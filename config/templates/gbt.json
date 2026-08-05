@@ -1,0 +1,21 @@
+{
+  "name": "GB/T 4091-2001 常规控制图报告",
+  "standard": "GB/T 4091-2001",
+  "format": "docx",
+  "sections": [
+    {"type": "title", "title": "常规控制图分析报告"},
+    {"type": "para", "text": "依据 GB/T 4091-2001《常规控制图》标准，对生产过程进行统计受控状态分析。"},
+    {"type": "heading", "text": "1. 控制图分析"},
+    {"type": "analysis", "category": "spc"},
+    {"type": "heading", "text": "2. 过程能力分析"},
+    {"type": "analysis", "category": "capability"},
+    {"type": "heading", "text": "3. 判异规则说明"},
+    {"type": "para", "text": "本报告使用以下判异规则:"},
+    {"type": "para", "text": "• 规则1: 一点超出3σ控制限"},
+    {"type": "para", "text": "• 规则2: 连续9点在中心线同一侧"},
+    {"type": "para", "text": "• 规则3: 连续6点递增或递减"},
+    {"type": "para", "text": "• 规则4: 连续14点交替上下"},
+    {"type": "heading", "text": "4. 附录: 控制图常数表"},
+    {"type": "para", "text": "控制图常数参考 GB/T 4091-2001 附录A。子组大小 n=2~25，A2/D3/D4 用于XBar-R，A3/B3/B4 用于XBar-S。"}
+  ]
+}
