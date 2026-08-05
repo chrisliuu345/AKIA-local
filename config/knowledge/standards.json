@@ -1,0 +1,174 @@
+{
+  "entries": [
+    {
+      "id": "aiag-msa-4",
+      "title": "MSA 参考手册（AIAG 第 4 版，2010）",
+      "category": "standard",
+      "keywords": ["MSA", "AIAG", "测量系统分析", "GRR", "量具", "手册"],
+      "content": "汽车行业测量系统分析权威指南。规定 GRR 研究方法（均值极差法/方差分析法）、计数型测量系统（假设试验分析/信号探测法）、偏倚/线性/稳定性研究程序。",
+      "thresholds": {
+        "grr_lt_10": "可接受",
+        "grr_10_30": "视应用重要性、量具成本、维修成本等有条件接受",
+        "grr_gt_30": "不可接受，必须改进",
+        "ndc_ge_5": "可区分类别数至少为 5",
+        "study_design": "典型 GRR: 10 零件 × 3 操作员 × 3 次重复"
+      },
+      "references": ["AIAG MSA Reference Manual, 4th Edition, 2010"]
+    },
+    {
+      "id": "aiag-spc-2",
+      "title": "SPC 参考手册（AIAG 第 2 版，2005）",
+      "category": "standard",
+      "keywords": ["SPC", "AIAG", "统计过程控制", "控制图", "手册"],
+      "content": "规定控制图选用、子组抽样、判异规则与过程能力研究程序。强调：先判稳（控制图无异常）再评能力；能力指数须基于受控过程；初始过程研究用 Ppk（样本量≥100，连续抽样）。",
+      "references": ["AIAG SPC Reference Manual, 2nd Edition, 2005"]
+    },
+    {
+      "id": "aiag-vda-fmea-2019",
+      "title": "FMEA 手册（AIAG-VDA 第 1 版，2019）",
+      "category": "standard",
+      "keywords": ["FMEA", "AIAG-VDA", "失效模式", "AP", "结构分析"],
+      "content": "取代旧版 RPN 体系，采用七步法：策划准备→结构分析→功能分析→失效分析→风险分析→优化→结果文件化。风险评价改用 AP（措施优先级 H/M/L），S/O/D 评分表更新。",
+      "references": ["AIAG-VDA FMEA Handbook, 1st Edition, 2019"]
+    },
+    {
+      "id": "aiag-apqp-2",
+      "title": "APQP 手册（AIAG 第 2 版）",
+      "category": "standard",
+      "keywords": ["APQP", "产品质量先期策划", "AIAG", "五大工具"],
+      "content": "产品质量先期策划五阶段：计划定义→产品设计开发→过程设计开发→产品与过程确认→反馈评定与纠正措施。输出物含特殊特性清单、DFMEA、流程图、PFMEA、控制计划、PPAP 包。"
+    },
+    {
+      "id": "aiag-ppap-4",
+      "title": "PPAP 手册（AIAG 第 4 版）",
+      "category": "standard",
+      "keywords": ["PPAP", "生产件批准", "AIAG", "PSW", "提交等级"],
+      "content": "规定生产件批准的 18 项要求与 5 个提交等级（默认等级 3）。初始过程能力接受准则：Ppk ≥ 1.67 满足要求；1.33 ≤ Ppk < 1.67 可接受但需改进计划（100% 检验加严）；Ppk < 1.33 不满足，须 100% 检验并提交纠正措施计划。"
+    },
+    {
+      "id": "vda-5",
+      "title": "VDA 第 5 卷 — 测量过程能力",
+      "category": "standard",
+      "keywords": ["VDA", "VDA5", "测量过程能力", "量具", "德国"],
+      "content": "德国汽车工业测量系统能力标准。核心指标 Cg/Cgk（量具能力，对公差的 20%）与 %GRR（对公差，要求 <15% 优选，<30% 有条件接受）。比 AIAG 更严格地区分对过程变差与对公差两种评价基准。"
+    },
+    {
+      "id": "iso-22514",
+      "title": "ISO 22514 系列 — 过程能力统计方法",
+      "category": "standard",
+      "keywords": ["ISO 22514", "过程能力", "统计方法", "国际标准"],
+      "content": "过程管理与能力分析的统计方法国际标准族。Part 2: 时间相依模型的过程能力与性能；Part 3: 离散数据的机器性能研究；Part 7: 测量过程能力。定义 Cp/Cpk/Pp/Ppk 标准算法。",
+      "references": ["ISO 22514-2:2017, ISO 22514-7:2021"]
+    },
+    {
+      "id": "iso-7870",
+      "title": "ISO 7870 系列 — 控制图",
+      "category": "standard",
+      "keywords": ["ISO 7870", "控制图", "国际标准", "休哈特"],
+      "content": "控制图国际标准族。Part 2: 休哈特控制图（对应 GB/T 4091）；Part 3: 验收控制图；Part 4: 累积和图；Part 5: 专用控制图；Part 6: EWMA 图。规定常规控制图的构造与判异准则。",
+      "references": ["ISO 7870-2:2023"]
+    },
+    {
+      "id": "iso-9001-2015",
+      "title": "ISO 9001:2015 质量管理体系",
+      "category": "standard",
+      "keywords": ["ISO 9001", "质量管理体系", "QMS", "过程方法"],
+      "content": "质量管理体系基础标准，采用 PDCA 与风险思维。与质量工具相关条款：7.1.5 监视测量资源（MSA 的体系依据）、9.1 监视测量分析评价、9.1.1 总则要求用适当方法（如 SPC）分析过程、10.2 不合格与纠正措施（8D/根因分析）。",
+      "references": ["ISO 9001:2015"]
+    },
+    {
+      "id": "iatf-16949",
+      "title": "IATF 16949:2016 汽车质量管理体系",
+      "category": "standard",
+      "keywords": ["IATF", "16949", "汽车", "QMS", "特殊特性"],
+      "content": "汽车行业 QMS 标准（基于 ISO 9001 补充）。关键要求：7.1.5.1.1 MSA（优先采用客户批准的参考手册，即 AIAG MSA-4）；9.1.1.1 过程监视（SPC）；特殊特性必须用符号标识并纳入控制计划；过程能力/性能须达到客户要求并持续改进。",
+      "references": ["IATF 16949:2016"]
+    },
+    {
+      "id": "iso-2859",
+      "title": "ISO 2859 / GB/T 2828.1 — 计数抽样检验程序",
+      "category": "standard",
+      "keywords": ["ISO 2859", "GB/T 2828", "AQL", "抽样方案", "计数抽样"],
+      "content": "按 AQL 检索的逐批计数抽样体系。三要素：检验水平（一般 II 级默认）、AQL 值、严格度（正常/加严/减量）。由批量→样本量字码→查表得 n、Ac、Re。转移规则：正常→加严（5 批中 2 批拒收）、加严→正常（连续 5 批接收）。",
+      "references": ["ISO 2859-1:1999, GB/T 2828.1-2012"]
+    },
+    {
+      "id": "iso-3951",
+      "title": "ISO 3951 / GB/T 6378 — 计量抽样检验程序",
+      "category": "standard",
+      "keywords": ["ISO 3951", "GB/T 6378", "计量抽样", "AQL"],
+      "content": "按 AQL 检索的计量型抽样体系（特性为连续变量）。分 s 法（σ 未知）与 σ 法（σ 已知）。用质量统计量 Q = (USL-x̄)/s 或 (x̄-LSL)/s 与接收常数 k 比较判定。样本量比计数方案小，但要求正态性。",
+      "references": ["ISO 3951-1:2013"]
+    },
+    {
+      "id": "gb-t-4091",
+      "title": "GB/T 4091 — 常规控制图（等同 ISO 7870-2）",
+      "category": "standard",
+      "keywords": ["GB/T 4091", "国标", "控制图", "休哈特"],
+      "content": "中国国标常规控制图标准，等同采用 ISO 7870-2。规定 X̄-R、X̄-s、中位数图、I-MR、p、np、c、u 图的构造、控制限常数表与 8 项判异准则。"
+    },
+    {
+      "id": "iso-5725",
+      "title": "ISO 5725 — 测量方法与结果的准确度",
+      "category": "standard",
+      "keywords": ["ISO 5725", "准确度", "精密度", "正确度", "重复性", "再现性"],
+      "content": "准确度（正确度+精密度）国际标准。定义重复性条件（同员/同机/短时）与再现性条件（异员/异机/异时）下的标准差测定程序，是 MSA 概念的国际标准源头。"
+    },
+    {
+      "id": "iso-13053",
+      "title": "ISO 13053 — 六西格玛定量方法",
+      "category": "standard",
+      "keywords": ["ISO 13053", "六西格玛", "DMAIC", "国际标准"],
+      "content": "Part 1: DMAIC 方法论标准流程与各阶段交付物；Part 2: 六西格玛实施所需工具技术清单（SIPOC、VSM、MSA、能力、假设检验、DOE、SPC、控制计划等）。"
+    },
+    {
+      "id": "asq-cssbb-bok",
+      "title": "ASQ CSSBB 知识体系 (BoK)",
+      "category": "standard",
+      "keywords": ["ASQ", "CSSBB", "黑带", "知识体系", "认证"],
+      "content": "美国质量学会注册六西格玛黑带知识体系：企业范围展开、组织过程管理与测量、团队管理、DMAIC 五阶段工具、DFSS。是六西格玛工具箱的事实标准框架。"
+    },
+    {
+      "id": "vda-6-3",
+      "title": "VDA 6.3 — 过程审核",
+      "category": "standard",
+      "keywords": ["VDA 6.3", "过程审核", "德国", "P6"],
+      "content": "德国汽车行业过程审核标准。P6 过程分析（过程输入/工作流程/人力资源/物质资源/效率）评分制，符合率分级：A ≥90%、B 80-90%、C <80%。MSA、SPC、能力研究是 P6.4/6.5 的典型审核证据。"
+    },
+    {
+      "id": "iso-16269",
+      "title": "ISO 16269 — 统计解释数据（分布/容差区间）",
+      "category": "standard",
+      "keywords": ["ISO 16269", "容差区间", "统计解释", "置信区间"],
+      "content": "数据统计解释系列标准。Part 4: 离群值检测与处理；Part 6: 统计容差区间的确定（给定置信度下覆盖总体比例的区间），用于小样本验证场景的能力论证。"
+    },
+    {
+      "id": "gb-z-19027",
+      "title": "GB/Z 19027 — GB/T 19001 的统计技术指南",
+      "category": "standard",
+      "keywords": ["GB/Z 19027", "统计技术", "指南", "国标"],
+      "content": "质量管理体系统计技术应用指南国标。对应 12 类统计技术：描述统计、实验设计、假设检验、测量分析、过程能力、回归分析、可靠性、抽样、仿真、SPC、统计容差、时间序列，并给出在 QMS 各条款中的应用说明。"
+    },
+    {
+      "id": "iso-3534",
+      "title": "ISO 3534 — 统计学词汇与符号",
+      "category": "standard",
+      "keywords": ["ISO 3534", "术语", "符号", "统计学"],
+      "content": "统计学术语标准族。Part 1: 一般统计术语与概率术语；Part 2: 应用统计；Part 3: 实验设计。统一 σ、μ、Cp、Cpk 等符号定义，是各工具标准术语的引用源。"
+    },
+    {
+      "id": "ansi-asq-z1-4",
+      "title": "ANSI/ASQ Z1.4 — 计数抽样（美标）",
+      "category": "standard",
+      "keywords": ["Z1.4", "ANSI", "ASQ", "AQL", "抽样"],
+      "content": "美国计数抽样标准，与 ISO 2859-1 技术内容一致（MIL-STD-105E 的民用继承者）。C=0 零缺陷抽样方案（Squeglia）为其简化变体，在电子行业广泛应用：任何样本量 Ac 恒为 0。"
+    },
+    {
+      "id": "fda-21-cfr-820",
+      "title": "FDA 21 CFR Part 820 — 医疗器械质量体系法规",
+      "category": "standard",
+      "keywords": ["FDA", "820", "QSR", "医疗器械", "过程确认"],
+      "content": "美国医疗器械质量体系法规。§820.75 过程确认：结果无法完全验证的过程必须用 IQ/OQ/PQ 确认；§820.250 统计技术：须建立适用的统计技术程序（SPC/抽样）。能力接受准则常在 PQ 阶段规定 Cpk ≥ 1.33。"
+    }
+  ]
+}

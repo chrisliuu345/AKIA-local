@@ -1,0 +1,152 @@
+"""核心模块单元测试 — formatting/fmea/sheet_merger/splitter/layered/profiler"""
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import pytest, tempfile, pandas as pd, numpy as np
+
+from core.formatting import format_pvalue, format_cp, format_pct, format_stat, format_ci
+from core.fmea_engine import FMEAItem, FMEAEngine
+from core.sheet_merger import SheetMerger
+from core.sheet_splitter import SheetSplitter
+from core.layered_form import LPAEngine, LPA_TEMPLATES
+from core.data_profiler import DataProfiler, _clean_col_name
+
+
+# ── formatting ──
+class TestFormatting:
+    def test_pvalue_small(self): assert format_pvalue(0.00005) == "<0.0001"
+    def test_pvalue_medium(self): assert format_pvalue(0.0005) == "<0.001"
+    def test_pvalue_normal(self): assert format_pvalue(0.0456) == "0.0456"
+    def test_cp(self): assert format_cp(1.334) == "1.334"
+    def test_pct(self): assert format_pct(0.856) == "85.6%"
+    def test_ci(self): assert format_ci(12.345, 18.9) == "[12.35, 18.90]"
+
+
+# ── FMEA ──
+class TestFMEA:
+    def test_rpn_calc(self):
+        item = FMEAItem(severity=7, occurrence=5, detection=6)
+        assert item.calc_rpn() == 210
+        assert item.risk_level == "high"
+
+    def test_risk_medium(self):
+        item = FMEAItem(severity=5, occurrence=4, detection=3)
+        item.calc_rpn()
+        assert item.risk_level == "medium"
+
+    def test_risk_low(self):
+        item = FMEAItem(severity=2, occurrence=2, detection=2)
+        item.calc_rpn()
+        assert item.risk_level == "low"
+
+    def test_sort(self):
+        items = [FMEAItem(severity=s, occurrence=1, detection=1) for s in [3, 9, 5]]
+        for i in items: i.calc_rpn()
+        sorted_items = FMEAEngine.sort_by_rpn(items)
+        assert sorted_items[0].rpn == 9
+        assert sorted_items[-1].rpn == 3
+
+    def test_default_pfmea(self):
+        items = FMEAEngine.create_default("pfmea")
+        assert len(items) == 3
+        for i in items:
+            assert i.rpn > 0
+
+    def test_stats(self):
+        items = FMEAEngine.create_default("pfmea")
+        stats = FMEAEngine.get_stats(items)
+        assert stats["total"] == 3
+        assert stats["max_rpn"] > 0
+
+    def test_dataframe(self):
+        items = FMEAEngine.create_default("pfmea")
+        df = FMEAEngine.to_dataframe(items)
+        assert df.shape == (3, 12)
+
+
+# ── Sheet Merger ──
+class TestSheetMerger:
+    def test_merge_append(self):
+        tmp = tempfile.mkdtemp()
+        p1 = os.path.join(tmp, "a.xlsx"); p2 = os.path.join(tmp, "b.xlsx")
+        pd.DataFrame({"x": [1, 2]}).to_excel(p1, index=False)
+        pd.DataFrame({"x": [3, 4]}).to_excel(p2, index=False)
+        df = SheetMerger.merge_append([p1, p2])
+        assert len(df) == 4
+
+    def test_merge_empty(self):
+        df = SheetMerger.merge_append([])
+        assert df.empty
+
+    def test_merge_join(self):
+        df1 = pd.DataFrame({"id": [1, 2], "a": [10, 20]})
+        df2 = pd.DataFrame({"id": [1, 3], "b": [100, 300]})
+        df = SheetMerger.merge_join(df1, df2, "id", "inner")
+        assert len(df) == 1
+
+
+# ── Sheet Splitter ──
+class TestSheetSplitter:
+    def test_split_by_rows(self):
+        df = pd.DataFrame({"x": range(25)})
+        tmp = tempfile.mkdtemp()
+        paths = SheetSplitter.split_by_rows(df, 10, tmp)
+        assert len(paths) == 3
+
+    def test_split_by_column(self):
+        df = pd.DataFrame({"cat": ["A", "A", "B", "B", "C"], "v": range(5)})
+        tmp = tempfile.mkdtemp()
+        paths = SheetSplitter.split_by_column(df, "cat", tmp)
+        assert len(paths) == 3
+
+    def test_split_by_condition(self):
+        df = pd.DataFrame({"cpk": [0.8, 1.2, 0.9, 1.5]})
+        tmp = tempfile.mkdtemp()
+        paths = SheetSplitter.split_by_condition(df, "cpk", "<", 1.0, tmp)
+        assert len(paths) == 2
+
+
+# ── LPA ──
+class TestLPA:
+    def test_templates_exist(self):
+        t = LPAEngine.get_templates()
+        assert "5S" in t
+        assert "安全" in t
+        assert "质量" in t
+
+    def test_generate(self):
+        tmp = tempfile.mkdtemp()
+        path = os.path.join(tmp, "lpa.xlsx")
+        result = LPAEngine.generate_excel(["OP10"], ["5S", "安全"], ["AuditorA"], path)
+        assert os.path.exists(result)
+
+
+# ── Data Profiler ──
+class TestDataProfiler:
+    def test_profile_basic(self):
+        df = pd.DataFrame({"a": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "b": ["x"] * 10})
+        dp = DataProfiler()
+        r = dp.profile({"Sheet1": df})
+        assert r["global_summary"]["total_sheets"] == 1
+        assert "recommendations" in r["sheets"]["Sheet1"]
+
+    def test_clean_col_unnamed(self):
+        assert _clean_col_name("Unnamed: 0") == "列 1"
+        assert _clean_col_name("Unnamed: 5") == "列 6"
+
+    def test_clean_col_numeric(self):
+        assert _clean_col_name(0) == "列 1"
+        assert _clean_col_name(3) == "列 4"
+
+    def test_clean_col_named(self):
+        assert _clean_col_name("Product") == "Product"
+
+    def test_issues_detection(self):
+        df = pd.DataFrame({"a": [1, None, 3, None, 5] * 20, "b": [1] * 100})
+        dp = DataProfiler()
+        r = dp.profile({"S": df})
+        issues = r["sheets"]["S"]["issues"]
+        assert len(issues) >= 1  # 40% missing
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

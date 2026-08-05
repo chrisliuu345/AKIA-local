@@ -1,0 +1,25 @@
+{
+  "name": "ISO 9001:2015 / IATF 16949 质量报告",
+  "standard": "ISO 9001:2015",
+  "format": "docx",
+  "sections": [
+    {"type": "title", "title": "质量分析报告"},
+    {"type": "toc"},
+    {"type": "heading", "text": "1. 测量系统分析 (MSA)"},
+    {"type": "analysis", "category": "msa"},
+    {"type": "heading", "text": "2. 过程能力分析"},
+    {"type": "analysis", "category": "capability"},
+    {"type": "heading", "text": "3. 统计过程控制 (SPC)"},
+    {"type": "analysis", "category": "spc"},
+    {"type": "heading", "text": "4. 假设检验"},
+    {"type": "analysis", "category": "hypothesis"},
+    {"type": "heading", "text": "5. 实验设计 (DOE)"},
+    {"type": "analysis", "category": "doe"},
+    {"type": "heading", "text": "6. 回归分析"},
+    {"type": "analysis", "category": "regression"},
+    {"type": "heading", "text": "7. 审计追踪"},
+    {"type": "para", "text": "本报告由 QA-Tool 自动生成。所有分析数据来源于原始测量数据，未经人工修改。"},
+    {"type": "heading", "text": "8. 批准"},
+    {"type": "signature", "roles": ["编制", "审核", "批准"]}
+  ]
+}
