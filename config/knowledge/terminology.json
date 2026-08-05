@@ -1,0 +1,341 @@
+{
+  "entries": [
+    {
+      "id": "cp",
+      "title": "Cp — 过程能力指数（潜在能力）",
+      "category": "terminology",
+      "keywords": ["Cp", "过程能力", "capability", "潜在能力", "规格宽度"],
+      "content": "Cp 衡量过程固有波动相对于规格宽度的能力，不考虑均值偏移。Cp = (USL - LSL) / (6σ)。Cp 只反映离散程度，不能发现中心偏移问题，需与 Cpk 配合使用。",
+      "formula": "Cp = (USL - LSL) / (6σ)",
+      "typical_values": {"lt_1.0": "规格宽度小于 6σ，必然超差", "1.0": "恰好 6σ，约 2700 PPM", "1.33": "4σ 水准，约 63 PPM", "1.67": "5σ 水准", "2.0": "6σ 水准，约 0.002 PPM"}
+    },
+    {
+      "id": "cpk",
+      "title": "Cpk — 过程能力指数（考虑偏移）",
+      "category": "terminology",
+      "keywords": ["Cpk", "过程能力", "capability", "能力指数", "偏移"],
+      "content": "Cpk 在 Cp 基础上考虑过程均值偏移，取上下两侧能力的最小值。Cpk = min((USL-μ)/(3σ), (μ-LSL)/(3σ))。Cpk ≤ Cp 恒成立；Cpk 与 Cp 差距越大说明中心偏移越严重。",
+      "formula": "Cpk = min((USL-μ)/(3σ), (μ-LSL)/(3σ))",
+      "typical_values": {"lt_1.0": "能力不足，存在超差风险", "1.0_1.33": "能力一般，需持续改进", "1.33_1.67": "能力良好（多数行业要求≥1.33）", "gt_1.67": "能力优秀（汽车行业关键特性常要求≥1.67）"}
+    },
+    {
+      "id": "pp-ppk",
+      "title": "Pp / Ppk — 过程性能指数",
+      "category": "terminology",
+      "keywords": ["Pp", "Ppk", "过程性能", "performance", "长期能力"],
+      "content": "Pp/Ppk 与 Cp/Cpk 公式相同，但分母使用整体标准差（含组间波动），反映长期实际表现。Cpk 用组内标准差（R̄/d2 或 s̄/c4）评估短期潜在能力。通常 Cpk ≥ Ppk；两者差距大说明过程存在组间漂移、不够稳定。",
+      "formula": "Ppk = min((USL-μ)/(3s), (μ-LSL)/(3s))，s 为整体样本标准差"
+    },
+    {
+      "id": "ppm",
+      "title": "PPM — 百万分之一不良数",
+      "category": "terminology",
+      "keywords": ["PPM", "百万分之一", "不良率", "defect"],
+      "content": "PPM (Parts Per Million) 表示每百万件产品中的不良品数量。由规格限与过程分布计算：PPM = [P(X>USL) + P(X<LSL)] × 10⁶。六西格玛水准（含 1.5σ 漂移）对应 3.4 PPM。",
+      "typical_values": {"3.4": "六西格玛水准（含1.5σ漂移）", "63": "Cpk≈1.33", "2700": "Cpk≈1.0", "66811": "3σ 水准（含漂移）"}
+    },
+    {
+      "id": "sigma-level",
+      "title": "西格玛水平 (Sigma Level)",
+      "category": "terminology",
+      "keywords": ["西格玛水平", "sigma level", "Z值", "DPMO"],
+      "content": "西格玛水平用 Z 值表示过程满足规格的能力：Z = (USL-μ)/σ 或 (μ-LSL)/σ 取小值。长期西格玛水平 = Z(short) - 1.5（经验漂移）。6σ 水平即长期 3.4 DPMO。",
+      "typical_values": {"2σ": "308,537 DPMO", "3σ": "66,807 DPMO", "4σ": "6,210 DPMO", "5σ": "233 DPMO", "6σ": "3.4 DPMO"}
+    },
+    {
+      "id": "grr",
+      "title": "GRR — 量具重复性与再现性",
+      "category": "terminology",
+      "keywords": ["GRR", "Gage R&R", "重复性", "再现性", "量具", "测量系统"],
+      "content": "GRR 评估测量系统误差占过程总波动的比例。重复性 (EV) 是同一操作员多次测量同一零件的波动；再现性 (AV) 是不同操作员之间的差异。%GRR = GRR/TV × 100%。",
+      "typical_values": {"lt_10": "可接受（优秀测量系统）", "10_30": "有条件接受（视重要性/成本评估）", "gt_30": "不可接受，测量系统需改进"}
+    },
+    {
+      "id": "ndc",
+      "title": "NDC — 可区分类别数",
+      "category": "terminology",
+      "keywords": ["NDC", "可区分类别数", "分辨力", "distinct categories"],
+      "content": "NDC (Number of Distinct Categories) 表示测量系统能将过程波动划分为多少个不重叠的组别。NDC = 1.41 × (PV/GRR)，取整。NDC ≥ 5 表示分辨力足够；NDC < 5 时测量系统不足以支持过程分析与控制。",
+      "typical_values": {"ge_5": "分辨力足够", "2_4": "分辨力不足，仅能做粗略判断", "1": "无法区分零件差异"}
+    },
+    {
+      "id": "ev-av-pv-tv",
+      "title": "EV / AV / PV / TV — GRR 方差分量",
+      "category": "terminology",
+      "keywords": ["EV", "AV", "PV", "TV", "方差分量", "设备变差", "评价人变差"],
+      "content": "EV（设备变差）= 重复性；AV（评价人变差）= 再现性；PV（零件变差）= 零件间真实差异；TV（总变差）= √(GRR² + PV²)。%EV、%AV 分别占 TV 的比例用于定位测量系统改进方向：EV 高改善量具，AV 高培训操作员/标准化测量方法。"
+    },
+    {
+      "id": "msa-bias",
+      "title": "偏倚 (Bias) 与线性 (Linearity)",
+      "category": "terminology",
+      "keywords": ["偏倚", "bias", "线性", "linearity", "测量系统", "准确度"],
+      "content": "偏倚是测量均值与基准值（真值）的差。线性是偏倚在量程范围内的变化程度。偏倚通过 t 检验判定显著性（p<0.05 存在显著偏倚）；线性回归斜率显著≠0 则存在线性问题。稳定性指测量系统随时间保持一致的能力。"
+    },
+    {
+      "id": "attribute-agreement",
+      "title": "属性一致性分析 (Attribute Agreement / Kappa)",
+      "category": "terminology",
+      "keywords": ["属性一致性", "kappa", "卡帕", "计数型", "属性数据", "Fleiss"],
+      "content": "用于合格/不合格等计数型测量系统评估。Kappa 系数衡量评价者间及与基准的一致程度，剔除偶然一致。Kappa ≥ 0.9 优秀；0.7-0.9 可接受；<0.7 需改进。常用 Cohen's Kappa（两人）与 Fleiss' Kappa（多人）。",
+      "typical_values": {"ge_0.9": "一致性优秀", "0.7_0.9": "可接受", "lt_0.7": "一致性不足"}
+    },
+    {
+      "id": "spc",
+      "title": "SPC — 统计过程控制",
+      "category": "terminology",
+      "keywords": ["SPC", "统计过程控制", "控制图", "control chart", "休哈特"],
+      "content": "SPC 用控制图监控过程波动，区分普通原因（随机、不可消除）与特殊原因（可查明、应消除）。控制限 = 中心线 ± 3σ，基于过程自身数据计算，与规格限无关。过程判稳后才有资格做能力分析。"
+    },
+    {
+      "id": "ucl-lcl-cl",
+      "title": "UCL / LCL / CL — 控制限与中心线",
+      "category": "terminology",
+      "keywords": ["UCL", "LCL", "CL", "控制上限", "控制下限", "中心线", "控制限"],
+      "content": "控制上限 UCL = CL + 3σ，控制下限 LCL = CL - 3σ，CL 为中心线（过程均值）。控制限由过程数据计算，反映过程声音 (Voice of Process)；规格限 USL/LSL 由客户/设计要求给定，反映客户声音 (Voice of Customer)。两者不可混淆。"
+    },
+    {
+      "id": "nelson-rules",
+      "title": "Nelson 判异规则 (8 条)",
+      "category": "terminology",
+      "keywords": ["Nelson", "判异规则", "异常判定", "WECO", "Western Electric", "失控"],
+      "content": "控制图异常模式判定规则。规则1: 1点超3σ；规则2: 连续9点在中心线同侧；规则3: 连续6点递增或递减；规则4: 连续14点交替上下；规则5: 连续3点中2点超2σ(同侧)；规则6: 连续5点中4点超1σ(同侧)；规则7: 连续15点在±1σ内(波动异常小/分层)；规则8: 连续8点在±1σ外两侧(混合)。",
+      "related_analyses": ["SPC 控制图"]
+    },
+    {
+      "id": "xbar-r",
+      "title": "XBar-R 控制图（均值-极差图）",
+      "category": "terminology",
+      "keywords": ["XBar-R", "均值极差图", "计量型", "子组"],
+      "content": "最常用的计量型控制图，适用于子组样本量 2-10（典型 4-5）。X̄ 图监控均值漂移，R 图监控组内波动。常数 A2、D3、D4 查表获得。子组应满足合理子组原则：组内仅含普通原因波动。",
+      "formula": "X̄图: CL=X̿, UCL/LCL=X̿±A2·R̄；R图: CL=R̄, UCL=D4·R̄, LCL=D3·R̄"
+    },
+    {
+      "id": "imr",
+      "title": "I-MR 控制图（单值-移动极差图）",
+      "category": "terminology",
+      "keywords": ["I-MR", "单值图", "移动极差", "individuals"],
+      "content": "适用于无法或不宜分组的单值数据（如每班测一次、破坏性测试）。I 图监控单值，MR 图监控相邻两点移动极差（n=2）。对非正态数据敏感，必要时先做正态性检验或变换。",
+      "formula": "I图: CL=X̄, UCL/LCL=X̄±2.66·MR̄；MR图: UCL=3.267·MR̄"
+    },
+    {
+      "id": "pnp-chart",
+      "title": "P 图 / NP 图（不合格品率/数控制图）",
+      "category": "terminology",
+      "keywords": ["P图", "NP图", "不合格品率", "不合格品数", "计数型"],
+      "content": "计数型控制图。P 图监控不合格品率，样本量可不等；NP 图监控不合格品数，要求样本量固定。判稳前提：np̄ ≥ 5（否则控制限过宽、检出力低，建议改用稀有事件图）。",
+      "formula": "P图: UCL/LCL = p̄ ± 3√(p̄(1-p̄)/n)"
+    },
+    {
+      "id": "cu-chart",
+      "title": "C 图 / U 图（缺陷数/单位缺陷数控制图）",
+      "category": "terminology",
+      "keywords": ["C图", "U图", "缺陷数", "单位缺陷", "计数型", "泊松"],
+      "content": "基于泊松分布的计数型控制图。C 图监控固定检验单位的缺陷总数；U 图监控单位缺陷数，检验单位可不等。要求缺陷相互独立且发生率低。",
+      "formula": "C图: UCL/LCL = c̄ ± 3√c̄；U图: ū ± 3√(ū/n)"
+    },
+    {
+      "id": "cusum",
+      "title": "CUSUM 控制图（累积和图）",
+      "category": "terminology",
+      "keywords": ["CUSUM", "累积和", "小漂移", "tabular"],
+      "content": "对小漂移（0.5-2σ）检出力远优于休哈特图。将偏差累积求和，超过决策区间 H 判异。参数：k（参考值，通常取漂移量一半/σ）、h（决策区间，通常 4-5）。适用于需要尽早发现缓慢趋势的场景（如刀具磨损）。",
+      "formula": "C⁺ = max(0, x - (μ₀+kσ) + C⁺prev)；C⁻ = max(0, (μ₀-kσ) - x + C⁻prev)"
+    },
+    {
+      "id": "ewma",
+      "title": "EWMA 控制图（指数加权移动平均图）",
+      "category": "terminology",
+      "keywords": ["EWMA", "指数加权", "移动平均", "平滑"],
+      "content": "对历史数据指数加权（近期权重高），平滑随机噪声、放大持续趋势。λ 越小平滑越强、对小漂移越敏感（常用 0.1-0.3）；L 为控制限宽度系数（常用 2.7-3.0）。",
+      "formula": "zₜ = λxₜ + (1-λ)zₜ₋₁；UCL = μ₀ + Lσ√(λ/(2-λ))"
+    },
+    {
+      "id": "normality",
+      "title": "正态性检验",
+      "category": "terminology",
+      "keywords": ["正态性", "normality", "Shapiro-Wilk", "Anderson-Darling", "KS检验", "偏度", "峰度"],
+      "content": "检验数据是否服从正态分布。Shapiro-Wilk 适用 n≤5000，小样本功效好；Anderson-Darling 对尾部敏感；KS 检验通用但功效较低。p ≥ 0.05 不能拒绝正态性假设。能力分析、I-MR 图等对正态性敏感，非正态时应考虑 Box-Cox/Johnson 变换或非正态能力方法。"
+    },
+    {
+      "id": "box-cox",
+      "title": "Box-Cox 变换",
+      "category": "terminology",
+      "keywords": ["Box-Cox", "变换", "正态化", "lambda"],
+      "content": "幂变换族：y(λ) = (x^λ - 1)/λ (λ≠0)，y = ln(x) (λ=0)。要求数据为正。选择最优 λ 使变换后数据最接近正态，再进行能力分析等参数方法。常见 λ：0.5 平方根、0 对数、-1 倒数。"
+    },
+    {
+      "id": "t-test",
+      "title": "t 检验（单样本/双样本/配对）",
+      "category": "terminology",
+      "keywords": ["t检验", "t-test", "均值检验", "显著性", "p值"],
+      "content": "检验均值差异显著性。单样本：与目标值比较；双样本独立：两组均值比较（注意方差齐性，Levene 检验决定是否用 Welch 校正）；配对：同一对象前后测量差值检验。p < α（通常 0.05）判定差异显著。"
+    },
+    {
+      "id": "anova",
+      "title": "方差分析 (ANOVA)",
+      "category": "terminology",
+      "keywords": ["ANOVA", "方差分析", "F检验", "组间差异", "多重比较"],
+      "content": "检验 3 组及以上均值是否全等。H0: 各组均值相等；p < 0.05 拒绝 H0 表示至少一组不同。显著后需做事后检验（Tukey HSD）定位差异组。前提：正态性、方差齐性、独立性。双因素 ANOVA 可同时分析主效应与交互作用。"
+    },
+    {
+      "id": "p-value",
+      "title": "p 值与显著性水平 α",
+      "category": "terminology",
+      "keywords": ["p值", "p-value", "显著性", "alpha", "假设检验", "拒绝域"],
+      "content": "p 值是 H0 为真时得到当前或更极端结果的概率。p < α（通常 0.05）拒绝原假设。p 小不代表效应大，需结合效应量与置信区间。α 是犯第一类错误（弃真）的概率，β 是第二类错误（取伪）的概率，检验功效 = 1-β。"
+    },
+    {
+      "id": "doe",
+      "title": "DOE — 实验设计",
+      "category": "terminology",
+      "keywords": ["DOE", "实验设计", "因子", "响应", "交互作用", "随机化"],
+      "content": "有计划地改变因子水平，用最少试验次数识别显著因子与最优条件。三大原则：随机化、重复、区组化。全因子设计考察所有水平组合；部分因子设计（分辨率 III/IV/V）用混杂换取效率；响应曲面 (RSM) 拟合二次模型寻优。"
+    },
+    {
+      "id": "doe-resolution",
+      "title": "DOE 分辨率 (Resolution)",
+      "category": "terminology",
+      "keywords": ["分辨率", "resolution", "混杂", "confounding", "部分因子"],
+      "content": "部分因子设计中效应混杂的程度。分辨率 III：主效应与二阶交互混杂（仅用于筛选）；IV：主效应不混杂，但二阶交互彼此混杂；V：主效应与二阶交互均可独立估计（可找出显著交互）。",
+      "typical_values": {"III": "筛选设计", "IV": "常用筛选/表征", "V": "可完整估计二阶交互"}
+    },
+    {
+      "id": "rsm",
+      "title": "RSM — 响应曲面法",
+      "category": "terminology",
+      "keywords": ["RSM", "响应曲面", "CCD", "Box-Behnken", "中心复合", "优化"],
+      "content": "在筛选出显著因子后，拟合二阶多项式模型寻找最优区域。CCD（中心复合设计）含轴点，可旋转性好，需 5 水平；Box-Behnken 仅 3 水平、不含顶点，试验次数少、适合因子边界不可超出的场合。"
+    },
+    {
+      "id": "r-squared",
+      "title": "R² 与调整 R²",
+      "category": "terminology",
+      "keywords": ["R²", "R-squared", "决定系数", "拟合优度", "调整R方"],
+      "content": "R² 表示模型解释的变异占总变异的比例（0-1）。加入更多自变量 R² 必然增大，调整 R² 对变量个数做惩罚，可用于模型比较。R² 高不代表模型正确，需检查残差诊断（随机、正态、等方差）与 VIF（<5-10 无严重共线性）。"
+    },
+    {
+      "id": "vif",
+      "title": "VIF — 方差膨胀因子",
+      "category": "terminology",
+      "keywords": ["VIF", "共线性", "多重共线性", "回归"],
+      "content": "衡量回归自变量间共线性程度。VIF = 1/(1-Rᵢ²)。VIF < 5 可接受；5-10 中等共线性，系数不稳定；> 10 严重共线性，应删除/合并变量或用岭回归、主成分回归。"
+    },
+    {
+      "id": "oee",
+      "title": "OEE — 设备综合效率",
+      "category": "terminology",
+      "keywords": ["OEE", "设备综合效率", "可用率", "性能", "良品率", "六大损失"],
+      "content": "OEE = 时间可用率 × 性能效率 × 良品率。可用率 = 运行时间/计划时间（损失：故障、换型调整）；性能 = 实际产出/(理论节拍×运行时间)（损失：空转小停、速度降低）；良品率 = 良品数/总产出（损失：废品、返工）。世界级水平 ≥ 85%。",
+      "formula": "OEE = A × P × Q",
+      "typical_values": {"ge_85": "世界级", "60_85": "有改进空间", "lt_60": "改善潜力巨大（典型未管理工厂约40-60%）"}
+    },
+    {
+      "id": "takt-time",
+      "title": "节拍时间 (Takt Time)",
+      "category": "terminology",
+      "keywords": ["节拍", "takt", "客户需求节拍", "线平衡"],
+      "content": "Takt = 可用生产时间 / 客户需求数量，是满足客户需求所需的生产节奏。线平衡目标：各工序周期时间 ≤ Takt 且尽量接近。周期时间 (Cycle Time) 是工序实际耗时；Lead Time 是产品从投入到产出的总时间。"
+    },
+    {
+      "id": "standard-time",
+      "title": "标准时间与宽放率",
+      "category": "terminology",
+      "keywords": ["标准时间", "宽放率", "allowance", "正常时间", "评比系数", "工时研究"],
+      "content": "正常时间 = 观测时间均值 × 评比系数（对操作员速度评比，通常 1.0 为正常速度）。标准时间 = 正常时间 × (1 + 宽放率)。宽放含生理（3-5%）、疲劳（4-10%）、管理/作业宽放（3-5%），合计典型 10-20%。",
+      "formula": "ST = NT × (1 + 宽放率)；NT = 观测均值 × 评比系数"
+    },
+    {
+      "id": "work-sampling",
+      "title": "工作抽样 (Work Sampling)",
+      "category": "terminology",
+      "keywords": ["工作抽样", "瞬间观测", "比率", "置信区间", "样本量"],
+      "content": "通过大量随机瞬时观测统计各类活动的时间占比。所需样本量 n = z²·p(1-p)/E²（p 预估比率，E 允许绝对误差，z=1.96 对应 95% 置信度）。观测须随机、瞬时、覆盖整个研究周期。",
+      "formula": "n = z²·p(1-p)/E²"
+    },
+    {
+      "id": "line-balance",
+      "title": "生产线平衡率",
+      "category": "terminology",
+      "keywords": ["线平衡", "平衡率", "瓶颈", "balance", "工序"],
+      "content": "平衡率 = Σ各工序时间 / (工位数 × 瓶颈工序时间) × 100%。平衡损失率 = 1 - 平衡率。瓶颈是耗时最长的工序，决定整线产出。改善方向：瓶颈工序分解转移、合并短工序、增减工位。平衡率 >85% 较好，<70% 需重新排布。"
+    },
+    {
+      "id": "va-nva",
+      "title": "增值 / 非增值活动 (VA / NVA)",
+      "category": "terminology",
+      "keywords": ["增值", "非增值", "VA", "NVA", "浪费", "价值流"],
+      "content": "增值活动：改变产品形态/功能且客户愿付费的工作。非增值（浪费）：搬运、等待、库存、过度加工、多余动作、不良返工、过量生产（TIMWOOD 七大浪费）。价值流分析统计增值比 = ΣVA时间 / Lead Time，典型未改善流程仅 1-5%。"
+    },
+    {
+      "id": "cpm",
+      "title": "Cpm — Taguchi 能力指数",
+      "category": "terminology",
+      "keywords": ["Cpm", "Taguchi", "田口", "目标值", "能力指数"],
+      "content": "考虑过程均值偏离目标值 T 的能力指数：Cpm = (USL-LSL) / (6√(σ² + (μ-T)²))。当过程目标明确（如标称尺寸）且偏离目标即产生质量损失时使用，比 Cpk 更严格地惩罚目标偏移。"
+    },
+    {
+      "id": "oc-curve",
+      "title": "OC 曲线（抽样特性曲线）",
+      "category": "terminology",
+      "keywords": ["OC曲线", "抽样", "接收概率", "AQL", "LTPD"],
+      "content": "描述抽样方案对不同质量水平批的接收概率。AQL（可接收质量限）处接收概率高（生产者风险 α≈5%）；LTPD（极限质量）处接收概率低（消费者风险 β≈10%）。理想方案曲线陡峭，区分好坏批能力强。"
+    },
+    {
+      "id": "fmea",
+      "title": "FMEA — 失效模式与影响分析",
+      "category": "terminology",
+      "keywords": ["FMEA", "失效模式", "RPN", "严重度", "频度", "探测度", "AP"],
+      "content": "系统性风险分析工具，识别潜在失效模式并评估风险。传统 RPN = 严重度S × 频度O × 探测度D（各 1-10 分）。AIAG-VDA 2019 版改用 AP（措施优先级）取代 RPN。S≥9 涉及安全/法规必须采取措施。"
+    },
+    {
+      "id": "eight-d",
+      "title": "8D 问题解决法",
+      "category": "terminology",
+      "keywords": ["8D", "问题解决", "纠正措施", "CAR"],
+      "content": "结构化问题解决方法：D1 成立团队、D2 描述问题、D3 临时围堵、D4 根因分析（5Why/鱼骨图）、D5 选择永久纠正措施、D6 实施验证、D7 预防再发（标准化/FMEA更新）、D8 表彰团队。"
+    },
+    {
+      "id": "control-plan",
+      "title": "控制计划 (Control Plan)",
+      "category": "terminology",
+      "keywords": ["控制计划", "control plan", "CP", "过程控制"],
+      "content": "定义产品/过程特性的控制方法的动态文件：特性、规格、测量系统、样本量/频次、控制方法（SPC/防错/检验）、反应计划。是 APQP 第三阶段输出，随 PFMEA 和过程变更更新。"
+    },
+    {
+      "id": "ppap",
+      "title": "PPAP — 生产件批准程序",
+      "category": "terminology",
+      "keywords": ["PPAP", "生产件批准", "PSW", "提交等级"],
+      "content": "汽车行业供应商批量供货前的批准程序，18 项输出（含 DFMEA/PFMEA、MSA、能力研究、控制计划、PSW 零件提交保证书）。默认提交等级 3。初始过程能力要求 Ppk ≥ 1.67。"
+    },
+    {
+      "id": "histogram",
+      "title": "直方图与分布形态",
+      "category": "terminology",
+      "keywords": ["直方图", "histogram", "分布", "偏态", "双峰"],
+      "content": "观察数据分布形态的图形工具。常见形态：正态型（理想）、偏态型（自然边界/刀具磨损）、双峰型（两台设备/两种原料混合，应分层）、孤岛型（混入异常批）、平顶型（多分布叠加）。组数经验值：√n 或 Sturges 公式。"
+    },
+    {
+      "id": "pareto",
+      "title": "柏拉图 (Pareto 图)",
+      "category": "terminology",
+      "keywords": ["柏拉图", "帕累托", "pareto", "二八法则", "ABC分析"],
+      "content": "按频次降序排列的柱状图 + 累积百分比曲线，基于帕累托原理（约 80% 问题来自 20% 原因）。用于识别优先改进项目，通常前 2-3 项即覆盖 70-80% 的问题。"
+    },
+    {
+      "id": "fishbone",
+      "title": "鱼骨图 / 因果图 (Ishikawa)",
+      "category": "terminology",
+      "keywords": ["鱼骨图", "因果图", "石川图", "fishbone", "5M1E", "人机料法环"],
+      "content": "将问题原因按类别展开的头脑风暴工具。制造业常用 5M1E：人(Man)、机(Machine)、料(Material)、法(Method)、测(Measurement)、环(Environment)。配合 5Why 逐层追问直达根因。"
+    },
+    {
+      "id": "five-why",
+      "title": "5Why 分析法",
+      "category": "terminology",
+      "keywords": ["5Why", "五个为什么", "根因", "追问"],
+      "content": "对问题连续追问'为什么'直至根因（通常约 5 次）。要点：基于事实而非推测；沿因果关系链验证（可用'所以'反向检验）；根因应落在可控的流程/系统层面，而非归咎于个人。"
+    }
+  ]
+}

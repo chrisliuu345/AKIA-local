@@ -1,0 +1,22 @@
+{
+  "name": "FDA 21 CFR Part 11 合规报告",
+  "standard": "FDA 21 CFR Part 11",
+  "format": "pdf",
+  "sections": [
+    {"type": "title", "title": "质量分析合规报告"},
+    {"type": "heading", "text": "合规声明"},
+    {"type": "para", "text": "本报告遵循 FDA 21 CFR Part 11 电子记录与电子签名规范。所有数据采集、处理、报告过程均保留完整审计追踪。数据文件未被篡改，分析结果可复现。"},
+    {"type": "heading", "text": "1. 过程能力分析"},
+    {"type": "analysis", "category": "capability"},
+    {"type": "heading", "text": "2. 测量系统分析 (MSA)"},
+    {"type": "analysis", "category": "msa"},
+    {"type": "heading", "text": "3. 统计过程控制 (SPC)"},
+    {"type": "analysis", "category": "spc"},
+    {"type": "heading", "text": "4. 审计追踪"},
+    {"type": "para", "text": "数据文件: {{file_name}}"},
+    {"type": "para", "text": "分析时间: {{timestamp}}"},
+    {"type": "para", "text": "软件版本: QA-Tool v{{version}}"},
+    {"type": "para", "text": "电子签名:"},
+    {"type": "signature", "roles": ["分析师", "质量经理", "QA负责人"]}
+  ]
+}

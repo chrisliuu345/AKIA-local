@@ -1,0 +1,493 @@
+"""交互式鱼骨图画布 — 节点拖动/分支联动/文字背景框/滚轮缩放"""
+
+from PySide6.QtWidgets import (
+    QGraphicsView, QGraphicsScene, QGraphicsItem,
+    QGraphicsLineItem, QGraphicsRectItem, QGraphicsTextItem,
+    QGraphicsEllipseItem, QMenu, QInputDialog,
+)
+from PySide6.QtCore import Qt, QPointF, QRectF, Signal, QObject
+from PySide6.QtGui import (
+    QPen, QBrush, QColor, QFont, QPainter, QPolygonF, QPainterPath,
+)
+
+
+M6_COLORS = [
+    QColor("#4da6ff"), QColor("#ff6b6b"), QColor("#51cf66"),
+    QColor("#ffa726"), QColor("#cc5de8"), QColor("#20c997"),
+]
+BG_COLOR = QColor("#262632")
+TEXT_COLOR = QColor("#e1e2e6")
+MUTED_COLOR = QColor("#a0a3ae")
+
+
+# ──────────────────────────────────────────────
+# 带背景框的可拖动文本
+# ──────────────────────────────────────────────
+class _LabelNode(QGraphicsItem):
+    """文字 + 半透明圆角背景框, 可拖动, 双击编辑"""
+
+    def __init__(self, text: str, font_size: int = 10, bold: bool = False,
+                 color: QColor = TEXT_COLOR):
+        super().__init__()
+        self._text = text
+        self._font = QFont("Microsoft YaHei", font_size)
+        self._font.setBold(bold)
+        self._color = color
+        self._padding = 6
+        self._radius = 6
+        self._on_moved = None        # callback()
+        self._on_edited = None       # callback(text)
+
+        self.setFlag(QGraphicsItem.ItemIsMovable, True)
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
+        self.setCursor(Qt.OpenHandCursor)
+        self._calc_rect()
+
+    def _calc_rect(self):
+        from PySide6.QtGui import QFontMetrics
+        fm = QFontMetrics(self._font)
+        tw = fm.horizontalAdvance(self._text)
+        th = fm.height()
+        self._text_w = tw
+        self._text_h = th
+        self._w = tw + self._padding * 2
+        self._h = th + self._padding
+
+    def setText(self, text: str):
+        self._text = text
+        self._calc_rect()
+        self.update()
+
+    def text(self) -> str:
+        return self._text
+
+    def boundingRect(self):
+        return QRectF(0, 0, self._w, self._h)
+
+    def paint(self, painter, option, widget):
+        r = self.boundingRect()
+        # 背景框
+        path = QPainterPath()
+        path.addRoundedRect(r, self._radius, self._radius)
+        painter.fillPath(path, QBrush(QColor(30, 30, 42, 220)))
+        pen = QPen(QColor(70, 70, 85), 1)
+        painter.setPen(pen)
+        painter.drawPath(path)
+        # 文字
+        painter.setFont(self._font)
+        painter.setPen(self._color)
+        painter.drawText(r.adjusted(self._padding, 0, -self._padding, 0),
+                         Qt.AlignVCenter | Qt.AlignLeft, self._text)
+
+    def mouseDoubleClickEvent(self, event):
+        text, ok = QInputDialog.getText(None, "编辑", "文本:", text=self._text)
+        if ok and text.strip():
+            self.setText(text.strip())
+            if self._on_edited:
+                self._on_edited(text.strip())
+        super().mouseDoubleClickEvent(event)
+
+    def mousePressEvent(self, event):
+        self.setCursor(Qt.ClosedHandCursor)
+        super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        self.setCursor(Qt.OpenHandCursor)
+        super().mouseReleaseEvent(event)
+
+    def itemChange(self, change, value):
+        if change == QGraphicsItem.ItemPositionHasChanged:
+            if self._on_moved:
+                self._on_moved()
+        return super().itemChange(change, value)
+
+    def center(self) -> QPointF:
+        return self.pos() + QPointF(self._w / 2, self._h / 2)
+
+    def top_center(self) -> QPointF:
+        return self.pos() + QPointF(self._w / 2, 0)
+
+    def bottom_center(self) -> QPointF:
+        return self.pos() + QPointF(self._w / 2, self._h)
+
+    def left_center(self) -> QPointF:
+        return self.pos() + QPointF(0, self._h / 2)
+
+    def right_center(self) -> QPointF:
+        return self.pos() + QPointF(self._w, self._h / 2)
+
+
+# ──────────────────────────────────────────────
+# 问题框 (鱼头)
+# ──────────────────────────────────────────────
+class _ProblemBox(QGraphicsRectItem):
+    def __init__(self, x, y, text: str):
+        w, h = 170, 38
+        super().__init__(x, y - h / 2, w, h)
+        self.setBrush(QBrush(QColor("#363648")))
+        self.setPen(QPen(QColor("#4da6ff"), 2))
+        self.setFlag(QGraphicsItem.ItemIsSelectable, False)
+
+        self.label = QGraphicsTextItem(text, self)
+        self.label.setFont(QFont("Microsoft YaHei", 13, QFont.Bold))
+        self.label.setDefaultTextColor(TEXT_COLOR)
+        self.label.setPos(x + 8, y - 14)
+
+
+# ──────────────────────────────────────────────
+# 子原因刺 (固定在分支上)
+# ──────────────────────────────────────────────
+class _CauseSpike:
+    """通用原因刺: 锚点在父对象上 → 标签框, 支持 3 层嵌套"""
+
+    def __init__(self, scene, parent, t: float, label: str, color: QColor,
+                 level: int = 1):
+        self.scene = scene
+        self.parent = parent    # _Branch 或 _CauseSpike
+        self.t = t              # 父对象上的位置比率 (0~1)
+        self._color = color
+        self._level = level
+        self._side = 1
+        self._children: list[_CauseSpike] = []
+
+        fs = max(8, 10 - level)  # 层级越深字号越小
+        self.line = QGraphicsLineItem()
+        self.line.setPen(QPen(color, max(1.0, 2.0 - level * 0.5)))
+        scene.addItem(self.line)
+
+        self.label = _LabelNode(label, font_size=fs,
+                                color=QColor("#d0d2d8") if level > 1 else QColor("#d0d2d8"))
+        self.label._on_moved = self._on_label_moved
+        self.label._on_edited = self._on_label_changed
+        scene.addItem(self.label)
+
+    def add_child(self, label_text: str, t: float, side: int) -> "_CauseSpike":
+        child = _CauseSpike(self.scene, self, t, label_text, self._color,
+                           level=self._level + 1)
+        child._side = side
+        child._reposition()
+        self._children.append(child)
+        return child
+
+    def _parent_anchor(self) -> tuple:
+        """父对象上的锚点坐标"""
+        if isinstance(self.parent, _Branch):
+            bl = self.parent.line
+            x1, y1 = bl.line().x1(), bl.line().y1()
+            x2, y2 = bl.line().x2(), bl.line().y2()
+            return (x1 + self.t * (x2 - x1), y1 + self.t * (y2 - y1))
+        else:
+            # 父是 _CauseSpike: 锚点在父标签框边缘
+            pl = self.parent.label
+            pc = pl.center()
+            bw, bh = pl.boundingRect().width(), pl.boundingRect().height()
+            # 从父标签中心向外的方向
+            side = self._side
+            return (pc.x() + side * bw * 0.5, pc.y())
+
+    def _update_line(self):
+        """线: 父锚点 → 当前标签框边缘"""
+        ax, ay = self._parent_anchor()
+        lc = self.label.center()
+        dx, dy = lc.x() - ax, lc.y() - ay
+        length = (dx * dx + dy * dy) ** 0.5
+        if length < 1:
+            length = 1
+        bw, bh = self.label.boundingRect().width(), self.label.boundingRect().height()
+        ex = lc.x() - dx / length * (bw / 2 + 6)
+        ey = lc.y() - dy / length * (bh / 2 + 6)
+        self.line.setLine(ax, ay, ex, ey)
+
+    def _reposition(self):
+        """计算初始位置: 从父锚点垂直偏移（基于父对象的实际方向）"""
+        ax, ay = self._parent_anchor()
+        side = self._side
+        length = 60 - self._level * 8
+        bw = self.label.boundingRect().width()
+        bh = self.label.boundingRect().height()
+
+        if isinstance(self.parent, _Branch):
+            # 基于分支实际方向计算垂直偏移
+            bl = self.parent.line
+            dx = bl.line().x2() - bl.line().x1()
+            dy = bl.line().y2() - bl.line().y1()
+            plen = (dx * dx + dy * dy) ** 0.5
+            if plen > 0.001:
+                perp_x = -dy / plen
+                perp_y = dx / plen
+            else:
+                perp_x, perp_y = 0, 1
+        else:
+            # 父是 _CauseSpike: 基于标签→锚点方向
+            lc = self.parent.label.center()
+            dx = lc.x() - ax
+            dy = lc.y() - ay
+            plen = (dx * dx + dy * dy) ** 0.5
+            if plen > 0.001:
+                perp_x = dy / plen
+                perp_y = -dx / plen
+            else:
+                perp_x, perp_y = 0, 1
+
+        self.label.setPos(ax + perp_x * length * side - bw / 2,
+                          ay + perp_y * length * side - bh / 2)
+        self._update_line()
+
+    def update_anchor(self):
+        """父对象移动后: 重算位置 + 线 + 递归子"""
+        self._reposition()
+        self._update_line()
+        for c in self._children:
+            c.update_anchor()
+
+    def set_side(self, side: int):
+        self._side = side
+
+    def _on_label_moved(self):
+        self._update_line()
+        for c in self._children:
+            c.update_anchor()
+
+    def _on_label_changed(self, text: str):
+        pass
+
+    def remove(self):
+        for c in self._children:
+            c.remove()
+        self.scene.removeItem(self.line)
+        self.scene.removeItem(self.label)
+
+
+# ──────────────────────────────────────────────
+# 主分支 (大刺) — 从脊骨到可拖动标签
+# ──────────────────────────────────────────────
+class _Branch:
+    """主分支: 线从脊骨接点→标签, 标签拖动时线+所有子原因联动"""
+
+    def __init__(self, scene, bx, by, label_text: str, color: QColor,
+                 angle_up: bool):
+        self.scene = scene
+        self._bx = bx
+        self._by = by
+        self._color = color
+        self._angle_up = angle_up
+        self._causes: list[_CauseSpike] = []
+
+        # 初始端点 (标签初始位置)
+        init_len = 190
+        rad = 0.55  # ~31°
+        y_dir = -1 if angle_up else 1
+        ex = bx - init_len * 0.82
+        ey = by + y_dir * init_len * 0.52
+
+        self.line = QGraphicsLineItem(bx, by, ex, ey)
+        self.line.setPen(QPen(color, 3))
+        scene.addItem(self.line)
+
+        self.label = _LabelNode(label_text, font_size=11, bold=True, color=color)
+        self.label.setPos(ex - self.label.boundingRect().width() / 2,
+                          ey - self.label.boundingRect().height() / 2)
+        self.label._on_moved = self._on_label_moved
+        scene.addItem(self.label)
+
+    def add_cause(self, label_text: str, t: float, side: int) -> _CauseSpike:
+        spike = _CauseSpike(self.scene, self, t, label_text, self._color)
+        spike.set_side(side)
+        spike._reposition()
+        self._causes.append(spike)
+        return spike
+
+    def _on_label_moved(self):
+        """标签拖动 → 线跟随 + 所有子原因重算锚点"""
+        lc = self.label.center()
+        self.line.setLine(self._bx, self._by, lc.x(), lc.y())
+        for c in self._causes:
+            c.update_anchor()
+
+    def remove(self):
+        for c in self._causes:
+            c.remove()
+        self.scene.removeItem(self.line)
+        self.scene.removeItem(self.label)
+
+
+# ──────────────────────────────────────────────
+# 主画布 (QGraphicsView)
+# ──────────────────────────────────────────────
+class FishboneCanvas(QGraphicsView):
+    """交互式鱼骨图: 滚轮缩放 + 中键/右键拖拽平移"""
+
+    node_added = Signal(str, str)
+    node_deleted = Signal(str)
+    zoom_changed = Signal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._scene = QGraphicsScene()
+        self.setScene(self._scene)
+        self.setRenderHint(QPainter.Antialiasing)
+        self.setDragMode(QGraphicsView.NoDrag)
+        self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
+        self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
+        self.setBackgroundBrush(QBrush(BG_COLOR))
+        self.setMinimumHeight(350)
+        self.setFrameShape(QGraphicsView.NoFrame)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        self._branches: list[_Branch] = []
+        self._causes: list[_CauseSpike] = []
+        self._panning = False
+        self._pan_start = QPointF()
+        self._zoom_level = 1.0
+
+    def render_fishbone(self, branches: dict, problem: str = "质量问题"):
+        self._scene.clear()
+        self._branches.clear()
+        self._causes.clear()
+
+        n = len(branches)
+        if n == 0:
+            t = self._scene.addText("请添加分析分支", QFont("Microsoft YaHei", 14))
+            t.setDefaultTextColor(MUTED_COLOR)
+            return
+
+        colors = M6_COLORS[:n] if n <= len(M6_COLORS) else M6_COLORS * 2
+
+        # 画布尺寸 (场景坐标, 大一些给足空间)
+        w, h = 1200, 700
+        self._scene.setSceneRect(-20, -20, w + 40, h + 40)
+        cx, cy = w / 2, h / 2
+
+        # ── 脊骨 ──
+        spine_x1, spine_x2 = cx - 380, cx + 260
+        spine = QGraphicsLineItem(spine_x1, cy, spine_x2, cy)
+        spine.setPen(QPen(MUTED_COLOR, 3))
+        self._scene.addItem(spine)
+        # 箭头
+        arrow = QPolygonF([
+            QPointF(spine_x2, cy), QPointF(spine_x2 - 14, cy - 7),
+            QPointF(spine_x2 - 14, cy + 7),
+        ])
+        path = QPainterPath()
+        path.addPolygon(arrow)
+        arr_item = self._scene.addPath(path, QPen(Qt.NoPen), QBrush(MUTED_COLOR))
+
+        # ── 问题框 ──
+        pb = _ProblemBox(spine_x2 + 10, cy, problem)
+        self._scene.addItem(pb)
+
+        # ── 分支: 均匀分布在脊骨上 ──
+        branch_names = list(branches.keys())
+        bx_spacing = (spine_x2 - 80 - spine_x1 - 60) / max(n - 1, 1) if n > 1 else 0
+        bx_start = spine_x1 + 70
+
+        for i, (bname, root) in enumerate(branches.items()):
+            color = colors[i]
+            bx = bx_start + i * bx_spacing if n > 1 else cx - 50
+            angle_up = (i % 2 == 0)
+
+            branch = _Branch(self._scene, bx, cy, bname, color, angle_up)
+            self._branches.append(branch)
+
+            sub_count = len(root.children)
+            for j, child in enumerate(root.children):
+                t = (j + 1) / (sub_count + 1)
+                side = 1 if j % 2 == 0 else -1
+                spike = branch.add_cause(child.name, t, side)
+                self._causes.append(spike)
+
+                # 递归渲染孙/曾孙原因 (第 2-3 层)
+                self._render_children(spike, child, side)
+
+        self.fitInView(self._scene.sceneRect().adjusted(-30, -30, 60, 60),
+                       Qt.KeepAspectRatio)
+        self._zoom_level = self.transform().m11()
+
+    def _render_children(self, parent_spike: _CauseSpike, node,
+                         side: int, depth: int = 1):
+        """递归渲染子原因 (最多 3 层, depth 1=第2层, depth 2=第3层)"""
+        if depth > 2 or not node.children:  # 最多到第3层 (depth 0=spike本身, 1=孙, 2=曾孙)
+            return
+        n = len(node.children)
+        for k, gc in enumerate(node.children):
+            t = (k + 1) / (n + 1)
+            s = 1 if k % 2 == 0 else -1
+            child = parent_spike.add_child(gc.name, t, s)
+            self._causes.append(child)
+            self._render_children(child, gc, s, depth + 1)
+
+    def wheelEvent(self, event):
+        """滚轮缩放"""
+        factor = 1.15 if event.angleDelta().y() > 0 else 1 / 1.15
+        self.scale(factor, factor)
+        self._zoom_level = self.transform().m11()
+        self.zoom_changed.emit()
+
+    def mousePressEvent(self, event):
+        if event.button() in (Qt.MiddleButton, Qt.RightButton):
+            self._panning = True
+            self._pan_start = event.position()
+            self.setCursor(Qt.ClosedHandCursor)
+            event.accept()
+        else:
+            super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if self._panning:
+            delta = event.position() - self._pan_start
+            self._pan_start = event.position()
+            self.horizontalScrollBar().setValue(
+                self.horizontalScrollBar().value() - int(delta.x()))
+            self.verticalScrollBar().setValue(
+                self.verticalScrollBar().value() - int(delta.y()))
+            event.accept()
+        else:
+            super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if self._panning:
+            self._panning = False
+            self.setCursor(Qt.ArrowCursor)
+            event.accept()
+        else:
+            super().mouseReleaseEvent(event)
+
+    def contextMenuEvent(self, event):
+        item = self.itemAt(event.pos())
+        menu = QMenu(self)
+
+        if isinstance(item, _LabelNode):
+            edit_action = menu.addAction("编辑文本")
+            delete_action = menu.addAction("删除此节点")
+            action = menu.exec(event.globalPos())
+            if action == edit_action:
+                item.mouseDoubleClickEvent(None)
+            elif action == delete_action:
+                self._remove_node(item)
+        else:
+            add_action = menu.addAction("在此添加原因")
+            reset_action = menu.addAction("重置缩放")
+            action = menu.exec(event.globalPos())
+            if action == add_action:
+                sp = self.mapToScene(event.pos())
+                text, ok = QInputDialog.getText(self, "添加原因", "原因描述:")
+                if ok and text.strip():
+                    node = _LabelNode(text.strip(), font_size=8)
+                    node.setPos(sp)
+                    self._scene.addItem(node)
+            elif action == reset_action:
+                self.fitInView(self._scene.sceneRect().adjusted(-30, -30, 60, 60),
+                               Qt.KeepAspectRatio)
+                self._zoom_level = self.transform().m11()
+                self.zoom_changed.emit()
+
+    def _remove_node(self, item: _LabelNode):
+        for c in self._causes:
+            if c.label is item:
+                c.remove()
+                self._causes.remove(c)
+                self.node_deleted.emit(item.text())
+                return
+        self._scene.removeItem(item)

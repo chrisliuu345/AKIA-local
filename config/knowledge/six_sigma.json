@@ -1,0 +1,156 @@
+{
+  "entries": [
+    {
+      "id": "dmaic-overview",
+      "title": "DMAIC 方法论总览",
+      "category": "six_sigma",
+      "keywords": ["DMAIC", "六西格玛", "方法论", "改进流程"],
+      "content": "六西格玛改进的标准路径：Define 定义（问题、目标、范围、SIPOC、VOC）→ Measure 测量（数据收集计划、MSA、现状能力）→ Analyze 分析（根因假设与验证：假设检验、回归、DOE）→ Improve 改进（方案设计、DOE 优化、试运行）→ Control 控制（SPC、控制计划、标准化、防错）。",
+      "related_analyses": ["MSA", "过程能力", "假设检验", "DOE", "SPC"]
+    },
+    {
+      "id": "dmaic-define",
+      "title": "Define 定义阶段工具",
+      "category": "six_sigma",
+      "keywords": ["Define", "定义", "SIPOC", "VOC", "CTQ", "项目章程"],
+      "content": "输出：项目章程（问题陈述、目标、范围、收益）、SIPOC 高阶流程图、VOC→CTQ 转化（卡诺模型/QFD）。CTQ 必须可测量，如'孔径 10±0.05mm'而非'尺寸要好'。"
+    },
+    {
+      "id": "dmaic-measure",
+      "title": "Measure 测量阶段工具",
+      "category": "six_sigma",
+      "keywords": ["Measure", "测量", "数据收集", "MSA", "现状能力"],
+      "content": "步骤：确定测量对象与抽样计划→MSA 验证测量系统可信（GRR<30% 才可继续）→收集数据→计算现状西格玛水平/能力指数。常见错误：跳过 MSA 直接分析——测量误差会污染一切后续结论。",
+      "related_analyses": ["MSA", "正态性检验", "过程能力"]
+    },
+    {
+      "id": "dmaic-analyze",
+      "title": "Analyze 分析阶段工具",
+      "category": "six_sigma",
+      "keywords": ["Analyze", "分析", "根因", "假设检验", "回归"],
+      "content": "先用图形（柏拉图/直方图/箱线图/散点图）与流程分析（鱼骨图、5Why）形成候选根因清单，再用数据验证：均值差异→t检验/ANOVA；比率差异→卡方检验；关系建模→回归分析；多因子→DOE 筛选。",
+      "related_analyses": ["假设检验", "回归分析", "DOE"]
+    },
+    {
+      "id": "dmaic-improve",
+      "title": "Improve 改进阶段工具",
+      "category": "six_sigma",
+      "keywords": ["Improve", "改进", "DOE", "优化", "试运行"],
+      "content": "针对已验证根因设计改进方案：工艺参数优化用 DOE/RSM 求最优设置；方案筛选用 Pugh 矩阵/成本效益分析；正式实施前做小批量试运行（Pilot）验证效果并评估风险（更新 FMEA）。",
+      "related_analyses": ["DOE", "响应曲面"]
+    },
+    {
+      "id": "dmaic-control",
+      "title": "Control 控制阶段工具",
+      "category": "six_sigma",
+      "keywords": ["Control", "控制", "SPC", "控制计划", "标准化"],
+      "content": "固化成果：关键特性上控制图（SPC）持续监控；更新控制计划（方法/频次/反应计划）；作业标准化（SOP）；防错（Poka-Yoke）消除人为差错可能；财务收益核算与项目关闭报告。",
+      "related_analyses": ["SPC 控制图"]
+    },
+    {
+      "id": "hypothesis-selection",
+      "title": "假设检验选择树",
+      "category": "six_sigma",
+      "keywords": ["假设检验", "选择", "t检验", "ANOVA", "卡方", "非参数"],
+      "content": "连续型数据：1 组均值 vs 目标→单样本 t；2 组独立均值→双样本 t（方差不齐用 Welch）；2 组配对→配对 t；≥3 组→ANOVA（事后 Tukey）。非正态/等级数据：Mann-Whitney（2 组）、Kruskal-Wallis（多组）。离散比率：2 比率检验、卡方独立性检验。",
+      "related_analyses": ["假设检验"]
+    },
+    {
+      "id": "msa-selection",
+      "title": "MSA 方法选择指南",
+      "category": "six_sigma",
+      "keywords": ["MSA", "选择", "计量型", "计数型", "GRR"],
+      "content": "计量型测量系统：首选均值极差法 GRR（10件×3人×3次）或 ANOVA 法（可分解交互）；破坏性测试→嵌套 GRR；单件/量程宽→偏倚与线性研究。计数型（通止规/目检）：属性一致性分析（Kappa），≥20件含边界样品×3人×3次。",
+      "related_analyses": ["MSA"]
+    },
+    {
+      "id": "capability-prerequisite",
+      "title": "能力分析前置条件检查单",
+      "category": "six_sigma",
+      "keywords": ["能力分析", "前置条件", "受控", "正态", "样本量"],
+      "content": "1) 过程受控：控制图无判异点（否则 Cpk 无意义，用 Ppk 描述现状并先消除特殊原因）；2) 数据独立（自相关数据需特殊处理）；3) 正态性确认（非正态→Box-Cox/Johnson 或非正态方法）；4) 样本量 ≥ 100（至少 30，越大区间越窄）；5) 规格限明确且为单侧/双侧已知。",
+      "related_analyses": ["SPC 控制图", "正态性检验", "过程能力"]
+    },
+    {
+      "id": "doe-roadmap",
+      "title": "DOE 实施路线图",
+      "category": "six_sigma",
+      "keywords": ["DOE", "路线图", "筛选", "表征", "优化"],
+      "content": "阶段1 筛选：Plackett-Burman 或分辨率 III/IV 部分因子（4-7 因子→8-16 次试验）找出显著因子；阶段2 表征：分辨率 V 或全因子估计主效应+交互；阶段3 优化：CCD/Box-Behnken 响应曲面寻最优；阶段4 验证：最优点 3-5 次确认试验，预测区间应覆盖实测值。",
+      "related_analyses": ["DOE"]
+    },
+    {
+      "id": "spc-implementation",
+      "title": "SPC 导入实施步骤",
+      "category": "six_sigma",
+      "keywords": ["SPC", "实施", "导入", "控制图", "判稳"],
+      "content": "1) 选定关键特性（CTQ，来自 FMEA/控制计划）；2) 确定抽样方案（合理子组：组内仅普通原因）；3) 收集 20-25 子组试运行数据；4) 计算试用控制限并判稳；5) 剔除已知特殊原因点后定限；6) 转日常监控，明确异常反应计划；7) 过程变更后重新定限。",
+      "related_analyses": ["SPC 控制图"]
+    },
+    {
+      "id": "lean-seven-waste",
+      "title": "七大浪费 (TIMWOOD)",
+      "category": "six_sigma",
+      "keywords": ["七大浪费", "精益", "TIMWOOD", "浪费", "muda"],
+      "content": "Transportation 搬运、Inventory 库存、Motion 多余动作、Waiting 等待、Overproduction 过量生产（万恶之源，掩盖其他浪费）、Overprocessing 过度加工、Defects 不良品。识别工具：现场观察、价值流图、动作分析。第八浪费（未用人才）常被补充。"
+    },
+    {
+      "id": "lean-5s",
+      "title": "5S 现场管理",
+      "category": "six_sigma",
+      "keywords": ["5S", "整理", "整顿", "清扫", "清洁", "素养"],
+      "content": "Seiri 整理（要与不要分开，清除不要品）→ Seiton 整顿（定置定位，30 秒内取到）→ Seiso 清扫（清扫即点检，发现微缺陷）→ Seiketsu 清洁（前三项标准化、目视化）→ Shitsuke 素养（养成遵守习惯）。5S 是一切改善的地基。"
+    },
+    {
+      "id": "poka-yoke",
+      "title": "防错法 (Poka-Yoke)",
+      "category": "six_sigma",
+      "keywords": ["防错", "poka-yoke", "防呆", "零缺陷"],
+      "content": "通过装置设计使错误不可能发生或立即被检测。三层递进：不能发生（形状防呆/治具）> 不能传递（传感器检出即停线）> 易于发现（计数/清单）。优先用于控制阶段固化改进成果，成本远低于检验。"
+    },
+    {
+      "id": "kaizen",
+      "title": "Kaizen 持续改善",
+      "category": "six_sigma",
+      "keywords": ["Kaizen", "改善", "持续改进", "PDCA"],
+      "content": "小步快跑的持续改善哲学，遵循 PDCA 循环。与六西格玛项目制（突破性改进）互补：Kaizen 解决现场 80% 的小问题，DMAIC 攻克 20% 的系统性难题。典型形式：改善周（Kaizen Event，3-5 天集中改善一个区域）。"
+    },
+    {
+      "id": "smed",
+      "title": "SMED 快速换模",
+      "category": "six_sigma",
+      "keywords": ["SMED", "快速换模", "换型", "内部作业", "外部作业"],
+      "content": "将换型时间压缩到个位数分钟。步骤：区分内部作业（停机才能做）与外部作业（开机时可做）→ 内部转外部（预热、预装配）→ 优化内部作业（标准化、并行、免工具夹具）→ 稳定与固化。收益：小批量多品种生产的可行性 + OEE 提升。"
+    },
+    {
+      "id": "vsm-guide",
+      "title": "价值流图 (VSM) 绘制要点",
+      "category": "six_sigma",
+      "keywords": ["VSM", "价值流", "现状图", "未来图"],
+      "content": "现状图：选定产品族→现场实测各工序 CT/COT/换型/良率/库存→画物流与信息流→计算 Lead Time 与增值比。未来图：按节拍设计流动（连续流/拉动/超市），消除断点。价值流经理负责跨部门推进，图必须基于现场实测而非台账。"
+    },
+    {
+      "id": "gemba",
+      "title": "现场现物现实 (Gemba)",
+      "category": "six_sigma",
+      "keywords": ["Gemba", "现场", "三现主义", "走动管理"],
+      "content": "三现主义：到现场、看现物、了解现实。数据分析必须与现场观察结合——控制图上的异常点要回到发生时的现场条件（人/机/料/法/环）查证，避免'办公室质量'。管理者的 Gemba Walk 应带着标准与问题清单。"
+    },
+    {
+      "id": "sample-size-power",
+      "title": "样本量与检验功效",
+      "category": "six_sigma",
+      "keywords": ["样本量", "功效", "power", "检验", "效应量"],
+      "content": "功效 = 1-β，常用目标 0.8。样本量由 α、功效、效应量（要检出的最小差异/σ）决定。经验：t 检验检出 1σ 差异约需 n=8/组（α=0.05, power=0.8）；0.5σ 约需 n=32/组。样本不足时'不显著'可能只是检不出，报告时应同时给置信区间。",
+      "related_analyses": ["假设检验"]
+    },
+    {
+      "id": "histogram-qc7",
+      "title": "QC 七大手法",
+      "category": "six_sigma",
+      "keywords": ["QC七大手法", "检查表", "层别", "柏拉图", "直方图", "散布图"],
+      "content": "层别法（分层）、检查表、柏拉图、因果图、直方图、散布图、控制图。原则：先分层再分析——混合数据会掩盖真相（辛普森悖论）；先看图再算数——图形揭示模式，统计量做确认。新 QC 七手法（关联图/亲和图/系统图/矩阵图/PDPC/箭头图/矩阵数据解析）用于管理层面。",
+      "related_analyses": ["SPC 控制图"]
+    }
+  ]
+}
