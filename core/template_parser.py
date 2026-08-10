@@ -71,11 +71,12 @@ class TemplateParser:
                 key_col = df.columns[0]
                 value_col = df.columns[1]
                 params = {}
-                for _, row in df.iterrows():
-                    key = str(row[key_col]).strip()
-                    val = str(row[value_col]).strip() if pd.notna(row[value_col]) else ""
-                    if key and key.lower() != "nan":
-                        params[key] = self._parse_value(val)
+                # 向量化：批量处理替代逐行 iterrows
+                keys = df[key_col].fillna("").astype(str).str.strip()
+                vals = df[value_col].fillna("").astype(str).str.strip()
+                for k, v in zip(keys, vals):
+                    if k and k.lower() != "nan":
+                        params[k] = self._parse_value(v)
                 if params:
                     result[sheet_name] = params
 

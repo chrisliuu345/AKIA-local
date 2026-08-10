@@ -23,12 +23,12 @@ class Process:
     OPTIONAL = ["equipment", "cycle_time", "labor_count", "predecessors"]
 
     FIELD_ALIASES = {
-        "process_id": ["工序编号", "工序ID", "process id", "id", "编号"],
-        "process_name": ["工序名称", "工序", "工序名", "process name", "name", "名称", "步骤"],
-        "equipment": ["设备", "设备名称", "equipment", "machine", "设备编号"],
-        "cycle_time": ["ct", "周期时间", "cycle time", "节拍", "时间", "秒", "工时"],
-        "labor_count": ["人数", "作业人数", "labor", "工人", "人员", "人数(人)"],
-        "predecessors": ["前置工序", "前置关系", "紧前工序", "predecessors", "prev", "前置"],
+        "process_id": ["工序编号", "工序ID", "process id", "id", "编号", "序号", "代码", "code", "站号"],
+        "process_name": ["工序名称", "工序", "工序名", "process name", "name", "名称", "步骤", "工位名称", "岗位", "作业内容"],
+        "equipment": ["设备", "设备名称", "equipment", "machine", "设备编号", "机台", "机器", "机床"],
+        "cycle_time": ["ct", "周期时间", "cycle time", "节拍", "时间", "秒", "工时", "标准工时", "加工时间", "作业时间", "耗时"],
+        "labor_count": ["人数", "作业人数", "labor", "工人", "人员", "人数(人)", "定员", "操作人数", "人工"],
+        "predecessors": ["前置工序", "前置关系", "紧前工序", "predecessors", "prev", "前置", "上游工序", "前工序"],
     }
 
     def to_dict(self) -> Dict:
@@ -62,10 +62,10 @@ class TimeObservation:
     OPTIONAL = []
 
     FIELD_ALIASES = {
-        "process_id": ["工序编号", "工序ID", "process id", "id", "编号", "工序"],
-        "operator": ["作业员", "操作员", "operator", "人员", "工人", "员工", "姓名"],
-        "cycle": ["循环", "周期", "cycle", "次数", "循环编号", "第几次", "次"],
-        "observation_time": ["时间", "观测时间", "time", "秒", "秒表", "工时", "耗时", "秒数", "观测值"],
+        "process_id": ["工序编号", "工序ID", "process id", "id", "编号", "工序", "序号", "工位号", "代码"],
+        "operator": ["作业员", "操作员", "operator", "人员", "工人", "员工", "姓名", "操作者", "测定者", "观测者"],
+        "cycle": ["循环", "周期", "cycle", "次数", "循环编号", "第几次", "次", "回", "round"],
+        "observation_time": ["时间", "观测时间", "time", "秒", "秒表", "工时", "耗时", "秒数", "观测值", "测量值", "实测", "实际时间"],
     }
 
     def to_dict(self) -> Dict:

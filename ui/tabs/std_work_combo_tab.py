@@ -74,11 +74,11 @@ class StdWorkComboTab(BaseAnalysisTab):
             name=self.table.item(i,0)
             m_text=self.table.item(i,1); a_text=self.table.item(i,2); wk_text=self.table.item(i,3)
             try: man=int(m_text.text()) if m_text and m_text.text() else 0
-            except: man=0
+            except (ValueError, TypeError, AttributeError): man=0
             try: auto=int(a_text.text()) if a_text and a_text.text() else 0
-            except: auto=0
+            except (ValueError, TypeError, AttributeError): auto=0
             try: walk=int(wk_text.text()) if wk_text and wk_text.text() else 0
-            except: walk=0
+            except (ValueError, TypeError, AttributeError): walk=0
             rows.append((name.text() if name else f"OP{i+1}",man,auto,walk))
         total_man=sum(r[1] for r in rows); total_auto=sum(r[2] for r in rows)
         total_walk=sum(r[3] for r in rows); total=total_man+total_auto+total_walk
