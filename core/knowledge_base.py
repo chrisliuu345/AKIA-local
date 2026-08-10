@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -18,6 +19,7 @@ CATEGORY_LABELS = {
     "standard": "标准",
     "table": "判定表",
     "six_sigma": "六西格玛",
+    "engineering": "工程工具",
 }
 
 
@@ -80,7 +82,7 @@ class KnowledgeBase:
     """内置质量标准/术语/判定表知识库，支持离线检索与 LLM 上下文增强"""
 
     DATA_DIR = Path(__file__).resolve().parent.parent / "config" / "knowledge"
-    FILES = ("terminology.json", "standards.json", "tables.json", "six_sigma.json")
+    FILES = ("terminology.json", "standards.json", "tables.json", "six_sigma.json", "engineering.json")
 
     def __init__(self, data_dir: Optional[Path] = None):
         self.entries: List[KnowledgeEntry] = []
@@ -122,22 +124,44 @@ class KnowledgeBase:
     def search(self, query: str, top_k: int = 5,
                category: Optional[str] = None,
                min_score: float = 0.02) -> List[KnowledgeEntry]:
-        """语义检索，返回按相似度排序的条目（score 已写入 entry）"""
+        """混合检索: TF-IDF(0.5) + 关键词精确匹配(0.3) + 标题匹配(0.2) → 融合排序"""
         if not self.available or not query.strip():
             return []
 
-        q = self.vectorizer.transform([query.strip()])
+        q_text = query.strip().lower()
+
+        # ── TF-IDF 语义相似度 ──
+        q = self.vectorizer.transform([q_text])
         sims = cosine_similarity(q, self.matrix).ravel()
 
-        order = sims.argsort()[::-1]
+        # ── 关键词精确匹配加分 ──
+        kw_boost = np.zeros(len(self.entries))
+        title_boost = np.zeros(len(self.entries))
+        for i, entry in enumerate(self.entries):
+            # 关键词匹配
+            kw_matches = sum(1 for kw in entry.keywords if kw.lower() in q_text or q_text in kw.lower())
+            if kw_matches > 0:
+                kw_boost[i] = min(kw_matches * 0.15, 0.3)
+            # 标题匹配
+            if any(term in entry.title.lower() for term in q_text.split()):
+                title_boost[i] = 0.2
+
+        # ── 融合: TF-IDF(0.5) + 关键词(0.3) + 标题(0.2) ──
+        combined = sims * 0.5 + kw_boost + title_boost
+
+        order = combined.argsort()[::-1]
         results: List[KnowledgeEntry] = []
+        seen_ids = set()
         for idx in order:
-            if sims[idx] < min_score:
+            if combined[idx] < min_score:
                 break
             entry = self.entries[idx]
             if category and entry.category != category:
                 continue
-            entry.score = float(sims[idx])
+            if entry.id in seen_ids:
+                continue
+            seen_ids.add(entry.id)
+            entry.score = float(combined[idx])
             results.append(entry)
             if len(results) >= top_k:
                 break

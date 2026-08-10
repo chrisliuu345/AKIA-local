@@ -79,11 +79,11 @@ class WorkerMachineTab(BaseAnalysisTab):
             name=self.table.item(i,0)
             w_text=self.table.item(i,1); m_text=self.table.item(i,2); walk_text=self.table.item(i,3)
             try: w=int(w_text.text()) if w_text and w_text.text() else 0
-            except: w=0
+            except (ValueError, TypeError, AttributeError): w=0
             try: m=int(m_text.text()) if m_text and m_text.text() else 0
-            except: m=0
+            except (ValueError, TypeError, AttributeError): m=0
             try: walk=int(walk_text.text()) if walk_text and walk_text.text() else 0
-            except: walk=0
+            except (ValueError, TypeError, AttributeError): walk=0
             rows.append((name.text() if name else f"OP{i+1}",w,m,walk))
         # 统计
         total_work=sum(r[1] for r in rows); total_machine=sum(r[2] for r in rows)

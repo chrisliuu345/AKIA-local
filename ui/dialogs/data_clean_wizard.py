@@ -2,10 +2,11 @@
 
 import pandas as pd, numpy as np
 from PySide6.QtWidgets import (
-    QDialog,QVBoxLayout,QHBoxLayout,QLabel,QPushButton,
-    QTableWidget,QTableWidgetItem,QHeaderView,QGroupBox,
-    QFormLayout,QComboBox,QDoubleSpinBox,QCheckBox,
-    QSplitter,QScrollArea,QFrame,QMessageBox,QProgressBar,
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
+    QTableWidget, QTableWidgetItem, QHeaderView, QGroupBox,
+    QFormLayout, QComboBox, QDoubleSpinBox, QCheckBox,
+    QSplitter, QScrollArea, QFrame, QMessageBox, QProgressBar,
+    QWidget,
 )
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFont, QColor

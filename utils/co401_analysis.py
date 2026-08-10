@@ -37,7 +37,7 @@ for c in df.columns:
         d = pd.to_numeric(df[c], errors="coerce")
         if d.notna().sum() > 50 and d.std() > 0.001:
             numeric_cols.append((str(c), float(d.mean()), float(d.std()), d.notna().sum(), d))
-    except:
+    except (ValueError, TypeError):
         pass
 
 numeric_cols.sort(key=lambda x: x[2])  # sort by std

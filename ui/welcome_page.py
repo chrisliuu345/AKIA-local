@@ -16,9 +16,11 @@ from config.settings import APP_VERSION
 
 class WelcomePage(QWidget):
     import_data_clicked = Signal()
+    import_ie_clicked = Signal()
     import_template_clicked = Signal()
     diagnose_clicked = Signal()
     new_analysis_clicked = Signal()
+    open_project_clicked = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -88,9 +90,10 @@ class WelcomePage(QWidget):
         cards_layout.addStretch()
 
         card_defs = [
-            ("", i18n.tr("welcome.import_btn"), "导入 Excel / CSV 数据文件", self.import_data_clicked),
-            ("", "最近项目", "打开最近使用的 .qap 项目", None),
-            ("", "新建分析", "直接跳转到分析模块", self.new_analysis_clicked),
+            ("", "导入工作表", "Excel/CSV → SPC/能力/MSA/图表/工程工具…", self.import_data_clicked),
+            ("", "导入IE数据", "工序表/时间观测/物流/资源 → IE工具", self.import_ie_clicked),
+            ("", "最近项目", "打开最近使用的 .qap 项目", self.open_project_clicked),
+            ("", "新建分析", "直接跳转到 SPC 分析模块", self.new_analysis_clicked),
             ("", i18n.tr("sidebar.diagnose"), "一键智能诊断数据质量", self.diagnose_clicked),
         ]
 
@@ -228,11 +231,12 @@ class WelcomePage(QWidget):
 
     def _on_recent_click(self, path: str):
         parent = self.window()
-        if parent and hasattr(parent, '_load_project_from_path'):
+        if parent and hasattr(parent, '_load_project_by_path'):
             try:
-                parent._load_project_from_path(path)
+                parent._load_project_by_path(path)
             except Exception:
-                pass
+                import logging
+                logging.getLogger(__name__).exception(f"加载最近项目失败: {path}")
 
     def paintEvent(self, event):
         tc = theme_colors()
