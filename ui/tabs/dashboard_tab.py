@@ -95,7 +95,9 @@ class DashboardTab(BaseAnalysisTab):
                     buf=io.BytesIO()
                     ExcelReport().generate([r],buf)
                     buf.seek(0); zf.writestr(f"{atype}.xlsx",buf.read())
-                except: pass
+                except Exception:
+                    import logging
+                    logging.warning(f"dashboard: 导出 {atype} 失败", exc_info=True)
                 # 图表 PNG
                 tab=parent._get_tabs().get(idx)
                 if tab and hasattr(tab,'current_figure') and tab.current_figure:

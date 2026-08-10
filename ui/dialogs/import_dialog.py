@@ -30,7 +30,7 @@ class ImportDialog(QDialog):
     def _setup_ui(self):
         tc = theme_colors()
         mode_color = "#1b5faa" if self.mode == "quality" else "#27ae60"
-        mode_label = "质量分析数据" if self.mode == "quality" else "IE 分析数据"
+        mode_label = "工作表数据" if self.mode == "quality" else "IE 分析数据"
 
         self.setWindowTitle(f"导入{mode_label}")
         self.setStyleSheet(f"background-color: {tc['bg_body']};")
@@ -119,7 +119,7 @@ class ImportDialog(QDialog):
 
     def _get_default_status(self) -> str:
         if self.mode == "quality":
-            return "请选择 Excel 文件 (.xlsx/.xls) — 质量分析数据"
+            return "请选择 Excel 文件 (.xlsx/.xls) — 工作表数据"
         return "请选择 Excel 文件 (.xlsx/.xls) — 需含工序表/时间观测等 IE 数据"
 
     def _on_browse(self):

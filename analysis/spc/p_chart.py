@@ -49,7 +49,7 @@ def analyze(defectives: pd.Series, sample_sizes: pd.Series) -> Dict[str, Any]:
         "violations": violations,
         "summary": {
             "p_bar": round(float(p_bar), 6),
-            "total_inspected": int(d.sum()),
-            "total_defectives": int(ss.sum()),
+            "total_inspected": int(ss.sum()),
+            "total_defectives": int(d.sum()),
         },
     }

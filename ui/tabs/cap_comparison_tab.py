@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QGroupBox, QFormLayout, QComboBox, QDoubleSpinBox,
     QTableWidget, QTableWidgetItem, QSplitter, QHeaderView,
     QScrollArea, QFrame, QListWidget, QAbstractItemView,
+    QMessageBox,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
@@ -128,9 +129,13 @@ class CapComparisonTab(BaseAnalysisTab):
         if self.df is None:
             return
         self.col_list.clear()
-        numeric = self.df.select_dtypes(include="number").columns
-        for c in numeric:
-            self.col_list.addItem(str(c))
+        for c in self.df.columns:
+            try:
+                s = pd.to_numeric(self.df[c], errors="coerce").dropna()
+                if len(s) > 0:
+                    self.col_list.addItem(str(c))
+            except Exception:
+                pass
 
     def _apply_spec(self):
         usl = self.usl_spin.value()

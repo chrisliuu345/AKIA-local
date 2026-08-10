@@ -156,9 +156,12 @@ class BatchScheduler(QObject):
 
     @staticmethod
     def _default_execute(task: BatchTask):
-        """默认执行器——调用分析引擎"""
-        # 此方法由子类或调用方注入具体执行逻辑
-        pass
+        """默认执行器——必须由调用方注入具体执行逻辑"""
+        task_name = task.id if hasattr(task, 'id') else str(task)
+        raise NotImplementedError(
+            f"未注入 execute_fn，无法执行任务 {task_name}。"
+            "请在创建 BatchScheduler 时通过 execute_fn 参数注入执行函数。"
+        )
 
     def _log_msg(self, msg: str):
         ts = datetime.now().strftime("%H:%M:%S")

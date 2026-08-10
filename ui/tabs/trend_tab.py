@@ -106,8 +106,12 @@ class TrendTab(BaseAnalysisTab):
         self.date_combo.clear(); self.val_list.clear()
         for c in self.df.columns:
             self.date_combo.addItem(str(c), c)
-            if pd.api.types.is_numeric_dtype(self.df[c]):
-                self.val_list.addItem(str(c))
+            try:
+                s = pd.to_numeric(self.df[c], errors="coerce").dropna()
+                if len(s) > 0:
+                    self.val_list.addItem(str(c))
+            except Exception:
+                pass
 
     def _run(self):
         if self.df is None or self.df.empty:
@@ -156,6 +160,7 @@ class TrendTab(BaseAnalysisTab):
                 ax.plot(md, ma, "--", color=color, linewidth=1.2, alpha=0.6)
 
             # 异常点
+            anom = []
             if self.cb_anomaly.isChecked() and len(v) > 5:
                 z = np.abs((v - np.mean(v)) / (np.std(v) + 1e-9))
                 anom = np.where(z > 3)[0]

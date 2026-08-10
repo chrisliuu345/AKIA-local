@@ -1,0 +1,204 @@
+{
+  "entries": [
+    {
+      "id": "smed_stages",
+      "title": "SMED 快速换模 — 四阶段法",
+      "category": "terminology",
+      "keywords": ["SMED", "快速换模", "换模", "换线", "setup", "changeover", "内外分离", "单分钟换模"],
+      "content": "SMED (Single-Minute Exchange of Die) 四阶段:\n1. 区分内外作业: 内部作业(必须停机) vs 外部作业(可不停机)\n2. 内转外: 将内部作业转化为外部作业\n3. 缩短内部时间: 平行作业、功能标准化、快速夹具、中间夹具\n4. 缩短外部时间: 5S管理、目视化管理、物料预置\n目标: 换模时间控制在10分钟以内(单分钟换模)。\n改善前后对比: 传统换模90min → SMED后15min(常见改善幅度70-85%)。",
+      "source": "工业工程教材"
+    },
+    {
+      "id": "smed_internal_external",
+      "title": "SMED — 内部作业 vs 外部作业",
+      "category": "terminology",
+      "keywords": ["内部作业", "外部作业", "内换模", "外换模", "IEM", "OEM"],
+      "content": "内部作业(IED): 必须停机才能进行的作业(如拆装模具、调试参数)。\n外部作业(OED): 可在设备运行时完成的作业(如准备工具、预热模具、物料搬运)。\n区分方法: 现场录像分析+作业时序图(甘特图)。\n典型内转外案例: 模具预热(原本停机加热→改为线上预热架)、工具提前准备(原本停机找工具→标准化工具车)。",
+      "source": "工业工程教材"
+    },
+    {
+      "id": "8d_process",
+      "title": "8D 问题解决法 — 八步骤",
+      "category": "terminology",
+      "keywords": ["8D", "八步法", "问题解决", "纠正措施", "CAR", "8D报告", "福特8D"],
+      "content": "8D (Eight Disciplines) 问题解决流程:\nD1: 组建团队(跨部门, ≤8人)\nD2: 描述问题(5W2H + 是/不是分析)\nD3: 临时遏制措施(ICA, 24-48小时内实施)\nD4: 根因分析(鱼骨图 + 5Why + 因果矩阵)\nD5: 永久纠正措施(PCA, 验证有效性)\nD6: 实施验证(PCA落地 + 防错防呆)\nD7: 预防再发(标准化/FMEA更新/控制计划更新)\nD8: 团队表彰\n适用场景: 客户投诉、重大质量异常、重复发生问题。\n典型周期: 2-4周(紧急8D) 或 30-60天(标准8D)。",
+      "source": "福特8D手册 / IATF 16949"
+    },
+    {
+      "id": "tpm_overview",
+      "title": "TPM 全面生产维护 — 八大支柱",
+      "category": "terminology",
+      "keywords": ["TPM", "全面生产维护", "自主维护", "计划维护", "OEE", "六大损失"],
+      "content": "TPM (Total Productive Maintenance) 八大支柱:\n1. 自主维护(AM): 操作者日常清扫/点检/加油\n2. 计划维护(PM): 专业维修预防/定期/预测\n3. 个别改善(FI): 设备效率瓶颈攻关\n4. 早期管理(EM): 设备设计阶段输入\n5. 质量维护(QM): 设备精度与产品质量关联\n6. 教育训练(ET): 多能工培养\n7. 事务间接效率(OE): 办公室流程改善\n8. 安全健康环境(SHE): 零灾害\n六大损失: 故障停机、换模调整、空转小停机、速度降低、不良返工、启动损失。\nOEE = 时间稼动率 × 性能稼动率 × 良品率。\n世界级OEE ≥ 85%.",
+      "source": "JIPM TPM 标准 / 工业工程教材"
+    },
+    {
+      "id": "ppap_overview",
+      "title": "PPAP 生产件批准程序 — 18项提交清单",
+      "category": "standard",
+      "keywords": ["PPAP", "生产件批准", "提交等级", "PSW", "零件提交保证书", "APQP"],
+      "content": "PPAP (Production Part Approval Process) 18项提交要求:\n1. 设计记录 2. 工程变更文件 3. 顾客工程批准\n4. DFMEA 5. 过程流程图 6. PFMEA 7. 控制计划\n8. MSA 9. 尺寸结果 10. 材料/性能结果\n11. 初始过程能力(CPK≥1.33) 12. 合格实验室文件\n13. 外观批准报告 14. 散装材料检查表\n15. 样品产品 16. 标准样品 17. 检查辅具\n18. PSW零件提交保证书\n提交等级: 1级(仅PSW)-5级(全套在现场审核)。\n汽车行业默认等级3(提交PSW+样品+有限支持数据)。",
+      "source": "AIAG PPAP 第4版 / IATF 16949"
+    },
+    {
+      "id": "aql_concept",
+      "title": "AQL — 可接受质量水平",
+      "category": "terminology",
+      "keywords": ["AQL", "可接受质量水平", "允收标准", "不合格品率", "抽样方案"],
+      "content": "AQL (Acceptable Quality Level): 可接收的连续批不合格品率上限。\n- AQL越小越严格(AQL 0.010→AQL 1000)\n- 常用AQL值: 0.10(关键特性)、0.65(重要特性)、1.0/1.5/2.5(一般特性)、4.0(次要特性)\n- GB/T 2828.1 对应 ISO 2859-1\n- 检验水平: S-1~S-4(特殊)、I/II/III(一般,默认II)\n- 抽样方案: 一次/二次/多次/序贯\n决策: 样本中不合格数 ≤ Ac(允收) | ≥ Re(拒收)。",
+      "source": "GB/T 2828.1-2012 / ISO 2859-1"
+    },
+    {
+      "id": "aql_code_letter",
+      "title": "GB/T 2828.1 样本量字码表",
+      "category": "table",
+      "keywords": ["GB2828", "样本字码", "code letter", "检验水平", "批量", "AQL查表"],
+      "content": "GB/T 2828.1 样本量字码表(一般检验水平II):\n批量2-8→A, 9-15→B, 16-25→C, 26-50→D, 51-90→E,\n91-150→F, 151-280→G, 281-500→H, 501-1200→J,\n1201-3200→K, 3201-10000→L, 10001-35000→M,\n35001-150000→N, 150001-500000→P, 500001及以上→Q\n正常一次抽样对应样本量: A=2, B=3, C=5, D=8, E=13, F=20, G=32, H=50, J=80, K=125, L=200, M=315, N=500, P=800, Q=1250",
+      "source": "GB/T 2828.1-2012 表1"
+    },
+    {
+      "id": "oc_curve",
+      "title": "OC 曲线 — 抽样特性曲线",
+      "category": "terminology",
+      "keywords": ["OC曲线", "抽样特性", "接收概率", "生产者风险", "消费者风险", "鉴别比"],
+      "content": "OC曲线 (Operating Characteristic Curve): 显示批不合格品率p与接收概率Pa的关系。\n关键参数:\n- AQL(p1): 生产者风险α≈5%时的质量水平(好批被拒概率)\n- LTPD(p2): 消费者风险β≈10%时的质量水平(坏批被收概率)\n- 鉴别比 = p2/p1 (越小方案越灵敏)\nOC曲线形状: 理想OC→直角(完美鉴别); 实际OC→S形曲线。\n用途: 比较不同抽样方案的鉴别力、设计满足供需双方要求的方案。",
+      "source": "GB/T 2828.1 附录 / 质量检验教材"
+    },
+    {
+      "id": "sequential_sampling",
+      "title": "序贯抽样检验 — 逐件判定",
+      "category": "terminology",
+      "keywords": ["序贯抽样", "sequential", "逐件判定", "Wald检验", "截尾"],
+      "content": "序贯抽样(Sequential Sampling / Wald SPRT): 逐件检验并实时决策。\n每次检完一件: 累计不合格数 d_n\n- d_n ≤ h1+s·n → 接收\n- d_n ≥ h2+s·n → 拒收\n- 否则 → 继续抽下一件\n优点: 平均样本量最小(比一次抽样节省30-50%)。\n缺点: 需逐件判定、不适合自动化产线、需预设截尾值。\n适用: 破坏性检验、昂贵检验、小批量。",
+      "source": "Wald SPRT / GB/T 8051"
+    },
+    {
+      "id": "weibull_shape",
+      "title": "Weibull 形状参数 β 的工程意义",
+      "category": "terminology",
+      "keywords": ["Weibull", "形状参数", "beta", "失效模式", "寿命分布", "浴盆曲线"],
+      "content": "Weibull 分布形状参数 β 的物理含义:\nβ<1: 早期失效期(浴盆曲线左段) — 设计缺陷、来料不良、装配问题\nβ=1: 偶然失效期(浴盆曲线中段) — 随机失效,等同于指数分布\nβ>1: 耗损失效期(浴盆曲线右段) — 疲劳、磨损、老化\nβ=3.44: 近似正态分布\n典型应用:\n- 电子元件(早期): β≈0.5-0.8\n- 机械零件(随机): β≈1.0-2.0\n- 轴承(磨损): β≈1.5-3.0\n- 齿轮(疲劳): β≈2.0-4.0\n尺度参数η: 特征寿命(63.2%失效的时间点)",
+      "source": "可靠性工程教材 / Weibull Analysis Handbook"
+    },
+    {
+      "id": "mtbf_confidence",
+      "title": "MTBF 置信区间 — 卡方分布法",
+      "category": "table",
+      "keywords": ["MTBF", "置信区间", "卡方", "chi-square", "故障率", "区间估计"],
+      "content": "MTBF 置信区间(指数分布/定时截尾):\n下限 = 2T/χ²(α/2, 2r+2)\n上限 = 2T/χ²(1-α/2, 2r)\n其中 T=总试验时间, r=故障数, α=1-置信水平。\n零故障时(r=0): 下限 = T/ln(1/α) = T/(-ln α)\n常用: 90%置信下限(T/-ln0.1) = T/2.3026\n95%置信下限(T/-ln0.05) = T/2.9957\n示例: 试验1000小时零故障 → 95%下限=1000/2.9957=334小时",
+      "source": "MIL-HDBK-781 / 可靠性工程教材"
+    },
+    {
+      "id": "alt_arrhenius",
+      "title": "ALT — Arrhenius 加速模型",
+      "category": "terminology",
+      "keywords": ["ALT", "加速寿命", "Arrhenius", "活化能", "温度加速", "加速因子"],
+      "content": "Arrhenius 加速模型(温度应力):\nAF = exp[(Ea/k) × (1/T_use - 1/T_test)]\nEa=活化能(eV), k=8.617×10⁻⁵ eV/K\nT_use=使用温度(K), T_test=加速温度(K)\n常用活化能:\n- 电子元器件: 0.3-0.7eV\n- PCB/焊点: 0.5-1.0eV\n- 机械磨损: 0.3-0.5eV\n- 化学反应: 0.8-1.5eV\n示例: Ea=0.7eV, T_use=55°C(328K), T_test=85°C(358K)\nAF=exp[0.7/8.617e-5×(1/328-1/358)]=exp(8127×0.000255)=7.97",
+      "source": "JEDEC / 可靠性工程教材"
+    },
+    {
+      "id": "normality_test_selection",
+      "title": "正态性检验方法选择指南",
+      "category": "table",
+      "keywords": ["正态性检验", "Shapiro-Wilk", "Anderson-Darling", "KS检验", "样本量", "选择"],
+      "content": "正态性检验选择指南:\nn<50: Shapiro-Wilk (SW) — 统计功效最高\n50≤n≤2000: Anderson-Darling (AD) — 尾部敏感性好\nn>2000: D'Agostino-Pearson K² 或 Jarque-Bera\n不推荐 Kolmogorov-Smirnov (KS) — 对尾部不敏感,功效低\n辅助判断: 偏度/峰度、Q-Q图、直方图叠加正态曲线。\n经验法则: n≥30时中心极限定理起作用,轻微非正态对t检验影响不大。\np值解读: p<0.05→拒绝正态假设; p≥0.05→不能拒绝正态假设(不是\"证明\"正态)。",
+      "source": "统计方法教材 / ISO 5479"
+    },
+    {
+      "id": "outlier_thresholds",
+      "title": "异常值判定阈值标准",
+      "category": "table",
+      "keywords": ["异常值", "outlier", "IQR", "Z-score", "Grubbs", "箱线图", "判定"],
+      "content": "常用异常值判定方法:\n1. IQR法: Q1-1.5×IQR ~ Q3+1.5×IQR 为正常范围; 之外=异常(箱子图胡须)\n   适用: 任意分布,稳健,非参数\n2. Z-Score法: |Z|>3 为异常(3σ原则,正态假设)\n   适用: 近似正态,n较大\n   |Z|>2 为可疑(n较小时)\n3. Grubbs检验: 正态假设,逐次检验最极端值\n   G = max|Xi-X̄|/s,查Grubbs临界表\n   适用: n=3-100,一次检一个\n4. MAD法: |Xi-Median|/MAD > 3.5 为异常\n   适用: 非正态,更稳健\n建议: 用至少两种方法交叉验证; Grubbs适合实验室数据,IQR适合生产现场。",
+      "source": "ISO 5725 / ASTM E178 / 统计方法教材"
+    },
+    {
+      "id": "box_cox_lambda",
+      "title": "Box-Cox 变换 λ 选择指南",
+      "category": "table",
+      "keywords": ["Box-Cox", "lambda", "变换", "正态化", "非正态", "能力分析"],
+      "content": "Box-Cox 变换 Y'=(Y^λ-1)/λ (λ≠0); Y'=ln(Y) (λ=0)\n常用 λ 值及其对应变换:\nλ=2: Y²(反比变换的逆)\nλ=1: 无变换(数据已正态)\nλ=0.5: √Y(计数数据 C=U图)\nλ=0: ln(Y)(对数正态)\nλ=-0.5: 1/√Y\nλ=-1: 1/Y(速率数据)\n选择方法: 最大似然法在[-5,5]范围内搜索使残差平方和最小的λ。\n注意: λ必须在数据范围内有意义; Y必须>0; 变换后需重新验证正态性。\n替代方案: Johnson变换(更灵活)、非正态能力分析(百分位数法)。",
+      "source": "Box & Cox (1964) / Minitab Help"
+    },
+    {
+      "id": "mwu_vs_ttest",
+      "title": "Mann-Whitney U vs t检验 — 如何选择",
+      "category": "terminology",
+      "keywords": ["Mann-Whitney", "Wilcoxon", "非参数", "t检验", "Robust", "功效"],
+      "content": "Mann-Whitney U检验(也称Wilcoxon秩和检验):\n- 非参数替代两独立样本t检验\n- 比较两组的中位数(非均值)\n- 不假设正态性\n选择指南:\n| 条件 | 推荐方法 |\n| 正态+方差齐 | t检验(功效高) |\n| 正态+方差不齐 | Welch t'检验 |\n| 非正态(轻中) | MWU(渐近相对功效0.955) |\n| 非正态(重度)+小样本 | MWU(必选) |\n| 有序分类数据 | MWU(唯一有效) |\n注意: MWU检验U统计量对应的效应量 r=Z/√N (小0.1/中0.3/大0.5)。",
+      "source": "统计方法教材 / Conover"
+    },
+    {
+      "id": "kruskal_posthoc",
+      "title": "Kruskal-Wallis 检验与事后比较",
+      "category": "terminology",
+      "keywords": ["Kruskal-Wallis", "Dunn检验", "事后比较", "Bonferroni", "多组比较"],
+      "content": "Kruskal-Wallis H检验: 非参数替代单因素ANOVA,比较3组及以上中位数。\nH统计量近似χ²分布(df=k-1)。\n显著后的事后两两比较:\n1. Dunn检验(推荐): Dw=|R̄i-R̄j|/SE, 使用Bonferroni校正Z临界值\n   Z_crit = Z(1-α/[2k(k-1)])\n2. Conover检验: 比Dunn更灵敏\n3. Dwass-Steel-Critchlow-Fligner (DSCF): 专门的两两比较\n注意: 不能直接用Mann-Whitney两两比较(α膨胀)。\n小样本(n<5): 使用精确检验而非χ²近似。",
+      "source": "统计方法教材 / Dunn (1964)"
+    },
+    {
+      "id": "oee_benchmark",
+      "title": "OEE 世界级基准值",
+      "category": "standard",
+      "keywords": ["OEE", "基准", "世界级", "稼动率", "性能", "良率", "标杆"],
+      "content": "OEE 世界级基准值(Seiichi Nakajima / JIPM标准):\n时间稼动率(Availability): ≥90.0%\n性能稼动率(Performance): ≥95.0%\n良品率(Quality): ≥99.9%\nOEE = A×P×Q: ≥85.0% (世界级)\n分级:\n≥85%: 世界级\n65-85%: 良好\n40-65%: 一般\n<40%: 需要重大改善\n典型离散制造OEE中位值: 60-65%\n典型流程工业OEE中位值: 80-85%\n注意: OEE不是独立指标,需与TEEP(总设备效能=OEE×设备利用率)配合使用。",
+      "source": "JIPM / Nakajima TPM 标准"
+    },
+    {
+      "id": "line_balance_formula",
+      "title": "线平衡率计算公式",
+      "category": "terminology",
+      "keywords": ["线平衡", "平衡率", "瓶颈", "节拍", "平衡损失率", "工位"],
+      "content": "线平衡率(Balance Ratio):\nBR = ΣCT_i/(CT_bottleneck×N)×100%\n其中 CT_i=各工位周期时间, CT_bottleneck=瓶颈工位时间, N=工位数\n平衡损失率 = 100%-BR\n\n日产能 = 有效工作时间 / CT_bottleneck\n节拍时间(Takt Time) = 有效工作时间 / 客户需求\n理论最少工位数 = ΣCT_i / Takt Time\n\n改善目标: BR≥85%(良好), BR≥95%(优秀)\n改善手段: 作业分解→ECRS(取消/合并/重排/简化)→再分配→标准化\n数字孪生线平衡: 拖拽工站模拟,实时计算平衡率变化,替代Excel手工试算。",
+      "source": "工业工程教材 / 精益生产"
+    },
+    {
+      "id": "standard_time_allowance",
+      "title": "标准工时 — 宽放率设定",
+      "category": "table",
+      "keywords": ["标准工时", "宽放率", "评比系数", "标准时间", "ST", "工时定额"],
+      "content": "标准工时 ST = 观测时间 × 评比系数 × (1 + 宽放率)\n\n评比系数(速度评价): 正常速度=1.0(100%),熟练工1.2,生手0.8\n\n宽放率构成:\n1. 生理宽放: 2-5%(饮水/如厕)\n2. 疲劳宽放: 0-30%(轻作业4%/中作业8-12%/重作业15-30%)\n3. 延迟宽放: 2-10%(换刀/清屑/等待物料)\n4. 特殊宽放: 根据具体环境\n总宽放率通常: 10-25%\n\n评比方法:\n- 西屋法: 熟练度+努力度+一致性+作业条件→合成系数\n- 客观评价法: 难度调整系数\n注意: 标准工时≠实际工时(需定期复核更新,至少1年1次)。",
+      "source": "工业工程教材 / MIL-STD-1567"
+    },
+    {
+      "id": "stratified_sampling",
+      "title": "分层抽样 — 原理与方法",
+      "category": "terminology",
+      "keywords": ["分层抽样", "strata", "层内方差", "Neyman分配", "比例分配"],
+      "content": "分层抽样(Stratified Sampling): 将总体分为互斥的层,各层独立抽样。\n步骤: 1.确定分层变量(批次/产线/时间/供应商) 2.各层按比例/最优分配抽取\n\n分配方法:\n1. 比例分配: n_h = n×(N_h/N)\n2. Neyman最优分配: n_h = n×(N_h×S_h)/Σ(N_i×S_i)\n   层内方差大→多抽; 方差小→少抽\n3. 等额分配: 每层抽同样数量(仅当各层大小相近时)\n\n优点: 比简单随机抽样精度更高(特别是层间差异大时)\n缺点: 需事先知道分层信息\n应用: 来料检验(按供应商分层)、过程控制(按班次/产线分层)。",
+      "source": "GB/T 2828.1 / 抽样理论教材"
+    },
+    {
+      "id": "mwu_wilcoxon_difference",
+      "title": "Mann-Whitney U vs Wilcoxon 符号秩 — 区别",
+      "category": "terminology",
+      "keywords": ["Mann-Whitney", "Wilcoxon", "符号秩", "秩和", "配对", "独立"],
+      "content": "两个常见混淆:\n1. Mann-Whitney U = Wilcoxon Rank-Sum (独立样本,两组)\n   - 替代独立样本t检验\n   - 假设: 两组独立,数据至少为有序\n   - H0: 两组分布相同(MWU) 或 中位数差为0\n\n2. Wilcoxon Signed-Rank (配对样本)\n   - 替代配对t检验\n   - 假设: 差值对称分布\n   - H0: 差值中位数为0\n\n选择: 独立两组→MWU; 配对/前后→Wilcoxon符号秩。\n报错: 很多人说\"用Wilcoxon检验\"但实际指MWU——需看数据结构是独立还是配对。",
+      "source": "统计方法教材"
+    },
+    {
+      "id": "alt_inverse_power",
+      "title": "ALT — 逆幂律加速模型",
+      "category": "terminology",
+      "keywords": ["逆幂律", "inverse power law", "非热应力", "电压", "压力", "加速因子"],
+      "content": "逆幂律加速模型(非热应力):\nAF = (S_test/S_use)^n\n其中S=应力水平(电压/压力/载荷), n=幂指数\n典型n值:\n- 电压加速(电容): n=3-5\n- 机械疲劳: n=4-10(S-N曲线斜率)\n- 磨损: n=1-3\n\n当温度和另一应力同时加速时,用广义Eyring模型:\nAF = (T_test/T_use)×exp[(Ea/k)(1/T_use-1/T_test)] × (S_test/S_use)^n\n\n注意: 每种加速模型必须通过试验数据验证(线性拟合判定系数R²>0.9)。",
+      "source": "JEDEC / 可靠性物理"
+    },
+    {
+      "id": "spc_chart_selection",
+      "title": "SPC 控制图选择决策树",
+      "category": "table",
+      "keywords": ["控制图选择", "SPC决策", "Xbar-R", "I-MR", "P图", "C图", "选择指南"],
+      "content": "控制图选择决策树:\n\n数据类型→\n├─ 计量型(连续数据)\n│  ├─ 子组大小 n≥2\n│  │  ├─ n=2-10, 子组易计算 → XBar-R\n│  │  └─ n>10, 精确需要 → XBar-S\n│  └─ 子组大小 n=1\n│     └─ 单值移动极差 → I-MR\n│\n└─ 计数型(离散数据)\n   ├─ 缺陷数(计点)\n   │  ├─ 样本大小固定 → C图\n   │  └─ 样本大小变化 → U图\n   └─ 不合格品(计件)\n      ├─ 样本大小固定 → NP图\n      └─ 样本大小变化 → P图\n\n特殊情况:\n- 微小偏移检测 → CUSUM 或 EWMA\n- 多变量关联监控 → Hotelling T²\n- 小批量/多品种 → Z-MR图或3D图",
+      "source": "AIAG SPC 第2版 / GB/T 4091"
+    },
+    {
+      "id": "cpk_improvement_guide",
+      "title": "CPK 偏低 — 系统改善指南",
+      "category": "six_sigma",
+      "keywords": ["CPK改善", "Cpk", "过程能力", "改善路线图", "短期", "长期"],
+      "content": "根据CPK现状的改善策略:\n\nCpk<0.67 (D级):\n- 短期: 100%全检 + 源头排查(设备/来料/方法)\n- 中期: DOE识别关键因子 → SPC监控\n- 长期: 设备升级或替代工艺\n\nCpk 0.67-1.00 (C级):\n- 短期: 重点抽样检验 + SPC实时监控\n- 中期: 减少变异(5M1E标准化)+防错\n- 目标: 6个月内提升至1.33\n\nCpk 1.00-1.33 (B级):\n- 短期: 正常SPC监控即可\n- 中期: SPC→控制图预警+六西格玛项目\n- 目标: 1年提升至1.67\n\nCpk≥1.33 (A级):\n- 维持: 过程稳定监控+预防性维护\n- 优化: 降低成本(减少过度控制)\n\n通用改善步骤(变异来源排序): 1.测量系统(先做MSA) 2.设备(精度/稳定性) 3.来料(供应商) 4.方法(参数优化) 5.人员(标准化培训)",
+      "source": "六西格玛 DMAIC / 质量工程教材"
+    }
+  ]
+}

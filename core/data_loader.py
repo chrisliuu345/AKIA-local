@@ -178,11 +178,12 @@ def _clean_column_names(df: pd.DataFrame) -> pd.DataFrame:
     df.columns = new_cols
     return df
 
-    @staticmethod
-    def validate_file(file_path: str) -> bool:
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"文件不存在: {file_path}")
-        ext = os.path.splitext(file_path)[1].lower()
-        if ext not in SUPPORTED_EXCEL_EXTENSIONS:
-            raise ValueError(f"不支持的文件格式: {ext}")
-        return True
+
+def validate_data_file(file_path: str) -> bool:
+    """验证数据文件是否存在且格式受支持"""
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"文件不存在: {file_path}")
+    ext = os.path.splitext(file_path)[1].lower()
+    if ext not in SUPPORTED_EXCEL_EXTENSIONS:
+        raise ValueError(f"不支持的文件格式: {ext}")
+    return True

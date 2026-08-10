@@ -72,8 +72,12 @@ class SummaryPanelTab(BaseAnalysisTab):
         if self.df is None: return
         self.val_list.clear()
         for c in self.df.columns:
-            if pd.api.types.is_numeric_dtype(self.df[c]):
-                self.val_list.addItem(str(c))
+            try:
+                s = pd.to_numeric(self.df[c], errors="coerce").dropna()
+                if len(s) > 0:
+                    self.val_list.addItem(str(c))
+            except Exception:
+                pass
 
     def _run(self):
         if self.df is None or self.df.empty:

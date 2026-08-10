@@ -11,15 +11,25 @@ from core.data_objects import OBJECT_CLASSES, get_all_types
 
 
 _SHEET_KEYWORDS = {
-    "Process": ["工序", "流程", "process", "制程", "工位", "步骤表", "产线"],
+    "Process": ["工序", "流程", "process", "制程", "工位", "步骤表", "产线",
+                "工艺", "routing", "装配", "assembly", "生产线", "工作站",
+                "生产工序", "加工步骤", "作业步骤", "流程表", "工艺路线"],
     "TimeObservation": ["时间观测", "观测", "秒表", "时间研究", "time observation",
-                        "工时", "timing", "observation", "测时"],
+                        "工时", "timing", "observation", "测时", "标准工时",
+                        "标准时间", "standard time", "作业测定", "work measurement",
+                        "循环时间", "cycle time", "时间测量", "MTM", "预定时间",
+                        "动作研究", "motion study", "测时表", "工时测定"],
     "QualityRecord": ["质量记录", "质量", "quality", "检测", "检验记录",
-                      "测量", "spc", "数据", "检查", "规格"],
+                      "测量", "spc", "数据", "检查", "规格", "不合格",
+                      "缺陷", "defect", "不良", "特性", "检验结果",
+                      "测试数据", "测量数据", "质检", "检验单", "检验表"],
     "MaterialFlow": ["物流", "flow", "搬运", "material", "距离", "运输",
-                     "路径", "流动", "移动"],
+                     "路径", "流动", "移动", "物流路径", "搬运路径",
+                     "配送", "delivery", "物料流动", "搬运分析"],
     "Resource": ["资源", "resource", "设备清单", "人员", "班组", "资源表",
-                 "设备表", "人员表", "machine", "worker"],
+                 "设备表", "人员表", "machine", "worker", "机器", "设备",
+                 "操作工", "technician", "模具", "夹具", "工装",
+                 "设备台账", "员工", "人力资源", "机台"],
 }
 
 
@@ -102,14 +112,12 @@ class IEDataParser:
             column_map = self.map_columns(list(df.columns), obj_type)
 
         objects = []
-        for _, row in df.iterrows():
+        # 向量化：一次 to_dict 替代逐行 iterrows
+        rows = df[list(column_map.keys())].fillna("").to_dict("records")
+        for row_dict_raw in rows:
             row_dict: Dict[str, Any] = {}
             for excel_col, field_name in column_map.items():
-                if excel_col in df.columns:
-                    val = row[excel_col]
-                    if pd.isna(val):
-                        val = ""
-                    row_dict[field_name] = val
+                row_dict[field_name] = row_dict_raw.get(excel_col, "")
             if row_dict:
                 try:
                     obj = cls.from_dict(row_dict)

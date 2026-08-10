@@ -312,7 +312,7 @@
   "sidebar.import_data": "导入数据",
   "sidebar.import_db": "导入数据库",
   "sidebar.import_ie": "导入 IE 数据",
-  "sidebar.import_quality": "导入质量数据",
+  "sidebar.import_quality": "导入工作表",
   "sidebar.line_balance": "线平衡",
   "sidebar.llm": "AI 助手",
   "sidebar.load_template": "加载模板",

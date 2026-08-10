@@ -132,17 +132,6 @@ class PDFReport(BaseReportEngine):
             leftMargin=2 * cm, rightMargin=2 * cm,
             topMargin=2 * cm, bottomMargin=2 * cm,
         )
-        # 水印回调
-        if watermark:
-            def _wm(canvas, doc):
-                canvas.saveState()
-                canvas.setFont("Helvetica", 40)
-                canvas.setFillColor(HexColor("#888888"), alpha=0.08)
-                canvas.drawString(3*cm, 14*cm, watermark)
-                canvas.restoreState()
-            doc.build(self.story, onFirstPage=_wm, onLaterPages=_wm)
-            return output_path
-
         self.story = []
         S = self._get_styles()
 
@@ -188,7 +177,16 @@ class PDFReport(BaseReportEngine):
         footer_text, _ = self.footers()
         self.story.append(Paragraph(footer_text, S["meta"]))
 
-        doc.build(self.story)
+        if watermark:
+            def _wm(canvas, doc):
+                canvas.saveState()
+                canvas.setFont("Helvetica", 40)
+                canvas.setFillColor(HexColor("#888888"), alpha=0.08)
+                canvas.drawString(3*cm, 14*cm, watermark)
+                canvas.restoreState()
+            doc.build(self.story, onFirstPage=_wm, onLaterPages=_wm)
+        else:
+            doc.build(self.story)
         return output_path
 
     def _add_title_page(self, title: str, subtitle: str, S: dict):

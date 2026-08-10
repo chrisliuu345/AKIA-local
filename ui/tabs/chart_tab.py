@@ -168,20 +168,19 @@ class ChartTab(BaseAnalysisTab):
         self.cb_3d.setVisible(chart_type == "3D曲面图")
 
     def _rebuild_config_panel(self, chart_type: str):
+        # 清理旧引用，防止访问已删除的 C++ 对象
+        self.cb_show_regression = None
+
         while self.config_form_layout.rowCount() > 0:
             self.config_form_layout.removeRow(0)
         self._col_widgets.clear()
 
         # 散点图回归线开关
-        if hasattr(self, 'cb_show_regression'):
-            self.cb_show_regression.setVisible(False)
         if chart_type == "散点图":
-            if not hasattr(self, 'cb_show_regression'):
-                from PySide6.QtWidgets import QCheckBox
-                self.cb_show_regression = QCheckBox("显示回归线")
-                self.cb_show_regression.setChecked(True)
-                self.cb_show_regression.setStyleSheet("color: #a0a3ae;")
-            self.cb_show_regression.setVisible(True)
+            from PySide6.QtWidgets import QCheckBox
+            self.cb_show_regression = QCheckBox("显示回归线")
+            self.cb_show_regression.setChecked(True)
+            self.cb_show_regression.setStyleSheet("color: #a0a3ae;")
             self.config_form_layout.addRow(self.cb_show_regression)
 
         configs = CHART_CONFIGS.get(chart_type, [])
@@ -201,35 +200,20 @@ class ChartTab(BaseAnalysisTab):
         self._populate_column_widgets()
 
     def _populate_column_widgets(self):
+        """填充所有列选择器 — 所有列在所有控件中均可见（和 SPC tab 一致）"""
         if self.df is None:
             return
-        info = self.parsed_info or {}
-        numeric = info.get("numeric_columns", [])
-        text_cols = info.get("identifier_columns", [])
-        datetime_cols = [c for c, t in info.get("column_types", {}).items() if t == "datetime"]
-        if not datetime_cols:
-            datetime_cols = []
-
-        type_map = {
-            "numeric": numeric,
-            "multi_numeric": numeric,
-            "text": text_cols,
-            "multi_text": text_cols if text_cols else numeric,
-            "datetime": datetime_cols if datetime_cols else numeric,
-        }
-
+        all_cols = list(self.df.columns)
         for w in self._col_widgets:
-            col_type = w.property("col_type")
-            candidates = type_map.get(col_type, [])
             if isinstance(w, QListWidget):
                 w.clear()
-                for c in candidates:
+                for c in all_cols:
                     item = QListWidgetItem(c)
                     item.setCheckState(Qt.Unchecked)
                     w.addItem(item)
             else:
                 w.clear()
-                w.addItems(candidates)
+                w.addItems(all_cols)
                 w.setCurrentIndex(-1)
 
     def set_data(self, df: pd.DataFrame, parsed_info: Dict[str, Any] = None):
@@ -261,22 +245,38 @@ class ChartTab(BaseAnalysisTab):
 
     def validate_params(self) -> tuple:
         if self.df is None:
-            return False, i18n.tr("chart_tab.no_data")
-        params = self._collect_params()
+            return False, "请先导入数据文件"
         chart_type = self.chart_type_combo.currentText()
+        params = self._collect_params()
+
+        # 收集所有已选列
+        selected_cols = [c for c in params.get("columns", []) if c]
+        for multi_list in params.get("multi_columns", {}).values():
+            selected_cols.extend(c for c in multi_list if c)
+
         configs = CHART_CONFIGS.get(chart_type, [])
         for (label, col_type), w in zip(configs, self._col_widgets):
             if col_type.startswith("multi_"):
-                selected = params.get("multi_columns", {}).get(col_type, [])
-                if not selected:
-                    return False, f"{i18n.tr('chart_tab.select_hint')}: {label}"
+                sel = params.get("multi_columns", {}).get(col_type, [])
+                if not sel:
+                    return False, f"请选择: {label}"
             else:
-                if not params.get("columns", []):
-                    return False, f"{i18n.tr('chart_tab.select_hint')}: {label}"
                 vals = [c for c in params["columns"] if c]
                 if not vals:
-                    return False, f"{i18n.tr('chart_tab.select_hint')}: {label}"
+                    return False, f"请选择: {label}"
             break
+
+        # 预检已选列是否有有效数值内容（避免选择全文本列时只显示"数据点不足"）
+        for col in selected_cols:
+            if col not in self.df.columns:
+                continue
+            try:
+                n = pd.to_numeric(self.df[col], errors="coerce").dropna()
+            except Exception:
+                continue
+            if len(n) == 0:
+                return False, f"列「{col}」不含数值数据（全为文本/空值），无法用于图表分析。\n请改用其他列，或检查数据格式。"
+
         return True, ""
 
     def run_analysis(self) -> Dict[str, Any]:
@@ -299,7 +299,7 @@ class ChartTab(BaseAnalysisTab):
             "dark_mode": True,
             "palette": self.palette_combo.currentText(),
         }
-        if hasattr(self, 'cb_show_regression') and self.cb_show_regression.isVisible():
+        if self.cb_show_regression is not None and self.cb_show_regression.isVisible():
             options["show_regression"] = self.cb_show_regression.isChecked()
 
         fig = generate_chart(chart_type, data, options)

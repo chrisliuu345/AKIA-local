@@ -4,6 +4,7 @@ QA-Tool — 主窗口
 
 import os
 from typing import Dict, Any
+import pandas as pd
 
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QStackedWidget,
@@ -23,38 +24,10 @@ from core.session_manager import SessionManager
 from core.i18n import i18n
 from core.data_profiler import DataProfiler
 from core.project_manager import ProjectManager
-from core.auth import AuthManager
 
 from ui.sidebar import Sidebar
 from ui.theme import colors as theme_colors
-from ui.tabs.spc_tab import SPCTab
-from ui.tabs.capability_tab import CapabilityTab
-from ui.tabs.msa_tab import MSATab
-from ui.tabs.hypothesis_tab import HypothesisTab
-from ui.tabs.doe_tab import DOETab
-from ui.tabs.regression_tab import RegressionTab
-from ui.tabs.time_study_tab import TimeStudyTab
-from ui.tabs.work_sampling_tab import WorkSamplingTab
-from ui.tabs.line_balance_tab import LineBalanceTab
-from ui.tabs.oee_tab import OEETab
-from ui.tabs.vsm_tab import VSMTab
-from ui.tabs.chart_tab import ChartTab
-from ui.tabs.reliability_tab import ReliabilityTab
-from ui.tabs.fishbone_tab import FishboneTab
-from ui.tabs.pareto_tab import ParetoTab
-from ui.tabs.fmea_tab import FMEATab
-from ui.tabs.control_plan_tab import ControlPlanTab
-from ui.tabs.cap_comparison_tab import CapComparisonTab
-from ui.tabs.trend_tab import TrendTab
-from ui.tabs.summaries_panel_tab import SummaryPanelTab
-from ui.tabs.worker_machine_tab import WorkerMachineTab
-from ui.tabs.std_work_combo_tab import StdWorkComboTab
-from ui.tabs.sheet_merge_tab import SheetMergeTab
-from ui.tabs.sheet_split_tab import SheetSplitTab
-from ui.tabs.layered_form_tab import LayeredFormTab
-from ui.tabs.sampling_tab import SamplingTab
-from ui.tabs.dashboard_tab import DashboardTab
-from ui.tabs.data_tools_tab import DataToolsTab
+# Tab 类按需通过 _lazy_load_tab() + importlib 加载，无需顶层导入
 from ui.welcome_page import WelcomePage
 from ui.dialogs.import_dialog import ImportDialog
 from ui.dialogs.settings_dialog import SettingsDialog
@@ -168,65 +141,20 @@ class MainWindow(QMainWindow):
         vdivider.setMaximumWidth(1)
 
         self.stack = QStackedWidget()
-        self.welcome_page = WelcomePage()
-        self.spc_tab = SPCTab()
-        self.capability_tab = CapabilityTab()
-        self.msa_tab = MSATab()
-        self.hypothesis_tab = HypothesisTab()
-        self.doe_tab = DOETab()
-        self.regression_tab = RegressionTab()
-        self.time_study_tab = TimeStudyTab()
-        self.work_sampling_tab = WorkSamplingTab()
-        self.line_balance_tab = LineBalanceTab()
-        self.oee_tab = OEETab()
-        self.vsm_tab = VSMTab()
-        self.chart_tab = ChartTab()
-        self.reliability_tab = ReliabilityTab()
-        self.fishbone_tab = FishboneTab()
-        self.pareto_tab = ParetoTab()
-        self.fmea_tab = FMEATab()
-        self.control_plan_tab = ControlPlanTab()
-        self.cap_comparison_tab = CapComparisonTab()
-        self.trend_tab = TrendTab()
-        self.summary_panel_tab = SummaryPanelTab()
-        self.worker_machine_tab = WorkerMachineTab()
-        self.std_work_combo_tab = StdWorkComboTab()
-        self.sheet_merge_tab = SheetMergeTab()
-        self.sheet_split_tab = SheetSplitTab()
-        self.layered_form_tab = LayeredFormTab()
-        self.sampling_tab = SamplingTab()
-        self.dashboard_tab = DashboardTab()
-        self.data_tools_tab = DataToolsTab()
+        self._tab_cache = {}  # 懒加载缓存: idx → tab实例
 
+        # 首页始终立即加载 (轻量)
+        self.welcome_page = WelcomePage()
         self.stack.addWidget(self.welcome_page)  # 0
-        self.stack.addWidget(self.spc_tab)
-        self.stack.addWidget(self.capability_tab)
-        self.stack.addWidget(self.msa_tab)
-        self.stack.addWidget(self.hypothesis_tab)
-        self.stack.addWidget(self.doe_tab)
-        self.stack.addWidget(self.regression_tab)
-        self.stack.addWidget(self.time_study_tab)
-        self.stack.addWidget(self.work_sampling_tab)
-        self.stack.addWidget(self.line_balance_tab)
-        self.stack.addWidget(self.oee_tab)
-        self.stack.addWidget(self.vsm_tab)
-        self.stack.addWidget(self.chart_tab)        # 12
-        self.stack.addWidget(self.reliability_tab)  # 13
-        self.stack.addWidget(self.fishbone_tab)     # 14
-        self.stack.addWidget(self.pareto_tab)         # 15
-        self.stack.addWidget(self.fmea_tab)           # 16
-        self.stack.addWidget(self.control_plan_tab)     # 17
-        self.stack.addWidget(self.cap_comparison_tab)   # 18
-        self.stack.addWidget(self.trend_tab)            # 19
-        self.stack.addWidget(self.summary_panel_tab)      # 20
-        self.stack.addWidget(self.worker_machine_tab)     # 21
-        self.stack.addWidget(self.std_work_combo_tab)     # 22
-        self.stack.addWidget(self.sheet_merge_tab)        # 23
-        self.stack.addWidget(self.sheet_split_tab)        # 24
-        self.stack.addWidget(self.layered_form_tab)       # 25
-        self.stack.addWidget(self.sampling_tab)           # 26
-        self.stack.addWidget(self.dashboard_tab)          # 27
-        self.stack.addWidget(self.data_tools_tab)         # 28
+
+        # 内置 Tab 占位符 (1-28)，首次切换时懒加载
+        for idx in range(1, 29):
+            placeholder = QWidget()
+            placeholder.setObjectName(f"placeholder_{idx}")
+            self.stack.addWidget(placeholder)
+
+        # 插件 Tab (动态)
+        self._plugin_tab_start = 100
 
         layout.addWidget(self.expand_strip)
         layout.addWidget(self.sidebar)
@@ -389,6 +317,9 @@ class MainWindow(QMainWindow):
         ai_action = QAction(i18n.tr("sidebar.llm"), self)
         ai_action.triggered.connect(self._on_llm_assist)
         tools_menu.addAction(ai_action)
+        one_click_action = QAction("一键智能分析报告", self)
+        one_click_action.triggered.connect(self._on_one_click_analysis)
+        tools_menu.addAction(one_click_action)
 
         help_menu = menubar.addMenu(i18n.tr("menu.help"))
         about_action = QAction(i18n.tr("menu.about"), self)
@@ -415,6 +346,16 @@ class MainWindow(QMainWindow):
         dlg = LLMDialog(self)
         dlg.exec()
 
+    def _on_one_click_analysis(self):
+        """一键智能分析 — 画像 → 推荐 → 执行 → 报告"""
+        raw_data = self.current_data.get("raw_data", {})
+        if not raw_data:
+            QMessageBox.warning(self, "无数据", "请先导入数据文件后再运行一键分析")
+            return
+        from ui.dialogs.one_click_dialog import OneClickDialog
+        dlg = OneClickDialog(raw_data, self)
+        dlg.exec()
+
     def _setup_statusbar(self):
         self.statusBar().setStyleSheet(
             "QStatusBar { min-height: 24px; background: #13131c; } QStatusBar::item { border: none; }"
@@ -435,41 +376,23 @@ class MainWindow(QMainWindow):
         self.sidebar.llm_clicked.connect(self._on_llm_assist)
         self.sidebar.collapse_requested.connect(lambda: self._toggle_sidebar(True))
         self.welcome_page.import_data_clicked.connect(self._on_import_quality)
+        self.welcome_page.import_ie_clicked.connect(self._on_import_ie)
         self.welcome_page.import_template_clicked.connect(self._on_import_template)
-        self.spc_tab.export_clicked.connect(lambda: self._on_export_single(1, "docx"))
-        self.capability_tab.export_clicked.connect(lambda: self._on_export_single(2, "docx"))
-        self.msa_tab.export_clicked.connect(lambda: self._on_export_single(3, "docx"))
-        self.hypothesis_tab.export_clicked.connect(lambda: self._on_export_single(4, "docx"))
-        self.doe_tab.export_clicked.connect(lambda: self._on_export_single(5, "docx"))
-        self.regression_tab.export_clicked.connect(lambda: self._on_export_single(6, "docx"))
-        self.time_study_tab.export_clicked.connect(lambda: self._on_export_single(7, "docx"))
-        self.work_sampling_tab.export_clicked.connect(lambda: self._on_export_single(8, "docx"))
-        self.line_balance_tab.export_clicked.connect(lambda: self._on_export_single(9, "docx"))
-        self.oee_tab.export_clicked.connect(lambda: self._on_export_single(10, "docx"))
-        self.vsm_tab.export_clicked.connect(lambda: self._on_export_single(11, "docx"))
-        self.chart_tab.export_clicked.connect(lambda: self._on_export_single(12, "docx"))
-        self.reliability_tab.export_clicked.connect(lambda: self._on_export_single(13, "docx"))
-
-        self.spc_tab.analysis_completed.connect(lambda: self._on_analysis_finished(1))
-        self.capability_tab.analysis_completed.connect(lambda: self._on_analysis_finished(2))
-        self.msa_tab.analysis_completed.connect(lambda: self._on_analysis_finished(3))
-        self.hypothesis_tab.analysis_completed.connect(lambda: self._on_analysis_finished(4))
-        self.doe_tab.analysis_completed.connect(lambda: self._on_analysis_finished(5))
-        self.regression_tab.analysis_completed.connect(lambda: self._on_analysis_finished(6))
-        self.time_study_tab.analysis_completed.connect(lambda: self._on_analysis_finished(7))
-        self.work_sampling_tab.analysis_completed.connect(lambda: self._on_analysis_finished(8))
-        self.line_balance_tab.analysis_completed.connect(lambda: self._on_analysis_finished(9))
-        self.oee_tab.analysis_completed.connect(lambda: self._on_analysis_finished(10))
-        self.vsm_tab.analysis_completed.connect(lambda: self._on_analysis_finished(11))
-        self.chart_tab.analysis_completed.connect(lambda: self._on_analysis_finished(12))
-        self.reliability_tab.analysis_completed.connect(lambda: self._on_analysis_finished(13))
+        self.welcome_page.new_analysis_clicked.connect(lambda: self._switch_tab(1))
+        self.welcome_page.diagnose_clicked.connect(self._on_diagnose)
+        self.welcome_page.open_project_clicked.connect(self._on_load_project)
+        # Tab 导出/分析信号由 _lazy_load_tab() 在首次创建时动态连接
 
     def _switch_tab(self, index: int):
         if 0 <= index < self.stack.count():
+            # 懒加载: 首次访问时按需创建
+            if index > 0:
+                self._lazy_load_tab(index)
             target = self.stack.widget(index)
-            # 淡入动画 (200ms, 防止太快看不见)
+            if not target:
+                return
+            # 淡入动画 (200ms)
             from PySide6.QtWidgets import QGraphicsOpacityEffect
-            old_effect = target.graphicsEffect()
             effect = QGraphicsOpacityEffect()
             effect.setOpacity(0.0)
             target.setGraphicsEffect(effect)
@@ -501,7 +424,7 @@ class MainWindow(QMainWindow):
                     "metadata": self.data_loader.metadata,
                 }
                 self.session_manager.create_session(file_path=file_path)
-                self._route_sheets_to_tabs(raw_data, quality_only=True)
+                self._route_sheets_to_tabs(raw_data, worksheet_mode=True)
                 self.data_label.setText(f" {os.path.basename(file_path)} [{len(raw_data)} sheets]")
 
                 try:
@@ -557,16 +480,26 @@ class MainWindow(QMainWindow):
                 self.data_label.setText(f" {os.path.basename(file_path)} [{len(raw_data)} sheets]")
 
                 if ie_data.get("TimeObservation"):
-                    if hasattr(self.time_study_tab, 'set_ie_data'):
-                        self.time_study_tab.set_ie_data(ie_data["TimeObservation"])
-
+                    ts_tab = self._lazy_load_tab(7)
+                    if ts_tab and hasattr(ts_tab, 'set_ie_data'):
+                        ts_tab.set_ie_data(ie_data["TimeObservation"])
                 if ie_data.get("Process"):
-                    self.line_balance_tab.set_ie_data(ie_data["Process"])
-                    self.vsm_tab.set_ie_data(processes=ie_data["Process"])
+                    for tab_idx in (9, 11):
+                        t = self._lazy_load_tab(tab_idx)
+                        if t is None:
+                            continue
+                        if tab_idx == 9:
+                            t.set_ie_data(ie_data["Process"])
+                        else:
+                            t.set_ie_data(processes=ie_data["Process"])
                 if ie_data.get("MaterialFlow"):
-                    self.vsm_tab.set_ie_data(flows=ie_data["MaterialFlow"])
+                    t = self._lazy_load_tab(11)
+                    if t is not None:
+                        t.set_ie_data(flows=ie_data["MaterialFlow"])
                 if ie_data.get("Resource"):
-                    self.oee_tab.set_ie_data(ie_data["Resource"])
+                    t = self._lazy_load_tab(10)
+                    if t is not None:
+                        t.set_ie_data(ie_data["Resource"])
 
                 parts = []
                 for obj_type, objects in ie_data.items():
@@ -602,7 +535,7 @@ class MainWindow(QMainWindow):
                 self.data_loader.raw_data = raw_data
                 self.data_loader.metadata = loader.metadata
 
-                self._route_sheets_to_tabs(raw_data, quality_only=False)
+                self._route_sheets_to_tabs(raw_data, worksheet_mode=False)
                 db_label = f"{config.get('database', 'DB')}"
                 self.data_label.setText(f" DB: {db_label} [{len(raw_data)} tables]")
 
@@ -631,40 +564,69 @@ class MainWindow(QMainWindow):
         """兼容旧调用 — 默认质量导入"""
         self._on_import_quality()
 
-    def _route_sheets_to_tabs(self, raw_data: Dict[str, pd.DataFrame], quality_only: bool = False):
+    def _route_sheets_to_tabs(self, raw_data: Dict[str, pd.DataFrame], worksheet_mode: bool = False):
+        """将导入的 Sheet 分配到各分析 Tab。
+        worksheet_mode=True: 分配到除 IE 工具(7-11,21-22)外的所有 Tab。
+        worksheet_mode=False: 分配到所有 Tab（含 IE）。"""
+        # IE 专用索引 (工时研究/工作抽样/线平衡/OEE/VSM/人机/标准作业)
+        IE_INDICES = {7, 8, 9, 10, 11, 21, 22}
+
+        # Sheet → Tab 自动匹配关键词 (sheet名含这些关键词则优先分配到对应Tab)
         sheet_map = {
-            self.spc_tab: ["spc", "控制图", "control"],
-            self.capability_tab: ["能力", "capability"],
-            self.msa_tab: ["msa", "gage", "量具", "r&r"],
-            self.hypothesis_tab: ["假设", "hypothesis", "检验", "t_test", "anova"],
-            self.doe_tab: ["doe", "因子", "设计", "实验"],
-            self.regression_tab: ["regression", "回归", "reg"],
+            1:  ["spc", "控制图", "control chart"],
+            2:  ["能力", "capability", "cpk", "ppk"],
+            3:  ["msa", "gage", "量具", "r&r", "grr"],
+            4:  ["假设", "hypothesis", "t_test", "anova", "检验"],
+            5:  ["doe", "因子", "实验设计", "design"],
+            6:  ["regression", "回归", "reg"],
+            12: ["chart", "图表", "chart_tab", "可视化"],
+            13: ["reliability", "可靠性", "weibull", "mtbf", "寿命"],
+            14: ["fishbone", "鱼骨", "因果", "ishikawa"],
+            15: ["pareto", "帕累托", "柏拉图", "abc"],
+            16: ["fmea", "失效", "fmea"],
+            17: ["control_plan", "控制计划", "cp"],
+            18: ["cap_comparison", "能力对比", "comparison"],
+            19: ["trend", "趋势", "trend"],
+            20: ["summary", "摘要", "汇总", "summary_panel"],
+            23: ["merge", "合并", "sheet_merge"],
+            24: ["split", "拆分", "sheet_split"],
+            25: ["layered", "lpa", "分层", "审核"],
+            26: ["sampling", "抽样", "aql", "采样"],
+            27: ["dashboard", "仪表盘", "dashboard", "汇总报告"],
+            28: ["data_tools", "数据工具", "生成", "转换"],
         }
 
-        tabs = self._get_tabs()
-        for idx, tab in tabs.items():
-            if quality_only and idx > 6 and idx not in (12, 13, 14, 15, 18, 19, 20, 28):
+        # 1) 将所有 Sheet 填入各 Tab 的 sheet_combo / set_raw_data
+        #    遍历 sheet_map 中所有索引，按需懒加载 Tab
+        all_indices = set(sheet_map.keys()) | {16, 17}  # 补充 FMEA(16)/控制计划(17)
+        for idx in all_indices:
+            if worksheet_mode and idx in IE_INDICES:
                 continue
-            if hasattr(tab, 'set_raw_data') and (idx <= 6 or idx in (12, 13, 15, 18, 19, 20, 28)):
+            tab = self._lazy_load_tab(idx)
+            if tab and hasattr(tab, 'set_raw_data'):
                 tab.set_raw_data(raw_data, self.data_parser)
 
+        # 2) 按关键词自动匹配 Sheet 到对应 Tab
         assigned = set()
-        for tab, keywords in sheet_map.items():
-            if not hasattr(tab, 'sheet_combo'):
+        for tab_idx, keywords in sheet_map.items():
+            if worksheet_mode and tab_idx in IE_INDICES:
+                continue
+            tab = self._lazy_load_tab(tab_idx)
+            if not tab or not hasattr(tab, 'sheet_combo'):
                 continue
             for sname in raw_data:
                 if sname in assigned:
                     continue
                 if any(kw in sname.lower() for kw in keywords):
-                    idx = tab.sheet_combo.findText(sname)
-                    if idx >= 0:
-                        tab.sheet_combo.setCurrentIndex(idx)
+                    pos = tab.sheet_combo.findText(sname)
+                    if pos >= 0:
+                        tab.sheet_combo.setCurrentIndex(pos)
                         assigned.add(sname)
                         break
 
         sheets_info = ", ".join(f"{s} ({len(raw_data[s])}r)" for s in assigned)
         if sheets_info:
-            self.status_label.setText(f"{i18n.tr('status.sheets_matched')}{sheets_info}")
+            self.status_label.setText(f"Sheet 已自动匹配: {sheets_info}")
 
     def _on_import_template(self):
         file_path, _ = QFileDialog.getOpenFileName(
@@ -883,6 +845,8 @@ class MainWindow(QMainWindow):
                 self.sidebar.add_history(idx, atype, key_res)
             self.status_label.setText(i18n.tr("status.done"))
         except Exception as e:
+            import logging
+            logging.getLogger(__name__).exception(f"批量分析 {idx} 失败: {e}")
             self.status_label.setText(i18n.tr("status.failed"))
 
     def _on_analysis_finished(self, idx: int):
@@ -900,7 +864,7 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, i18n.tr("msg.no_data"), i18n.tr("msg.no_data_file"))
             return
 
-        tabs = self._get_tabs()
+        tabs = self._get_tabs(force_load=True)
         success = 0
         failed = 0
 
@@ -917,6 +881,8 @@ class MainWindow(QMainWindow):
                     self.sidebar.add_history(idx, atype, key_res)
                 success += 1
             except Exception:
+                import logging
+                logging.getLogger(__name__).exception(f"批量分析 tab idx={idx} 失败")
                 failed += 1
 
         self.statusBar().showMessage(
@@ -926,21 +892,81 @@ class MainWindow(QMainWindow):
             self.stack.setCurrentIndex(1)
             self.sidebar.set_active(1)
 
-    def _get_tabs(self):
-        return {1: self.spc_tab, 2: self.capability_tab, 3: self.msa_tab,
-                4: self.hypothesis_tab, 5: self.doe_tab, 6: self.regression_tab,
-                7: self.time_study_tab, 8: self.work_sampling_tab,
-                9: self.line_balance_tab, 10: self.oee_tab, 11: self.vsm_tab,
-                12: self.chart_tab, 13: self.reliability_tab,
-                14: self.fishbone_tab, 15: self.pareto_tab,
-                16: self.fmea_tab, 17: self.control_plan_tab,
-                18: self.cap_comparison_tab,
-                19: self.trend_tab, 20: self.summary_panel_tab,
-                21: self.worker_machine_tab, 22: self.std_work_combo_tab,
-                23: self.sheet_merge_tab, 24: self.sheet_split_tab,
-                25: self.layered_form_tab, 26: self.sampling_tab,
-                27: self.dashboard_tab, 28: self.data_tools_tab,
-                **{idx: self.stack.widget(idx) for idx in range(100, 100+len(self._plugin_tabs))}}
+    def _lazy_load_tab(self, idx: int):
+        """按需加载 Tab — 首次访问时 import + 实例化 + 替换占位符"""
+        if idx in self._tab_cache:
+            return self._tab_cache[idx]
+
+        # 插件 Tab (index >= 100)
+        if idx >= self._plugin_tab_start:
+            if idx in self._plugin_tabs:
+                p = self._plugin_tabs[idx]
+                tab = p.create_tab()
+                self._tab_cache[idx] = tab
+                old = self.stack.widget(idx)
+                if old:
+                    self.stack.removeWidget(old)
+                self.stack.insertWidget(idx, tab)
+                if old and old.objectName().startswith("placeholder"):
+                    old.deleteLater()
+                return tab
+            return None
+
+        # 内置 Tab
+        from ui._tab_registry import INDEX_MAP
+        entry = INDEX_MAP.get(idx)
+        if not entry:
+            return None
+
+        _, _, class_name, module_path, _ = entry
+        try:
+            import importlib
+            mod = importlib.import_module(module_path)
+            cls = getattr(mod, class_name)
+            tab = cls()
+        except Exception:
+            import logging
+            logging.getLogger(__name__).exception(
+                f"懒加载 Tab 失败: idx={idx} {class_name} from {module_path}"
+            )
+            return None
+
+        self._tab_cache[idx] = tab
+        # 替换占位符（先同步移除再插入，防止 insertWidget 导致索引错位）
+        old = self.stack.widget(idx)
+        if old:
+            self.stack.removeWidget(old)
+        self.stack.insertWidget(idx, tab)
+        if old and old.objectName().startswith("placeholder"):
+            old.deleteLater()
+
+        # 连接信号
+        self._connect_tab_signals(idx, tab)
+        return tab
+
+    def _connect_tab_signals(self, idx: int, tab):
+        """为新创建的 Tab 建立信号连接"""
+        if hasattr(tab, 'export_clicked'):
+            tab.export_clicked.connect(lambda tid=idx: self._on_export_single(tid, "docx"))
+        if hasattr(tab, 'analysis_completed'):
+            tab.analysis_completed.connect(lambda tid=idx: self._on_analysis_finished(tid))
+
+    def _get_tabs(self, force_load: bool = False):
+        """获取 Tab 字典。force_load=False 仅返回已缓存的(懒加载友好)；force_load=True 全量加载"""
+        result = {}
+        if force_load:
+            idx_range = list(range(1, 29))
+        else:
+            idx_range = sorted(self._tab_cache.keys())
+        for idx in idx_range:
+            tab = self._lazy_load_tab(idx)
+            if tab:
+                result[idx] = tab
+        for idx in self._plugin_tabs:
+            tab = self._lazy_load_tab(idx)
+            if tab:
+                result[idx] = tab
+        return result
 
     def _collect_charts(self, indices: list):
         charts = {}
@@ -1030,7 +1056,7 @@ class MainWindow(QMainWindow):
         )
         if file_path:
             try:
-                self.status_label.setText(f"正在导出合规报告...")
+                self.status_label.setText("正在导出合规报告...")
                 charts = self._collect_charts(list(self.analyses.keys()))
                 ComplianceReportGenerator.generate(
                     template_id, list(self.analyses.values()),
@@ -1094,6 +1120,28 @@ class MainWindow(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "加载失败", str(e))
 
+    def _load_project_by_path(self, path: str):
+        """通过路径直接加载项目（供欢迎页最近项目使用）"""
+        try:
+            self.status_label.setText("正在加载项目...")
+            project = ProjectManager.load_project(path)
+            raw_data = project["raw_data"]
+            self.current_data = {
+                "file_path": path,
+                "raw_data": raw_data,
+                "metadata": {"sheet_names": list(raw_data.keys()), "total_rows": sum(len(df) for df in raw_data.values())},
+            }
+            self.data_loader.raw_data = raw_data
+            self.data_loader.metadata = self.current_data["metadata"]
+            self._route_sheets_to_tabs(raw_data)
+            self.analyses = project["analyses"]
+            info = project["manifest"]
+            self.data_label.setText(f" {os.path.basename(path)} [{info.get('sheet_count',0)} sheets]")
+            self._rebuild_recent_menu(ProjectManager.recent_projects())
+            self.status_label.setText(f"项目已加载: {info.get('analysis_count', 0)} 个分析")
+        except Exception as e:
+            QMessageBox.critical(self, "加载失败", str(e))
+
     def _rebuild_recent_menu(self, recent: list):
         if not hasattr(self, 'recent_menu'):
             return
@@ -1107,8 +1155,7 @@ class MainWindow(QMainWindow):
 
     def _on_load_recent(self, path: str):
         if os.path.exists(path):
-            self._on_load_project()  # 复用标准加载流程(会弹出文件对话框——跳过)
-            # 直接使用已知路径加载
+            # 直接使用已知路径加载（不弹文件对话框）
             from core.project_manager import ProjectManager
             try:
                 project = ProjectManager.load_project(path)
@@ -1345,7 +1392,7 @@ class MainWindow(QMainWindow):
             cleaned = wiz.get_result()
             raw[first_key] = cleaned
             self.current_data["raw_data"] = raw
-            self._route_sheets_to_tabs(raw, quality_only=False)
+            self._route_sheets_to_tabs(raw, worksheet_mode=False)
             self.statusBar().showMessage("数据清洗向导完成", 5000)
 
     def _summarize_result(self, result: dict) -> str:
@@ -1543,7 +1590,7 @@ class MainWindow(QMainWindow):
             raw_data = self.data_loader.load(file_path)
             self.current_data = {"file_path": file_path, "raw_data": raw_data}
             self.data_label.setText(os.path.basename(file_path))
-            self._route_sheets_to_tabs(raw_data, quality_only=True)
+            self._route_sheets_to_tabs(raw_data, worksheet_mode=True)
             self.status_label.setText(f"已加载: {os.path.basename(file_path)}")
         except Exception as e:
             self.status_label.setText(f"加载失败: {e}")
