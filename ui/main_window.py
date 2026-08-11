@@ -432,7 +432,12 @@ class MainWindow(QMainWindow):
                     "metadata": self.data_loader.metadata,
                 }
                 self.session_manager.create_session(file_path=file_path)
-                self._route_sheets_to_tabs(raw_data, worksheet_mode=True)
+                try:
+                    self._route_sheets_to_tabs(raw_data, worksheet_mode=True)
+                except Exception as re:
+                    import logging
+                    logging.getLogger(__name__).exception("Sheet 分发失败")
+                    QMessageBox.critical(self, "路由失败", f"Sheet 分发异常:\n{str(re)}")
                 self.data_label.setText(f" {os.path.basename(file_path)} [{len(raw_data)} sheets]")
 
                 try:
@@ -449,8 +454,16 @@ class MainWindow(QMainWindow):
                     if df is None or len(df) == 0:
                         continue
                     # A8: 用 pd.to_numeric 替代 select_dtypes (数据以 str 加载)
-                    num_cols = [c for c in df.columns
-                                if pd.to_numeric(df[c], errors="coerce").dropna().pipe(len) > 0][:20]
+                    # 使用 iloc 按位置访问避免重复列名返回 DataFrame 导致 TypeError
+                    num_cols = []
+                    for i, c in enumerate(df.columns):
+                        try:
+                            s = pd.to_numeric(df.iloc[:, i], errors="coerce").dropna()
+                            if len(s) > 0:
+                                num_cols.append(c)
+                        except (ValueError, TypeError):
+                            pass
+                    num_cols = num_cols[:20]
                     if num_cols:
                         v = self.data_validator.validate(df, num_cols)
                         all_warnings += v.get("warning_count", 0)
@@ -463,6 +476,8 @@ class MainWindow(QMainWindow):
                 else:
                     self.status_label.setText(f"{i18n.tr('status.loaded')}: {len(self.data_loader.metadata['sheet_names'])} Sheets")
             except Exception as e:
+                import logging
+                logging.getLogger(__name__).exception("导入工作表失败")
                 QMessageBox.critical(self, i18n.tr("msg.import_failed"), f"{i18n.tr('msg.cannot_load')}\n{str(e)}")
                 self.status_label.setText(i18n.tr("status.failed"))
 
