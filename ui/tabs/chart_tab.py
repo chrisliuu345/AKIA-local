@@ -159,19 +159,23 @@ class ChartTab(BaseAnalysisTab):
         self.cb_3d.setVisible(chart_type == "3D曲面图")
 
     def _rebuild_config_panel(self, chart_type: str):
-        # 清理旧引用，防止访问已删除的 C++ 对象
+        # 销毁 config_panel 的所有旧子控件（比 takeRow 更可靠地清空 QFormLayout）
         self.cb_show_regression = None
-
-        while self.config_form_layout.rowCount() > 0:
-            row = self.config_form_layout.takeRow(0)
-            if row:
-                li = row.labelItem()
-                if li and li.widget():
-                    li.widget().deleteLater()
-                fi = row.fieldItem()
-                if fi and fi.widget():
-                    fi.widget().deleteLater()
         self._col_widgets.clear()
+        panel = self.config_panel
+        # 找到所有直接子控件并删除
+        children = panel.findChildren(QWidget, options=Qt.FindDirectChildrenOnly)
+        for child in children:
+            child.setParent(None)
+            child.deleteLater()
+        # 清空布局中的所有项
+        while self.config_form_layout.count() > 0:
+            item = self.config_form_layout.takeAt(0)
+            if item:
+                w = item.widget()
+                if w:
+                    w.setParent(None)
+                    w.deleteLater()
 
         # 散点图回归线开关
         if chart_type == "散点图":
