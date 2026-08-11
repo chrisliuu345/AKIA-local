@@ -132,6 +132,7 @@ class TPMTab(BaseAnalysisTab):
                 continue
         result = self.engine.analyze()
         self._display(result)
+        self.current_result = result.to_dict()
 
     def _display(self, result):
         # KPI
@@ -174,10 +175,12 @@ class TPMTab(BaseAnalysisTab):
             ax2.legend(fontsize=8)
 
         fig.tight_layout()
+        import matplotlib.pyplot as plt
         for i in reversed(range(self.canvas_layout.count())):
             w = self.canvas_layout.itemAt(i).widget()
             if w:
                 w.setParent(None)
+        plt.close("all")
         self.canvas = FigureCanvasQTAgg(fig)
         self.canvas_layout.addWidget(self.canvas)
         self.canvas.draw()

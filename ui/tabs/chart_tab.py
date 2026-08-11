@@ -163,14 +163,14 @@ class ChartTab(BaseAnalysisTab):
         self.cb_show_regression = None
 
         while self.config_form_layout.rowCount() > 0:
-            item = self.config_form_layout.takeRow(0)
-            if item:
-                w = item.labelField()
-                if w:
-                    w.deleteLater()
-                w = item.fieldWidget()
-                if w:
-                    w.deleteLater()
+            row = self.config_form_layout.takeRow(0)
+            if row:
+                li = row.labelItem()
+                if li and li.widget():
+                    li.widget().deleteLater()
+                fi = row.fieldItem()
+                if fi and fi.widget():
+                    fi.widget().deleteLater()
         self._col_widgets.clear()
 
         # 散点图回归线开关

@@ -30,13 +30,14 @@ class TPMRecord:
 
     @property
     def availability(self) -> float:
-        return self.actual_runtime / max(self.planned_production_time, 0.001)
+        v = self.actual_runtime / max(self.planned_production_time, 0.001)
+        return max(0.0, min(1.0, v))
 
     @property
     def performance(self) -> float:
         """性能稼动率 (简化: 有效产出时间/实际运行时间)"""
         loss = self.setup_time + self.idle_time + self.reduced_speed_loss
-        effective = self.actual_runtime - loss
+        effective = max(0.0, self.actual_runtime - loss)
         return effective / max(self.actual_runtime, 0.001)
 
     @property
@@ -69,6 +70,10 @@ class TPMResult:
         if not self.records:
             return 0.0
         return sum(r.oee for r in self.records) / len(self.records)
+
+    @property
+    def record_count(self) -> int:
+        return len(self.records)
 
     @property
     def six_losses(self) -> dict:
