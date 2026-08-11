@@ -448,5 +448,9 @@
   "sidebar.dashboard": "Dashboard汇总",
   "sidebar.data_tools": "数据工具",
   "sidebar.data_tools_tab": "随机生成/转换/异常",
+  "sidebar.smed": "SMED 快速换模",
+  "sidebar.8d": "8D 问题解决",
+  "sidebar.tpm": "TPM 全面维护",
+  "sidebar.ppap": "PPAP 生产件批准",
   "sidebar.plugins": "第三方插件"
 }

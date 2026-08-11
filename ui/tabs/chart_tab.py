@@ -2,17 +2,17 @@
 通用图表生成 Tab — 动态配置面板 + 12 种图表类型
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 import pandas as pd
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QGroupBox, QFormLayout, QTextEdit, QCheckBox,
-    QTableWidget, QTableWidgetItem, QSplitter, QHeaderView,
+    QTableWidget, QHeaderView,
     QStackedWidget, QListWidget, QListWidgetItem, QLineEdit,
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
 from core.i18n import i18n
@@ -20,15 +20,6 @@ from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import colors as theme_colors, BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY, BUTTON_TOGGLE
 from analysis.charts import generate_chart, CHART_TYPES, CHART_CONFIGS
 from analysis.charts.chart_generator import _build_summary, _CHART_PALETTES
-
-
-_COL_TYPE_MAP = {
-    "numeric": "numeric_columns",
-    "multi_numeric": "numeric_columns",
-    "multi_text": "identifier_columns",
-    "text": "identifier_columns",
-    "datetime": "column_types",
-}
 
 
 class ChartTab(BaseAnalysisTab):
@@ -172,7 +163,14 @@ class ChartTab(BaseAnalysisTab):
         self.cb_show_regression = None
 
         while self.config_form_layout.rowCount() > 0:
-            self.config_form_layout.removeRow(0)
+            item = self.config_form_layout.takeRow(0)
+            if item:
+                w = item.labelField()
+                if w:
+                    w.deleteLater()
+                w = item.fieldWidget()
+                if w:
+                    w.deleteLater()
         self._col_widgets.clear()
 
         # 散点图回归线开关
@@ -264,7 +262,6 @@ class ChartTab(BaseAnalysisTab):
                 vals = [c for c in params["columns"] if c]
                 if not vals:
                     return False, f"请选择: {label}"
-            break
 
         # 预检已选列是否有有效数值内容（避免选择全文本列时只显示"数据点不足"）
         for col in selected_cols:

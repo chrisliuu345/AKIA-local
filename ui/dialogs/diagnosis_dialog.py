@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (
     QScrollArea, QFrame, QWidget, QGridLayout, QProgressBar,
 )
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QFont, QColor
+from PySide6.QtGui import QFont
 
 from ui.theme import colors as theme_colors
 
@@ -298,4 +298,4 @@ class DiagnosisDialog(QDialog):
             for rec in sheet.get("recommendations", []):
                 if rec["confidence"]["grade"] in ("highly_recommended", "recommended"):
                     self.apply_clicked.emit(rec)
-                    return  # 应用第一个高/中置信度推荐
+                    # A6: 不 return，遍历全部高/中置信度推荐
