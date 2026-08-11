@@ -46,6 +46,11 @@ TAB_REGISTRY = [
     (27, "sidebar.dashboard",        "DashboardTab",        "ui.tabs.dashboard_tab",        "sidebar.report"),
     # ── 数据工具 (28) ──
     (28, "sidebar.data_tools_tab",   "DataToolsTab",        "ui.tabs.data_tools_tab",       "sidebar.data_tools"),
+    # ── v2.2 工程工具扩展 (29-32) ──
+    (29, "sidebar.smed",             "SMEDTab",             "ui.tabs.smed_tab",             "sidebar.ie_tools"),
+    (30, "sidebar.8d",               "EightDTab",           "ui.tabs.eight_d_tab",          "sidebar.engineering_tools"),
+    (31, "sidebar.tpm",              "TPMTab",              "ui.tabs.tpm_tab",              "sidebar.ie_tools"),
+    (32, "sidebar.ppap",             "PPAPTab",             "ui.tabs.ppap_tab",             "sidebar.engineering_tools"),
 ]
 
 # 构建快速索引: index → registry entry

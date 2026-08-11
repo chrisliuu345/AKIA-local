@@ -371,11 +371,29 @@ class LLMDialog(QDialog):
 
     def _on_token(self, token: str):
         self._current_ai_msg += token
+        # 流式刷新: append新段落, 后续token用cursor删除再重写
+        if not hasattr(self, '_streaming_block_added') or not self._streaming_block_added:
+            safe = html.escape(self._current_ai_msg).replace("\n", "<br>")
+            self.chat_view.append(
+                '<p style="margin:4px 0"><b style="color:#2ca02c">AI:</b> ' + safe + "</p>"
+            )
+            self._streaming_block_added = True
+        else:
+            cursor = self.chat_view.textCursor()
+            cursor.movePosition(cursor.End)
+            cursor.movePosition(cursor.StartOfBlock, cursor.KeepAnchor)
+            cursor.removeSelectedText()
+            safe = html.escape(self._current_ai_msg).replace("\n", "<br>")
+            cursor.insertHtml(
+                '<p style="margin:4px 0"><b style="color:#2ca02c">AI:</b> ' + safe + "</p>"
+            )
+        self.chat_view.verticalScrollBar().setValue(
+            self.chat_view.verticalScrollBar().maximum()
+        )
 
     def _on_finished(self, full_text: str):
-        self.append_msg("assistant", full_text)
+        self._streaming_block_added = False
         self._history.append(("assistant", full_text))
-        # 截断历史
         if len(self._history) > HISTORY_MAX * 2:
             self._history = self._history[-HISTORY_MAX * 2:]
         self.send_btn.setEnabled(True)
@@ -434,6 +452,12 @@ class LLMDialog(QDialog):
         self.chat_view.verticalScrollBar().setValue(
             self.chat_view.verticalScrollBar().maximum()
         )
+
+    def closeEvent(self, event):
+        if self.worker and self.worker.isRunning():
+            self.worker.quit()
+            self.worker.wait(2000)
+        super().closeEvent(event)
 
     def _clear_chat(self):
         self.chat_view.clear()

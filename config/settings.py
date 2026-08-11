@@ -7,7 +7,7 @@ import os
 
 # ── 应用信息 ──────────────────────────────────────────
 APP_NAME = "QA-Tool"
-APP_VERSION = "2.1"
+APP_VERSION = "2.2"
 ORGANIZATION = "QA-Tool"
 
 # ── 统计常量 ──────────────────────────────────────────

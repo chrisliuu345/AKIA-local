@@ -38,6 +38,8 @@ CATEGORIES = [
             (11, "sidebar.vsm"),
             (21, "sidebar.worker_machine"),
             (22, "sidebar.std_work_combo"),
+            (29, "sidebar.smed"),
+            (31, "sidebar.tpm"),
         ],
     },
     {
@@ -87,6 +89,8 @@ CATEGORIES = [
             (15, "sidebar.pareto"),
             (16, "sidebar.fmea"),
             (17, "sidebar.control_plan"),
+            (30, "sidebar.8d"),
+            (32, "sidebar.ppap"),
         ],
     },
 ]

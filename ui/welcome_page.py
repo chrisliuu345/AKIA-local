@@ -1,8 +1,8 @@
 """欢迎/首页 — 暗色渐变背景 + 卡片式快速入口 + 最近项目"""
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame,
-    QScrollArea, QSizePolicy,
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
+    QScrollArea,
 )
 from PySide6.QtCore import Signal, Qt, QPointF
 from PySide6.QtGui import (
