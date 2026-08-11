@@ -146,6 +146,7 @@ class SMEDTab(BaseAnalysisTab):
         self._read_table()
         result = self.engine.analyze()
         if not result.tasks:
+            self.current_figure = None
             return {"analysis_type": "SMED", "result": {}, "summary": "无数据"}
 
         all_tasks = list(reversed(result.tasks))
@@ -207,10 +208,12 @@ class SMEDTab(BaseAnalysisTab):
 
     def display_result(self, result):
         if self.current_figure:
+            import matplotlib.pyplot as plt
             for i in reversed(range(self.canvas_layout.count())):
                 w = self.canvas_layout.itemAt(i).widget()
                 if w:
                     w.setParent(None)
+            plt.close("all")
             self.canvas = FigureCanvasQTAgg(self.current_figure)
             self.canvas_layout.addWidget(self.canvas)
             self.canvas.draw()
