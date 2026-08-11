@@ -66,8 +66,8 @@ class PPAPTab(BaseAnalysisTab):
         # 尺寸报告
         dim_group = QGroupBox("关键尺寸报告")
         dim_layout = QVBoxLayout(dim_group)
-        self.dim_table = QTableWidget(0, 5)
-        self.dim_table.setHorizontalHeaderLabels(["特性", "名义值", "USL", "LSL", "测量值(逗号分隔)"])
+        self.dim_table = QTableWidget(0, 6)
+        self.dim_table.setHorizontalHeaderLabels(["特性", "名义值", "USL", "LSL", "测量值(逗号分隔)", "Cp/Cpk(自动)"])
         self.dim_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
         dim_layout.addWidget(self.dim_table)
         dim_btn = QHBoxLayout()
@@ -133,9 +133,7 @@ class PPAPTab(BaseAnalysisTab):
                     sigma = arr.std(ddof=1) if len(arr) > 1 else 0.001
                     cp = (usl - lsl) / (6 * sigma) if sigma > 0 else 0
                     cpk = min((usl - arr.mean()) / (3 * sigma), (arr.mean() - lsl) / (3 * sigma)) if sigma > 0 else 0
-                    name_item = self.dim_table.item(r, 0)
-                    char_name = name_item.text() if name_item else ""
-                    self.dim_table.setItem(r, 0, QTableWidgetItem(f"{char_name} (Cp={cp:.2f}, Cpk={cpk:.2f})"))
+                    self.dim_table.setItem(r, 5, QTableWidgetItem(f"Cp={cp:.2f} Cpk={cpk:.2f}"))
             except (ValueError, AttributeError):
                 continue
         QMessageBox.information(self, "计算完成", "Cp/Cpk 已更新")
@@ -165,10 +163,10 @@ class PPAPTab(BaseAnalysisTab):
                 status = self.matrix.cellWidget(r, 2).currentText()
                 rows.append({"#": n, "项目": name, "状态": status})
             df_items = pd.DataFrame(rows)
-            df_dim = pd.DataFrame(columns=["特性", "名义值", "USL", "LSL", "测量值"])
+            df_dim = pd.DataFrame(columns=["特性", "名义值", "USL", "LSL", "测量值", "Cp/Cpk"])
             for r in range(self.dim_table.rowCount()):
                 row_data = {}
-                for c in range(5):
+                for c in range(6):
                     item = self.dim_table.item(r, c)
                     row_data[df_dim.columns[c]] = item.text() if item else ""
                 df_dim = pd.concat([df_dim, pd.DataFrame([row_data])], ignore_index=True)

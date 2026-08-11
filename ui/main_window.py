@@ -395,15 +395,15 @@ class MainWindow(QMainWindow):
                 return
             # 淡入动画 (200ms)
             from PySide6.QtWidgets import QGraphicsOpacityEffect
-            # 停止旧动画并清理残留 effect (A4: 防快速切换残留)
+            # C2: 停止旧动画并清理残留 effect
+            if hasattr(self, '_tab_anim_widget') and self._tab_anim_widget:
+                self._tab_anim_widget.setGraphicsEffect(None)
             if hasattr(self, '_tab_anim') and self._tab_anim:
-                old_target = self._tab_anim.targetObject()
-                if old_target:
-                    old_target.setGraphicsEffect(None)
                 self._tab_anim.stop()
             effect = QGraphicsOpacityEffect()
             effect.setOpacity(0.0)
             target.setGraphicsEffect(effect)
+            self._tab_anim_widget = target  # 记录 widget 待下次清理
             self.stack.setCurrentIndex(index)
             self.sidebar.set_active(index)
 
