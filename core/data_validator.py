@@ -113,8 +113,15 @@ class DataValidator:
             data_min = float(data.min())
             data_max = float(data.max())
 
-            skew_val = stats.skew(data)
-            kurtosis_val = stats.kurtosis(data)
+            # 近常数数据跳过偏度/峰度 (避免 catastrophic cancellation 警告)
+            if std < 1e-12 or std / (abs(mean) + 1e-9) < 1e-8:
+                skew_val, kurtosis_val = 0.0, 0.0
+            else:
+                import warnings
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", RuntimeWarning)
+                    skew_val = stats.skew(data)
+                    kurtosis_val = stats.kurtosis(data)
 
             statistic, p_value = stats.shapiro(data) if len(data) <= 5000 else (None, None)
             if len(data) > 5000:
