@@ -432,5 +432,9 @@
   "sidebar.fishbone": "Fishbone",
   "sidebar.pareto": "Pareto",
   "sidebar.fmea": "FMEA",
-  "sidebar.control_plan": "Control Plan"
+  "sidebar.control_plan": "Control Plan",
+  "sidebar.smed": "SMED Quick Changeover",
+  "sidebar.8d": "8D Problem Solving",
+  "sidebar.tpm": "TPM Maintenance",
+  "sidebar.ppap": "PPAP Submission"
 }

@@ -83,19 +83,18 @@ class MainWindow(QMainWindow):
         self._restore_window_state()
         self.setAcceptDrops(True)
 
-        # 插件发现与注册
+        # 插件发现与注册 — 从 33 开始（v2.2 内置 Tab 已扩展到 32）
         self._pm = PluginManager()
         self._pm.discover()
         self._plugin_tabs = {}
+        self._plugin_tab_start = 33
         for name, p in self._pm.plugins.items():
-            idx = 100 + len(self._plugin_tabs)
+            idx = self._plugin_tab_start + len(self._plugin_tabs)
             self._plugin_tabs[idx] = p
             tab = p.create_tab()
             self.stack.addWidget(tab)
             self.sidebar.add_plugin_entry(idx, name)
-        # 重建导航映射
-        for idx in self._plugin_tabs:
-            self.sidebar.nav_buttons[idx] = self.stack.widget(idx)
+            self.sidebar.nav_buttons[idx] = tab
 
         _step(85, "主窗口初始化完成")
 
@@ -148,7 +147,7 @@ class MainWindow(QMainWindow):
         self.stack.addWidget(self.welcome_page)  # 0
 
         # 内置 Tab 占位符 (1-28)，首次切换时懒加载
-        for idx in range(1, 29):
+        for idx in range(1, 33):  # v2.2: indices 1-32
             placeholder = QWidget()
             placeholder.setObjectName(f"placeholder_{idx}")
             self.stack.addWidget(placeholder)
@@ -239,6 +238,9 @@ class MainWindow(QMainWindow):
         if recent:
             self.recent_menu = file_menu.addMenu("📋 最近项目")
             self._rebuild_recent_menu(recent)
+            # A5: 欢迎页填充 (转换 dict → tuple)
+            recent_items = [(r["name"], r["path"]) for r in recent]
+            self.welcome_page.set_recent_projects(recent_items)
 
         file_menu.addSeparator()
 
@@ -393,6 +395,12 @@ class MainWindow(QMainWindow):
                 return
             # 淡入动画 (200ms)
             from PySide6.QtWidgets import QGraphicsOpacityEffect
+            # 停止旧动画并清理残留 effect (A4: 防快速切换残留)
+            if hasattr(self, '_tab_anim') and self._tab_anim:
+                old_target = self._tab_anim.targetObject()
+                if old_target:
+                    old_target.setGraphicsEffect(None)
+                self._tab_anim.stop()
             effect = QGraphicsOpacityEffect()
             effect.setOpacity(0.0)
             target.setGraphicsEffect(effect)
@@ -440,7 +448,9 @@ class MainWindow(QMainWindow):
                     df = getattr(tab, 'df', None)
                     if df is None or len(df) == 0:
                         continue
-                    num_cols = df.select_dtypes(include="number").columns.tolist()
+                    # A8: 用 pd.to_numeric 替代 select_dtypes (数据以 str 加载)
+                    num_cols = [c for c in df.columns
+                                if pd.to_numeric(df[c], errors="coerce").dropna().pipe(len) > 0][:20]
                     if num_cols:
                         v = self.data_validator.validate(df, num_cols)
                         all_warnings += v.get("warning_count", 0)
@@ -509,6 +519,10 @@ class MainWindow(QMainWindow):
                     }
                     parts.append(f"{type_labels.get(obj_type, obj_type)}: {len(objects)} 条")
                 self.status_label.setText(f"已加载 IE 数据: {' | '.join(parts)}")
+                try:
+                    self.profile_result = self.data_profiler.profile(raw_data)
+                except Exception:
+                    self.profile_result = {}
             except Exception as e:
                 QMessageBox.critical(self, "导入失败", f"无法加载 IE 数据:\n{str(e)}")
                 self.status_label.setText(i18n.tr("status.failed"))
@@ -955,7 +969,7 @@ class MainWindow(QMainWindow):
         """获取 Tab 字典。force_load=False 仅返回已缓存的(懒加载友好)；force_load=True 全量加载"""
         result = {}
         if force_load:
-            idx_range = list(range(1, 29))
+            idx_range = list(range(1, 33))  # v2.2: 32 tabs
         else:
             idx_range = sorted(self._tab_cache.keys())
         for idx in idx_range:
@@ -1085,7 +1099,10 @@ class MainWindow(QMainWindow):
                 charts[label] = buf.getvalue() if hasattr(buf, 'getvalue') else buf
             ProjectManager.save_project(path, raw, self.analyses, charts, "")
             self.status_label.setText(f"项目已保存: {path}")
-            self._rebuild_recent_menu(ProjectManager.recent_projects())
+            recent = ProjectManager.recent_projects()
+            self._rebuild_recent_menu(recent)
+            recent_items = [(r["name"], r["path"]) for r in recent]
+            self.welcome_page.set_recent_projects(recent_items)
             QMessageBox.information(self, "保存完成", f"项目已保存到:\n{path}")
         except Exception as e:
             QMessageBox.critical(self, "保存失败", str(e))
@@ -1113,7 +1130,10 @@ class MainWindow(QMainWindow):
             self.analyses = project["analyses"]
             info = project["manifest"]
             self.data_label.setText(f" {os.path.basename(path)} [{info.get('sheet_count',0)} sheets]")
-            self._rebuild_recent_menu(ProjectManager.recent_projects())
+            recent = ProjectManager.recent_projects()
+            self._rebuild_recent_menu(recent)
+            recent_items = [(r["name"], r["path"]) for r in recent]
+            self.welcome_page.set_recent_projects(recent_items)
             self.status_label.setText(f"项目已加载: {info.get('analysis_count', 0)} 个分析")
             QMessageBox.information(self, "加载完成",
                                     f"已恢复 {len(raw_data)} 个数据表、{len(self.analyses)} 个分析结果")
@@ -1137,7 +1157,10 @@ class MainWindow(QMainWindow):
             self.analyses = project["analyses"]
             info = project["manifest"]
             self.data_label.setText(f" {os.path.basename(path)} [{info.get('sheet_count',0)} sheets]")
-            self._rebuild_recent_menu(ProjectManager.recent_projects())
+            recent = ProjectManager.recent_projects()
+            self._rebuild_recent_menu(recent)
+            recent_items = [(r["name"], r["path"]) for r in recent]
+            self.welcome_page.set_recent_projects(recent_items)
             self.status_label.setText(f"项目已加载: {info.get('analysis_count', 0)} 个分析")
         except Exception as e:
             QMessageBox.critical(self, "加载失败", str(e))
@@ -1166,7 +1189,10 @@ class MainWindow(QMainWindow):
                 self._route_sheets_to_tabs(raw_data)
                 self.analyses = project["analyses"]
                 self.data_label.setText(f" {os.path.basename(path)}")
-                self._rebuild_recent_menu(ProjectManager.recent_projects())
+                recent = ProjectManager.recent_projects()
+                self._rebuild_recent_menu(recent)
+                recent_items = [(r["name"], r["path"]) for r in recent]
+                self.welcome_page.set_recent_projects(recent_items)
                 self.status_label.setText(f"项目已加载: {len(raw_data)} sheets")
                 QMessageBox.information(self, "加载完成", f"已恢复 {len(self.analyses)} 个分析")
             except Exception as e:
@@ -1447,7 +1473,7 @@ class MainWindow(QMainWindow):
         from core.project_manager import SharedProjectManager
         dept = self.current_user.department or "公共"
         path, _ = QFileDialog.getSaveFileName(
-            self, "保存到共享目录", f"QA_Shared.qap", "QA-Tool Project (*.qap)"
+            self, "保存到共享目录", "QA_Shared.qap", "QA-Tool Project (*.qap)"
         )
         if not path:
             return
