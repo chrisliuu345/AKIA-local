@@ -130,6 +130,18 @@ class EightDTab(BaseAnalysisTab):
             t.setMaximumHeight(80)
             add("d4_5why", t)
             lay.addWidget(t)
+            # A1: 嵌入鱼骨图 (6M 默认骨架)
+            lay.addWidget(QLabel("鱼骨图 (双击编辑标签, 右键添加子原因):"))
+            from ui.widgets.fishbone_canvas import FishboneCanvas
+            canvas = FishboneCanvas()
+            canvas.setMinimumHeight(200)
+            # 预填 6M 骨架
+            defaults = [("人员", "人"), ("机器", "机"), ("材料", "料"),
+                        ("方法", "法"), ("测量", "测"), ("环境", "环")]
+            for i, (label, _) in enumerate(defaults):
+                canvas.add_cause(label, "right" if i % 2 == 0 else "left")
+            add("d4_fishbone", canvas)
+            lay.addWidget(canvas)
         elif code == "D5":
             t = QTableWidget(0, 3)
             t.setHorizontalHeaderLabels(["措施", "责任人", "期限"])

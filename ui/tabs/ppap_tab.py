@@ -119,7 +119,8 @@ class PPAPTab(BaseAnalysisTab):
                 pass  # keep default style
 
     def _on_status_change(self, row, status):
-        """状态变更回调（保留供未来行着色）"""
+        """A2: 状态变更实时刷新完成度"""
+        self._update_pct()
 
     def _calc_capability(self):
         for r in range(self.dim_table.rowCount()):
@@ -138,16 +139,24 @@ class PPAPTab(BaseAnalysisTab):
                 continue
         QMessageBox.information(self, "计算完成", "Cp/Cpk 已更新")
 
+    def _update_pct(self):
+        """A3: 使用引擎 completion_pct（按提交等级要求项目计算，非全部18项）"""
+        level = self.level_combo.currentData() or 3
+        self.report.submission_level = level
+        # 同步状态矩阵到引擎 items
+        for r in range(18):
+            status = self.matrix.cellWidget(r, 2).currentText()
+            self.report.items[r].status = status
+        pct = self.report.completion_pct
+        self.pct_label.setText(f"完成度: {pct}% (等级{level}: {len(self.report.required_items())}项)")
+
     def _save(self):
         self.report.part_number = self.part_no.text()
         self.report.part_name = self.part_name.text()
         self.report.supplier = self.supplier.text()
-        self.report.submission_level = self.level_combo.currentData() or 3
         self.report.psw_notes = self.psw_text.toPlainText()
-        done = sum(1 for r in range(18) if self.matrix.cellWidget(r, 2).currentText() in ("complete", "n_a"))
-        pct = round(done / 18 * 100, 1)
-        self.pct_label.setText(f"完成度: {pct}%")
-        QMessageBox.information(self, "保存完成", f"PPAP 报告已暂存 (完成度: {pct}%)")
+        self._update_pct()
+        QMessageBox.information(self, "保存完成", f"PPAP 报告已暂存 (完成度: {self.report.completion_pct}%)")
 
     def _export_xlsx(self):
         self._save()
