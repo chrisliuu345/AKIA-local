@@ -1,6 +1,5 @@
 """报告模板引擎 — 加载 + 渲染 HTML 模板 (stdlib string.Template)"""
 
-import os
 from pathlib import Path
 from string import Template
 from typing import Dict, Any, List, Optional
@@ -102,6 +101,13 @@ class ReportTemplateEngine:
         ctx.setdefault("version", "2.3")
         ctx.setdefault("timestamp", datetime.now().strftime("%Y-%m-%d %H:%M"))
         ctx.setdefault("date", datetime.now().strftime("%Y-%m-%d"))
+        # 对所有可能缺失的占位符填空值，防止 safe_substitute 保留字面 $xxx
+        placeholders = ["product", "department", "auditor", "period", "title_info",
+                        "ppap_info", "kpi_cards", "summary_table", "capability_table",
+                        "spc_violations", "msa_summary", "audit_table", "nc_list",
+                        "items_table", "dim_table", "steps_html"]
+        for ph in placeholders:
+            ctx.setdefault(ph, "—")
         try:
             return Template(raw).safe_substitute(**ctx)
         except Exception as e:

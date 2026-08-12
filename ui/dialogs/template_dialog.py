@@ -77,50 +77,38 @@ class TemplateDialog(QDialog):
     def _export(self, fmt: str):
         tid = self.template_combo.currentData()
         ctx = self.engine.build_context(self.analyses)
+        ctx["product"] = "当前项目"
+        ctx["department"] = "质量部"
         html = self.engine.render(tid, ctx)
 
         if fmt == "html":
             path, _ = QFileDialog.getSaveFileName(self, "导出 HTML", "report.html", "HTML (*.html)")
             if path:
-                with open(path, "w", encoding="utf-8") as f:
-                    f.write(html)
-                QMessageBox.information(self, "导出完成", f"HTML 已导出到:\n{path}")
+                try:
+                    with open(path, "w", encoding="utf-8") as f:
+                        f.write(html)
+                    QMessageBox.information(self, "导出完成", f"HTML 已导出到:\n{path}")
+                except Exception as e:
+                    QMessageBox.critical(self, "导出失败", str(e))
         elif fmt == "pdf":
             path, _ = QFileDialog.getSaveFileName(self, "导出 PDF", "report.pdf", "PDF (*.pdf)")
             if path:
                 try:
-                    from reportlab.lib.pagesizes import A4
-                    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-                    from reportlab.lib.styles import getSampleStyleSheet
-                    from reportlab.lib.utils import simpleSplit
-                    from html.parser import HTMLParser
-                    doc = SimpleDocTemplate(path, pagesize=A4)
-                    styles = getSampleStyleSheet()
-                    story = []
-
-                    class _Stripper(HTMLParser):
-                        def __init__(self):
-                            super().__init__()
-                            self.text = []
-                        def handle_data(self, d):
-                            self.text.append(d.strip())
-                    s = _Stripper()
-                    s.feed(html)
-                    lines = [l for l in s.text if l]
-                    for line in lines:
-                        story.append(Paragraph(line, styles["BodyText"]))
-                        story.append(Spacer(1, 6))
-                    doc.build(story)
-                    QMessageBox.information(self, "导出完成", f"PDF 已导出")
+                    from output.pdf_report import PDFReport
+                    items = [{"analysis_type": k, "result": v} for k, v in ctx.items()
+                             if k not in ("version", "timestamp", "date", "product", "department")]
+                    PDFReport().generate(items, output_path=path, title="报告导出")
+                    QMessageBox.information(self, "导出完成", "PDF 已导出")
                 except Exception as e:
                     QMessageBox.critical(self, "导出失败", str(e))
         elif fmt == "docx":
             path, _ = QFileDialog.getSaveFileName(self, "导出 Word", "report.docx", "Word (*.docx)")
             if path:
                 try:
+                    items = [{"analysis_type": k, "result": v} for k, v in ctx.items()
+                             if k not in ("version", "timestamp", "date", "product", "department")]
                     from output.word_report import WordReport
-                    w = WordReport()
-                    w.generate([{"analysis_type": "report", "result": {}}], path, title="报告导出")
+                    WordReport().generate(items, path, title="报告导出")
                     QMessageBox.information(self, "导出完成", "Word 已导出")
                 except Exception as e:
                     QMessageBox.critical(self, "导出失败", str(e))
