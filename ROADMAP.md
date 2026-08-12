@@ -1,151 +1,153 @@
-# QA-Tool 版本路线图 (ROADMAP)
+# QA-Tool Roadmap
 
-> 当前: v2.3 | 测试: 87/87 | 32 Tab + 插件 | 更新: 2026-08-10
+> Current: v2.3 | Tests: 87/87 | 32 Tabs + Plugins | Updated: 2026-08-12
 
 ---
 
-## 版本路线图总览
+## Version Roadmap Overview
 
 ```
-v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 🔨 ──→ v2.4 ──→ v2.5
- 发布     代码+AI    工程工具    报告增强    实时监控    长期规划
-          (完成)     (完成)     (进行中)    (3天)      (待定)
+v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ──→ v2.5
+ Release   Code+AI    Eng Tools   Reports     Live       Long-term
+           (Done)     (Done)      (Done)      (3 days)   (TBD)
 ```
 
 ---
 
-## v2.1 ✅ 已完成 — 代码质量与 AI 智能增强
+## v2.1 ✅ Completed — Code Quality & AI Enhancement
 
-### 方向A: 代码质量与架构优化
-- 5个P0 Bug修复 (p_chart数据写反/pdf水印/NameError×3)
-- 12处裸except消除, 2处iterrows向量化
-- Tab懒加载 (TAB_REGISTRY 32项 + importlib按需创建), 启动时间减半
-- 200+未使用导入清理, 60+死代码删除
-- welcome_page 4个死功能修复、诊断apply_all修复
-- 测试: 65→87 (+22)
-- 关键修复: pd.to_numeric替代select_dtypes, removeWidget防止Stack错位, iloc防重名列
+### Direction A: Code Quality & Architecture Optimization
+- 5 P0 bug fixes (p_chart data swap / PDF watermark / NameError ×3)
+- 12 bare-except eliminations, 2 iterrows vectorizations
+- Tab lazy loading (TAB_REGISTRY 32 entries + importlib on-demand), startup time halved
+- 200+ unused imports cleaned, 60+ dead code removed
+- welcome_page 4 dead features fixed, diagnostics apply_all fix
+- Tests: 65 → 87 (+22)
+- Key fixes: `pd.to_numeric` replaces `select_dtypes`, `removeWidget` prevents Stack index shift, `iloc` for duplicate column safety
 
-### 方向C: AI智能增强
-- 知识库 99→124条目 (+25: SMED/8D/TPM/PPAP/AQL/Weibull/ALT/非参数)
-- 混合检索: TF-IDF(0.5)+关键词(0.3)+标题(0.2)
-- AI对话V2: 8预设模板 + 20轮历史 + 导出MD + QSettings持久化 + 流式刷新
-- 一键智能分析: 画像→推荐→执行→AI撰写→PDF/MD
-- LLM线程管理 (closeEvent quit+wait)
+### Direction C: AI Intelligence Enhancement
+- Knowledge base 99 → 124 entries (+25: SMED/8D/TPM/PPAP/AQL/Weibull/ALT/non-parametric)
+- Hybrid search: TF-IDF (0.5) + keyword (0.3) + title (0.2)
+- AI Chat V2: 8 preset templates + 20-round history + MD export + QSettings persistence + streaming refresh
+- One-click analysis: Profile → Recommend → Execute → AI write-up → PDF/MD
+- LLM thread management (closeEvent quit+wait)
 
-### 体验提升
-- 导入工作表→自动分发21个非IE工具 (sheet_map 22条目)
-- 欢迎页双入口 (工作表/IE数据)
-- IE识别100+别名扩展; 数据校验近常数列静默
-- 版本号→2.1, 构建 exe (36.8MB) 含 logo+knowledge
+### UX Improvements
+- Import sheet → auto-route to 21 non-IE tools (sheet_map 22 entries)
+- Welcome page dual entry (Sheet / IE Data)
+- IE recognition 100+ alias expansion; near-constant column silent suppression
+- Version → 2.1, Build exe (36.8MB) with logo + knowledge base
 
 ---
 
-## v2.2 ✅ 已完成 — 工程工具扩展
+## v2.2 ✅ Completed — Engineering Tools Extension
 
-### Phase A: v2.1 遗留修复 (9项)
-插件索引33、LLM流式刷新、validate_params完整、动画清理、欢迎页最近项目、诊断apply_all、Chart Tab控件清理、数据校验、profile_result
+### Phase A: v2.1 Legacy Fixes (9 items)
+Plugin index 33, LLM streaming refresh, validate_params complete, animation cleanup, welcome page recent projects, diagnostics apply_all, Chart Tab widget cleanup, data validation, profile_result
 
-### Phase B: 新工程工具 (4个)
+### Phase B: New Engineering Tools (4 modules)
 
-| 索引 | 模块 | 引擎 | Tab |
+| Index | Module | Engine | Tab |
 |:--:|------|------|------|
-| 29 | SMED 快速换模 | `analysis/ie/smed.py` | `ui/tabs/smed_tab.py` |
-| 30 | 8D 问题解决 | `analysis/quality/eight_d_engine.py` | `ui/tabs/eight_d_tab.py` |
-| 31 | TPM 全面维护 | `analysis/ie/tpm.py` | `ui/tabs/tpm_tab.py` |
-| 32 | PPAP 生产件批准 | `analysis/quality/ppap_engine.py` | `ui/tabs/ppap_tab.py` |
+| 29 | SMED | `analysis/ie/smed.py` | `ui/tabs/smed_tab.py` |
+| 30 | 8D Problem Solving | `analysis/quality/eight_d_engine.py` | `ui/tabs/eight_d_tab.py` |
+| 31 | TPM | `analysis/ie/tpm.py` | `ui/tabs/tpm_tab.py` |
+| 32 | PPAP | `analysis/quality/ppap_engine.py` | `ui/tabs/ppap_tab.py` |
 
-**侧栏**: 32 Tab (4新增) · 插件起点 33
+**Sidebar**: 32 Tabs (+4 new) · Plugin start index 33
 
 ---
 
-## v2.3 🔨 报告增强（当前版本）
+## v2.3 ✅ Completed — Report Enhancement
 
-### Phase A: v2.2 遗留修复 (4项) ✅
-- A1: 8D D4页嵌入 FishboneCanvas (6M骨架, render_fishbone)
-- A2: PPAP状态变更实时刷新完成度
-- A3: PPAP完成度统一使用引擎 completion_pct (按提交等级)
-- A4: analysis/ie/__init__.py 和 analysis/quality/__init__.py 导出新模块
+### Phase A: v2.2 Legacy Fixes (4 items)
+- A1: 8D D4 page embedded FishboneCanvas (6M skeleton, render_fishbone)
+- A2: PPAP status change real-time completion refresh
+- A3: PPAP completion unified to engine `completion_pct` (submission-level based)
+- A4: `analysis/ie/__init__.py` and `analysis/quality/__init__.py` export new modules
 
-### Phase B: 报告系统 (4项)
+### Phase B: Report System (4 items)
 
-| # | 模块 | 文件 | 说明 |
+| # | Module | File | Description |
 |:--:|------|------|------|
-| D1 | 模板引擎 | `core/report_templates.py` (新建) | string.Template, 5种内置HTML模板 |
-| D2 | 模板对话框 | `ui/dialogs/template_dialog.py` (新建) | 选模板→预览→导出PDF/Word/HTML |
-| D3 | 合规报告 | `output/compliance_report.py` | 框架已有, IATF/ISO条款引用 |
-| D4 | HTML导出 | `output/html_export.py` (新建) | matplotlib→base64内嵌, 自包含离线HTML |
+| D1 | Template Engine | `core/report_templates.py` | string.Template, 5 built-in HTML templates |
+| D2 | Template Dialog | `ui/dialogs/template_dialog.py` | Select → Preview → Export PDF/Word/HTML |
+| D3 | Compliance Report | `output/compliance_report.py` | Framework with IATF/ISO clause references |
+| D4 | HTML Export | `output/html_export.py` | matplotlib→base64 inline, self-contained offline HTML |
 
-**菜单**: 工具 → 报告模板 / 导出HTML报告
-
----
-
-## v2.4 — 实时监控与集成（方向E）
-
-### E1. 文件监控实时SPC（1.5天）
-- QFileSystemWatcher 监控文件夹
-- 新文件/变更 → 自动导入 → 更新控制图 → 超限告警
-- 新建: `core/file_watcher.py`, `ui/tabs/monitor_tab.py` (index 33)
-
-### E2. 多工厂/多产线对比（1天）
-- 同指标多线并排 · Cp/Cpk雷达图 · OEE多柱图 · 不良率叠加趋势
-- 新建: `ui/tabs/multi_plant_tab.py` (index 34)
-
-### E3. 告警通知系统（0.5天）
-- 多通道告警（弹窗/声音/日志）· 可配置规则 · 告警聚合/去重
-
-### E4. 数据看板增强（0.5天）
-- 实时刷新Dashboard(27号Tab, QTimer轮询)
-- 自定义KPI卡片布局
-
-**预估**: 3天 | 新建 Tab 33-34 | 侧栏 32→34
+### Menu Restructure
+6 menus: File | Analysis | AI | Tools | View | Help — with categorized submenus covering all 32 tabs
 
 ---
 
-## v2.5 — 长期规划 (P2/P3)
+## v2.4 — Real-Time Monitoring & Integration (Direction E)
 
-| 优先级 | 功能 | 说明 |
+### E1. File Watcher Real-Time SPC (1.5 days)
+- QFileSystemWatcher monitoring folder
+- New file / change → auto import → update control chart → out-of-spec alert
+- New: `core/file_watcher.py`, `ui/tabs/monitor_tab.py` (index 33)
+
+### E2. Multi-Plant / Multi-Line Comparison (1 day)
+- Same metric multi-line side-by-side · Cp/Cpk radar chart · OEE multi-bar · Defect rate overlay trend
+- New: `ui/tabs/multi_plant_tab.py` (index 34)
+
+### E3. Alert Notification System (0.5 days)
+- Multi-channel alerts (popup / sound / log) · Configurable rules · Alert aggregation / dedup
+
+### E4. Dashboard Enhancement (0.5 days)
+- Real-time refresh Dashboard (tab 27, QTimer polling)
+- Custom KPI card layout
+
+**Estimate**: 3 days | New Tabs 33-34 | Sidebar 32→34
+
+---
+
+## v2.5 — Long-Term Planning (P2/P3)
+
+| Priority | Feature | Description |
 |:--:|------|------|
-| P2-1 | 低代码公式编辑器 | 用户自定义KPI公式 (类似JMP Formula Editor) |
-| P2-2 | 车间大屏模式 | 全屏仪表盘·自动轮播·适配1920×1080 |
-| P2-3 | 视频工时分析 | 视频帧级计时·AI动作识别 (OpenCV+MediaPipe) |
-| P2-4 | 批量宏录制/回放 | 录制操作序列→保存为宏→一键回放 |
-| P2-5 | 自定义控制图模板 | 用户保存/加载图表配置 (JSON) |
-| P3-1 | 供应链质量协同 | P2P供应商数据共享·CPK穿透·物料号映射 |
-| P3-2 | 数字孪生Layout | 拖拽工站模拟线平衡·2D Canvas产线布局 |
-| P3-3 | REST API服务 | FastAPI包装核心分析→供MES/ERP调用 |
-| P3-4 | Web前端迁移 | 逐步从PySide6迁移到FastAPI+React |
-| P3-5 | 移动端App | Flutter/React Native查看报告+告警推送 |
+| P2-1 | Low-code Formula Editor | User-defined KPI formulas (similar to JMP Formula Editor) |
+| P2-2 | Shop Floor Display Mode | Full-screen dashboard · Auto-rotate · 1920×1080 optimized |
+| P2-3 | Video Time Study | Frame-level timing · AI motion recognition (OpenCV+MediaPipe) |
+| P2-4 | Batch Macro Record/Replay | Record operation sequence → save as macro → one-click replay |
+| P2-5 | Custom Control Chart Templates | User save/load chart configs (JSON) |
+| P3-1 | Supply Chain Quality Collaboration | P2P supplier data sharing · CPK drill-through · Part number mapping |
+| P3-2 | Digital Twin Layout | Drag-and-drop workstation simulation · 2D Canvas line layout |
+| P3-3 | REST API Service | FastAPI wrapping core analysis → for MES/ERP consumption |
+| P3-4 | Web Frontend Migration | Gradual migration from PySide6 to FastAPI+React |
+| P3-5 | Mobile App | Flutter/React Native for report viewing + alert push |
 
 ---
 
-## 侧栏演进路线
+## Sidebar Evolution
 
 ```
 v2.0 (28)     v2.1 (28)     v2.2 (32)       v2.4 (34)
- 首页(0)       同左          同左             同左
- 质量(1-6)     同左          同左             同左
- IE(7-11,21-22) 同左         +SMED(29)+TPM(31)  同左
- 图表(12,18-20) 同左         同左             同左
- 工程(13-17)    同左         +8D(30)+PPAP(32)   同左
- 工作表(23-25)  同左         同左             同左
- 抽样(26)       同左         同左             同左
- 报告(27)       同左         同左             同左
- 数据(28)       同左         同左             同左
- —              —            —               实时监控(33)
- —              —            —               多工厂对比(34)
- 插件(动态)     同左         同左             同左
+ Home (0)       Same           Same             Same
+ Quality (1-6)  Same           Same             Same
+ IE (7-11,21-22) Same          +SMED(29)+TPM(31)  Same
+ Charts (12,18-20) Same        Same             Same
+ Eng (13-17)     Same         +8D(30)+PPAP(32)   Same
+ Worksheet (23-25) Same        Same             Same
+ Sampling (26)   Same          Same             Same
+ Report (27)     Same          Same             Same
+ Data (28)       Same          Same             Same
+ —               —             —                Live Monitor (33)
+ —               —             —                Multi-Plant (34)
+ Plugins (dynamic) Same        Same             Same
 ```
 
 ---
 
-## 版本历史
+## Version History
 
-| 日期 | 版本 | 内容 |
-|------|------|------|
-| 08-10 | v2.3-dev | Phase B: 报告模板引擎 + 对话框 + HTML自包含导出 |
-| 08-10 | v2.3-dev | Phase A: 8D鱼骨图嵌入 + PPAP实时刷新 + 引擎包导出 |
-| 08-10 | v2.2 | 发布: 32Tab·SMED/8D/TPM/PPAP·87测试·lint干净 |
-| 08-10 | v2.2-dev | 审查修复: 3 Critical + 7 Warning (TPM属性/动画/图表) |
-| 08-10 | v2.1 | 发布: 87测试·AI增强·懒加载·一键分析·列选择器修复 |
-| 08-10 | v2.1-dev | 代码审计: 5Bug·200+导入·60+死代码·15组重复 |
-| 08-04 | v2.0 | 正式发布: 28Tab·65测试·AI助手·插件化 |
+| Date | Version | Content |
+|------|---------|---------|
+| 08-12 | v2.3 | Released: Report template engine + dialog + HTML export + menu restructure |
+| 08-10 | v2.3-dev | Phase B: Report template engine + dialog + HTML self-contained export |
+| 08-10 | v2.3-dev | Phase A: 8D fishbone embed + PPAP real-time refresh + engine package exports |
+| 08-10 | v2.2 | Released: 32 tabs · SMED/8D/TPM/PPAP · 87 tests · lint-clean |
+| 08-10 | v2.2-dev | Review fixes: 3 Critical + 7 Warning (TPM property / animation / chart tab) |
+| 08-10 | v2.1 | Released: 87 tests · AI enhanced · Lazy loading · One-click analysis · Column selector fix |
+| 08-10 | v2.1-dev | Code audit: 5 bugs · 200+ imports · 60+ dead code · 15 duplicate groups |
+| 08-04 | v2.0 | Initial release: 28 tabs · 65 tests · AI assistant · Plugin system |

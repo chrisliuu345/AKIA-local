@@ -1,0 +1,9 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>月度SPC报告</title>
+<style>body{font-family:'Microsoft YaHei',sans-serif;max-width:900px;margin:auto;padding:20px;color:#333}
+h1{color:#1b5faa}h2{color:#555;border-bottom:1px solid #ddd}table{width:100%;border-collapse:collapse;margin:10px 0}
+td,th{border:1px solid #ddd;padding:6px}th{background:#1b5faa;color:#fff}.warn{color:#e74c3c}.ok{color:#27ae60}</style></head><body>
+<h1>月度SPC统计过程控制报告</h1><p>期间: $period | 产品: $product</p>
+<h2>过程能力汇总</h2>$capability_table
+<h2>SPC违规统计</h2>$spc_violations
+<h2>MSA评估</h2>$msa_summary
+<div class="footer"><p>QA-Tool v$version · $timestamp</p></div></body></html>
