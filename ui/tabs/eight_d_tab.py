@@ -130,17 +130,21 @@ class EightDTab(BaseAnalysisTab):
             t.setMaximumHeight(80)
             add("d4_5why", t)
             lay.addWidget(t)
-            # A1: 嵌入鱼骨图 (6M 骨架, 可通过右键菜单交互)
-            lay.addWidget(QLabel("鱼骨图 (双击标签编辑, 右键分支添加子原因):"))
+            # A1: 嵌入鱼骨图 (6M 骨架, 可与鱼骨图工具交互)
+            lay.addWidget(QLabel("鱼骨图 (拖拽标签, 滚轮缩放, 双击编辑):"))
             from ui.widgets.fishbone_canvas import FishboneCanvas
             canvas = FishboneCanvas()
             canvas.setMinimumHeight(220)
-            # 预填 6M 骨架 (t=位置参数, side=0左/1右)
-            defaults = ["人员", "机器", "材料", "方法", "测量", "环境"]
-            for i, label in enumerate(defaults):
-                t_val = 0.1 + 0.16 * i
-                side_val = 0 if i % 2 == 0 else 1
-                canvas.add_cause(label, t_val, side_val)
+            # render_fishbone 接收 {分支名: {子原因: [...]}}
+            branches_6m = {
+                "人员": {"培训不足": [], "疲劳": []},
+                "机器": {"精度下降": [], "维护不及时": []},
+                "材料": {"来料变异": [], "批次差异": []},
+                "方法": {"参数偏移": [], "SOP不明确": []},
+                "测量": {"量具误差": [], "人员差异": []},
+                "环境": {"温度波动": [], "振动干扰": []},
+            }
+            canvas.render_fishbone(branches_6m, problem="")
             add("d4_fishbone", canvas)
             lay.addWidget(canvas)
         elif code == "D5":
