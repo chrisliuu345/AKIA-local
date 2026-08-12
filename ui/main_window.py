@@ -268,66 +268,91 @@ class MainWindow(QMainWindow):
         )
         view_menu.addAction(self.toggle_sidebar_action)
 
-        analysis_menu = menubar.addMenu(i18n.tr("menu.analysis"))
-        spc_action = QAction(i18n.tr("menu.spc"), self)
-        spc_action.triggered.connect(lambda: self._switch_tab(1))
-        analysis_menu.addAction(spc_action)
-        cap_action = QAction(i18n.tr("menu.capability"), self)
-        cap_action.triggered.connect(lambda: self._switch_tab(2))
-        analysis_menu.addAction(cap_action)
-        msa_action = QAction(i18n.tr("menu.msa"), self)
-        msa_action.triggered.connect(lambda: self._switch_tab(3))
-        analysis_menu.addAction(msa_action)
-        hyp_action = QAction(i18n.tr("menu.hypothesis"), self)
-        hyp_action.triggered.connect(lambda: self._switch_tab(4))
-        analysis_menu.addAction(hyp_action)
-        doe_action = QAction(i18n.tr("menu.doe"), self)
-        doe_action.triggered.connect(lambda: self._switch_tab(5))
-        analysis_menu.addAction(doe_action)
-
+        # ── 分析 — 全Tab分类子菜单 ──
+        analysis_menu = menubar.addMenu("分析")
+        # 质量分析
+        quality_sub = analysis_menu.addMenu("质量分析")
+        for idx, label in [(1, "SPC 控制图"), (2, "过程能力"), (3, "MSA"),
+                           (4, "假设检验"), (5, "DOE"), (6, "回归分析")]:
+            a = QAction(label, self)
+            a.triggered.connect(lambda _, i=idx: self._switch_tab(i))
+            quality_sub.addAction(a)
+        # IE 工具
+        ie_sub = analysis_menu.addMenu("IE 工具")
+        for idx, label in [(7, "工时研究"), (8, "工作抽样"), (9, "线平衡"),
+                           (10, "OEE"), (11, "VSM"), (21, "人机配合"),
+                           (22, "标准作业"), (29, "SMED 快速换模"), (31, "TPM 全面维护")]:
+            a = QAction(label, self)
+            a.triggered.connect(lambda _, i=idx: self._switch_tab(i))
+            ie_sub.addAction(a)
+        # 图表工具
+        chart_sub = analysis_menu.addMenu("图表工具")
+        for idx, label in [(12, "通用图表"), (18, "能力对比"), (19, "趋势图"), (20, "统计摘要")]:
+            a = QAction(label, self)
+            a.triggered.connect(lambda _, i=idx: self._switch_tab(i))
+            chart_sub.addAction(a)
+        # 工程工具
+        eng_sub = analysis_menu.addMenu("工程工具")
+        for idx, label in [(13, "可靠性"), (14, "鱼骨图"), (15, "帕累托"),
+                           (16, "FMEA"), (17, "控制计划"), (30, "8D 问题解决"), (32, "PPAP 批准")]:
+            a = QAction(label, self)
+            a.triggered.connect(lambda _, i=idx: self._switch_tab(i))
+            eng_sub.addAction(a)
+        # 工作表/抽样/数据
+        sheet_sub = analysis_menu.addMenu("工作表")
+        for idx, label in [(23, "合并"), (24, "拆分"), (25, "LPA 审核表")]:
+            a = QAction(label, self)
+            a.triggered.connect(lambda _, i=idx: self._switch_tab(i))
+            sheet_sub.addAction(a)
+        analysis_menu.addSeparator()
+        for idx, label in [(26, "抽样检验 (AQL)"), (28, "数据工具"), (27, "仪表盘")]:
+            a = QAction(label, self)
+            a.triggered.connect(lambda _, i=idx: self._switch_tab(i))
+            analysis_menu.addAction(a)
         analysis_menu.addSeparator()
         run_all = QAction(i18n.tr("menu.run"), self)
         run_all.setShortcut("F5")
         run_all.triggered.connect(self._on_run_all_analyses)
         analysis_menu.addAction(run_all)
 
+        # ── AI — 从工具菜单拆出 ──
+        ai_menu = menubar.addMenu("AI")
+        ai_chat = QAction(i18n.tr("sidebar.llm"), self)
+        ai_chat.triggered.connect(self._on_llm_assist)
+        ai_menu.addAction(ai_chat)
+        one_click = QAction("一键智能分析报告", self)
+        one_click.triggered.connect(self._on_one_click_analysis)
+        ai_menu.addAction(one_click)
+        ai_menu.addSeparator()
+        template_act = QAction("报告模板", self)
+        template_act.triggered.connect(self._on_template_dialog)
+        ai_menu.addAction(template_act)
+        html_act = QAction("导出 HTML 报告", self)
+        html_act.triggered.connect(self._on_html_export)
+        ai_menu.addAction(html_act)
+
+        # ── 工具 — 精简后 ──
         tools_menu = menubar.addMenu(i18n.tr("menu.tools"))
-        settings_action = QAction(i18n.tr("menu.settings"), self)
-        settings_action.triggered.connect(self._on_settings)
-        tools_menu.addAction(settings_action)
-        tools_menu.addSeparator()
-        batch_action = QAction("批量调度", self)
-        batch_action.triggered.connect(self._on_batch_scheduler)
-        tools_menu.addAction(batch_action)
+        tools_menu.addAction(QAction(i18n.tr("menu.settings"), self,
+                                     triggered=self._on_settings))
+        tools_menu.addAction(QAction("批量调度", self,
+                                     triggered=self._on_batch_scheduler))
         if self.current_user and self.current_user.can_manage_users:
-            user_mgmt_action = QAction("用户管理", self)
-            user_mgmt_action.triggered.connect(self._on_user_management)
-            tools_menu.addAction(user_mgmt_action)
-        clean_action = QAction(i18n.tr("sidebar.data_clean"), self)
-        clean_action.triggered.connect(self._on_data_cleaner)
-        tools_menu.addAction(clean_action)
-        wizard_action = QAction("数据清洗向导 (一键)", self)
-        wizard_action.triggered.connect(self._on_data_clean_wizard)
-        tools_menu.addAction(wizard_action)
-        template_help_action = QAction(i18n.tr("sidebar.template_help_tip"), self)
-        template_help_action.triggered.connect(self._on_template_help)
-        tools_menu.addAction(template_help_action)
+            tools_menu.addAction(QAction("用户管理", self,
+                                         triggered=self._on_user_management))
         tools_menu.addSeparator()
-        diagnose_action = QAction(i18n.tr("sidebar.diagnose"), self)
-        diagnose_action.triggered.connect(self._on_diagnose)
-        tools_menu.addAction(diagnose_action)
-        ai_action = QAction(i18n.tr("sidebar.llm"), self)
-        ai_action.triggered.connect(self._on_llm_assist)
-        tools_menu.addAction(ai_action)
-        one_click_action = QAction("一键智能分析报告", self)
-        one_click_action.triggered.connect(self._on_one_click_analysis)
-        tools_menu.addAction(one_click_action)
-        template_action = QAction("报告模板", self)
-        template_action.triggered.connect(self._on_template_dialog)
-        tools_menu.addAction(template_action)
-        html_export_action = QAction("导出 HTML 报告", self)
-        html_export_action.triggered.connect(self._on_html_export)
-        tools_menu.addAction(html_export_action)
+        tools_menu.addAction(QAction(i18n.tr("sidebar.data_clean"), self,
+                                     triggered=self._on_data_cleaner))
+        tools_menu.addAction(QAction("数据清洗向导", self,
+                                     triggered=self._on_data_clean_wizard))
+        tools_menu.addAction(QAction(i18n.tr("sidebar.template_help_tip"), self,
+                                     triggered=self._on_template_help))
+        tools_menu.addSeparator()
+        tools_menu.addAction(QAction(i18n.tr("sidebar.diagnose"), self,
+                                     triggered=self._on_diagnose))
+        kb_action = QAction("知识库检索", self)
+        kb_action.triggered.connect(lambda: LLMDialog(self).exec())
+        tools_menu.addAction(kb_action)
 
         help_menu = menubar.addMenu(i18n.tr("menu.help"))
         about_action = QAction(i18n.tr("menu.about"), self)
