@@ -351,7 +351,7 @@ class MainWindow(QMainWindow):
         tools_menu.addAction(QAction(i18n.tr("sidebar.diagnose"), self,
                                      triggered=self._on_diagnose))
         kb_action = QAction("知识库检索", self)
-        kb_action.triggered.connect(lambda: LLMDialog(self).exec())
+        kb_action.triggered.connect(self._on_llm_assist)
         tools_menu.addAction(kb_action)
 
         help_menu = menubar.addMenu(i18n.tr("menu.help"))
