@@ -1,0 +1,11 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>质量日报</title>
+<style>body{font-family:'Microsoft YaHei',sans-serif;max-width:800px;margin:auto;padding:20px;color:#333}
+h1{color:#1b5faa;border-bottom:2px solid #1b5faa}h2{color:#555}.kpi{display:flex;gap:20px;margin:10px 0}
+.kpi div{flex:1;background:#f0f4f8;padding:12px;border-radius:8px;text-align:center}
+.kpi .val{font-size:28px;font-weight:bold;color:#1b5faa}table{width:100%;border-collapse:collapse;margin:10px 0}
+td,th{border:1px solid #ddd;padding:6px;text-align:center}th{background:#1b5faa;color:#fff}
+.footer{color:#888;font-size:12px;margin-top:30px}</style></head><body>
+<h1>质量日报</h1><p>日期: $date | 产品: $product | 部门: $department</p>
+<h2>关键指标</h2><div class="kpi">$kpi_cards</div>
+<h2>分析摘要</h2>$summary_table
+<div class="footer"><p>QA-Tool v$version · 自动生成于 $timestamp</p></div></body></html>

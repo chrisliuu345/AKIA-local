@@ -1,137 +1,172 @@
-## 功能总览
+# QA-Tool — IE Quality Analyzer
 
-### 质量分析 (6 模块)
+A Python 3.14 + PySide6 desktop application for quality engineering and industrial engineering analysis. 32 analysis modules, AI-powered insights, and comprehensive reporting.
 
-| 模块 | 功能 |
+## Features
+
+### Quality Analysis (6 modules)
+
+| Module | Capabilities |
 |------|------|
-| **SPC 控制图** | XBar-R/S · I-MR · P/NP/C/U · CUSUM · EWMA + Nelson 8 规则 |
-| **过程能力** | 正态/非正态(Box-Cox) / 组间组内 · Cp/Cpk/Pp/Ppk/PPM |
-| **MSA** | 量具 R&R (交叉/嵌套) · 偏倚/线性 · 属性一致性 |
-| **假设检验** | t检验 · ANOVA · 正态性 · 方差齐性 · **非参数检验** (MWU/Wilcoxon/Kruskal) |
-| **DOE** | 全因子/2^k · 响应曲面 CCD · Box-Behnken |
-| **回归分析** | 线性/多元 · R² · 残差诊断 · 相关矩阵热力图 |
+| **SPC Control Charts** | XBar-R/S · I-MR · P/NP/C/U · CUSUM · EWMA + Nelson 8 rules |
+| **Process Capability** | Normal / Non-normal (Box-Cox) / Between-Within · Cp/Cpk/Pp/Ppk/PPM |
+| **MSA** | Gauge R&R (crossed/nested) · Bias/Linearity · Attribute agreement |
+| **Hypothesis Testing** | t-test · ANOVA · Normality · Variance equality · **Non-parametric** (MWU/Wilcoxon/Kruskal) |
+| **DOE** | Full factorial / 2^k · Response surface CCD · Box-Behnken |
+| **Regression** | Linear / Multiple · R² · Residual diagnostics · Correlation heatmap |
 
-### IE 工业工程 (7 模块)
+### IE Industrial Engineering (7 modules)
 
-| 模块 | 功能 |
+| Module | Capabilities |
 |------|------|
-| 工时研究 | 标准工时 · 评比系数 · 宽放率 · 能力 vs 节拍 |
-| 工作抽样 | 比率分析 · 置信区间 · 利用率 |
-| 线平衡 | LPT 平衡 · 瓶颈识别 · 山积图 |
-| **OEE** | A×P×Q · 损失分解 · 世界级/良好/落后分级 |
-| VSM | 价值流图 · VA/NVA · 前置时间 |
-| **人机配合** | Worker-Machine 时间线图 (预设+可编辑) |
-| **标准作业组合票** | 手动/自动/步行堆叠柱状图 |
+| Time Study | Standard time · Rating factor · Allowance · Capacity vs Takt |
+| Work Sampling | Ratio analysis · Confidence intervals · Utilization |
+| Line Balancing | LPT balancing · Bottleneck identification · Yamazumi chart |
+| **OEE** | A×P×Q · Loss decomposition · World-class / Good / Fair grading |
+| VSM | Value stream mapping · VA/NVA · Lead time |
+| **Worker-Machine** | Worker-Machine timeline chart (presets + editable) |
+| **Standard Work** | Manual / Auto / Walk stacked bar chart |
 
-### 工程工具 (5 模块)
+### Engineering Tools (5 modules)
 
-| 模块 | 功能 |
+| Module | Capabilities |
 |------|------|
-| **可靠性** | Weibull 2P/3P MLE · MTBF/MTTR · **ALT 加速寿命** (Arrhenius/逆幂律) |
-| **鱼骨图** | 交互式 QGraphicsView · 3层嵌套 · 拖动/双击/右键 |
-| **帕累托图** | 二层钻取 · Top-N · 阈值线 |
-| **FMEA** | RPN=S×O×D · 风险着色 · PFMEA/DFMEA |
-| 控制计划 | 9列模板 · Excel 导出 |
+| **Reliability** | Weibull 2P/3P MLE · MTBF/MTTR · **ALT** (Arrhenius / Inverse power law) |
+| **Fishbone** | Interactive QGraphicsView · 3-level nesting · Drag / Double-click / Right-click |
+| **Pareto** | Two-level drill-down · Top-N · Threshold line |
+| **FMEA** | RPN=S×O×D · Risk coloring · PFMEA/DFMEA |
+| Control Plan | 9-column template · Excel export |
 
-### 图表工具 (4 模块)
+### Chart Tools (4 modules)
 
-15 种图表: 直方图/箱线图/散点图/帕累托/概率图/矩阵图/残差图/主效应/交互/等值线/3D曲面/时间序列/气泡图/雷达图/瀑布图 + 工序能力对比 + 多系列趋势 + 统计摘要面板
+15 chart types: Histogram / Box / Scatter / Pareto / Probability / Matrix / Residual / Main Effects / Interaction / Contour / 3D Surface / Time Series / Bubble / Radar / Waterfall + Capability Comparison + Multi-series Trend + Statistical Summary Panel
 
-### 工作表工具 (3 模块)
+### Worksheet Tools (3 modules)
 
-合并 (追加/JOIN/批量) · 拆分 (按列/行/条件/分组) · LPA 分层审核表
+Merge (Append / JOIN / Batch) · Split (by column / row / condition / group) · LPA Audit Sheet
 
-### 数据工具 + 抽样检验 (2 模块)
+### Data Tools + Sampling (2 modules)
 
-AQL 查表 (GB/T 2828.1) · 随机/分层/系统抽样 · 序贯检验 · 数据生成器 (7分布) · 格式转换 · 异常值检测 (IQR/Z/Grubbs)
+AQL Lookup (GB/T 2828.1 / ANSI/ASQ Z1.4) · Random / Stratified / Systematic Sampling · Sequential Testing · Data Generator (7 distributions) · Format Conversion · Outlier Detection (IQR / Z / Grubbs)
+
+### IE Engineering Tools (NEW in v2.2)
+
+| Module | Capabilities |
+|------|------|
+| **SMED** | Single-Minute Exchange of Die · Internal/External separation · Gantt timeline · Before/After comparison |
+| **8D** | 8 Disciplines problem solving · D1-D8 stepper · Fishbone (D4) · PDF/Markdown export |
+| **TPM** | Total Productive Maintenance · OEE / MTBF / MTTR · Six big losses · Pareto + Calendar |
+| **PPAP** | Production Part Approval Process · 18-item checklist · Dimension Cp/Cpk · Submission levels |
+
+### Reporting (NEW in v2.3)
+
+| Feature | Description |
+|------|------|
+| **Template Engine** | 5 built-in HTML templates (Daily / Monthly SPC / Audit / 8D / PPAP) |
+| **Template Dialog** | Preview + Export to PDF / Word / HTML |
+| **HTML Export** | Self-contained offline report with matplotlib charts embedded as base64 |
 
 ---
 
-## 快速开始
+## Quick Start
 
-### 方式一: 便携版 (推荐)
+### Option 1: Portable (Recommended)
 
-下载 `QA-Tool-v2.0.exe` (195MB 单文件)，双击运行。无需 Python 环境，无需安装。
+Download `QA-Tool-v2.3.exe` (~200MB single file), double-click to run. No Python required.
 
-### 方式二: 源码运行
+### Option 2: From Source
 
 ```bash
-# 要求 Python 3.11+
+# Requires Python 3.11+
 pip install PySide6 pandas numpy scipy matplotlib scikit-learn statsmodels reportlab openpyxl
 python main.py
 ```
 
-### 默认登录
+### Default Login
 
 ```
-用户名: admin
-密码:   admin
+Username: admin
+Password: admin
 ```
 
 ---
 
-## 技术栈
+## Tech Stack
 
-| 层 | 技术 |
+| Layer | Technology |
 |------|------|
-| UI | PySide6 (Qt) · Fusion 暗色主题 · 全局 QSS |
-| 数值计算 | NumPy · SciPy · pandas |
-| 机器学习 | scikit-learn (RandomForest) · SHAP |
-| 图表 | matplotlib · seaborn |
-| 报告 | reportlab (PDF) · python-docx (Word) · openpyxl (Excel) |
-| AI | Ollama · OpenAI 兼容 API · char-ngram TF-IDF RAG |
-| 认证 | PBKDF2-SHA256 (150K rounds) |
-| 打包 | PyInstaller (单文件 .exe) |
+| UI | PySide6 (Qt) · Fusion dark theme · Global QSS |
+| Numeric | NumPy · SciPy · pandas |
+| ML | scikit-learn (RandomForest) · SHAP |
+| Charts | matplotlib · seaborn |
+| Reporting | reportlab (PDF) · python-docx (Word) · openpyxl (Excel) |
+| AI | Ollama · OpenAI-compatible API · char-ngram TF-IDF RAG |
+| Auth | PBKDF2-SHA256 (150K rounds) |
+| Packaging | PyInstaller (single-file .exe) |
 
 ---
 
-## 项目结构
+## Project Structure
 
 ```
-├── main.py              # 入口 + Splash 加载
-├── analysis/            # 分析引擎 (14 模块)
-│   ├── spc/             # SPC 控制图 (9种 + Nelson规则)
-│   ├── capability/      # 过程能力 (3种)
-│   ├── msa/             # 测量系统分析 (3种)
-│   ├── hypothesis/      # 假设检验 + 非参数
-│   ├── doe/             # 实验设计 (4种)
-│   ├── regression/      # 回归分析
-│   ├── ie/              # IE 工业工程 (5种)
-│   ├── reliability/     # 可靠性 (Weibull/MTBF/ALT)
-│   ├── quality/         # 鱼骨图引擎
-│   ├── charts/          # 图表生成器 (15种)
-│   └── ai/              # AI 根因分析 (SHAP)
-├── core/                # 核心引擎 (17 模块)
-│   ├── auth.py          # 4级角色 + PBKDF2 认证
-│   ├── data_loader.py   # Excel/CSV 加载
-│   ├── data_profiler.py # 智能诊断 (20+推荐类型)
-│   ├── knowledge_base.py # TF-IDF RAG (99条目)
-│   ├── llm_client.py    # Ollama + OpenAI 双后端
-│   ├── plugin_manager.py # 插件系统
+├── main.py              # Entry point + Splash loader
+├── analysis/            # Analysis engines (14 modules)
+│   ├── spc/             # SPC control charts (9 types + Nelson rules)
+│   ├── capability/      # Process capability (3 types)
+│   ├── msa/             # Measurement system analysis (3 types)
+│   ├── hypothesis/      # Hypothesis testing + non-parametric
+│   ├── doe/             # Design of experiments (4 types)
+│   ├── regression/      # Regression analysis
+│   ├── ie/              # IE industrial engineering (SMED, TPM)
+│   ├── reliability/     # Reliability (Weibull/MTBF/ALT)
+│   ├── quality/         # 8D engine, PPAP engine, Fishbone engine
+│   ├── charts/          # Chart generators (15 types)
+│   └── ai/              # AI root cause analysis (SHAP)
+├── core/                # Core engines (17 modules)
+│   ├── auth.py          # 4-level RBAC + PBKDF2 auth
+│   ├── data_loader.py   # Excel/CSV loader
+│   ├── data_profiler.py # Smart diagnostics (20+ recommendation types)
+│   ├── knowledge_base.py # TF-IDF RAG (124 entries)
+│   ├── llm_client.py    # Ollama + OpenAI dual backend
+│   ├── plugin_manager.py # Plugin system
+│   ├── report_templates.py # Template engine (5 built-in)
 │   ├── sampling_engine.py # GB/T 2828.1 AQL
 │   └── ...
-├── ui/                  # PySide6 界面
-│   ├── tabs/            # 30 个分析 Tab
-│   ├── dialogs/         # 15 个对话框
-│   ├── widgets/         # Toast/鱼骨图画布
-│   └── theme.py         # 暗色主题 + 字体常量
-├── config/              # 配置 + 知识库 + 模板
+├── ui/                  # PySide6 UI
+│   ├── tabs/            # 32 analysis tabs
+│   ├── dialogs/         # 16 dialogs
+│   ├── widgets/         # Toast / Fishbone canvas
+│   └── theme.py         # Dark theme + font constants
+├── config/              # Config + knowledge base + templates
+│   ├── templates/       # HTML report templates
+│   └── knowledge/       # Knowledge base JSON files
 ├── locales/             # zh.json / en.json
-├── plugins/             # 第三方插件
-├── output/              # 报告引擎 (Word/Excel/PDF)
-└── tests/               # 65 项 pytest
+├── plugins/             # Third-party plugins
+├── output/              # Report engines (Word/Excel/PDF/HTML)
+└── tests/               # 87 pytest tests
 ```
 
 ---
 
-## 企业特性
+## Enterprise Features
 
-- **多用户**: 4级角色 (admin/dept_admin/analyst/readonly) + 部门/班组
-- **.qap 项目文件**: ZIP 打包，包含数据+图表+分析
-- **SQL 直连**: MySQL/PostgreSQL/SQL Server
-- **批量调度**: 定时任务 (每日/每小时/一次性)
-- **共享项目**: 部门级 .qap 文件共享
-- **审计日志**: `~/.qa_tool_audit.log`
+- **Multi-user**: 4-level roles (admin / dept_admin / analyst / readonly) + department / team
+- **.qap project files**: ZIP-packaged projects containing data + charts + analyses
+- **SQL Direct Connect**: MySQL / PostgreSQL / SQL Server
+- **Batch Scheduling**: Scheduled tasks (daily / hourly / one-shot)
+- **Shared Projects**: Department-level .qap file sharing
+- **Audit Log**: `~/.qa_tool_audit.log`
+
+---
+
+## Version History
+
+| Date | Version | Highlights |
+|------|---------|------------|
+| 2026-08-12 | **v2.3** | Report template engine · Template dialog · HTML self-contained export · Menu restructure |
+| 2026-08-10 | v2.2 | SMED · 8D · TPM · PPAP (4 new engineering tools) · 32 tabs |
+| 2026-08-10 | v2.1 | Code audit · AI enhancement · Lazy loading · One-click analysis · 87 tests |
+| 2026-08-04 | v2.0 | Initial release: 28 tabs · 65 tests · AI assistant · Plugin system |
 
 ---
 
@@ -141,4 +176,4 @@ MIT
 
 ---
 
-*Built with Python 3.14 + PySide6 · 65 tests passing*
+*Built with Python 3.14 + PySide6 · 87 tests passing · 32 analysis tabs*
