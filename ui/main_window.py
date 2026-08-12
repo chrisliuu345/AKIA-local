@@ -374,10 +374,16 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "无数据", "请先导入数据并运行分析")
             return
         path, _ = QFileDialog.getSaveFileName(self, "导出 HTML 报告", "qa_report.html", "HTML (*.html)")
-        if path:
+        if not path:
+            return
+        try:
             from output.html_export import export_html
-            export_html(self.analyses, path)
+            charts = self._collect_charts(list(self.analyses.keys()))
+            export_html(list(self.analyses.values()), charts=charts, output_path=path)
+            self.status_label.setText("HTML 报告已导出")
             QMessageBox.information(self, "导出完成", "HTML 报告已导出")
+        except Exception as e:
+            QMessageBox.critical(self, "导出失败", str(e))
 
     def _setup_statusbar(self):
         self.statusBar().setStyleSheet(
