@@ -322,6 +322,12 @@ class MainWindow(QMainWindow):
         one_click_action = QAction("一键智能分析报告", self)
         one_click_action.triggered.connect(self._on_one_click_analysis)
         tools_menu.addAction(one_click_action)
+        template_action = QAction("报告模板", self)
+        template_action.triggered.connect(self._on_template_dialog)
+        tools_menu.addAction(template_action)
+        html_export_action = QAction("导出 HTML 报告", self)
+        html_export_action.triggered.connect(self._on_html_export)
+        tools_menu.addAction(html_export_action)
 
         help_menu = menubar.addMenu(i18n.tr("menu.help"))
         about_action = QAction(i18n.tr("menu.about"), self)
@@ -357,6 +363,21 @@ class MainWindow(QMainWindow):
         from ui.dialogs.one_click_dialog import OneClickDialog
         dlg = OneClickDialog(raw_data, self)
         dlg.exec()
+
+    def _on_template_dialog(self):
+        from ui.dialogs.template_dialog import TemplateDialog
+        dlg = TemplateDialog(self, analyses=self.analyses)
+        dlg.exec()
+
+    def _on_html_export(self):
+        if not self.analyses:
+            QMessageBox.warning(self, "无数据", "请先导入数据并运行分析")
+            return
+        path, _ = QFileDialog.getSaveFileName(self, "导出 HTML 报告", "qa_report.html", "HTML (*.html)")
+        if path:
+            from output.html_export import export_html
+            export_html(self.analyses, path)
+            QMessageBox.information(self, "导出完成", "HTML 报告已导出")
 
     def _setup_statusbar(self):
         self.statusBar().setStyleSheet(
