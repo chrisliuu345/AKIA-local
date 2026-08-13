@@ -108,6 +108,11 @@ class DashboardTab(BaseAnalysisTab):
         self.btn_formula.clicked.connect(self._open_formula_dialog)
         hdr.addWidget(self.btn_formula)
 
+        self.btn_display = QPushButton(i18n.tr("dashboard.display_mode"))
+        self.btn_display.setStyleSheet(BUTTON_SECONDARY)
+        self.btn_display.clicked.connect(self._open_display_mode)
+        hdr.addWidget(self.btn_display)
+
         self.btn_export = QPushButton(i18n.tr("dashboard.export"))
         self.btn_export.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.btn_export.clicked.connect(self._batch_export)
@@ -275,6 +280,20 @@ class DashboardTab(BaseAnalysisTab):
             l.addWidget(lbl)
         l.addStretch()
         return frame
+
+    # ── F4: 大屏模式 ─────────────────────────────────────
+    def _open_display_mode(self):
+        parent = self.window()
+        if not parent or not hasattr(parent, "analyses") or not parent.analyses:
+            QMessageBox.information(self, i18n.tr("dashboard.display_mode"),
+                                    i18n.tr("dashboard.empty"))
+            return
+        if hasattr(parent, "_open_display_mode"):
+            parent._open_display_mode()
+        else:
+            from ui.dialogs.display_mode import DisplayModeWindow
+            self._display_window = DisplayModeWindow(parent)
+            self._display_window.showFullScreen()
 
     # ── F3: 公式编辑器与自定义卡片 ───────────────────────
     def _get_analysis_df(self):
