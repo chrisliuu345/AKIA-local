@@ -154,7 +154,7 @@ v2.0 (28)     v2.1 (28)     v2.2 (32)       v2.4 (34)
 
 | Date | Version | Content |
 |------|---------|---------|
-| 08-13 | v2.4 | Dashboard Enhancement E4 complete: KPI extractor / real-time refresh / card layout / formula editor / shop floor display · 136 tests |
+| 08-13 | v2.4 | Released: Dashboard E4 complete — KPI extractor / real-time refresh / card layout / formula editor / shop floor display · 136 tests |
 | 08-13 | v2.3.1 | Released: UI text display fixes — table headers / status bar elide / welcome cards / menu i18n |
 | 08-13 | v2.4-dev | Dashboard Phase 1 done (KPI extractor + real-time refresh + card layout) · Phase 2 done (formula editor + display mode) |
 | 08-12 | v2.3 | Released: Report template engine + dialog + HTML export + menu restructure |
