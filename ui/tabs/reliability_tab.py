@@ -282,6 +282,16 @@ class ReliabilityTab(BaseAnalysisTab):
         self.result_table.resizeColumnsToContents()
 
         self._draw_weibull_charts(r)
+        # v2.4: 补齐 current_result (此前只发信号, 结果进不了 MainWindow.analyses)
+        self.current_result = {
+            "analysis_type": "Weibull 寿命分析",
+            "params": {},
+            "result": {
+                "beta": r.beta, "eta": r.eta, "b10_life": r.b10_life,
+                "characteristic_life": r.characteristic_life,
+                "mean_life": r.mean_life if r.mean_life < float("inf") else None,
+            },
+        }
         self.analysis_completed.emit()
 
     def _draw_weibull_charts(self, r):
@@ -406,6 +416,13 @@ class ReliabilityTab(BaseAnalysisTab):
         self.result_table.resizeColumnsToContents()
 
         self._draw_mtbf_chart(result)
+        # v2.4: 补齐 current_result (此前只发信号, 结果进不了 MainWindow.analyses)
+        from dataclasses import asdict
+        self.current_result = {
+            "analysis_type": "MTBF / MTTR",
+            "params": {},
+            "result": asdict(result["overall"]),
+        }
         self.analysis_completed.emit()
 
     def _draw_mtbf_chart(self, result: Dict[str, Any]):
