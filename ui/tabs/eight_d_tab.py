@@ -35,7 +35,7 @@ class EightDTab(BaseAnalysisTab):
 
         # 左侧步骤导航
         left = QWidget()
-        left.setFixedWidth(160)
+        left.setFixedWidth(170)  # v2.3.1: 160 对 "导出 Markdown" 零余量, 加 10px
         left.setStyleSheet("background: #1c1c26; border-right: 1px solid #3a3a48;")
         ll = QVBoxLayout(left)
         ll.setContentsMargins(8, 12, 8, 12)

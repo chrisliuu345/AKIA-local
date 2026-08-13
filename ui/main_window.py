@@ -9,7 +9,7 @@ import pandas as pd
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QStackedWidget,
     QMessageBox, QFileDialog,
-    QLabel, QPushButton, QApplication, QSizePolicy, QFrame,
+    QPushButton, QApplication, QFrame,
     QScrollArea,
 )
 from PySide6.QtCore import Qt, QSettings, QPropertyAnimation, QEasingCurve
@@ -27,6 +27,7 @@ from core.project_manager import ProjectManager
 
 from ui.sidebar import Sidebar
 from ui.theme import colors as theme_colors
+from ui.widgets.elided_label import ElidedLabel
 # Tab 类按需通过 _lazy_load_tab() + importlib 加载，无需顶层导入
 from ui.welcome_page import WelcomePage
 from ui.dialogs.import_dialog import ImportDialog
@@ -224,11 +225,11 @@ class MainWindow(QMainWindow):
 
         file_menu.addSeparator()
         # .qap 项目文件
-        save_project_action = QAction("💾 保存项目 (.qap)", self)
+        save_project_action = QAction("💾 " + i18n.tr("menu.save_project"), self)
         save_project_action.setShortcut("Ctrl+Shift+S")
         save_project_action.triggered.connect(self._on_save_project)
         file_menu.addAction(save_project_action)
-        open_project_action = QAction("📂 打开项目 (.qap)", self)
+        open_project_action = QAction("📂 " + i18n.tr("menu.open_project"), self)
         open_project_action.setShortcut("Ctrl+Shift+O")
         open_project_action.triggered.connect(self._on_load_project)
         file_menu.addAction(open_project_action)
@@ -236,7 +237,7 @@ class MainWindow(QMainWindow):
         # 最近项目
         recent = ProjectManager.recent_projects()
         if recent:
-            self.recent_menu = file_menu.addMenu("📋 最近项目")
+            self.recent_menu = file_menu.addMenu("📋 " + i18n.tr("menu.recent"))
             self._rebuild_recent_menu(recent)
             # A5: 欢迎页填充 (转换 dict → tuple)
             recent_items = [(r["name"], r["path"]) for r in recent]
@@ -268,45 +269,50 @@ class MainWindow(QMainWindow):
         )
         view_menu.addAction(self.toggle_sidebar_action)
 
-        # ── 分析 — 全Tab分类子菜单 ──
-        analysis_menu = menubar.addMenu("分析")
+        # ── 分析 — 全Tab分类子菜单 (v2.3.1: 全部走 i18n) ──
+        analysis_menu = menubar.addMenu(i18n.tr("menu.analysis"))
         # 质量分析
-        quality_sub = analysis_menu.addMenu("质量分析")
-        for idx, label in [(1, "SPC 控制图"), (2, "过程能力"), (3, "MSA"),
-                           (4, "假设检验"), (5, "DOE"), (6, "回归分析")]:
-            a = QAction(label, self)
+        quality_sub = analysis_menu.addMenu(i18n.tr("sidebar.quality_tools"))
+        for idx, key in [(1, "sidebar.spc"), (2, "sidebar.capability"), (3, "sidebar.msa"),
+                         (4, "sidebar.hypothesis"), (5, "sidebar.doe"), (6, "sidebar.regression")]:
+            a = QAction(i18n.tr(key), self)
             a.triggered.connect(lambda _, i=idx: self._switch_tab(i))
             quality_sub.addAction(a)
         # IE 工具
-        ie_sub = analysis_menu.addMenu("IE 工具")
-        for idx, label in [(7, "工时研究"), (8, "工作抽样"), (9, "线平衡"),
-                           (10, "OEE"), (11, "VSM"), (21, "人机配合"),
-                           (22, "标准作业"), (29, "SMED 快速换模"), (31, "TPM 全面维护")]:
-            a = QAction(label, self)
+        ie_sub = analysis_menu.addMenu(i18n.tr("sidebar.ie_tools"))
+        for idx, key in [(7, "sidebar.time_study"), (8, "sidebar.work_sampling"),
+                         (9, "sidebar.line_balance"), (10, "sidebar.oee"),
+                         (11, "menu.vsm"), (21, "sidebar.worker_machine"),
+                         (22, "sidebar.std_work_combo"), (29, "sidebar.smed"), (31, "sidebar.tpm")]:
+            a = QAction(i18n.tr(key), self)
             a.triggered.connect(lambda _, i=idx: self._switch_tab(i))
             ie_sub.addAction(a)
         # 图表工具
-        chart_sub = analysis_menu.addMenu("图表工具")
-        for idx, label in [(12, "通用图表"), (18, "能力对比"), (19, "趋势图"), (20, "统计摘要")]:
-            a = QAction(label, self)
+        chart_sub = analysis_menu.addMenu(i18n.tr("sidebar.chart_tools"))
+        for idx, key in [(12, "sidebar.chart_tab"), (18, "sidebar.cap_comparison"),
+                         (19, "sidebar.trend"), (20, "sidebar.summary_panel")]:
+            a = QAction(i18n.tr(key), self)
             a.triggered.connect(lambda _, i=idx: self._switch_tab(i))
             chart_sub.addAction(a)
         # 工程工具
-        eng_sub = analysis_menu.addMenu("工程工具")
-        for idx, label in [(13, "可靠性"), (14, "鱼骨图"), (15, "帕累托"),
-                           (16, "FMEA"), (17, "控制计划"), (30, "8D 问题解决"), (32, "PPAP 批准")]:
-            a = QAction(label, self)
+        eng_sub = analysis_menu.addMenu(i18n.tr("sidebar.engineering_tools"))
+        for idx, key in [(13, "sidebar.reliability"), (14, "sidebar.fishbone"),
+                         (15, "sidebar.pareto"), (16, "sidebar.fmea"),
+                         (17, "sidebar.control_plan"), (30, "sidebar.8d"), (32, "sidebar.ppap")]:
+            a = QAction(i18n.tr(key), self)
             a.triggered.connect(lambda _, i=idx: self._switch_tab(i))
             eng_sub.addAction(a)
         # 工作表/抽样/数据
-        sheet_sub = analysis_menu.addMenu("工作表")
-        for idx, label in [(23, "合并"), (24, "拆分"), (25, "LPA 审核表")]:
-            a = QAction(label, self)
+        sheet_sub = analysis_menu.addMenu(i18n.tr("sidebar.sheet_tools"))
+        for idx, key in [(23, "sidebar.sheet_merge"), (24, "sidebar.sheet_split"),
+                         (25, "sidebar.layered_form")]:
+            a = QAction(i18n.tr(key), self)
             a.triggered.connect(lambda _, i=idx: self._switch_tab(i))
             sheet_sub.addAction(a)
         analysis_menu.addSeparator()
-        for idx, label in [(26, "抽样检验 (AQL)"), (28, "数据工具"), (27, "仪表盘")]:
-            a = QAction(label, self)
+        for idx, key in [(26, "sidebar.sampling"), (28, "sidebar.data_tools_tab"),
+                         (27, "sidebar.dashboard")]:
+            a = QAction(i18n.tr(key), self)
             a.triggered.connect(lambda _, i=idx: self._switch_tab(i))
             analysis_menu.addAction(a)
         analysis_menu.addSeparator()
@@ -316,18 +322,18 @@ class MainWindow(QMainWindow):
         analysis_menu.addAction(run_all)
 
         # ── AI — 从工具菜单拆出 ──
-        ai_menu = menubar.addMenu("AI")
+        ai_menu = menubar.addMenu(i18n.tr("menu.ai"))
         ai_chat = QAction(i18n.tr("sidebar.llm"), self)
         ai_chat.triggered.connect(self._on_llm_assist)
         ai_menu.addAction(ai_chat)
-        one_click = QAction("一键智能分析报告", self)
+        one_click = QAction(i18n.tr("menu.one_click"), self)
         one_click.triggered.connect(self._on_one_click_analysis)
         ai_menu.addAction(one_click)
         ai_menu.addSeparator()
-        template_act = QAction("报告模板", self)
+        template_act = QAction(i18n.tr("menu.template"), self)
         template_act.triggered.connect(self._on_template_dialog)
         ai_menu.addAction(template_act)
-        html_act = QAction("导出 HTML 报告", self)
+        html_act = QAction(i18n.tr("menu.html_export"), self)
         html_act.triggered.connect(self._on_html_export)
         ai_menu.addAction(html_act)
 
@@ -335,22 +341,22 @@ class MainWindow(QMainWindow):
         tools_menu = menubar.addMenu(i18n.tr("menu.tools"))
         tools_menu.addAction(QAction(i18n.tr("menu.settings"), self,
                                      triggered=self._on_settings))
-        tools_menu.addAction(QAction("批量调度", self,
+        tools_menu.addAction(QAction(i18n.tr("menu.batch"), self,
                                      triggered=self._on_batch_scheduler))
         if self.current_user and self.current_user.can_manage_users:
-            tools_menu.addAction(QAction("用户管理", self,
+            tools_menu.addAction(QAction(i18n.tr("menu.user_mgmt"), self,
                                          triggered=self._on_user_management))
         tools_menu.addSeparator()
         tools_menu.addAction(QAction(i18n.tr("sidebar.data_clean"), self,
                                      triggered=self._on_data_cleaner))
-        tools_menu.addAction(QAction("数据清洗向导", self,
+        tools_menu.addAction(QAction(i18n.tr("menu.data_clean_wizard"), self,
                                      triggered=self._on_data_clean_wizard))
         tools_menu.addAction(QAction(i18n.tr("sidebar.template_help_tip"), self,
                                      triggered=self._on_template_help))
         tools_menu.addSeparator()
         tools_menu.addAction(QAction(i18n.tr("sidebar.diagnose"), self,
                                      triggered=self._on_diagnose))
-        kb_action = QAction("知识库检索", self)
+        kb_action = QAction(i18n.tr("menu.kb_search"), self)
         kb_action.triggered.connect(self._on_llm_assist)
         tools_menu.addAction(kb_action)
 
@@ -414,12 +420,10 @@ class MainWindow(QMainWindow):
         self.statusBar().setStyleSheet(
             "QStatusBar { min-height: 24px; background: #13131c; } QStatusBar::item { border: none; }"
         )
-        self.status_label = QLabel(i18n.tr("status.ready"))
-        self.status_label.setSizePolicy(
-            self.status_label.sizePolicy().horizontalPolicy(), QSizePolicy.Preferred
-        )
+        # 长消息自动省略号, tooltip 显示全文 (v2.3.1)
+        self.status_label = ElidedLabel(i18n.tr("status.ready"))
         self.statusBar().addWidget(self.status_label, 1)
-        self.data_label = QLabel("")
+        self.data_label = ElidedLabel("")
         self.data_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.data_label.setMaximumWidth(300)
         self.statusBar().addPermanentWidget(self.data_label)

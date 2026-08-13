@@ -41,7 +41,7 @@ class Toast(QFrame):
             f"border-radius: 6px;"
             f"}}"
         )
-        self.setFixedHeight(40)
+        self.setMinimumHeight(40)  # v2.3.1: 换行后允许增高, 不再硬裁切
         self.setMinimumWidth(200)
         self.setMaximumWidth(480)
 
@@ -50,7 +50,7 @@ class Toast(QFrame):
         label = QLabel(message)
         label.setFont(QFont("Microsoft YaHei", 10))
         label.setStyleSheet(f"color: #e1e2e6; background: transparent;")
-        label.setWordWrap(False)
+        label.setWordWrap(True)
         layout.addWidget(label)
 
         self.adjustSize()

@@ -12,6 +12,7 @@ from PySide6.QtGui import QFont
 from core.i18n import i18n
 from config.settings import APP_VERSION
 from ui.theme import colors as theme_colors
+from ui.widgets.elided_label import ElidedLabel
 
 
 HOME_ITEM = (0, "sidebar.home")
@@ -398,7 +399,7 @@ class Sidebar(QWidget):
         history_header.addStretch()
         self.clear_hist_btn = QPushButton(i18n.tr("sidebar.history_clear"))
         self.clear_hist_btn.setFont(QFont("Microsoft YaHei", 8))
-        self.clear_hist_btn.setFixedSize(36, 18)
+        self.clear_hist_btn.setFixedSize(40, 20)
         self.clear_hist_btn.setCursor(Qt.PointingHandCursor)
         self.clear_hist_btn.setStyleSheet(
             f"QPushButton {{ background: transparent; color: {tc['text_dim']}; "
@@ -546,11 +547,10 @@ class Sidebar(QWidget):
             time_lbl.setStyleSheet(f"color: {tc['text_muted']};")
             rlayout.addWidget(time_lbl)
 
-            type_text = entry["type"][:10] + (".." if len(entry["type"]) > 10 else "")
-            type_lbl = QLabel(type_text)
+            # v2.3.1: ElidedLabel 自动省略, 不再预截断, tooltip 保留全文
+            type_lbl = ElidedLabel(entry["type"])
             type_lbl.setFont(QFont("Microsoft YaHei", 9))
             type_lbl.setStyleSheet(f"color: {tc['text_primary']};")
-            type_lbl.setMaximumWidth(max_row_width - 36 - 60)
             rlayout.addWidget(type_lbl, 1)
 
             if entry["result"]:
