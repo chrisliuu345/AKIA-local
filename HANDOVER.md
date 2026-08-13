@@ -1,7 +1,7 @@
 # QA-Tool 项目交接文档（面向 opencode 接管）
 
 > **给 opencode 的说明**：本文件是项目交接的核心文档。opencode 会自动读取 `AGENTS.md` —
-> 建议在仓库根目录创建 `AGENTS.md` 内容为 `参考 HANDOVER.md 和 CLAUDE.md 了解项目`，
+> 建议在仓库根目录创建 `AGENTS.md` 内容为 `参考 HANDOVER.md 了解项目`，
 > 或将本文件直接重命名为 `AGENTS.md`。开发约定（第四节）为强制条款。
 
 ---
@@ -161,7 +161,7 @@ gh release upload vX.Y "D:\AI-agent\projects\ie-quality-analyzer\dist\QA-Tool\QA
 ```
 
 **发布要求（用户明确规定）**：README、ROADMAP、Release notes、更新日志必须为英文。
-代码提交信息用中文（`<type>: <description>` 格式 + Co-Authored-By 尾行）。
+代码提交信息用中文（`<type>: <description>` 格式）。
 
 ### 2.6 手动测试
 
@@ -182,7 +182,7 @@ gh release upload vX.Y "D:\AI-agent\projects\ie-quality-analyzer\dist\QA-Tool\QA
 | 图表中文乱码 | 依赖 Microsoft YaHei；Linux 需装文泉驿并改 `config/settings.py FONT_FAMILY` |
 | PyInstaller 找不到 templates | 先运行 `_ensure_templates()` 生成 config/templates/*.html |
 | 测试收集失败 | `pytest.ini` 的 pythonpath=`.` 依赖项目根目录执行；test_integration 为模块级断言 |
-| MCP 服务器异常 | `claude mcp list` / `claude doctor`（Claude Code 工作区问题，与项目无关） |
+| MCP 服务器异常 | 检查编辑器 MCP 服务器配置与日志（工作区问题，与项目无关） |
 
 ---
 
@@ -251,7 +251,7 @@ gh release upload vX.Y "D:\AI-agent\projects\ie-quality-analyzer\dist\QA-Tool\QA
 - **中文注释与文档，英文代码标识符**（项目一贯风格，勿混用）
 - 所有用户可见文字走 `i18n.tr(key)` — **zh.json 与 en.json 必须同时添加**（缺 en 会回退显示键名）
 - 遵循既有代码风格：简洁、函数式倾向、docstring 中文
-- 提交信息 `<type>: <description>`（中文描述）+ 末尾 `Co-Authored-By: Claude <noreply@anthropic.com>`
+- 提交信息 `<type>: <description>`（中文描述）
 
 ### 4.2 结构性约定（破坏即回归）
 
