@@ -163,7 +163,8 @@ Password: admin
 
 | Date | Version | Highlights |
 |------|---------|------------|
-| 2026-08-12 | **v2.3** | Report template engine · Template dialog · HTML self-contained export · Menu restructure |
+| 2026-08-13 | **v2.4** | Dashboard enhancement: unified KPI extractor · real-time refresh · card layout · formula editor · shop floor display mode |
+| 2026-08-12 | v2.3 | Report template engine · Template dialog · HTML self-contained export · Menu restructure |
 | 2026-08-10 | v2.2 | SMED · 8D · TPM · PPAP (4 new engineering tools) · 32 tabs |
 | 2026-08-10 | v2.1 | Code audit · AI enhancement · Lazy loading · One-click analysis · 87 tests |
 | 2026-08-04 | v2.0 | Initial release: 28 tabs · 65 tests · AI assistant · Plugin system |
