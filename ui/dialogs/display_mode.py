@@ -33,6 +33,34 @@ CLOCK_INTERVAL_MS = 1000
 CHART_DPI = 150           # 大屏图表渲染分辨率
 
 
+class ScaledPixmapLabel(QLabel):
+    """保持宽高比的图像缩放显示 — 大屏图表轮播专用
+
+    修复: QLabel.setPixmap 按原始像素 1:1 显示, 150dpi 图表 (~1500px)
+    超出标签区域被裁切; 本类在 resize 时按 KeepAspectRatio 缩放重绘。
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._original = QPixmap()
+        self.setAlignment(Qt.AlignCenter)
+
+    def setPixmap(self, pm: QPixmap):
+        self._original = pm
+        self._rescale()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._rescale()
+
+    def _rescale(self):
+        if self._original.isNull() or self.width() <= 0 or self.height() <= 0:
+            return
+        scaled = self._original.scaled(
+            self.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        super().setPixmap(scaled)
+
+
 class DisplayModeWindow(QWidget):
     """全屏车间大屏窗口 — 数据来自 MainWindow.analyses 与各 Tab 图表"""
 
@@ -234,10 +262,9 @@ class DisplayModeWindow(QWidget):
             except Exception:
                 continue
 
-        # 填入轮播 stack
+        # 填入轮播 stack — 保持宽高比缩放, 避免原始像素 1:1 显示被裁切
         for _label, pm in self._charts:
-            lbl = QLabel()
-            lbl.setAlignment(Qt.AlignCenter)
+            lbl = ScaledPixmapLabel()
             lbl.setStyleSheet("background: transparent; border: none;")
             lbl.setPixmap(pm)
             self.chart_stack.addWidget(lbl)
