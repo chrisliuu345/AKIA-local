@@ -18,6 +18,7 @@ from ui.widgets.elided_label import ElidedLabel
 from core.formatting import format_cp, format_pvalue, format_pct
 from core.i18n import i18n
 from core.kpi_extractor import extract_metrics
+from core.kpi_formula import evaluate, describe_variables, FormulaError
 
 # 指标显示名 (i18n 键) + 格式化器
 # 百分比类指标统一为 0-1 分数 (extractor 已归一化), format_pct 直接使用
@@ -65,6 +66,8 @@ class DashboardTab(BaseAnalysisTab):
         super().__init__(p)
         self._cards = []
         self._last_fp = ""
+        self._df_cache = None
+        self._df_cache_key = None
         self._settings = QSettings("QA-Tool", "Dashboard")
         # F1: 轮询兜底定时器
         self._timer = QTimer(self)
@@ -99,6 +102,11 @@ class DashboardTab(BaseAnalysisTab):
         self.btn_layout.setStyleSheet(BUTTON_SECONDARY)
         self.btn_layout.clicked.connect(self._open_layout_dialog)
         hdr.addWidget(self.btn_layout)
+
+        self.btn_formula = QPushButton(i18n.tr("dashboard.formula"))
+        self.btn_formula.setStyleSheet(BUTTON_SECONDARY)
+        self.btn_formula.clicked.connect(self._open_formula_dialog)
+        hdr.addWidget(self.btn_formula)
 
         self.btn_export = QPushButton(i18n.tr("dashboard.export"))
         self.btn_export.setStyleSheet(BUTTON_PRIMARY_STRETCH)
@@ -201,6 +209,16 @@ class DashboardTab(BaseAnalysisTab):
 
         col = 0
         row = 0
+
+        # F3: 自定义公式卡片排最前
+        for card in self._make_formula_cards():
+            self.grid.addWidget(card, row, col)
+            self._cards.append(card)
+            col += 1
+            if col > 2:
+                col = 0
+                row += 1
+
         for atype in keys:
             card = self._make_card(atype, metrics_map[atype])
             if card is None:
@@ -257,6 +275,85 @@ class DashboardTab(BaseAnalysisTab):
             l.addWidget(lbl)
         l.addStretch()
         return frame
+
+    # ── F3: 公式编辑器与自定义卡片 ───────────────────────
+    def _get_analysis_df(self):
+        """从主窗口当前数据取主数据表 (供公式变量列统计)
+
+        带缓存 — DataParser.prepare 是重清洗操作, 同一数据源不重复解析。
+        id() 键安全: 缓存持有 df 引用, 旧对象 id 不可能被复用。
+        """
+        parent = self.window()
+        if not parent or not hasattr(parent, "current_data"):
+            return None
+        raw = parent.current_data.get("raw_data")
+        if not raw:
+            return None
+        first = next(iter(raw.values()))
+        key = (id(first), len(first))
+        if getattr(self, "_df_cache_key", None) == key and self._df_cache is not None:
+            return self._df_cache
+        try:
+            from core.data_parser import DataParser
+            df, _ = DataParser().prepare(first)
+            self._df_cache = df
+            self._df_cache_key = key
+            return df
+        except Exception:
+            return None
+
+    def _open_formula_dialog(self):
+        parent = self.window()
+        analyses = parent.analyses if parent and hasattr(parent, "analyses") else {}
+        from ui.dialogs.formula_dialog import FormulaDialog
+        dlg = FormulaDialog(self, analyses=analyses, df=self._get_analysis_df())
+        dlg.exec()
+        self.refresh()
+
+    def _make_formula_cards(self):
+        """渲染自定义公式卡片 — 求值失败显示 '无法求值'"""
+        from ui.dialogs.formula_dialog import FormulaDialog
+        # 注意: 公式存储于 QSettings("QA-Tool", "Formulas") 作用域,
+        # 与布局设置的 "Dashboard" 作用域分离, 不可传入 self._settings
+        formulas = FormulaDialog.load_formulas()
+        if not formulas:
+            return []
+        parent = self.window()
+        analyses = parent.analyses if parent and hasattr(parent, "analyses") else {}
+        variables = describe_variables(analyses, self._get_analysis_df())
+
+        tc = theme_colors()
+        cards = []
+        for name, expr in formulas.items():
+            frame = QFrame()
+            frame.setFixedSize(240, 170)
+            frame.setStyleSheet(
+                f"QFrame {{ background:{tc['bg_card']};"
+                f"border:1px solid {tc['accent_bright']}; border-radius:10px; padding:10px; }}"
+            )
+            l = QVBoxLayout(frame)
+            l.setSpacing(6)
+            title = ElidedLabel(name)
+            title.setFont(FONT_10)
+            title.setStyleSheet(f"color:{tc['accent_bright']}; font-weight:bold;")
+            title.setToolTip(f"{name} = {expr}")
+            l.addWidget(title)
+            try:
+                value = evaluate(str(expr), variables)
+                text = f"{value:.4g}"
+            except FormulaError as e:
+                text = i18n.tr("formula.eval_failed")
+                frame.setToolTip(str(e))
+            val = ElidedLabel(text)
+            val.setFont(FONT_18B)
+            val.setToolTip(f"{name} = {expr}\n{text}")
+            l.addWidget(val)
+            hint = QLabel(i18n.tr("formula.card_hint"))
+            hint.setStyleSheet(f"color: {tc['text_muted']}; font-size: 9px;")
+            l.addWidget(hint)
+            l.addStretch()
+            cards.append(frame)
+        return cards
 
     # ── F2: 布局对话框 ───────────────────────────────────
     def _open_layout_dialog(self):
