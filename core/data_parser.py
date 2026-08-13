@@ -202,8 +202,20 @@ class DataParser:
     def _apply_header(self, df: pd.DataFrame, header_row: int) -> pd.DataFrame:
         if header_row > 0:
             df = df.iloc[header_row:].reset_index(drop=True)
-        df.columns = [str(c).strip() for c in df.iloc[0]]
-        df = df.iloc[1:].reset_index(drop=True)
+            df.columns = [str(c).strip() for c in df.iloc[0]]
+            df = df.iloc[1:].reset_index(drop=True)
+            return df
+        # header_row == 0 分两种情况:
+        # (a) header=None 读入: 列名为默认数字, 首行是表头文本 → 提取为列名
+        # (b) pandas 默认读入 (DataLoader): 列名已是表头, 首行是数据 → 保持原列名
+        #     (v2.4.1 修复: 此前重赋数据行为列名, 导致列名丢失)
+        cols_are_default = all(
+            str(c).isdigit() or str(c).startswith("Unnamed")
+            for c in df.columns
+        )
+        if cols_are_default:
+            df.columns = [str(c).strip() for c in df.iloc[0]]
+            df = df.iloc[1:].reset_index(drop=True)
         return df
 
     def _classify_columns(self, df: pd.DataFrame) -> Dict[str, str]:
@@ -280,7 +292,10 @@ class DataParser:
         return None
 
     def _identify_measurement_columns(self, df: pd.DataFrame) -> List[str]:
-        return [c for c, t in self.column_types.items() if t == "numeric"]
+        # v2.4.1: measurement 类型 (列名含"测量/长度/重量"等关键词) 与 numeric
+        # 同属测量列 — 此前只认 numeric, 导致 "测量值" 列被漏掉
+        return [c for c, t in self.column_types.items()
+                if t in ("numeric", "measurement")]
 
     def _identify_identifier_columns(self, df: pd.DataFrame) -> List[str]:
         return [
