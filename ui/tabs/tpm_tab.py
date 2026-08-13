@@ -143,7 +143,12 @@ class TPMTab(BaseAnalysisTab):
                 continue
         result = self.engine.analyze()
         self._display(result)
-        self.current_result = result.to_dict()
+        # v2.4: 与其他 Tab 统一的 current_result 包装 (analysis_type/params/result)
+        self.current_result = {
+            "analysis_type": "TPM 全面维护",
+            "params": {},
+            "result": result.to_dict(),
+        }
 
     def _display(self, result):
         # KPI

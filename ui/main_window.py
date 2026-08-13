@@ -475,6 +475,12 @@ class MainWindow(QMainWindow):
             self._tab_anim = anim  # 防止被 GC
             anim.start()
 
+            # v2.4 F1: 切到 Dashboard (27) 时刷新 (指纹去重)
+            if index == 27 and hasattr(self, '_tab_cache'):
+                tab = self._tab_cache.get(27)
+                if tab is not None and hasattr(tab, 'refresh_if_changed'):
+                    tab.refresh_if_changed()
+
     def _on_import_quality(self):
         dialog = ImportDialog(self, mode="quality")
         if dialog.exec():
@@ -929,6 +935,7 @@ class MainWindow(QMainWindow):
                 key_res = self._summarize_result(result.get("result", {}))
                 self.sidebar.add_history(idx, atype, key_res)
             self.status_label.setText(i18n.tr("status.done"))
+            self._notify_dashboard()
         except Exception as e:
             import logging
             logging.getLogger(__name__).exception(f"批量分析 {idx} 失败: {e}")
@@ -943,6 +950,16 @@ class MainWindow(QMainWindow):
             atype = result.get("analysis_type", "")
             key_res = self._summarize_result(result.get("result", {}))
             self.sidebar.add_history(idx, atype, key_res)
+        self._notify_dashboard()
+
+    def _notify_dashboard(self):
+        """v2.4 F1: 分析完成后通知 Dashboard 刷新 (仅当已懒加载时)
+
+        用 refresh_if_changed 去重 — 批量分析时 N 次通知只重建一次
+        """
+        tab = self._tab_cache.get(27)
+        if tab is not None and hasattr(tab, 'refresh_if_changed'):
+            tab.refresh_if_changed()
 
     def _on_run_all_analyses(self):
         if not self.current_data:
@@ -973,6 +990,7 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(
             f"批量分析完成: 成功 {success}, 失败 {failed}", 5000
         )
+        self._notify_dashboard()
         if success > 0:
             self.stack.setCurrentIndex(1)
             self.sidebar.set_active(1)
@@ -1206,6 +1224,7 @@ class MainWindow(QMainWindow):
             recent_items = [(r["name"], r["path"]) for r in recent]
             self.welcome_page.set_recent_projects(recent_items)
             self.status_label.setText(f"项目已加载: {info.get('analysis_count', 0)} 个分析")
+            self._notify_dashboard()
             QMessageBox.information(self, "加载完成",
                                     f"已恢复 {len(raw_data)} 个数据表、{len(self.analyses)} 个分析结果")
         except Exception as e:
@@ -1233,6 +1252,7 @@ class MainWindow(QMainWindow):
             recent_items = [(r["name"], r["path"]) for r in recent]
             self.welcome_page.set_recent_projects(recent_items)
             self.status_label.setText(f"项目已加载: {info.get('analysis_count', 0)} 个分析")
+            self._notify_dashboard()
         except Exception as e:
             QMessageBox.critical(self, "加载失败", str(e))
 
@@ -1265,6 +1285,7 @@ class MainWindow(QMainWindow):
                 recent_items = [(r["name"], r["path"]) for r in recent]
                 self.welcome_page.set_recent_projects(recent_items)
                 self.status_label.setText(f"项目已加载: {len(raw_data)} sheets")
+                self._notify_dashboard()
                 QMessageBox.information(self, "加载完成", f"已恢复 {len(self.analyses)} 个分析")
             except Exception as e:
                 QMessageBox.critical(self, "加载失败", str(e))
