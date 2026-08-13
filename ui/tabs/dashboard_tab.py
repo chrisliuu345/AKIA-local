@@ -161,6 +161,7 @@ class DashboardTab(BaseAnalysisTab):
         empty = QLabel(i18n.tr("dashboard.empty"))
         empty.setStyleSheet("color: #6e7080; font-size: 14px; padding: 40px;")
         self.grid.addWidget(empty, 0, 0)
+        self._cards.append(empty)  # 加入统一管理, 下次 refresh 一并清理
 
     def refresh(self):
         # 清除旧卡片
@@ -168,8 +169,13 @@ class DashboardTab(BaseAnalysisTab):
             if c.parent():
                 c.setParent(None)
         self._cards.clear()
+        # 移除 layout 项的同时销毁 widget — 否则孤儿 widget 残留在容器上叠加显示
         while self.grid.count():
-            self.grid.takeAt(0)
+            item = self.grid.takeAt(0)
+            w = item.widget()
+            if w:
+                w.setParent(None)
+                w.deleteLater()
         # 空态早退也更新指纹, 避免每 5s 重复重建空标签
         self._last_fp = self._analyses_fingerprint()
 
