@@ -1,0 +1,305 @@
+"""车间大屏模式 — 全屏深色仪表盘 + 大字 KPI + 图表轮播 (v2.4 F4, P2-2 提前)
+
+- showFullScreen 无边框窗口, ESC 退出
+- 左侧大数字 KPI 区: 整体 OEE / 最优 Cpk / 违规总数 / 自定义公式值
+- 右侧图表轮播: 分析结果图表 8s 自动切换 + 指示圆点 + 手动切换
+- 顶部信息条: 实时时钟 + 数据文件摘要
+- 1920×1080 优化, 布局按比例伸缩自适应
+"""
+
+from io import BytesIO
+from datetime import datetime
+
+from PySide6.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
+    QStackedWidget, QFrame,
+)
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QPixmap
+
+from core.i18n import i18n
+from core.kpi_extractor import extract_metrics
+from ui.theme import FONT_36B, FONT_18B, FONT_14B, FONT_12
+from ui.widgets.elided_label import ElidedLabel
+
+BG_BIG_SCREEN = "#0c0c12"      # 大屏底色 (比主界面更深, 高对比)
+BG_KPI_CARD = "#161620"
+ACCENT = "#4da6ff"
+ACCENT_WARN = "#ffa726"
+TEXT_DIM = "#6e7080"
+
+CAROUSEL_INTERVAL_MS = 8000
+CLOCK_INTERVAL_MS = 1000
+CHART_DPI = 150           # 大屏图表渲染分辨率
+
+
+class DisplayModeWindow(QWidget):
+    """全屏车间大屏窗口 — 数据来自 MainWindow.analyses 与各 Tab 图表"""
+
+    def __init__(self, main_window):
+        super().__init__(None, Qt.Window)
+        self._main = main_window
+        self._charts = []          # [(label, QPixmap)]
+        self._chart_idx = 0
+        self._setup_ui()
+        self._load_data()
+        self._start_timers()
+        self.setStyleSheet(
+            f"QWidget {{ background-color: {BG_BIG_SCREEN}; color: #e1e2e6; }}"
+            f"QPushButton {{ background-color: #1b1b28; color: #a0a3ae;"
+            f"border: 1px solid #3a3a48; border-radius: 6px; padding: 8px 18px; }}"
+            f"QPushButton:hover {{ color: #fff; border-color: {ACCENT}; }}"
+        )
+
+    # ── UI ───────────────────────────────────────────────
+    def _setup_ui(self):
+        root = QVBoxLayout(self)
+        root.setContentsMargins(28, 18, 28, 18)
+        root.setSpacing(14)
+
+        # 顶部信息条: 标题 + 时钟 + 数据摘要
+        top = QHBoxLayout()
+        title = QLabel("QA-Tool · " + i18n.tr("display.title"))
+        title.setFont(FONT_18B)
+        title.setStyleSheet(f"color: {ACCENT}; background: transparent;")
+        top.addWidget(title)
+        top.addStretch()
+
+        self.data_summary = ElidedLabel("")
+        self.data_summary.setFont(FONT_12)
+        self.data_summary.setMaximumWidth(600)
+        self.data_summary.setStyleSheet(f"color: {TEXT_DIM}; background: transparent;")
+        top.addWidget(self.data_summary)
+        top.addSpacing(24)
+
+        self.clock_label = QLabel("")
+        self.clock_label.setFont(FONT_14B)
+        self.clock_label.setStyleSheet(f"color: #e1e2e6; background: transparent;")
+        top.addWidget(self.clock_label)
+        root.addLayout(top)
+
+        # 分隔线
+        divider = QFrame()
+        divider.setFixedHeight(1)
+        divider.setStyleSheet(f"background: #262633; border: none;")
+        root.addWidget(divider)
+
+        # 中部: 左 KPI 区 + 右图表轮播
+        body = QHBoxLayout()
+        body.setSpacing(20)
+
+        self.kpi_layout = QVBoxLayout()
+        self.kpi_layout.setSpacing(14)
+        self.kpi_layout.addStretch()
+        body.addLayout(self.kpi_layout, 3)
+
+        chart_wrap = QVBoxLayout()
+        chart_wrap.setSpacing(10)
+        self.chart_stack = QStackedWidget()
+        self.chart_stack.setStyleSheet(
+            f"QStackedWidget {{ background: {BG_KPI_CARD}; border: 1px solid #262633;"
+            f"border-radius: 10px; }}"
+        )
+        chart_wrap.addWidget(self.chart_stack, 1)
+
+        # 轮播控制行: 上一个 + 圆点 + 下一个
+        ctrl = QHBoxLayout()
+        prev_btn = QPushButton("◀ " + i18n.tr("display.prev"))
+        prev_btn.clicked.connect(lambda: self._step_chart(-1))
+        ctrl.addWidget(prev_btn)
+        ctrl.addStretch()
+        self.dots_label = QLabel("")
+        self.dots_label.setFont(FONT_12)
+        self.dots_label.setStyleSheet(f"color: {TEXT_DIM}; background: transparent;")
+        ctrl.addWidget(self.dots_label)
+        ctrl.addStretch()
+        next_btn = QPushButton(i18n.tr("display.next") + " ▶")
+        next_btn.clicked.connect(lambda: self._step_chart(1))
+        ctrl.addWidget(next_btn)
+        chart_wrap.addLayout(ctrl)
+        body.addLayout(chart_wrap, 7)
+
+        root.addLayout(body, 1)
+
+        # 底部提示行
+        hint = QLabel(i18n.tr("display.hint"))
+        hint.setFont(FONT_12)
+        hint.setAlignment(Qt.AlignCenter)
+        hint.setStyleSheet(f"color: {TEXT_DIM}; background: transparent;")
+        root.addWidget(hint)
+
+    # ── 数据加载 ─────────────────────────────────────────
+    def _load_data(self):
+        # 数据文件摘要
+        data = getattr(self._main, "current_data", {}) or {}
+        fpath = data.get("file_path", "")
+        if fpath:
+            import os
+            self.data_summary.setText("📊 " + os.path.basename(fpath))
+        else:
+            self.data_summary.setText("")
+
+        # KPI 大数字
+        analyses = getattr(self._main, "analyses", {}) or {}
+        metrics_map = extract_metrics(analyses)
+        self._build_kpi_tiles(metrics_map, analyses)
+
+        # 图表轮播
+        self._build_charts()
+
+    def _build_kpi_tiles(self, metrics_map: dict, analyses: dict):
+        # 清空旧 KPI (保留 stretch)
+        while self.kpi_layout.count() > 1:
+            item = self.kpi_layout.takeAt(0)
+            w = item.widget()
+            if w:
+                w.setParent(None)
+                w.deleteLater()
+
+        # 汇总指标
+        oee_vals = [m["oee"] for m in metrics_map.values() if m.get("oee") is not None]
+        cpk_vals = [m["cpk"] for m in metrics_map.values() if m.get("cpk") is not None]
+        viol_sum = sum(m.get("violations", 0) or 0 for m in metrics_map.values())
+        grr_vals = [m["grr_pct"] for m in metrics_map.values() if m.get("grr_pct") is not None]
+
+        if oee_vals:
+            self._add_kpi_tile(i18n.tr("display.kpi_oee"),
+                               f"{max(oee_vals) * 100:.1f}%", ACCENT)
+        if cpk_vals:
+            best = max(cpk_vals)
+            color = "#27ae60" if best >= 1.33 else (ACCENT_WARN if best >= 1.0 else "#e74c3c")
+            self._add_kpi_tile(i18n.tr("display.kpi_cpk"), f"{best:.3f}", color)
+        if grr_vals:
+            grr = min(grr_vals)
+            color = "#27ae60" if grr < 0.1 else (ACCENT_WARN if grr < 0.3 else "#e74c3c")
+            self._add_kpi_tile(i18n.tr("display.kpi_grr"), f"{grr * 100:.1f}%", color)
+        if viol_sum > 0:
+            self._add_kpi_tile(i18n.tr("display.kpi_violations"), str(viol_sum),
+                               "#27ae60" if viol_sum < 10 else "#e74c3c")
+
+        # 自定义公式值 (前 3 个可求值的)
+        from ui.dialogs.formula_dialog import FormulaDialog
+        from core.kpi_formula import evaluate, describe_variables, FormulaError
+        formulas = FormulaDialog.load_formulas()
+        if formulas:
+            variables = describe_variables(analyses)
+            shown = 0
+            for name, expr in formulas.items():
+                try:
+                    value = evaluate(str(expr), variables)
+                except FormulaError:
+                    continue
+                self._add_kpi_tile(name, f"{value:.4g}", ACCENT)
+                shown += 1
+                if shown >= 3:
+                    break
+
+    def _add_kpi_tile(self, label: str, value: str, color: str):
+        tile = QFrame()
+        tile.setStyleSheet(
+            f"QFrame {{ background: {BG_KPI_CARD}; border: 1px solid #262633;"
+            f"border-radius: 12px; }}"
+        )
+        l = QVBoxLayout(tile)
+        l.setContentsMargins(22, 16, 22, 16)
+        name_lbl = QLabel(label)
+        name_lbl.setFont(FONT_14B)
+        name_lbl.setStyleSheet(f"color: {TEXT_DIM}; background: transparent;")
+        l.addWidget(name_lbl)
+        val_lbl = QLabel(value)
+        val_lbl.setFont(FONT_36B)
+        val_lbl.setStyleSheet(f"color: {color}; background: transparent;")
+        l.addWidget(val_lbl)
+        self.kpi_layout.insertWidget(self.kpi_layout.count() - 1, tile)
+
+    def _build_charts(self):
+        # 从各 Tab 的 current_figure 渲染高分辨率位图
+        self._charts.clear()
+        tabs = getattr(self._main, "_get_tabs", lambda: {})()
+        analyses = getattr(self._main, "analyses", {}) or {}
+        for idx in sorted(analyses.keys()):
+            tab = tabs.get(idx)
+            fig = getattr(tab, "current_figure", None) if tab else None
+            if fig is None:
+                continue
+            atype = analyses[idx].get("analysis_type", f"analysis_{idx}")
+            try:
+                buf = BytesIO()
+                fig.savefig(buf, format="png", dpi=CHART_DPI,
+                            bbox_inches="tight", facecolor=BG_KPI_CARD)
+                buf.seek(0)
+                pm = QPixmap()
+                if pm.loadFromData(buf.read()):
+                    self._charts.append((atype, pm))
+            except Exception:
+                continue
+
+        # 填入轮播 stack
+        for _label, pm in self._charts:
+            lbl = QLabel()
+            lbl.setAlignment(Qt.AlignCenter)
+            lbl.setStyleSheet("background: transparent; border: none;")
+            lbl.setPixmap(pm)
+            self.chart_stack.addWidget(lbl)
+
+        if not self._charts:
+            empty = QLabel(i18n.tr("display.no_charts"))
+            empty.setFont(FONT_18B)
+            empty.setAlignment(Qt.AlignCenter)
+            empty.setStyleSheet(f"color: {TEXT_DIM}; background: transparent;")
+            self.chart_stack.addWidget(empty)
+        self._update_carousel()
+
+    # ── 轮播 ─────────────────────────────────────────────
+    def _step_chart(self, delta: int):
+        if not self._charts:
+            return
+        self._chart_idx = (self._chart_idx + delta) % len(self._charts)
+        self._update_carousel()
+
+    def _update_carousel(self):
+        if self._charts:
+            self.chart_stack.setCurrentIndex(self._chart_idx)
+            dots = " ".join(
+                "●" if i == self._chart_idx else "○"
+                for i in range(len(self._charts))
+            )
+            self.dots_label.setText(
+                f"{self._charts[self._chart_idx][0]}   {dots}")
+        else:
+            self.chart_stack.setCurrentIndex(0)
+            self.dots_label.setText("")
+
+    def _start_timers(self):
+        self._clock_timer = QTimer(self)
+        self._clock_timer.setInterval(CLOCK_INTERVAL_MS)
+        self._clock_timer.timeout.connect(self._update_clock)
+        self._clock_timer.start()
+        self._update_clock()
+
+        self._carousel_timer = QTimer(self)
+        self._carousel_timer.setInterval(CAROUSEL_INTERVAL_MS)
+        self._carousel_timer.timeout.connect(lambda: self._step_chart(1))
+        self._carousel_timer.start()
+
+    def _update_clock(self):
+        now = datetime.now()
+        self.clock_label.setText(now.strftime("%Y-%m-%d  %H:%M:%S  %A"))
+
+    # ── 事件 ─────────────────────────────────────────────
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Escape:
+            self.close()
+            return
+        if event.key() == Qt.Key_Left:
+            self._step_chart(-1)
+            return
+        if event.key() == Qt.Key_Right:
+            self._step_chart(1)
+            return
+        super().keyPressEvent(event)
+
+    def closeEvent(self, event):
+        self._carousel_timer.stop()
+        self._clock_timer.stop()
+        super().closeEvent(event)

@@ -1553,6 +1553,22 @@ class MainWindow(QMainWindow):
         dlg = BatchDialog(self)
         dlg.exec()
 
+    def _open_display_mode(self):
+        """v2.4 F4: 车间大屏模式 (F11)"""
+        if not self.analyses:
+            QMessageBox.information(self, i18n.tr("dashboard.display_mode"),
+                                    i18n.tr("dashboard.empty"))
+            return
+        from ui.dialogs.display_mode import DisplayModeWindow
+        self._display_window = DisplayModeWindow(self)
+        self._display_window.showFullScreen()
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_F11:
+            self._open_display_mode()
+            return
+        super().keyPressEvent(event)
+
     def _on_user_management(self):
         from ui.dialogs.user_management_dialog import UserManagementDialog
         dlg = UserManagementDialog(self.current_user, self)

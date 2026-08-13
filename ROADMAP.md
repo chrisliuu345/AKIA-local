@@ -1,6 +1,6 @@
 # QA-Tool Roadmap
 
-> Current: v2.3.1 → v2.4-dev | Tests: 87/87 | 32 Tabs + Plugins | Updated: 2026-08-13
+> Current: v2.4 | Tests: 136/136 | 32 Tabs + Plugins | Updated: 2026-08-13
 
 ---
 
@@ -94,18 +94,20 @@ Plugin index 33, LLM streaming refresh, validate_params complete, animation clea
 ### E3. Alert Notification System (0.5 days)
 - Multi-channel alerts (popup / sound / log) · Configurable rules · Alert aggregation / dedup
 
-### E4. Dashboard UI & Control Enhancement (3 days) — P2-1/P2-2 moved up from v2.5
+### E4. Dashboard UI & Control Enhancement ✅ (3 days) — P2-1/P2-2 moved up from v2.5
 
-Dashboard interface and control optimization, merged from long-term planning items.
+Dashboard interface and control optimization, merged from long-term planning items. **Completed.**
 
-**Phase 1 (this sprint):**
+**Phase 1:**
 - F0: Unified KPI extractor `core/kpi_extractor.py` — fixes 3 broken card metrics (OEE / %GRR / SPC violations had wrong key paths), provides variable namespace for the formula engine
 - F1: Real-time refresh — signal-driven (`analysis_completed` → `_notify_dashboard`) + QTimer(5s) polling fallback + auto-refresh toggle
 - F2: Custom card layout — show/hide + reorder dialog (`ui/dialogs/layout_dialog.py`), QSettings persistence
 
-**Phase 2 (next sprint):**
-- F3: Low-code formula editor (P2-1) — `core/kpi_formula.py` AST whitelist parser + `ui/dialogs/formula_dialog.py`, custom KPI cards with live evaluation
-- F4: Shop floor display mode (P2-2) — full-screen dashboard `ui/dialogs/display_mode.py`, big-number KPI tiles (FONT_40), chart carousel (QTimer 8s), ESC exit, 1920×1080 optimized
+**Phase 2:**
+- F3: Low-code formula editor (P2-1) — `core/kpi_formula.py` AST whitelist parser (23 attack cases rejected, length/depth guards) + `ui/dialogs/formula_dialog.py`, custom KPI cards with live evaluation
+- F4: Shop floor display mode (P2-2) — full-screen dashboard `ui/dialogs/display_mode.py`, big-number KPI tiles (FONT_36B), chart carousel (QTimer 8s), ESC/arrow keys, F11 shortcut
+
+**Remaining for v2.4**: E1 (file watcher SPC), E2 (multi-plant comparison), E3 (alert notification) — scheduled next.
 
 **Estimate**: 6 days total (E1 1.5 + E2 1 + E3 0.5 + E4 3) | New Tabs 33-34 | Sidebar 32→34
 
@@ -152,8 +154,9 @@ v2.0 (28)     v2.1 (28)     v2.2 (32)       v2.4 (34)
 
 | Date | Version | Content |
 |------|---------|---------|
+| 08-13 | v2.4 | Dashboard Enhancement E4 complete: KPI extractor / real-time refresh / card layout / formula editor / shop floor display · 136 tests |
 | 08-13 | v2.3.1 | Released: UI text display fixes — table headers / status bar elide / welcome cards / menu i18n |
-| 08-13 | v2.4-dev | Planned: E4 Dashboard Phase 1 (KPI extractor + real-time refresh + card layout) |
+| 08-13 | v2.4-dev | Dashboard Phase 1 done (KPI extractor + real-time refresh + card layout) · Phase 2 done (formula editor + display mode) |
 | 08-12 | v2.3 | Released: Report template engine + dialog + HTML export + menu restructure |
 | 08-10 | v2.3-dev | Phase B: Report template engine + dialog + HTML self-contained export |
 | 08-10 | v2.3-dev | Phase A: 8D fishbone embed + PPAP real-time refresh + engine package exports |
