@@ -43,11 +43,22 @@ class TPMTab(BaseAnalysisTab):
 
         # 数据表
         self.table = QTableWidget(0, 10)
+        # 表头精简为 4 字保证最小窗口不截断, 单位 h 放入 tooltip
         self.table.setHorizontalHeaderLabels(
-            ["日期", "运行(h)", "计划停(h)", "故障停(h)", "换模(h)", "空转(h)",
-             "速度损(h)", "不良(h)", "启动损(h)", "总产/良品"]
+            ["日期", "运行", "计划停", "故障停", "换模", "空转",
+             "速度损", "不良", "启动损", "产量/良品"]
         )
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        hdr = self.table.horizontalHeader()
+        hdr.setSectionResizeMode(0, QHeaderView.Stretch)
+        hdr.setMinimumSectionSize(60)
+        for i in range(1, 10):
+            hdr.setSectionResizeMode(i, QHeaderView.ResizeToContents)
+        for i, tip in [(1, "运行时间 (小时)"), (2, "计划停机 (小时)"), (3, "故障停机 (小时)"),
+                       (4, "换模时间 (小时)"), (5, "空转/小停顿 (小时)"), (6, "速度损失 (小时)"),
+                       (7, "不良损失 (小时)"), (8, "启动损失 (小时)"), (9, "总产量 / 良品数")]:
+            item = self.table.horizontalHeaderItem(i)
+            if item:
+                item.setToolTip(tip)
         layout.addWidget(self.table)
 
         # 按钮行

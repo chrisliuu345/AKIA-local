@@ -50,30 +50,31 @@ class DashboardTab(BaseAnalysisTab):
             if col>2: col=0; row+=1
 
     def _make_card(self,atype,params,r,idx,tc):
-        frame=QFrame(); frame.setFixedSize(230,150)
+        frame=QFrame(); frame.setFixedSize(240,160)
         frame.setStyleSheet(f"QFrame {{ background:{tc['bg_card']}; border:1px solid {tc['border']}; border-radius:10px; padding:10px; }}")
         l=QVBoxLayout(frame); l.setSpacing(4)
         # 标题
         title=QLabel(atype[:25]+(".." if len(atype)>25 else "")); title.setFont(FONT_10); title.setStyleSheet(f"color:{tc['accent_bright']}; font-weight:bold;")
+        title.setWordWrap(True)
         l.addWidget(title)
-        # 关键指标
+        # 关键指标 — 全部允许换行, 避免长指标行被卡片宽度硬裁切
         cap=r.get("capability",{})
         if cap:
             cp=cap.get("cp"); cpk=cap.get("cpk"); grade=cap.get("grade","")
-            l.addWidget(QLabel(f"Cp={format_cp(cp) if cp else '-'}  Cpk={format_cp(cpk) if cpk else '-'}"))
-            l.addWidget(QLabel(f"等级: {grade}"))
+            lbl=QLabel(f"Cp={format_cp(cp) if cp else '-'}  Cpk={format_cp(cpk) if cpk else '-'}"); lbl.setWordWrap(True); l.addWidget(lbl)
+            lbl=QLabel(f"等级: {grade}"); lbl.setWordWrap(True); l.addWidget(lbl)
         oee=r.get("oee"); avail=r.get("availability"); perf=r.get("performance"); qual=r.get("quality")
         if oee is not None:
-            l.addWidget(QLabel(f"OEE: {oee*100:.1f}%  A:{avail*100:.0f}% P:{perf*100:.0f}% Q:{qual*100:.0f}%"))
+            lbl=QLabel(f"OEE: {oee*100:.1f}%  A:{avail*100:.0f}% P:{perf*100:.0f}% Q:{qual*100:.0f}%"); lbl.setWordWrap(True); l.addWidget(lbl)
         pv=r.get("p_value")
         if pv is not None:
-            l.addWidget(QLabel(f"p值: {format_pvalue(pv)}"))
+            lbl=QLabel(f"p值: {format_pvalue(pv)}"); lbl.setWordWrap(True); l.addWidget(lbl)
         grr=r.get("grr_percent")
         if grr:
-            l.addWidget(QLabel(f"%GRR: {grr*100:.1f}%"))
+            lbl=QLabel(f"%GRR: {grr*100:.1f}%"); lbl.setWordWrap(True); l.addWidget(lbl)
         viols=r.get("violations",[])
         if viols:
-            l.addWidget(QLabel(f"违规点: {len(viols)}个"))
+            lbl=QLabel(f"违规点: {len(viols)}个"); lbl.setWordWrap(True); l.addWidget(lbl)
         l.addStretch()
         return frame
 
