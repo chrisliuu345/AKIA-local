@@ -56,7 +56,7 @@ class SMEDTab(BaseAnalysisTab):
         presets = ["换模5S准备", "工具检查", "模具拆卸", "模具安装", "首件调试", "参数调整", "质量确认", "清理收尾"]
         for p in presets:
             btn = QPushButton(p)
-            btn.setMaximumHeight(26)
+            btn.setFixedHeight(32)  # 足够容纳 9pt+ 中文, 避免垂直裁切
             btn.clicked.connect(lambda _, n=p: self._add_preset(n))
             preset_row.addWidget(btn)
         preset_row.addStretch()

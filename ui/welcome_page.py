@@ -9,6 +9,7 @@ from PySide6.QtGui import (
     QFont, QColor, QPainter, QLinearGradient, QRadialGradient, QPen,
 )
 from ui.theme import colors as theme_colors
+from ui.widgets.elided_label import ElidedLabel
 
 from core.i18n import i18n
 from config.settings import APP_VERSION
@@ -71,6 +72,8 @@ class WelcomePage(QWidget):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
+        # v2.3.1: 最小窗口(1040)下卡片行不出现水平滚动条
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
         scroll.viewport().setAutoFillBackground(False)
 
@@ -78,7 +81,7 @@ class WelcomePage(QWidget):
         body.setStyleSheet("background: transparent;")
         body.setAutoFillBackground(False)
         body_layout = QVBoxLayout(body)
-        body_layout.setContentsMargins(50, 28, 50, 20)
+        body_layout.setContentsMargins(24, 28, 24, 20)
         body_layout.setSpacing(16)
 
         # ── 快速入口卡片 ──
@@ -86,7 +89,7 @@ class WelcomePage(QWidget):
         cards_widget.setStyleSheet("background: transparent;")
         cards_layout = QHBoxLayout(cards_widget)
         cards_layout.setContentsMargins(0, 0, 0, 0)
-        cards_layout.setSpacing(16)
+        cards_layout.setSpacing(12)
         cards_layout.addStretch()
 
         card_defs = [
@@ -142,8 +145,8 @@ class WelcomePage(QWidget):
         tc = theme_colors()
         card = QFrame()
         card.setCursor(Qt.PointingHandCursor)
-        card.setMinimumWidth(170)
-        card.setMaximumWidth(200)
+        card.setMinimumWidth(140)  # v2.3.1: 5卡并排最小 796px, 适配 1040 最小窗口
+        card.setMaximumWidth(180)
         card.setMinimumHeight(100)
         card.setStyleSheet(
             f"QFrame {{"
@@ -217,8 +220,10 @@ class WelcomePage(QWidget):
                     f"color: {tc['text_primary']}; background: transparent; border: none;")
                 row_layout.addWidget(name_lbl, 1)
 
-                path_lbl = QLabel(path)
+                # v2.3.1: 长路径自动省略号, tooltip 显示完整路径
+                path_lbl = ElidedLabel(path)
                 path_lbl.setFont(QFont("Microsoft YaHei", 8))
+                path_lbl.setMaximumWidth(360)
                 path_lbl.setStyleSheet(
                     f"color: {tc['text_muted']}; background: transparent; border: none;")
                 row_layout.addWidget(path_lbl)
