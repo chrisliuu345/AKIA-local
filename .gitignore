@@ -11,3 +11,4 @@ dist/
 *.spec
 *.exe
 .DS_Store
+HANDOVER.md
