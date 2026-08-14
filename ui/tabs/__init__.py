@@ -32,6 +32,7 @@ from ui.tabs.eight_d_tab import EightDTab
 from ui.tabs.tpm_tab import TPMTab
 from ui.tabs.ppap_tab import PPAPTab
 from ui.tabs.monitor_tab import MonitorTab
+from ui.tabs.multi_plant_tab import MultiPlantTab
 
 __all__ = [
     "SPCTab", "CapabilityTab", "MSATab", "HypothesisTab",
@@ -44,4 +45,5 @@ __all__ = [
     "SheetMergeTab", "SheetSplitTab", "LayeredFormTab",
     "SamplingTab", "DashboardTab", "DataToolsTab",
     "SMEDTab", "EightDTab", "TPMTab", "PPAPTab", "MonitorTab",
+    "MultiPlantTab",
 ]
