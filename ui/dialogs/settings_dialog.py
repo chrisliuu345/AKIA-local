@@ -47,11 +47,6 @@ class SettingsDialog(QDialog):
         self.dpi_spin.setValue(get_setting("chart_dpi", CHART_DPI))
         general_layout.addRow("图表DPI:", self.dpi_spin)
 
-        self.decimal_spin = QSpinBox()
-        self.decimal_spin.setRange(0, 10)
-        self.decimal_spin.setValue(get_setting("decimal_places", 4))
-        general_layout.addRow("小数位数:", self.decimal_spin)
-
         tabs.addTab(general_tab, "通用")
 
         rules_tab = QWidget()
@@ -60,10 +55,6 @@ class SettingsDialog(QDialog):
         self.nelson_check = QCheckBox("启用Nelson判异规则")
         self.nelson_check.setChecked(get_setting("nelson_rules_enabled", True))
         rules_layout.addRow(self.nelson_check)
-
-        self.weco_check = QCheckBox("启用Western Electric判异规则")
-        self.weco_check.setChecked(get_setting("weco_rules_enabled", False))
-        rules_layout.addRow(self.weco_check)
 
         tabs.addTab(rules_tab, "判异规则")
 
@@ -211,9 +202,7 @@ class SettingsDialog(QDialog):
         return {
             "font_family": self.font_combo.currentText(),
             "chart_dpi": self.dpi_spin.value(),
-            "decimal_places": self.decimal_spin.value(),
             "nelson_rules_enabled": self.nelson_check.isChecked(),
-            "weco_rules_enabled": self.weco_check.isChecked(),
             "msa_grr_acceptable": self.grr_accept.value(),
             "msa_ndc_threshold": self.ndc_spin.value(),
         }
