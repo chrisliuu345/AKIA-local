@@ -906,47 +906,22 @@ class MainWindow(QMainWindow):
                         if idx >= 0:
                             combo.setCurrentIndex(idx)
 
-    def _on_run_analysis(self):
-        idx = self.stack.currentIndex()
-        if idx == 0:
-            QMessageBox.information(self, i18n.tr("msg.select_module"), i18n.tr("msg.select_module"))
-            return
-        if not self.current_data:
-            QMessageBox.warning(self, i18n.tr("msg.no_data"), i18n.tr("msg.no_data_file"))
-            return
-
-        tabs = self._get_tabs()
-        tab = tabs.get(idx)
-        if tab is None:
-            return
-
-        self.status_label.setText(i18n.tr("status.running"))
-        try:
-            tab.run_and_display()
-            result = getattr(tab, 'current_result', None)
-            if result:
-                self.analyses[idx] = result.copy()
-                self.session_manager.add_analysis(
-                    result.get("analysis_type", "Unknown"),
-                    result.get("params", {}),
-                    result.get("result", {})
-                )
-                atype = result.get("analysis_type", "")
-                key_res = self._summarize_result(result.get("result", {}))
-                self.sidebar.add_history(idx, atype, key_res)
-            self.status_label.setText(i18n.tr("status.done"))
-            self._notify_dashboard()
-        except Exception as e:
-            import logging
-            logging.getLogger(__name__).exception(f"批量分析 {idx} 失败: {e}")
-            self.status_label.setText(i18n.tr("status.failed"))
-
     def _on_analysis_finished(self, idx: int):
+        """分析完成统一收纳点: analyses + 会话 + 侧栏历史 + Dashboard
+
+        v2.4 修复: 补上 session_manager.add_analysis (原死代码 _on_run_analysis
+        携带, 迁移到此处后删除死代码)
+        """
         tabs = self._get_tabs()
         tab = tabs.get(idx)
         result = getattr(tab, 'current_result', None)
         if result:
             self.analyses[idx] = result.copy()
+            self.session_manager.add_analysis(
+                result.get("analysis_type", "Unknown"),
+                result.get("params", {}),
+                result.get("result", {})
+            )
             atype = result.get("analysis_type", "")
             key_res = self._summarize_result(result.get("result", {}))
             self.sidebar.add_history(idx, atype, key_res)
@@ -1350,6 +1325,9 @@ class MainWindow(QMainWindow):
                 if params:
                     self.session_manager.current_session["tab_params"][str(idx)] = params
 
+            # v2.4 修复 (遗留 #3): 内存分析结果快照写入会话
+            self.session_manager.set_analyses(self.analyses)
+
             path = self.session_manager.save(file_path)
             self.status_label.setText(f"{i18n.tr('status.session_saved')}{path}")
 
@@ -1411,7 +1389,10 @@ class MainWindow(QMainWindow):
                     if subgroup is not None and hasattr(tab, 'subgroup_spin'):
                         tab.subgroup_spin.setValue(int(subgroup))
 
-                count = len(data.get("analyses", []))
+                # v2.4 修复 (遗留 #3): 恢复分析结果快照 + 刷新 Dashboard
+                self.analyses = self.session_manager.get_analyses()
+                self._notify_dashboard()
+                count = len(self.analyses)
                 self.statusBar().showMessage(
                     f"会话已加载: {data.get('name', '')} ({count} 个分析)", 5000
                 )
@@ -1621,6 +1602,7 @@ class MainWindow(QMainWindow):
                 self.analyses = loaded["analyses"]
                 self.data_label.setText(proj['name'])
                 self.status_label.setText(f"共享项目已加载: {len(raw_data)} sheets")
+                self._notify_dashboard()
             except Exception as e:
                 QMessageBox.critical(self, "加载失败", str(e))
 

@@ -141,6 +141,7 @@ class SMEDTab(BaseAnalysisTab):
         if result:
             self.display_result(result)
             self.current_result = result
+            self.analysis_completed.emit()
 
     def run_analysis(self):
         self._read_table()
