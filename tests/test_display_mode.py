@@ -181,6 +181,62 @@ class TestZoomView:
         win.close()
         win.deleteLater()
 
+    def _win_with_view(self, app):
+        win = DisplayModeWindow(FakeMain(
+            analyses={2: {"analysis_type": "能力", "params": {},
+                          "result": {"capability": {"cpk": 1.1}}}},
+            tabs={2: FakeTab(_fig())},
+        ))
+        win.show()
+        QTest.qWait(50)
+        view = win.chart_stack.widget(0)
+        return win, view
+
+    def test_refit_after_resize_keeps_aspect(self, app):
+        win, view = self._win_with_view(app)
+        view.resize(800, 600)
+        QTest.qWait(50)
+
+        m = view.transform()
+        assert abs(m.m11() - m.m22()) < 1e-9          # 等比缩放, 无拉伸
+        assert m.m11() > 0
+
+        r = m.mapRect(view._item.boundingRect())      # 完整适配视口, 无遮挡
+        vp = view.viewport()
+        assert r.width() <= vp.width() + 1.0
+        assert r.height() <= vp.height() + 1.0
+
+        win.close()
+        win.deleteLater()
+
+    def test_resize_keeps_user_zoom(self, app):
+        win, view = self._win_with_view(app)
+        view._fit()
+        view.wheelEvent(_FakeWheel(120))
+        zoomed = view._zoom
+        assert zoomed > 0
+
+        view.resize(800, 600)
+        QTest.qWait(50)
+        assert abs(view._zoom - zoomed) < 1e-9       # 用户缩放不被 resize 覆盖
+
+        win.close()
+        win.deleteLater()
+
+    def test_zero_size_viewport_then_refit(self, app):
+        win, view = self._win_with_view(app)
+        view.resize(0, 0)
+        QTest.qWait(50)                              # 零尺寸视口不崩不产生 NaN
+
+        view.resize(800, 600)
+        QTest.qWait(50)
+        m = view.transform()
+        assert m.m11() > 0
+        assert abs(m.m11() - m.m22()) < 1e-9
+
+        win.close()
+        win.deleteLater()
+
 
 class TestAnimationsEnabled:
     def test_count_up_completes_after_wait(self, app):
