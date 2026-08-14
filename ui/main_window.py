@@ -38,6 +38,12 @@ from core.sql_loader import SqlLoader
 from core.plugin_manager import PluginManager
 
 
+def _tab_has_data(tab) -> bool:
+    """Tab 是否有可分析数据 — 不能用 not df 测试 DataFrame 真值 (恒抛 ValueError)"""
+    df = getattr(tab, 'df', None)
+    return df is not None and len(df) != 0
+
+
 class MainWindow(QMainWindow):
     def __init__(self, user=None, splash=None):
         super().__init__()
@@ -949,7 +955,7 @@ class MainWindow(QMainWindow):
         failed = 0
 
         for idx, tab in tabs.items():
-            if not getattr(tab, 'df', None) or len(tab.df) == 0:
+            if not _tab_has_data(tab):
                 continue
             try:
                 tab.run_and_display()
