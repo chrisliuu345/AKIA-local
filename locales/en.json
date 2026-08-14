@@ -522,5 +522,21 @@
   "sidebar.smed": "SMED Quick Changeover",
   "sidebar.8d": "8D Problem Solving",
   "sidebar.tpm": "TPM Maintenance",
-  "sidebar.ppap": "PPAP Submission"
+  "sidebar.ppap": "PPAP Submission",
+  "sidebar.cap_comparison": "Process Capability Comparison",
+  "sidebar.trend": "Multi-series Trend Chart",
+  "sidebar.summary_panel": "Statistics Summary Panel",
+  "sidebar.worker_machine": "Worker-Machine Analysis",
+  "sidebar.std_work_combo": "Standard Work Combination Sheet",
+  "sidebar.sheet_tools": "Sheet Tools",
+  "sidebar.sheet_merge": "Sheet Merge",
+  "sidebar.sheet_split": "Sheet Split",
+  "sidebar.layered_form": "LPA Audit Sheet",
+  "sidebar.sampling_tools": "Sampling Inspection",
+  "sidebar.sampling": "Sampling Inspection",
+  "sidebar.report": "Analysis Report",
+  "sidebar.dashboard": "Dashboard",
+  "sidebar.data_tools": "Data Tools",
+  "sidebar.data_tools_tab": "Random Data / Transform / Outliers",
+  "sidebar.plugins": "Third-party Plugins"
 }

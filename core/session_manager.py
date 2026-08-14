@@ -42,6 +42,16 @@ class SessionManager:
             self.current_session.setdefault("analyses", []).append(entry)
         self.history.append(entry)
 
+    def set_analyses(self, analyses: Dict[int, Dict[str, Any]]) -> None:
+        """整体写入内存分析结果快照 (键为 Tab 索引, JSON 序列化为字符串键)"""
+        if self.current_session:
+            self.current_session["analysis_snapshot"] = {str(k): v for k, v in analyses.items()}
+
+    def get_analyses(self) -> Dict[int, Dict[str, Any]]:
+        """读取分析结果快照并还原 int 键"""
+        snap = self.current_session.get("analysis_snapshot", {}) if self.current_session else {}
+        return {int(k): v for k, v in snap.items()}
+
     def save(self, file_path: Optional[str] = None) -> str:
         if not file_path:
             sid = self.current_session.get("session_id", datetime.now().strftime("%Y%m%d_%H%M%S"))
