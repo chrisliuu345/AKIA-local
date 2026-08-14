@@ -586,5 +586,6 @@
   "alert.new": "检测到 {n} 个判异点 — {file}",
   "alert.cleared": "判异解除 — {file}",
   "alert.popup_title": "质量告警",
-  "alert.log_empty": "暂无告警记录"
+  "alert.log_empty": "暂无告警记录",
+  "dashboard.last_update": "更新于 {time}"
 }
