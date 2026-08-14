@@ -1171,6 +1171,35 @@ class MainWindow(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "保存失败", str(e))
 
+    def _apply_loaded_project(self, project: dict, path: str,
+                              status_msg: str | None = None,
+                              data_label_suffix: bool = True,
+                              success_msg: str | None = None):
+        """应用已加载的 .qap 项目: 恢复数据/分析结果/最近菜单并刷新 Dashboard"""
+        raw_data = project["raw_data"]
+        self.current_data = {
+            "file_path": path,
+            "raw_data": raw_data,
+            "metadata": {"sheet_names": list(raw_data.keys()), "total_rows": sum(len(df) for df in raw_data.values())},
+        }
+        self.data_loader.raw_data = raw_data
+        self.data_loader.metadata = self.current_data["metadata"]
+        self._route_sheets_to_tabs(raw_data)
+        self.analyses = project["analyses"]
+        info = project["manifest"]
+        suffix = f" [{info.get('sheet_count', 0)} sheets]" if data_label_suffix else ""
+        self.data_label.setText(f" {os.path.basename(path)}{suffix}")
+        recent = ProjectManager.recent_projects()
+        self._rebuild_recent_menu(recent)
+        recent_items = [(r["name"], r["path"]) for r in recent]
+        self.welcome_page.set_recent_projects(recent_items)
+        self.status_label.setText(
+            status_msg or f"项目已加载: {info.get('analysis_count', 0)} 个分析"
+        )
+        self._notify_dashboard()
+        if success_msg:
+            QMessageBox.information(self, "加载完成", success_msg)
+
     def _on_load_project(self):
         path, _ = QFileDialog.getOpenFileName(
             self, "打开项目", "", "QA-Tool Project (*.qap)"
@@ -1180,28 +1209,10 @@ class MainWindow(QMainWindow):
         try:
             self.status_label.setText("正在加载项目...")
             project = ProjectManager.load_project(path)
-            # 恢复数据
-            raw_data = project["raw_data"]
-            self.current_data = {
-                "file_path": path,
-                "raw_data": raw_data,
-                "metadata": {"sheet_names": list(raw_data.keys()), "total_rows": sum(len(df) for df in raw_data.values())},
-            }
-            self.data_loader.raw_data = raw_data
-            self.data_loader.metadata = self.current_data["metadata"]
-            self._route_sheets_to_tabs(raw_data)
-            # 恢复分析结果
-            self.analyses = project["analyses"]
-            info = project["manifest"]
-            self.data_label.setText(f" {os.path.basename(path)} [{info.get('sheet_count',0)} sheets]")
-            recent = ProjectManager.recent_projects()
-            self._rebuild_recent_menu(recent)
-            recent_items = [(r["name"], r["path"]) for r in recent]
-            self.welcome_page.set_recent_projects(recent_items)
-            self.status_label.setText(f"项目已加载: {info.get('analysis_count', 0)} 个分析")
-            self._notify_dashboard()
-            QMessageBox.information(self, "加载完成",
-                                    f"已恢复 {len(raw_data)} 个数据表、{len(self.analyses)} 个分析结果")
+            self._apply_loaded_project(
+                project, path,
+                success_msg=f"已恢复 {len(project['raw_data'])} 个数据表、{len(self.analyses)} 个分析结果",
+            )
         except Exception as e:
             QMessageBox.critical(self, "加载失败", str(e))
 
@@ -1210,24 +1221,7 @@ class MainWindow(QMainWindow):
         try:
             self.status_label.setText("正在加载项目...")
             project = ProjectManager.load_project(path)
-            raw_data = project["raw_data"]
-            self.current_data = {
-                "file_path": path,
-                "raw_data": raw_data,
-                "metadata": {"sheet_names": list(raw_data.keys()), "total_rows": sum(len(df) for df in raw_data.values())},
-            }
-            self.data_loader.raw_data = raw_data
-            self.data_loader.metadata = self.current_data["metadata"]
-            self._route_sheets_to_tabs(raw_data)
-            self.analyses = project["analyses"]
-            info = project["manifest"]
-            self.data_label.setText(f" {os.path.basename(path)} [{info.get('sheet_count',0)} sheets]")
-            recent = ProjectManager.recent_projects()
-            self._rebuild_recent_menu(recent)
-            recent_items = [(r["name"], r["path"]) for r in recent]
-            self.welcome_page.set_recent_projects(recent_items)
-            self.status_label.setText(f"项目已加载: {info.get('analysis_count', 0)} 个分析")
-            self._notify_dashboard()
+            self._apply_loaded_project(project, path)
         except Exception as e:
             QMessageBox.critical(self, "加载失败", str(e))
 
@@ -1245,23 +1239,15 @@ class MainWindow(QMainWindow):
     def _on_load_recent(self, path: str):
         if os.path.exists(path):
             # 直接使用已知路径加载（不弹文件对话框）
-            from core.project_manager import ProjectManager
             try:
+                self.status_label.setText("正在加载项目...")
                 project = ProjectManager.load_project(path)
-                raw_data = project["raw_data"]
-                self.current_data = {"file_path": path, "raw_data": raw_data, "metadata": {"sheet_names": list(raw_data.keys()), "total_rows": sum(len(df) for df in raw_data.values())}}
-                self.data_loader.raw_data = raw_data
-                self.data_loader.metadata = self.current_data["metadata"]
-                self._route_sheets_to_tabs(raw_data)
-                self.analyses = project["analyses"]
-                self.data_label.setText(f" {os.path.basename(path)}")
-                recent = ProjectManager.recent_projects()
-                self._rebuild_recent_menu(recent)
-                recent_items = [(r["name"], r["path"]) for r in recent]
-                self.welcome_page.set_recent_projects(recent_items)
-                self.status_label.setText(f"项目已加载: {len(raw_data)} sheets")
-                self._notify_dashboard()
-                QMessageBox.information(self, "加载完成", f"已恢复 {len(self.analyses)} 个分析")
+                self._apply_loaded_project(
+                    project, path,
+                    status_msg=f"项目已加载: {len(project['raw_data'])} sheets",
+                    data_label_suffix=False,
+                    success_msg=f"已恢复 {len(project['analyses'])} 个分析",
+                )
             except Exception as e:
                 QMessageBox.critical(self, "加载失败", str(e))
         else:
