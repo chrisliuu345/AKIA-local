@@ -44,6 +44,11 @@ def _tab_has_data(tab) -> bool:
     return df is not None and len(df) != 0
 
 
+def _tab_is_runnable(tab) -> bool:
+    """Tab 能否参与批量分析 — 有数据且定义了 run_and_display (Dashboard 等文档型 Tab 无此方法)"""
+    return _tab_has_data(tab) and callable(getattr(tab, 'run_and_display', None))
+
+
 class MainWindow(QMainWindow):
     def __init__(self, user=None, splash=None):
         super().__init__()
@@ -955,7 +960,7 @@ class MainWindow(QMainWindow):
         failed = 0
 
         for idx, tab in tabs.items():
-            if not _tab_has_data(tab):
+            if not _tab_is_runnable(tab):
                 continue
             try:
                 tab.run_and_display()
