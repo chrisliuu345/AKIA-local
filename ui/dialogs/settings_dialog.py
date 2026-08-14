@@ -74,6 +74,30 @@ class SettingsDialog(QDialog):
 
         tabs.addTab(msa_tab, "MSA")
 
+        # ── 告警标签页 (E3) ──
+        alert_tab = QWidget()
+        alert_layout = QFormLayout(alert_tab)
+
+        self.alert_min_spin = QSpinBox()
+        self.alert_min_spin.setRange(0, 100)
+        self.alert_min_spin.setValue(get_setting("alert_min_violations", 1))
+        self.alert_min_spin.setToolTip("判异点数达到该阈值才触发告警")
+        alert_layout.addRow("最小判异点数:", self.alert_min_spin)
+
+        self.alert_popup_check = QCheckBox("弹窗告警")
+        self.alert_popup_check.setChecked(get_setting("alert_popup_enabled", True))
+        alert_layout.addRow(self.alert_popup_check)
+
+        self.alert_sound_check = QCheckBox("声音提醒")
+        self.alert_sound_check.setChecked(get_setting("alert_sound_enabled", True))
+        alert_layout.addRow(self.alert_sound_check)
+
+        self.alert_log_check = QCheckBox("告警日志")
+        self.alert_log_check.setChecked(get_setting("alert_log_enabled", True))
+        alert_layout.addRow(self.alert_log_check)
+
+        tabs.addTab(alert_tab, "告警")
+
         # ── 账户标签页 ──
         if self._user:
             account_tab = QWidget()
@@ -205,4 +229,8 @@ class SettingsDialog(QDialog):
             "nelson_rules_enabled": self.nelson_check.isChecked(),
             "msa_grr_acceptable": self.grr_accept.value(),
             "msa_ndc_threshold": self.ndc_spin.value(),
+            "alert_min_violations": self.alert_min_spin.value(),
+            "alert_popup_enabled": self.alert_popup_check.isChecked(),
+            "alert_sound_enabled": self.alert_sound_check.isChecked(),
+            "alert_log_enabled": self.alert_log_check.isChecked(),
         }
