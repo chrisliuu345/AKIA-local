@@ -39,6 +39,8 @@ class LLMWorker(QThread):
         full = ""
         try:
             for token in self.client.generate(self.prompt):
+                if self.isInterruptionRequested():
+                    break
                 full += token
                 self.token_received.emit(token)
         except Exception as e:
@@ -455,8 +457,17 @@ class LLMDialog(QDialog):
 
     def closeEvent(self, event):
         if self.worker and self.worker.isRunning():
-            self.worker.quit()
-            self.worker.wait(2000)
+            # 先断开信号防止向已销毁控件发消息，再中断线程并掐断连接
+            try:
+                self.worker.token_received.disconnect(self._on_token)
+                self.worker.finished.disconnect(self._on_finished)
+            except RuntimeError:
+                pass
+            self.worker.requestInterruption()
+            self.llm.stop()
+            if not self.worker.wait(3000):
+                self.worker.terminate()
+                self.worker.wait(1000)
         super().closeEvent(event)
 
     def _clear_chat(self):
