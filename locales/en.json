@@ -581,5 +581,10 @@
   "multi_plant.col_mean": "Mean",
   "multi_plant.col_std": "Std Dev",
   "multi_plant.col_cpk": "Cpk",
-  "multi_plant.col_violations": "Violations"
+  "multi_plant.col_violations": "Violations",
+  "alert.title": "Alerts",
+  "alert.new": "Detected {n} violation(s) — {file}",
+  "alert.cleared": "Violations cleared — {file}",
+  "alert.popup_title": "Quality Alert",
+  "alert.log_empty": "No alerts yet"
 }
