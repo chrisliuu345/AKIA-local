@@ -1391,6 +1391,8 @@ class MainWindow(QMainWindow):
         dialog = SettingsDialog(self, user=self.current_user)
         if dialog.exec():
             save_config(dialog.get_values())
+            from output.chart_engine import setup_chinese_font
+            setup_chinese_font()
             # 保存账户设置
             if self.current_user:
                 acct = dialog.get_account_values()
