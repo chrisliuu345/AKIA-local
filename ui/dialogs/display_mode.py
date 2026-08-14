@@ -2,7 +2,7 @@
 
 - showFullScreen 无边框窗口, ESC 退出
 - 左侧大数字 KPI 区: 整体 OEE / 最优 Cpk / 违规总数 / 自定义公式值
-- 右侧图表轮播: 分析结果图表 8s 自动切换 + 指示圆点 + 手动切换
+- 右侧图表轮播: 分析结果图表 8s 自动切换 + 指示圆点 + 手动切换 + 滚轮缩放/拖拽平移
 - 顶部信息条: 实时时钟 + 数据文件摘要
 - 1920×1080 优化, 布局按比例伸缩自适应
 """
@@ -12,10 +12,10 @@ from datetime import datetime
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QStackedWidget, QFrame,
+    QStackedWidget, QFrame, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem,
 )
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QPixmap, QPainter
 
 from core.i18n import i18n
 from core.kpi_extractor import extract_metrics
@@ -33,32 +33,52 @@ CLOCK_INTERVAL_MS = 1000
 CHART_DPI = 150           # 大屏图表渲染分辨率
 
 
-class ScaledPixmapLabel(QLabel):
-    """保持宽高比的图像缩放显示 — 大屏图表轮播专用
+class ZoomPixmapView(QGraphicsView):
+    """可交互大屏图表查看器 — 滚轮缩放 + 拖拽平移 + 双击复位
 
-    修复: QLabel.setPixmap 按原始像素 1:1 显示, 150dpi 图表 (~1500px)
-    超出标签区域被裁切; 本类在 resize 时按 KeepAspectRatio 缩放重绘。
+    替代静态位图 QLabel: QGraphicsView 场景承载 150dpi 渲染位图,
+    支持滚轮以鼠标为锚点缩放、左键拖拽平移、双击回到全图适配。
     """
 
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self._original = QPixmap()
-        self.setAlignment(Qt.AlignCenter)
+    MIN_ZOOM = 0.2
+    MAX_ZOOM = 10.0
 
-    def setPixmap(self, pm: QPixmap):
-        self._original = pm
-        self._rescale()
+    def __init__(self, pixmap: QPixmap, parent=None):
+        super().__init__(parent)
+        self._scene = QGraphicsScene(self)
+        self._item = QGraphicsPixmapItem(pixmap)
+        self._scene.addItem(self._item)
+        self.setScene(self._scene)
+        self.setStyleSheet("background: transparent; border: none;")
+        self.setFrameShape(QFrame.NoFrame)
+        self.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
+        self.setDragMode(QGraphicsView.ScrollHandDrag)
+        self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
+        self.setResizeAnchor(QGraphicsView.AnchorViewCenter)
+        self._fitted = False
+        self._zoom = 1.0
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        self._rescale()
+        if not self._fitted:
+            self._fit()
+            self._fitted = True
 
-    def _rescale(self):
-        if self._original.isNull() or self.width() <= 0 or self.height() <= 0:
-            return
-        scaled = self._original.scaled(
-            self.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        super().setPixmap(scaled)
+    def _fit(self):
+        self.resetTransform()
+        self.fitInView(self._item, Qt.KeepAspectRatio)
+        self._zoom = self.transform().m11()
+
+    def wheelEvent(self, event):
+        factor = 1.25 if event.angleDelta().y() > 0 else 0.8
+        new_zoom = self._zoom * factor
+        if self.MIN_ZOOM <= new_zoom <= self.MAX_ZOOM:
+            self.scale(factor, factor)
+            self._zoom = new_zoom
+        event.accept()
+
+    def mouseDoubleClickEvent(self, event):
+        self._fit()
 
 
 class DisplayModeWindow(QWidget):
@@ -262,12 +282,10 @@ class DisplayModeWindow(QWidget):
             except Exception:
                 continue
 
-        # 填入轮播 stack — 保持宽高比缩放, 避免原始像素 1:1 显示被裁切
+        # 填入轮播 stack — ZoomPixmapView 支持滚轮缩放/拖拽平移
         for _label, pm in self._charts:
-            lbl = ScaledPixmapLabel()
-            lbl.setStyleSheet("background: transparent; border: none;")
-            lbl.setPixmap(pm)
-            self.chart_stack.addWidget(lbl)
+            view = ZoomPixmapView(pm)
+            self.chart_stack.addWidget(view)
 
         if not self._charts:
             empty = QLabel(i18n.tr("display.no_charts"))

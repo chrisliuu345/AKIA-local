@@ -9,8 +9,9 @@ matplotlib.use("Agg")
 import pytest
 from matplotlib.figure import Figure
 from PySide6.QtWidgets import QApplication, QLabel
+from PySide6.QtCore import QPoint
 
-from ui.dialogs.display_mode import DisplayModeWindow
+from ui.dialogs.display_mode import DisplayModeWindow, ZoomPixmapView
 
 
 @pytest.fixture(scope="module")
@@ -114,5 +115,58 @@ class TestCarousel:
         )
         win = DisplayModeWindow(main)
         assert len(win._charts) == 1  # 无 figure 的 tab 被跳过
+        win.close()
+        win.deleteLater()
+
+
+class _FakeWheel:
+    def __init__(self, dy):
+        self._dy = dy
+        self.accepted = False
+
+    def angleDelta(self):
+        return QPoint(0, self._dy)
+
+    def accept(self):
+        self.accepted = True
+
+
+class TestZoomView:
+    def test_widget_is_zoom_view(self, app):
+        win = DisplayModeWindow(FakeMain(
+            analyses={2: {"analysis_type": "能力", "params": {},
+                          "result": {"capability": {"cpk": 1.1}}}},
+            tabs={2: FakeTab(_fig())},
+        ))
+        view = win.chart_stack.widget(0)
+        assert isinstance(view, ZoomPixmapView)
+        win.close()
+        win.deleteLater()
+
+    def test_zoom_clamped_and_double_click_reset(self, app):
+        win = DisplayModeWindow(FakeMain(
+            analyses={2: {"analysis_type": "能力", "params": {},
+                          "result": {"capability": {"cpk": 1.1}}}},
+            tabs={2: FakeTab(_fig())},
+        ))
+        view = win.chart_stack.widget(0)
+        view._fit()
+        base_zoom = view._zoom
+        assert base_zoom > 0
+
+        view.wheelEvent(_FakeWheel(120))
+        assert view._zoom > base_zoom
+
+        for _ in range(100):
+            view.wheelEvent(_FakeWheel(120))
+        assert view._zoom <= ZoomPixmapView.MAX_ZOOM + 1e-9
+
+        for _ in range(200):
+            view.wheelEvent(_FakeWheel(-120))
+        assert view._zoom >= ZoomPixmapView.MIN_ZOOM - 1e-9
+
+        view.mouseDoubleClickEvent(None)
+        assert abs(view._zoom - base_zoom) < 1e-9
+
         win.close()
         win.deleteLater()
