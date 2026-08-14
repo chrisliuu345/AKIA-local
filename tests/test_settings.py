@@ -40,3 +40,15 @@ class TestUserFontWiring:
         settings._user_overrides = {"font_family": "TestUserFont"}
         setup_chinese_font()
         assert plt.rcParams["font.sans-serif"][0] == "TestUserFont"
+
+
+class TestAnimationsSetting:
+    def test_default_enabled(self):
+        from ui.widgets import animate
+        settings._user_overrides = {}
+        assert animate._animations_enabled() is True
+
+    def test_disabled_override(self):
+        from ui.widgets import animate
+        settings._user_overrides = {"animations_enabled": False}
+        assert animate._animations_enabled() is False

@@ -47,6 +47,10 @@ class SettingsDialog(QDialog):
         self.dpi_spin.setValue(get_setting("chart_dpi", CHART_DPI))
         general_layout.addRow("图表DPI:", self.dpi_spin)
 
+        self.animations_check = QCheckBox("界面动画效果 (淡入/数字滚动)")
+        self.animations_check.setChecked(get_setting("animations_enabled", True))
+        general_layout.addRow("动画:", self.animations_check)
+
         tabs.addTab(general_tab, "通用")
 
         rules_tab = QWidget()
@@ -226,6 +230,7 @@ class SettingsDialog(QDialog):
         return {
             "font_family": self.font_combo.currentText(),
             "chart_dpi": self.dpi_spin.value(),
+            "animations_enabled": self.animations_check.isChecked(),
             "nelson_rules_enabled": self.nelson_check.isChecked(),
             "msa_grr_acceptable": self.grr_accept.value(),
             "msa_ndc_threshold": self.ndc_spin.value(),

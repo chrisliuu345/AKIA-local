@@ -8,15 +8,25 @@ matplotlib.use("Agg")
 
 import pytest
 from matplotlib.figure import Figure
+from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QLabel
 from PySide6.QtCore import QPoint
 
+from config import settings
 from ui.dialogs.display_mode import DisplayModeWindow, ZoomPixmapView
 
 
 @pytest.fixture(scope="module")
 def app():
     return QApplication.instance() or QApplication([])
+
+
+@pytest.fixture(autouse=True)
+def _anim_off():
+    original = dict(settings._user_overrides)
+    settings._user_overrides = {"animations_enabled": False}
+    yield
+    settings._user_overrides = original
 
 
 class FakeTab:
@@ -168,5 +178,51 @@ class TestZoomView:
         view.mouseDoubleClickEvent(None)
         assert abs(view._zoom - base_zoom) < 1e-9
 
+        win.close()
+        win.deleteLater()
+
+
+class TestAnimationsEnabled:
+    def test_count_up_completes_after_wait(self, app):
+        settings._user_overrides = {"animations_enabled": True}
+        win = DisplayModeWindow(FakeMain(analyses={
+            10: {"analysis_type": "OEE", "params": {},
+                 "result": {"overall": {"oee": 0.853}}},
+        }))
+        QTest.qWait(1200)
+        assert "85.3%" in _kpi_texts(win)
+        win.close()
+        win.deleteLater()
+
+    def test_cross_fade_switches_after_wait(self, app):
+        settings._user_overrides = {"animations_enabled": True}
+        fig = _fig()
+        win = DisplayModeWindow(FakeMain(
+            analyses={
+                2: {"analysis_type": "能力", "params": {},
+                    "result": {"capability": {"cpk": 1.1}}},
+                10: {"analysis_type": "OEE", "params": {},
+                     "result": {"overall": {"oee": 0.8}}},
+            },
+            tabs={2: FakeTab(fig), 10: FakeTab(fig)},
+        ))
+        win._step_chart(1)
+        QTest.qWait(600)
+        assert win.chart_stack.currentIndex() == 1
+        win.close()
+        win.deleteLater()
+
+    def test_cross_fade_disabled_switches_instantly(self, app):
+        win = DisplayModeWindow(FakeMain(
+            analyses={
+                2: {"analysis_type": "能力", "params": {},
+                    "result": {"capability": {"cpk": 1.1}}},
+                10: {"analysis_type": "OEE", "params": {},
+                     "result": {"overall": {"oee": 0.8}}},
+            },
+            tabs={2: FakeTab(_fig()), 10: FakeTab(_fig())},
+        ))
+        win._step_chart(1)
+        assert win.chart_stack.currentIndex() == 1
         win.close()
         win.deleteLater()
