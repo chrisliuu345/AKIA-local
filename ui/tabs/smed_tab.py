@@ -16,6 +16,11 @@ from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY, FONT_12B
 from analysis.ie.smed import SMEDEngine, SMEDTask
 
 
+def truncate_label(name: str, max_len: int = 8) -> str:
+    """甘特图 y 轴标签截断: 超长作业名截为 max_len-1 字 + 省略号"""
+    return name if len(name) <= max_len else name[: max_len - 1] + "…"
+
+
 class SMEDTab(BaseAnalysisTab):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -160,7 +165,7 @@ class SMEDTab(BaseAnalysisTab):
         colors_map = {'internal': '#e74c3c', 'external': '#3498db'}
         labels, colors_list, starts, widths_after = [], [], [], []
         for t in all_tasks:
-            labels.append(t.name)
+            labels.append(truncate_label(t.name))
             colors_list.append(colors_map.get(t.task_type, '#888'))
             starts.append(0)
             widths_after.append(max(t.improved_time, 0) if t.improved_time > 0 else t.time_sec)
@@ -171,7 +176,8 @@ class SMEDTab(BaseAnalysisTab):
             ws = widths_after[i] if t.improved_time > 0 else t.time_sec
             ax_gantt.text(ws / 2, i, f'{ws:.0f}s', ha='center', va='center', fontsize=8, color='white')
         ax_gantt.set_yticks(list(y_positions))
-        ax_gantt.set_yticklabels(labels, fontsize=9)
+        gantt_fs = 9 if len(all_tasks) <= 8 else 7  # 任务多时缩小字号防挤叠
+        ax_gantt.set_yticklabels(labels, fontsize=gantt_fs)
         ax_gantt.set_xlabel("时间 (秒)", fontsize=10)
         ax_gantt.set_title("改善后时间分布", fontsize=12, fontweight='bold', color='#e1e2e6')
         ax_gantt.set_facecolor('#1c1c26')
@@ -198,7 +204,7 @@ class SMEDTab(BaseAnalysisTab):
             ax_compare.text(x[i] - w/2, before_vals[i] + 5, f'{before_vals[i]:.0f}', ha='center', fontsize=8, color='#e1e2e6')
             ax_compare.text(x[i] + w/2, after_vals[i] + 5, f'{after_vals[i]:.0f}', ha='center', fontsize=8, color='#e1e2e6')
 
-        fig.tight_layout()
+        fig.tight_layout(rect=[0.18, 0, 1, 1])  # 左侧预留 y 轴标签宽度
         self.current_figure = fig
         summary = (f"换模总时间: {result.total_before:.0f}s → {result.total_after:.0f}s "
                    f"(改善 {result.improvement_pct:.1f}%)\n"
