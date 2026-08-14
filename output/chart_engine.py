@@ -13,7 +13,7 @@ import seaborn as sns
 from config.settings import (
     CHART_COLORS, CHART_DPI, CHART_FIGSIZE,
     FONT_FAMILY, FONT_SIZE_TITLE, FONT_SIZE_LABEL, FONT_SIZE_TICK,
-    get_effective,
+    get_effective, get_setting,
 )
 from core.i18n import i18n
 
@@ -32,6 +32,9 @@ def setup_chinese_font():
         "Noto Sans JP", "Noto Sans", "DejaVu Sans",
         "Arial Unicode MS", "WenQuanYi Micro Hei",
     ]
+    user_font = get_setting("font_family", "")
+    if user_font:
+        preferred.insert(0, user_font)
     matched = [p for p in preferred if p in available]
     if matched:
         current = list(plt.rcParams["font.sans-serif"])

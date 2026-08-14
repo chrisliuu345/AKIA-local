@@ -12,7 +12,10 @@ from scipy.interpolate import griddata
 from output.chart_engine import (
     create_histogram, create_pareto_chart, create_correlation_heatmap,
 )
-from config.settings import CHART_DPI, FONT_SIZE_TITLE, FONT_SIZE_LABEL, FONT_SIZE_TICK
+from config.settings import (
+    CHART_DPI, FONT_SIZE_TITLE, FONT_SIZE_LABEL, FONT_SIZE_TICK,
+    get_effective,
+)
 
 # ── 暗色主题 ──
 _DARK_AXES = {
@@ -35,7 +38,8 @@ _CHART_PALETTES = {
     "质感灰": ["#6e7080", "#a0a3ae", "#3a3a48", "#5a5c6a", "#e1e2e6"],
 }
 
-_DPI = CHART_DPI
+def _dpi():
+    return get_effective("chart_dpi", CHART_DPI)
 
 
 def _apply_dark_theme(dark: bool = True):
@@ -101,7 +105,7 @@ def _build_histogram(data: dict, options: dict) -> Figure:
     df = data.get("df")
     col = data.get("columns", [None])[0]
     if df is None or col is None or col not in df.columns:
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=_DPI)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "请选择数值列", ha="center", va="center", fontsize=14)
         return fig
     series = pd.to_numeric(df[col], errors="coerce").dropna()
@@ -115,11 +119,11 @@ def _build_boxplot(data: dict, options: dict) -> Figure:
     df = data.get("df")
     cols = data.get("columns", [])
     if df is None or not cols:
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=_DPI)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "请选择数值列", ha="center", va="center", fontsize=14)
         return fig
     palette = _get_palette(options.get("palette", "专业蓝"))
-    fig, ax = plt.subplots(figsize=(max(7, len(cols) * 2), 5), dpi=_DPI)
+    fig, ax = plt.subplots(figsize=(max(7, len(cols) * 2), 5), dpi=_dpi())
     values = [pd.to_numeric(df[c], errors="coerce").dropna().values for c in cols if c in df.columns]
     labels = [c for c in cols if c in df.columns]
     bp = ax.boxplot(values, patch_artist=True,
@@ -139,7 +143,7 @@ def _build_scatter(data: dict, options: dict) -> Figure:
     df = data.get("df")
     cols = data.get("columns", [None, None])
     if df is None or len(cols) < 2 or cols[0] not in df.columns or cols[1] not in df.columns:
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=_DPI)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "请选择 X 和 Y 轴列", ha="center", va="center", fontsize=14)
         return fig
     x = pd.to_numeric(df[cols[0]], errors="coerce").dropna()
@@ -147,12 +151,12 @@ def _build_scatter(data: dict, options: dict) -> Figure:
     common = x.index.intersection(y.index)
     x, y = x.loc[common], y.loc[common]
     if len(x) < 3:
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=_DPI)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "数据点不足", ha="center", va="center", fontsize=14)
         return fig
     palette = _get_palette(options.get("palette", "专业蓝"))
     show_reg = options.get("show_regression", True)
-    fig, ax = plt.subplots(figsize=(8, 6), dpi=_DPI)
+    fig, ax = plt.subplots(figsize=(8, 6), dpi=_dpi())
     ax.scatter(x, y, alpha=0.6, edgecolors="white", linewidth=0.3, color=palette[0])
     if show_reg:
         slope, intercept, r_val, p_val, std_err = sp_stats.linregress(x, y)
@@ -174,7 +178,7 @@ def _build_pareto(data: dict, options: dict) -> Figure:
     df = data.get("df")
     cols = data.get("columns", [None, None])
     if df is None or len(cols) < 2 or cols[0] not in df.columns or cols[1] not in df.columns:
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=_DPI)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "请选择分类列和数值列", ha="center", va="center", fontsize=14)
         return fig
     cat_col, val_col = cols[0], cols[1]
@@ -193,15 +197,15 @@ def _build_probplot(data: dict, options: dict) -> Figure:
     df = data.get("df")
     cols = data.get("columns", [None])
     if df is None or cols[0] not in df.columns:
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=_DPI)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "请选择数值列", ha="center", va="center", fontsize=14)
         return fig
     series = pd.to_numeric(df[cols[0]], errors="coerce").dropna()
     if len(series) < 4:
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=_DPI)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "数据点不足", ha="center", va="center", fontsize=14)
         return fig
-    fig, ax = plt.subplots(figsize=(8, 6), dpi=_DPI)
+    fig, ax = plt.subplots(figsize=(8, 6), dpi=_dpi())
     sp_stats.probplot(series.values, dist="norm", plot=ax)
     ax.get_lines()[1].set_color("#4da6ff")
     ax.get_lines()[1].set_linewidth(1.5)
@@ -222,12 +226,12 @@ def _build_matrix(data: dict, options: dict) -> Figure:
     df = data.get("df")
     cols = data.get("columns", [])
     if df is None or not cols:
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=_DPI)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "请选择至少 2 个数值列", ha="center", va="center", fontsize=14)
         return fig
     valid_cols = [c for c in cols if c in df.columns]
     if len(valid_cols) < 2:
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=_DPI)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "至少需要 2 个数值列", ha="center", va="center", fontsize=14)
         return fig
     fig = create_correlation_heatmap(df, numeric_cols=valid_cols,
@@ -243,7 +247,7 @@ def _build_residual(data: dict, options: dict) -> Figure:
     df = data.get("df")
     cols = data.get("columns", [])
     if df is None or len(cols) < 2 or cols[0] not in df.columns or cols[1] not in df.columns:
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=_DPI)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "请选择实际值列和预测值列", ha="center", va="center", fontsize=14)
         return fig
     actual_col, pred_col = cols[0], cols[1]
@@ -252,12 +256,12 @@ def _build_residual(data: dict, options: dict) -> Figure:
     common = actual.index.intersection(pred.index)
     actual, pred = actual.loc[common], pred.loc[common]
     if len(actual) < 3:
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=_DPI)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "数据点不足", ha="center", va="center", fontsize=14)
         return fig
     residuals = actual - pred
     palette = _get_palette(options.get("palette", "专业蓝"))
-    fig, axes = plt.subplots(1, 2, figsize=(12, 5), dpi=_DPI)
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5), dpi=_dpi())
     ax1 = axes[0]
     ax1.scatter(pred, residuals, alpha=0.6, edgecolors="white", linewidth=0.3, color=palette[0])
     ax1.axhline(y=0, color="red", linestyle="--", linewidth=1)
@@ -293,12 +297,12 @@ def _build_main_effects(data: dict, options: dict) -> Figure:
                 response_col = c
                 break
     if df is None or not factor_cols or response_col is None:
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=_DPI)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "请选择因子列和响应列", ha="center", va="center", fontsize=14)
         return fig
     palette = _get_palette(options.get("palette", "专业蓝"))
     n = len(factor_cols)
-    fig, axes = plt.subplots(1, n, figsize=(5 * n, 4), dpi=_DPI)
+    fig, axes = plt.subplots(1, n, figsize=(5 * n, 4), dpi=_dpi())
     if n == 1:
         axes = [axes]
     response = pd.to_numeric(df[response_col], errors="coerce")
@@ -323,14 +327,14 @@ def _build_interaction(data: dict, options: dict) -> Figure:
     df = data.get("df")
     cols = data.get("columns", [None, None, None])
     if df is None or len(cols) < 3 or any(c not in df.columns for c in cols[:3]):
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=_DPI)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "请选择因子1、因子2和响应列", ha="center", va="center", fontsize=14)
         return fig
     f1, f2, resp = cols[0], cols[1], cols[2]
     palette = _get_palette(options.get("palette", "专业蓝"))
     response = pd.to_numeric(df[resp], errors="coerce")
     means = df.groupby([f1, f2])[response.name].mean().unstack()
-    fig, ax = plt.subplots(figsize=(8, 5), dpi=_DPI)
+    fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
     for i, col in enumerate(means.columns):
         c = palette[i % len(palette)]
         ax.plot(range(len(means)), means[col].values, "o-", color=c, linewidth=2, markersize=8, label=str(col))
@@ -351,7 +355,7 @@ def _build_contour(data: dict, options: dict) -> Figure:
     df = data.get("df")
     cols = data.get("columns", [None, None, None])
     if df is None or len(cols) < 3 or any(c not in df.columns for c in cols[:3]):
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=_DPI)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "请选择 X 因子、Y 因子和响应列", ha="center", va="center", fontsize=14)
         return fig
     x_col, y_col, resp = cols[0], cols[1], cols[2]
@@ -361,10 +365,10 @@ def _build_contour(data: dict, options: dict) -> Figure:
     mask = x.notna() & y.notna() & z.notna()
     x, y, z = x[mask], y[mask], z[mask]
     if len(x) < 4:
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=_DPI)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "数据点不足", ha="center", va="center", fontsize=14)
         return fig
-    fig, ax = plt.subplots(figsize=(8, 6), dpi=_DPI)
+    fig, ax = plt.subplots(figsize=(8, 6), dpi=_dpi())
     xi = np.linspace(x.min(), x.max(), 50)
     yi = np.linspace(y.min(), y.max(), 50)
     X, Y = np.meshgrid(xi, yi)
@@ -383,7 +387,7 @@ def _build_surface_3d(data: dict, options: dict) -> Figure:
     df = data.get("df")
     cols = data.get("columns", [None, None, None])
     if df is None or len(cols) < 3 or any(c not in df.columns for c in cols[:3]):
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=_DPI)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "请选择 X 因子、Y 因子和响应列", ha="center", va="center", fontsize=14)
         return fig
     x_col, y_col, resp = cols[0], cols[1], cols[2]
@@ -393,10 +397,10 @@ def _build_surface_3d(data: dict, options: dict) -> Figure:
     mask = x.notna() & y.notna() & z.notna()
     x, y, z = x[mask], y[mask], z[mask]
     if len(x) < 4:
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=_DPI)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "数据点不足", ha="center", va="center", fontsize=14)
         return fig
-    fig = plt.figure(figsize=(10, 7), dpi=_DPI)
+    fig = plt.figure(figsize=(10, 7), dpi=_dpi())
     ax = fig.add_subplot(111, projection="3d")
     xi = np.linspace(x.min(), x.max(), 30)
     yi = np.linspace(y.min(), y.max(), 30)
@@ -417,7 +421,7 @@ def _build_time_series(data: dict, options: dict) -> Figure:
     df = data.get("df")
     cols = data.get("columns", [None, None])
     if df is None or len(cols) < 2 or cols[0] not in df.columns or cols[1] not in df.columns:
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=_DPI)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "请选择日期列和数值列", ha="center", va="center", fontsize=14)
         return fig
     date_col, val_col = cols[0], cols[1]
@@ -428,11 +432,11 @@ def _build_time_series(data: dict, options: dict) -> Figure:
     sorted_idx = np.argsort(dates)
     dates, values = dates.iloc[sorted_idx], values.iloc[sorted_idx]
     if len(dates) < 3:
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=_DPI)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "数据点不足", ha="center", va="center", fontsize=14)
         return fig
     palette = _get_palette(options.get("palette", "专业蓝"))
-    fig, ax = plt.subplots(figsize=(12, 5), dpi=_DPI)
+    fig, ax = plt.subplots(figsize=(12, 5), dpi=_dpi())
     ax.plot(dates, values, "o-", color=palette[0], linewidth=1.5, markersize=4)
     ax.fill_between(dates, values, alpha=0.1, color=palette[0])
     ax.set_xlabel(date_col, fontsize=FONT_SIZE_LABEL)
@@ -450,7 +454,7 @@ def _build_bubble(data: dict, options: dict) -> Figure:
     df = data.get("df")
     cols = data.get("columns", [None, None, None])
     if df is None or len(cols) < 3 or any(c not in df.columns for c in cols[:3]):
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=_DPI)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "请选择 X/Y/大小列", ha="center", va="center", fontsize=14)
         return fig
     x_col, y_col, s_col = cols[0], cols[1], cols[2]
@@ -460,11 +464,11 @@ def _build_bubble(data: dict, options: dict) -> Figure:
     mask = x.notna() & y.notna() & s.notna()
     x, y, s = x[mask], y[mask], s[mask]
     if len(x) < 2:
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=_DPI)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "数据点不足", ha="center", va="center", fontsize=14)
         return fig
     palette = _get_palette(options.get("palette", "专业蓝"))
-    fig, ax = plt.subplots(figsize=(9, 6), dpi=_DPI)
+    fig, ax = plt.subplots(figsize=(9, 6), dpi=_dpi())
     sizes = (s - s.min()) / (s.max() - s.min() + 0.001) * 400 + 20
     scatter = ax.scatter(x, y, s=sizes, alpha=0.55, c=palette[0],
                          edgecolors="white", linewidth=0.5)
@@ -487,16 +491,16 @@ def _build_radar(data: dict, options: dict) -> Figure:
             cat_col = c
             break
     if df is None or not val_cols:
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=_DPI)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "请选择至少 2 个数值列", ha="center", va="center", fontsize=14)
         return fig
     valid_cols = [c for c in val_cols if c in df.columns]
     if len(valid_cols) < 2:
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=_DPI)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "至少需要 2 个数值列", ha="center", va="center", fontsize=14)
         return fig
     palette = _get_palette(options.get("palette", "专业蓝"))
-    fig, ax = plt.subplots(figsize=(8, 7), dpi=_DPI, subplot_kw=dict(polar=True))
+    fig, ax = plt.subplots(figsize=(8, 7), dpi=_dpi(), subplot_kw=dict(polar=True))
     n = len(valid_cols)
     angles = np.linspace(0, 2 * np.pi, n, endpoint=False).tolist()
     angles += angles[:1]
@@ -528,7 +532,7 @@ def _build_waterfall(data: dict, options: dict) -> Figure:
     df = data.get("df")
     cols = data.get("columns", [None, None])
     if df is None or len(cols) < 2 or cols[0] not in df.columns or cols[1] not in df.columns:
-        fig, ax = plt.subplots(figsize=(9, 5), dpi=_DPI)
+        fig, ax = plt.subplots(figsize=(9, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "请选择分类列和数值列", ha="center", va="center", fontsize=14)
         return fig
     cat_col, val_col = cols[0], cols[1]
@@ -537,11 +541,11 @@ def _build_waterfall(data: dict, options: dict) -> Figure:
     valid = vals.notna()
     vals, labels = vals[valid].values, [labels[i] for i in valid.index[valid]]
     if len(vals) < 2:
-        fig, ax = plt.subplots(figsize=(9, 5), dpi=_DPI)
+        fig, ax = plt.subplots(figsize=(9, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "数据点不足", ha="center", va="center", fontsize=14)
         return fig
     palette = _get_palette(options.get("palette", "专业蓝"))
-    fig, ax = plt.subplots(figsize=(max(10, len(vals) * 1.2), 5), dpi=_DPI)
+    fig, ax = plt.subplots(figsize=(max(10, len(vals) * 1.2), 5), dpi=_dpi())
 
     bottom = 0.0
     for i, (lbl, v) in enumerate(zip(labels, vals)):
@@ -628,7 +632,7 @@ def generate_chart(chart_type: str, data: dict, options: dict = None) -> Figure:
     _apply_dark_theme(options.get("dark_mode", True))
     builder = BUILDERS.get(chart_type)
     if builder is None:
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=_DPI)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, f"图表未实现: {chart_type}", ha="center", va="center", fontsize=14)
         return fig
     return builder(data, options)
