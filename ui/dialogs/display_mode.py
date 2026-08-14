@@ -20,6 +20,7 @@ from PySide6.QtGui import QPixmap, QPainter
 from core.i18n import i18n
 from core.kpi_extractor import extract_metrics
 from ui.theme import FONT_36B, FONT_18B, FONT_14B, FONT_12
+from ui.widgets.animate import fade_in, count_up, cross_fade
 from ui.widgets.elided_label import ElidedLabel
 
 BG_BIG_SCREEN = "#0c0c12"      # 大屏底色 (比主界面更深, 高对比)
@@ -212,17 +213,18 @@ class DisplayModeWindow(QWidget):
 
         if oee_vals:
             self._add_kpi_tile(i18n.tr("display.kpi_oee"),
-                               f"{max(oee_vals) * 100:.1f}%", ACCENT)
+                               max(oee_vals) * 100, lambda v: f"{v:.1f}%", ACCENT)
         if cpk_vals:
             best = max(cpk_vals)
             color = "#27ae60" if best >= 1.33 else (ACCENT_WARN if best >= 1.0 else "#e74c3c")
-            self._add_kpi_tile(i18n.tr("display.kpi_cpk"), f"{best:.3f}", color)
+            self._add_kpi_tile(i18n.tr("display.kpi_cpk"), best, lambda v: f"{v:.3f}", color)
         if grr_vals:
             grr = min(grr_vals)
             color = "#27ae60" if grr < 0.1 else (ACCENT_WARN if grr < 0.3 else "#e74c3c")
-            self._add_kpi_tile(i18n.tr("display.kpi_grr"), f"{grr * 100:.1f}%", color)
+            self._add_kpi_tile(i18n.tr("display.kpi_grr"), grr * 100, lambda v: f"{v:.1f}%", color)
         if viol_sum > 0:
-            self._add_kpi_tile(i18n.tr("display.kpi_violations"), str(viol_sum),
+            self._add_kpi_tile(i18n.tr("display.kpi_violations"), float(viol_sum),
+                               lambda v: f"{int(v)}",
                                "#27ae60" if viol_sum < 10 else "#e74c3c")
 
         # 自定义公式值 (前 3 个可求值的)
@@ -237,12 +239,12 @@ class DisplayModeWindow(QWidget):
                     value = evaluate(str(expr), variables)
                 except FormulaError:
                     continue
-                self._add_kpi_tile(name, f"{value:.4g}", ACCENT)
+                self._add_kpi_tile(name, float(value), lambda v: f"{v:.4g}", ACCENT)
                 shown += 1
                 if shown >= 3:
                     break
 
-    def _add_kpi_tile(self, label: str, value: str, color: str):
+    def _add_kpi_tile(self, label: str, value: float, fmt, color: str):
         tile = QFrame()
         tile.setStyleSheet(
             f"QFrame {{ background: {BG_KPI_CARD}; border: 1px solid #262633;"
@@ -254,11 +256,13 @@ class DisplayModeWindow(QWidget):
         name_lbl.setFont(FONT_14B)
         name_lbl.setStyleSheet(f"color: {TEXT_DIM}; background: transparent;")
         l.addWidget(name_lbl)
-        val_lbl = QLabel(value)
+        val_lbl = QLabel("")
         val_lbl.setFont(FONT_36B)
         val_lbl.setStyleSheet(f"color: {color}; background: transparent;")
         l.addWidget(val_lbl)
         self.kpi_layout.insertWidget(self.kpi_layout.count() - 1, tile)
+        count_up(val_lbl, value, fmt)
+        fade_in(tile)
 
     def _build_charts(self):
         # 从各 Tab 的 current_figure 渲染高分辨率位图
@@ -304,7 +308,7 @@ class DisplayModeWindow(QWidget):
 
     def _update_carousel(self):
         if self._charts:
-            self.chart_stack.setCurrentIndex(self._chart_idx)
+            cross_fade(self.chart_stack, self._chart_idx)
             dots = " ".join(
                 "●" if i == self._chart_idx else "○"
                 for i in range(len(self._charts))
