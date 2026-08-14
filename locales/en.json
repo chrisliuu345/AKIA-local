@@ -586,5 +586,6 @@
   "alert.new": "Detected {n} violation(s) — {file}",
   "alert.cleared": "Violations cleared — {file}",
   "alert.popup_title": "Quality Alert",
-  "alert.log_empty": "No alerts yet"
+  "alert.log_empty": "No alerts yet",
+  "dashboard.last_update": "Updated {time}"
 }
