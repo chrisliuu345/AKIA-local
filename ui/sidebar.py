@@ -79,6 +79,12 @@ CATEGORIES = [
         ],
     },
     {
+        "key": "sidebar.monitoring",
+        "items": [
+            (33, "sidebar.monitor"),
+        ],
+    },
+    {
         "key": "sidebar.plugins",
         "items": [],  # 由 MainWindow 动态填充
     },
