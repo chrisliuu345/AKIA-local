@@ -1528,6 +1528,11 @@ class MainWindow(QMainWindow):
 
     def _open_display_mode(self):
         """v2.4 F4: 车间大屏模式 (F11)"""
+        if getattr(self, "_display_window", None) is not None and \
+                self._display_window.isVisible():
+            self._display_window.raise_()
+            self._display_window.activateWindow()
+            return
         if not self.analyses:
             QMessageBox.information(self, i18n.tr("dashboard.display_mode"),
                                     i18n.tr("dashboard.empty"))

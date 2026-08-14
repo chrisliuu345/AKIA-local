@@ -8,6 +8,7 @@
 """
 
 from io import BytesIO
+from copy import deepcopy
 from datetime import datetime
 
 from PySide6.QtWidgets import (
@@ -64,6 +65,11 @@ class ZoomPixmapView(QGraphicsView):
         if not self._user_zoomed:
             self._fit()
 
+    def showEvent(self, event):
+        super().showEvent(event)
+        if not self._user_zoomed:
+            self._fit()
+
     def _fit(self):
         if self.viewport().width() <= 0 or self.viewport().height() <= 0:
             return
@@ -92,8 +98,13 @@ class DisplayModeWindow(QWidget):
         super().__init__(None, Qt.Window)
         self._main = main_window
         self._charts = []          # [(label, QPixmap)]
+        self._figures = []         # [(label, Figure)] 大屏渲染时按视口比例重设尺寸
         self._chart_idx = 0
         self._setup_ui()
+        self._resize_timer = QTimer(self)
+        self._resize_timer.setSingleShot(True)
+        self._resize_timer.setInterval(300)
+        self._resize_timer.timeout.connect(self._render_all)
         self._load_data()
         self._start_timers()
         self.setStyleSheet(
@@ -268,8 +279,8 @@ class DisplayModeWindow(QWidget):
         fade_in(tile)
 
     def _build_charts(self):
-        # 从各 Tab 的 current_figure 渲染高分辨率位图
-        self._charts.clear()
+        # 收集各 Tab 的 current_figure, 按图表区比例重设尺寸后渲染
+        self._figures.clear()
         tabs = getattr(self._main, "_get_tabs", lambda: {})()
         analyses = getattr(self._main, "analyses", {}) or {}
         for idx in sorted(analyses.keys()):
@@ -278,18 +289,50 @@ class DisplayModeWindow(QWidget):
             if fig is None:
                 continue
             atype = analyses[idx].get("analysis_type", f"analysis_{idx}")
-            try:
-                buf = BytesIO()
-                fig.savefig(buf, format="png", dpi=CHART_DPI,
-                            bbox_inches="tight", facecolor=BG_KPI_CARD)
-                buf.seek(0)
-                pm = QPixmap()
-                if pm.loadFromData(buf.read()):
-                    self._charts.append((atype, pm))
-            except Exception:
-                continue
+            self._figures.append((atype, fig))
+        self._render_all()
 
-        # 填入轮播 stack — ZoomPixmapView 支持滚轮缩放/拖拽平移
+    def _target_chart_size(self):
+        w = self.chart_stack.width()
+        h = self.chart_stack.height()
+        if w <= 0 or h <= 0:
+            w, h = 1344, 900
+        return w, h
+
+    def _render_figure(self, fig, target_w, target_h):
+        try:
+            fig2 = deepcopy(fig)
+            fig2.set_size_inches(target_w / CHART_DPI, target_h / CHART_DPI,
+                                 forward=False)
+        except Exception:
+            fig2 = fig
+        try:
+            buf = BytesIO()
+            fig2.savefig(buf, format="png", dpi=CHART_DPI,
+                         bbox_inches="tight", facecolor=BG_KPI_CARD)
+            buf.seek(0)
+            pm = QPixmap()
+            if pm.loadFromData(buf.read()):
+                return pm
+        except Exception:
+            pass
+        return None
+
+    def _render_all(self):
+        # 按当前图表区视口尺寸重渲染全部图表 (首次加载 / resize 防抖后)
+        self._charts.clear()
+        target_w, target_h = self._target_chart_size()
+        for atype, fig in self._figures:
+            pm = self._render_figure(fig, target_w, target_h)
+            if pm is not None:
+                self._charts.append((atype, pm))
+
+        while self.chart_stack.count() > 0:
+            w = self.chart_stack.widget(0)
+            self.chart_stack.removeWidget(w)
+            w.setParent(None)
+            w.deleteLater()
+
         for _label, pm in self._charts:
             view = ZoomPixmapView(pm)
             self.chart_stack.addWidget(view)
@@ -300,6 +343,8 @@ class DisplayModeWindow(QWidget):
             empty.setAlignment(Qt.AlignCenter)
             empty.setStyleSheet(f"color: {TEXT_DIM}; background: transparent;")
             self.chart_stack.addWidget(empty)
+        if self._chart_idx >= max(len(self._charts), 1):
+            self._chart_idx = 0
         self._update_carousel()
 
     # ── 轮播 ─────────────────────────────────────────────
@@ -339,6 +384,10 @@ class DisplayModeWindow(QWidget):
         self.clock_label.setText(now.strftime("%Y-%m-%d  %H:%M:%S  %A"))
 
     # ── 事件 ─────────────────────────────────────────────
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._resize_timer.start()
+
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
             self.close()

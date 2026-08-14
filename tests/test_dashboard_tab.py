@@ -197,3 +197,22 @@ class TestEmptyState:
         assert isinstance(tab._cards[0], QLabel)
         assert tab._cards[0].text()
         tab.close()
+
+
+class TestCardTitle:
+    def test_short_title_no_ellipsis(self, main, monkeypatch):
+        tab = _make_tab(main, monkeypatch)
+        card = tab._make_card("短名", ["Cpk: 1.5"], {}, 3)
+        labels = card.findChildren(QLabel)
+        assert labels[0].text() == "短名"
+        card.deleteLater()
+        tab.close()
+
+    def test_long_title_ellipsis(self, main, monkeypatch):
+        tab = _make_tab(main, monkeypatch)
+        long_name = "超长分析类型名称" * 6
+        card = tab._make_card(long_name, ["Cpk: 1.5"], {}, 3)
+        labels = card.findChildren(QLabel)
+        assert labels[0].text() == long_name[:25] + ".."
+        card.deleteLater()
+        tab.close()
