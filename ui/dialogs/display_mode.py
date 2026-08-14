@@ -56,19 +56,21 @@ class ZoomPixmapView(QGraphicsView):
         self.setDragMode(QGraphicsView.ScrollHandDrag)
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.AnchorViewCenter)
-        self._fitted = False
+        self._user_zoomed = False
         self._zoom = 1.0
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        if not self._fitted:
+        if not self._user_zoomed:
             self._fit()
-            self._fitted = True
 
     def _fit(self):
+        if self.viewport().width() <= 0 or self.viewport().height() <= 0:
+            return
         self.resetTransform()
         self.fitInView(self._item, Qt.KeepAspectRatio)
         self._zoom = self.transform().m11()
+        self._user_zoomed = False
 
     def wheelEvent(self, event):
         factor = 1.25 if event.angleDelta().y() > 0 else 0.8
@@ -76,6 +78,7 @@ class ZoomPixmapView(QGraphicsView):
         if self.MIN_ZOOM <= new_zoom <= self.MAX_ZOOM:
             self.scale(factor, factor)
             self._zoom = new_zoom
+            self._user_zoomed = True
         event.accept()
 
     def mouseDoubleClickEvent(self, event):
