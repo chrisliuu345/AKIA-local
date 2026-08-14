@@ -51,6 +51,8 @@ TAB_REGISTRY = [
     (30, "sidebar.8d",               "EightDTab",           "ui.tabs.eight_d_tab",          "sidebar.engineering_tools"),
     (31, "sidebar.tpm",              "TPMTab",              "ui.tabs.tpm_tab",              "sidebar.ie_tools"),
     (32, "sidebar.ppap",             "PPAPTab",             "ui.tabs.ppap_tab",             "sidebar.engineering_tools"),
+    # ── v2.4 实时监控 (33-34) ──
+    (33, "sidebar.monitor",          "MonitorTab",          "ui.tabs.monitor_tab",          "sidebar.monitoring"),
 ]
 
 # 构建快速索引: index → registry entry

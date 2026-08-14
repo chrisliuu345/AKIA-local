@@ -27,6 +27,11 @@ from ui.tabs.layered_form_tab import LayeredFormTab
 from ui.tabs.sampling_tab import SamplingTab
 from ui.tabs.dashboard_tab import DashboardTab
 from ui.tabs.data_tools_tab import DataToolsTab
+from ui.tabs.smed_tab import SMEDTab
+from ui.tabs.eight_d_tab import EightDTab
+from ui.tabs.tpm_tab import TPMTab
+from ui.tabs.ppap_tab import PPAPTab
+from ui.tabs.monitor_tab import MonitorTab
 
 __all__ = [
     "SPCTab", "CapabilityTab", "MSATab", "HypothesisTab",
@@ -38,4 +43,5 @@ __all__ = [
     "WorkerMachineTab", "StdWorkComboTab",
     "SheetMergeTab", "SheetSplitTab", "LayeredFormTab",
     "SamplingTab", "DashboardTab", "DataToolsTab",
+    "SMEDTab", "EightDTab", "TPMTab", "PPAPTab", "MonitorTab",
 ]

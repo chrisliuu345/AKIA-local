@@ -84,11 +84,11 @@ class MainWindow(QMainWindow):
         self._restore_window_state()
         self.setAcceptDrops(True)
 
-        # 插件发现与注册 — 从 33 开始（v2.2 内置 Tab 已扩展到 32）
+        # 插件发现与注册 — 从 35 开始（v2.4 内置 Tab 已扩展到 34）
         self._pm = PluginManager()
         self._pm.discover()
         self._plugin_tabs = {}
-        self._plugin_tab_start = 33
+        self._plugin_tab_start = 35
         for name, p in self._pm.plugins.items():
             idx = self._plugin_tab_start + len(self._plugin_tabs)
             self._plugin_tabs[idx] = p
@@ -147,14 +147,14 @@ class MainWindow(QMainWindow):
         self.welcome_page = WelcomePage()
         self.stack.addWidget(self.welcome_page)  # 0
 
-        # 内置 Tab 占位符 (1-28)，首次切换时懒加载
-        for idx in range(1, 33):  # v2.2: indices 1-32
+        # 内置 Tab 占位符 (1-34)，首次切换时懒加载
+        for idx in range(1, 35):  # v2.4: indices 1-34
             placeholder = QWidget()
             placeholder.setObjectName(f"placeholder_{idx}")
             self.stack.addWidget(placeholder)
 
-        # 插件 Tab (动态)
-        self._plugin_tab_start = 100
+        # 插件 Tab (动态) — 起始索引在 __init__ 末尾统一设为 35
+        self._plugin_tab_start = 35
 
         layout.addWidget(self.expand_strip)
         layout.addWidget(self.sidebar)
@@ -311,7 +311,7 @@ class MainWindow(QMainWindow):
             sheet_sub.addAction(a)
         analysis_menu.addSeparator()
         for idx, key in [(26, "sidebar.sampling"), (28, "sidebar.data_tools_tab"),
-                         (27, "sidebar.dashboard")]:
+                         (27, "sidebar.dashboard"), (33, "sidebar.monitor")]:
             a = QAction(i18n.tr(key), self)
             a.triggered.connect(lambda _, i=idx: self._switch_tab(i))
             analysis_menu.addAction(a)
@@ -1033,7 +1033,7 @@ class MainWindow(QMainWindow):
         """获取 Tab 字典。force_load=False 仅返回已缓存的(懒加载友好)；force_load=True 全量加载"""
         result = {}
         if force_load:
-            idx_range = list(range(1, 33))  # v2.2: 32 tabs
+            idx_range = list(range(1, 35))  # v2.4: 34 tabs
         else:
             idx_range = sorted(self._tab_cache.keys())
         for idx in idx_range:
