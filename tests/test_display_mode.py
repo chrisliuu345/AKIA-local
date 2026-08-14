@@ -237,6 +237,28 @@ class TestZoomView:
         win.close()
         win.deleteLater()
 
+    def test_show_event_triggers_fit(self, app):
+        win, view = self._win_with_view(app)
+        pm = view._item.pixmap()
+        win.close()
+        win.deleteLater()
+
+        v2 = ZoomPixmapView(pm)
+        v2.show()
+        QTest.qWait(30)
+        v2.resize(800, 600)
+        QTest.qWait(30)
+        fitted = v2._zoom
+        assert fitted > 0
+        v2.resetTransform()
+        v2._zoom = 1.0
+        v2._user_zoomed = False
+        v2.hide()
+        v2.show()
+        QTest.qWait(30)
+        assert abs(v2._zoom - fitted) < 1e-6
+        v2.deleteLater()
+
 
 class TestAnimationsEnabled:
     def test_count_up_completes_after_wait(self, app):
@@ -280,5 +302,66 @@ class TestAnimationsEnabled:
         ))
         win._step_chart(1)
         assert win.chart_stack.currentIndex() == 1
+        win.close()
+        win.deleteLater()
+
+
+class TestAspectRender:
+    """方案A: 大屏按图表区比例专属渲染 (v2.4.1 fix)"""
+
+    def test_render_matches_target_aspect(self, app):
+        win = DisplayModeWindow(FakeMain())
+        fig = _fig()
+        pm_a = win._render_figure(fig, 800, 400)
+        assert pm_a is not None
+        ratio_a = pm_a.width() / pm_a.height()
+        assert abs(ratio_a - 2.0) < 0.25
+
+        pm_b = win._render_figure(fig, 800, 600)
+        assert pm_b is not None
+        ratio_b = pm_b.width() / pm_b.height()
+        assert abs(ratio_b - 800 / 600) < 0.25
+        assert ratio_a > ratio_b * 1.15
+        win.close()
+        win.deleteLater()
+
+    def test_fit_fills_viewport_when_aspect_matches(self, app):
+        win = DisplayModeWindow(FakeMain(
+            analyses={2: {"analysis_type": "能力", "params": {},
+                          "result": {"capability": {"cpk": 1.1}}}},
+            tabs={2: FakeTab(_fig())},
+        ))
+        win.show()
+        QTest.qWait(50)
+        win.resize(1200, 800)
+        QTest.qWait(400)
+        view = win.chart_stack.widget(0)
+        assert view is not None
+        m = view.transform()
+        assert abs(m.m11() - m.m22()) < 1e-9
+        assert m.m11() > 0.9
+        win.close()
+        win.deleteLater()
+
+    def test_resize_rerenders_to_new_viewport(self, app):
+        win = DisplayModeWindow(FakeMain(
+            analyses={2: {"analysis_type": "能力", "params": {},
+                          "result": {"capability": {"cpk": 1.1}}}},
+            tabs={2: FakeTab(_fig())},
+        ))
+        win.show()
+        QTest.qWait(50)
+        view0 = win.chart_stack.widget(0)
+        old_pm = view0._item.pixmap()
+        win.resize(1400, 900)
+        QTest.qWait(500)
+        view1 = win.chart_stack.widget(0)
+        assert view1 is not view0
+        new_pm = view1._item.pixmap()
+        assert (new_pm.width(), new_pm.height()) != (old_pm.width(), old_pm.height())
+        vp = win.chart_stack
+        if vp.width() > 0 and vp.height() > 0:
+            assert abs(new_pm.width() / new_pm.height()
+                       - vp.width() / vp.height()) < 0.25
         win.close()
         win.deleteLater()
