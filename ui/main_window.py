@@ -311,7 +311,8 @@ class MainWindow(QMainWindow):
             sheet_sub.addAction(a)
         analysis_menu.addSeparator()
         for idx, key in [(26, "sidebar.sampling"), (28, "sidebar.data_tools_tab"),
-                         (27, "sidebar.dashboard"), (33, "sidebar.monitor")]:
+                         (27, "sidebar.dashboard"), (33, "sidebar.monitor"),
+                         (34, "sidebar.multi_plant")]:
             a = QAction(i18n.tr(key), self)
             a.triggered.connect(lambda _, i=idx: self._switch_tab(i))
             analysis_menu.addAction(a)

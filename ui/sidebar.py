@@ -82,6 +82,7 @@ CATEGORIES = [
         "key": "sidebar.monitoring",
         "items": [
             (33, "sidebar.monitor"),
+            (34, "sidebar.multi_plant"),
         ],
     },
     {
