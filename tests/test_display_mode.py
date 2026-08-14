@@ -325,6 +325,17 @@ class TestAspectRender:
         win.close()
         win.deleteLater()
 
+    def test_render_uses_readable_background(self, app):
+        win = DisplayModeWindow(FakeMain())
+        fig = _fig()
+        pm = win._render_figure(fig, 800, 400)
+        assert pm is not None
+        img = pm.toImage()
+        c = img.pixelColor(0, 0)
+        assert c.red() > 200 and c.green() > 200 and c.blue() > 200
+        win.close()
+        win.deleteLater()
+
     def test_fit_fills_viewport_when_aspect_matches(self, app):
         win = DisplayModeWindow(FakeMain(
             analyses={2: {"analysis_type": "能力", "params": {},

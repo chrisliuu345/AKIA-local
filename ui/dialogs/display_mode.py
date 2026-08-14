@@ -309,7 +309,7 @@ class DisplayModeWindow(QWidget):
         try:
             buf = BytesIO()
             fig2.savefig(buf, format="png", dpi=CHART_DPI,
-                         bbox_inches="tight", facecolor=BG_KPI_CARD)
+                         bbox_inches="tight", facecolor="white")
             buf.seek(0)
             pm = QPixmap()
             if pm.loadFromData(buf.read()):
