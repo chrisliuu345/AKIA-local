@@ -1,6 +1,6 @@
 """LLM 客户端 — Ollama + OpenAI 兼容 API 多模型支持"""
 
-import json, os, urllib.request, urllib.error
+import json, os, threading, urllib.request, urllib.error
 from typing import Generator, List
 
 OLLAMA_MODELS = ["qwen2.5:7b", "qwen2.5:14b", "llama3.2", "deepseek-r1:8b"]
@@ -16,7 +16,19 @@ class LLMClient:
         self.model = model or os.environ.get("OLLAMA_MODEL", "qwen2.5:7b")
         self.api_base = os.environ.get("OPENAI_API_BASE", "")
         self.api_key = os.environ.get("OPENAI_API_KEY", "")
+        self._stop_event = threading.Event()
+        self._resp = None
         self.available = self._check_available()
+
+    def stop(self):
+        """中断当前流式生成: 置停止标志并关闭底层连接以解除阻塞读"""
+        self._stop_event.set()
+        resp, self._resp = self._resp, None
+        if resp is not None:
+            try:
+                resp.close()
+            except Exception:
+                pass
 
     def set_model(self, model: str, provider: str = "ollama"):
         self.model = model; self.provider = provider
@@ -41,6 +53,7 @@ class LLMClient:
         return OPENAI_MODELS
 
     def generate(self, prompt: str, model: str = None) -> Generator[str, None, None]:
+        self._stop_event.clear()
         m = model or self.model
         if self.provider == "ollama":
             yield from self._gen_ollama(prompt, m)
@@ -54,21 +67,30 @@ class LLMClient:
             req = urllib.request.Request(f"{self.OLLAMA_BASE}/api/generate", data=payload,
                 headers={"Content-Type": "application/json"})
             with urllib.request.urlopen(req, timeout=self.TIMEOUT) as resp:
-                buf = b""
-                while True:
-                    chunk = resp.read(4096)
-                    if not chunk: break
-                    buf += chunk
-                    while b"\n" in buf:
-                        line, buf = buf.split(b"\n", 1)
-                        if not line.strip(): continue
-                        try:
-                            d = json.loads(line.decode())
-                            if d.get("done"): return
-                            yield d.get("response", "")
-                        except json.JSONDecodeError: continue
-        except urllib.error.URLError as e: yield f"[连接失败: {e}]"
-        except Exception as e: yield f"[异常: {e}]"
+                self._resp = resp
+                try:
+                    buf = b""
+                    while True:
+                        chunk = resp.read(4096)
+                        if not chunk: break
+                        if self._stop_event.is_set(): break
+                        buf += chunk
+                        while b"\n" in buf:
+                            line, buf = buf.split(b"\n", 1)
+                            if not line.strip(): continue
+                            try:
+                                d = json.loads(line.decode())
+                                if d.get("done"): return
+                                yield d.get("response", "")
+                            except json.JSONDecodeError: continue
+                finally:
+                    self._resp = None
+        except urllib.error.URLError as e:
+            if self._stop_event.is_set(): return
+            yield f"[连接失败: {e}]"
+        except Exception as e:
+            if self._stop_event.is_set(): return
+            yield f"[异常: {e}]"
 
     def _gen_openai(self, prompt: str, model: str):
         payload = json.dumps({"model": model, "messages": [
@@ -80,20 +102,29 @@ class LLMClient:
             req = urllib.request.Request(url, data=payload,
                 headers={"Content-Type": "application/json", "Authorization": f"Bearer {self.api_key}"})
             with urllib.request.urlopen(req, timeout=self.TIMEOUT) as resp:
-                buf = b""
-                while True:
-                    chunk = resp.read(4096)
-                    if not chunk: break
-                    buf += chunk
-                    while b"\n" in buf:
-                        line, buf = buf.split(b"\n", 1)
-                        line = line.strip()
-                        if not line or not line.startswith(b"data: "): continue
-                        d = line[6:]
-                        if d == b"[DONE]": return
-                        try:
-                            j = json.loads(d)
-                            yield j.get("choices", [{}])[0].get("delta", {}).get("content", "")
-                        except json.JSONDecodeError: continue
-        except urllib.error.URLError as e: yield f"[连接失败: {e}]"
-        except Exception as e: yield f"[异常: {e}]"
+                self._resp = resp
+                try:
+                    buf = b""
+                    while True:
+                        chunk = resp.read(4096)
+                        if not chunk: break
+                        if self._stop_event.is_set(): break
+                        buf += chunk
+                        while b"\n" in buf:
+                            line, buf = buf.split(b"\n", 1)
+                            line = line.strip()
+                            if not line or not line.startswith(b"data: "): continue
+                            d = line[6:]
+                            if d == b"[DONE]": return
+                            try:
+                                j = json.loads(d)
+                                yield j.get("choices", [{}])[0].get("delta", {}).get("content", "")
+                            except json.JSONDecodeError: continue
+                finally:
+                    self._resp = None
+        except urllib.error.URLError as e:
+            if self._stop_event.is_set(): return
+            yield f"[连接失败: {e}]"
+        except Exception as e:
+            if self._stop_event.is_set(): return
+            yield f"[异常: {e}]"
