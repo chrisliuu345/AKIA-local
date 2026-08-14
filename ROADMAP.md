@@ -82,17 +82,17 @@ Plugin index 33, LLM streaming refresh, validate_params complete, animation clea
 
 ## v2.4 — Real-Time Monitoring & Integration (Direction E)
 
-### E1. File Watcher Real-Time SPC (1.5 days)
-- QFileSystemWatcher monitoring folder
-- New file / change → auto import → update control chart → out-of-spec alert
-- New: `core/file_watcher.py`, `ui/tabs/monitor_tab.py` (index 33)
+### E1. File Watcher Real-Time SPC ✅ (1.5 days)
+- File change → auto import → update control chart → out-of-spec alert
+- Implemented: `core/file_watcher.py` (polling FileMonitor daemon thread + stable-state confirm, Qt-free), `ui/tabs/monitor_tab.py` (index 33)
 
-### E2. Multi-Plant / Multi-Line Comparison (1 day)
-- Same metric multi-line side-by-side · Cp/Cpk radar chart · OEE multi-bar · Defect rate overlay trend
-- New: `ui/tabs/multi_plant_tab.py` (index 34)
+### E2. Multi-Plant / Multi-Line Comparison ✅ (1 day)
+- Same metric multi-line side-by-side · Cp/Cpk comparison · Violation summary
+- Implemented: `core/plant_compare.py` (summarize_plant / build_comparison), `ui/tabs/multi_plant_tab.py` (index 34)
 
-### E3. Alert Notification System (0.5 days)
+### E3. Alert Notification System ✅ (0.5 days)
 - Multi-channel alerts (popup / sound / log) · Configurable rules · Alert aggregation / dedup
+- Implemented: `core/alert_rules.py` (AlertTracker NEW/ONGOING/CLEARED state machine + AlertLog ring buffer + configurable rules via user_config), MonitorTab alert banner + popup + beep + log panel
 
 ### E4. Dashboard UI & Control Enhancement ✅ (3 days) — P2-1/P2-2 moved up from v2.5
 
@@ -107,7 +107,7 @@ Dashboard interface and control optimization, merged from long-term planning ite
 - F3: Low-code formula editor (P2-1) — `core/kpi_formula.py` AST whitelist parser (23 attack cases rejected, length/depth guards) + `ui/dialogs/formula_dialog.py`, custom KPI cards with live evaluation
 - F4: Shop floor display mode (P2-2) — full-screen dashboard `ui/dialogs/display_mode.py`, big-number KPI tiles (FONT_36B), chart carousel (QTimer 8s), ESC/arrow keys, F11 shortcut
 
-**Remaining for v2.4**: E1 (file watcher SPC), E2 (multi-plant comparison), E3 (alert notification) — scheduled next.
+**Status**: Direction E fully implemented — E1/E2/E3 completed (Tabs 33-34, alert system, 182 tests).
 
 **Estimate**: 6 days total (E1 1.5 + E2 1 + E3 0.5 + E4 3) | New Tabs 33-34 | Sidebar 32→34
 
