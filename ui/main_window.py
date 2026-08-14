@@ -3,6 +3,7 @@ QA-Tool — 主窗口
 """
 
 import os
+from datetime import datetime
 from typing import Dict, Any
 import pandas as pd
 
@@ -918,6 +919,7 @@ class MainWindow(QMainWindow):
         result = getattr(tab, 'current_result', None)
         if result:
             self.analyses[idx] = result.copy()
+            self.analyses[idx]["_completed_at"] = datetime.now().isoformat(timespec="seconds")
             self.session_manager.add_analysis(
                 result.get("analysis_type", "Unknown"),
                 result.get("params", {}),
@@ -954,6 +956,7 @@ class MainWindow(QMainWindow):
                 result = getattr(tab, 'current_result', None)
                 if result:
                     self.analyses[idx] = result.copy()
+                    self.analyses[idx]["_completed_at"] = datetime.now().isoformat(timespec="seconds")
                     atype = result.get("analysis_type", "")
                     key_res = self._summarize_result(result.get("result", {}))
                     self.sidebar.add_history(idx, atype, key_res)

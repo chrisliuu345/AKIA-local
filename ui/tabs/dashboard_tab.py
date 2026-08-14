@@ -10,11 +10,13 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGridLayout, QFrame, QScrollArea, QFileDialog, QMessageBox, QCheckBox,
 )
-from PySide6.QtCore import QTimer, QSettings
+from PySide6.QtCore import QTimer, QSettings, Qt
+from PySide6.QtGui import QFont
 from ui.tabs.base_tab import BaseAnalysisTab
-from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY, FONT_18B, FONT_10
+from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY, FONT_18B
 from ui.theme import colors as theme_colors
 from ui.widgets.elided_label import ElidedLabel
+from ui.widgets.animate import fade_in
 from core.formatting import format_cp, format_pvalue, format_pct
 from core.i18n import i18n
 from core.kpi_extractor import extract_metrics
@@ -59,6 +61,44 @@ _METRIC_SPECS = {
 }
 
 _REFRESH_INTERVAL_MS = 5000
+
+# v2.4.1: 卡片自适应 — 卡片少则放大填充界面, 多则小卡滚动扩展 (QScrollArea 天然支持)
+_CARD_SIZES = {1: (560, 260), 2: (330, 220), 3: (240, 170)}
+_ROW_CAPS = {1: 10, 2: 8, 3: 6}          # 大卡展示更多指标行 (内容细节)
+_ROW_FONT_SIZES = {1: 13, 2: 12, 3: 11}  # 行字号随列数
+_TITLE_FONT_PT = 12
+_STATUS_RANK = {"na": 0, "good": 1, "warn": 2, "bad": 3}
+_STATUS_COLORS = {"na": "#6e7080", "good": "#27ae60", "warn": "#ffa726", "bad": "#e74c3c"}
+
+
+def _cpk_status(cpk):
+    if cpk is None:
+        return None
+    if cpk < 1.0:
+        return "bad"
+    if cpk < 1.33:
+        return "warn"
+    return "good"
+
+
+def _oee_status(oee):
+    if oee is None:
+        return None
+    if oee < 0.6:
+        return "bad"
+    if oee < 0.8:
+        return "warn"
+    return "good"
+
+
+def _grr_status(grr):
+    if grr is None:
+        return None
+    if grr >= 0.3:
+        return "bad"
+    if grr >= 0.1:
+        return "warn"
+    return "good"
 
 
 class DashboardTab(BaseAnalysisTab):
@@ -212,33 +252,40 @@ class DashboardTab(BaseAnalysisTab):
         rest = [k for k in sorted(metrics_map) if k not in ordered and k not in hidden]
         keys = ordered + rest
 
-        col = 0
-        row = 0
+        # v2.4.1: 先收集卡片数据, 按总数定列数/尺寸 — 卡片少则放大填充, 多则滚动扩展
+        from ui.dialogs.formula_dialog import FormulaDialog
+        formulas = FormulaDialog.load_formulas()
+        variables = describe_variables(parent.analyses, self._get_analysis_df())
 
-        # F3: 自定义公式卡片排最前
-        for card in self._make_formula_cards():
-            self.grid.addWidget(card, row, col)
-            self._cards.append(card)
-            col += 1
-            if col > 2:
-                col = 0
-                row += 1
-
+        entries = []  # (kind, payload...)
+        for name, expr in formulas.items():
+            entries.append(("formula", name, expr))
         for atype in keys:
-            card = self._make_card(atype, metrics_map[atype])
-            if card is None:
+            rows = self._collect_rows(metrics_map[atype])
+            if not rows:
                 continue  # 无可显示指标的卡片 (防御)
+            entries.append(("metric", atype, rows, metrics_map[atype]))
+
+        cols = 1 if len(entries) <= 3 else (2 if len(entries) <= 6 else 3)
+        card_w, card_h = _CARD_SIZES[cols]
+
+        for i, entry in enumerate(entries):
+            if entry[0] == "formula":
+                card = self._make_formula_card(entry[1], entry[2], variables, cols)
+            else:
+                card = self._make_card(entry[1], entry[2], entry[3], cols)
+            if card is None:
+                continue
+            card.setFixedSize(card_w, card_h)
+            row, col = divmod(i, cols)
             self.grid.addWidget(card, row, col)
             self._cards.append(card)
-            col += 1
-            if col > 2:
-                col = 0
-                row += 1
+            fade_in(card)  # 动画关闭时走瞬显路径
 
     # ── F0: 指标卡片 (从提取器数据渲染) ──────────────────
-    def _make_card(self, atype: str, metrics: dict):
-        tc = theme_colors()
-        # 先收集可显示指标行 — 无可显示指标时不建卡 (避免空标题卡片)
+    @staticmethod
+    def _collect_rows(metrics: dict):
+        """收集可显示指标行 — 无上限, 由 _make_card 按列数截断"""
         rows = []
         for name, value in metrics.items():
             if value is None or value == "":
@@ -252,13 +299,49 @@ class DashboardTab(BaseAnalysisTab):
             except (TypeError, ValueError):
                 continue  # 非标量或格式不符的指标静默跳过
             rows.append(f"{i18n.tr(key)}: {text}")
-            if len(rows) >= 6:  # 卡片高度上限
-                break
+        return rows
+
+    @staticmethod
+    def _status_color(metrics: dict) -> str:
+        """状态色点 — 取最差等级 (红 > 橙 > 绿 > 灰)"""
+        worst = "na"
+        candidates = (
+            _cpk_status(metrics.get("cpk")),
+            _oee_status(metrics.get("oee")),
+            _grr_status(metrics.get("grr_pct")),
+            "bad" if (metrics.get("violations") or 0) > 0 else None,
+        )
+        for v in candidates:
+            if v and _STATUS_RANK[v] > _STATUS_RANK[worst]:
+                worst = v
+        return _STATUS_COLORS[worst]
+
+    def _latest_time(self, atype: str):
+        """该分析类型最近一次完成时间 (ISO 字符串, _completed_at)"""
+        parent = self.window()
+        entries = getattr(parent, "analyses", {}) or {}
+        ts = None
+        for e in entries.values():
+            if isinstance(e, dict) and e.get("analysis_type") == atype:
+                v = e.get("_completed_at")
+                if v and (ts is None or v > ts):
+                    ts = v
+        return ts
+
+    @staticmethod
+    def _format_time(ts: str) -> str:
+        """ISO '2026-08-14T14:23:45' → '14:23' (timespec=seconds 保证格式)"""
+        if len(ts) >= 16:
+            return ts[11:16]
+        return ts
+
+    def _make_card(self, atype: str, rows, metrics: dict, cols: int):
+        tc = theme_colors()
+        rows = rows[:_ROW_CAPS[cols]]
         if not rows:
             return None
 
         frame = QFrame()
-        frame.setFixedSize(240, 170)
         frame.setStyleSheet(
             f"QFrame {{ background:{tc['bg_card']}; border:1px solid {tc['border']};"
             f"border-radius:10px; padding:10px; }}"
@@ -266,16 +349,35 @@ class DashboardTab(BaseAnalysisTab):
         l = QVBoxLayout(frame)
         l.setSpacing(4)
 
+        # 标题行: 标题 + 状态色点
+        hdr = QHBoxLayout()
         title = QLabel(atype[:25] + (".." if len(atype) > 25 else ""))
-        title.setFont(FONT_10)
-        title.setStyleSheet(f"color:{tc['accent_bright']}; font-weight:bold;")
+        title.setFont(QFont("Microsoft YaHei", _TITLE_FONT_PT, QFont.Bold))
+        title.setStyleSheet(f"color:{tc['accent_bright']};")
         title.setWordWrap(True)
         title.setToolTip(atype)
-        l.addWidget(title)
+        hdr.addWidget(title)
+        hdr.addStretch()
+        dot = QLabel("●")
+        dot.setFixedSize(14, 14)
+        dot.setAlignment(Qt.AlignCenter)
+        dot.setStyleSheet(f"color: {self._status_color(metrics)}; font-size: 10px;")
+        hdr.addWidget(dot)
+        l.addLayout(hdr)
+
+        # v2.4.1: 更新时间戳 (内容细节)
+        ts = self._latest_time(atype)
+        if ts:
+            t = QLabel(i18n.tr("dashboard.last_update").format(time=self._format_time(ts)))
+            t.setStyleSheet(f"color:{tc['text_muted']}; font-size:9px;")
+            t.setToolTip(f"{atype} — {ts}")
+            l.addWidget(t)
 
         # 指标行用 ElidedLabel 单行显示 — 超宽自动省略, tooltip 全文 (v2.3.1 组件复用)
+        row_font = QFont("Microsoft YaHei", _ROW_FONT_SIZES[cols])
         for text in rows:
             lbl = ElidedLabel(text)
+            lbl.setFont(row_font)
             lbl.setToolTip(f"{atype} — {text}")
             l.addWidget(lbl)
         l.addStretch()
@@ -329,50 +431,36 @@ class DashboardTab(BaseAnalysisTab):
         dlg.exec()
         self.refresh()
 
-    def _make_formula_cards(self):
-        """渲染自定义公式卡片 — 求值失败显示 '无法求值'"""
-        from ui.dialogs.formula_dialog import FormulaDialog
-        # 注意: 公式存储于 QSettings("QA-Tool", "Formulas") 作用域,
-        # 与布局设置的 "Dashboard" 作用域分离, 不可传入 self._settings
-        formulas = FormulaDialog.load_formulas()
-        if not formulas:
-            return []
-        parent = self.window()
-        analyses = parent.analyses if parent and hasattr(parent, "analyses") else {}
-        variables = describe_variables(analyses, self._get_analysis_df())
-
+    def _make_formula_card(self, name: str, expr: str, variables: dict, cols: int):
+        """渲染单张自定义公式卡片 — 求值失败显示 '无法求值'"""
         tc = theme_colors()
-        cards = []
-        for name, expr in formulas.items():
-            frame = QFrame()
-            frame.setFixedSize(240, 170)
-            frame.setStyleSheet(
-                f"QFrame {{ background:{tc['bg_card']};"
-                f"border:1px solid {tc['accent_bright']}; border-radius:10px; padding:10px; }}"
-            )
-            l = QVBoxLayout(frame)
-            l.setSpacing(6)
-            title = ElidedLabel(name)
-            title.setFont(FONT_10)
-            title.setStyleSheet(f"color:{tc['accent_bright']}; font-weight:bold;")
-            title.setToolTip(f"{name} = {expr}")
-            l.addWidget(title)
-            try:
-                value = evaluate(str(expr), variables)
-                text = f"{value:.4g}"
-            except FormulaError as e:
-                text = i18n.tr("formula.eval_failed")
-                frame.setToolTip(str(e))
-            val = ElidedLabel(text)
-            val.setFont(FONT_18B)
-            val.setToolTip(f"{name} = {expr}\n{text}")
-            l.addWidget(val)
-            hint = QLabel(i18n.tr("formula.card_hint"))
-            hint.setStyleSheet(f"color: {tc['text_muted']}; font-size: 9px;")
-            l.addWidget(hint)
-            l.addStretch()
-            cards.append(frame)
-        return cards
+        frame = QFrame()
+        frame.setStyleSheet(
+            f"QFrame {{ background:{tc['bg_card']};"
+            f"border:1px solid {tc['accent_bright']}; border-radius:10px; padding:10px; }}"
+        )
+        l = QVBoxLayout(frame)
+        l.setSpacing(6)
+        title = ElidedLabel(name)
+        title.setFont(QFont("Microsoft YaHei", _TITLE_FONT_PT, QFont.Bold))
+        title.setStyleSheet(f"color:{tc['accent_bright']};")
+        title.setToolTip(f"{name} = {expr}")
+        l.addWidget(title)
+        try:
+            value = evaluate(str(expr), variables)
+            text = f"{value:.4g}"
+        except FormulaError as e:
+            text = i18n.tr("formula.eval_failed")
+            frame.setToolTip(str(e))
+        val = ElidedLabel(text)
+        val.setFont(FONT_18B)
+        val.setToolTip(f"{name} = {expr}\n{text}")
+        l.addWidget(val)
+        hint = QLabel(i18n.tr("formula.card_hint"))
+        hint.setStyleSheet(f"color: {tc['text_muted']}; font-size: 9px;")
+        l.addWidget(hint)
+        l.addStretch()
+        return frame
 
     # ── F2: 布局对话框 ───────────────────────────────────
     def _open_layout_dialog(self):
