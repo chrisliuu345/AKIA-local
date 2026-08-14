@@ -53,6 +53,7 @@ TAB_REGISTRY = [
     (32, "sidebar.ppap",             "PPAPTab",             "ui.tabs.ppap_tab",             "sidebar.engineering_tools"),
     # ── v2.4 实时监控 (33-34) ──
     (33, "sidebar.monitor",          "MonitorTab",          "ui.tabs.monitor_tab",          "sidebar.monitoring"),
+    (34, "sidebar.multi_plant",      "MultiPlantTab",       "ui.tabs.multi_plant_tab",      "sidebar.monitoring"),
 ]
 
 # 构建快速索引: index → registry entry
