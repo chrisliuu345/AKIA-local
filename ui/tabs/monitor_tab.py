@@ -10,6 +10,7 @@ import os
 from PySide6.QtWidgets import (
     QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QLineEdit, QSpinBox, QFileDialog, QGroupBox, QFormLayout,
+    QApplication, QMessageBox, QPlainTextEdit,
 )
 from PySide6.QtCore import Signal, Qt
 from PySide6.QtGui import QFont
@@ -17,6 +18,7 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 
 from core.i18n import i18n
 from core.file_watcher import FileMonitor
+from core.alert_rules import AlertTracker, AlertLog, AlertRules, AlertState, format_alert_message
 from output.chart_engine import create_control_chart
 from ui.theme import colors as theme_colors, BUTTON_PRIMARY_STRETCH
 from ui.tabs.base_tab import BaseAnalysisTab
@@ -32,6 +34,8 @@ class MonitorTab(BaseAnalysisTab):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._monitor = None
+        self._alert_tracker = AlertTracker()
+        self._alert_log = AlertLog()
         self._setup_ui()
 
     # ── UI ───────────────────────────────────────────────
@@ -97,6 +101,28 @@ class MonitorTab(BaseAnalysisTab):
         ctrl.addStretch()
         layout.addLayout(ctrl)
 
+        # 告警横幅 (状态跳变时显示，红色=判异中 / 绿色=已解除)
+        self.alert_banner = QLabel("")
+        self.alert_banner.setAlignment(Qt.AlignCenter)
+        self.alert_banner.setMinimumHeight(30)
+        self.alert_banner.hide()
+        layout.addWidget(self.alert_banner)
+
+        # 告警日志面板
+        log_group = QGroupBox(i18n.tr("alert.title"))
+        log_group.setStyleSheet(
+            f"QGroupBox {{ color: {tc['text_secondary']}; border: 1px solid #3a3a3a;"
+            f"border-radius: 8px; margin-top: 10px; padding-top: 8px; }}"
+            f"QGroupBox::title {{ subcontrol-origin: margin; left: 12px; }}"
+        )
+        log_layout = QVBoxLayout(log_group)
+        self.alert_log_view = QPlainTextEdit()
+        self.alert_log_view.setReadOnly(True)
+        self.alert_log_view.setFixedHeight(84)
+        self.alert_log_view.setPlaceholderText(i18n.tr("alert.log_empty"))
+        log_layout.addWidget(self.alert_log_view)
+        layout.addWidget(log_group)
+
         # 图表区
         self.chart_layout = QVBoxLayout()
         self.chart_layout.setSpacing(0)
@@ -140,6 +166,7 @@ class MonitorTab(BaseAnalysisTab):
             self._stop_monitor()
 
     def _start_monitor(self, path):
+        self._alert_tracker.reset()
         monitor = FileMonitor(
             file_path=path,
             on_change=self.update_received.emit,
@@ -199,6 +226,45 @@ class MonitorTab(BaseAnalysisTab):
             + "  " + i18n.tr("monitor.violations").format(n=viol)
         )
         self.status_label.setStyleSheet(f"color: {tc['text_secondary']};")
+
+        self._check_alerts(viol, os.path.basename(payload["file_path"]))
+
+    # ── 告警 (E3) ────────────────────────────────────────
+    def _check_alerts(self, violations: int, file_name: str):
+        min_v = AlertRules.min_violations()
+        effective = violations if violations >= min_v else 0
+        state = self._alert_tracker.update(effective)
+
+        if state not in (AlertState.NEW, AlertState.CLEARED):
+            return
+
+        message = format_alert_message(state, violations, file_name)
+        if state == AlertState.NEW:
+            self.alert_banner.setText("⚠ " + message)
+            self.alert_banner.setStyleSheet(
+                "color: #fff; background: #e74c3c; border-radius: 6px;"
+                "font-weight: bold; padding: 4px;")
+            self.alert_banner.show()
+            if AlertRules.sound_enabled():
+                QApplication.beep()
+            if AlertRules.popup_enabled():
+                QMessageBox.warning(self, i18n.tr("alert.popup_title"), message)
+        else:
+            self.alert_banner.setText("✔ " + message)
+            self.alert_banner.setStyleSheet(
+                "color: #fff; background: #27ae60; border-radius: 6px;"
+                "font-weight: bold; padding: 4px;")
+
+        if AlertRules.log_enabled():
+            self._alert_log.add(message)
+            self._refresh_alert_log()
+
+    def _refresh_alert_log(self):
+        lines = [
+            f"[{ts.strftime('%H:%M:%S')}] {msg}"
+            for ts, msg in self._alert_log.entries()
+        ]
+        self.alert_log_view.setPlainText("\n".join(lines))
 
     def _render_figure(self, fig):
         while self.chart_layout.count():
