@@ -89,6 +89,8 @@ def cross_fade(stack, to_idx: int, duration: int = 400):
         if old_widget is not None:
             old_widget.setGraphicsEffect(None)
         new_widget = stack.currentWidget()
+        if hasattr(new_widget, "_fit") and not getattr(new_widget, "_user_zoomed", True):
+            new_widget._fit()
         in_effect = QGraphicsOpacityEffect(new_widget)
         new_widget.setGraphicsEffect(in_effect)
         in_anim = QPropertyAnimation(in_effect, b"opacity", stack)
