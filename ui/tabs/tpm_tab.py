@@ -149,6 +149,7 @@ class TPMTab(BaseAnalysisTab):
             "params": {},
             "result": result.to_dict(),
         }
+        self.analysis_completed.emit()
 
     def _display(self, result):
         # KPI
