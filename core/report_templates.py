@@ -5,6 +5,8 @@ from string import Template
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
+from config.settings import APP_VERSION
+
 
 TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "config" / "templates"
 
@@ -98,7 +100,7 @@ class ReportTemplateEngine:
         if not raw:
             return "<p>模板未找到</p>"
         ctx = dict(context)
-        ctx.setdefault("version", "2.3")
+        ctx.setdefault("version", APP_VERSION)
         ctx.setdefault("timestamp", datetime.now().strftime("%Y-%m-%d %H:%M"))
         ctx.setdefault("date", datetime.now().strftime("%Y-%m-%d"))
         # 对所有可能缺失的占位符填空值，防止 safe_substitute 保留字面 $xxx
