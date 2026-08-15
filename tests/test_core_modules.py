@@ -148,18 +148,16 @@ class TestDataProfiler:
         assert len(issues) >= 1  # 40% missing
 
 
-# ── i18n 键一致性 (v2.4 修复: en.json 曾缺 16 键, 缺键会回退显示键名) ──
-class TestI18nKeyParity:
-    def test_zh_en_keys_match(self):
+# ── i18n 中文文案完整性 (v2.4.1 中文化后仅维护 zh.json) ──
+class TestI18nZh:
+    def test_zh_json_valid_and_has_keys(self):
         import json
         from pathlib import Path
         base = Path(__file__).resolve().parent.parent
         zh = json.loads((base / "locales" / "zh.json").read_text(encoding="utf-8"))
-        en = json.loads((base / "locales" / "en.json").read_text(encoding="utf-8"))
-        zh_only = sorted(set(zh) - set(en))
-        en_only = sorted(set(en) - set(zh))
-        assert not zh_only, f"en.json 缺键: {zh_only}"
-        assert not en_only, f"zh.json 缺键: {en_only}"
+        assert zh, "zh.json 为空"
+        for k in ["sidebar.home", "menu.file", "status.loaded", "db.connection_title"]:
+            assert k in zh, f"zh.json 缺键: {k}"
 
 
 if __name__ == "__main__":
