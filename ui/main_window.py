@@ -417,7 +417,7 @@ class MainWindow(QMainWindow):
         if not self.analyses:
             QMessageBox.warning(self, "无数据", "请先导入数据并运行分析")
             return
-        path, _ = QFileDialog.getSaveFileName(self, "导出 HTML 报告", "qa_report.html", "HTML (*.html)")
+        path, _ = QFileDialog.getSaveFileName(self, "导出 HTML 报告", "qa_report.html", "HTML 报告 (*.html)")
         if not path:
             return
         try:
@@ -545,11 +545,11 @@ class MainWindow(QMainWindow):
 
                 if all_warnings > 0:
                     self.statusBar().showMessage(
-                        f"{i18n.tr('status.loaded')}: {len(self.data_loader.metadata['sheet_names'])} Sheets  |  数据校验: {all_warnings} 个警告",
+                        f"{i18n.tr('status.loaded')}: {len(self.data_loader.metadata['sheet_names'])} 个工作表  |  数据校验: {all_warnings} 个警告",
                         8000,
                     )
                 else:
-                    self.status_label.setText(f"{i18n.tr('status.loaded')}: {len(self.data_loader.metadata['sheet_names'])} Sheets")
+                    self.status_label.setText(f"{i18n.tr('status.loaded')}: {len(self.data_loader.metadata['sheet_names'])} 个工作表")
             except Exception as e:
                 import logging
                 logging.getLogger(__name__).exception("导入工作表失败")
@@ -1083,7 +1083,7 @@ class MainWindow(QMainWindow):
 
         filters = {"xlsx": "Excel (*.xlsx)", "docx": "Word (*.docx)", "pdf": "PDF (*.pdf)"}
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "导出报告", f"Analysis_Report.{fmt}", filters.get(fmt, "")
+            self, "导出报告", f"分析报告.{fmt}", filters.get(fmt, "")
         )
 
         if file_path:
@@ -1166,7 +1166,7 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "无数据", "请先导入数据并运行分析")
             return
         path, _ = QFileDialog.getSaveFileName(
-            self, "保存项目", "QA_Project.qap", "QA-Tool Project (*.qap)"
+            self, "保存项目", "QA_Project.qap", "QA-Tool 项目 (*.qap)"
         )
         if not path:
             return
@@ -1217,7 +1217,7 @@ class MainWindow(QMainWindow):
 
     def _on_load_project(self):
         path, _ = QFileDialog.getOpenFileName(
-            self, "打开项目", "", "QA-Tool Project (*.qap)"
+            self, "打开项目", "", "QA-Tool 项目 (*.qap)"
         )
         if not path:
             return
@@ -1570,7 +1570,7 @@ class MainWindow(QMainWindow):
         from core.project_manager import SharedProjectManager
         dept = self.current_user.department or "公共"
         path, _ = QFileDialog.getSaveFileName(
-            self, "保存到共享目录", "QA_Shared.qap", "QA-Tool Project (*.qap)"
+            self, "保存到共享目录", "QA_Shared.qap", "QA-Tool 项目 (*.qap)"
         )
         if not path:
             return

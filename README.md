@@ -140,7 +140,7 @@ Password: admin
 ├── config/              # Config + knowledge base + templates
 │   ├── templates/       # HTML report templates
 │   └── knowledge/       # Knowledge base JSON files
-├── locales/             # zh.json / en.json
+├── locales/             # zh.json (Chinese UI strings)
 ├── plugins/             # Third-party plugins
 ├── output/              # Report engines (Word/Excel/PDF/HTML)
 └── tests/               # 215 pytest tests

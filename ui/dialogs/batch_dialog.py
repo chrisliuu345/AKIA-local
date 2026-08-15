@@ -95,7 +95,7 @@ class BatchDialog(QDialog):
         form.addRow("格式:", self.format_combo)
 
         self.schedule_combo = QComboBox()
-        self.schedule_combo.addItems(["once (仅一次)", "hourly (每小时)", "daily@09:00 (每日)"])
+        self.schedule_combo.addItems(["仅一次", "每小时", "每日 09:00"])
         form.addRow("调度:", self.schedule_combo)
 
         self.enabled_check = QCheckBox("启用")
