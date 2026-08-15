@@ -1,6 +1,6 @@
 # QA-Tool — IE Quality Analyzer
 
-A Python 3.14 + PySide6 desktop application for quality engineering and industrial engineering analysis. 32 analysis modules, AI-powered insights, and comprehensive reporting.
+A Python 3.14 + PySide6 desktop application for quality engineering and industrial engineering analysis. 34 analysis modules, AI-powered insights, and comprehensive reporting.
 
 ## Features
 
@@ -72,7 +72,7 @@ AQL Lookup (GB/T 2828.1 / ANSI/ASQ Z1.4) · Random / Stratified / Systematic Sam
 
 ### Option 1: Portable (Recommended)
 
-Download `QA-Tool-v2.3.exe` (~200MB single file), double-click to run. No Python required.
+Download `QA-Tool-v2.4.1.exe` (~200MB single file), double-click to run. No Python required.
 
 ### Option 2: From Source
 
@@ -133,7 +133,7 @@ Password: admin
 │   ├── sampling_engine.py # GB/T 2828.1 AQL
 │   └── ...
 ├── ui/                  # PySide6 UI
-│   ├── tabs/            # 32 analysis tabs
+│   ├── tabs/            # 34 analysis tabs
 │   ├── dialogs/         # 16 dialogs
 │   ├── widgets/         # Toast / Fishbone canvas
 │   └── theme.py         # Dark theme + font constants
@@ -143,7 +143,7 @@ Password: admin
 ├── locales/             # zh.json / en.json
 ├── plugins/             # Third-party plugins
 ├── output/              # Report engines (Word/Excel/PDF/HTML)
-└── tests/               # 87 pytest tests
+└── tests/               # 215 pytest tests
 ```
 
 ---
@@ -163,6 +163,7 @@ Password: admin
 
 | Date | Version | Highlights |
 |------|---------|------------|
+| 2026-08-15 | **v2.4.1** | Adaptive dashboard card grid · fade-in / count-up / cross-fade animations · shop floor display aspect & readability fixes · batch analysis guards · 215 tests |
 | 2026-08-13 | **v2.4** | Dashboard enhancement: unified KPI extractor · real-time refresh · card layout · formula editor · shop floor display mode |
 | 2026-08-12 | v2.3 | Report template engine · Template dialog · HTML self-contained export · Menu restructure |
 | 2026-08-10 | v2.2 | SMED · 8D · TPM · PPAP (4 new engineering tools) · 32 tabs |
@@ -177,4 +178,4 @@ MIT
 
 ---
 
-*Built with Python 3.14 + PySide6 · 87 tests passing · 32 analysis tabs*
+*Built with Python 3.14 + PySide6 · 215 tests passing · 34 analysis tabs*
