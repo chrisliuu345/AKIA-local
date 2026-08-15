@@ -1,15 +1,15 @@
 # QA-Tool Roadmap
 
-> Current: v2.4 | Tests: 136/136 | 32 Tabs + Plugins | Updated: 2026-08-13
+> Current: v2.4.1 | Tests: 215/215 | 34 Tabs + Plugins | Updated: 2026-08-15
 
 ---
 
 ## Version Roadmap Overview
 
 ```
-v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ──→ v2.5
- Release   Code+AI    Eng Tools   Reports     Live       Long-term
-           (Done)     (Done)      (Done)      (3 days)   (TBD)
+v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5
+ Release   Code+AI    Eng Tools   Reports     Live       UX+Anim     Long-term
+            (Done)     (Done)      (Done)      (Done)     (Done)      (TBD)
 ```
 
 ---
@@ -107,9 +107,22 @@ Dashboard interface and control optimization, merged from long-term planning ite
 - F3: Low-code formula editor (P2-1) — `core/kpi_formula.py` AST whitelist parser (23 attack cases rejected, length/depth guards) + `ui/dialogs/formula_dialog.py`, custom KPI cards with live evaluation
 - F4: Shop floor display mode (P2-2) — full-screen dashboard `ui/dialogs/display_mode.py`, big-number KPI tiles (FONT_36B), chart carousel (QTimer 8s), ESC/arrow keys, F11 shortcut
 
-**Status**: Direction E fully implemented — E1/E2/E3 completed (Tabs 33-34, alert system, 182 tests).
+**Status**: Direction E fully implemented — E1/E2/E3 completed (Tabs 33-34, alert system, 215 tests).
 
 **Estimate**: 6 days total (E1 1.5 + E2 1 + E3 0.5 + E4 3) | New Tabs 33-34 | Sidebar 32→34
+
+---
+
+## v2.4.1 ✅ Completed — Dashboard & Display-Mode Visual Enhancement
+
+- **Adaptive card grid**: ≤3 cards → 1 column (560×260) / ≤6 → 2 columns (330×220) / more → 3 columns (240×170); scrollable overflow preserved for many cards
+- **Card details**: update timestamp (HH:MM), status color dot (Cpk/OEE/GRR/violations graded red/orange/green), dynamic font sizes per column count
+- **Animation infrastructure** `ui/widgets/animate.py`: fade_in / count_up / cross_fade (QPropertyAnimation/QVariantAnimation, InOutCubic), settings toggle (default on, user_config.json)
+- **Big-screen**: KPI number count-up + tile fade-in + carousel cross-fade
+- **Big-screen chart rendering**: charts rendered at chart-area aspect ratio (deepcopy + set_size_inches, 300ms resize debounce re-render) — fixes stretched/compressed charts with no distortion or clipping
+- **Big-screen readability**: chart PNG white background (was dark background with black text)
+- **Fixes**: F5 batch analysis DataFrame truth-value ambiguity; skip non-runnable tabs (Dashboard etc.) in batch analysis; duplicate display-mode window guard
+- Tests: 201 → 215
 
 ---
 
@@ -154,6 +167,7 @@ v2.0 (28)     v2.1 (28)     v2.2 (32)       v2.4 (34)
 
 | Date | Version | Content |
 |------|---------|---------|
+| 08-15 | v2.4.1 | Released: adaptive dashboard cards + animations (fade/count-up/cross-fade) + display-mode aspect & readability fixes · 215 tests |
 | 08-13 | v2.4 | Released: Dashboard E4 complete — KPI extractor / real-time refresh / card layout / formula editor / shop floor display · 136 tests |
 | 08-13 | v2.3.1 | Released: UI text display fixes — table headers / status bar elide / welcome cards / menu i18n |
 | 08-13 | v2.4-dev | Dashboard Phase 1 done (KPI extractor + real-time refresh + card layout) · Phase 2 done (formula editor + display mode) |
