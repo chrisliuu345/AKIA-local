@@ -7,6 +7,8 @@ from typing import Dict, List
 from datetime import datetime
 from io import BytesIO
 
+from config.settings import APP_VERSION
+
 
 def _fig_to_base64(fig) -> str:
     with io.BytesIO() as buf:
@@ -46,10 +48,10 @@ h3{{color:#a0a3ae}}.summary{{background:#262632;padding:12px;border-radius:8px;m
 .footer{{color:#6e7080;font-size:12px;margin-top:30px;text-align:center}}
 </style></head><body>
 <h1>{safe_title}</h1>
-<p>生成时间: {datetime.now().strftime("%Y-%m-%d %H:%M")} | 分析项目: {len(items)} 项 | QA-Tool v2.3</p>
+<p>生成时间: {datetime.now().strftime("%Y-%m-%d %H:%M")} | 分析项目: {len(items)} 项 | QA-Tool v{APP_VERSION}</p>
 {"".join(f'<div class="summary"><b>{i["type"]}:</b> {i["summary"]}</div>' for i in items)}
 {img_tags}
-<div class="footer"><p>QA-Tool v2.3 · 自包含离线报告</p></div>
+<div class="footer"><p>QA-Tool v{APP_VERSION} · 自包含离线报告</p></div>
 </body></html>"""
 
     if output_path:

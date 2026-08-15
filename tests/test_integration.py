@@ -90,7 +90,7 @@ print(f"[PASS] TemplateParser: {len(tp.VALID_ANALYSIS_TYPES)} valid analysis typ
 er = ExcelReport()
 out = er.generate(
     [{"analysis_type": "XBar-R", "params": {"size": 5}, "result": r}],
-    r"D:\AI-agent\projects\ie-quality-analyzer\test_report.xlsx",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "_tmp_test_report.xlsx"),
     "Test Report",
 )
 print(f"[PASS] ExcelReport: {out}")
