@@ -81,7 +81,6 @@ class SamplingEngine:
             total += 1
             if r == 1: d += 1
             if d >= re: return "reject", d, i
-            if i - d >= (i - ac + 1): pass
             if d <= ac and i >= ac + 1: return "accept", d, i
         if d <= ac: return "accept", d, len(results)
         return "continue", d, len(results)

@@ -41,7 +41,7 @@ def analyze(data: pd.Series, subgroup_size: int = 5) -> Dict[str, Any]:
     r_cl = r_bar
 
     sigma_hat = r_bar / const["d2"]
-    xbar_violations = check_all_nelson_rules(xbar, xbar_bar, sigma_hat)
+    xbar_violations = check_all_nelson_rules(xbar, xbar_bar, sigma_hat / np.sqrt(subgroup_size))
     r_violations = _check_range_violations(r, r_ucl, r_lcl)
 
     return {

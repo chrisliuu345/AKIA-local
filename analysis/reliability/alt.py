@@ -1,7 +1,7 @@
 """ALT 加速寿命试验 — Arrhenius / 逆幂律模型"""
 
 import numpy as np
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from scipy import stats as sp_stats
 from scipy.optimize import curve_fit
 
@@ -11,8 +11,7 @@ class ALTEngine:
 
     @staticmethod
     def arrhenius_life(stress_temp: np.ndarray, life: np.ndarray,
-                       use_temp: float, activation_energy: float = 0.7,
-                       T_use_k: float = None) -> Dict[str, Any]:
+                       use_temp: float, activation_energy: float = 0.7) -> Dict[str, Any]:
         """Arrhenius 模型: L(T) = A * exp(Ea/(k*T))
         参数:
             stress_temp: 加速应力温度 (K)

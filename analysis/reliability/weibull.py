@@ -137,23 +137,45 @@ class WeibullAnalyzer:
     # ──────────────────────────────────────────────
     def _fit_2p_mle(self, failures: np.ndarray, censored: np.ndarray,
                     all_times: np.ndarray) -> WeibullResult:
-        """scipy MLE 拟合 2P Weibull (weibull_min = 标准威布尔)"""
-        params = sp_stats.weibull_min.fit(failures, floc=0)
-        c, loc, scale = params  # c=形状, loc=0, scale=尺度
+        """MLE 拟合 2P Weibull (γ=0) — 最大化含删失的完整似然
 
-        beta = float(c)
-        eta = float(scale)
+        以 scipy 仅失效拟合结果为初值，再用 L-BFGS-B 优化含删失负对数似然，
+        使右删失数据参与参数估计（修复: 旧实现删失仅进 loglik 不参与拟合）。
+        """
+        # 初值: 仅失效数据的 scipy MLE
+        p2 = sp_stats.weibull_min.fit(failures, floc=0)
+        beta0, _, eta0 = p2
+
+        def neg_loglik(params):
+            beta, eta = params
+            if beta <= 0.1 or eta <= 0:
+                return 1e12
+            return -self._weibull_loglik(beta, eta, 0.0, all_times, censored)
+
+        result = minimize(
+            neg_loglik,
+            x0=[beta0, eta0],
+            bounds=[(0.2, 20), (1e-6, None)],
+            method="L-BFGS-B",
+        )
+
+        if result.success:
+            beta, eta = result.x
+            loglik = -result.fun
+        else:
+            # 优化失败时回退 scipy 直接拟合结果
+            beta, eta = float(beta0), float(eta0)
+            loglik = self._weibull_loglik(beta, eta, 0.0, all_times, censored)
+
         gamma = 0.0
-
-        # 对数似然 (含删失)
-        loglik = self._weibull_loglik(beta, eta, gamma, all_times, censored)
         n_params = 2
         n_total = len(all_times)
         aic = 2 * n_params - 2 * loglik
         bic = n_params * np.log(n_total) - 2 * loglik
 
         return WeibullResult(
-            beta=beta, eta=eta, gamma=gamma, method="2P-MLE",
+            beta=round(float(beta), 6), eta=round(float(eta), 6),
+            gamma=gamma, method="2P-MLE",
             loglik=loglik, aic=aic, bic=bic,
             b10_life=0.0, b50_life=0.0,
             characteristic_life=eta, mean_life=0.0,

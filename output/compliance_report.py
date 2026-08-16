@@ -6,6 +6,7 @@ import os
 from datetime import datetime
 from typing import Dict, Any, List
 
+from config.settings import APP_VERSION
 from output.base_report_engine import BaseReportEngine
 from output.word_report import WordReport
 from output.pdf_report import generate_pdf_report
@@ -13,6 +14,17 @@ from output.pdf_report import generate_pdf_report
 _logger = logging.getLogger("QA-Tool.Compliance")
 
 TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), "..", "config", "templates")
+
+
+def _fill_placeholders(text: str, file_name: str = "") -> str:
+    """替换模板正文中的 {{file_name}} / {{timestamp}} / {{version}} 占位符"""
+    if not text:
+        return text
+    return (
+        text.replace("{{file_name}}", file_name)
+        .replace("{{timestamp}}", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        .replace("{{version}}", APP_VERSION)
+    )
 
 
 class ComplianceReportGenerator:
@@ -66,7 +78,9 @@ class ComplianceReportGenerator:
 
         if fmt == "pdf":
             return generate_pdf_report(selected, output_path,
-                                       title=template.get("name", ""), charts=charts or {})
+                                       title=_fill_placeholders(template.get("name", ""), file_name),
+                                       charts=charts or {})
         else:
             return WordReport().generate(selected, output_path,
-                                         title=template.get("name", ""), charts=charts or {})
+                                         title=_fill_placeholders(template.get("name", ""), file_name),
+                                         charts=charts or {})

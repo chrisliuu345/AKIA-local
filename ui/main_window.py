@@ -245,6 +245,12 @@ class MainWindow(QMainWindow):
         open_project_action.setShortcut("Ctrl+Shift+O")
         open_project_action.triggered.connect(self._on_load_project)
         file_menu.addAction(open_project_action)
+        save_shared_action = QAction("📤 " + i18n.tr("menu.save_shared"), self)
+        save_shared_action.triggered.connect(self._on_save_shared)
+        file_menu.addAction(save_shared_action)
+        load_shared_action = QAction("📥 " + i18n.tr("menu.load_shared"), self)
+        load_shared_action.triggered.connect(self._on_load_shared)
+        file_menu.addAction(load_shared_action)
 
         # 最近项目
         recent = ProjectManager.recent_projects()

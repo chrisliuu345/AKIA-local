@@ -177,6 +177,8 @@
   "menu.kb_search": "知识库检索",
   "menu.save_project": "保存项目 (.qap)",
   "menu.open_project": "打开项目 (.qap)",
+  "menu.save_shared": "保存共享项目",
+  "menu.load_shared": "加载共享项目",
   "menu.recent": "最近项目",
   "menu.vsm": "VSM",
   "msa.config": "分析配置",

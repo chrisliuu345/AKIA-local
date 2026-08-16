@@ -54,11 +54,11 @@ class DataLoader:
         self._extract_metadata()
         return self.raw_data
 
-    def load_chunked(self, file_path: str, sheet_name: str = "Sheet1",
-                     chunk_size: int = CHUNK_SIZE) -> pd.DataFrame:
-        """一次性加载（保持与 load() 一致的接口）。
+    def load_head(self, file_path: str, sheet_name: str = "Sheet1",
+                  chunk_size: int = CHUNK_SIZE) -> pd.DataFrame:
+        """一次性加载前 chunk_size 行（受限加载，非分块）。
 
-        注意：此方法名称含 "chunked" 但实际上是受限加载（最多返回 chunk_size 行），而非真正的分块。
+        注意：此方法仅返回前 chunk_size 行作为预览/抽样，而非真正的分块读取。
         对于真正的分块迭代，请使用本类的 load_chunked_iter() 方法。
 
         pandas 的 read_excel 不支持 chunksize 参数，对于超大文件（>100万行），
@@ -78,6 +78,8 @@ class DataLoader:
             except Exception:
                 pass
         return pd.read_excel(file_path, sheet_name=sheet_name, dtype=str, engine="openpyxl")
+
+    load_chunked = load_head  # 兼容旧名称
 
     def load_chunked_iter(self, file_path: str, sheet_name: str = "Sheet1",
                           chunk_size: int = CHUNK_SIZE):

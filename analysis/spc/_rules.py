@@ -53,7 +53,6 @@ def _rule_2(values: np.ndarray, mean: float) -> List[Dict]:
     for i in range(n - 8):
         if all(sign[i:i + 9] == 1) or all(sign[i:i + 9] == -1):
             violations.append(_mk(i + 9, 2, values[i + 8]))
-            break
     return violations
 
 
@@ -67,7 +66,6 @@ def _rule_3(values: np.ndarray) -> List[Dict]:
         window = values[i:i + 6]
         if all(np.diff(window) > 0) or all(np.diff(window) < 0):
             violations.append(_mk(i + 6, 3, values[i + 5]))
-            break
     return violations
 
 
@@ -85,7 +83,6 @@ def _rule_4(values: np.ndarray, mean: float) -> List[Dict]:
         alternating = all(window[j] * window[j + 1] < 0 for j in range(12))
         if alternating:
             violations.append(_mk(i + 14, 4, values[i + 13]))
-            break
     return violations
 
 
@@ -100,7 +97,6 @@ def _rule_5(values: np.ndarray, mean: float, sigma: float) -> List[Dict]:
         beyond = sum(1 for v in window if abs(v - mean) > 2 * sigma)
         if beyond >= 2 and (all(v > mean for v in window) or all(v < mean for v in window)):
             violations.append(_mk(i + 3, 5, values[i + 2]))
-            break
     return violations
 
 
@@ -118,7 +114,6 @@ def _rule_6(values: np.ndarray, mean: float, sigma: float) -> List[Dict]:
             above = sum(1 for v in window if v > mean)
             if above >= 4 or above <= 1:
                 violations.append(_mk(i + 5, 6, values[i + 4]))
-                break
     return violations
 
 
@@ -133,7 +128,6 @@ def _rule_7(values: np.ndarray, mean: float, sigma: float) -> List[Dict]:
         within = sum(1 for v in window if abs(v - mean) <= sigma)
         if within >= 15:
             violations.append(_mk(i + 15, 7, values[i + 14]))
-            break
     return violations
 
 

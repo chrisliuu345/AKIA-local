@@ -150,6 +150,8 @@ class BatchScheduler(QObject):
             if t.schedule == "once":
                 t.enabled = False
             self._save_tasks()
+        # 清理已完成的工作线程（防止 _workers 引用只增不减的泄漏）
+        self._workers = [w for w in self._workers if w.task.id != task_id]
         status = "成功" if success else f"失败: {error}"
         self._log_msg(f"任务完成 [{task_id}]: {status}")
         self.task_completed.emit(task_id, success, error)
