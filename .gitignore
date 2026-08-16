@@ -4,6 +4,7 @@ __pycache__/
 *.pyo
 user_config.json
 test_report.*
+_tmp_test_report.xlsx
 test_session.json
 fishbone_test.png
 build/

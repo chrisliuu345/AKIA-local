@@ -7,12 +7,13 @@ from typing import Dict, List
 from datetime import datetime
 from io import BytesIO
 
-from config.settings import APP_VERSION
+from config.settings import APP_VERSION, CHART_COLORS
 
 
 def _fig_to_base64(fig) -> str:
     with io.BytesIO() as buf:
-        fig.savefig(buf, format="png", dpi=100, bbox_inches="tight", facecolor="#181822")
+        fig.savefig(buf, format="png", dpi=100, bbox_inches="tight",
+                    facecolor=CHART_COLORS.get("background", "#181822"))
         buf.seek(0)
         return base64.b64encode(buf.read()).decode()
 

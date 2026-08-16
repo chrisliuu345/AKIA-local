@@ -22,6 +22,7 @@ FONT_18B = _f(18, True);  FONT_36B = _f(36, True)
 
 
 def is_dark_theme(widget=None) -> bool:
+    # 当前为暗色单主题设计，恒返回 True；widget 参数预留，供未来多主题切换使用
     return True
 
 

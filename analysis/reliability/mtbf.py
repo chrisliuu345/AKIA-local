@@ -152,8 +152,8 @@ class MTBFAnalyzer:
         if abs(stat) < 1.96:
             trend = "stable"
         elif stat > 0:
-            trend = "degrading"  # 故障间隔变长 = 恶化
+            trend = "degrading"  # 失效事件偏后段/故障间隔变短 = 恶化
         else:
-            trend = "improving"  # 故障间隔变短 = 改善
+            trend = "improving"  # 失效事件偏前段/故障间隔变长 = 改善
 
         return round(stat, 4), trend

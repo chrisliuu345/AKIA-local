@@ -539,7 +539,8 @@ def _build_waterfall(data: dict, options: dict) -> Figure:
     vals = pd.to_numeric(df[val_col], errors="coerce")
     labels = df[cat_col].astype(str).tolist()
     valid = vals.notna()
-    vals, labels = vals[valid].values, [labels[i] for i in valid.index[valid]]
+    vals = vals[valid].values
+    labels = [labels[i] for i in np.flatnonzero(valid.values)]
     if len(vals) < 2:
         fig, ax = plt.subplots(figsize=(9, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "数据点不足", ha="center", va="center", fontsize=14)

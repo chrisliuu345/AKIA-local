@@ -47,7 +47,7 @@ class WordReport(BaseReportEngine):
         output_path: str,
         title: str = "",
         subtitle: str = "",
-        charts: Dict[str, BytesIO] = None,
+        charts: Dict[str, Any] = None,
     ) -> str:
         if not title:
             title = i18n.tr("report.title")
@@ -97,7 +97,8 @@ class WordReport(BaseReportEngine):
 
             if charts and atype in charts:
                 doc.add_heading(i18n.tr("report.charts"), level=2)
-                chart_buf = charts[atype]
+                chart_data = charts[atype]
+                chart_buf = BytesIO(chart_data) if isinstance(chart_data, bytes) else chart_data
                 doc.add_picture(chart_buf, width=Inches(CHART_FIGSIZE[0]), height=Inches(CHART_FIGSIZE[1]))
 
             doc.add_page_break()

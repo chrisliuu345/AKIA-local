@@ -44,9 +44,16 @@ def one_sample(data: pd.Series, pop_mean: float, alternative: str = "two-sided")
 def two_sample(
     group1: pd.Series,
     group2: pd.Series,
-    equal_var: bool = False,
+    equal_var: Optional[bool] = None,
     alternative: str = "two-sided",
 ) -> Dict[str, Any]:
+    """双样本 t 检验
+
+    equal_var 三态:
+      - None: 自动选择 — 经 Levene 检验, 方差齐(p>=0.05)用 pooled, 否则 Welch
+      - True: 强制等方差 (pooled)
+      - False: 强制 Welch
+    """
     g1 = group1.dropna().astype(float)
     g2 = group2.dropna().astype(float)
 
@@ -54,8 +61,8 @@ def two_sample(
         raise ValueError("两组数据量均需 >= 2")
 
     lev_stat, lev_p = stats.levene(g1, g2)
-    if not equal_var and lev_p < 0.05:
-        equal_var = False
+    if equal_var is None:
+        equal_var = bool(lev_p >= 0.05)  # 方差齐 → pooled; 方差不齐 → Welch
 
     t_stat, p_value = stats.ttest_ind(g1, g2, equal_var=equal_var)
     if alternative == "greater":
