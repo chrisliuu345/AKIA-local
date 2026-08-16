@@ -28,11 +28,18 @@ class SheetMerger:
 
     @staticmethod
     def merge_folder(folder: str, pattern: str = "*.*") -> pd.DataFrame:
-        """批量合并文件夹中所有 Excel/CSV"""
+        """批量合并文件夹中所有 Excel/CSV
+
+        pattern: 文件匹配模式。默认 "*.*" 匹配所有 Excel/CSV 文件；
+        传入自定义模式（如 "*.txt"）时按该模式匹配。
+        """
         import glob
-        files = []
-        for ext in ["*.xlsx", "*.xls", "*.xlsm", "*.csv"]:
-            files.extend(glob.glob(os.path.join(folder, ext)))
+        if pattern in ("*", "*.*"):
+            files = []
+            for ext in ["*.xlsx", "*.xls", "*.xlsm", "*.csv"]:
+                files.extend(glob.glob(os.path.join(folder, ext)))
+        else:
+            files = glob.glob(os.path.join(folder, pattern))
         if not files:
             return pd.DataFrame()
         return SheetMerger.merge_append(sorted(files))

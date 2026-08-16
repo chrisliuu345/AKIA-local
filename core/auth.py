@@ -1,5 +1,5 @@
 """
-多用户认证 — bcrypt 哈希 + 三级角色权限
+多用户认证 — PBKDF2-SHA256 哈希 + 四级角色权限
 """
 
 import json
@@ -133,7 +133,9 @@ class AuthManager:
         users = self._load_users()
         for u in users:
             if u["username"] == username and _verify_password(password, u["password_hash"]):
+                _audit("login", username, "成功")
                 return User(**u)
+        _audit("login_failed", username)
         return None
 
     def create_user(self, username: str, password: str, role: str = "analyst",
@@ -142,6 +144,7 @@ class AuthManager:
             raise ValueError(f"无效角色: {role}")
         users = self._load_users()
         if any(u["username"] == username for u in users):
+            _audit("create_user_failed", username, "用户已存在")
             return None
         user = User(
             username=username,
@@ -154,6 +157,7 @@ class AuthManager:
         )
         users.append(user.to_dict())
         self._save_users(users)
+        _audit("create_user", username, f"角色={role}")
         return user
 
     def update_user(self, username: str, **kwargs) -> bool:
@@ -165,6 +169,7 @@ class AuthManager:
                     if k in kwargs and kwargs[k]:
                         u[k] = kwargs[k]
                 self._save_users(users)
+                _audit("update_user", username, f"字段={','.join(k for k in ('role','department','team','display_name') if k in kwargs and kwargs[k])}")
                 return True
         return False
 
@@ -175,17 +180,22 @@ class AuthManager:
             if u["username"] == username:
                 u["password_hash"] = _hash_password(new_password)
                 self._save_users(users)
+                _audit("reset_password", username)
                 return True
+        _audit("reset_password_failed", username, "用户不存在")
         return False
 
     def delete_user(self, username: str) -> bool:
         if username == "admin":
+            _audit("delete_user_failed", username, "禁止删除admin")
             return False
         users = self._load_users()
         new_users = [u for u in users if u["username"] != username]
         if len(new_users) == len(users):
+            _audit("delete_user_failed", username, "用户不存在")
             return False
         self._save_users(new_users)
+        _audit("delete_user", username)
         return True
 
     def list_users(self, department: str = "") -> List[User]:
@@ -197,12 +207,14 @@ class AuthManager:
     def change_password(self, username: str, old_password: str, new_password: str) -> bool:
         user = self.authenticate(username, old_password)
         if not user:
+            _audit("change_password_failed", username, "旧密码错误")
             return False
         users = self._load_users()
         for u in users:
             if u["username"] == username:
                 u["password_hash"] = _hash_password(new_password)
                 self._save_users(users)
+                _audit("change_password", username)
                 return True
         return False
 

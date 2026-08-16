@@ -7,8 +7,6 @@ def format_pvalue(p: float) -> str:
         return "<0.0001"
     if p < 0.001:
         return "<0.001"
-    if p < 0.01:
-        return f"{p:.4f}"
     return f"{p:.4f}"
 
 

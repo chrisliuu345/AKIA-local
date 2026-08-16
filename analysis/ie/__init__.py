@@ -2,5 +2,8 @@
 
 from analysis.ie.time_study import TimeStudyEngine
 from analysis.ie.work_sampling import WorkSamplingEngine, BUILTIN_STATUSES
+from analysis.ie.line_balance import LineBalanceEngine
+from analysis.ie.oee import OEEEngine
+from analysis.ie.vsm import VSMEngine
 from analysis.ie.smed import SMEDEngine, SMEDTask, SMEDResult
 from analysis.ie.tpm import TPMEngine, TPMRecord, TPMResult

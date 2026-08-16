@@ -26,7 +26,6 @@ class SessionManager:
             "file_path": file_path,
             "file_name": os.path.basename(file_path) if file_path else "",
             "analyses": [],
-            "results": [],
             "config": {},
         }
         return session_id

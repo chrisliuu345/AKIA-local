@@ -41,12 +41,13 @@ def test_rule_2_no_violation():
 
 
 def test_rule_3_trend_6():
-    """规则3: 连续6点递增"""
-    data = np.arange(1, 30, dtype=float)
-    data[5:11] = [1, 2, 3, 4, 5, 6]
-    v = check_all_nelson_rules(data, 15.0, 3.0)
+    """规则3: 连续6点递增(报告全部违规窗口)"""
+    data = np.ones(30, dtype=float) * 10.0
+    data[10:20] = np.arange(10, 20, dtype=float)  # 10点递增段
+    v = check_all_nelson_rules(data, 10.0, 1.0)
     r3 = [x for x in v if x["rule"] == 3]
-    assert len(r3) == 1
+    assert len(r3) == 5
+    assert [x["point"] for x in r3] == [16, 17, 18, 19, 20]
 
 
 def test_rule_4_alternating_14():
@@ -56,7 +57,8 @@ def test_rule_4_alternating_14():
         base[20 + i] = 10.0 + (1.0 if i % 2 == 0 else -1.0)
     v = check_all_nelson_rules(base, 10.0, 2.0)
     r4 = [x for x in v if x["rule"] == 4]
-    assert len(r4) == 1
+    assert len(r4) == 3
+    assert [x["point"] for x in r4] == [33, 34, 35]
 
 
 def test_rule_4_no_violation():
@@ -91,7 +93,7 @@ def test_rule_7_15_within_1sigma():
     data[10:25] = 10.05
     v = check_all_nelson_rules(data, 10.0, 1.0)
     r7 = [x for x in v if x["rule"] == 7]
-    assert len(r7) == 1
+    assert len(r7) == 36  # 全部50点均在±1σ内 → 每个15点窗口均违规
 
 
 def test_rule_8_outside_1sigma():
