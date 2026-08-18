@@ -1,0 +1,251 @@
+# QA-Tool Roadmap
+
+> [中文](ROADMAP.md) | [English](ROADMAP.en.md)
+
+> Current: v2.6.0 Released | Tests: 278/278 | 35 Tabs + Plugins | Updated: 2026-08-18
+
+---
+
+## Version Roadmap Overview
+
+```
+v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1
+ Release   Code+AI    Eng Tools   Reports    Live      UX+Anim    HW Ext     ESP32 Deploy+   Security
+            (Done)     (Done)     (Done)    (Done)     (Done)     (Done)     Device Tab      (TBD)
+                                                                             (Released)
+```
+
+---
+
+## v2.1 ✅ Completed — Code Quality & AI Enhancement
+
+### Direction A: Code Quality & Architecture Optimization
+- 5 P0 bug fixes (p_chart data swap / PDF watermark / NameError ×3)
+- 12 bare-except eliminations, 2 iterrows vectorizations
+- Tab lazy loading (TAB_REGISTRY 32 entries + importlib on-demand), startup time halved
+- 200+ unused imports cleaned, 60+ dead code removed
+- welcome_page 4 dead features fixed, diagnostics apply_all fix
+- Tests: 65 → 87 (+22)
+- Key fixes: `pd.to_numeric` replaces `select_dtypes`, `removeWidget` prevents Stack index shift, `iloc` for duplicate column safety
+
+### Direction C: AI Intelligence Enhancement
+- Knowledge base 99 → 124 entries (+25: SMED/8D/TPM/PPAP/AQL/Weibull/ALT/non-parametric)
+- Hybrid search: TF-IDF (0.5) + keyword (0.3) + title (0.2)
+- AI Chat V2: 8 preset templates + 20-round history + MD export + QSettings persistence + streaming refresh
+- One-click analysis: Profile → Recommend → Execute → AI write-up → PDF/MD
+- LLM thread management (closeEvent quit+wait)
+
+### UX Improvements
+- Import sheet → auto-route to 21 non-IE tools (sheet_map 22 entries)
+- Welcome page dual entry (Sheet / IE Data)
+- IE recognition 100+ alias expansion; near-constant column silent suppression
+- Version → 2.1, Build exe (36.8MB) with logo + knowledge base
+
+---
+
+## v2.2 ✅ Completed — Engineering Tools Extension
+
+### Phase A: v2.1 Legacy Fixes (9 items)
+Plugin index 33, LLM streaming refresh, validate_params complete, animation cleanup, welcome page recent projects, diagnostics apply_all, Chart Tab widget cleanup, data validation, profile_result
+
+### Phase B: New Engineering Tools (4 modules)
+
+| Index | Module | Engine | Tab |
+|:--:|------|------|------|
+| 29 | SMED | `analysis/ie/smed.py` | `ui/tabs/smed_tab.py` |
+| 30 | 8D Problem Solving | `analysis/quality/eight_d_engine.py` | `ui/tabs/eight_d_tab.py` |
+| 31 | TPM | `analysis/ie/tpm.py` | `ui/tabs/tpm_tab.py` |
+| 32 | PPAP | `analysis/quality/ppap_engine.py` | `ui/tabs/ppap_tab.py` |
+
+**Sidebar**: 32 Tabs (+4 new) · Plugin start index 33
+
+---
+
+## v2.3 ✅ Completed — Report Enhancement
+
+### Phase A: v2.2 Legacy Fixes (4 items)
+- A1: 8D D4 page embedded FishboneCanvas (6M skeleton, render_fishbone)
+- A2: PPAP status change real-time completion refresh
+- A3: PPAP completion unified to engine `completion_pct` (submission-level based)
+- A4: `analysis/ie/__init__.py` and `analysis/quality/__init__.py` export new modules
+
+### Phase B: Report System (4 items)
+
+| # | Module | File | Description |
+|:--:|------|------|------|
+| D1 | Template Engine | `core/report_templates.py` | string.Template, 5 built-in HTML templates |
+| D2 | Template Dialog | `ui/dialogs/template_dialog.py` | Select → Preview → Export PDF/Word/HTML |
+| D3 | Compliance Report | `output/compliance_report.py` | Framework with IATF/ISO clause references |
+| D4 | HTML Export | `output/html_export.py` | matplotlib→base64 inline, self-contained offline HTML |
+
+### Menu Restructure
+6 menus: File | Analysis | AI | Tools | View | Help — with categorized submenus covering all 32 tabs
+
+---
+
+## v2.4 ✅ Completed — Real-Time Monitoring & Integration (Direction E)
+
+### E1. File Watcher Real-Time SPC ✅ (1.5 days)
+- File change → auto import → update control chart → out-of-spec alert
+- Implemented: `core/file_watcher.py` (polling FileMonitor daemon thread + stable-state confirm, Qt-free), `ui/tabs/monitor_tab.py` (index 33)
+
+### E2. Multi-Plant / Multi-Line Comparison ✅ (1 day)
+- Same metric multi-line side-by-side · Cp/Cpk comparison · Violation summary
+- Implemented: `core/plant_compare.py` (summarize_plant / build_comparison), `ui/tabs/multi_plant_tab.py` (index 34)
+
+### E3. Alert Notification System ✅ (0.5 days)
+- Multi-channel alerts (popup / sound / log) · Configurable rules · Alert aggregation / dedup
+- Implemented: `core/alert_rules.py` (AlertTracker NEW/ONGOING/CLEARED state machine + AlertLog ring buffer + configurable rules via user_config), MonitorTab alert banner + popup + beep + log panel
+
+### E4. Dashboard UI & Control Enhancement ✅ (3 days) — P2-1/P2-2 moved up from v2.5
+
+**Phase 1:**
+- F0: Unified KPI extractor `core/kpi_extractor.py` — fixes 3 broken card metrics (OEE / %GRR / SPC violations had wrong key paths), provides variable namespace for the formula engine
+- F1: Real-time refresh — signal-driven (`analysis_completed` → `_notify_dashboard`) + QTimer(5s) polling fallback + auto-refresh toggle
+- F2: Custom card layout — show/hide + reorder dialog (`ui/dialogs/layout_dialog.py`), QSettings persistence
+
+**Phase 2:**
+- F3: Low-code formula editor (P2-1) — `core/kpi_formula.py` AST whitelist parser (23 attack cases rejected, length/depth guards) + `ui/dialogs/formula_dialog.py`, custom KPI cards with live evaluation
+- F4: Shop floor display mode (P2-2) — full-screen dashboard `ui/dialogs/display_mode.py`, big-number KPI tiles (FONT_36B), chart carousel (QTimer 8s), ESC/arrow keys, F11 shortcut
+
+**Status**: Direction E fully implemented — E1/E2/E3 completed (Tabs 33-34, alert system, 215 tests).
+
+**Estimate**: 6 days total (E1 1.5 + E2 1 + E3 0.5 + E4 3) | New Tabs 33-34 | Sidebar 32→34
+
+---
+
+## v2.4.1 ✅ Completed — Dashboard & Display-Mode Visual Enhancement
+
+- **Adaptive card grid**: ≤3 cards → 1 column (560×260) / ≤6 → 2 columns (330×220) / more → 3 columns (240×170); scrollable overflow preserved for many cards
+- **Card details**: update timestamp (HH:MM), status color dot (Cpk/OEE/GRR/violations graded red/orange/green), dynamic font sizes per column count
+- **Animation infrastructure** `ui/widgets/animate.py`: fade_in / count_up / cross_fade (QPropertyAnimation/QVariantAnimation, InOutCubic), settings toggle (default on, user_config.json)
+- **Big-screen**: KPI number count-up + tile fade-in + carousel cross-fade
+- **Big-screen chart rendering**: charts rendered at chart-area aspect ratio (deepcopy + set_size_inches, 300ms resize debounce re-render) — fixes stretched/compressed charts with no distortion or clipping
+- **Big-screen readability**: chart PNG white background (was dark background with black text)
+- **Fixes**: F5 batch analysis DataFrame truth-value ambiguity; skip non-runnable tabs (Dashboard etc.) in batch analysis; duplicate display-mode window guard
+- Tests: 201 → 215
+
+---
+
+## v2.5 ✅ Completed — Hardware Expansion (ESP32)
+
+### H1. ESP32 Device Framework ✅ (core/devices + Tab 35)
+- JSON-lines serial protocol (utf-8, `\n`-terminated): HELLO→ACK→READY handshake · PING/PONG heartbeat (3s/9s) · DATA/COMMAND/RECOGNITION messages
+- `core/devices/`: protocol.py (encode/decode/HandshakeProtocol/Heartbeat), transport.py (SerialTransport daemon read thread), discovery.py (comport scan + HELLO probe), registry.py (state machine + user_config.json persistence), device.py (Device / Esp32InputDevice / Esp32OutputDevice / MaixcamVisionDevice)
+- `ui/tabs/device_tab.py` (index 35): device cards + detail tabs (events / data preview / output console / recognition records) + auto-discovery (3s) + import device data to analysis
+- Sidebar "监控" group: Live Monitor (33) / Multi-Plant (34) / Device Monitor (35) · Plugin start index 36
+- Tests: test_devices.py 30 (all mocked, no hardware)
+
+### H2. MicroPython Firmware ✅ (firmware/esp32_in.py + esp32_out.py, v1.1.0)
+- MicroPython **v1.20.0** on-board (official v1.21+ broke `machine.UART(0)`: REPL UART driver never installed → `ESP_ERR_INVALID_STATE`/128B-TX-FIFO stall)
+- Both firmware files use **UART1 remapped to the onboard bridge** (`machine.UART(1, tx=1, rx=3)`, 115200) + boot self-announce (HELLO + META) so PC auto-discovery can find the board
+- `esp32_in.py`: 7 configurable channels (DS18B20 temp on GPIO4 + 6× ADC 32/33/34/35/36/39, ATTN_11DB) → DATA every 1s · answers HELLO/PING
+- `esp32_out.py`: COMMAND `<name>:on/off|duty>` grammar (led GPIO2 / relay GPIO25 digital, servo GPIO13 PWM) → ACK reply
+- REPL escape hatch: hold BOOT (GPIO0 low) at power-on → firmware exits, REPL stays available (maintenance path)
+- Protocol simulation test (`TEMP/fw_proto_test.py`, fake machine + UART pipe): boot announce / META / HELLO reply / PONG / DATA / COMMAND+ACK all pass
+- Flash: copy to board as `main.py` (esptool.py installs MicroPython image only; board: ESP32-D0WD-V3, 4MB, no SPIRAM, no auto-reset quirks — DTR/RTS pulse handled by host code)
+
+### H3. Real-Device Verification (Partially Complete)
+- ✅ **esp32_in live on COM3** (`esp32_in_6cc84055ec48`, FW 1.1.0): auto-discovery (HELLO probe + boot announce) → ONLINE → META 7 channels → DATA every 1s · end-to-end verified via `TEMP/e2e_hw_check.py` (hello+pong+meta+data PASS) and device-tab smoke (preview table with channel names/units, one-click import → multi-column DataFrame)
+- ⏳ **esp32_out**: firmware + simulated protocol tests pass; flash second board and verify COMMAND→ACK on real actuator pins → **moved to v2.6.1**
+- ⏳ **MaixCAM**: network transport (TCP/SSH, no serial) → **moved to v2.6.1**
+
+---
+
+## v2.6.0 ✅ Released — ESP32 Deployment Extension + Device Monitoring Tab
+
+### Deployment Extension (ESP32 Input)
+- Firmware v1.1.0 deployed on real hardware: `esp32_in_6cc84055ec48` live on COM3 (MicroPython v1.20 + UART1 remap, 7 channels) — auto-discovery → ONLINE → META → DATA every second verified end-to-end
+- Host discovery/monitor is now reset-pulse aware
+
+### Device Monitoring Tab 35 (polished)
+- Device cards: type icon/badge, elided name + tooltip, state color dot (online/offline/error), port + heartbeat display, selected-state highlight
+- **Stop / Resume monitoring**: dual buttons on the card (disabled-state style); new devices default to monitoring ON; stopped state persists across refreshes; resume re-attaches (serial reopen + board reset + HELLO)
+- Live data preview table: 20 rows always visible (doubled from initial), stable Stretch column widths
+- One-click import: device sample DataFrame → routed to other analysis tabs (`_route_sheets_to_tabs`)
+- Fixes: card text clipping (_ElidedLabel ellipsis), empty-hint overlapping cards, button text clipping
+
+### ESP-32 Config Gating
+- `user_config.json` gains `esp32_extension` switch (default on, backward compatible); when off, sidebar hides the device-monitor button and Tab 35 is not loaded
+- New in `config/settings.py`: `tab_allowed(idx)` / `esp32_extension_enabled()`
+
+### Packaging & Release Pipeline
+- Branding: `assets/logo.ico` (7 sizes) + `version_info.txt` (2.6.0, Chinese description)
+- PyInstaller **onedir**: QA-Tool.exe (38MB) + `_internal/` (454MB total), GUI subsystem (no console)
+- **Inno Setup installer** (135MB): Chinese UI, admin install to Program Files, "ESP-32 硬件拓展" component page (writes the install-time switch), desktop/start-menu shortcuts, uninstall support
+- Tests: 278 (+3 monitoring stop/resume + 5 config gating + bilingual docs)
+
+---
+
+## v2.6.1 — Security Validation & Hardware Wrap-up (TBD)
+
+### Security Validation (moved from v2.6)
+- Multi-user auth hardening (login attempts / lockout)
+- Password policy (`core/password_policy.py` — code already prepared in backup)
+- Secret store (`core/secret_store.py` — code already prepared in backup)
+- Role-based UI enforcement review
+- Audit logging improvements
+
+### Hardware Wrap-up
+- **esp32_out real-device verification**: flash second board, verify COMMAND→ACK drives real actuators (LED/relay/servo)
+- **MaixCAM**: network transport (TCP/SSH) device integration
+
+---
+
+## Long-Term Backlog (P2/P3)
+
+| Priority | Feature | Description |
+|:--:|------|------|
+| P2-3 | Video Time Study | Frame-level timing · AI motion recognition (OpenCV+MediaPipe) |
+| P2-4 | Batch Macro Record/Replay | Record operation sequence → save as macro → one-click replay |
+| P2-5 | Custom Control Chart Templates | User save/load chart configs (JSON) |
+| P3-1 | Supply Chain Quality Collaboration | P2P supplier data sharing · CPK drill-through · Part number mapping |
+| P3-2 | Digital Twin Layout | Drag-and-drop workstation simulation · 2D Canvas line layout |
+| P3-3 | REST API Service | FastAPI wrapping core analysis → for MES/ERP consumption |
+| P3-4 | Web Frontend Migration | Gradual migration from PySide6 to FastAPI+React |
+| P3-5 | Mobile App | Flutter/React Native for report viewing + alert push |
+
+> **Note**: P2-1 (Low-code Formula Editor) and P2-2 (Shop Floor Display Mode) were moved up to v2.4 E4 (Dashboard UI & Control Enhancement).
+
+---
+
+## Sidebar Evolution
+
+```
+v2.0 (28)     v2.1 (28)     v2.2 (32)       v2.4 (34)     v2.5/2.6 (35)
+ Home (0)       Same           Same             Same           Same
+ Quality (1-6)  Same           Same             Same           Same
+ IE (7-11,21-22) Same          +SMED(29)+TPM(31)  Same         Same
+ Charts (12,18-20) Same        Same             Same           Same
+ Eng (13-17)     Same         +8D(30)+PPAP(32)   Same           Same
+ Worksheet (23-25) Same        Same             Same           Same
+ Sampling (26)   Same          Same             Same           Same
+ Report (27)     Same          Same             Same           Same
+ Data (28)       Same          Same             Same           Same
+ —               —             —                Live Monitor (33) Same
+ —               —             —                Multi-Plant (34)   Same
+ —               —             —                —                 Device (35)
+ Plugins (dynamic) Same        Same             Same             Same
+```
+
+---
+
+## Version History
+
+| Date | Version | Content |
+|------|---------|---------|
+| 08-18 | v2.6.0 | Released: ESP32-IN deployment (FW 1.1.0 verified on hardware) + Device Monitoring Tab 35 (stop/resume, 20-row preview, data import) + ESP-32 config gating + PyInstaller onedir + Inno Setup installer · 278 tests |
+| 08-18 | v2.5-dev | H2 firmware v1.1.0 live on ESP32 (MicroPython v1.20 + UART1 remap, 7 channels) · H3 esp32_in verified end-to-end on COM3 (discovery→META→DATA→import) · host discovery/monitor now reset-pulse aware · 270+ tests |
+| 08-17 | v2.5-dev | Hardware expansion: ESP32 device framework restored (core/devices + DeviceTab 35 + 21 tests) · QMenu GC crash fix re-applied · memory-leak audit (threads clean) · 264 tests |
+| 08-15 | v2.4.1 | Released: adaptive dashboard cards + animations (fade/count-up/cross-fade) + display-mode aspect & readability fixes · 215 tests |
+| 08-13 | v2.4 | Released: Dashboard E4 complete — KPI extractor / real-time refresh / card layout / formula editor / shop floor display · 136 tests |
+| 08-13 | v2.3.1 | Released: UI text display fixes — table headers / status bar elide / welcome cards / menu i18n |
+| 08-13 | v2.4-dev | Dashboard Phase 1 done (KPI extractor + real-time refresh + card layout) · Phase 2 done (formula editor + display mode) |
+| 08-12 | v2.3 | Released: Report template engine + dialog + HTML export + menu restructure |
+| 08-10 | v2.3-dev | Phase B: Report template engine + dialog + HTML self-contained export |
+| 08-10 | v2.3-dev | Phase A: 8D fishbone embed + PPAP real-time refresh + engine package exports |
+| 08-10 | v2.2 | Released: 32 tabs · SMED/8D/TPM/PPAP · 87 tests · lint-clean |
+| 08-10 | v2.2-dev | Review fixes: 3 Critical + 7 Warning (TPM property / animation / chart tab) |
+| 08-10 | v2.1 | Released: 87 tests · AI enhanced · Lazy loading · One-click analysis · Column selector fix |
+| 08-10 | v2.1-dev | Code audit: 5 bugs · 200+ imports · 60+ dead code · 15 duplicate groups |
+| 08-04 | v2.0 | Initial release: 28 tabs · 65 tests · AI assistant · Plugin system |
