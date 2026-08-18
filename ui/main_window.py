@@ -15,8 +15,9 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, QSettings, QPropertyAnimation, QEasingCurve
 from PySide6.QtGui import QAction, QIcon, QFont, QPixmap, QDragEnterEvent, QDropEvent
+import shiboken6
 
-from config.settings import APP_NAME, APP_VERSION, CHART_FIGSIZE
+from config.settings import APP_NAME, APP_VERSION, CHART_FIGSIZE, tab_allowed
 from core.data_loader import DataLoader
 from core.data_parser import DataParser
 from core.data_validator import DataValidator
@@ -82,6 +83,8 @@ class MainWindow(QMainWindow):
 
         _step(73, "构建界面布局...")
         self._setup_ui()
+        # 保留所有 QMenu 的 Python 强引用，防止 PySide6 GC 提前释放 C++ QMenu
+        self._menu_refs: list = []
 
         _step(76, "初始化菜单栏...")
         self._setup_menu()
@@ -100,7 +103,7 @@ class MainWindow(QMainWindow):
         self._pm = PluginManager()
         self._pm.discover()
         self._plugin_tabs = {}
-        self._plugin_tab_start = 35
+        self._plugin_tab_start = 36
         for name, p in self._pm.plugins.items():
             idx = self._plugin_tab_start + len(self._plugin_tabs)
             self._plugin_tabs[idx] = p
@@ -159,14 +162,14 @@ class MainWindow(QMainWindow):
         self.welcome_page = WelcomePage()
         self.stack.addWidget(self.welcome_page)  # 0
 
-        # 内置 Tab 占位符 (1-34)，首次切换时懒加载
-        for idx in range(1, 35):  # v2.4: indices 1-34
+        # 内置 Tab 占位符 (1-35)，首次切换时懒加载
+        for idx in range(1, 36):  # v2.5: indices 1-35 (含设备监控)
             placeholder = QWidget()
             placeholder.setObjectName(f"placeholder_{idx}")
             self.stack.addWidget(placeholder)
 
-        # 插件 Tab (动态) — 起始索引在 __init__ 末尾统一设为 35
-        self._plugin_tab_start = 35
+        # 插件 Tab (动态) — 起始索引在 __init__ 末尾统一设为 36
+        self._plugin_tab_start = 36
 
         layout.addWidget(self.expand_strip)
         layout.addWidget(self.sidebar)
@@ -188,7 +191,11 @@ class MainWindow(QMainWindow):
     def _setup_menu(self):
         menubar = self.menuBar()
 
-        file_menu = menubar.addMenu(i18n.tr("menu.file"))
+        def _pin(menu):
+            self._menu_refs.append(menu)
+            return menu
+
+        file_menu = _pin(menubar.addMenu(i18n.tr("menu.file")))
 
         import_quality_action = QAction("📂 " + i18n.tr("sidebar.import_quality"), self)
         import_quality_action.setShortcut("Ctrl+O")
@@ -211,7 +218,7 @@ class MainWindow(QMainWindow):
 
         file_menu.addSeparator()
 
-        export_menu = file_menu.addMenu(i18n.tr("menu.export"))
+        export_menu = _pin(file_menu.addMenu(i18n.tr("menu.export")))
         export_xlsx = QAction("📊 " + i18n.tr("menu.export_xlsx"), self)
         export_xlsx.triggered.connect(lambda: self._on_export_all("xlsx"))
         export_menu.addAction(export_xlsx)
@@ -227,7 +234,7 @@ class MainWindow(QMainWindow):
             templates = ComplianceReportGenerator.list_templates()
             if templates:
                 export_menu.addSeparator()
-                comply_menu = export_menu.addMenu(i18n.tr("menu.compliance"))
+                comply_menu = _pin(export_menu.addMenu(i18n.tr("menu.compliance")))
                 for t in templates:
                     ac = comply_menu.addAction(f"{t['name']} ({t['standard']})")
                     ac.setData(t["id"])
@@ -255,7 +262,7 @@ class MainWindow(QMainWindow):
         # 最近项目
         recent = ProjectManager.recent_projects()
         if recent:
-            self.recent_menu = file_menu.addMenu("📋 " + i18n.tr("menu.recent"))
+            self.recent_menu = _pin(file_menu.addMenu("📋 " + i18n.tr("menu.recent")))
             self._rebuild_recent_menu(recent)
             # A5: 欢迎页填充 (转换 dict → tuple)
             recent_items = [(r["name"], r["path"]) for r in recent]
@@ -277,7 +284,7 @@ class MainWindow(QMainWindow):
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
 
-        view_menu = menubar.addMenu(i18n.tr("menu.view"))
+        view_menu = _pin(menubar.addMenu(i18n.tr("menu.view")))
         self.toggle_sidebar_action = QAction(i18n.tr("menu.toggle_sidebar"), self)
         self.toggle_sidebar_action.setCheckable(True)
         self.toggle_sidebar_action.setChecked(True)
@@ -288,16 +295,16 @@ class MainWindow(QMainWindow):
         view_menu.addAction(self.toggle_sidebar_action)
 
         # ── 分析 — 全Tab分类子菜单 (v2.3.1: 全部走 i18n) ──
-        analysis_menu = menubar.addMenu(i18n.tr("menu.analysis"))
+        analysis_menu = _pin(menubar.addMenu(i18n.tr("menu.analysis")))
         # 质量分析
-        quality_sub = analysis_menu.addMenu(i18n.tr("sidebar.quality_tools"))
+        quality_sub = _pin(analysis_menu.addMenu(i18n.tr("sidebar.quality_tools")))
         for idx, key in [(1, "sidebar.spc"), (2, "sidebar.capability"), (3, "sidebar.msa"),
                          (4, "sidebar.hypothesis"), (5, "sidebar.doe"), (6, "sidebar.regression")]:
             a = QAction(i18n.tr(key), self)
             a.triggered.connect(lambda _, i=idx: self._switch_tab(i))
             quality_sub.addAction(a)
         # IE 工具
-        ie_sub = analysis_menu.addMenu(i18n.tr("sidebar.ie_tools"))
+        ie_sub = _pin(analysis_menu.addMenu(i18n.tr("sidebar.ie_tools")))
         for idx, key in [(7, "sidebar.time_study"), (8, "sidebar.work_sampling"),
                          (9, "sidebar.line_balance"), (10, "sidebar.oee"),
                          (11, "menu.vsm"), (21, "sidebar.worker_machine"),
@@ -306,14 +313,14 @@ class MainWindow(QMainWindow):
             a.triggered.connect(lambda _, i=idx: self._switch_tab(i))
             ie_sub.addAction(a)
         # 图表工具
-        chart_sub = analysis_menu.addMenu(i18n.tr("sidebar.chart_tools"))
+        chart_sub = _pin(analysis_menu.addMenu(i18n.tr("sidebar.chart_tools")))
         for idx, key in [(12, "sidebar.chart_tab"), (18, "sidebar.cap_comparison"),
                          (19, "sidebar.trend"), (20, "sidebar.summary_panel")]:
             a = QAction(i18n.tr(key), self)
             a.triggered.connect(lambda _, i=idx: self._switch_tab(i))
             chart_sub.addAction(a)
         # 工程工具
-        eng_sub = analysis_menu.addMenu(i18n.tr("sidebar.engineering_tools"))
+        eng_sub = _pin(analysis_menu.addMenu(i18n.tr("sidebar.engineering_tools")))
         for idx, key in [(13, "sidebar.reliability"), (14, "sidebar.fishbone"),
                          (15, "sidebar.pareto"), (16, "sidebar.fmea"),
                          (17, "sidebar.control_plan"), (30, "sidebar.8d"), (32, "sidebar.ppap")]:
@@ -321,7 +328,7 @@ class MainWindow(QMainWindow):
             a.triggered.connect(lambda _, i=idx: self._switch_tab(i))
             eng_sub.addAction(a)
         # 工作表/抽样/数据
-        sheet_sub = analysis_menu.addMenu(i18n.tr("sidebar.sheet_tools"))
+        sheet_sub = _pin(analysis_menu.addMenu(i18n.tr("sidebar.sheet_tools")))
         for idx, key in [(23, "sidebar.sheet_merge"), (24, "sidebar.sheet_split"),
                          (25, "sidebar.layered_form")]:
             a = QAction(i18n.tr(key), self)
@@ -341,7 +348,7 @@ class MainWindow(QMainWindow):
         analysis_menu.addAction(run_all)
 
         # ── AI — 从工具菜单拆出 ──
-        ai_menu = menubar.addMenu(i18n.tr("menu.ai"))
+        ai_menu = _pin(menubar.addMenu(i18n.tr("menu.ai")))
         ai_chat = QAction(i18n.tr("sidebar.llm"), self)
         ai_chat.triggered.connect(self._on_llm_assist)
         ai_menu.addAction(ai_chat)
@@ -357,7 +364,7 @@ class MainWindow(QMainWindow):
         ai_menu.addAction(html_act)
 
         # ── 工具 — 精简后 ──
-        tools_menu = menubar.addMenu(i18n.tr("menu.tools"))
+        tools_menu = _pin(menubar.addMenu(i18n.tr("menu.tools")))
         tools_menu.addAction(QAction(i18n.tr("menu.settings"), self,
                                      triggered=self._on_settings))
         tools_menu.addAction(QAction(i18n.tr("menu.batch"), self,
@@ -379,7 +386,7 @@ class MainWindow(QMainWindow):
         kb_action.triggered.connect(self._on_llm_assist)
         tools_menu.addAction(kb_action)
 
-        help_menu = menubar.addMenu(i18n.tr("menu.help"))
+        help_menu = _pin(menubar.addMenu(i18n.tr("menu.help")))
         about_action = QAction(i18n.tr("menu.about"), self)
         about_action.triggered.connect(self._on_about)
         help_menu.addAction(about_action)
@@ -1014,7 +1021,7 @@ class MainWindow(QMainWindow):
         # 内置 Tab
         from ui._tab_registry import INDEX_MAP
         entry = INDEX_MAP.get(idx)
-        if not entry:
+        if not entry or not tab_allowed(idx):
             return None
 
         _, _, class_name, module_path, _ = entry
@@ -1054,7 +1061,7 @@ class MainWindow(QMainWindow):
         """获取 Tab 字典。force_load=False 仅返回已缓存的(懒加载友好)；force_load=True 全量加载"""
         result = {}
         if force_load:
-            idx_range = list(range(1, 35))  # v2.4: 34 tabs
+            idx_range = list(range(1, 36))  # v2.5: 35 tabs
         else:
             idx_range = sorted(self._tab_cache.keys())
         for idx in idx_range:
@@ -1454,15 +1461,19 @@ class MainWindow(QMainWindow):
 
     def refresh_menu_for_user(self):
         """登录后刷新菜单: 根据角色显示/隐藏用户管理入口"""
-        menubar = self.menuBar()
         tools_menu = None
-        for action in menubar.actions():
-            if action.text() == i18n.tr("menu.tools") or "工具" in action.text():
-                tools_menu = action.menu()
+        for m in self._menu_refs:
+            if not shiboken6.isValid(m):
+                continue
+            if m.title() == i18n.tr("menu.tools") or "工具" in m.title():
+                tools_menu = m
                 break
-        if not tools_menu: return
+        if not tools_menu or not shiboken6.isValid(tools_menu):
+            return
         # 查找并移除旧的用户管理项
         for a in tools_menu.actions():
+            if not shiboken6.isValid(a):
+                continue
             if "用户管理" in a.text():
                 tools_menu.removeAction(a)
                 break
@@ -1472,6 +1483,8 @@ class MainWindow(QMainWindow):
             actions = tools_menu.actions()
             insert_at = None
             for i, a in enumerate(actions):
+                if not shiboken6.isValid(a):
+                    continue
                 if "批量" in a.text():
                     insert_at = actions[i] if i + 1 < len(actions) else None
                     break

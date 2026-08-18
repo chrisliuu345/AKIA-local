@@ -7,7 +7,7 @@ import os
 
 # ── 应用信息 ──────────────────────────────────────────
 APP_NAME = "QA-Tool"
-APP_VERSION = "2.4.1"
+APP_VERSION = "2.6.0"
 ORGANIZATION = "QA-Tool"
 
 # ── 统计常量 ──────────────────────────────────────────
@@ -152,6 +152,22 @@ def get_setting(key: str, default=None):
 def get_effective(key: str, module_default):
     """获取最终生效值（用户配置覆盖模块默认）"""
     return _user_overrides.get(key, module_default)
+
+
+# ── ESP-32 硬件拓展安装门控 ────────────────────────────
+ESP32_DEVICE_TAB_INDEX = 35
+
+
+def esp32_extension_enabled() -> bool:
+    """ESP-32 硬件拓展是否启用（默认启用，可由 user_config.json 的 esp32_extension 关闭）"""
+    return bool(_user_overrides.get("esp32_extension", True))
+
+
+def tab_allowed(idx: int) -> bool:
+    """Tab 是否允许加载 — 用于安装器可选组件门控"""
+    if idx == ESP32_DEVICE_TAB_INDEX:
+        return esp32_extension_enabled()
+    return True
 
 
 load_config()
