@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Signal, Qt, QPropertyAnimation, QEasingCurve, QParallelAnimationGroup
 from PySide6.QtGui import QFont
 from core.i18n import i18n
-from config.settings import APP_VERSION
+from config.settings import APP_VERSION, tab_allowed
 from ui.theme import colors as theme_colors
 from ui.widgets.elided_label import ElidedLabel
 
@@ -83,6 +83,7 @@ CATEGORIES = [
         "items": [
             (33, "sidebar.monitor"),
             (34, "sidebar.multi_plant"),
+            (35, "sidebar.device"),
         ],
     },
     {
@@ -170,6 +171,8 @@ class CategoryGroup(QWidget):
 
         if self.items:
             for idx, key in self.items:
+                if not tab_allowed(idx):
+                    continue
                 btn = QPushButton()
                 btn.setFont(QFont("Microsoft YaHei", 10))
                 btn.setFixedHeight(32)
