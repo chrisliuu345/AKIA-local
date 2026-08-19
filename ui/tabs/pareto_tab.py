@@ -222,7 +222,7 @@ class ParetoTab(BaseAnalysisTab):
         # 过滤到该分类
         filtered = self._full_df[self._full_df[cat_col].astype(str) == cat_name]
         if len(filtered) > 0:
-            self.set_data(filtered)
+            self.df = filtered
             self._draw()
 
     def _reset_data(self):
