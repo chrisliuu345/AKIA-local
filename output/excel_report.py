@@ -81,6 +81,12 @@ class ExcelReport(BaseReportEngine):
             }),
         }
 
+    def _safe_write(self, ws, row, col, value, fmt=None):
+        """安全写入单元格 — 字符串使用 write_string 防止公式注入"""
+        if isinstance(value, str):
+            return ws.write_string(row, col, value, fmt)
+        return ws.write(row, col, value, fmt)
+
     def _write_summary(self, ws, analyses, title):
         ws.merge_range(0, 0, 0, 4, title, self.formats["title"])
         ws.set_row(0, 30)
@@ -95,7 +101,7 @@ class ExcelReport(BaseReportEngine):
             i18n.tr("report.conclusion"),
         ]
         for j, h in enumerate(headers):
-            ws.write(3, j, h, self.formats["header"])
+            self._safe_write(ws, 3, j, h, self.formats["header"])
         ws.set_row(3, 22)
 
         for i, analysis in enumerate(analyses):
@@ -105,16 +111,16 @@ class ExcelReport(BaseReportEngine):
             result = analysis.get("result", {})
 
             ws.write(row, 0, i + 1, self.formats["cell_text"])
-            ws.write(row, 1, atype, self.formats["cell_text"])
+            self._safe_write(ws, row, 1, atype, self.formats["cell_text"])
 
             param_str = ", ".join(f"{k}={v}" for k, v in list(params.items())[:5])
-            ws.write(row, 2, param_str[:80], self.formats["cell_text"])
+            self._safe_write(ws, row, 2, param_str[:80], self.formats["cell_text"])
 
             key_result = self.extract_key_result(result)
-            ws.write(row, 3, key_result[:80], self.formats["cell"])
+            self._safe_write(ws, row, 3, key_result[:80], self.formats["cell"])
 
             conclusion = self.extract_conclusion(result)
-            ws.write(row, 4, conclusion, self.formats["cell_text"])
+            self._safe_write(ws, row, 4, conclusion, self.formats["cell_text"])
 
     def _write_analysis_sheet(self, ws, atype, params, result):
         ws.merge_range(0, 0, 0, 3, f"{atype}", self.formats["heading1"])
@@ -122,10 +128,10 @@ class ExcelReport(BaseReportEngine):
 
         row = 2
         if params:
-            ws.write(1, 0, i18n.tr("report.analysis_params"), self.formats["heading2"])
+            self._safe_write(ws, 1, 0, i18n.tr("report.analysis_params"), self.formats["heading2"])
             for k, v in params.items():
-                ws.write(row, 0, k, self.formats["header"])
-                ws.write(row, 1, str(v), self.formats["cell_text"])
+                self._safe_write(ws, row, 0, k, self.formats["header"])
+                self._safe_write(ws, row, 1, str(v), self.formats["cell_text"])
                 row += 1
 
         row += 1
@@ -135,12 +141,12 @@ class ExcelReport(BaseReportEngine):
         if isinstance(data, dict):
             for key, val in data.items():
                 if isinstance(val, (dict, list)):
-                    ws.write(start_row, col, str(key), self.formats["heading2"])
+                    self._safe_write(ws, start_row, col, str(key), self.formats["heading2"])
                     start_row += 1
                     start_row = self._flatten_dict_to_sheet(ws, start_row, val, col, depth + 1)
                 else:
-                    ws.write(start_row, col, str(key), self.formats["cell_text"])
-                    ws.write(start_row, col + 1, val, self.formats["cell"] if isinstance(val, (int, float)) else self.formats["cell_text"])
+                    self._safe_write(ws, start_row, col, str(key), self.formats["cell_text"])
+                    self._safe_write(ws, start_row, col + 1, val, self.formats["cell"] if isinstance(val, (int, float)) else self.formats["cell_text"])
                     start_row += 1
         elif isinstance(data, list) and data:
             if isinstance(data[0], dict):
@@ -148,16 +154,16 @@ class ExcelReport(BaseReportEngine):
                     return start_row
                 keys = list(data[0].keys())
                 for j, k in enumerate(keys):
-                    ws.write(start_row, col + j, k, self.formats["header"])
+                    self._safe_write(ws, start_row, col + j, k, self.formats["header"])
                 start_row += 1
                 for item in data:
                     for j, k in enumerate(keys):
                         val = item.get(k, "")
-                        ws.write(start_row, col + j, val, self.formats["cell"] if isinstance(val, (int, float)) else self.formats["cell_text"])
+                        self._safe_write(ws, start_row, col + j, val, self.formats["cell"] if isinstance(val, (int, float)) else self.formats["cell_text"])
                     start_row += 1
             else:
                 for i, item in enumerate(data):
-                    ws.write(start_row, col, f"[{i}]", self.formats["cell_text"])
-                    ws.write(start_row, col + 1, item, self.formats["cell"] if isinstance(item, (int, float)) else self.formats["cell_text"])
+                    self._safe_write(ws, start_row, col, f"[{i}]", self.formats["cell_text"])
+                    self._safe_write(ws, start_row, col + 1, item, self.formats["cell"] if isinstance(item, (int, float)) else self.formats["cell_text"])
                     start_row += 1
         return start_row

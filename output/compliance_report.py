@@ -53,7 +53,13 @@ class ComplianceReportGenerator:
 
     @staticmethod
     def load_template(template_id: str) -> Dict[str, Any]:
+        if not template_id or "/" in template_id or "\\" in template_id or ".." in template_id:
+            raise ValueError(f"非法的模板 ID: {template_id}")
         path = os.path.join(TEMPLATES_DIR, f"{template_id}.json")
+        real_path = os.path.abspath(path)
+        real_templates_dir = os.path.abspath(TEMPLATES_DIR)
+        if not real_path.startswith(real_templates_dir + os.sep) and real_path != real_templates_dir:
+            raise ValueError(f"模板路径越界: {template_id}")
         if not os.path.exists(path):
             raise FileNotFoundError(f"模板不存在: {template_id}")
         with open(path, "r", encoding="utf-8") as f:

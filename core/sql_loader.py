@@ -5,6 +5,7 @@ SQL 数据库加载引擎 — SQLAlchemy 统一接入 MySQL/PostgreSQL/SQL Serve
 
 from typing import Dict, List, Optional, Any
 import re
+from urllib.parse import quote_plus
 import pandas as pd
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.engine import Engine
@@ -43,9 +44,11 @@ def build_connection_string(config: dict) -> str:
     database = config.get("database", "")
     user = config.get("user", "")
     password = config.get("password", "")
+    safe_user = quote_plus(user)
+    safe_password = quote_plus(password)
     if db_type == "mssql":
-        return f"{driver}://{user}:{password}@{host}:{port}/{database}?driver=ODBC+Driver+17+for+SQL+Server"
-    return f"{driver}://{user}:{password}@{host}:{port}/{database}"
+        return f"{driver}://{safe_user}:{safe_password}@{host}:{port}/{database}?driver=ODBC+Driver+17+for+SQL+Server"
+    return f"{driver}://{safe_user}:{safe_password}@{host}:{port}/{database}"
 
 
 class SqlLoader:
@@ -87,13 +90,16 @@ class SqlLoader:
                 result[name] = df
             except Exception:
                 try:
-                    from sqlalchemy import text as sa_text
-                    # 安全引用表名（双引号包裹，来自 inspect 返回值，非用户输入）
-                    safe_name = name.replace('"', '""')
-                    df = pd.read_sql_query(
-                        sa_text(f'SELECT * FROM "{safe_name}"'), self.engine
-                    )
-                    result[name] = df
+                    from sqlalchemy import Table, MetaData, select
+                    metadata = MetaData()
+                    metadata.reflect(bind=self.engine, only=[name])
+                    if name in metadata.tables:
+                        tbl = metadata.tables[name]
+                        stmt = select(tbl)
+                        df = pd.read_sql_query(stmt, self.engine)
+                        result[name] = df
+                    else:
+                        raise ValueError(f"表 '{name}' 反射失败")
                 except Exception as e:
                     raise RuntimeError(f"读取表 '{name}' 失败: {sanitize_connection_error(e)}")
         self.tables = result

@@ -4,6 +4,7 @@
 
 import json
 import base64
+import logging
 from typing import Dict, List, Optional, Tuple
 
 from PySide6.QtWidgets import (
@@ -20,12 +21,16 @@ from core.sql_loader import SqlLoader, DEFAULT_PORTS
 from ui.theme import colors as theme_colors
 
 
+_logger = logging.getLogger("QA-Tool.DbConnection")
+
+
 def _obscure(text: str) -> str:
     """加密密码 — Windows DPAPI 优先，失败降级 base64（兼容旧数据/异常场景）"""
     try:
         from core.secret_store import encrypt_secret
         return encrypt_secret(text)
-    except Exception:
+    except Exception as e:
+        _logger.warning(f"DPAPI 加密失败，降级为 base64（非加密）: {e}")
         return base64.b64encode(text.encode()).decode()
 
 

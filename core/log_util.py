@@ -3,17 +3,17 @@
 import logging
 import sys
 
-_logger = None
+_configured = set()
 
 
 def get_logger(name: str = "QA-Tool") -> logging.Logger:
-    global _logger
-    if _logger is None:
-        _logger = logging.getLogger(name)
-        _logger.setLevel(logging.WARNING)
-        if not _logger.handlers:
+    logger = logging.getLogger(name)
+    if name not in _configured:
+        logger.setLevel(logging.WARNING)
+        if not logger.handlers:
             h = logging.StreamHandler(sys.stderr)
             h.setFormatter(logging.Formatter(
                 "[%(levelname)s] %(name)s.%(funcName)s: %(message)s"))
-            _logger.addHandler(h)
-    return _logger
+            logger.addHandler(h)
+        _configured.add(name)
+    return logger
