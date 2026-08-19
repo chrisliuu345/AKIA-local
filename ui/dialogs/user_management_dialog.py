@@ -109,7 +109,7 @@ class UserManagementDialog(QDialog):
             if data.get("delete"):
                 self.auth.delete_user(username)
             elif data.get("reset_password"):
-                self.auth.reset_password(username, data.get("new_password", "123456"))
+                self.auth.reset_password(username, data.get("new_password", "Pass1234"))
                 QMessageBox.information(self, "密码已重置", f"用户 {username} 的密码已重置")
             else:
                 self.auth.update_user(username, role=data.get("role"),
@@ -150,7 +150,7 @@ class _UserEditDialog(QDialog):
             self.pwd_edit = QLineEdit()
             self.pwd_edit.setEchoMode(QLineEdit.Password)
             self.pwd_edit.setMinimumHeight(28)
-            self.pwd_edit.setText("123456")
+            self.pwd_edit.setText("Pass1234")
             form.addRow("密码:", self.pwd_edit)
 
         self.role_combo = QComboBox()
@@ -210,7 +210,7 @@ class _UserEditDialog(QDialog):
             self.accept()
 
     def _on_reset_password(self):
-        text, ok = QInputDialog.getText(self, "重置密码", "新密码:", QLineEdit.Password, "123456")
+        text, ok = QInputDialog.getText(self, "重置密码", "新密码:", QLineEdit.Password, "Pass1234")
         if ok and text:
             self._reset_pwd = True
             self._new_password = text
