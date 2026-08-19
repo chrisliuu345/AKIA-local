@@ -199,8 +199,10 @@ class SettingsDialog(QDialog):
             self.pwd_status.setText("两次输入的新密码不一致")
             self.pwd_status.setStyleSheet("color: #e74c3c;")
             return
-        if len(new) < 3:
-            self.pwd_status.setText("密码至少 3 个字符")
+        from core.password_policy import validate_password
+        ok, reason = validate_password(new)
+        if not ok:
+            self.pwd_status.setText(reason)
             self.pwd_status.setStyleSheet("color: #e74c3c;")
             return
         from core.auth import AuthManager

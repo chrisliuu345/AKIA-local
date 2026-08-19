@@ -10,6 +10,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Dict, List, Optional
 
+from core.password_policy import validate_password
+
 _LOG_FILE = os.path.join(os.path.expanduser("~"), ".qa_tool_audit.log")
 def _audit(action: str, operator: str, detail: str = ""):
     try:
@@ -142,6 +144,10 @@ class AuthManager:
                      department: str = "", team: str = "", display_name: str = "") -> Optional[User]:
         if role not in _ROLE_PERMISSIONS:
             raise ValueError(f"无效角色: {role}")
+        ok, reason = validate_password(password)
+        if not ok:
+            _audit("create_user_failed", username, reason)
+            return None
         users = self._load_users()
         if any(u["username"] == username for u in users):
             _audit("create_user_failed", username, "用户已存在")
@@ -175,6 +181,10 @@ class AuthManager:
 
     def reset_password(self, username: str, new_password: str) -> bool:
         """管理员重置用户密码"""
+        ok, reason = validate_password(new_password)
+        if not ok:
+            _audit("reset_password_failed", username, reason)
+            return False
         users = self._load_users()
         for u in users:
             if u["username"] == username:
@@ -205,6 +215,10 @@ class AuthManager:
         return all_users
 
     def change_password(self, username: str, old_password: str, new_password: str) -> bool:
+        ok, reason = validate_password(new_password)
+        if not ok:
+            _audit("change_password_failed", username, reason)
+            return False
         user = self.authenticate(username, old_password)
         if not user:
             _audit("change_password_failed", username, "旧密码错误")

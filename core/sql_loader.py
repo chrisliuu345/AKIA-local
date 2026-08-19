@@ -4,9 +4,20 @@ SQL 数据库加载引擎 — SQLAlchemy 统一接入 MySQL/PostgreSQL/SQL Serve
 """
 
 from typing import Dict, List, Optional, Any
+import re
 import pandas as pd
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.engine import Engine
+
+
+def sanitize_connection_error(err) -> str:
+    """将异常消息中的数据库连接串密码打码，防止密码经日志/弹窗泄露。"""
+    text = str(err)
+    # 匹配 scheme://user:password@host 形式
+    text = re.sub(r"(://[^:/@\s]+:)[^@\s/]+(@)", r"\1******\2", text)
+    # 匹配 user:password@host 无 scheme 形式
+    text = re.sub(r"([A-Za-z_][\w.-]*:)[^@\s/]+(@)", r"\1******\2", text)
+    return text
 
 
 DB_TYPE_MAP = {
@@ -52,9 +63,9 @@ class SqlLoader:
             with self.engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
             return True
-        except Exception:
+        except Exception as e:
             self.engine = None
-            raise
+            raise RuntimeError(f"数据库连接失败: {sanitize_connection_error(e)}") from e
 
     def get_table_names(self) -> List[str]:
         if not self.engine:
@@ -84,7 +95,7 @@ class SqlLoader:
                     )
                     result[name] = df
                 except Exception as e:
-                    raise RuntimeError(f"读取表 '{name}' 失败: {e}")
+                    raise RuntimeError(f"读取表 '{name}' 失败: {sanitize_connection_error(e)}")
         self.tables = result
         self._extract_metadata()
         return result
@@ -107,7 +118,7 @@ class SqlLoader:
             try:
                 return pd.read_sql_table(table_name, self.engine).head(rows)
             except Exception as e:
-                raise RuntimeError(f"预览表 '{table_name}' 失败: {e}")
+                raise RuntimeError(f"预览表 '{table_name}' 失败: {sanitize_connection_error(e)}")
 
     def get_table_names_like(self, pattern: str) -> List[str]:
         all_tables = self.get_table_names()
