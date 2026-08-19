@@ -2,17 +2,17 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> Current: v2.6.0 Released | Tests: 278/278 | 35 Tabs + Plugins | Updated: 2026-08-18
+> Current: v2.6.1 Dev Complete | Tests: 282/282 | 35 Tabs + Plugins | Updated: 2026-08-19
 
 ---
 
 ## Version Roadmap Overview
 
 ```
-v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1
- Release   Code+AI    Eng Tools   Reports    Live      UX+Anim    HW Ext     ESP32 Deploy+   Security
-            (Done)     (Done)     (Done)    (Done)     (Done)     (Done)     Device Tab      (TBD)
-                                                                             (Released)
+v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2
+ Release   Code+AI    Eng Tools   Reports    Live      UX+Anim    HW Ext     ESP32 Deploy+   Security     RBAC matrix
+            (Done)     (Done)     (Done)    (Done)     (Done)     (Done)     Device Tab      (Done)       +auth hw wrap
+                                                                              (Released)                  (TBD)
 ```
 
 ---
@@ -177,16 +177,41 @@ Plugin index 33, LLM streaming refresh, validate_params complete, animation clea
 
 ---
 
-## v2.6.1 — Security Validation & Hardware Wrap-up (TBD)
+## v2.6.1 ✅ Completed — Security Validation
 
-### Security Validation (moved from v2.6)
-- Multi-user auth hardening (login attempts / lockout)
-- Password policy (`core/password_policy.py` — code already prepared in backup)
-- Secret store (`core/secret_store.py` — code already prepared in backup)
-- Role-based UI enforcement review
-- Audit logging improvements
+### Password Policy (`core/password_policy.py`)
+- Minimum 8 chars + letters & digits, Chinese validation hints
+- Wired into `create_user` / `reset_password` / `change_password` (weak passwords rejected and audited)
+- UI sync: settings dialog change-password validation, user-management default password → Pass1234
 
-### Hardware Wrap-up
+### Audit Logging (`core/audit.py`)
+- Public audit entry (same `~/.qa_tool_audit.log`, UTF-8 append, exceptions swallowed)
+- Business events added: data imports (quality/IE/database), single/summary/compliance exports, settings save, data clean, shared project save
+
+### Secret Store (`core/secret_store.py`)
+- Windows DPAPI encryption (`dpapi:` prefix, smooth migration from legacy base64)
+- DB connection passwords encrypted at rest (was base64 obfuscation)
+- SQL connection-string error masking (`sanitize_connection_error`)
+
+> Tests: 278 → 282 (new `tests/test_security_fixes.py`, 4 cases)
+>
+> Not included: auth hardening (attempts/lockout) and RBAC matrix enforcement → moved to v2.6.2; hardware wrap-up (2 items) → moved to v2.6.2
+
+---
+
+## v2.6.2 — RBAC Matrix + Auth Hardening + Hardware Wrap-up (TBD)
+
+### RBAC Permission Matrix Enforcement (core)
+- Goal: make `_ROLE_PERMISSIONS` (admin/dept_admin/analyst/readonly) effective — two-layer "hide + block"
+- Permission mapping: import (4 import entries + data Tab), analyze (analysis Tabs + batch F5), clean (clean wizard), export (3 export entries), settings, share_project, view (Tab viewing / display mode F11 / welcome page)
+- Key points: `MainWindow._check_permission(action)` unified guard (user=None allows all) → handler blocking + menu greying + shortcut guards + sidebar/welcome role filtering + `_lazy_load_tab` fallback; denial shows dialog and writes audit
+- New `tests/test_rbac_ui.py`; regression: test_v2_1 / test_main_window / test_extension_gating
+
+### Auth Hardening
+- Login attempt limit & lockout (5 failed attempts, persisted) + first-login forced password change (`must_change_password`)
+- Legacy users-file migration compatibility (`User(**u)` old fields)
+
+### Hardware Wrap-up (moved from v2.6.1)
 - **esp32_out real-device verification**: flash second board, verify COMMAND→ACK drives real actuators (LED/relay/servo)
 - **MaixCAM**: network transport (TCP/SSH) device integration
 
@@ -234,6 +259,7 @@ v2.0 (28)     v2.1 (28)     v2.2 (32)       v2.4 (34)     v2.5/2.6 (35)
 
 | Date | Version | Content |
 |------|---------|---------|
+| 08-19 | v2.6.1 | Security validation: password policy (≥8 chars + letters/digits, wired in 3 auth paths) + audit logging (core/audit.py public entry + 9 business events) + secret store (DPAPI encryption + SQL connection-string masking) · 282 tests |
 | 08-18 | v2.6.0 | Released: ESP32-IN deployment (FW 1.1.0 verified on hardware) + Device Monitoring Tab 35 (stop/resume, 20-row preview, data import) + ESP-32 config gating + PyInstaller onedir + Inno Setup installer · 278 tests |
 | 08-18 | v2.5-dev | H2 firmware v1.1.0 live on ESP32 (MicroPython v1.20 + UART1 remap, 7 channels) · H3 esp32_in verified end-to-end on COM3 (discovery→META→DATA→import) · host discovery/monitor now reset-pulse aware · 270+ tests |
 | 08-17 | v2.5-dev | Hardware expansion: ESP32 device framework restored (core/devices + DeviceTab 35 + 21 tests) · QMenu GC crash fix re-applied · memory-leak audit (threads clean) · 264 tests |
