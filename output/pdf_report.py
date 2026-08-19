@@ -4,6 +4,7 @@ PDF 报告生成器 — 基于 reportlab，可靠中文渲染
 import os
 from datetime import datetime
 from typing import Dict, Any, List
+from xml.sax.saxutils import escape
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import cm
@@ -143,7 +144,7 @@ class PDFReport(BaseReportEngine):
 
         for i, atype, params, result in self.iter_analyses(analyses):
 
-            self.story.append(Paragraph(f"{i+1}. {atype}", S["h1"]))
+            self.story.append(Paragraph(f"{i+1}. {escape(atype)}", S["h1"]))
 
             if params:
                 self._add_kv_table("分析参数", params, S)
@@ -191,9 +192,9 @@ class PDFReport(BaseReportEngine):
 
     def _add_title_page(self, title: str, subtitle: str, S: dict):
         self.story.append(Spacer(1, 5 * cm))
-        self.story.append(Paragraph(title, S["title"]))
+        self.story.append(Paragraph(escape(title), S["title"]))
         if subtitle:
-            self.story.append(Paragraph(subtitle, S["subtitle"]))
+            self.story.append(Paragraph(escape(subtitle), S["subtitle"]))
         self.story.append(Spacer(1, 3 * cm))
         self.story.append(Paragraph(f"{i18n.tr('report.generated_by')} {APP_NAME} v{APP_VERSION}", S["body"]))
         self.story.append(Paragraph(f"{i18n.tr('report.date')}: {datetime.now().strftime('%Y-%m-%d')}", S["body"]))
@@ -249,7 +250,12 @@ class PDFReport(BaseReportEngine):
             sig = result.get("is_significant", False)
             color = "#1b5faa" if sig else "#d62728"
             msg = i18n.tr("report.significant") if sig else i18n.tr("report.not_significant")
-            text = f'<font color="{color}"><b>{msg}</b></font>  (P-value = {result["p_value"]:.4f})'
+            pv = result.get("p_value")
+            try:
+                pv_text = f"{pv:.4f}"
+            except (TypeError, ValueError):
+                pv_text = str(pv)
+            text = f'<font color="{color}"><b>{msg}</b></font>  (P-value = {pv_text})'
             self.story.append(Paragraph(text, S["body"]))
 
         if "model" in result:

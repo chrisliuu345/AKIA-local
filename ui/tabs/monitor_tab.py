@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Signal, Qt
 from PySide6.QtGui import QFont
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+import matplotlib.pyplot as plt
 
 from core.i18n import i18n
 from core.file_watcher import FileMonitor
@@ -37,6 +38,7 @@ class MonitorTab(BaseAnalysisTab):
         self._alert_tracker = AlertTracker()
         self._alert_log = AlertLog()
         self._setup_ui()
+        self.update_received.connect(self._on_update)
 
     # ── UI ───────────────────────────────────────────────
     def _setup_ui(self):
@@ -267,6 +269,8 @@ class MonitorTab(BaseAnalysisTab):
         self.alert_log_view.setPlainText("\n".join(lines))
 
     def _render_figure(self, fig):
+        if self.current_figure is not None:
+            plt.close(self.current_figure)
         while self.chart_layout.count():
             item = self.chart_layout.takeAt(0)
             w = item.widget()
