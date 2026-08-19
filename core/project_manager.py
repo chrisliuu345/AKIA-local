@@ -194,7 +194,12 @@ class SharedProjectManager:
                     analyses: Dict[int, Dict], chart_bytes: Dict[str, bytes],
                     department: str, annotations: str = "") -> str:
         """保存项目到共享目录"""
-        dept_dir = os.path.join(SHARED_DIR, department or PUBLIC_DEPT)
+        safe_dept = os.path.basename(department or PUBLIC_DEPT)
+        dept_dir = os.path.join(SHARED_DIR, safe_dept)
+        real_dept_dir = os.path.abspath(dept_dir)
+        real_shared_dir = os.path.abspath(SHARED_DIR)
+        if not real_dept_dir.startswith(real_shared_dir + os.sep):
+            raise ValueError(f"非法的部门目录: {department}")
         os.makedirs(dept_dir, exist_ok=True)
         basename = os.path.basename(path)
         if not basename.endswith(".qap"):
