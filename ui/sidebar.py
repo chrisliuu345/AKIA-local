@@ -308,6 +308,7 @@ class Sidebar(QWidget):
     diagnose_clicked = Signal()
     llm_clicked = Signal()
     collapse_requested = Signal()
+    import_db_clicked = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -667,3 +668,13 @@ class Sidebar(QWidget):
         self.llm_btn.setText("  " + i18n.tr("sidebar.llm"))
         self.collapse_btn.setText("  " + i18n.tr("sidebar.collapse"))
         self._refresh_styles()
+
+    def set_permission_filter(self, allowed_indices: set):
+        """根据权限过滤侧栏导航按钮 — 无权限的 Tab 按钮隐藏"""
+        for idx, btn in self.nav_buttons.items():
+            if idx == 0:
+                continue
+            btn.setVisible(idx in allowed_indices)
+        for group in self.categories:
+            has_visible = any(btn.isVisible() for btn in group.sub_buttons.values())
+            group.setVisible(has_visible or not group.sub_buttons)

@@ -15,7 +15,6 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, QSettings, QPropertyAnimation, QEasingCurve
 from PySide6.QtGui import QAction, QIcon, QFont, QPixmap, QDragEnterEvent, QDropEvent
-import shiboken6
 
 from config.settings import APP_NAME, APP_VERSION, CHART_FIGSIZE, tab_allowed
 from core.data_loader import DataLoader
@@ -30,6 +29,8 @@ from core.audit import audit
 from core.auth import AuthManager
 
 from ui.sidebar import Sidebar
+from ui._tab_registry import INDEX_MAP
+_PLUGIN_TAB_START = max(INDEX_MAP.keys()) + 1
 from ui.theme import colors as theme_colors
 from ui.widgets.elided_label import ElidedLabel
 # Tab 类按需通过 _lazy_load_tab() + importlib 加载，无需顶层导入
@@ -85,6 +86,7 @@ class MainWindow(QMainWindow):
         self.current_data: Dict[str, Any] = {}
         self.profile_result: Dict[str, Any] = {}
         self.analyses: Dict[int, Dict[str, Any]] = {}
+        self._action_permissions: list = []
 
         _step(73, "构建界面布局...")
         self._setup_ui()
@@ -104,16 +106,17 @@ class MainWindow(QMainWindow):
         self._restore_window_state()
         self.setAcceptDrops(True)
 
-        # 插件发现与注册 — 从 35 开始（v2.4 内置 Tab 已扩展到 34）
+        # 插件发现与注册 — 从 _PLUGIN_TAB_START 开始
         self._pm = PluginManager()
         self._pm.discover()
         self._plugin_tabs = {}
-        self._plugin_tab_start = 36
+        self._plugin_tab_start = _PLUGIN_TAB_START
         for name, p in self._pm.plugins.items():
             idx = self._plugin_tab_start + len(self._plugin_tabs)
             self._plugin_tabs[idx] = p
-            tab = p.create_tab()
-            self.stack.addWidget(tab)
+            placeholder = QWidget()
+            placeholder.setObjectName(f"placeholder_plugin_{idx}")
+            self.stack.addWidget(placeholder)
             self.sidebar.add_plugin_entry(idx, name)
 
         _step(85, "主窗口初始化完成")
@@ -131,6 +134,11 @@ class MainWindow(QMainWindow):
               f"action={action}")
         QMessageBox.warning(self, "权限不足", f"当前角色无「{action}」操作权限")
         return False
+
+    def _reg(self, action: QAction, permission: str):
+        """注册 action 权限映射，供 refresh_menu_for_user 置灰"""
+        self._action_permissions.append((action, permission))
+        return action
 
     def _setup_ui(self):
         divider_color = "#3a3a3a"
@@ -180,14 +188,14 @@ class MainWindow(QMainWindow):
         self.welcome_page = WelcomePage()
         self.stack.addWidget(self.welcome_page)  # 0
 
-        # 内置 Tab 占位符 (1-35)，首次切换时懒加载
-        for idx in range(1, 36):  # v2.5: indices 1-35 (含设备监控)
+        # 内置 Tab 占位符 (1..max)，首次切换时懒加载
+        for idx in range(1, _PLUGIN_TAB_START):  # v2.5: indices 1-35 (含设备监控)
             placeholder = QWidget()
             placeholder.setObjectName(f"placeholder_{idx}")
             self.stack.addWidget(placeholder)
 
-        # 插件 Tab (动态) — 起始索引在 __init__ 末尾统一设为 36
-        self._plugin_tab_start = 36
+        # 插件 Tab (动态) — 起始索引在 __init__ 末尾统一设为 _PLUGIN_TAB_START
+        self._plugin_tab_start = _PLUGIN_TAB_START
 
         layout.addWidget(self.expand_strip)
         layout.addWidget(self.sidebar)
@@ -218,20 +226,24 @@ class MainWindow(QMainWindow):
         import_quality_action = QAction("📂 " + i18n.tr("sidebar.import_quality"), self)
         import_quality_action.setShortcut("Ctrl+O")
         import_quality_action.triggered.connect(self._on_import_quality)
+        self._reg(import_quality_action, "import")
         file_menu.addAction(import_quality_action)
 
         import_ie_action = QAction("🏭 " + i18n.tr("sidebar.import_ie"), self)
         import_ie_action.triggered.connect(self._on_import_ie)
+        self._reg(import_ie_action, "import")
         file_menu.addAction(import_ie_action)
 
         import_db_action = QAction("🗄️ " + i18n.tr("sidebar.import_db"), self)
         import_db_action.triggered.connect(self._on_import_db)
+        self._reg(import_db_action, "import")
         file_menu.addAction(import_db_action)
 
         file_menu.addSeparator()
 
         template_action = QAction("📋 " + i18n.tr("menu.import_template"), self)
         template_action.triggered.connect(self._on_import_template)
+        self._reg(template_action, "import")
         file_menu.addAction(template_action)
 
         file_menu.addSeparator()
@@ -239,12 +251,15 @@ class MainWindow(QMainWindow):
         export_menu = _pin(file_menu.addMenu(i18n.tr("menu.export")))
         export_xlsx = QAction("📊 " + i18n.tr("menu.export_xlsx"), self)
         export_xlsx.triggered.connect(lambda: self._on_export_all("xlsx"))
+        self._reg(export_xlsx, "export")
         export_menu.addAction(export_xlsx)
         export_docx = QAction("📝 " + i18n.tr("menu.export_docx"), self)
         export_docx.triggered.connect(lambda: self._on_export_all("docx"))
+        self._reg(export_docx, "export")
         export_menu.addAction(export_docx)
         export_pdf = QAction("📄 " + i18n.tr("menu.export_pdf"), self)
         export_pdf.triggered.connect(lambda: self._on_export_all("pdf"))
+        self._reg(export_pdf, "export")
         export_menu.addAction(export_pdf)
 
         try:
@@ -272,9 +287,11 @@ class MainWindow(QMainWindow):
         file_menu.addAction(open_project_action)
         save_shared_action = QAction("📤 " + i18n.tr("menu.save_shared"), self)
         save_shared_action.triggered.connect(self._on_save_shared)
+        self._reg(save_shared_action, "share_project")
         file_menu.addAction(save_shared_action)
         load_shared_action = QAction("📥 " + i18n.tr("menu.load_shared"), self)
         load_shared_action.triggered.connect(self._on_load_shared)
+        self._reg(load_shared_action, "view_shared")
         file_menu.addAction(load_shared_action)
 
         # 最近项目
@@ -363,6 +380,7 @@ class MainWindow(QMainWindow):
         run_all = QAction(i18n.tr("menu.run"), self)
         run_all.setShortcut("F5")
         run_all.triggered.connect(self._on_run_all_analyses)
+        self._reg(run_all, "analyze")
         analysis_menu.addAction(run_all)
 
         # ── AI — 从工具菜单拆出 ──
@@ -372,6 +390,7 @@ class MainWindow(QMainWindow):
         ai_menu.addAction(ai_chat)
         one_click = QAction(i18n.tr("menu.one_click"), self)
         one_click.triggered.connect(self._on_one_click_analysis)
+        self._reg(one_click, "analyze")
         ai_menu.addAction(one_click)
         ai_menu.addSeparator()
         template_act = QAction(i18n.tr("menu.template"), self)
@@ -379,22 +398,27 @@ class MainWindow(QMainWindow):
         ai_menu.addAction(template_act)
         html_act = QAction(i18n.tr("menu.html_export"), self)
         html_act.triggered.connect(self._on_html_export)
+        self._reg(html_act, "export")
         ai_menu.addAction(html_act)
 
         # ── 工具 — 精简后 ──
         tools_menu = _pin(menubar.addMenu(i18n.tr("menu.tools")))
-        tools_menu.addAction(QAction(i18n.tr("menu.settings"), self,
-                                     triggered=self._on_settings))
-        tools_menu.addAction(QAction(i18n.tr("menu.batch"), self,
-                                     triggered=self._on_batch_scheduler))
-        if self.current_user and self.current_user.can_manage_users:
-            tools_menu.addAction(QAction(i18n.tr("menu.user_mgmt"), self,
-                                         triggered=self._on_user_management))
+        settings_act = QAction(i18n.tr("menu.settings"), self, triggered=self._on_settings)
+        self._reg(settings_act, "settings")
+        tools_menu.addAction(settings_act)
+        batch_act = QAction(i18n.tr("menu.batch"), self, triggered=self._on_batch_scheduler)
+        self._reg(batch_act, "analyze")
+        tools_menu.addAction(batch_act)
+        self._user_mgmt_action = QAction(i18n.tr("menu.user_mgmt"), self,
+                                         triggered=self._on_user_management)
+        tools_menu.addAction(self._user_mgmt_action)
         tools_menu.addSeparator()
-        tools_menu.addAction(QAction(i18n.tr("sidebar.data_clean"), self,
-                                     triggered=self._on_data_cleaner))
-        tools_menu.addAction(QAction(i18n.tr("menu.data_clean_wizard"), self,
-                                     triggered=self._on_data_clean_wizard))
+        clean_act = QAction(i18n.tr("sidebar.data_clean"), self, triggered=self._on_data_cleaner)
+        self._reg(clean_act, "clean")
+        tools_menu.addAction(clean_act)
+        clean_wiz_act = QAction(i18n.tr("menu.data_clean_wizard"), self, triggered=self._on_data_clean_wizard)
+        self._reg(clean_wiz_act, "clean")
+        tools_menu.addAction(clean_wiz_act)
         tools_menu.addAction(QAction(i18n.tr("sidebar.template_help_tip"), self,
                                      triggered=self._on_template_help))
         tools_menu.addSeparator()
@@ -481,6 +505,7 @@ class MainWindow(QMainWindow):
         self.sidebar.diagnose_clicked.connect(self._on_diagnose)
         self.sidebar.llm_clicked.connect(self._on_llm_assist)
         self.sidebar.collapse_requested.connect(lambda: self._toggle_sidebar(True))
+        self.sidebar.import_db_clicked.connect(self._on_import_db)  # T44
         self.welcome_page.import_data_clicked.connect(self._on_import_quality)
         self.welcome_page.import_ie_clicked.connect(self._on_import_ie)
         self.welcome_page.import_template_clicked.connect(self._on_import_template)
@@ -1114,7 +1139,7 @@ class MainWindow(QMainWindow):
         """获取 Tab 字典。force_load=False 仅返回已缓存的(懒加载友好)；force_load=True 全量加载"""
         result = {}
         if force_load:
-            idx_range = list(range(1, 36))  # v2.5: 35 tabs
+            idx_range = list(range(1, _PLUGIN_TAB_START))  # v2.5: 35 tabs
         else:
             idx_range = sorted(self._tab_cache.keys())
         for idx in idx_range:
@@ -1530,42 +1555,33 @@ class MainWindow(QMainWindow):
                 )
 
     def refresh_menu_for_user(self):
-        """登录后刷新菜单: 根据角色显示/隐藏用户管理入口"""
-        tools_menu = None
-        for m in self._menu_refs:
-            if not shiboken6.isValid(m):
-                continue
-            if m.title() == i18n.tr("menu.tools") or "工具" in m.title():
-                tools_menu = m
-                break
-        if not tools_menu or not shiboken6.isValid(tools_menu):
+        """登录后刷新菜单: 根据角色置灰/启用各操作入口 (W44 action-key)"""
+        for action, perm in self._action_permissions:
+            action.setEnabled(self._has_permission(perm))
+        # 用户管理: 仅 admin/dept_admin 可见
+        if hasattr(self, "_user_mgmt_action"):
+            self._user_mgmt_action.setVisible(
+                bool(self.current_user and self.current_user.can_manage_users)
+            )
+        # 侧边栏 + 欢迎页权限过滤
+        self._apply_permission_filter()
+
+    def _apply_permission_filter(self):
+        """根据当前用户权限过滤侧边栏与欢迎页可见项"""
+        if self.current_user is None:
+            # user=None 全放行
+            self.sidebar.set_permission_filter(set(self.sidebar.nav_buttons.keys()))
+            self.welcome_page.set_permission_filter(set())
             return
-        # 查找并移除旧的用户管理项
-        for a in tools_menu.actions():
-            if not shiboken6.isValid(a):
-                continue
-            if "用户管理" in a.text():
-                tools_menu.removeAction(a)
-                break
-        # admin/dept_admin 添加用户管理
-        if self.current_user and self.current_user.can_manage_users:
-            # 在设置后、批量前插入
-            actions = tools_menu.actions()
-            insert_at = None
-            for i, a in enumerate(actions):
-                if not shiboken6.isValid(a):
-                    continue
-                if "批量" in a.text():
-                    insert_at = actions[i] if i + 1 < len(actions) else None
-                    break
-            if insert_at is None and actions:
-                insert_at = actions[1]  # fallback: 第二个位置
-            user_mgmt_action = QAction("用户管理", self)
-            user_mgmt_action.triggered.connect(self._on_user_management)
-            if insert_at:
-                tools_menu.insertAction(insert_at, user_mgmt_action)
-            else:
-                tools_menu.addAction(user_mgmt_action)
+        perms = AuthManager.get_permissions(self.current_user.role)
+        # 侧边栏: tab 权限映射
+        allowed_indices = {0}  # home 永远可见
+        for idx in list(self.sidebar.nav_buttons.keys()):
+            tab_perm = _TAB_PERMISSIONS.get(idx, "view")
+            if tab_perm in perms:
+                allowed_indices.add(idx)
+        self.sidebar.set_permission_filter(allowed_indices)
+        self.welcome_page.set_permission_filter(perms)
 
     def _on_data_clean_wizard(self):
         if not self._check_permission("clean"):
