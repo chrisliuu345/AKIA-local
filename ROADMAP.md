@@ -2,17 +2,17 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> 当前: v2.6.1 开发完成 | 测试: 282/282 | 35 个 Tab + 插件 | 更新: 2026-08-19
+> 当前: v2.6.1 + 代码审查修复 | 测试: 289 pytest · 44/45 冒烟 | 35 个 Tab + 插件 | 更新: 2026-08-19
 
 ---
 
 ## 版本总览
 
 ```
-v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2
- Release   代码+AI    工程工具    报告      实时监控    UX+动画     硬件扩展    ESP32部署+    安全校验     RBAC权限矩阵
-          (完成)    (完成)     (完成)    (完成)     (完成)     (完成)     设备监控Tab     (已完成)     +认证加固+硬件
-                                                                          (已发布)                    (待开发)
+v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ──→ v2.6.3 ──→ v2.6.4
+ Release   代码+AI    工程工具    报告      实时监控    UX+动画     硬件扩展    ESP32部署+    安全校验     RBAC+认证    统计引擎    UI健壮性
+           (完成)    (完成)     (完成)    (完成)     (完成)     (完成)     设备监控Tab     (已完成)     +设备加固     加固        +报告+测试
+                                                                           (已发布)                    (待开发)    (待开发)    (待开发)
 ```
 
 ---
@@ -199,21 +199,82 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 
 ---
 
-## v2.6.2 — RBAC 权限矩阵 + 认证加固 + 硬件收尾（待开发）
+## v2.6.2 — RBAC 权限矩阵 + 认证加固 + 设备可靠性（待开发）
+
+> 代码审查前置修复已完成（12/19 Critical，commits ae04c38/d2c7426/53e888d）：认证越权 C01/C02/C03/C13/C14、nav_buttons 污染 C08、功能失效与崩溃 C07/C09/C10/C11/C12/C17、合成测试数据 C18。剩余 6 项 Critical 与 ~31 项 Warning 纳入本版。
 
 ### RBAC 权限矩阵落实（核心）
 - 目标：让 `_ROLE_PERMISSIONS`（admin/dept_admin/analyst/readonly 四级）真正生效，双层防护"隐藏 + 拦截"
 - 权限映射：import（导入 4 入口 + 数据 Tab）、analyze（分析类 Tab + 批量 F5）、clean（清洗向导）、export（导出 3 入口）、settings（设置）、share_project（共享）、view（Tab 查看/大屏 F11/欢迎页）
 - 实现要点：`MainWindow._check_permission(action)` 统一守卫（user=None 全放行）→ handler 拦截 + 菜单置灰 + 快捷键守卫 + sidebar/welcome 按角色过滤 + `_lazy_load_tab` 兜底；拒绝时弹窗提示并写审计
+- 五条旁路统一门控：`_switch_tab` / handler / 拖拽导入 / 快捷键 / welcome 直插
 - 新增 `tests/test_rbac_ui.py`；回归 test_v2_1 / test_main_window / test_extension_gating
+- RBAC 耦合 UI 修复：W40 插件 Tab 双实例化、W44 refresh_menu 文本匹配改 action 键、W45 硬编码 35/36 改 TAB_REGISTRY、W47 拖拽导入补 audit
 
-### 认证加固
-- 登录尝试次数限制与锁定（5 次失败锁定，持久化）+ 首次登录强制改密（`must_change_password`）
-- 存量用户文件迁移兼容（`User(**u)` 旧字段）
+### 认证与安全加固
+- 登录尝试限制与锁定（5 次失败锁定，持久化）+ 首次登录强制改密（`must_change_password`）
+- 存量用户文件迁移兼容（W03 `User(**u)` 旧字段容错）
+- 安全加固（与认证同源）：W01 change_password 审计误导、W04/W05 audit 双实现同步与轮转、W06/W07 SQL 脱敏正则与跨方言、W08 project_manager 部门名路径穿越、W09 log_util 单例缓存、W11 login 默认凭据、W13/W14 用户管理返回值与提示、W15 DPAPI 异常降级、W16 compliance template_id 校验、W17 Excel 公式注入
+
+### 设备链路加固
+- Critical：C04 transport buf 滑窗限长、C05 回调异常隔离防断连、C06 batch_scheduler `_running` 集合防并发、C19 esp32_out 循环体异常保护
+- Warning：W87 discovery 并行扫描、W88 monitor stop 超时处理、W89 registry 持久化加锁、W93 context_builder acceptance 类型校验、W94 batch daily 窗口、W97 esp32_in DS18B20 非阻塞、W98 esp32_in 通道初始化容错、W100 esp32 RTC 同步
 
 ### 硬件收尾（自 v2.6.1 移入）
 - **esp32_out 实机验证**：第二块板烧录固件，验证 COMMAND→ACK 驱动真实执行器（LED/继电器/舵机）
 - **MaixCAM**：网络传输（TCP/SSH）设备接入
+
+### 测试
+- T44 sidebar 缺 `import_db_clicked` 信号（预存失败，RBAC 改 sidebar 时修复）
+
+---
+
+## v2.6.3 — 统计引擎加固（待开发）
+
+> 主题：统计正确性 — 质量工具的核心价值。修复全库代码审查发现的统计边界缺陷与常数表错误。
+
+### Critical 统计正确性
+- C15 `gage_rr.py` AV/PV 常数表：SPC d2 → MSA d2*（n=2 高估 25%，n=3 约 13%），settings.py 新增 d2* 因子表
+- C16 `chart_generator.py` 瀑布图累积基线错误：i=0 不累加致整体偏移
+
+### 统计边界加固（W18-W39）
+- Nelson 规则：W18 规则5 两点同侧判定修正
+- 假设检验：W19/W20 配对检验 dropna 对齐、W27 alt 最小样本校验、W28 温度单位对称
+- 正态性与能力：W21 normaltest n<8、W22 shapiro n=2、W23 std=0 返回值、W24 non_normal_cap 除零、W25 单观测子组、W33 xbar_s 魔法数
+- 控制图：W29 cusum 常数列、W30/W31 p/u/c chart 校验、W32 ewma 初值用 μ0
+- 方差与 DOE：W34 anova 单观测组、W35 factorial 编码 mask、W36 doe shapiro N<3
+- 可靠性：W26 weibull 全相等退化、W37 censored 长度匹配
+- 抽样：W39 sampling_engine _NORMAL_TABLE 与 _AQL_VALS 错位
+
+### 统计输出健壮性
+- W76 chart 空数据、W77 全零除零、W78 figure_to_bytes 泄漏、W79 griddata 重复坐标
+
+### IE 统计模块
+- W10 one_click grr_pct 量纲、W82 smed improved_time、W85 time_study kstest、W90 data_profiler iloc 兜底、W92 data_validator kstest 退化
+
+---
+
+## v2.6.4 — UI 健壮性 + 报告安全 + 测试质量（待开发）
+
+> 主题：剩余 UI 崩溃/正确性 + 输出安全 + 测试可信度。聚焦崩溃与契约一致性，低价值打磨项降级 P2。
+
+### UI 崩溃与正确性
+- 连接与线程：W41 _on_import_db 连接泄漏、W52 device_tab 后台线程改 QWidget、W53 closeEvent 未停 discovery
+- 数据正确性：W42 USL/LSL=0 跳过、W43 compliance load_template、W55 doe 覆盖原始数据、W56 hypothesis factor2 可空、W57 msa part 列空、W58 fmea 先改后确认、W64 oee=None 崩溃、W65 ppap 单点虚假 Cp、W66 3P Weibull NaN、W67 sheet_split dtype、W70 vsm 除零
+- 契约一致性：W59-W62 四个 Tab current_result 三件套 + 键名统一、W63 重建表清空备注
+- 图表与交互：W48 base_tab plt.close 误关、W46 F5 全量冻结、W68 cellChanged 每键触发、W71 8D PDF 未转义
+
+### 输出与报告
+- W75 excel 无 try/finally 残缺文件、W80 word 图片溢出 A4
+
+### 对话框
+- W106 import_dialog nrows、W107 AnalyzeWorker 无 try/except、W108 conclusion 未转义、W109 root_cause KeyError、W110 batch _refresh_log O(n²)、W111 llm closeEvent 阻塞
+
+### 测试质量
+- W101 or True 恒真、W102 零断言、W103 mtime flaky、W104 import 期写文件、W105 time.time 全局替换
+
+### IE/设备残留
+- W83 tpm clamp、W84 work_sampling z_value、W86 co401 硬编码路径、W91 skewness 判定、W95 sheet_splitter 截断、W96 kpi_formula 嵌套幂
 
 ---
 
@@ -224,6 +285,8 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 | P2-3 | 视频时间研究 | 帧级计时 · AI 动作识别（OpenCV+MediaPipe） |
 | P2-4 | 批量宏录制/回放 | 录制操作序列 → 保存为宏 → 一键回放 |
 | P2-5 | 自定义控制图模板 | 用户保存/加载图表配置（JSON） |
+| P2-6 | 代码审查 Info 项清零 | 151 项 Info：重复实现合并、死代码清理、i18n 一致性、魔法数字常量化、私有 API 替换、单一数据源 |
+| P2-7 | UI 打磨项（自 v2.6.4 降级） | W49 全量填充阻塞、W50 Grubbs 标签、W51 均匀分布 μ、W69 trend 无抽样、W72 sidebar 高度、W73 fishbone 迭代、W74 animate 清理、W99 esp32 buf(dup C04) |
 | P3-1 | 供应链质量协作 | P2P 供应商数据共享 · CPK 钻取 · 料号映射 |
 | P3-2 | 数字孪生布局 | 拖拽工位仿真 · 2D Canvas 产线布局 |
 | P3-3 | REST API 服务 | FastAPI 封装核心分析 → 供 MES/ERP 消费 |
@@ -259,6 +322,7 @@ v2.0 (28)     v2.1 (28)     v2.2 (32)       v2.4 (34)     v2.5/2.6 (35)
 
 | 日期 | 版本 | 内容 |
 |------|---------|---------|
+| 08-19 | v2.6.1-review | 代码审查修复（12 Critical）：认证越权 C01/C02/C03/C13/C14 + nav_buttons C08 + 功能失效/崩溃 C07/C09/C10/C11/C12/C17 + 合成测试数据 C18 · 289 pytest · 44/45 冒烟 |
 | 08-19 | v2.6.1 | 安全校验：密码策略（≥8 位+字母数字，auth 三处接线）+ 审计日志（core/audit.py 公共入口 + 9 类业务事件）+ 密钥库（DPAPI 加密存储 + SQL 连接串脱敏）· 282 tests |
 | 08-18 | v2.6.0 | 已发布：ESP32-IN 部署拓展（固件 v1.1.0 实机验证）+ 设备监控 Tab 35（停止/继续监控、20 行预览、数据导入）+ ESP-32 配置门控 + PyInstaller onedir + Inno Setup 安装器 · 278 tests |
 | 08-18 | v2.5-dev | H2 固件 v1.1.0 实机运行（MicroPython v1.20 + UART1 重映射, 7 通道）· H3 esp32_in 在 COM3 端到端验证（发现→META→DATA→导入）· 主机发现/监控支持复位脉冲 · 270+ tests |

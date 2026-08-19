@@ -2,17 +2,17 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> Current: v2.6.1 Dev Complete | Tests: 282/282 | 35 Tabs + Plugins | Updated: 2026-08-19
+> Current: v2.6.1 + Code Review Fixes | Tests: 289 pytest · 44/45 smoke | 35 Tabs + Plugins | Updated: 2026-08-19
 
 ---
 
 ## Version Roadmap Overview
 
 ```
-v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2
- Release   Code+AI    Eng Tools   Reports    Live      UX+Anim    HW Ext     ESP32 Deploy+   Security     RBAC matrix
-            (Done)     (Done)     (Done)    (Done)     (Done)     (Done)     Device Tab      (Done)       +auth hw wrap
-                                                                              (Released)                  (TBD)
+v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ──→ v2.6.3 ──→ v2.6.4
+ Release   Code+AI    Eng Tools   Reports    Live      UX+Anim    HW Ext     ESP32 Deploy+   Security     RBAC+Auth    Stats Eng    UI Robust
+            (Done)     (Done)     (Done)    (Done)     (Done)     (Done)     Device Tab      (Done)       +Device      Hardening    +Reports+Test
+                                                                               (Released)                  (TBD)       (TBD)        (TBD)
 ```
 
 ---
@@ -199,21 +199,82 @@ Plugin index 33, LLM streaming refresh, validate_params complete, animation clea
 
 ---
 
-## v2.6.2 — RBAC Matrix + Auth Hardening + Hardware Wrap-up (TBD)
+## v2.6.2 — RBAC Matrix + Auth Hardening + Device Reliability (TBD)
+
+> Code review prerequisite fixes completed (12/19 Critical, commits ae04c38/d2c7426/53e888d): auth privilege escalation C01/C02/C03/C13/C14, nav_buttons pollution C08, functional/crash C07/C09/C10/C11/C12/C17, synthetic test data C18. Remaining 6 Critical + ~31 Warnings included in this version.
 
 ### RBAC Permission Matrix Enforcement (core)
 - Goal: make `_ROLE_PERMISSIONS` (admin/dept_admin/analyst/readonly) effective — two-layer "hide + block"
 - Permission mapping: import (4 import entries + data Tab), analyze (analysis Tabs + batch F5), clean (clean wizard), export (3 export entries), settings, share_project, view (Tab viewing / display mode F11 / welcome page)
 - Key points: `MainWindow._check_permission(action)` unified guard (user=None allows all) → handler blocking + menu greying + shortcut guards + sidebar/welcome role filtering + `_lazy_load_tab` fallback; denial shows dialog and writes audit
+- Five bypass paths unified: `_switch_tab` / handler / drag-drop / shortcuts / welcome direct
 - New `tests/test_rbac_ui.py`; regression: test_v2_1 / test_main_window / test_extension_gating
+- RBAC-coupled UI fixes: W40 plugin Tab double instantiation, W44 refresh_menu text match → action key, W45 hardcoded 35/36 → TAB_REGISTRY, W47 drag-drop audit
 
-### Auth Hardening
+### Auth & Security Hardening
 - Login attempt limit & lockout (5 failed attempts, persisted) + first-login forced password change (`must_change_password`)
-- Legacy users-file migration compatibility (`User(**u)` old fields)
+- Legacy users-file migration (W03 `User(**u)` old-field tolerance)
+- Security fixes (auth-coupled): W01 change_password audit misleading, W04/W05 audit dual-impl sync & rotation, W06/W07 SQL masking regex & cross-dialect, W08 project_manager dept-name path traversal, W09 log_util singleton cache, W11 login default credentials, W13/W14 user-mgmt return values & prompts, W15 DPAPI silent degradation, W16 compliance template_id validation, W17 Excel formula injection
+
+### Device Link Hardening
+- Critical: C04 transport buf sliding-window cap, C05 callback exception isolation, C06 batch_scheduler `_running` set concurrency guard, C19 esp32_out loop body exception guard
+- Warning: W87 discovery parallel scan, W88 monitor stop timeout, W89 registry persistence lock, W93 context_builder acceptance type check, W94 batch daily window, W97 esp32_in DS18B20 non-blocking, W98 esp32_in channel init tolerance, W100 esp32 RTC sync
 
 ### Hardware Wrap-up (moved from v2.6.1)
 - **esp32_out real-device verification**: flash second board, verify COMMAND→ACK drives real actuators (LED/relay/servo)
 - **MaixCAM**: network transport (TCP/SSH) device integration
+
+### Tests
+- T44 sidebar missing `import_db_clicked` signal (pre-existing failure, fix during RBAC sidebar work)
+
+---
+
+## v2.6.3 — Statistical Engine Hardening (TBD)
+
+> Theme: statistical correctness — the core value of a quality tool. Fixes statistical boundary defects and constant-table errors found in the full-codebase review.
+
+### Critical Statistical Correctness
+- C15 `gage_rr.py` AV/PV constant table: SPC d2 → MSA d2* (n=2 overestimate 25%, n=3 ~13%), add d2* factor table to settings.py
+- C16 `chart_generator.py` waterfall cumulative baseline error: i=0 not accumulated causes global offset
+
+### Statistical Boundary Hardening (W18-W39)
+- Nelson rules: W18 rule 5 two-point same-side judgment
+- Hypothesis tests: W19/W20 paired-test dropna alignment, W27 alt min-sample guard, W28 temperature unit symmetry
+- Normality & capability: W21 normaltest n<8, W22 shapiro n=2, W23 std=0 return value, W24 non_normal_cap divide-by-zero, W25 single-obs subgroup, W33 xbar_s magic number
+- Control charts: W29 cusum constant column, W30/W31 p/u/c chart validation, W32 ewma initial value μ0
+- ANOVA & DOE: W34 anova single-obs group, W35 factorial coding mask, W36 doe shapiro N<3
+- Reliability: W26 weibull all-equal degenerate, W37 censored length match
+- Sampling: W39 sampling_engine _NORMAL_TABLE vs _AQL_VALS misalignment
+
+### Statistical Output Robustness
+- W76 chart empty data, W77 all-zero divide, W78 figure_to_bytes leak, W79 griddata duplicate coords
+
+### IE Statistical Modules
+- W10 one_click grr_pct unit, W82 smed improved_time, W85 time_study kstest, W90 data_profiler iloc guard, W92 data_validator kstest degenerate
+
+---
+
+## v2.6.4 — UI Robustness + Report Safety + Test Quality (TBD)
+
+> Theme: remaining UI crashes/correctness + output safety + test reliability. Focus on crashes and contract consistency; low-value polish demoted to P2.
+
+### UI Crashes & Correctness
+- Connections & threads: W41 _on_import_db connection leak, W52 device_tab background-thread QWidget, W53 closeEvent no discovery stop
+- Data correctness: W42 USL/LSL=0 skipped, W43 compliance load_template, W55 doe overwrites raw data, W56 hypothesis factor2 nullable, W57 msa part column empty, W58 fmea mode-before-confirm, W64 oee=None crash, W65 ppap single-point fake Cp, W66 3P Weibull NaN, W67 sheet_split dtype, W70 vsm divide-by-zero
+- Contract consistency: W59-W62 four Tabs current_result triplet + key name unification, W63 rebuild table clears notes
+- Charts & interaction: W48 base_tab plt.close collateral, W46 F5 full-load freeze, W68 cellChanged per-keystroke, W71 8D PDF unescaped
+
+### Output & Reports
+- W75 excel no try/finally truncated file, W80 word image A4 overflow
+
+### Dialogs
+- W106 import_dialog nrows, W107 AnalyzeWorker no try/except, W108 conclusion unescaped, W109 root_cause KeyError, W110 batch _refresh_log O(n²), W111 llm closeEvent block
+
+### Test Quality
+- W101 or True tautology, W102 zero assertions, W103 mtime flaky, W104 import-time file writes, W105 time.time global replace
+
+### IE/Device Residual
+- W83 tpm clamp, W84 work_sampling z_value, W86 co401 hardcoded path, W91 skewness judgment, W95 sheet_splitter truncation, W96 kpi_formula nested power
 
 ---
 
@@ -224,6 +285,8 @@ Plugin index 33, LLM streaming refresh, validate_params complete, animation clea
 | P2-3 | Video Time Study | Frame-level timing · AI motion recognition (OpenCV+MediaPipe) |
 | P2-4 | Batch Macro Record/Replay | Record operation sequence → save as macro → one-click replay |
 | P2-5 | Custom Control Chart Templates | User save/load chart configs (JSON) |
+| P2-6 | Code Review Info Items Cleanup | 151 Info items: duplicate-impl merge, dead code, i18n consistency, magic-number constants, private-API replacement, single source of truth |
+| P2-7 | UI Polish (demoted from v2.6.4) | W49 bulk-fill block, W50 Grubbs label, W51 uniform μ, W69 trend no sampling, W72 sidebar height, W73 fishbone iteration, W74 animate cleanup, W99 esp32 buf (dup C04) |
 | P3-1 | Supply Chain Quality Collaboration | P2P supplier data sharing · CPK drill-through · Part number mapping |
 | P3-2 | Digital Twin Layout | Drag-and-drop workstation simulation · 2D Canvas line layout |
 | P3-3 | REST API Service | FastAPI wrapping core analysis → for MES/ERP consumption |
@@ -259,6 +322,7 @@ v2.0 (28)     v2.1 (28)     v2.2 (32)       v2.4 (34)     v2.5/2.6 (35)
 
 | Date | Version | Content |
 |------|---------|---------|
+| 08-19 | v2.6.1-review | Code review fixes (12 Critical): auth privilege escalation C01/C02/C03/C13/C14 + nav_buttons C08 + functional/crash C07/C09/C10/C11/C12/C17 + synthetic test data C18 · 289 pytest · 44/45 smoke |
 | 08-19 | v2.6.1 | Security validation: password policy (≥8 chars + letters/digits, wired in 3 auth paths) + audit logging (core/audit.py public entry + 9 business events) + secret store (DPAPI encryption + SQL connection-string masking) · 282 tests |
 | 08-18 | v2.6.0 | Released: ESP32-IN deployment (FW 1.1.0 verified on hardware) + Device Monitoring Tab 35 (stop/resume, 20-row preview, data import) + ESP-32 config gating + PyInstaller onedir + Inno Setup installer · 278 tests |
 | 08-18 | v2.5-dev | H2 firmware v1.1.0 live on ESP32 (MicroPython v1.20 + UART1 remap, 7 channels) · H3 esp32_in verified end-to-end on COM3 (discovery→META→DATA→import) · host discovery/monitor now reset-pulse aware · 270+ tests |
