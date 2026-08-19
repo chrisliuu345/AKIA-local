@@ -4,6 +4,8 @@
 
 基于 Python 3.14 + PySide6 的桌面应用，面向质量工程（QE）与工业工程（IE）分析：35 个分析模块、AI 智能洞察、完整报告输出，并支持 ESP32 系列硬件数据采集与设备监控。
 
+<img width="1280" height="800" alt="{20844337-54A4-41EC-B974-20397A2571B1}" src="https://github.com/user-attachments/assets/6d4b7fbb-993b-4030-8fc4-f7c3db5ce4dd" />
+
 ## 功能特性
 
 ### 质量分析（6 个模块）
@@ -16,6 +18,7 @@
 | **假设检验** | t 检验 · ANOVA · 正态性 · 方差齐性 · **非参数检验**（MWU/Wilcoxon/Kruskal） |
 | **DOE 试验设计** | 全因子 / 2^k · 响应曲面 CCD · Box-Behnken |
 | **回归分析** | 线性 / 多元 · R² · 残差诊断 · 相关性热图 |
+
 
 ### IE 工业工程（7 个模块）
 
