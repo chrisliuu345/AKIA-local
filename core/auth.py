@@ -41,6 +41,7 @@ def _verify_password(password: str, password_hash: str) -> bool:
         if len(parts) != 5:
             return False
         algo, rounds, salt_b64, dk_b64 = parts[1], int(parts[2]), parts[3], parts[4]
+        rounds = min(rounds, 1_000_000)
         salt = base64.b64decode(salt_b64)
         expected = base64.b64decode(dk_b64)
         dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, rounds)
@@ -95,6 +96,17 @@ _ROLE_PERMISSIONS = {
 }
 
 
+def _can_manage(caller: Optional[User], target_role: str) -> bool:
+    """判断 caller 是否有权管理 target_role 的用户（后端越权防护）"""
+    if caller is None:
+        return True
+    if caller.role == "admin":
+        return True
+    if caller.role == "dept_admin":
+        return target_role in ("analyst", "readonly")
+    return False
+
+
 class AuthManager:
     """用户认证与权限管理器"""
 
@@ -119,10 +131,28 @@ class AuthManager:
         )
         self._save_users([admin.to_dict()])
 
+    def _read_users_file(self) -> List[dict]:
+        with open(self.USERS_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if not isinstance(data, list):
+            raise ValueError("用户文件格式错误: 不是列表")
+        return data
+
     def _load_users(self) -> List[dict]:
         try:
-            with open(self.USERS_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
+            return self._read_users_file()
+        except (json.JSONDecodeError, ValueError):
+            # 用户文件损坏：备份后重建默认 admin，避免系统锁死
+            try:
+                os.replace(self.USERS_FILE, self.USERS_FILE + ".corrupt")
+                _audit("auth_corrupt", "system", "用户文件损坏，已备份并重建默认管理员")
+            except OSError:
+                pass
+            self._init_default_admin()
+            try:
+                return self._read_users_file()
+            except Exception:
+                return []
         except Exception:
             return []
 
@@ -166,20 +196,30 @@ class AuthManager:
         _audit("create_user", username, f"角色={role}")
         return user
 
-    def update_user(self, username: str, **kwargs) -> bool:
+    def update_user(self, username: str, caller: Optional[User] = None, **kwargs) -> bool:
         """更新用户属性（角色/部门/班组/显示名称），不修改密码"""
+        if "role" in kwargs and kwargs["role"] not in _ROLE_PERMISSIONS:
+            raise ValueError(f"无效角色: {kwargs['role']}")
         users = self._load_users()
         for u in users:
             if u["username"] == username:
+                if not _can_manage(caller, u.get("role", "")):
+                    _audit("update_user_failed", username, "无权限修改该用户")
+                    return False
+                if "role" in kwargs and not _can_manage(caller, kwargs["role"]):
+                    _audit("update_user_failed", username, "无权限设置该角色")
+                    return False
                 for k in ("role", "department", "team", "display_name"):
-                    if k in kwargs and kwargs[k]:
+                    if k in kwargs and kwargs[k] is not None:
                         u[k] = kwargs[k]
                 self._save_users(users)
-                _audit("update_user", username, f"字段={','.join(k for k in ('role','department','team','display_name') if k in kwargs and kwargs[k])}")
+                _fields = ','.join(k for k in ("role", "department", "team", "display_name")
+                                    if k in kwargs and kwargs[k] is not None)
+                _audit("update_user", username, f"字段={_fields}")
                 return True
         return False
 
-    def reset_password(self, username: str, new_password: str) -> bool:
+    def reset_password(self, username: str, new_password: str, caller: Optional[User] = None) -> bool:
         """管理员重置用户密码"""
         ok, reason = validate_password(new_password)
         if not ok:
@@ -188,6 +228,9 @@ class AuthManager:
         users = self._load_users()
         for u in users:
             if u["username"] == username:
+                if not _can_manage(caller, u.get("role", "")):
+                    _audit("reset_password_failed", username, "无权限重置该用户密码")
+                    return False
                 u["password_hash"] = _hash_password(new_password)
                 self._save_users(users)
                 _audit("reset_password", username)
@@ -195,15 +238,19 @@ class AuthManager:
         _audit("reset_password_failed", username, "用户不存在")
         return False
 
-    def delete_user(self, username: str) -> bool:
+    def delete_user(self, username: str, caller: Optional[User] = None) -> bool:
         if username == "admin":
             _audit("delete_user_failed", username, "禁止删除admin")
             return False
         users = self._load_users()
-        new_users = [u for u in users if u["username"] != username]
-        if len(new_users) == len(users):
+        target = next((u for u in users if u["username"] == username), None)
+        if target is None:
             _audit("delete_user_failed", username, "用户不存在")
             return False
+        if not _can_manage(caller, target.get("role", "")):
+            _audit("delete_user_failed", username, "无权限删除该用户")
+            return False
+        new_users = [u for u in users if u["username"] != username]
         self._save_users(new_users)
         _audit("delete_user", username)
         return True

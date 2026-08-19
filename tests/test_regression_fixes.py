@@ -229,6 +229,67 @@ class TestAuthAudit:
         assert "zhang: login_failed" in content
         assert "admin: delete_user_failed" in content
         assert "zhang: delete_user" in content
+# ── C01/C13/C14: 认证越权防护 ───────────────────────
+class TestAuthPrivilegeEscalation:
+    def _setup(self, tmp_path, monkeypatch):
+        import core.auth as auth_mod
+        monkeypatch.setattr(auth_mod.AuthManager, "USERS_FILE", str(tmp_path / "users.json"))
+        monkeypatch.setattr(auth_mod, "_LOG_FILE", str(tmp_path / "audit.log"))
+        return auth_mod, auth_mod.AuthManager()
+
+    def test_update_user_rejects_invalid_role(self, tmp_path, monkeypatch):
+        import pytest
+        auth_mod, am = self._setup(tmp_path, monkeypatch)
+        am.create_user("alice", "Pass1234", role="analyst")
+        with pytest.raises(ValueError):
+            am.update_user("alice", role="superadmin")
+
+    def test_update_user_rejects_role_escalation(self, tmp_path, monkeypatch):
+        auth_mod, am = self._setup(tmp_path, monkeypatch)
+        am.create_user("alice", "Pass1234", role="analyst")
+        am.create_user("bob", "Pass1234", role="dept_admin")
+        bob = am.authenticate("bob", "Pass1234")
+        assert am.update_user("alice", caller=bob, role="admin") is False
+        alice = am.authenticate("alice", "Pass1234")
+        assert alice.role == "analyst"
+
+    def test_dept_admin_cannot_edit_admin_role_user(self, tmp_path, monkeypatch):
+        auth_mod, am = self._setup(tmp_path, monkeypatch)
+        am.create_user("boss", "Pass1234", role="admin")
+        am.create_user("bob", "Pass1234", role="dept_admin")
+        bob = am.authenticate("bob", "Pass1234")
+        assert am.update_user("boss", caller=bob, department="生产部") is False
+
+    def test_dept_admin_cannot_delete_admin_role_user(self, tmp_path, monkeypatch):
+        auth_mod, am = self._setup(tmp_path, monkeypatch)
+        am.create_user("boss", "Pass1234", role="admin")
+        am.create_user("bob", "Pass1234", role="dept_admin")
+        bob = am.authenticate("bob", "Pass1234")
+        assert am.delete_user("boss", caller=bob) is False
+
+    def test_dept_admin_cannot_reset_admin_password(self, tmp_path, monkeypatch):
+        auth_mod, am = self._setup(tmp_path, monkeypatch)
+        am.create_user("boss", "Pass1234", role="admin")
+        am.create_user("bob", "Pass1234", role="dept_admin")
+        bob = am.authenticate("bob", "Pass1234")
+        assert am.reset_password("boss", "NewPass1234", caller=bob) is False
+
+    def test_update_user_clears_empty_field(self, tmp_path, monkeypatch):
+        auth_mod, am = self._setup(tmp_path, monkeypatch)
+        am.create_user("alice", "Pass1234", role="analyst", department="质量部")
+        assert am.update_user("alice", department="") is True
+        alice = am.authenticate("alice", "Pass1234")
+        assert alice.department == ""
+
+    def test_corrupt_users_file_recovers(self, tmp_path, monkeypatch):
+        import core.auth as auth_mod
+        users_file = tmp_path / "users.json"
+        monkeypatch.setattr(auth_mod.AuthManager, "USERS_FILE", str(users_file))
+        monkeypatch.setattr(auth_mod, "_LOG_FILE", str(tmp_path / "audit.log"))
+        users_file.write_text("{invalid json", encoding="utf-8")
+        am = auth_mod.AuthManager()
+        users = am.list_users()
+        assert any(u.username == "admin" for u in users)
 # ── P1-7: batch_scheduler.py 工作线程泄漏 ─────────────
 class TestBatchWorkerCleanup:
     def test_workers_list_empties_after_tasks_finish(self, tmp_path, monkeypatch):
