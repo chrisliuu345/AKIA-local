@@ -21,14 +21,24 @@ from ui.theme import colors as theme_colors
 
 
 def _obscure(text: str) -> str:
-    return base64.b64encode(text.encode()).decode()
+    """加密密码 — Windows DPAPI 优先，失败降级 base64（兼容旧数据/异常场景）"""
+    try:
+        from core.secret_store import encrypt_secret
+        return encrypt_secret(text)
+    except Exception:
+        return base64.b64encode(text.encode()).decode()
 
 
 def _unobscure(text: str) -> str:
+    """解密密码 — 支持 dpapi: 前缀与旧版无前缀 base64"""
     try:
-        return base64.b64decode(text.encode()).decode()
+        from core.secret_store import decrypt_secret
+        return decrypt_secret(text)
     except Exception:
-        return ""
+        try:
+            return base64.b64decode(text.encode()).decode()
+        except Exception:
+            return ""
 
 
 def _load_saved_configs() -> Dict[str, dict]:

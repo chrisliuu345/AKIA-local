@@ -26,6 +26,7 @@ from core.session_manager import SessionManager
 from core.i18n import i18n
 from core.data_profiler import DataProfiler
 from core.project_manager import ProjectManager
+from core.audit import audit
 
 from ui.sidebar import Sidebar
 from ui.theme import colors as theme_colors
@@ -514,6 +515,8 @@ class MainWindow(QMainWindow):
             try:
                 self.status_label.setText(f"{i18n.tr('status.loading')}{file_path}...")
                 raw_data = self.data_loader.load(file_path)
+                audit("import_data", self.current_user.username if self.current_user else "anonymous",
+                      f"质量数据 {os.path.basename(file_path)}")
                 self.current_data = {
                     "file_path": file_path,
                     "raw_data": raw_data,
@@ -576,6 +579,8 @@ class MainWindow(QMainWindow):
             try:
                 self.status_label.setText(f"{i18n.tr('status.loading')}{file_path}...")
                 raw_data = self.data_loader.load(file_path)
+                audit("import_data", self.current_user.username if self.current_user else "anonymous",
+                      f"IE 数据 {os.path.basename(file_path)}")
                 ie_data = self.data_loader.load_ie_data()
 
                 if not ie_data:
@@ -642,6 +647,8 @@ class MainWindow(QMainWindow):
                 loader.connect(config)
                 raw_data = loader.load(table_names)
                 loader.disconnect()
+                audit("import_db", self.current_user.username if self.current_user else "anonymous",
+                      f"数据库 {config.get('database', '')} 表数={len(raw_data)}")
 
                 self.current_data = {
                     "source": "database",
@@ -1114,6 +1121,8 @@ class MainWindow(QMainWindow):
                     from output.pdf_report import generate_pdf_report
                     generate_pdf_report([result], file_path, charts=charts)
                 self.status_label.setText(f"{i18n.tr('status.exported')}{file_path}")
+                audit("export", self.current_user.username if self.current_user else "anonymous",
+                      f"单Tab导出 {fmt} {os.path.basename(file_path)}")
                 QMessageBox.information(self, i18n.tr("msg.export_complete"), f"{i18n.tr('msg.export_saved')}\n{file_path}")
             except Exception as e:
                 QMessageBox.critical(self, i18n.tr("msg.export_failed"), str(e))
@@ -1144,6 +1153,8 @@ class MainWindow(QMainWindow):
                     from output.pdf_report import generate_pdf_report
                     generate_pdf_report(analyses_list, file_path, charts=charts)
                 self.status_label.setText(f"{i18n.tr('status.exported')}{file_path}")
+                audit("export", self.current_user.username if self.current_user else "anonymous",
+                      f"汇总导出 {fmt} {os.path.basename(file_path)}")
                 QMessageBox.information(self, i18n.tr("msg.export_complete"), f"{i18n.tr('msg.export_saved')}\n{file_path}")
             except Exception as e:
                 QMessageBox.critical(self, i18n.tr("msg.export_failed"), str(e))
@@ -1169,6 +1180,8 @@ class MainWindow(QMainWindow):
                     file_path, charts=charts,
                 )
                 self.status_label.setText(f"{i18n.tr('status.exported')}{file_path}")
+                audit("export", self.current_user.username if self.current_user else "anonymous",
+                      f"合规报告 {template_id} {os.path.basename(file_path)}")
                 QMessageBox.information(self, i18n.tr("msg.export_complete"),
                                         f"{i18n.tr('msg.export_saved')}\n{file_path}")
             except Exception as e:
@@ -1430,6 +1443,7 @@ class MainWindow(QMainWindow):
                     self.current_user.department = acct.get("department", "")
                     self.current_user.team = acct.get("team", "")
                     self.current_user.display_name = acct.get("display_name", "")
+            audit("settings", self.current_user.username if self.current_user else "anonymous", "设置保存")
             self.statusBar().showMessage("设置已保存", 3000)
 
     def _on_data_cleaner(self):
@@ -1514,6 +1528,8 @@ class MainWindow(QMainWindow):
             raw[first_key] = cleaned
             self.current_data["raw_data"] = raw
             self._route_sheets_to_tabs(raw, worksheet_mode=False)
+            audit("data_clean", self.current_user.username if self.current_user else "anonymous",
+                  f"清洗 {first_key}")
             self.statusBar().showMessage("数据清洗向导完成", 5000)
 
     def _summarize_result(self, result: dict) -> str:
@@ -1599,6 +1615,8 @@ class MainWindow(QMainWindow):
             for label, buf in self._collect_charts(list(self.analyses.keys())).items():
                 charts[label] = buf.getvalue() if hasattr(buf, 'getvalue') else buf
             SharedProjectManager.save_shared(path, raw, self.analyses, charts, dept)
+            audit("share_project", self.current_user.username if self.current_user else "anonymous",
+                  f"保存 {os.path.basename(path)}")
             self.status_label.setText("共享项目已保存")
             QMessageBox.information(self, "保存完成", f"项目已共享到部门: {dept}")
         except Exception as e:
