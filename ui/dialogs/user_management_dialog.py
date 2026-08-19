@@ -71,6 +71,8 @@ class UserManagementDialog(QDialog):
     def _refresh(self):
         dept = self.current_user.department if self.current_user.role == "dept_admin" else ""
         users = self.auth.list_users(department=dept)
+        if self.current_user.role == "dept_admin":
+            users = [u for u in users if u.role in ("analyst", "readonly")]
         self.table.setRowCount(len(users))
         for i, u in enumerate(users):
             self.table.setItem(i, 0, QTableWidgetItem(u.username))
@@ -107,12 +109,14 @@ class UserManagementDialog(QDialog):
         if dialog.exec() == QDialog.Accepted:
             data = dialog.get_data()
             if data.get("delete"):
-                self.auth.delete_user(username)
+                self.auth.delete_user(username, caller=self.current_user)
             elif data.get("reset_password"):
-                self.auth.reset_password(username, data.get("new_password", "Pass1234"))
+                self.auth.reset_password(username, data.get("new_password", "Pass1234"),
+                                         caller=self.current_user)
                 QMessageBox.information(self, "密码已重置", f"用户 {username} 的密码已重置")
             else:
-                self.auth.update_user(username, role=data.get("role"),
+                self.auth.update_user(username, caller=self.current_user,
+                                      role=data.get("role"),
                                       department=data.get("department"),
                                       team=data.get("team"),
                                       display_name=data.get("display_name"))
@@ -154,16 +158,21 @@ class _UserEditDialog(QDialog):
             form.addRow("密码:", self.pwd_edit)
 
         self.role_combo = QComboBox()
-        available_roles = ["analyst", "readonly"]
         if self._current_user.role == "admin":
             available_roles = ["admin", "dept_admin", "analyst", "readonly"]
-        elif self._current_user.role == "dept_admin":
+        else:
             available_roles = ["analyst", "readonly"]
-        self.role_combo.addItems([ROLE_LABELS.get(r, r) for r in available_roles])
+        self._role_locked = False
+        if not self._new_mode and self._target.role not in available_roles:
+            # 目标角色超出当前用户可管理范围，锁定角色防止静默降级
+            available_roles = [self._target.role] + available_roles
+            self._role_locked = True
         self._role_keys = available_roles
+        self.role_combo.addItems([ROLE_LABELS.get(r, r) for r in available_roles])
         if not self._new_mode:
-            idx = self._role_keys.index(self._target.role) if self._target.role in self._role_keys else 0
-            self.role_combo.setCurrentIndex(idx)
+            self.role_combo.setCurrentIndex(self._role_keys.index(self._target.role))
+        if self._role_locked:
+            self.role_combo.setEnabled(False)
         form.addRow("角色:", self.role_combo)
 
         self.dept_combo = QComboBox()
@@ -183,7 +192,11 @@ class _UserEditDialog(QDialog):
         layout.addLayout(form)
 
         btn_row = QHBoxLayout()
-        if not self._new_mode and self._current_user.role in ("admin", "dept_admin"):
+        can_manage = self._current_user.role == "admin" or (
+            self._current_user.role == "dept_admin"
+            and self._target.role in ("analyst", "readonly")
+        )
+        if not self._new_mode and can_manage:
             reset_btn = QPushButton("重置密码")
             reset_btn.setStyleSheet(BUTTON_TOGGLE)
             reset_btn.clicked.connect(self._on_reset_password)
