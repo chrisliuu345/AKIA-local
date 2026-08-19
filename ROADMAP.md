@@ -2,17 +2,17 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> 当前: v2.6.0 已发布 | 测试: 278/278 | 35 个 Tab + 插件 | 更新: 2026-08-18
+> 当前: v2.6.1 开发完成 | 测试: 282/282 | 35 个 Tab + 插件 | 更新: 2026-08-19
 
 ---
 
 ## 版本总览
 
 ```
-v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1
- Release   代码+AI    工程工具    报告      实时监控    UX+动画     硬件扩展    ESP32部署+    安全性校验
-          (完成)    (完成)     (完成)    (完成)     (完成)     (完成)     设备监控Tab    (待开发)
-                                                                          (已发布)
+v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2
+ Release   代码+AI    工程工具    报告      实时监控    UX+动画     硬件扩展    ESP32部署+    安全校验     RBAC权限矩阵
+          (完成)    (完成)     (完成)    (完成)     (完成)     (完成)     设备监控Tab     (已完成)     +认证加固+硬件
+                                                                          (已发布)                    (待开发)
 ```
 
 ---
@@ -177,16 +177,41 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 
 ---
 
-## v2.6.1 — 安全性校验与硬件收尾（待开发）
+## v2.6.1 ✅ 已完成 — 安全校验
 
-### 安全性校验（自 v2.6 后移）
-- 多用户认证加固（登录尝试次数 / 锁定策略）
-- 密码策略（`core/password_policy.py` — 代码已在备份中准备）
-- 密钥库（`core/secret_store.py` — 代码已在备份中准备）
-- 基于角色的 UI 权限复核
-- 审计日志改进
+### 密码策略（`core/password_policy.py`）
+- 最小长度 8 位 + 含字母与数字，中文校验提示
+- 接入 `create_user` / `reset_password` / `change_password`（弱密码拒绝并写审计）
+- UI 同步：设置对话框密码修改校验、用户管理默认密码 → Pass1234
 
-### 硬件收尾
+### 审计日志（`core/audit.py`）
+- 公共审计入口（同 `~/.qa_tool_audit.log`，UTF-8 追加，吞异常）
+- 业务事件扩展：数据导入（质量/IE/数据库）、单/汇总/合规导出、设置保存、数据清洗、共享项目保存
+
+### 密钥库（`core/secret_store.py`）
+- Windows DPAPI 加密（`dpapi:` 前缀，兼容旧 base64 平滑迁移）
+- 数据库连接密码加密存储（原 base64 混淆）
+- SQL 连接串异常密码脱敏（`sanitize_connection_error`）
+
+> 测试: 278 → 282（新增 `tests/test_security_fixes.py` 4 用例）
+>
+> 未纳入：认证加固（尝试次数/锁定）与 RBAC 权限矩阵 → 移至 v2.6.2；硬件收尾 2 项 → 移至 v2.6.2
+
+---
+
+## v2.6.2 — RBAC 权限矩阵 + 认证加固 + 硬件收尾（待开发）
+
+### RBAC 权限矩阵落实（核心）
+- 目标：让 `_ROLE_PERMISSIONS`（admin/dept_admin/analyst/readonly 四级）真正生效，双层防护"隐藏 + 拦截"
+- 权限映射：import（导入 4 入口 + 数据 Tab）、analyze（分析类 Tab + 批量 F5）、clean（清洗向导）、export（导出 3 入口）、settings（设置）、share_project（共享）、view（Tab 查看/大屏 F11/欢迎页）
+- 实现要点：`MainWindow._check_permission(action)` 统一守卫（user=None 全放行）→ handler 拦截 + 菜单置灰 + 快捷键守卫 + sidebar/welcome 按角色过滤 + `_lazy_load_tab` 兜底；拒绝时弹窗提示并写审计
+- 新增 `tests/test_rbac_ui.py`；回归 test_v2_1 / test_main_window / test_extension_gating
+
+### 认证加固
+- 登录尝试次数限制与锁定（5 次失败锁定，持久化）+ 首次登录强制改密（`must_change_password`）
+- 存量用户文件迁移兼容（`User(**u)` 旧字段）
+
+### 硬件收尾（自 v2.6.1 移入）
 - **esp32_out 实机验证**：第二块板烧录固件，验证 COMMAND→ACK 驱动真实执行器（LED/继电器/舵机）
 - **MaixCAM**：网络传输（TCP/SSH）设备接入
 
@@ -234,6 +259,7 @@ v2.0 (28)     v2.1 (28)     v2.2 (32)       v2.4 (34)     v2.5/2.6 (35)
 
 | 日期 | 版本 | 内容 |
 |------|---------|---------|
+| 08-19 | v2.6.1 | 安全校验：密码策略（≥8 位+字母数字，auth 三处接线）+ 审计日志（core/audit.py 公共入口 + 9 类业务事件）+ 密钥库（DPAPI 加密存储 + SQL 连接串脱敏）· 282 tests |
 | 08-18 | v2.6.0 | 已发布：ESP32-IN 部署拓展（固件 v1.1.0 实机验证）+ 设备监控 Tab 35（停止/继续监控、20 行预览、数据导入）+ ESP-32 配置门控 + PyInstaller onedir + Inno Setup 安装器 · 278 tests |
 | 08-18 | v2.5-dev | H2 固件 v1.1.0 实机运行（MicroPython v1.20 + UART1 重映射, 7 通道）· H3 esp32_in 在 COM3 端到端验证（发现→META→DATA→导入）· 主机发现/监控支持复位脉冲 · 270+ tests |
 | 08-17 | v2.5-dev | 硬件扩展：ESP32 设备框架恢复（core/devices + DeviceTab 35 + 21 测试）· QMenu GC 崩溃修复复检 · 内存泄漏审计（线程干净）· 264 tests |
