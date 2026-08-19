@@ -27,6 +27,7 @@ from core.i18n import i18n
 from core.data_profiler import DataProfiler
 from core.project_manager import ProjectManager
 from core.audit import audit
+from core.auth import AuthManager
 
 from ui.sidebar import Sidebar
 from ui.theme import colors as theme_colors
@@ -49,6 +50,9 @@ def _tab_has_data(tab) -> bool:
 def _tab_is_runnable(tab) -> bool:
     """Tab 能否参与批量分析 — 有数据且定义了 run_and_display (Dashboard 等文档型 Tab 无此方法)"""
     return _tab_has_data(tab) and callable(getattr(tab, 'run_and_display', None))
+
+
+_TAB_PERMISSIONS = {28: "import"}
 
 
 class MainWindow(QMainWindow):
@@ -113,6 +117,20 @@ class MainWindow(QMainWindow):
             self.sidebar.add_plugin_entry(idx, name)
 
         _step(85, "主窗口初始化完成")
+
+    def _has_permission(self, action: str) -> bool:
+        if self.current_user is None:
+            return True
+        return AuthManager.check_permission(self.current_user, action)
+
+    def _check_permission(self, action: str) -> bool:
+        if self._has_permission(action):
+            return True
+        audit("permission_denied",
+              self.current_user.username if self.current_user else "anonymous",
+              f"action={action}")
+        QMessageBox.warning(self, "权限不足", f"当前角色无「{action}」操作权限")
+        return False
 
     def _setup_ui(self):
         divider_color = "#3a3a3a"
@@ -413,6 +431,8 @@ class MainWindow(QMainWindow):
 
     def _on_one_click_analysis(self):
         """一键智能分析 — 画像 → 推荐 → 执行 → 报告"""
+        if not self._check_permission("analyze"):
+            return
         raw_data = self.current_data.get("raw_data", {})
         if not raw_data:
             QMessageBox.warning(self, "无数据", "请先导入数据文件后再运行一键分析")
@@ -427,6 +447,8 @@ class MainWindow(QMainWindow):
         dlg.exec()
 
     def _on_html_export(self):
+        if not self._check_permission("export"):
+            return
         if not self.analyses:
             QMessageBox.warning(self, "无数据", "请先导入数据并运行分析")
             return
@@ -469,6 +491,9 @@ class MainWindow(QMainWindow):
 
     def _switch_tab(self, index: int):
         if 0 <= index < self.stack.count():
+            required = _TAB_PERMISSIONS.get(index, "view")
+            if not self._check_permission(required):
+                return
             # 懒加载: 首次访问时按需创建
             if index > 0:
                 self._lazy_load_tab(index)
@@ -508,6 +533,8 @@ class MainWindow(QMainWindow):
                     tab.refresh_if_changed()
 
     def _on_import_quality(self):
+        if not self._check_permission("import"):
+            return
         dialog = ImportDialog(self, mode="quality")
         if dialog.exec():
             file_path, sheet_names = dialog.get_selection()
@@ -572,6 +599,8 @@ class MainWindow(QMainWindow):
                 self.status_label.setText(i18n.tr("status.failed"))
 
     def _on_import_ie(self):
+        if not self._check_permission("import"):
+            return
         dialog = ImportDialog(self, mode="ie")
         if dialog.exec():
             file_path, sheet_names = dialog.get_selection()
@@ -635,6 +664,8 @@ class MainWindow(QMainWindow):
                 self.status_label.setText(i18n.tr("status.failed"))
 
     def _on_import_db(self):
+        if not self._check_permission("import"):
+            return
         dialog = DbConnectionDialog(self)
         if dialog.exec():
             config, table_names = dialog.get_selection()
@@ -752,6 +783,8 @@ class MainWindow(QMainWindow):
             self.status_label.setText(f"Sheet 已自动匹配: {sheets_info}")
 
     def _on_import_template(self):
+        if not self._check_permission("import"):
+            return
         file_path, _ = QFileDialog.getOpenFileName(
             self, i18n.tr("menu.import_template"), "",
             "Excel/JSON (*.xlsx *.xls *.xlsm *.json);;All (*.*)",
@@ -970,6 +1003,8 @@ class MainWindow(QMainWindow):
             tab.refresh_if_changed()
 
     def _on_run_all_analyses(self):
+        if not self._check_permission("analyze"):
+            return
         if not self.current_data:
             QMessageBox.warning(self, i18n.tr("msg.no_data"), i18n.tr("msg.no_data_file"))
             return
@@ -1029,6 +1064,8 @@ class MainWindow(QMainWindow):
         entry = INDEX_MAP.get(idx)
         if not entry or not tab_allowed(idx):
             return None
+        if not self._has_permission(_TAB_PERMISSIONS.get(idx, "view")):
+            return None
 
         _, _, class_name, module_path, _ = entry
         try:
@@ -1062,6 +1099,16 @@ class MainWindow(QMainWindow):
             tab.export_clicked.connect(lambda tid=idx: self._on_export_single(tid, "docx"))
         if hasattr(tab, 'analysis_completed'):
             tab.analysis_completed.connect(lambda tid=idx: self._on_analysis_finished(tid))
+        if callable(getattr(tab, 'run_and_display', None)):
+            _orig_run = tab.run_and_display
+
+            def _guarded_run(*args, _orig=_orig_run, **kwargs):
+                if not self._has_permission("analyze"):
+                    QMessageBox.warning(tab, "权限不足", "当前角色无「analyze」操作权限")
+                    return
+                return _orig(*args, **kwargs)
+
+            tab.run_and_display = _guarded_run
 
     def _get_tabs(self, force_load: bool = False):
         """获取 Tab 字典。force_load=False 仅返回已缓存的(懒加载友好)；force_load=True 全量加载"""
@@ -1095,6 +1142,8 @@ class MainWindow(QMainWindow):
         return charts
 
     def _on_export_single(self, idx: int, fmt: str = "docx"):
+        if not self._check_permission("export"):
+            return
         result = self.analyses.get(idx)
         if not result:
             QMessageBox.warning(self, i18n.tr("msg.no_results"), i18n.tr("msg.run_first"))
@@ -1127,6 +1176,8 @@ class MainWindow(QMainWindow):
                 QMessageBox.critical(self, i18n.tr("msg.export_failed"), str(e))
 
     def _on_export_all(self, fmt: str = "docx"):
+        if not self._check_permission("export"):
+            return
         if not self.analyses:
             QMessageBox.warning(self, i18n.tr("msg.no_results"), i18n.tr("msg.run_first"))
             return
@@ -1159,6 +1210,8 @@ class MainWindow(QMainWindow):
                 QMessageBox.critical(self, i18n.tr("msg.export_failed"), str(e))
 
     def _on_export_compliance(self, template_id: str):
+        if not self._check_permission("export"):
+            return
         if not self.analyses:
             QMessageBox.warning(self, i18n.tr("msg.no_results"), i18n.tr("msg.run_first"))
             return
@@ -1426,6 +1479,8 @@ class MainWindow(QMainWindow):
                 QMessageBox.critical(self, i18n.tr("msg.import_failed"), str(e))
 
     def _on_settings(self):
+        if not self._check_permission("settings"):
+            return
         from config.settings import save_config
         from core.auth import AuthManager
         dialog = SettingsDialog(self, user=self.current_user)
@@ -1446,6 +1501,8 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("设置已保存", 3000)
 
     def _on_data_cleaner(self):
+        if not self._check_permission("clean"):
+            return
         idx = self.stack.currentIndex()
         tabs = self._get_tabs()
         current_tab = tabs.get(idx)
@@ -1511,6 +1568,8 @@ class MainWindow(QMainWindow):
                 tools_menu.addAction(user_mgmt_action)
 
     def _on_data_clean_wizard(self):
+        if not self._check_permission("clean"):
+            return
         if not self.current_data:
             QMessageBox.information(self, "提示", "请先导入数据文件")
             return
@@ -1567,6 +1626,8 @@ class MainWindow(QMainWindow):
         super().closeEvent(event)
 
     def _on_batch_scheduler(self):
+        if not self._check_permission("analyze"):
+            return
         from ui.dialogs.batch_dialog import BatchDialog
         dlg = BatchDialog(self)
         dlg.exec()
@@ -1588,7 +1649,8 @@ class MainWindow(QMainWindow):
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_F11:
-            self._open_display_mode()
+            if self._check_permission("view"):
+                self._open_display_mode()
             return
         super().keyPressEvent(event)
 
@@ -1598,6 +1660,8 @@ class MainWindow(QMainWindow):
         dlg.exec()
 
     def _on_save_shared(self):
+        if not self._check_permission("share_project"):
+            return
         if not self.current_data or not self.current_user:
             QMessageBox.warning(self, "无数据", "请先导入数据并运行分析")
             return
@@ -1622,6 +1686,8 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "保存失败", str(e))
 
     def _on_load_shared(self):
+        if not self._check_permission("view_shared"):
+            return
         from core.project_manager import SharedProjectManager
         dept = self.current_user.department if self.current_user else ""
         role = self.current_user.role if self.current_user else ""
@@ -1745,9 +1811,14 @@ class MainWindow(QMainWindow):
         event.ignore()
 
     def _load_and_route(self, file_path: str):
+        if not self._check_permission("import"):
+            return
         try:
             self.status_label.setText(f"加载中... {file_path}")
             raw_data = self.data_loader.load(file_path)
+            audit("import_data",
+                  self.current_user.username if self.current_user else "anonymous",
+                  f"拖拽导入 {os.path.basename(file_path)}")
             self.current_data = {"file_path": file_path, "raw_data": raw_data}
             self.data_label.setText(os.path.basename(file_path))
             self._route_sheets_to_tabs(raw_data, worksheet_mode=True)
