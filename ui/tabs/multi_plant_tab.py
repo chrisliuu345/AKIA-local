@@ -176,6 +176,7 @@ class MultiPlantTab(BaseAnalysisTab):
             self.status_label.setStyleSheet(f"color: {tc['text_secondary']};")
 
     def _fill_table(self, plants):
+        self.table.clearSpans()
         self.table.setRowCount(len(plants))
         for row, p in enumerate(plants):
             if p.get("error"):

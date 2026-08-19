@@ -384,7 +384,7 @@ class FishboneCanvas(QGraphicsView):
         bx_start = spine_x1 + 70
 
         for i, (bname, root) in enumerate(branches.items()):
-            color = colors[i]
+            color = colors[i % len(colors)]
             bx = bx_start + i * bx_spacing if n > 1 else cx - 50
             angle_up = (i % 2 == 0)
 
