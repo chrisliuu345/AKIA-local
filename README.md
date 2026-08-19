@@ -109,6 +109,7 @@ python main.py
 用户名: admin
 密码: admin
 ```
+<img width="274" height="168" alt="{F6DD1BCE-DBE8-4CBF-97AE-EA87F4837AD2}" src="https://github.com/user-attachments/assets/a6f3746c-56a3-4562-b0f1-acf661e5f9a0" />
 
 ---
 
