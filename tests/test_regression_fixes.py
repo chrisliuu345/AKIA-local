@@ -214,8 +214,9 @@ class TestWeibullCensoredFit:
 class TestAuthAudit:
     def test_audit_entries_written(self, tmp_path, monkeypatch):
         import core.auth as auth_mod
+        import core.audit as audit_mod
         log = tmp_path / "audit.log"
-        monkeypatch.setattr(auth_mod, "_LOG_FILE", str(log))
+        monkeypatch.setattr(audit_mod, "LOG_FILE", str(log))
         monkeypatch.setattr(auth_mod.AuthManager, "USERS_FILE", str(tmp_path / "users.json"))
         am = auth_mod.AuthManager()
         am.create_user("zhang", "Pass1234", role="analyst")
@@ -233,8 +234,9 @@ class TestAuthAudit:
 class TestAuthPrivilegeEscalation:
     def _setup(self, tmp_path, monkeypatch):
         import core.auth as auth_mod
+        import core.audit as audit_mod
         monkeypatch.setattr(auth_mod.AuthManager, "USERS_FILE", str(tmp_path / "users.json"))
-        monkeypatch.setattr(auth_mod, "_LOG_FILE", str(tmp_path / "audit.log"))
+        monkeypatch.setattr(audit_mod, "LOG_FILE", str(tmp_path / "audit.log"))
         return auth_mod, auth_mod.AuthManager()
 
     def test_update_user_rejects_invalid_role(self, tmp_path, monkeypatch):
@@ -283,9 +285,10 @@ class TestAuthPrivilegeEscalation:
 
     def test_corrupt_users_file_recovers(self, tmp_path, monkeypatch):
         import core.auth as auth_mod
+        import core.audit as audit_mod
         users_file = tmp_path / "users.json"
         monkeypatch.setattr(auth_mod.AuthManager, "USERS_FILE", str(users_file))
-        monkeypatch.setattr(auth_mod, "_LOG_FILE", str(tmp_path / "audit.log"))
+        monkeypatch.setattr(audit_mod, "LOG_FILE", str(tmp_path / "audit.log"))
         users_file.write_text("{invalid json", encoding="utf-8")
         am = auth_mod.AuthManager()
         users = am.list_users()

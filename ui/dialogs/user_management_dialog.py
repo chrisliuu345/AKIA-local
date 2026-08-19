@@ -5,12 +5,13 @@
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox,
-    QComboBox, QLineEdit, QFormLayout, QGroupBox, QInputDialog,
+    QComboBox, QLineEdit, QFormLayout, QGroupBox, QInputDialog, QWidget,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
 from core.auth import AuthManager, _DEPARTMENTS, _TEAMS
+from core.password_policy import validate_password
 from ui.theme import colors as theme_colors, BUTTON_PRIMARY, BUTTON_SECONDARY, BUTTON_TOGGLE
 
 ROLE_LABELS = {
@@ -52,7 +53,7 @@ class UserManagementDialog(QDialog):
         self.table.setHorizontalHeaderLabels(["用户名", "角色", "部门", "班组", "创建时间", "操作"])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.table.horizontalHeader().setSectionResizeMode(5, QHeaderView.Fixed)
-        self.table.setColumnWidth(5, 120)
+        self.table.setColumnWidth(5, 160)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setAlternatingRowColors(True)
         self.table.setStyleSheet(
@@ -81,10 +82,23 @@ class UserManagementDialog(QDialog):
             self.table.setItem(i, 3, QTableWidgetItem(u.team or "-"))
             self.table.setItem(i, 4, QTableWidgetItem(u.created_at[:10] if u.created_at else ""))
 
-            btn_widget = QPushButton("编辑/删除")
-            btn_widget.setStyleSheet(BUTTON_TOGGLE)
-            btn_widget.clicked.connect(lambda checked, uname=u.username: self._on_edit_user(uname))
-            self.table.setCellWidget(i, 5, btn_widget)
+            btn_container = QWidget()
+            btn_layout = QHBoxLayout(btn_container)
+            btn_layout.setContentsMargins(2, 2, 2, 2)
+            btn_layout.setSpacing(4)
+
+            edit_btn = QPushButton("编辑/删除")
+            edit_btn.setStyleSheet(BUTTON_TOGGLE)
+            edit_btn.clicked.connect(lambda checked, uname=u.username: self._on_edit_user(uname))
+            btn_layout.addWidget(edit_btn)
+
+            if u.locked:
+                unlock_btn = QPushButton("解锁")
+                unlock_btn.setStyleSheet("QPushButton { color: #e67e22; font-size: 11px; }")
+                unlock_btn.clicked.connect(lambda checked, uname=u.username: self._on_unlock_user(uname))
+                btn_layout.addWidget(unlock_btn)
+
+            self.table.setCellWidget(i, 5, btn_container)
 
     def _on_add_user(self):
         dialog = _UserEditDialog(self, new_mode=True, current_user=self.current_user)
@@ -98,7 +112,20 @@ class UserManagementDialog(QDialog):
             if result:
                 self._refresh()
             else:
-                QMessageBox.warning(self, "添加失败", "用户名已存在或无效")
+                # W14: 区分失败原因（密码不合规 vs 用户已存在）
+                ok, reason = validate_password(data["password"])
+                if not ok:
+                    QMessageBox.warning(self, "添加失败", f"密码不符合要求: {reason}")
+                else:
+                    QMessageBox.warning(self, "添加失败", "用户名已存在")
+
+    def _on_unlock_user(self, username: str):
+        reply = QMessageBox.question(self, "确认解锁", f"确定要解锁用户 {username} 吗？")
+        if reply == QMessageBox.Yes:
+            if self.auth.unlock_user(username, caller=self.current_user):
+                self._refresh()
+            else:
+                QMessageBox.warning(self, "解锁失败", "解锁失败，可能无权限")
 
     def _on_edit_user(self, username: str):
         users = self.auth.list_users()
@@ -111,9 +138,14 @@ class UserManagementDialog(QDialog):
             if data.get("delete"):
                 self.auth.delete_user(username, caller=self.current_user)
             elif data.get("reset_password"):
-                self.auth.reset_password(username, data.get("new_password", "Pass1234"),
-                                         caller=self.current_user)
-                QMessageBox.information(self, "密码已重置", f"用户 {username} 的密码已重置")
+                # W13: 检查 reset_password 返回值
+                ok = self.auth.reset_password(username, data.get("new_password", "Pass1234"),
+                                              caller=self.current_user)
+                if ok:
+                    QMessageBox.information(self, "密码已重置",
+                                            f"用户 {username} 的密码已重置，下次登录需修改密码")
+                else:
+                    QMessageBox.warning(self, "重置失败", "密码重置失败，可能无权限或密码不合规")
             else:
                 self.auth.update_user(username, caller=self.current_user,
                                       role=data.get("role"),
