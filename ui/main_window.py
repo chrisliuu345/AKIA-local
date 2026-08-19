@@ -111,7 +111,6 @@ class MainWindow(QMainWindow):
             tab = p.create_tab()
             self.stack.addWidget(tab)
             self.sidebar.add_plugin_entry(idx, name)
-            self.sidebar.nav_buttons[idx] = tab
 
         _step(85, "主窗口初始化完成")
 
