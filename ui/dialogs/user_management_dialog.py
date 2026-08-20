@@ -76,7 +76,9 @@ class UserManagementDialog(QDialog):
             users = [u for u in users if u.role in ("analyst", "readonly")]
         self.table.setRowCount(len(users))
         for i, u in enumerate(users):
-            self.table.setItem(i, 0, QTableWidgetItem(u.username))
+            # P2-4: 锁定账户在用户名旁标注 🔒
+            name_text = f"🔒 {u.username}" if u.locked else u.username
+            self.table.setItem(i, 0, QTableWidgetItem(name_text))
             self.table.setItem(i, 1, QTableWidgetItem(ROLE_LABELS.get(u.role, u.role)))
             self.table.setItem(i, 2, QTableWidgetItem(u.department or "-"))
             self.table.setItem(i, 3, QTableWidgetItem(u.team or "-"))

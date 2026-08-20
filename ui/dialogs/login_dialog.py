@@ -18,10 +18,11 @@ from ui.theme import colors as theme_colors
 class ForceChangePasswordDialog(QDialog):
     """强制修改密码对话框（must_change_password 场景）"""
 
-    def __init__(self, auth: AuthManager, username: str, parent=None):
+    def __init__(self, auth: AuthManager, username: str, parent=None, user: User = None):
         super().__init__(parent)
         self.auth = auth
         self.username = username
+        self._caller = user
         self._setup_ui()
 
     def _setup_ui(self):
@@ -81,7 +82,7 @@ class ForceChangePasswordDialog(QDialog):
         if not ok:
             QMessageBox.warning(self, "密码不符合要求", reason)
             return
-        if self.auth.force_change_password(self.username, new_pwd):
+        if self.auth.force_change_password(self.username, new_pwd, caller=self._caller):
             self.accept()
         else:
             QMessageBox.warning(self, "修改失败", "密码修改失败，请重试")
@@ -168,11 +169,14 @@ class LoginDialog(QDialog):
         user = self.auth.authenticate(username, password)
         if user:
             if user.must_change_password:
-                dlg = ForceChangePasswordDialog(self.auth, username, self)
+                dlg = ForceChangePasswordDialog(self.auth, username, self, user=user)
                 if dlg.exec() == QDialog.Accepted:
                     user.must_change_password = False
                     self.user = user
                     self.accept()
+                else:
+                    # P2-2: 取消强制改密 → 提示并停留在登录页
+                    QMessageBox.warning(self, "需要修改密码", "请修改初始密码后才能登录")
                 return
             self.user = user
             self.accept()
