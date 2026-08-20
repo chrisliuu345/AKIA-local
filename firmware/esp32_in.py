@@ -56,6 +56,7 @@ _adc_map = {}
 _dig_map = {}
 _ds_driver = None
 ds18b20_roms = []
+_ds_pending_convert = False  # 两阶段 DS18B20: 本周期发起转换, 下周期读取 (W97)
 
 if not REPL_MODE:
     try:
@@ -69,29 +70,33 @@ if not REPL_MODE:
     for ch in CHANNELS:
         kind = ch.get("kind")
         pin_no = ch.get("pin")
-        if kind == "adc":
-            adc = machine.ADC(machine.Pin(pin_no))
-            adc.atten(machine.ADC.ATTN_11DB)
-            _adc_map[pin_no] = adc
-        elif kind == "digital":
-            pull = None
-            if ch.get("pull") == "up":
-                pull = machine.Pin.PULL_UP
-            elif ch.get("pull") == "down":
+        try:
+            if kind == "adc":
+                adc = machine.ADC(machine.Pin(pin_no))
+                adc.atten(machine.ADC.ATTN_11DB)
+                _adc_map[pin_no] = adc
+            elif kind == "digital":
+                pull = None
+                if ch.get("pull") == "up":
+                    pull = machine.Pin.PULL_UP
+                elif ch.get("pull") == "down":
+                    try:
+                        pull = machine.Pin.PULL_DOWN
+                    except Exception:
+                        pull = None
+                _dig_map[pin_no] = machine.Pin(pin_no, machine.Pin.IN, pull)
+            elif kind == "ds18b20":
                 try:
-                    pull = machine.Pin.PULL_DOWN
+                    import onewire
+                    import ds18x20
+                    _ds_driver = ds18x20.DS18X20(onewire.OneWire(machine.Pin(pin_no)))
+                    ds18b20_roms = _ds_driver.scan()
                 except Exception:
-                    pull = None
-            _dig_map[pin_no] = machine.Pin(pin_no, machine.Pin.IN, pull)
-        elif kind == "ds18b20":
-            try:
-                import onewire
-                import ds18x20
-                _ds_driver = ds18x20.DS18X20(onewire.OneWire(machine.Pin(pin_no)))
-                ds18b20_roms = _ds_driver.scan()
-            except Exception:
-                _ds_driver = None
-                ds18b20_roms = []
+                    _ds_driver = None
+                    ds18b20_roms = []
+        except Exception as e:
+            # 单个通道初始化失败仅跳过该通道, 不整体崩溃 (W98)
+            print("channel init failed:", ch.get("name"), repr(e))
 
 
 def send(msg):
@@ -121,6 +126,7 @@ def send_meta():
 
 
 def read_sensors():
+    global _ds_pending_convert
     values = []
     for ch in CHANNELS:
         kind = ch.get("kind")
@@ -135,9 +141,13 @@ def read_sensors():
             values.append(_dig_map[pin_no].value())
         elif kind == "ds18b20":
             if _ds_driver and ds18b20_roms:
-                _ds_driver.convert_temp()
-                time.sleep_ms(750)
-                values.append(round(_ds_driver.read_temp(ds18b20_roms[0]), 2))
+                # 两阶段采集: 本周期发起转换返回 None, 下周期读取, 避免 sleep_ms(750) 阻塞 (W97)
+                if _ds_pending_convert:
+                    values.append(round(_ds_driver.read_temp(ds18b20_roms[0]), 2))
+                else:
+                    _ds_driver.convert_temp()
+                    values.append(None)
+                _ds_pending_convert = not _ds_pending_convert
             else:
                 values.append(None)
         else:
@@ -165,6 +175,8 @@ def main():
                 data = uart.read()
                 if data:
                     buf += data
+                    if len(buf) > 65536:
+                        buf = b""  # 接收缓冲上限, 防无界增长 (W99)
                 while b"\n" in buf:
                     line, buf = buf.split(b"\n", 1)
                     try:
@@ -179,6 +191,8 @@ def main():
                         send({"type": "pong", "device_id": DEVICE_ID})
 
             if time.ticks_diff(time.ticks_ms(), last_stream) >= SAMPLE_MS:
+                # timestamp 语义: ESP32 无 RTC 时 time.time() 为 boot 后秒数,
+                # PC 端需按设备启动时间解读 (W100); 协议字段保持兼容
                 send({
                     "type": "data",
                     "device_id": DEVICE_ID,

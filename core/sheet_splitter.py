@@ -1,6 +1,6 @@
 """工作表拆分引擎 — 按列值/行数/条件/分组"""
 
-import os, pandas as pd, numpy as np
+import hashlib, os, pandas as pd, numpy as np
 from typing import List, Dict
 
 
@@ -12,7 +12,10 @@ class SheetSplitter:
         os.makedirs(output_dir, exist_ok=True)
         paths = []
         for val, group in df.groupby(column):
-            safe = str(val).replace("/", "_").replace("\\", "_")[:50]
+            raw = str(val).replace("/", "_").replace("\\", "_")
+            # 超长值截断时追加哈希后缀, 防不同长值截断后同名覆盖
+            suffix = "_" + hashlib.md5(raw.encode("utf-8")).hexdigest()[:6] if len(raw) > 50 else ""
+            safe = raw[:50] + suffix
             path = os.path.join(output_dir, f"{safe}.xlsx")
             group.to_excel(path, index=False)
             paths.append(path)

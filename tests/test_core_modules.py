@@ -104,6 +104,21 @@ class TestSheetSplitter:
         paths = SheetSplitter.split_by_condition(df, "cpk", "<", 1.0, tmp)
         assert len(paths) == 2
 
+    def test_split_by_column_hash_suffix(self):
+        """W95: 超长列值截断后追加哈希后缀, 前 50 字符相同但更长的值不互相覆盖"""
+        base = "Z" * 50
+        a = base + "A"  # 与 b 前 50 字符完全相同
+        b = base + "B"
+        df = pd.DataFrame({"cat": [a, a, b], "v": range(3)})
+        tmp = tempfile.mkdtemp()
+        paths = SheetSplitter.split_by_column(df, "cat", tmp)
+        assert len(paths) == 2, "两个不同长值应生成两个文件"
+        assert "_" in os.path.basename(paths[0]), "截断文件名应含哈希后缀"
+        # 短值文件名不含哈希后缀
+        df2 = pd.DataFrame({"cat": ["短", "短"], "v": range(2)})
+        paths2 = SheetSplitter.split_by_column(df2, "cat", tmp)
+        assert os.path.basename(paths2[0]) == "短.xlsx"
+
 
 # ── LPA ──
 class TestLPA:
@@ -147,6 +162,43 @@ class TestDataProfiler:
         issues = r["sheets"]["S"]["issues"]
         assert len(issues) >= 1  # 40% missing
 
+    def test_empty_spec_column_no_crash(self):
+        """W90: USL/LSL 列全为文本/空值时 profile 不崩, usl/lsl 为 None"""
+        df = pd.DataFrame({"a": [1, 2, 3, 4, 5], "USL": ["x", "y", "z", "w", "v"],
+                           "LSL": [None, None, None, None, None]})
+        cols = [
+            {"name": "a", "category": "measurement", "normality_pvalue": 0.5,
+             "std": 1.0, "distribution": "normal"},
+            {"name": "USL", "category": "text", "missing_pct": 0},
+            {"name": "LSL", "category": "text", "missing_pct": 0},
+        ]
+        dp = DataProfiler()
+        recs = dp._generate_recommendations(df, "S", cols)
+        assert recs, "应产生推荐"
+        assert recs[0]["params"].get("usl") is None
+        assert recs[0]["params"].get("lsl") is None
+
+    def test_high_correlation_detected(self):
+        """W91: 两列 Pearson |r|>0.95 报高相关 (替代旧的偏度差值误判)"""
+        df = pd.DataFrame({"a": list(range(1, 101)), "b": [2 * x for x in range(1, 101)]})
+        dp = DataProfiler()
+        r = dp.profile({"S": df})
+        issues = r["sheets"]["S"]["issues"]
+        assert any("高度相关" in i for i in issues)
+
+    def test_no_false_correlation_from_skewness(self):
+        """W91: 偏度相近但实际不相关的列不应报高相关 (旧逻辑会误判)"""
+        rng = np.random.default_rng(42)
+        df = pd.DataFrame({
+            "a": rng.normal(0, 1, 100),
+            "b": rng.exponential(3, 100),
+            "c": rng.exponential(4, 100),
+        })
+        dp = DataProfiler()
+        r = dp.profile({"S": df})
+        issues = [i for i in r["sheets"]["S"]["issues"] if "高度相关" in i]
+        assert issues == []
+
 
 # ── i18n 中文文案完整性 (v2.4.1 中文化后仅维护 zh.json) ──
 class TestI18nZh:
@@ -158,6 +210,21 @@ class TestI18nZh:
         assert zh, "zh.json 为空"
         for k in ["sidebar.home", "menu.file", "status.loaded", "db.connection_title"]:
             assert k in zh, f"zh.json 缺键: {k}"
+
+
+# ── Context Builder ──
+class TestContextBuilder:
+    def test_acceptance_string_no_crash(self):
+        """W93: result.acceptance 为字符串时 build() 不抛 AttributeError"""
+        from core.context_builder import ContextBuilder
+        cb = ContextBuilder()
+        analyses = {
+            1: {"analysis_type": "GRR", "params": {},
+                "result": {"percentages": {"grr_pct_tv": 12.5}, "ndc": 5,
+                           "acceptance": "通过"}},
+        }
+        text = cb.build(analyses, "f.xlsx")
+        assert "判定=通过" in text
 
 
 if __name__ == "__main__":

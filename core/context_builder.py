@@ -34,8 +34,13 @@ class ContextBuilder:
 
             pct = result.get("percentages", {})
             if pct:
+                acc = result.get("acceptance", {})
+                if isinstance(acc, dict):
+                    message = acc.get("message", "-")
+                else:
+                    message = str(acc) if acc else "-"
                 parts.append(f"GRR分析: %GRR={pct.get('grr_pct_tv','-')}%, "
-                            f"NDC={result.get('ndc','-')}, 判定={result.get('acceptance',{}).get('message','-')}")
+                            f"NDC={result.get('ndc','-')}, 判定={message}")
 
             if "p_value" in result:
                 sig = "显著" if result.get("is_significant") else "不显著"
