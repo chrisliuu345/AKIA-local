@@ -91,6 +91,22 @@ class TestEvaluate:
         assert evaluate("a % b", v) == 2.0
         assert evaluate("a ** 2", v) == 100.0
 
+    def test_parse_cache_reused(self):
+        """W96: validate+evaluate 复用同一 parse 结果, 不重复 ast.parse"""
+        from core import kpi_formula as kf
+        kf._parse_cache.clear()
+        validate("a + 1")
+        evaluate("a + 1", {"a": 2.0})
+        assert len(kf._parse_cache) == 1
+
+    def test_huge_constant_power_rejected(self):
+        """W96: 常量指数过大时拒绝 (防超长幂运算), 变量指数不受限"""
+        with pytest.raises(FormulaError, match="指数过大"):
+            evaluate("2 ** 1000000", {})
+        with pytest.raises(FormulaError, match="指数过大"):
+            evaluate("10 ** 9999999", {})
+        assert evaluate("2 ** x", {"x": 10.0}) == 1024.0
+
     def test_precedence(self):
         v = {"x": 2.0, "y": 3.0, "z": 4.0}
         assert evaluate("x + y * z", v) == 14.0

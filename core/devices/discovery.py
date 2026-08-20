@@ -15,17 +15,33 @@ class DeviceInfo:
     description: str = ""
 
 
-def discover_devices(timeout: float = 0.5) -> list[DeviceInfo]:
+DEVICE_LIMIT = 8  # 单次扫描最多探测的串口数，防止多串口机器长时间阻塞 UI (W87)
+
+
+def discover_devices(timeout: float = 0.5,
+                     cancel_check=None) -> list[DeviceInfo]:
+    """扫描串口并识别 QA-Tool 设备。
+
+    timeout: 每个端口的读窗口（至少 4s，覆盖板子 boot 流）。
+    cancel_check: 可选回调 `() -> bool`，返回 True 时立即停止扫描
+                  （用于后台任务被取消的场景，W87）。
+    """
     import serial.tools.list_ports
     from core.devices.protocol import encode_message, decode_message, MessageType
 
     found: list[DeviceInfo] = []
     ports = list(serial.tools.list_ports.comports())
+    if len(ports) > DEVICE_LIMIT:
+        logger.info("Discovery limited to %d of %d ports (W87)", DEVICE_LIMIT, len(ports))
+        ports = ports[:DEVICE_LIMIT]
     # Opening a serial port resets an attached ESP32 (auto-reset circuit); the
     # board needs ~1-2s to boot and announces itself (HELLO) right after boot,
     # so the read window must cover the boot stream.
     window = max(timeout, 4.0)
     for info in ports:
+        if cancel_check is not None and cancel_check():
+            logger.info("Discovery cancelled by caller")
+            break
         port = info.device
         try:
             import serial
@@ -48,6 +64,8 @@ def discover_devices(timeout: float = 0.5) -> list[DeviceInfo]:
                 deadline = time.time() + window
                 found_here = False
                 while time.time() < deadline:
+                    if cancel_check is not None and cancel_check():
+                        break
                     resp = ser.read(4096)
                     if not resp:
                         continue

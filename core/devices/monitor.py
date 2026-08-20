@@ -42,10 +42,17 @@ class DeviceMonitor:
 
     def stop(self) -> None:
         self._stop_event.set()
-        if self._ticker and self._ticker.is_alive():
-            self._ticker.join(timeout=3)
+        # 先 detach 全部设备，让各 SerialTransport 读线程退出 (W88)。
+        # close() 内部会 stop_event.set + join(3)；ticker 依赖 stop_event，
+        # 全部 detach 后再 join ticker 可避免 ticker 在收尾期间继续 ping。
         for device in list(self._attached.values()):
             self.detach(device)
+        if self._ticker and self._ticker.is_alive():
+            self._ticker.join(timeout=3)
+        if self._ticker and self._ticker.is_alive():
+            logger.warning(
+                "DeviceMonitor ticker thread still alive after stop (daemon, exiting anyway)"
+            )
 
     def attach(self, device: Device) -> bool:
         if device.transport and device.transport.is_open():

@@ -65,6 +65,7 @@ class BatchScheduler(QObject):
         self._timer.timeout.connect(self._check_schedule)
         self._workers: List[_WorkerThread] = []
         self._running: set[str] = set()
+        self._poll_interval_ms = 30000
         self._log: List[str] = []
         self._execute_fn = execute_fn or self._default_execute
         self._load_tasks()
@@ -92,6 +93,7 @@ class BatchScheduler(QObject):
     # ── 调度控制 ──────────────────────────────────────
     def start(self, interval_ms: int = 30000):
         """启动调度器，每 interval_ms 检查一次"""
+        self._poll_interval_ms = interval_ms
         self._timer.start(interval_ms)
         self._log_msg("调度器已启动")
 
@@ -125,9 +127,9 @@ class BatchScheduler(QObject):
             try:
                 h, m = map(int, target_time.split(":"))
                 target = now.replace(hour=h, minute=m, second=0, microsecond=0)
-                # 在目标时间 ±30s 窗口内
+                # 在目标时间 ±窗口内 (窗口至少 30s, 且 ≥2×轮询周期, 防抖动错过)
                 diff = abs((now - target).total_seconds())
-                if diff <= 30:
+                if diff <= max(30, self._poll_interval_ms / 1000 * 2):
                     if task.last_run:
                         last_date = datetime.fromisoformat(task.last_run).date()
                         return last_date < now.date()

@@ -1,5 +1,6 @@
 """设备通信内核单元测试 — mock 串口回环"""
 import json
+import os
 import time
 import pytest
 from unittest.mock import patch, MagicMock
@@ -218,6 +219,37 @@ class TestDiscovery:
         assert result[0].device_type == "esp32_in"
         assert result[0].port == "COM3"
 
+    @patch("serial.tools.list_ports.comports")
+    @patch("serial.Serial")
+    def test_discover_cancelled(self, mock_serial_cls, mock_comports):
+        """W87: cancel_check 返回 True 时立即停止扫描, 不打开任何串口"""
+        mock_port = MagicMock()
+        mock_port.device = "COM3"
+        mock_port.description = "USB Serial"
+        mock_comports.return_value = [mock_port]
+
+        result = discover_devices(timeout=0.1, cancel_check=lambda: True)
+        assert result == []
+        mock_serial_cls.assert_not_called()
+
+    @patch("serial.tools.list_ports.comports")
+    @patch("serial.Serial")
+    def test_discover_device_limit(self, mock_serial_cls, mock_comports):
+        """W87: 端口数超 DEVICE_LIMIT 时只探测前 8 个, 防止多串口机器长时间阻塞 UI"""
+        ports = [MagicMock(device=f"COM{i + 1}", description="USB") for i in range(12)]
+        mock_comports.return_value = ports
+
+        hello_resp = encode_message(MessageType.HELLO, device_id="esp1",
+                                    device_type="esp32_in", fw_version="1.0")
+        mock_inst = MagicMock()
+        mock_inst.read.return_value = hello_resp
+        mock_inst.__enter__.return_value = mock_inst
+        mock_serial_cls.return_value = mock_inst
+
+        result = discover_devices(timeout=0.1)
+        assert mock_serial_cls.call_count <= 8
+        assert len(result) == 1
+
 
 # ── Registry ──
 
@@ -256,6 +288,35 @@ class TestRegistry:
         reg.add(d)
         reg.stop_all()
         assert len(reg.devices) == 0
+
+    def test_save_persistent_atomic_write(self, tmp_path, monkeypatch):
+        """W89: save_persistent 原子写, 无遗留 .tmp 临时文件"""
+        import core.devices.registry as reg_mod
+        monkeypatch.setattr(reg_mod, "_CONFIG_PATH", str(tmp_path / "user_config.json"))
+        reg = DeviceRegistry()
+        d = Device("e1", "esp32_in", "COM3")
+        reg.add(d)
+        reg.save_persistent()
+        assert os.path.exists(tmp_path / "user_config.json")
+        data = json.loads((tmp_path / "user_config.json").read_text(encoding="utf-8"))
+        assert data["devices"][0]["device_id"] == "e1"
+        leftovers = [p for p in tmp_path.iterdir() if p.suffix == ".tmp"]
+        assert leftovers == []
+
+    def test_load_persistent_roundtrip(self, tmp_path, monkeypatch):
+        """W89: 保存后可被新实例读回 (含 custom_name)"""
+        import core.devices.registry as reg_mod
+        monkeypatch.setattr(reg_mod, "_CONFIG_PATH", str(tmp_path / "user_config.json"))
+        reg = DeviceRegistry()
+        d = Device("e1", "esp32_in", "COM3", 115200, "1.0")
+        d.custom_name = "我的设备"
+        reg.add(d)
+        reg.save_persistent()
+        reg2 = DeviceRegistry()
+        loaded = reg2.load_persistent()
+        assert len(loaded) == 1
+        assert loaded[0]["device_id"] == "e1"
+        assert loaded[0]["custom_name"] == "我的设备"
 
 
 # ── Device models ──

@@ -33,6 +33,22 @@ class FormulaError(Exception):
 MAX_EXPR_LEN = 500
 MAX_EVAL_DEPTH = 200
 
+# 解析缓存 — 避免 validate 与 evaluate 重复 ast.parse (W96)
+_MAX_PARSE_CACHE = 256
+_parse_cache: Dict[str, ast.Expression] = {}
+
+
+def _parse(expr: str) -> ast.Expression:
+    """ast.parse(mode='eval') + 缓存复用, 异常由调用方捕获"""
+    cached = _parse_cache.get(expr)
+    if cached is not None:
+        return cached
+    tree = ast.parse(expr, mode="eval")
+    if len(_parse_cache) >= _MAX_PARSE_CACHE:
+        _parse_cache.clear()
+    _parse_cache[expr] = tree
+    return tree
+
 
 def validate(expr: str) -> None:
     """语法 + 白名单校验, 不通过抛 FormulaError"""
@@ -41,7 +57,7 @@ def validate(expr: str) -> None:
     if len(expr) > MAX_EXPR_LEN:
         raise FormulaError(f"表达式过长 (上限 {MAX_EXPR_LEN} 字符)")
     try:
-        tree = ast.parse(expr, mode="eval")
+        tree = _parse(expr)
     except SyntaxError as e:
         raise FormulaError(f"语法错误: {e.msg} (位置 {e.offset})") from e
     except RecursionError:
@@ -67,7 +83,7 @@ def evaluate(expr: str, variables: Dict[str, float]) -> float:
     """校验并求值 — NameError/除零等转为 FormulaError, 保证只抛 FormulaError"""
     import math
     validate(expr)
-    tree = ast.parse(expr, mode="eval")
+    tree = _parse(expr)
     depth = 0
 
     def _eval(node):
@@ -113,6 +129,9 @@ def evaluate(expr: str, variables: Dict[str, float]) -> float:
                         raise FormulaError("除数为零")
                     return left % right
                 if isinstance(node.op, ast.Pow):
+                    # 常量指数过大时拒绝, 防超长幂运算耗时 (指数可为变量/表达式, 不受限)
+                    if isinstance(node.right, ast.Constant) and abs(node.right.value) >= 1e6:
+                        raise FormulaError("指数过大")
                     return left ** right
             raise FormulaError(f"无法求值的节点: {type(node).__name__}")
         finally:

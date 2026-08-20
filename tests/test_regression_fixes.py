@@ -360,6 +360,35 @@ class TestBatchWorkerCleanup:
         sched._running.add("abc")
         sched._on_task_finished("abc", True, "")
         assert "abc" not in sched._running
+
+    def test_daily_window_scales_with_interval(self, tmp_path, monkeypatch):
+        """W94: daily 窗口 = max(30, 2×轮询周期), 60s 轮询不因抖动错过目标"""
+        from datetime import datetime
+        from core import batch_scheduler as bs_mod
+
+        monkeypatch.setattr(bs_mod.BatchScheduler, "TASKS_FILE", str(tmp_path / "tasks.json"))
+        sched = bs_mod.BatchScheduler(execute_fn=lambda t: None)
+        t = bs_mod.BatchTask(name="t1", id="d1", schedule="daily@10:00")
+        # 60s 轮询: 窗口放大到 120s (2×interval), 差 5s 应触发
+        sched._poll_interval_ms = 60000
+        assert sched._should_run(t, datetime(2026, 8, 20, 10, 0, 5)) is True
+        # 差 150s > 窗口 120s → 不触发
+        assert sched._should_run(t, datetime(2026, 8, 20, 10, 2, 30)) is False
+        # 默认 30s 轮询: 窗口放宽到 60s (2×interval, 原 30s 窗口防抖动)
+        sched._poll_interval_ms = 30000
+        assert sched._should_run(t, datetime(2026, 8, 20, 10, 0, 29)) is True
+        assert sched._should_run(t, datetime(2026, 8, 20, 10, 1, 1)) is False
+
+    def test_kstest_skipped_for_constant_large_data(self):
+        """W92: >5000 行近常数数据不跑 kstest (scale≈0 退化), p_value=None"""
+        import pandas as pd
+        from core.data_validator import DataValidator
+        dv = DataValidator()
+        df = pd.DataFrame({"m": [5.0] * 6000})
+        res = dv.validate(df, ["m"])
+        s = res["summary"]["m"]
+        assert s["normality_p_value"] is None
+        assert s["is_normal"] is False
 # ── P1-8: waterfall 图非默认索引错位 ──────────────────
 class TestWaterfallIndex:
     def test_waterfall_non_default_index(self):
