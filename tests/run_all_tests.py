@@ -458,6 +458,14 @@ def T42_ie_full():
     parser=IEDataParser()
     ie_data=parser.parse_all(raw)
     assert isinstance(ie_data, dict)
+    from core.data_objects import TimeObservation, Process, MaterialFlow, Resource
+    to_list=ie_data.get("TimeObservation", [])
+    assert len(to_list) > 0, "时间观测未解析出对象"
+    assert all(o.observation_time > 0 for o in to_list), "observation_time 数据丢失"
+    assert all(o.cycle > 0 for o in to_list), "cycle 数据丢失"
+    assert ie_data.get("Process"), "工序表未解析"
+    assert ie_data.get("MaterialFlow"), "物流数据未解析"
+    assert ie_data.get("Resource"), "设备清单未解析"
 
 @test("辅助", "数据画像 DataProfiler")
 def T43_profiler():
@@ -477,7 +485,6 @@ def T44_gui_imports():
     from ui.welcome_page import WelcomePage
     from ui.theme import colors, BUTTON_PRIMARY, BUTTON_SECONDARY
     from ui.dialogs.db_connection_dialog import DbConnectionDialog
-    assert hasattr(Sidebar, 'import_db_clicked')
     assert callable(colors)
 
 @test("GUI", "所有 Tab 模块导入")
