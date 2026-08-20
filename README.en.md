@@ -197,7 +197,13 @@ Password: admin
 
 ## License
 
-MIT
+This project is licensed under the [GNU AGPL v3.0](LICENSE).
+
+- Distributing this project or modified versions of it requires providing the complete source code under AGPL-3.0
+- Running a modified version as a network service for users also requires offering the source code to those users (AGPL Section 13)
+- For commercial closed-source integration, please contact the maintainer to negotiate a separate license
+
+Please read the [Contributing Guide](CONTRIBUTING.en.md) before contributing.
 
 ---
 
