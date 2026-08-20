@@ -80,6 +80,8 @@ def announce():
 
 
 def run_command(command):
+    if not isinstance(command, str):
+        return "error: command must be a string"
     if ":" not in command:
         return "error: malformed command (expected <name>:<value>)"
     name, value = command.split(":", 1)
@@ -116,29 +118,37 @@ def main():
         pass
     buf = b""
     while True:
-        if uart.any():
-            data = uart.read()
-            if data:
-                buf += data
-                while b"\n" in buf:
-                    line, buf = buf.split(b"\n", 1)
-                    try:
-                        msg = json.loads(line.decode("utf-8", "replace"))
-                    except Exception:
-                        continue
-                    mtype = msg.get("type")
-                    if mtype == "hello":
-                        announce()
-                    elif mtype == "ping":
-                        send({"type": "pong", "device_id": DEVICE_ID})
-                    elif mtype == "command":
-                        result = run_command(msg.get("command", ""))
-                        send({
-                            "type": "ack",
-                            "device_id": DEVICE_ID,
-                            "command": msg.get("command", ""),
-                            "result": result,
-                        })
+        try:
+            if uart.any():
+                data = uart.read()
+                if data:
+                    buf += data
+                    if len(buf) > 65536:
+                        buf = b""
+                    while b"\n" in buf:
+                        line, buf = buf.split(b"\n", 1)
+                        try:
+                            msg = json.loads(line.decode("utf-8", "replace"))
+                        except Exception:
+                            continue
+                        mtype = msg.get("type")
+                        if mtype == "hello":
+                            announce()
+                        elif mtype == "ping":
+                            send({"type": "pong", "device_id": DEVICE_ID})
+                        elif mtype == "command":
+                            result = run_command(msg.get("command", ""))
+                            send({
+                                "type": "ack",
+                                "device_id": DEVICE_ID,
+                                "command": msg.get("command", ""),
+                                "result": result,
+                            })
+        except Exception as e:
+            try:
+                uart.write(("ERR " + repr(e) + "\n").encode("utf-8"))
+            except Exception:
+                pass
 
         time.sleep_ms(20)
 

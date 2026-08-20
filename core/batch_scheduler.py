@@ -64,6 +64,7 @@ class BatchScheduler(QObject):
         self._timer = QTimer(self)
         self._timer.timeout.connect(self._check_schedule)
         self._workers: List[_WorkerThread] = []
+        self._running: set[str] = set()
         self._log: List[str] = []
         self._execute_fn = execute_fn or self._default_execute
         self._load_tasks()
@@ -136,12 +137,17 @@ class BatchScheduler(QObject):
         return False
 
     def _execute_task(self, task: BatchTask):
+        if task.id in self._running:
+            self._log_msg(f"任务正在执行中，跳过重复启动: {task.name}")
+            return
+        self._running.add(task.id)
         worker = _WorkerThread(task, self._execute_fn)
         worker.task_finished.connect(self._on_task_finished)
         self._workers.append(worker)
         worker.start()
 
     def _on_task_finished(self, task_id: str, success: bool, error: str):
+        self._running.discard(task_id)
         if task_id in self.tasks:
             t = self.tasks[task_id]
             t.last_run = datetime.now().isoformat()
