@@ -47,19 +47,21 @@ def build_sheets():
     })
 
     # 4. 时间观测 (TimeObservation)
+    # 列名遵循 TimeObservation 字段别名契约: 工序→process_id, 操作员→operator,
+    # 循环→cycle, 观测时间→observation_time (不能再用"循环时间/观测次数", 会双映射 cycle)
     n4 = 20
     ops = ["张三", "李四", "王五"]
     sheets["时间观测"] = pd.DataFrame({
         "工序": ["OP1"] * n4,
         "操作员": [ops[i % 3] for i in range(n4)],
-        "循环时间": np.round(rng.normal(50.0, 5.0, n4), 1),
-        "观测次数": [5] * n4,
+        "循环": np.round(rng.normal(50.0, 5.0, n4), 1),
+        "观测时间": np.round(rng.normal(50.3, 5.0, n4), 1),
     })
 
     # 5. 设备清单 (Resource)
+    # 列名避免命中 resource_id 别名"名称": 只保留"设备编号"作为唯一标识
     sheets["设备清单"] = pd.DataFrame({
         "设备编号": ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8"],
-        "设备名称": ["车床", "铣床", "钻床", "磨床", "冲床", "焊接机", "注塑机", "检测台"],
         "可用时间": [480] * 8,
         "停机时间": [30, 45, 20, 35, 40, 25, 50, 15],
     })
