@@ -239,3 +239,179 @@ class TestUnifiedAudit:
         am.create_user("alice", "Pass1234", role="analyst")
         log_content = (tmp_path / "audit.log").read_text(encoding="utf-8")
         assert "alice: create_user" in log_content
+
+
+# ── Commit F: force_change_password 授权校验 (P1-1) ───
+
+class TestForceChangePasswordGuard:
+    def test_reject_non_owner_caller(self, tmp_path, monkeypatch):
+        """caller 非本人 → 拒绝且不修改密码"""
+        auth_mod, audit_mod, am = _setup_auth(tmp_path, monkeypatch)
+        am.create_user("alice", "Pass1234", role="analyst")
+        # 构造 admin 作为 caller
+        admin = am.authenticate("admin", "admin")
+        assert am.force_change_password("alice", "NewPass99", caller=admin) is False
+        assert am.authenticate("alice", "NewPass99") is None  # 密码未变
+        log_content = (tmp_path / "audit.log").read_text(encoding="utf-8")
+        assert "force_change_password_failed" in log_content
+
+    def test_reject_when_not_must_change(self, tmp_path, monkeypatch):
+        """非强制改密状态的账户调用 → 拒绝"""
+        _, _, am = _setup_auth(tmp_path, monkeypatch)
+        am.create_user("bob", "Pass1234", role="analyst")
+        bob = am.authenticate("bob", "Pass1234")  # 新用户无 flag
+        assert bob.must_change_password is False
+        assert am.force_change_password("bob", "NewPass99", caller=bob) is False
+
+    def test_owner_can_change_when_flagged(self, tmp_path, monkeypatch):
+        """本人 + must_change_password → 成功并清除 flag"""
+        auth_mod, _, am = _setup_auth(tmp_path, monkeypatch)
+        # 手工构造 must_change 用户
+        users = am._load_users()
+        users.append({"username": "carol", "password_hash": auth_mod._hash_password("Pass1234"),
+                      "role": "analyst", "must_change_password": True})
+        am._save_users(users)
+        carol = am.authenticate("carol", "Pass1234")
+        assert carol.must_change_password is True
+        assert am.force_change_password("carol", "NewPass99", caller=carol) is True
+        assert am.authenticate("carol", "NewPass99") is not None
+
+
+# ── Commit F: 存量默认密码迁移 (P1-2) ─────────────────
+
+class TestDefaultAdminMigration:
+    def test_legacy_admin_default_pw_migrated(self, tmp_path, monkeypatch):
+        """存量 admin 仍用默认密码 → 启动时强制改密"""
+        auth_mod, _, am = _setup_auth(tmp_path, monkeypatch)
+        # 手工构造"旧版" admin 记录（无 must_change_password 字段 = 未改密）
+        users = am._load_users()
+        u = next(x for x in users if x["username"] == "admin")
+        u.pop("must_change_password", None)
+        am._save_users(users)
+        # 重新构造 AuthManager 触发 _ensure_file → 迁移
+        am2 = auth_mod.AuthManager()
+        u2 = next(x for x in am2._load_users() if x["username"] == "admin")
+        assert u2["must_change_password"] is True
+
+    def test_changed_admin_not_migrated(self, tmp_path, monkeypatch):
+        """已改密的 admin → 迁移不动"""
+        auth_mod, _, am = _setup_auth(tmp_path, monkeypatch)
+        users = am._load_users()
+        u = next(x for x in users if x["username"] == "admin")
+        u["password_hash"] = auth_mod._hash_password("NewAdmin99")
+        u["must_change_password"] = False
+        am._save_users(users)
+        am2 = auth_mod.AuthManager()
+        u2 = next(x for x in am2._load_users() if x["username"] == "admin")
+        assert u2["must_change_password"] is False
+
+    def test_migrated_admin_requires_password_change_on_login(self, tmp_path, monkeypatch):
+        """迁移后 admin 登录须先改密 (auth 返回 flag)"""
+        auth_mod, _, am = _setup_auth(tmp_path, monkeypatch)
+        users = am._load_users()
+        u = next(x for x in users if x["username"] == "admin")
+        u.pop("must_change_password", None)
+        am._save_users(users)
+        am2 = auth_mod.AuthManager()
+        admin = am2.authenticate("admin", "admin")
+        assert admin is not None
+        assert admin.must_change_password is True
+
+
+# ── Commit F: unlock caller 必填 + 审计 (P1-3/P2-1) ───
+
+class TestUnlockCallerRequired:
+    def test_unlock_without_caller_rejected(self, tmp_path, monkeypatch):
+        """caller=None → 拒绝解锁"""
+        _, _, am = _setup_auth(tmp_path, monkeypatch)
+        am.create_user("alice", "Pass1234", role="analyst")
+        for _ in range(5):
+            am.authenticate("alice", "wrong")
+        assert am.is_account_locked("alice")
+        assert am.unlock_user("alice", caller=None) is False
+        assert am.is_account_locked("alice") is True
+
+    def test_unlock_audit_records_operator(self, tmp_path, monkeypatch):
+        """解锁审计记录 by=执行者"""
+        _, _, am = _setup_auth(tmp_path, monkeypatch)
+        am.create_user("alice", "Pass1234", role="analyst")
+        for _ in range(5):
+            am.authenticate("alice", "wrong")
+        admin = am.authenticate("admin", "admin")
+        assert am.unlock_user("alice", caller=admin) is True
+        log_content = (tmp_path / "audit.log").read_text(encoding="utf-8")
+        assert "unlock_user" in log_content and "by=admin" in log_content
+
+    def test_unlock_resets_failed_attempts(self, tmp_path, monkeypatch):
+        """解锁后 failed_attempts 归零 (G2 前置)"""
+        _, _, am = _setup_auth(tmp_path, monkeypatch)
+        am.create_user("alice", "Pass1234", role="analyst")
+        for _ in range(5):
+            am.authenticate("alice", "wrong")
+        admin = am.authenticate("admin", "admin")
+        am.unlock_user("alice", caller=admin)
+        users = am._load_users()
+        u = next(x for x in users if x["username"] == "alice")
+        assert u["failed_attempts"] == 0
+
+
+# ── Commit F: 边界补充 (G1/G2/G3) ────────────────────
+
+class TestLockoutBoundaries:
+    def test_locked_account_attempts_frozen(self, tmp_path, monkeypatch):
+        """G1: 锁定后再失败 → 计数冻结 + login_locked 审计"""
+        _, _, am = _setup_auth(tmp_path, monkeypatch)
+        am.create_user("alice", "Pass1234", role="analyst")
+        for _ in range(5):
+            am.authenticate("alice", "wrong")
+        am.authenticate("alice", "wrong")  # 第 6 次
+        users = am._load_users()
+        u = next(x for x in users if x["username"] == "alice")
+        assert u["failed_attempts"] == 5  # 冻结
+        log_content = (tmp_path / "audit.log").read_text(encoding="utf-8")
+        assert "login_locked" in log_content
+
+    def test_unlock_then_4_failures_no_relock(self, tmp_path, monkeypatch):
+        """G2: 解锁后 4 次失败不锁，第 5 次才锁"""
+        _, _, am = _setup_auth(tmp_path, monkeypatch)
+        am.create_user("alice", "Pass1234", role="analyst")
+        for _ in range(5):
+            am.authenticate("alice", "wrong")
+        admin = am.authenticate("admin", "admin")
+        am.unlock_user("alice", caller=admin)
+        for _ in range(4):
+            am.authenticate("alice", "wrong")
+        assert am.is_account_locked("alice") is False
+        am.authenticate("alice", "wrong")  # 第 5 次
+        assert am.is_account_locked("alice") is True
+
+    def test_unknown_user_audit(self, tmp_path, monkeypatch):
+        """G3: 用户不存在 → login_failed 用户不存在 审计"""
+        _, _, am = _setup_auth(tmp_path, monkeypatch)
+        am.authenticate("ghost", "x")
+        log_content = (tmp_path / "audit.log").read_text(encoding="utf-8")
+        assert "用户不存在" in log_content
+
+
+# ── Commit F: from_dict 容错 / change_password 锁检查 ──
+
+class TestFromDictTolerant:
+    def test_list_users_skips_invalid_records(self, tmp_path, monkeypatch):
+        """P3-6: 缺 password_hash 的记录被跳过，不崩溃"""
+        _, _, am = _setup_auth(tmp_path, monkeypatch)
+        users = am._load_users()
+        users.append({"username": "ghost", "role": "analyst"})  # 无 password_hash
+        am._save_users(users)
+        names = [u.username for u in am.list_users()]
+        assert "ghost" not in names
+        assert "admin" in names
+
+
+class TestChangePasswordLocked:
+    def test_locked_account_cannot_change_password(self, tmp_path, monkeypatch):
+        """P3-5: 锁定账户 change_password 失败"""
+        _, _, am = _setup_auth(tmp_path, monkeypatch)
+        am.create_user("alice", "Pass1234", role="analyst")
+        for _ in range(5):
+            am.authenticate("alice", "wrong")
+        assert am.change_password("alice", "Pass1234", "NewPass99") is False

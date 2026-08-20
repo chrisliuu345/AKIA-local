@@ -17,6 +17,7 @@ from core.audit import audit as _audit  # W04: 统一审计实现
 # 简易 bcrypt-lite: 使用 PBKDF2-SHA256 替代 bcrypt（无额外依赖）
 # 格式: $pbkdf2-sha256$rounds$salt_base64$hash_base64
 _PBKDF2_ROUNDS = 150000
+_MAX_FAILED_ATTEMPTS = 5  # 连续登录失败锁定阈值
 
 
 def _hash_password(password: str) -> str:
@@ -59,7 +60,10 @@ class User:
 
     @classmethod
     def from_dict(cls, d: dict) -> "User":
-        """从字典构造 User，忽略未知字段，缺失字段用默认值（W03 迁移兼容）"""
+        """从字典构造 User，忽略未知字段，缺失字段用默认值（W03 迁移兼容）
+        缺 password_hash 视为非法记录 (P3-6)，由调用方捕获跳过"""
+        if not d.get("password_hash"):
+            raise ValueError("缺少 password_hash")
         known = {k: v for k, v in d.items() if k in cls.__dataclass_fields__}
         return cls(**known)
 
@@ -124,6 +128,27 @@ class AuthManager:
     def _ensure_file(self):
         if not os.path.exists(self.USERS_FILE):
             self._init_default_admin()
+            return
+        self._migrate_default_admin()
+
+    def _migrate_default_admin(self):
+        """存量部署迁移 (P1-2): admin 仍使用默认密码时强制改密"""
+        try:
+            users = self._read_users_file()
+        except Exception:
+            return
+        changed = False
+        for u in users:
+            if u.get("username") == "admin" and not u.get("must_change_password", False):
+                if _verify_password("admin", u.get("password_hash", "")):
+                    u["must_change_password"] = True
+                    changed = True
+        if changed:
+            try:
+                self._save_users(users)
+                _audit("auth_migrate", "system", "检测到 admin 默认密码，已启用强制改密")
+            except OSError:
+                pass
 
     def _init_default_admin(self):
         admin = User(
@@ -191,7 +216,7 @@ class AuthManager:
                     return User.from_dict(u)
                 else:
                     u["failed_attempts"] = u.get("failed_attempts", 0) + 1
-                    if u["failed_attempts"] >= 5:
+                    if u["failed_attempts"] >= _MAX_FAILED_ATTEMPTS:
                         u["locked"] = True
                         _audit("login_locked", username, f"连续失败{u['failed_attempts']}次，已锁定")
                     else:
@@ -209,8 +234,11 @@ class AuthManager:
                 return u.get("locked", False)
         return False
 
-    def unlock_user(self, username: str, caller: Optional[User] = None) -> bool:
-        """管理员解锁用户账户"""
+    def unlock_user(self, username: str, caller: User) -> bool:
+        """管理员解锁用户账户 (P1-3: caller 必填, 拒绝隐式放行)"""
+        if caller is None:
+            _audit("unlock_user_failed", username, "缺少操作者身份")
+            return False
         users = self._load_users()
         for u in users:
             if u["username"] == username:
@@ -220,23 +248,31 @@ class AuthManager:
                 u["locked"] = False
                 u["failed_attempts"] = 0
                 self._save_users(users)
-                _audit("unlock_user", username)
+                _audit("unlock_user", username, f"by={caller.username}")
                 return True
         return False
 
-    def force_change_password(self, username: str, new_password: str) -> bool:
-        """强制修改密码（must_change_password 场景，不需要旧密码）"""
+    def force_change_password(self, username: str, new_password: str,
+                              caller: Optional[User] = None) -> bool:
+        """强制修改密码（must_change_password 场景，不需要旧密码）
+        P1-1: 仅允许账户本人且处于 must_change_password 状态时执行"""
+        if caller is not None and caller.username != username:
+            _audit("force_change_password_failed", username, "仅限账户本人修改")
+            return False
         ok, reason = validate_password(new_password)
         if not ok:
-            _audit("change_password_failed", username, reason)
+            _audit("force_change_password_failed", username, reason)
             return False
         users = self._load_users()
         for u in users:
             if u["username"] == username:
+                if not u.get("must_change_password", False):
+                    _audit("force_change_password_failed", username, "账户不处于强制改密状态")
+                    return False
                 u["password_hash"] = _hash_password(new_password)
                 u["must_change_password"] = False
                 self._save_users(users)
-                _audit("change_password", username, "强制改密完成")
+                _audit("force_change_password", username)
                 return True
         return False
 
@@ -327,7 +363,13 @@ class AuthManager:
         return True
 
     def list_users(self, department: str = "") -> List[User]:
-        all_users = [User.from_dict(u) for u in self._load_users()]
+        all_users = []
+        for u in self._load_users():
+            try:
+                all_users.append(User.from_dict(u))
+            except ValueError:
+                # P3-6: 跳过缺 password_hash 的非法记录，避免列表崩溃
+                continue
         if department:
             return [u for u in all_users if u.department == department]
         return all_users
@@ -336,6 +378,10 @@ class AuthManager:
         ok, reason = validate_password(new_password)
         if not ok:
             _audit("change_password_failed", username, reason)
+            return False
+        # P3-5: 锁定账户不允许改密（后端守卫一致性）
+        if self.is_account_locked(username):
+            _audit("change_password_failed", username, "账户已锁定")
             return False
         # W01: 使用 _verify_credentials 而非 authenticate，避免产生误导性 login 审计
         user_dict = self._verify_credentials(username, old_password)
