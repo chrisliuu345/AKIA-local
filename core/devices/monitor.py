@@ -3,7 +3,7 @@ import threading
 import time
 from collections.abc import Callable
 
-from core.devices.device import Device, Esp32InputDevice, MaixcamVisionDevice
+from core.devices.device import Device, Esp32InputDevice, Esp32OutputDevice, MaixcamVisionDevice
 from core.devices.protocol import MessageType, Heartbeat, encode_message
 from core.devices.transport import SerialTransport, TransportError
 
@@ -116,6 +116,9 @@ class DeviceMonitor:
                             MessageType.PONG, device_id=device.device_id))
                     except TransportError:
                         pass
+            elif mt == MessageType.ACK:
+                if isinstance(device, Esp32OutputDevice):
+                    device.record_ack(msg)
             elif mt == MessageType.RECOGNITION:
                 if isinstance(device, MaixcamVisionDevice):
                     device.add_recognition(msg)
