@@ -119,6 +119,11 @@ class SettingsDialog(QDialog):
 
         layout.addWidget(tabs)
 
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
     def _add_account_tab(self, tabs, tc):
         """构建账户标签页 (账户信息 + 修改密码)"""
         account_tab = QWidget()
@@ -196,11 +201,6 @@ class SettingsDialog(QDialog):
         account_layout.addStretch()
 
         tabs.addTab(account_tab, "账户")
-
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
 
     def _on_change_password(self):
         old = self.old_pwd.text()

@@ -451,3 +451,27 @@ class TestAccountPermission:
                 assert act.isEnabled() is True, "readonly 有 export"
             if p == "view":
                 assert act.isEnabled() is True, "readonly 有 view"
+
+    def test_settings_dialog_constructs_with_buttons(self, qapp, make_user):
+        """设置弹窗: 普通路径构造不抛异常且含按钮区 (回归: 提取残留 NameError)"""
+        from PySide6.QtWidgets import QDialogButtonBox
+        from ui.dialogs.settings_dialog import SettingsDialog
+        dlg = SettingsDialog(user=make_user("admin"))
+        assert dlg.findChildren(QDialogButtonBox), "普通设置路径应有 Ok/Cancel 按钮"
+        dlg.close()
+
+    def test_account_settings_dialog_constructs_with_buttons(self, qapp, make_user):
+        """账户设置弹窗: account_only 路径构造不抛异常且含按钮区"""
+        from PySide6.QtWidgets import QDialogButtonBox
+        from ui.dialogs.settings_dialog import SettingsDialog
+        dlg = SettingsDialog(user=make_user("analyst"), account_only=True)
+        assert dlg.findChildren(QDialogButtonBox), "账户设置应有 Ok/Cancel 按钮"
+        dlg.close()
+
+    def test_settings_dialog_constructs_without_user(self, qapp):
+        """user=None 构造不抛异常 (无账户页, 仍有按钮区)"""
+        from PySide6.QtWidgets import QDialogButtonBox
+        from ui.dialogs.settings_dialog import SettingsDialog
+        dlg = SettingsDialog(user=None)
+        assert dlg.findChildren(QDialogButtonBox), "user=None 也应有 Ok/Cancel 按钮"
+        dlg.close()
