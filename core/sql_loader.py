@@ -5,7 +5,7 @@ SQL 数据库加载引擎 — SQLAlchemy 统一接入 MySQL/PostgreSQL/SQL Serve
 
 from typing import Dict, List, Optional, Any
 import re
-from urllib.parse import quote_plus
+from urllib.parse import quote
 import pandas as pd
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.engine import Engine
@@ -44,11 +44,14 @@ def build_connection_string(config: dict) -> str:
     database = config.get("database", "")
     user = config.get("user", "")
     password = config.get("password", "")
-    safe_user = quote_plus(user)
-    safe_password = quote_plus(password)
+    # W06: quote(safe="") 编码为 %XX — SQLAlchemy 用 unquote 解析 userinfo,
+    # quote_plus 的 '+' 不会被还原为空格, 会导致含空格密码认证失败
+    safe_user = quote(user, safe="")
+    safe_password = quote(password, safe="")
+    safe_database = quote(database, safe="")
     if db_type == "mssql":
-        return f"{driver}://{safe_user}:{safe_password}@{host}:{port}/{database}?driver=ODBC+Driver+17+for+SQL+Server"
-    return f"{driver}://{safe_user}:{safe_password}@{host}:{port}/{database}"
+        return f"{driver}://{safe_user}:{safe_password}@{host}:{port}/{safe_database}?driver=ODBC+Driver+17+for+SQL+Server"
+    return f"{driver}://{safe_user}:{safe_password}@{host}:{port}/{safe_database}"
 
 
 class SqlLoader:
