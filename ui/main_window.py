@@ -121,6 +121,10 @@ class MainWindow(QMainWindow):
 
         _step(85, "主窗口初始化完成")
 
+        # 直接以已登录用户构造时 (如测试/未来嵌入) 也应用权限过滤 (P2-3)
+        if self.current_user:
+            self.refresh_menu_for_user()
+
     def _has_permission(self, action: str) -> bool:
         if self.current_user is None:
             return True
@@ -280,10 +284,12 @@ class MainWindow(QMainWindow):
         save_project_action = QAction("💾 " + i18n.tr("menu.save_project"), self)
         save_project_action.setShortcut("Ctrl+Shift+S")
         save_project_action.triggered.connect(self._on_save_project)
+        self._reg(save_project_action, "export")
         file_menu.addAction(save_project_action)
         open_project_action = QAction("📂 " + i18n.tr("menu.open_project"), self)
         open_project_action.setShortcut("Ctrl+Shift+O")
         open_project_action.triggered.connect(self._on_load_project)
+        self._reg(open_project_action, "view")
         file_menu.addAction(open_project_action)
         save_shared_action = QAction("📤 " + i18n.tr("menu.save_shared"), self)
         save_shared_action.triggered.connect(self._on_save_shared)
@@ -308,9 +314,11 @@ class MainWindow(QMainWindow):
         save_session = QAction("💾 " + i18n.tr("menu.save_session"), self)
         save_session.setShortcut("Ctrl+S")
         save_session.triggered.connect(self._on_save_session)
+        self._reg(save_session, "export")
         file_menu.addAction(save_session)
         load_session = QAction("📂 " + i18n.tr("menu.load_session"), self)
         load_session.triggered.connect(self._on_load_session)
+        self._reg(load_session, "view")
         file_menu.addAction(load_session)
 
         file_menu.addSeparator()
@@ -406,6 +414,10 @@ class MainWindow(QMainWindow):
         settings_act = QAction(i18n.tr("menu.settings"), self, triggered=self._on_settings)
         self._reg(settings_act, "settings")
         tools_menu.addAction(settings_act)
+        account_act = QAction(i18n.tr("menu.account_settings", "账户设置"), self,
+                              triggered=self._on_account_settings)
+        self._reg(account_act, "account")
+        tools_menu.addAction(account_act)
         batch_act = QAction(i18n.tr("menu.batch"), self, triggered=self._on_batch_scheduler)
         self._reg(batch_act, "analyze")
         tools_menu.addAction(batch_act)
@@ -505,7 +517,6 @@ class MainWindow(QMainWindow):
         self.sidebar.diagnose_clicked.connect(self._on_diagnose)
         self.sidebar.llm_clicked.connect(self._on_llm_assist)
         self.sidebar.collapse_requested.connect(lambda: self._toggle_sidebar(True))
-        self.sidebar.import_db_clicked.connect(self._on_import_db)  # T44
         self.welcome_page.import_data_clicked.connect(self._on_import_quality)
         self.welcome_page.import_ie_clicked.connect(self._on_import_ie)
         self.welcome_page.import_template_clicked.connect(self._on_import_template)
@@ -1081,6 +1092,7 @@ class MainWindow(QMainWindow):
                 self.stack.insertWidget(idx, tab)
                 if old and old.objectName().startswith("placeholder"):
                     old.deleteLater()
+                self._connect_tab_signals(idx, tab)
                 return tab
             return None
 
@@ -1128,12 +1140,22 @@ class MainWindow(QMainWindow):
             _orig_run = tab.run_and_display
 
             def _guarded_run(*args, _orig=_orig_run, **kwargs):
-                if not self._has_permission("analyze"):
-                    QMessageBox.warning(tab, "权限不足", "当前角色无「analyze」操作权限")
+                if not self._check_permission("analyze"):
                     return
                 return _orig(*args, **kwargs)
 
+            # 实例属性替换 + 按钮重连: tab.__init__ 中按钮已预绑定原始方法,
+            # 仅替换实例属性无法拦截按钮点击 (P0-1)
             tab.run_and_display = _guarded_run
+            for attr in ("run_btn", "btn_run"):
+                btn = getattr(tab, attr, None)
+                if btn is not None:
+                    try:
+                        btn.clicked.disconnect()
+                    except (RuntimeError, TypeError):
+                        pass
+                    btn.clicked.connect(_guarded_run)
+                    break
 
     def _get_tabs(self, force_load: bool = False):
         """获取 Tab 字典。force_load=False 仅返回已缓存的(懒加载友好)；force_load=True 全量加载"""
@@ -1265,6 +1287,8 @@ class MainWindow(QMainWindow):
                 QMessageBox.critical(self, i18n.tr("msg.export_failed"), str(e))
 
     def _on_save_project(self):
+        if not self._check_permission("export"):
+            return
         if not self.current_data:
             QMessageBox.warning(self, "无数据", "请先导入数据并运行分析")
             return
@@ -1319,6 +1343,8 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "加载完成", success_msg)
 
     def _on_load_project(self):
+        if not self._check_permission("view"):
+            return
         path, _ = QFileDialog.getOpenFileName(
             self, "打开项目", "", "QA-Tool 项目 (*.qap)"
         )
@@ -1335,6 +1361,8 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "加载失败", str(e))
 
     def _load_project_by_path(self, path: str):
+        if not self._check_permission("view"):
+            return
         """通过路径直接加载项目（供欢迎页最近项目使用）"""
         try:
             self.status_label.setText("正在加载项目...")
@@ -1372,6 +1400,8 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "文件不存在", f"项目文件已移动或删除:\n{path}")
 
     def _on_save_session(self):
+        if not self._check_permission("export"):
+            return
         file_path, _ = QFileDialog.getSaveFileName(
             self, i18n.tr("menu.save_session"), "session.json", "JSON (*.json)"
         )
@@ -1436,6 +1466,8 @@ class MainWindow(QMainWindow):
             self.status_label.setText(f"{i18n.tr('status.session_saved')}{path}")
 
     def _on_load_session(self):
+        if not self._check_permission("view"):
+            return
         file_path, _ = QFileDialog.getOpenFileName(
             self, i18n.tr("menu.load_session"), "", "JSON (*.json)"
         )
@@ -1503,6 +1535,25 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 QMessageBox.critical(self, i18n.tr("msg.import_failed"), str(e))
 
+    def _on_account_settings(self):
+        """账户设置 — 所有登录角色可自助修改部门/班组/显示名/密码 (P2-5)"""
+        if not self._check_permission("account"):
+            return
+        if not self.current_user:
+            return
+        from core.auth import AuthManager
+        dialog = SettingsDialog(self, user=self.current_user, account_only=True)
+        if dialog.exec():
+            acct = dialog.get_account_values()
+            if acct:
+                auth = AuthManager()
+                auth.update_user(self.current_user.username, **acct)
+                self.current_user.department = acct.get("department", "")
+                self.current_user.team = acct.get("team", "")
+                self.current_user.display_name = acct.get("display_name", "")
+            audit("account_settings", self.current_user.username, "账户设置保存")
+            self.statusBar().showMessage("账户设置已保存", 3000)
+
     def _on_settings(self):
         if not self._check_permission("settings"):
             return
@@ -1569,9 +1620,10 @@ class MainWindow(QMainWindow):
     def _apply_permission_filter(self):
         """根据当前用户权限过滤侧边栏与欢迎页可见项"""
         if self.current_user is None:
-            # user=None 全放行
+            # user=None 全放行 — 侧边栏全按钮 + 欢迎页全部卡片
+            all_perm = {p for _, p in self.welcome_page._card_permissions if p is not None}
             self.sidebar.set_permission_filter(set(self.sidebar.nav_buttons.keys()))
-            self.welcome_page.set_permission_filter(set())
+            self.welcome_page.set_permission_filter(all_perm)
             return
         perms = AuthManager.get_permissions(self.current_user.role)
         # 侧边栏: tab 权限映射

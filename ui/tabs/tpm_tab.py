@@ -70,6 +70,7 @@ class TPMTab(BaseAnalysisTab):
         run_btn = QPushButton("生成 TPM 分析")
         run_btn.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         run_btn.clicked.connect(self.run_and_display)
+        self.run_btn = run_btn
         btn_row.addWidget(run_btn)
         layout.addLayout(btn_row)
 

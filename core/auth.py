@@ -92,13 +92,13 @@ _TEAMS = ["一组", "二组", "三组", "白班", "夜班", "A班", "B班", "C�
 
 # 四级角色权限矩阵
 _ROLE_PERMISSIONS = {
-    "admin":       {"import", "analyze", "clean", "export", "view",
+    "admin":       {"import", "analyze", "clean", "export", "view", "account",
                     "manage_users", "settings", "share_project", "view_shared"},
-    "dept_admin":  {"import", "analyze", "clean", "export", "view",
+    "dept_admin":  {"import", "analyze", "clean", "export", "view", "account",
                     "manage_dept_users", "share_project", "view_shared"},
-    "analyst":     {"import", "analyze", "clean", "export", "view",
+    "analyst":     {"import", "analyze", "clean", "export", "view", "account",
                     "share_project", "view_shared"},
-    "readonly":    {"export", "view", "view_shared"},
+    "readonly":    {"export", "view", "view_shared", "account"},
 }
 
 
