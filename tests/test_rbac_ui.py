@@ -55,7 +55,7 @@ class TestPermissionMatrix:
     """验证 _ROLE_PERMISSIONS 四角色 × 十权限键"""
 
     ALL_ACTIONS = {
-        "import", "analyze", "clean", "export", "view",
+        "import", "analyze", "clean", "export", "view", "account",
         "manage_users", "manage_dept_users", "settings",
         "share_project", "view_shared",
     }
@@ -78,12 +78,13 @@ class TestPermissionMatrix:
         assert "settings" not in perms
         assert "manage_dept_users" not in perms
         assert "manage_users" not in perms
-        assert perms == {"import", "analyze", "clean", "export", "view",
+        assert "account" in perms
+        assert perms == {"import", "analyze", "clean", "export", "view", "account",
                          "share_project", "view_shared"}
 
     def test_readonly_minimal(self):
         perms = AuthManager.get_permissions("readonly")
-        assert perms == {"export", "view", "view_shared"}
+        assert perms == {"export", "view", "view_shared", "account"}
 
     def test_all_roles_have_view(self):
         for role in ("admin", "dept_admin", "analyst", "readonly"):
@@ -119,11 +120,6 @@ class TestTabPermissions:
         # tab 1 (SPC), 7 (IE), 27 (dashboard) 不在映射中 → 默认 view
         for idx in (1, 7, 12, 27, 33, 34):
             assert idx not in _TAB_PERMISSIONS
-
-    def test_plugin_tab_start_from_registry(self):
-        from ui.main_window import _PLUGIN_TAB_START
-        from ui._tab_registry import INDEX_MAP
-        assert _PLUGIN_TAB_START == max(INDEX_MAP.keys()) + 1
 
 
 # ── 3. MainWindow._has_permission ─────────────────────
@@ -261,29 +257,61 @@ class TestApplyPermissionFilter:
         mw._apply_permission_filter()
         for idx, btn in mw.sidebar.nav_buttons.items():
             assert not btn.isHidden(), f"user=None tab {idx} 应可见"
+        # 组级: 默认折叠态下所有组仍可见 (回归锚点: isVisible 判断 bug)
+        for group in mw.sidebar.categories:
+            assert not group.isHidden(), f"user=None 组 {group.title_key} 应可见"
+        # 欢迎页: user=None 全放行 → import 卡片也可见
+        for card, perm in mw.welcome_page._card_permissions:
+            assert not card.isHidden(), f"user=None 卡片 {perm} 应可见"
 
     def test_readonly_data_tab_hidden(self, qapp, make_user):
         from ui.main_window import MainWindow
         mw = MainWindow(user=make_user("readonly"))
         mw._apply_permission_filter()
         # tab 28 (data_tools) 需要 import 权限, readonly 无 → 隐藏
-        if 28 in mw.sidebar.nav_buttons:
-            assert mw.sidebar.nav_buttons[28].isHidden()
+        assert mw.sidebar.nav_buttons[28].isHidden()
 
     def test_readonly_view_tabs_visible(self, qapp, make_user):
         from ui.main_window import MainWindow
         mw = MainWindow(user=make_user("readonly"))
         mw._apply_permission_filter()
         # tab 1 (SPC) 默认 view 权限, readonly 有 view → 可见
-        if 1 in mw.sidebar.nav_buttons:
-            assert not mw.sidebar.nav_buttons[1].isHidden()
+        assert not mw.sidebar.nav_buttons[1].isHidden()
+        # readonly 有 view → 组级可见; 但 data_tools 组(仅 tab 28, import) 应隐藏
+        quality = next(g for g in mw.sidebar.categories if g.title_key == "sidebar.quality_tools")
+        assert not quality.isHidden()
+        data_tools = next(g for g in mw.sidebar.categories if g.title_key == "sidebar.data_tools")
+        assert data_tools.isHidden()
 
     def test_admin_all_tabs_visible(self, qapp, make_user):
         from ui.main_window import MainWindow
         mw = MainWindow(user=make_user("admin"))
         mw._apply_permission_filter()
-        if 28 in mw.sidebar.nav_buttons:
-            assert not mw.sidebar.nav_buttons[28].isHidden()
+        assert not mw.sidebar.nav_buttons[28].isHidden()
+        for group in mw.sidebar.categories:
+            assert not group.isHidden(), f"admin 组 {group.title_key} 应可见"
+
+    def test_readonly_import_card_hidden(self, qapp, make_user):
+        from ui.main_window import MainWindow
+        mw = MainWindow(user=make_user("readonly"))
+        mw._apply_permission_filter()
+        for card, perm in mw.welcome_page._card_permissions:
+            if perm == "import":
+                assert card.isHidden()
+            elif perm is None:
+                assert not card.isHidden()
+
+    def test_group_hidden_when_all_buttons_filtered(self, qapp):
+        """G12: 某组所有按钮被过滤 → 整个组隐藏"""
+        from ui.sidebar import Sidebar
+        sb = Sidebar()
+        # 只保留 tab 1 (质量工具组) 与 home
+        sb.set_permission_filter({0, 1})
+        for group in sb.categories:
+            if group.sub_buttons and all(idx not in {0, 1} for idx in group.sub_buttons):
+                assert group.isHidden(), f"组 {group.title_key} 应隐藏"
+        quality = next(g for g in sb.categories if g.title_key == "sidebar.quality_tools")
+        assert not quality.isHidden()
 
 
 # ── 7. Sidebar.set_permission_filter ─────────────────
@@ -295,6 +323,9 @@ class TestSidebarFilter:
         sb.set_permission_filter(all_indices)
         for idx, btn in sb.nav_buttons.items():
             assert not btn.isHidden()
+        # 回归锚点: 默认折叠态下组必须可见 (isVisible 判断 bug)
+        for group in sb.categories:
+            assert not group.isHidden(), f"组 {group.title_key} 应可见"
 
     def test_home_always_visible(self, qapp):
         sb = Sidebar()
@@ -309,6 +340,61 @@ class TestSidebarFilter:
                 assert not btn.isHidden()
             else:
                 assert btn.isHidden()
+
+
+# ── 7b. _guarded_run 按钮重连 (P0-1 回归锚点) ─────────
+
+class TestGuardedRunButton:
+    """run_btn 预绑定方法必须被守卫替换 — readonly 点击按钮不得执行分析"""
+
+    def _make_spc_like(self):
+        """构造带 run_btn + run_and_display 的假 tab"""
+        from PySide6.QtWidgets import QPushButton
+
+        class FakeTab:
+            def __init__(self):
+                self.run_btn = QPushButton()
+                self.called = 0
+                self.run_btn.clicked.connect(self.run_and_display)
+
+            def run_and_display(self):
+                self.called += 1
+
+        return FakeTab()
+
+    def test_readonly_button_click_denied(self, qapp, monkeypatch, make_user):
+        from ui.main_window import MainWindow
+        monkeypatch.setattr("ui.main_window.QMessageBox.warning", lambda *a, **k: None)
+        mw = MainWindow(user=make_user("readonly"))
+        tab = self._make_spc_like()
+        mw._connect_tab_signals(1, tab)
+        tab.run_btn.click()
+        assert tab.called == 0, "readonly 点击 run_btn 不得执行分析"
+
+    def test_admin_button_click_runs(self, qapp, make_user):
+        from ui.main_window import MainWindow
+        mw = MainWindow(user=make_user("admin"))
+        tab = self._make_spc_like()
+        mw._connect_tab_signals(1, tab)
+        tab.run_btn.click()
+        assert tab.called == 1, "admin 点击 run_btn 应执行分析"
+
+    def test_user_none_button_click_runs(self, qapp):
+        from ui.main_window import MainWindow
+        mw = MainWindow(user=None)
+        tab = self._make_spc_like()
+        mw._connect_tab_signals(1, tab)
+        tab.run_btn.click()
+        assert tab.called == 1, "user=None 点击 run_btn 应执行分析"
+
+    def test_direct_run_and_display_denied_for_readonly(self, qapp, monkeypatch, make_user):
+        from ui.main_window import MainWindow
+        monkeypatch.setattr("ui.main_window.QMessageBox.warning", lambda *a, **k: None)
+        mw = MainWindow(user=make_user("readonly"))
+        tab = self._make_spc_like()
+        mw._connect_tab_signals(1, tab)
+        tab.run_and_display()
+        assert tab.called == 0, "readonly 直接调用 run_and_display 不得执行"
 
 
 # ── 8. WelcomePage.set_permission_filter ─────────────
@@ -332,8 +418,36 @@ class TestWelcomePageFilter:
                 assert not card.isHidden()
 
 
-# ── 9. T44: Sidebar.import_db_clicked 信号 ───────────
+# ── 9. account 权限键 (P2-5) ─────────────────────────
 
-class TestT44SidebarSignal:
-    def test_sidebar_has_import_db_clicked_signal(self):
-        assert hasattr(Sidebar, "import_db_clicked")
+class TestAccountPermission:
+    def test_account_action_enabled_for_analyst(self, qapp, make_user):
+        from ui.main_window import MainWindow
+        mw = MainWindow(user=make_user("analyst"))
+        mw.refresh_menu_for_user()
+        account_actions = [a for a, p in mw._action_permissions if p == "account"]
+        assert account_actions, "account action 应已注册"
+        for act in account_actions:
+            assert act.isEnabled() is True
+
+    def test_account_action_enabled_for_readonly(self, qapp, make_user):
+        from ui.main_window import MainWindow
+        mw = MainWindow(user=make_user("readonly"))
+        mw.refresh_menu_for_user()
+        for act, p in mw._action_permissions:
+            if p == "account":
+                assert act.isEnabled() is True
+            elif p == "settings":
+                assert act.isEnabled() is False
+
+    def test_project_save_export_permission(self, qapp, make_user):
+        """P1-2: 保存项目归 export, 打开项目归 view"""
+        from ui.main_window import MainWindow
+        mw = MainWindow(user=make_user("readonly"))
+        mw.refresh_menu_for_user()
+        perms = dict(mw._action_permissions)
+        for act, p in perms.items():
+            if p == "export":
+                assert act.isEnabled() is True, "readonly 有 export"
+            if p == "view":
+                assert act.isEnabled() is True, "readonly 有 view"

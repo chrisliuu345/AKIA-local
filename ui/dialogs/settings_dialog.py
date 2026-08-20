@@ -18,10 +18,11 @@ from core.auth import _DEPARTMENTS, _TEAMS
 
 
 class SettingsDialog(QDialog):
-    def __init__(self, parent=None, user=None):
+    def __init__(self, parent=None, user=None, account_only=False):
         super().__init__(parent)
         self._user = user
-        self.setWindowTitle("系统设置")
+        self._account_only = account_only
+        self.setWindowTitle("账户设置" if account_only else "系统设置")
         self.setMinimumSize(520, 430)
         self._setup_ui()
 
@@ -31,6 +32,16 @@ class SettingsDialog(QDialog):
         layout = QVBoxLayout(self)
 
         tabs = QTabWidget()
+
+        if self._account_only:
+            if self._user:
+                self._add_account_tab(tabs, tc)
+            layout.addWidget(tabs)
+            buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+            buttons.accepted.connect(self.accept)
+            buttons.rejected.connect(self.reject)
+            layout.addWidget(buttons)
+            return
 
         general_tab = QWidget()
         general_layout = QFormLayout(general_tab)
@@ -104,83 +115,87 @@ class SettingsDialog(QDialog):
 
         # ── 账户标签页 ──
         if self._user:
-            account_tab = QWidget()
-            account_layout = QVBoxLayout(account_tab)
-            account_layout.setSpacing(10)
-
-            info_group = QGroupBox("账户信息")
-            info_form = QFormLayout(info_group)
-
-            self.acc_username = QLabel(self._user.username)
-            self.acc_username.setStyleSheet(f"color: {tc['accent_bright']}; font-weight: bold;")
-            info_form.addRow("用户名:", self.acc_username)
-
-            role_labels = {"admin": "管理员", "dept_admin": "部门管理员", "analyst": "分析师", "readonly": "只读"}
-            self.acc_role = QLabel(role_labels.get(self._user.role, self._user.role))
-            info_form.addRow("角色:", self.acc_role)
-
-            self.dept_combo = QComboBox()
-            self.dept_combo.setEditable(True)
-            self.dept_combo.addItems(_DEPARTMENTS)
-            if self._user.department:
-                idx = self.dept_combo.findText(self._user.department)
-                if idx >= 0:
-                    self.dept_combo.setCurrentIndex(idx)
-                else:
-                    self.dept_combo.setCurrentText(self._user.department)
-            self.dept_combo.setMinimumHeight(28)
-            info_form.addRow("部门:", self.dept_combo)
-
-            self.team_combo = QComboBox()
-            self.team_combo.setEditable(True)
-            self.team_combo.addItems(_TEAMS)
-            if self._user.team:
-                idx = self.team_combo.findText(self._user.team)
-                if idx >= 0:
-                    self.team_combo.setCurrentIndex(idx)
-                else:
-                    self.team_combo.setCurrentText(self._user.team)
-            self.team_combo.setMinimumHeight(28)
-            info_form.addRow("班组:", self.team_combo)
-
-            self.display_edit = QLineEdit()
-            self.display_edit.setText(self._user.display_name or self._user.username)
-            self.display_edit.setMinimumHeight(28)
-            info_form.addRow("显示名称:", self.display_edit)
-
-            account_layout.addWidget(info_group)
-
-            pwd_group = QGroupBox("修改密码")
-            pwd_form = QFormLayout(pwd_group)
-            self.old_pwd = QLineEdit()
-            self.old_pwd.setEchoMode(QLineEdit.Password)
-            self.old_pwd.setMinimumHeight(28)
-            pwd_form.addRow("旧密码:", self.old_pwd)
-            self.new_pwd = QLineEdit()
-            self.new_pwd.setEchoMode(QLineEdit.Password)
-            self.new_pwd.setMinimumHeight(28)
-            pwd_form.addRow("新密码:", self.new_pwd)
-            self.confirm_pwd = QLineEdit()
-            self.confirm_pwd.setEchoMode(QLineEdit.Password)
-            self.confirm_pwd.setMinimumHeight(28)
-            pwd_form.addRow("确认密码:", self.confirm_pwd)
-
-            pwd_btn_row = QHBoxLayout()
-            self.pwd_status = QLabel("")
-            self.pwd_status.setStyleSheet(f"color: {tc['text_muted']};")
-            pwd_btn_row.addWidget(self.pwd_status, 1)
-            change_btn = QPushButton("修改密码")
-            change_btn.setMinimumHeight(32)
-            change_btn.clicked.connect(self._on_change_password)
-            pwd_btn_row.addWidget(change_btn)
-            pwd_form.addRow("", pwd_btn_row)
-
-            account_layout.addWidget(pwd_group)
-            account_layout.addStretch()
-
-            tabs.addTab(account_tab, "账户")
+            self._add_account_tab(tabs, tc)
 
         layout.addWidget(tabs)
+
+    def _add_account_tab(self, tabs, tc):
+        """构建账户标签页 (账户信息 + 修改密码)"""
+        account_tab = QWidget()
+        account_layout = QVBoxLayout(account_tab)
+        account_layout.setSpacing(10)
+
+        info_group = QGroupBox("账户信息")
+        info_form = QFormLayout(info_group)
+
+        self.acc_username = QLabel(self._user.username)
+        self.acc_username.setStyleSheet(f"color: {tc['accent_bright']}; font-weight: bold;")
+        info_form.addRow("用户名:", self.acc_username)
+
+        role_labels = {"admin": "管理员", "dept_admin": "部门管理员", "analyst": "分析师", "readonly": "只读"}
+        self.acc_role = QLabel(role_labels.get(self._user.role, self._user.role))
+        info_form.addRow("角色:", self.acc_role)
+
+        self.dept_combo = QComboBox()
+        self.dept_combo.setEditable(True)
+        self.dept_combo.addItems(_DEPARTMENTS)
+        if self._user.department:
+            idx = self.dept_combo.findText(self._user.department)
+            if idx >= 0:
+                self.dept_combo.setCurrentIndex(idx)
+            else:
+                self.dept_combo.setCurrentText(self._user.department)
+        self.dept_combo.setMinimumHeight(28)
+        info_form.addRow("部门:", self.dept_combo)
+
+        self.team_combo = QComboBox()
+        self.team_combo.setEditable(True)
+        self.team_combo.addItems(_TEAMS)
+        if self._user.team:
+            idx = self.team_combo.findText(self._user.team)
+            if idx >= 0:
+                self.team_combo.setCurrentIndex(idx)
+            else:
+                self.team_combo.setCurrentText(self._user.team)
+        self.team_combo.setMinimumHeight(28)
+        info_form.addRow("班组:", self.team_combo)
+
+        self.display_edit = QLineEdit()
+        self.display_edit.setText(self._user.display_name or self._user.username)
+        self.display_edit.setMinimumHeight(28)
+        info_form.addRow("显示名称:", self.display_edit)
+
+        account_layout.addWidget(info_group)
+
+        pwd_group = QGroupBox("修改密码")
+        pwd_form = QFormLayout(pwd_group)
+        self.old_pwd = QLineEdit()
+        self.old_pwd.setEchoMode(QLineEdit.Password)
+        self.old_pwd.setMinimumHeight(28)
+        pwd_form.addRow("旧密码:", self.old_pwd)
+        self.new_pwd = QLineEdit()
+        self.new_pwd.setEchoMode(QLineEdit.Password)
+        self.new_pwd.setMinimumHeight(28)
+        pwd_form.addRow("新密码:", self.new_pwd)
+        self.confirm_pwd = QLineEdit()
+        self.confirm_pwd.setEchoMode(QLineEdit.Password)
+        self.confirm_pwd.setMinimumHeight(28)
+        pwd_form.addRow("确认密码:", self.confirm_pwd)
+
+        pwd_btn_row = QHBoxLayout()
+        self.pwd_status = QLabel("")
+        self.pwd_status.setStyleSheet(f"color: {tc['text_muted']};")
+        pwd_btn_row.addWidget(self.pwd_status, 1)
+        change_btn = QPushButton("修改密码")
+        change_btn.setMinimumHeight(32)
+        change_btn.clicked.connect(self._on_change_password)
+        pwd_btn_row.addWidget(change_btn)
+        pwd_form.addRow("", pwd_btn_row)
+
+        account_layout.addWidget(pwd_group)
+        account_layout.addStretch()
+
+        tabs.addTab(account_tab, "账户")
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         buttons.accepted.connect(self.accept)
