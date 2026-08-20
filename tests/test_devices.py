@@ -126,6 +126,67 @@ class TestSerialTransport:
         with pytest.raises(TransportError):
             transport.send(b"data")
 
+    @patch("serial.Serial")
+    def test_read_loop_buf_bounded(self, mock_serial_cls):
+        """C04: 无换行噪声流时 _buf 不超过 MAX_LINE_LEN"""
+        from core.devices.protocol import MAX_LINE_LEN
+        mock_inst = MagicMock()
+        mock_inst.is_open = True
+        mock_inst.read.side_effect = [b"A" * 100000, TransportError("stop")]
+        mock_serial_cls.return_value = mock_inst
+
+        errors = []
+        transport = SerialTransport("COM3", on_message=lambda m: None, on_error=errors.append)
+        transport._serial = mock_inst
+        transport._read_loop()
+
+        assert len(transport._buf) <= MAX_LINE_LEN
+        assert len(errors) == 1
+
+    @patch("serial.Serial")
+    def test_read_loop_recovers_after_overflow(self, mock_serial_cls):
+        """C04: 溢出截断丢弃坏数据，后续合法消息仍能解析"""
+        from core.devices.protocol import MAX_LINE_LEN
+        mock_inst = MagicMock()
+        mock_inst.is_open = True
+        noise_line = b"A" * (MAX_LINE_LEN + 500) + b"\n"
+        line = b'{"type":"data","values":[1.0]}\n'
+        mock_inst.read.side_effect = [noise_line, line, TransportError("stop")]
+        mock_serial_cls.return_value = mock_inst
+
+        messages = []
+        transport = SerialTransport("COM3", on_message=messages.append, on_error=lambda e: None)
+        transport._serial = mock_inst
+        transport._read_loop()
+
+        assert len(messages) == 1
+        assert messages[0]["values"] == [1.0]
+
+    @patch("serial.Serial")
+    def test_read_loop_callback_error_does_not_kill_thread(self, mock_serial_cls):
+        """C05: on_message 回调异常只记日志，读线程继续且 on_error 不受影响"""
+        mock_inst = MagicMock()
+        mock_inst.is_open = True
+        line = b'{"type":"data","values":[1.0]}\n'
+        mock_inst.read.side_effect = [line, line, TransportError("stop")]
+        mock_serial_cls.return_value = mock_inst
+
+        calls = []
+
+        def handler(msg):
+            calls.append(msg["values"])
+            if len(calls) == 1:
+                raise TypeError("bad values")
+
+        errors = []
+        transport = SerialTransport("COM3", on_message=handler, on_error=errors.append)
+        transport._serial = mock_inst
+        transport._read_loop()
+
+        assert calls == [[1.0], [1.0]], "回调抛异常后第二条消息仍应送达"
+        assert len(errors) == 1
+        assert not isinstance(errors[0], TypeError), "on_error 只应收到 I/O 错误"
+
 
 # ── Discovery ──
 

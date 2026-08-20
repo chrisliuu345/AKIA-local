@@ -335,6 +335,31 @@ class TestBatchWorkerCleanup:
         sched._workers.append(w2)
         sched._on_task_finished("other", True, "")
         assert len(sched._workers) == 1, "不匹配的 worker 不应被移除"
+
+    def test_in_flight_guard_skips_duplicate(self, tmp_path, monkeypatch):
+        """C06: 任务已在执行时 _execute_task 跳过重复启动"""
+        from core import batch_scheduler as bs_mod
+
+        monkeypatch.setattr(bs_mod.BatchScheduler, "TASKS_FILE", str(tmp_path / "tasks.json"))
+        ran = []
+        sched = bs_mod.BatchScheduler(execute_fn=lambda task: ran.append(task.id))
+        t = bs_mod.BatchTask(name="t1")
+        sched.add_task(t)
+        sched._running.add(t.id)
+        sched._execute_task(t)
+        assert ran == [], "in-flight 任务不应重复启动"
+
+    def test_on_task_finished_clears_running(self, tmp_path, monkeypatch):
+        """C06: 任务结束后 _running 中移除对应 id"""
+        from core import batch_scheduler as bs_mod
+
+        monkeypatch.setattr(bs_mod.BatchScheduler, "TASKS_FILE", str(tmp_path / "tasks.json"))
+        sched = bs_mod.BatchScheduler(execute_fn=lambda t: None)
+        t = bs_mod.BatchTask(name="t1", id="abc")
+        sched.tasks["abc"] = t
+        sched._running.add("abc")
+        sched._on_task_finished("abc", True, "")
+        assert "abc" not in sched._running
 # ── P1-8: waterfall 图非默认索引错位 ──────────────────
 class TestWaterfallIndex:
     def test_waterfall_non_default_index(self):

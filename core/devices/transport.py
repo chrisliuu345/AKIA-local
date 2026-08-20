@@ -106,7 +106,7 @@ class SerialTransport(Transport):
         return self._port
 
     def _read_loop(self):
-        from core.devices.protocol import decode_message
+        from core.devices.protocol import MAX_LINE_LEN, decode_message
         while not self._stop_event.is_set():
             try:
                 if not self._serial or not self._serial.is_open:
@@ -115,6 +115,12 @@ class SerialTransport(Transport):
                 if not data:
                     continue
                 self._buf += data
+                if len(self._buf) > MAX_LINE_LEN:
+                    logger.warning(
+                        "read buffer exceeded %d bytes, dropping %d bytes",
+                        MAX_LINE_LEN, len(self._buf) - MAX_LINE_LEN,
+                    )
+                    self._buf = self._buf[-MAX_LINE_LEN:]
                 while b"\n" in self._buf:
                     line, self._buf = self._buf.split(b"\n", 1)
                     try:
@@ -123,7 +129,10 @@ class SerialTransport(Transport):
                         continue
                     msg = decode_message(text)
                     if msg and self.on_message:
-                        self.on_message(msg)
+                        try:
+                            self.on_message(msg)
+                        except Exception as e:
+                            logger.exception("on_message callback error: %s", e)
             except Exception as e:
                 if self.on_error:
                     self.on_error(e)
