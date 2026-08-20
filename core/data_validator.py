@@ -114,7 +114,8 @@ class DataValidator:
             data_max = float(data.max())
 
             # 近常数数据跳过偏度/峰度 (避免 catastrophic cancellation 警告)
-            if std < 1e-12 or std / (abs(mean) + 1e-9) < 1e-8:
+            is_constant = std < 1e-12 or std / (abs(mean) + 1e-9) < 1e-8
+            if is_constant:
                 skew_val, kurtosis_val = 0.0, 0.0
             else:
                 import warnings
@@ -124,7 +125,7 @@ class DataValidator:
                     kurtosis_val = stats.kurtosis(data)
 
             statistic, p_value = stats.shapiro(data) if len(data) <= 5000 else (None, None)
-            if len(data) > 5000:
+            if len(data) > 5000 and not is_constant:
                 statistic, p_value = stats.kstest(data, lambda x: stats.norm.cdf(x, loc=mean, scale=std))
 
             self.stats[col] = {

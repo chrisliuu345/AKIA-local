@@ -25,7 +25,7 @@ class DataProfiler:
             total_rows += len(df)
             cols = self._profile_columns(sample)
             recs = self._generate_recommendations(sample, sn, cols)
-            issues = self._detect_issues(cols, sn)
+            issues = self._detect_issues(cols, sn, sample)
             total_issues.extend(issues)
 
             health = self._health_check(cols)
@@ -225,9 +225,11 @@ class DataProfiler:
                 "icon": "SPC",
             }
             if usl_col:
-                rec["params"]["usl"] = float(pd.to_numeric(df[usl_col], errors="coerce").dropna().iloc[0]) if usl_col in df.columns else None
+                usl_vals = pd.to_numeric(df[usl_col], errors="coerce").dropna()
+                rec["params"]["usl"] = float(usl_vals.iloc[0]) if len(usl_vals) else None
             if lsl_col:
-                rec["params"]["lsl"] = float(pd.to_numeric(df[lsl_col], errors="coerce").dropna().iloc[0]) if lsl_col in df.columns else None
+                lsl_vals = pd.to_numeric(df[lsl_col], errors="coerce").dropna()
+                rec["params"]["lsl"] = float(lsl_vals.iloc[0]) if len(lsl_vals) else None
             grade, conf = self._score_recommendation(cols, rec)
             rec["confidence"] = {"grade": grade, "percentage": conf}
             recs.append(rec)
@@ -383,7 +385,8 @@ class DataProfiler:
 
         return recs
 
-    def _detect_issues(self, cols: List[Dict], sheet_name: str) -> List[str]:
+    def _detect_issues(self, cols: List[Dict], sheet_name: str,
+                   df: Optional[pd.DataFrame] = None) -> List[str]:
         issues = []
         for c in cols:
             if c["missing_pct"] > 10:
@@ -394,17 +397,26 @@ class DataProfiler:
         for c in cols:
             if c["category"] == "measurement" and c.get("std", 0) == 0:
                 issues.append(f"{sheet_name}: '{c['name']}' 为常数列, 无分析价值")
-        # 高相关冗余
+        # 高相关冗余 — 用 Pearson 相关系数 (W91)，替代原来的偏度差值误判
         numeric = [c for c in cols if c["category"] == "measurement" and c.get("std", 0) > 0]
         if len(numeric) >= 2:
             correlated_pairs = []
-            for i in range(len(numeric)):
-                for j in range(i + 1, len(numeric)):
-                    if abs(numeric[i].get("skewness", 0) - numeric[j].get("skewness", 0)) < 0.1:
-                        correlated_pairs.append((numeric[i]["name"], numeric[j]["name"]))
+            if df is not None:
+                names = [c["name"] for c in numeric]
+                try:
+                    valid = [n for n in names if n in df.columns]
+                    if len(valid) >= 2:
+                        corr = df[valid].corr()
+                        for i in range(len(valid)):
+                            for j in range(i + 1, len(valid)):
+                                v = corr.iloc[i, j]
+                                if v is not None and abs(float(v)) > 0.95:
+                                    correlated_pairs.append((valid[i], valid[j]))
+                except Exception:
+                    pass
             if len(correlated_pairs) <= 3 and correlated_pairs:
                 a, b = correlated_pairs[0]
-                issues.append(f"{sheet_name}: '{a}' 与 '{b}' 分布高度相似, 可能存在冗余列")
+                issues.append(f"{sheet_name}: '{a}' 与 '{b}' 高度相关 (r>{0.95}), 可能存在冗余列")
         return issues
 
 
