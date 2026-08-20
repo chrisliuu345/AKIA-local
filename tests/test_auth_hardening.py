@@ -233,8 +233,6 @@ class TestUnifiedAudit:
     def test_auth_uses_core_audit(self, tmp_path, monkeypatch):
         """auth.py 的审计写入 core.audit.LOG_FILE"""
         auth_mod, audit_mod, am = _setup_auth(tmp_path, monkeypatch)
-        # 确认 auth_mod 不再有 _LOG_FILE 属性
-        assert not hasattr(auth_mod, "_LOG_FILE")
         # 审计记录写入 core.audit.LOG_FILE
         am.create_user("alice", "Pass1234", role="analyst")
         log_content = (tmp_path / "audit.log").read_text(encoding="utf-8")

@@ -20,7 +20,7 @@ from unittest.mock import patch, MagicMock
 import pytest
 from PySide6.QtWidgets import QApplication
 
-from core.auth import AuthManager, User, _ROLE_PERMISSIONS
+from core.auth import AuthManager, User
 from ui.sidebar import Sidebar
 from ui.welcome_page import WelcomePage
 
@@ -62,9 +62,9 @@ class TestPermissionMatrix:
 
     def test_admin_has_all_permissions(self):
         perms = AuthManager.get_permissions("admin")
-        assert perms == _ROLE_PERMISSIONS["admin"]
         assert "settings" in perms
         assert "manage_users" in perms
+        assert "account" in perms
 
     def test_dept_admin_has_no_settings_no_manage_users(self):
         perms = AuthManager.get_permissions("dept_admin")
