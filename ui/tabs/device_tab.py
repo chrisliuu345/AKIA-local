@@ -402,6 +402,15 @@ class DeviceTab(BaseAnalysisTab):
         if event in (MessageType.HELLO, MessageType.DATA, MessageType.META, MessageType.PONG):
             if dev.state != DeviceState.ONLINE:
                 self._registry.set_online(device_id)
+        elif event == MessageType.ACK:
+            if dev.state != DeviceState.ONLINE:
+                self._registry.set_online(device_id)
+            if device_id == self._selected_device_id:
+                result = payload.get("result", payload.get("error", ""))
+                if result:
+                    self._output_text.appendPlainText(f"✓ {result}")
+                else:
+                    self._output_text.appendPlainText("✓ ack")
         elif event == "error":
             self._registry.set_error(device_id)
         elif event == "timeout":
@@ -504,7 +513,14 @@ class DeviceTab(BaseAnalysisTab):
         self._output_text.clear()
         if isinstance(dev, Esp32OutputDevice):
             for ts, cmd in dev.command_history[:10]:
-                self._output_text.appendPlainText(f"[{ts:.1f}] {cmd}")
+                self._output_text.appendPlainText(f"[{ts:.1f}] > {cmd}")
+            for ack in dev.ack_history[:10]:
+                result = ack.get("result", ack.get("error", ""))
+                ts = ack.get("timestamp", 0)
+                line = f"✓ {result}" if result else "✓ ack"
+                if ts:
+                    line = f"[{ts:.1f}] {line}"
+                self._output_text.appendPlainText(line)
 
         self._recognition_list.clear()
         if isinstance(dev, MaixcamVisionDevice):
@@ -553,6 +569,7 @@ class DeviceTab(BaseAnalysisTab):
             try:
                 dev.send_command(cmd)
                 self._output_text.appendPlainText(f"> {cmd}")
+                self._output_text.appendPlainText("⏳ 等待 ack...")
                 self._cmd_input.clear()
             except Exception as e:
                 QMessageBox.warning(self, "指令错误", str(e))

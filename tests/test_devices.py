@@ -347,9 +347,34 @@ class TestDeviceModels:
         dev.add_data([1, 2, 3])
         assert dev.channel_labels() == ["CH0", "CH1", "CH2"]
 
-    def test_esp32_output_command(self):
+    def test_esp32_output_send_command(self):
         dev = Esp32OutputDevice("out1", "COM4")
-        assert dev.command_history == []
+        transport = MagicMock()
+        transport.is_open.return_value = True
+        dev.transport = transport
+        dev.send_command("led:on")
+        sent = transport.send.call_args_list[0][0][0]
+        assert b'"type":"command"' in sent
+        assert b'"command":"led:on"' in sent
+        assert len(dev.command_history) == 1
+        assert dev.command_history[0][1] == "led:on"
+        assert dev.last_ack is None
+
+    def test_esp32_output_send_command_requires_open(self):
+        dev = Esp32OutputDevice("out1", "COM4")
+        with pytest.raises(RuntimeError):
+            dev.send_command("led:on")
+
+    def test_esp32_output_record_ack(self):
+        dev = Esp32OutputDevice("out1", "COM4")
+        assert dev.ack_history == []
+        assert dev.last_ack is None
+        dev.record_ack({"type": "ack", "result": "ok", "device_id": "out1"})
+        assert dev.last_ack == {"type": "ack", "result": "ok", "device_id": "out1"}
+        assert len(dev.ack_history) == 1
+        dev.record_ack({"type": "ack", "result": "error: bad actuator"})
+        assert len(dev.ack_history) == 2
+        assert dev.ack_history[0]["result"] == "error: bad actuator"
 
     def test_maixcam_records(self):
         dev = MaixcamVisionDevice("cam1")
@@ -415,6 +440,23 @@ class TestDeviceMonitor:
         mon.detach(dev)
         mock_transport.close.assert_called_once()
         assert dev.transport is None
+
+    @patch("core.devices.monitor.SerialTransport")
+    def test_ack_routed_to_output_device(self, mock_transport_cls):
+        mock_transport = MagicMock()
+        mock_transport.is_open.return_value = True
+        mock_transport_cls.return_value = mock_transport
+        mon = DeviceMonitor()
+        dev = Esp32OutputDevice("out1", "COM4")
+        assert mon.attach(dev) is True
+        handler = mock_transport_cls.call_args.kwargs["on_message"]
+        handler({"type": "ack", "result": "ok", "device_id": "out1"})
+        assert dev.last_ack == {"type": "ack", "result": "ok", "device_id": "out1"}
+        assert len(dev.ack_history) == 1
+        handler({"type": "ack", "result": "error: bad actuator"})
+        assert dev.last_ack["result"] == "error: bad actuator"
+        assert len(dev.ack_history) == 2
+        mon.detach(dev)
 
     @patch("core.devices.monitor.SerialTransport")
     def test_attach_fails_on_open_error(self, mock_transport_cls):

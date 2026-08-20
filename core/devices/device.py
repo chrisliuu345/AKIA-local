@@ -94,6 +94,8 @@ class Esp32OutputDevice(Device):
                  fw_version: str = ""):
         super().__init__(device_id, "esp32_out", port, baudrate, fw_version)
         self._command_history: deque[tuple[str, str]] = deque(maxlen=100)
+        self._ack_history: deque[dict] = deque(maxlen=100)
+        self._last_ack: dict | None = None
 
     def send_command(self, command: str) -> None:
         from core.devices.protocol import encode_message, MessageType
@@ -103,10 +105,23 @@ class Esp32OutputDevice(Device):
                                  device_id=self.device_id)
         self.transport.send(payload)
         self._command_history.appendleft((time.time(), command))
+        self._last_ack = None
+
+    def record_ack(self, msg: dict) -> None:
+        self._last_ack = dict(msg)
+        self._ack_history.appendleft(dict(msg))
 
     @property
     def command_history(self) -> list[tuple[str, str]]:
         return list(self._command_history)
+
+    @property
+    def ack_history(self) -> list[dict]:
+        return list(self._ack_history)
+
+    @property
+    def last_ack(self) -> dict | None:
+        return self._last_ack
 
 
 class MaixcamVisionDevice(Device):
