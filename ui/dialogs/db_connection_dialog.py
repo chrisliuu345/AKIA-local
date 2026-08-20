@@ -4,7 +4,6 @@
 
 import json
 import base64
-import logging
 from typing import Dict, List, Optional, Tuple
 
 from PySide6.QtWidgets import (
@@ -17,11 +16,12 @@ from PySide6.QtCore import Qt, QSettings, Signal
 from PySide6.QtGui import QFont
 
 from core.i18n import i18n
+from core.log_util import get_logger
 from core.sql_loader import SqlLoader, DEFAULT_PORTS
 from ui.theme import colors as theme_colors
 
 
-_logger = logging.getLogger("QA-Tool.DbConnection")
+_logger = get_logger("DbConnection")
 
 
 def _obscure(text: str) -> str:
