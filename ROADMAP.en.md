@@ -9,10 +9,10 @@
 ## Version Roadmap Overview
 
 ```
-v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ──→ v2.6.3 ──→ v2.6.4
- Release   Code+AI    Eng Tools   Reports    Live      UX+Anim    HW Ext     ESP32 Deploy+   Security     RBAC+Auth    Stats Eng    UI Robust
-            (Done)     (Done)     (Done)    (Done)     (Done)     (Done)     Device Tab      (Done)       +Device      Hardening    +Reports+Test
-                                                                               (Released)                  (TBD)       (TBD)        (TBD)
+v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ──→ v2.6.3 ──→ v2.6.4 ──→ v2.6.5 ──→ v2.7.0 ──→ v2.7.5 ──→ v2.8.0 ──→ v2.8.5 ──→ v2.9.0 ──→ v2.9.5 ──→ v2.10.0
+ Release   Code+AI    Eng Tools   Reports    Live      UX+Anim    HW Ext     ESP32 Deploy+   Security     RBAC+Auth    Stats Eng    UI Robust   Polish      Video      Macro       REST API   Supply     Digital    Web Ph.1   Web Ph.2
+           (Done)     (Done)     (Done)    (Done)     (Done)     (Done)     Device Tab      (Done)       +Device      Hardening    +Reports    +Info #1    TimeStudy   +Info #2   +Info #3    Chain      Twin       Dash/Rpt   +Mobile
+                                                                           (Released)                  (TBD)       (TBD)        +Test       (TBD)      (TBD)       (TBD)      (TBD)      (TBD)       (TBD)      (TBD)
 ```
 
 ---
@@ -278,22 +278,116 @@ Plugin index 33, LLM streaming refresh, validate_params complete, animation clea
 
 ---
 
-## Long-Term Backlog (P2/P3)
+## v2.6.5 — UX Polish + Info Cleanup #1 (TBD)
 
-| Priority | Feature | Description |
-|:--:|------|------|
-| P2-3 | Video Time Study | Frame-level timing · AI motion recognition (OpenCV+MediaPipe) |
-| P2-4 | Batch Macro Record/Replay | Record operation sequence → save as macro → one-click replay |
-| P2-5 | Custom Control Chart Templates | User save/load chart configs (JSON) |
-| P2-6 | Code Review Info Items Cleanup | 151 Info items: duplicate-impl merge, dead code, i18n consistency, magic-number constants, private-API replacement, single source of truth |
-| P2-7 | UI Polish (demoted from v2.6.4) | W49 bulk-fill block, W50 Grubbs label, W51 uniform μ, W69 trend no sampling, W72 sidebar height, W73 fishbone iteration, W74 animate cleanup, W99 esp32 buf (dup C04) |
-| P3-1 | Supply Chain Quality Collaboration | P2P supplier data sharing · CPK drill-through · Part number mapping |
-| P3-2 | Digital Twin Layout | Drag-and-drop workstation simulation · 2D Canvas line layout |
-| P3-3 | REST API Service | FastAPI wrapping core analysis → for MES/ERP consumption |
-| P3-4 | Web Frontend Migration | Gradual migration from PySide6 to FastAPI+React |
-| P3-5 | Mobile App | Flutter/React Native for report viewing + alert push |
+> Theme: pay down UI polish items demoted from v2.6.4 + custom chart templates + first tranche of tech debt. First release of the detailed long-term backlog schedule.
+
+### P2-5 Custom Control Chart Templates
+- Serialize control-chart configs (spec limits / colors / Nelson rule sets / chart styles) as JSON templates
+- Template manager dialog: save / load / delete / rename, persisted in user_config.json
+- One-click template apply from control-chart Tabs
+
+### P2-7 UI Polish (demoted from v2.6.4, 8 items)
+- W49 bulk-fill block, W50 Grubbs label, W51 uniform μ, W69 trend no sampling
+- W72 sidebar height, W73 fishbone iteration, W74 animate cleanup, W99 esp32 buf (dup of C04, close after re-verification)
+
+### P2-6 Info Cleanup #1 (~50 items)
+- Dead code removal + unused imports (mechanical volume first, tool-assisted scan + manual review)
+
+---
+
+## v2.7.0 — Video Time Study (TBD)
+
+> Theme: P2-3 video time study — frame-level timing + AI motion recognition.
+
+### Core Features
+- Video import → frame extraction → Pose/Hands keypoint extraction (OpenCV + MediaPipe) → motion segmentation (thresholds + state machine) → operation cycle timing
+- New Tab 36: timeline + motion-segment list + cycle statistics, interoperable with time_study data
+- Risk note: MediaPipe compatibility with Python 3.14 unverified (official support usually lags); fallback options ONNX Runtime / OpenCV DNN
+- Risk note: PyInstaller bundle size will grow significantly (OpenCV adds ~60MB)
+
+---
+
+## v2.7.5 — Batch Macro Record/Replay + Info Cleanup #2 (TBD)
+
+> Theme: P2-4 macro record/replay — operation-sequence automation.
+
+### Core Features
+- Macro recorder: intercept key handlers to record action + params → JSON macro scripts
+- Macro manager dialog: save / load / edit / delete
+- Replay engine: dry-run pre-check + step-confirm mode; integrates with F5 batch analysis
+
+### P2-6 Info Cleanup #2 (~50 items)
+- Duplicate-implementation merge + single source of truth
+
+---
+
+## v2.8.0 — REST API Service + Info Cleanup #3 (TBD)
+
+> Theme: P3-3 REST API — service-ize core analysis, paving the way for supply chain / web / mobile (dependency-chain root).
+
+### Core Features
+- FastAPI wrapping core analysis engines: `/analyze/{tool}` (35 engines), `/kpi`, `/alerts`, `/devices`
+- API Key auth (reusing v2.6.2 RBAC matrix), OpenAPI auto docs
+- Architecture decision (during development): embedded uvicorn thread in desktop (localhost) vs standalone headless process
+- For MES/ERP consumption
+
+### P2-6 Info Cleanup #3 (~51 items)
+- i18n consistency + magic-number constants + private-API replacement
+
+---
+
+## v2.8.5 — Supply Chain Quality Collaboration (TBD)
+
+> Theme: P3-1 supply chain collaboration — P2P data sharing built on the v2.8.0 REST API layer.
+
+### Core Features
+- Supplier data package export/import (encrypted JSON, keys reuse DPAPI secret store)
+- CPK multi-level drill-through: part number → lot → process → parameter
+- Part-number mapping management (own ↔ supplier part numbers)
+- New "Supply Chain" Tab (index 37)
+
+---
+
+## v2.9.0 — Digital Twin Layout Simulation (TBD)
+
+> Theme: P3-2 digital twin — 2D line layout + discrete-event simulation.
+
+### Core Features
+- QGraphicsScene 2D layout editor: drag-and-drop stations / conveyors / buffers
+- Station properties bound to live data (cycle time / yield / OEE from the KPI extractor)
+- Discrete-event simulation: bottleneck detection / WIP accumulation analysis / before-after comparison
+- Interoperable with VSM / line balancing; new Tab (index 38)
+
+---
+
+## v2.9.5 — Web Frontend Phase 1 (TBD)
+
+> Theme: P3-4 progressive dual-stack phase 1 — read-only web views for dashboard and reports (desktop retained long-term).
+
+### Core Features
+- React scaffold (Vite + TypeScript), reusing the REST API
+- Web dashboard: KPI tiles + chart carousel (desktop display_mode equivalent)
+- Web report viewer: browse generated reports (PDF/HTML)
+- Embedded static-file server in the desktop app (same port serves web assets)
+
+---
+
+## v2.10.0 — Web Phase 2 + Mobile App + Info Wrap-up (TBD)
+
+> Theme: P3-4 phase 2 (analysis interaction) + P3-5 mobile app + P2-6 wrap-up.
+
+### Core Features
+- Web analysis interaction core flow: pick data → run analysis → view results (desktop main workflow equivalent)
+- Mobile app (Flutter / React Native): report viewing + alert push (webhook / FCM), reusing the same REST API
+- P2-6 remaining items cleared + full regression verification
+
+---
+
+## Original Backlog Scheduling Note
 
 > **Note**: P2-1 (Low-code Formula Editor) and P2-2 (Shop Floor Display Mode) were moved up to v2.4 E4 (Dashboard UI & Control Enhancement).
+> The original "Long-Term Backlog (P2/P3)" list has been fully allocated: P2-3→v2.7.0 · P2-4→v2.7.5 · P2-5/P2-7→v2.6.5 · P2-6 in three tranches across v2.6.5/v2.7.5/v2.8.0 + wrap-up in v2.10.0 · P3-1→v2.8.5 · P3-2→v2.9.0 · P3-3→v2.8.0 · P3-4 phase 1→v2.9.5 phase 2→v2.10.0 · P3-5→v2.10.0.
 
 ---
 
