@@ -87,11 +87,16 @@ class ExcelReport(BaseReportEngine):
             return ws.write_string(row, col, value, fmt)
         return ws.write(row, col, value, fmt)
 
+    def _merge_safe(self, ws, first_row, first_col, last_row, last_col, text, fmt):
+        """安全合并单元格 — 先空合并再 write_string，防止标题字符串被当公式 (W17)"""
+        ws.merge_range(first_row, first_col, last_row, last_col, None, fmt)
+        self._safe_write(ws, first_row, first_col, text, fmt)
+
     def _write_summary(self, ws, analyses, title):
-        ws.merge_range(0, 0, 0, 4, title, self.formats["title"])
+        self._merge_safe(ws, 0, 0, 0, 4, title, self.formats["title"])
         ws.set_row(0, 30)
         footer_text, _ = self.footers()
-        ws.merge_range(1, 0, 1, 4, footer_text, self.formats["footer"])
+        self._merge_safe(ws, 1, 0, 1, 4, footer_text, self.formats["footer"])
 
         headers = [
             i18n.tr("report.index"),
@@ -123,7 +128,7 @@ class ExcelReport(BaseReportEngine):
             self._safe_write(ws, row, 4, conclusion, self.formats["cell_text"])
 
     def _write_analysis_sheet(self, ws, atype, params, result):
-        ws.merge_range(0, 0, 0, 3, f"{atype}", self.formats["heading1"])
+        self._merge_safe(ws, 0, 0, 0, 3, f"{atype}", self.formats["heading1"])
         ws.set_row(0, 28)
 
         row = 2
