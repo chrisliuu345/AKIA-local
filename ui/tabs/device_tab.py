@@ -14,6 +14,7 @@ from PySide6.QtGui import QFont, QColor
 from core.i18n import i18n
 from core.devices import (
     DeviceRegistry, DeviceState, MessageType, discover_devices,
+    probe_network_device,
     Device, Esp32InputDevice, Esp32OutputDevice, MaixcamVisionDevice,
     DeviceMonitor,
 )
@@ -197,6 +198,7 @@ class DeviceCard(QFrame):
 class DeviceTab(BaseAnalysisTab):
     update_devices = Signal(object)
     monitor_event = Signal(str, str, object)
+    network_device_found = Signal(object)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -237,6 +239,12 @@ class DeviceTab(BaseAnalysisTab):
             f"QPushButton:hover {{ background: {tc['accent_dark']}; }}"
         )
         toolbar.addWidget(self.refresh_btn)
+
+        self.add_network_btn = QPushButton(i18n.tr("device.add_network"))
+        self.add_network_btn.setFixedHeight(32)
+        self.add_network_btn.setCursor(Qt.PointingHandCursor)
+        self.add_network_btn.setStyleSheet(BUTTON_SECONDARY)
+        toolbar.addWidget(self.add_network_btn)
 
         self.online_label = QLabel(i18n.tr("device.online_count").format(online=0, total=0))
         self.online_label.setFont(QFont("Microsoft YaHei", 10))
@@ -332,11 +340,13 @@ class DeviceTab(BaseAnalysisTab):
     def _connect_signals(self):
         self.auto_check.toggled.connect(self._on_auto_toggle)
         self.refresh_btn.clicked.connect(self._on_refresh)
+        self.add_network_btn.clicked.connect(self._on_add_network)
         self._send_btn.clicked.connect(self._on_send_command)
         self._cmd_input.returnPressed.connect(self._send_btn.click)
         self._import_btn.clicked.connect(self._on_import_data)
         self.update_devices.connect(self._on_update_devices)
         self.monitor_event.connect(self._on_monitor_event)
+        self.network_device_found.connect(self._on_network_device_found)
         self._preview_timer = QTimer(self)
         self._preview_timer.setInterval(1000)
         self._preview_timer.timeout.connect(self._refresh_preview)
@@ -375,25 +385,66 @@ class DeviceTab(BaseAnalysisTab):
 
     def _on_update_devices(self, found: list):
         for info in found:
-            if self._registry.get(info.device_id):
-                self._registry.set_online(info.device_id)
-            else:
-                dev_type = info.device_type
-                if dev_type == "esp32_in":
-                    dev = Esp32InputDevice(info.device_id, info.port, info.baudrate, info.fw_version)
-                elif dev_type == "esp32_out":
-                    dev = Esp32OutputDevice(info.device_id, info.port, info.baudrate, info.fw_version)
-                elif dev_type == "maixcam":
-                    dev = MaixcamVisionDevice(info.device_id, info.port, info.baudrate, info.fw_version)
-                else:
-                    dev = Device(info.device_id, dev_type, info.port, info.baudrate, info.fw_version)
-                self._registry.add(dev)
-                self._monitor.start()
-                if dev.monitoring:
-                    self._monitor.attach(dev)
+            self._add_device_info(info)
         self._rebuild_cards()
         if found:
             self._stop_discovery()
+
+    def _add_device_info(self, info):
+        """将 DeviceInfo 注册进 registry 并 attach 到 monitor（去重）。"""
+        if self._registry.get(info.device_id):
+            self._registry.set_online(info.device_id)
+            return
+        dev_type = info.device_type
+        if dev_type == "esp32_in":
+            dev = Esp32InputDevice(info.device_id, info.port, info.baudrate, info.fw_version)
+        elif dev_type == "esp32_out":
+            dev = Esp32OutputDevice(info.device_id, info.port, info.baudrate, info.fw_version)
+        elif dev_type == "maixcam":
+            dev = MaixcamVisionDevice(info.device_id, info.port, info.baudrate, info.fw_version)
+        else:
+            dev = Device(info.device_id, dev_type, info.port, info.baudrate, info.fw_version)
+        self._registry.add(dev)
+        self._monitor.start()
+        if dev.monitoring:
+            self._monitor.attach(dev)
+
+    def _on_add_network(self):
+        text, ok = QInputDialog.getText(
+            self, i18n.tr("device.add_network_title"),
+            i18n.tr("device.add_network_prompt"), text="192.168.50.46:9000")
+        address = text.strip() if ok else ""
+        if not address:
+            return
+        try:
+            host, port_s = address.rsplit(":", 1)
+            int(port_s)
+            if not host:
+                return
+        except ValueError:
+            QMessageBox.warning(self, i18n.tr("device.add_network_title"),
+                                i18n.tr("device.add_network_invalid"))
+            return
+        self.add_network_btn.setEnabled(False)
+
+        def _run():
+            try:
+                info = probe_network_device(address)
+            except Exception:
+                info = None
+            self.network_device_found.emit(info)
+
+        threading.Thread(target=_run, daemon=True, name="network-probe").start()
+
+    def _on_network_device_found(self, info):
+        self.add_network_btn.setEnabled(True)
+        if info is None:
+            QMessageBox.warning(self, i18n.tr("device.add_network_title"),
+                                i18n.tr("device.add_network_fail"))
+            return
+        self._add_device_info(info)
+        self._registry.save_persistent()
+        self._rebuild_cards()
 
     def _on_monitor_event(self, device_id: str, event: str, payload: dict):
         dev = self._registry.get(device_id)

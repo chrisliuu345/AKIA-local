@@ -97,3 +97,54 @@ def discover_devices(timeout: float = 0.5,
         except Exception as e:
             logger.debug("Discovery skip %s: %s", port, e)
     return found
+
+
+def probe_network_device(address: str, timeout: float = 3.0) -> DeviceInfo | None:
+    """探测网络设备（JSON-lines TCP，如 MaixCAM）。
+
+    address: "host:port"（如 "192.168.50.46:9000"）。
+    连接后发送 HELLO，等待设备回复 HELLO（含 device_id/device_type/fw_version）。
+    成功返回 DeviceInfo（port 字段即 address），失败返回 None。
+    """
+    import socket
+    from core.devices.protocol import encode_message, decode_message, MessageType
+
+    try:
+        host, port_s = address.rsplit(":", 1)
+        port = int(port_s)
+    except ValueError:
+        logger.debug("probe_network_device invalid address: %s", address)
+        return None
+    try:
+        with socket.create_connection((host, port), timeout=timeout) as sock:
+            sock.settimeout(timeout)
+            hello = encode_message(MessageType.HELLO,
+                                   device_id="pc_discovery",
+                                   device_type="pc_scanner", fw_version="0.0")
+            sock.sendall(hello)
+            deadline = time.time() + timeout
+            buf = b""
+            while time.time() < deadline:
+                data = sock.recv(4096)
+                if not data:
+                    break
+                buf += data
+                while b"\n" in buf:
+                    line, buf = buf.split(b"\n", 1)
+                    msg = decode_message(line.decode("utf-8", errors="replace"))
+                    if not msg:
+                        continue
+                    if msg.get("type") == MessageType.HELLO:
+                        did = msg.get("device_id", "")
+                        if not did:
+                            return None
+                        return DeviceInfo(
+                            device_id=did,
+                            device_type=msg.get("device_type", "unknown"),
+                            port=address,
+                            fw_version=msg.get("fw_version", ""),
+                            description=f"network {host}",
+                        )
+    except Exception as e:
+        logger.debug("probe_network_device skip %s: %s", address, e)
+    return None

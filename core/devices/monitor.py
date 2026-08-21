@@ -5,7 +5,7 @@ from collections.abc import Callable
 
 from core.devices.device import Device, Esp32InputDevice, Esp32OutputDevice, MaixcamVisionDevice
 from core.devices.protocol import MessageType, Heartbeat, encode_message
-from core.devices.transport import SerialTransport, TransportError
+from core.devices.transport import SerialTransport, TcpTransport, TransportError
 
 logger = logging.getLogger(__name__)
 
@@ -59,20 +59,31 @@ class DeviceMonitor:
             self._attached[device.device_id] = device
             self._heartbeats[device.device_id] = Heartbeat(PING_INTERVAL, PING_TIMEOUT)
             return True
-        transport = SerialTransport(
-            device.port, device.baudrate,
-            on_message=self._make_handler(device),
-            on_error=self._make_error_handler(device),
-        )
+        # 网络设备（port 形如 "192.168.50.46:9000"）走 TcpTransport，
+        # 串口设备走 SerialTransport 并保留硬复位流程。
+        is_network = isinstance(device.port, str) and ":" in device.port
+        if is_network:
+            transport = TcpTransport(
+                device.port,
+                on_message=self._make_handler(device),
+                on_error=self._make_error_handler(device),
+            )
+        else:
+            transport = SerialTransport(
+                device.port, device.baudrate,
+                on_message=self._make_handler(device),
+                on_error=self._make_error_handler(device),
+            )
         try:
             transport.open()
         except TransportError as e:
             logger.warning("DeviceMonitor attach failed for %s: %s", device.device_id, e)
             return False
-        try:
-            transport.reset_board()
-        except TransportError:
-            pass
+        if not is_network:
+            try:
+                transport.reset_board()
+            except TransportError:
+                pass
         device.transport = transport
         self._attached[device.device_id] = device
         self._heartbeats[device.device_id] = Heartbeat(PING_INTERVAL, PING_TIMEOUT)

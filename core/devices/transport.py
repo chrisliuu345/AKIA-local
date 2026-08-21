@@ -1,5 +1,6 @@
 import abc
 import logging
+import socket
 import threading
 import time
 from collections.abc import Callable
@@ -134,6 +135,111 @@ class SerialTransport(Transport):
                         except Exception as e:
                             logger.exception("on_message callback error: %s", e)
             except Exception as e:
+                if self.on_error:
+                    self.on_error(e)
+                break
+
+
+class TcpTransport(Transport):
+    """JSON-lines transport over TCP for network devices (e.g. MaixCAM).
+
+    address: "host:port" (e.g. "192.168.50.46:9000").  Same message routing
+    contract as SerialTransport (on_message / on_error callbacks).
+    """
+
+    def __init__(self, address: str,
+                 on_message: Callable[[dict], None] | None = None,
+                 on_error: Callable[[Exception], None] | None = None,
+                 connect_timeout: float = 3.0):
+        self._address = address
+        self.on_message = on_message
+        self.on_error = on_error
+        self._connect_timeout = connect_timeout
+        self._sock: socket.socket | None = None
+        self._read_thread = None
+        self._stop_event = threading.Event()
+        self._buf = b""
+
+    def open(self) -> None:
+        try:
+            host, port_s = self._address.rsplit(":", 1)
+            port = int(port_s)
+            self._sock = socket.create_connection(
+                (host, port), timeout=self._connect_timeout)
+            self._sock.settimeout(0.5)
+        except Exception as e:
+            self._sock = None
+            raise TransportError(f"Failed to connect {self._address}: {e}") from e
+        self._stop_event.clear()
+        self._read_thread = threading.Thread(
+            target=self._read_loop, daemon=True, name=f"tcp-{self._address}"
+        )
+        self._read_thread.start()
+        logger.info("TcpTransport opened %s", self._address)
+
+    def close(self) -> None:
+        self._stop_event.set()
+        if self._read_thread and self._read_thread.is_alive():
+            self._read_thread.join(timeout=3)
+        if self._sock:
+            try:
+                self._sock.close()
+            except Exception:
+                pass
+        self._sock = None
+        logger.info("TcpTransport closed %s", self._address)
+
+    def send(self, data: bytes) -> None:
+        if not self._sock:
+            raise TransportError("TCP socket not open")
+        try:
+            self._sock.sendall(data)
+        except Exception as e:
+            raise TransportError(f"Write error on {self._address}: {e}") from e
+
+    def is_open(self) -> bool:
+        return self._sock is not None
+
+    @property
+    def port_name(self) -> str:
+        return self._address
+
+    def _read_loop(self):
+        from core.devices.protocol import MAX_LINE_LEN, decode_message
+        while not self._stop_event.is_set():
+            try:
+                if not self._sock:
+                    break
+                data = self._sock.recv(4096)
+                if not data:
+                    # 对端关闭连接
+                    if self.on_error:
+                        self.on_error(TransportError("Connection closed by peer"))
+                    break
+                self._buf += data
+                if len(self._buf) > MAX_LINE_LEN:
+                    logger.warning(
+                        "read buffer exceeded %d bytes, dropping %d bytes",
+                        MAX_LINE_LEN, len(self._buf) - MAX_LINE_LEN,
+                    )
+                    self._buf = self._buf[-MAX_LINE_LEN:]
+                while b"\n" in self._buf:
+                    line, self._buf = self._buf.split(b"\n", 1)
+                    try:
+                        text = line.decode("utf-8", errors="replace")
+                    except Exception:
+                        continue
+                    msg = decode_message(text)
+                    if msg and self.on_message:
+                        try:
+                            self.on_message(msg)
+                        except Exception as e:
+                            logger.exception("on_message callback error: %s", e)
+            except socket.timeout:
+                continue
+            except OSError as e:
+                if self._stop_event.is_set():
+                    break
                 if self.on_error:
                     self.on_error(e)
                 break
