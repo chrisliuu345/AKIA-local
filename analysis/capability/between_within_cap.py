@@ -24,7 +24,13 @@ def analyze(
 
     groups = df.groupby(subgroup_col)[measurement_col]
     subgroup_means = groups.mean()
-    subgroup_stds = groups.std(ddof=1)
+    # W25 fix: 单观测子组std(ddof=1)为NaN，剔除n=1子组
+    subgroup_counts = groups.count()
+    valid_subgroups = subgroup_counts[subgroup_counts >= 2]
+    if len(valid_subgroups) < 2:
+        raise ValueError(f"有效子组不足（需要至少2个n≥2的子组，当前{len(valid_subgroups)}个）")
+    subgroup_stds = groups.std(ddof=1).loc[valid_subgroups.index]
+    subgroup_means = subgroup_means.loc[valid_subgroups.index]
 
     overall_mean = float(df[measurement_col].mean())
     overall_std = float(df[measurement_col].std(ddof=1))

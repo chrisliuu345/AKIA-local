@@ -409,8 +409,12 @@ class DataProfiler:
                         corr = df[valid].corr()
                         for i in range(len(valid)):
                             for j in range(i + 1, len(valid)):
-                                v = corr.iloc[i, j]
-                                if v is not None and abs(float(v)) > 0.95:
+                                # W90 fix: iloc兜底，处理NaN/空值
+                                try:
+                                    v = corr.iloc[i, j]
+                                except (IndexError, KeyError):
+                                    continue
+                                if v is not None and not pd.isna(v) and abs(float(v)) > 0.95:
                                     correlated_pairs.append((valid[i], valid[j]))
                 except Exception:
                     pass

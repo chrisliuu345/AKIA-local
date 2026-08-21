@@ -20,7 +20,20 @@ def analyze(data: pd.Series, subgroup_size: int = 5) -> Dict[str, Any]:
 
     xbar = subgroups.mean(axis=1)
     s = subgroups.std(ddof=1, axis=1)
-    s[s == 0] = 1e-10
+
+    # W33 fix: 剔除零标准差子组并告警，而非用魔法数污染s̄
+    zero_s_mask = s == 0
+    if zero_s_mask.any():
+        zero_count = int(zero_s_mask.sum())
+        # 剔除零标准差子组
+        valid_mask = ~zero_s_mask
+        if valid_mask.sum() < 2:
+            raise ValueError(f"有效子组不足：{zero_count}个子组标准差为0，剩余有效子组<2")
+        xbar = xbar[valid_mask]
+        s = s[valid_mask]
+        num_subgroups = len(s)
+        import warnings
+        warnings.warn(f"剔除{zero_count}个零标准差子组（标准差=0），剩余{num_subgroups}个子组", UserWarning)
 
     xbar_bar = xbar.mean()
     s_bar = s.mean()

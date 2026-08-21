@@ -38,15 +38,26 @@ def analyze(
 
     if usl is not None and lsl is not None:
         usl, lsl = float(usl), float(lsl)
-        cp = (usl - lsl) / (6 * std_within) if std_within > 0 else float("inf")
-        cpk = min((usl - mean) / (3 * std_within), (mean - lsl) / (3 * std_within)) if std_within > 0 else 0
-        pp = (usl - lsl) / (6 * std_overall) if std_overall > 0 else float("inf")
-        ppk = min((usl - mean) / (3 * std_overall), (mean - lsl) / (3 * std_overall)) if std_overall > 0 else 0
+        # W23 fix: std=0时用None替代inf，避免json.dumps抛异常
+        if std_within > 0:
+            cp = (usl - lsl) / (6 * std_within)
+            cpk = min((usl - mean) / (3 * std_within), (mean - lsl) / (3 * std_within))
+        else:
+            cp, cpk = None, None
+        if std_overall > 0:
+            pp = (usl - lsl) / (6 * std_overall)
+            ppk = min((usl - mean) / (3 * std_overall), (mean - lsl) / (3 * std_overall))
+        else:
+            pp, ppk = None, None
 
-        z_usl = (usl - mean) / std_overall if std_overall > 0 else float("inf")
-        z_lsl = (mean - lsl) / std_overall if std_overall > 0 else float("inf")
-        ppm_usl = stats.norm.sf(z_usl) * 1e6 if z_usl != float("inf") else 0
-        ppm_lsl = stats.norm.cdf(-z_lsl) * 1e6 if z_lsl != float("inf") else 0
+        if std_overall > 0:
+            z_usl = (usl - mean) / std_overall
+            z_lsl = (mean - lsl) / std_overall
+            ppm_usl = stats.norm.sf(z_usl) * 1e6
+            ppm_lsl = stats.norm.cdf(-z_lsl) * 1e6
+        else:
+            z_usl, z_lsl = 0.0, 0.0
+            ppm_usl, ppm_lsl = 0.0, 0.0
         ppm_total = ppm_usl + ppm_lsl
 
         expected_within = stats.norm.cdf((usl - mean) / std_within) - stats.norm.cdf((lsl - mean) / std_within) if std_within > 0 else 1
@@ -55,17 +66,17 @@ def analyze(
             "usl": float(usl),
             "lsl": float(lsl),
             "target": float(target) if target is not None else None,
-            "cp": round(float(cp), 4),
-            "cpk": round(float(cpk), 4),
-            "pp": round(float(pp), 4),
-            "ppk": round(float(ppk), 4),
+            "cp": round(float(cp), 4) if cp is not None else None,
+            "cpk": round(float(cpk), 4) if cpk is not None else None,
+            "pp": round(float(pp), 4) if pp is not None else None,
+            "ppk": round(float(ppk), 4) if ppk is not None else None,
             "ppm_total": round(float(ppm_total), 2),
             "ppm_usl": round(float(ppm_usl), 2),
             "ppm_lsl": round(float(ppm_lsl), 2),
             "expected_yield_within": round(float(expected_within * 100), 2),
             "expected_yield_overall": round(float((1 - ppm_total / 1e6) * 100), 2),
-            "grade": _get_capability_grade(cpk),
-            "sigma_level": round(float(min(cpk * 3, 6)), 2),
+            "grade": _get_capability_grade(cpk) if cpk is not None else "N/A",
+            "sigma_level": round(float(min(cpk * 3, 6)), 2) if cpk is not None else None,
         }
     elif usl is not None:
         result["capability"] = {
@@ -84,7 +95,8 @@ def analyze(
     else:
         result["capability"] = {"usl": None, "lsl": None}
 
-    if n <= 5000:
+    if n <= 5000 and n >= 3:
+        # W22 fix: shapiro要求n≥3，n<3跳过
         normality_result = stats.shapiro(clean)
     else:
         normality_result = stats.kstest(clean, lambda x: stats.norm.cdf(x, loc=mean, scale=std_overall))

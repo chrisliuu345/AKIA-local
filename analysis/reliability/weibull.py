@@ -80,7 +80,12 @@ class WeibullAnalyzer:
 
         ft = ft[valid]
         if censored is not None:
-            cen = np.asarray(censored, dtype=int)[valid]
+            # W37 fix: 校验censored长度与failure_times匹配
+            cen_raw = np.asarray(censored, dtype=int)
+            if len(cen_raw) != len(failure_times):
+                out["error"] = f"删失指示数组长度({len(cen_raw)})与失效时间数组长度({len(failure_times)})不匹配"
+                return out
+            cen = cen_raw[valid]
             if not np.any(cen == 1):
                 out["warnings"].append("所有数据均为删失，无法估计形状参数")
         else:
@@ -90,6 +95,10 @@ class WeibullAnalyzer:
         if len(failure_only) < 3:
             out["error"] = "失效事件不足（至少需要 3 个失效点）"
             return out
+
+        # W26 fix: 全部失效时间相等时拟合退化，提前检测
+        if np.std(failure_only) == 0:
+            out["warnings"].append("所有失效时间相同，Weibull拟合可能退化（β→0, η→极小值）")
 
         # ── 拟合 ──
         result: Optional[WeibullResult] = None

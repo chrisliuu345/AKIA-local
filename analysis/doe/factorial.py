@@ -42,8 +42,12 @@ def analyze_factorial(
     effects = {}
     for factor in factor_cols:
         col = data[factor].astype(float).values
-        high_mask = col == 1
-        low_mask = col == -1
+        # W35 fix: 支持非±1编码，按>0/<0分组而非严格==1/==-1
+        high_mask = col > 0
+        low_mask = col < 0
+        if high_mask.sum() == 0 or low_mask.sum() == 0:
+            effects[factor] = 0.0
+            continue
         effect_val = float(np.mean(response[high_mask]) - np.mean(response[low_mask]))
         effects[factor] = round(effect_val, 6)
 
@@ -63,10 +67,16 @@ def analyze_factorial(
 
     for factor in factor_cols:
         col = data[factor].astype(float).values
-        high_mask = col == 1
-        low_mask = col == -1
+        # W35 fix: SS计算也使用>0/<0，与效应计算一致（支持非±1编码）
+        high_mask = col > 0
+        low_mask = col < 0
         effect_val = effects[factor]
-        ss_f = int(np.sum(high_mask)) * (effect_val / 2) ** 2 + int(np.sum(low_mask)) * (-effect_val / 2) ** 2
+        n_high = int(np.sum(high_mask))
+        n_low = int(np.sum(low_mask))
+        if n_high > 0 and n_low > 0:
+            ss_f = n_high * (effect_val / 2) ** 2 + n_low * (-effect_val / 2) ** 2
+        else:
+            ss_f = 0.0
         ss_factors[factor] = round(float(ss_f), 4)
         df_factors[factor] = 1
         ss_model += ss_f

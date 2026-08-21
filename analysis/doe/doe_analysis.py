@@ -52,7 +52,11 @@ def analyze(
     y_pred = response - residuals
     r_squared = 1 - np.sum(residuals ** 2) / np.sum((response - grand_mean) ** 2) if np.sum((response - grand_mean) ** 2) > 0 else 0
 
-    sw_stat, sw_p = stats.shapiro(residuals) if len(residuals) <= 5000 else (0, 0)
+    # W36 fix: shapiro要求n≥3，N<3跳过
+    if len(residuals) >= 3:
+        sw_stat, sw_p = stats.shapiro(residuals) if len(residuals) <= 5000 else (0, 0)
+    else:
+        sw_stat, sw_p = 0, 0
 
     return {
         "chart_type": "DOE Analysis",

@@ -23,7 +23,8 @@ def analyze(
     sigma = float(np.std(values, ddof=1)) if n > 1 else 1.0
 
     ewma = np.zeros(n)
-    ewma[0] = values[0]
+    # W32 fix: 初值用μ0（均值），符合Montgomery/Minitab标准
+    ewma[0] = mean
     for i in range(1, n):
         ewma[i] = lam * values[i] + (1 - lam) * ewma[i - 1]
 

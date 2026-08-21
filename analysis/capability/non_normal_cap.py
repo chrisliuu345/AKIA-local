@@ -21,6 +21,25 @@ def analyze(
     if n < 5:
         raise ValueError(f"数据量不足: {n}")
 
+    # W24 fix: 常数数据提前检测，boxcox无法处理
+    if np.std(clean) == 0:
+        result = {
+            "chart_type": "Non-Normal Capability",
+            "method": method,
+            "transform_param": None,
+            "summary": {
+                "sample_size": n,
+                "original_mean": round(float(np.mean(clean)), 6),
+                "original_std": 0.0,
+                "skewness": 0.0,
+                "kurtosis": 0.0,
+                "transformed_mean": round(float(np.mean(clean)), 6),
+                "transformed_std": 0.0,
+            },
+            "error": "数据为常数（标准差=0），无法进行非正态能力分析",
+        }
+        return result
+
     shift = 0.0
     lam: Optional[float] = None
     if method == "box_cox":
@@ -61,28 +80,38 @@ def analyze(
     lsl_t = _transform_value(float(lsl), method, lam, shift, mean_orig, std_orig) if has_lsl else None
 
     if has_usl and has_lsl:
-        pp = (usl_t - lsl_t) / (6 * std_t) if std_t > 0 else float("inf")
-        ppk = min((usl_t - mean_t) / (3 * std_t), (mean_t - lsl_t) / (3 * std_t)) if std_t > 0 else 0
-        ppm = stats.norm.cdf((lsl_t - mean_t) / std_t) * 1e6 + stats.norm.sf((usl_t - mean_t) / std_t) * 1e6
+        # W24 fix: std_t=0时用None替代inf，避免除零
+        if std_t > 0:
+            pp = (usl_t - lsl_t) / (6 * std_t)
+            ppk = min((usl_t - mean_t) / (3 * std_t), (mean_t - lsl_t) / (3 * std_t))
+            ppm = stats.norm.cdf((lsl_t - mean_t) / std_t) * 1e6 + stats.norm.sf((usl_t - mean_t) / std_t) * 1e6
+        else:
+            pp, ppk, ppm = None, None, None
     elif has_usl:
-        pp = (usl_t - mean_t) / (3 * std_t) if std_t > 0 else float("inf")
+        if std_t > 0:
+            pp = (usl_t - mean_t) / (3 * std_t)
+            ppm = stats.norm.sf((usl_t - mean_t) / std_t) * 1e6
+        else:
+            pp, ppm = None, None
         ppk = pp
-        ppm = stats.norm.sf((usl_t - mean_t) / std_t) * 1e6
     else:
-        pp = (mean_t - lsl_t) / (3 * std_t) if std_t > 0 else float("inf")
+        if std_t > 0:
+            pp = (mean_t - lsl_t) / (3 * std_t)
+            ppm = stats.norm.cdf((lsl_t - mean_t) / std_t) * 1e6
+        else:
+            pp, ppm = None, None
         ppk = pp
-        ppm = stats.norm.cdf((lsl_t - mean_t) / std_t) * 1e6
 
     capability = {
-        "pp": round(float(pp), 4),
-        "ppk": round(float(ppk), 4),
-        "ppm_total": round(float(ppm), 2),
-        "grade": _get_grade(ppk),
-        "sigma_level": round(float(min(ppk * 3, 6)), 2),
+        "pp": round(float(pp), 4) if pp is not None else None,
+        "ppk": round(float(ppk), 4) if ppk is not None else None,
+        "ppm_total": round(float(ppm), 2) if ppm is not None else None,
+        "grade": _get_grade(ppk) if ppk is not None else "N/A",
+        "sigma_level": round(float(min(ppk * 3, 6)), 2) if ppk is not None else None,
     }
     if has_usl:
         capability["usl"] = float(usl)
-        capability["ppu"] = round(float(pp), 4)
+        capability["ppu"] = round(float(pp), 4) if pp is not None else None
     if has_lsl:
         capability["lsl"] = float(lsl)
         capability["ppl"] = round(float(pp), 4)

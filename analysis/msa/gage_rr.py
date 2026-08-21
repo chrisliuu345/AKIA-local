@@ -42,14 +42,16 @@ def analyze_crossed(
     ev_pct = ev
 
     r_op = float(op_means.max() - op_means.min())
-    d2_op = _cfg.CONTROL_CHART_CONSTANTS.get(o, {}).get("d2", 1.128)
-    av = np.sqrt(max((r_op / d2_op) ** 2 - ev ** 2 / (p * r), 0))  # reproducibility
+    # C15 fix: AV uses d2* (K2 inverse), not SPC d2
+    d2_star_op = _cfg.MSA_D2_STAR.get(o, _cfg.CONTROL_CHART_CONSTANTS.get(o, {}).get("d2", 1.128))
+    av = np.sqrt(max((r_op / d2_star_op) ** 2 - ev ** 2 / (p * r), 0))  # reproducibility
     av_pct = av
 
     grr = np.sqrt(ev ** 2 + av ** 2)  # Gage R&R
     r_part = float(part_means.max() - part_means.min())
-    d2_part = _cfg.CONTROL_CHART_CONSTANTS.get(p, {}).get("d2", 1.128)
-    pv = r_part / d2_part  # part variation
+    # C15 fix: PV uses d2* (K3 inverse), not SPC d2
+    d2_star_part = _cfg.MSA_D2_STAR.get(p, _cfg.CONTROL_CHART_CONSTANTS.get(p, {}).get("d2", 1.128))
+    pv = r_part / d2_star_part  # part variation
 
     tv = np.sqrt(grr ** 2 + pv ** 2)  # total variation
 

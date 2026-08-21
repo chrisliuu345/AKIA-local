@@ -368,11 +368,20 @@ def _build_contour(data: dict, options: dict) -> Figure:
         fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "数据点不足", ha="center", va="center", fontsize=14)
         return fig
+
+    # W79 fix: 去除重复坐标避免griddata QhullError
+    coords = np.column_stack([x.values, y.values])
+    _, unique_idx = np.unique(coords, axis=0, return_index=True)
+    x_u, y_u, z_u = x.values[unique_idx], y.values[unique_idx], z.values[unique_idx]
+
     fig, ax = plt.subplots(figsize=(8, 6), dpi=_dpi())
     xi = np.linspace(x.min(), x.max(), 50)
     yi = np.linspace(y.min(), y.max(), 50)
     X, Y = np.meshgrid(xi, yi)
-    Z = griddata((x.values, y.values), z.values, (X, Y), method="cubic")
+    try:
+        Z = griddata((x_u, y_u), z_u, (X, Y), method="cubic")
+    except Exception:
+        Z = griddata((x_u, y_u), z_u, (X, Y), method="linear")  # 降级到linear
     contour = ax.contourf(X, Y, Z, levels=20, cmap="RdYlBu_r")
     fig.colorbar(contour, ax=ax, label=resp)
     ax.scatter(x, y, c="black", s=20, alpha=0.5, edgecolors="white")
@@ -400,12 +409,21 @@ def _build_surface_3d(data: dict, options: dict) -> Figure:
         fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "数据点不足", ha="center", va="center", fontsize=14)
         return fig
+
+    # W79 fix: 去除重复坐标避免griddata QhullError
+    coords = np.column_stack([x.values, y.values])
+    _, unique_idx = np.unique(coords, axis=0, return_index=True)
+    x_u, y_u, z_u = x.values[unique_idx], y.values[unique_idx], z.values[unique_idx]
+
     fig = plt.figure(figsize=(10, 7), dpi=_dpi())
     ax = fig.add_subplot(111, projection="3d")
     xi = np.linspace(x.min(), x.max(), 30)
     yi = np.linspace(y.min(), y.max(), 30)
     X, Y = np.meshgrid(xi, yi)
-    Z = griddata((x.values, y.values), z.values, (X, Y), method="cubic")
+    try:
+        Z = griddata((x_u, y_u), z_u, (X, Y), method="cubic")
+    except Exception:
+        Z = griddata((x_u, y_u), z_u, (X, Y), method="linear")  # 降级到linear
     surf = ax.plot_surface(X, Y, Z, cmap="RdYlBu_r", alpha=0.8, linewidth=0, antialiased=True)
     fig.colorbar(surf, ax=ax, shrink=0.5, aspect=10, label=resp)
     ax.scatter(x, y, z, c="black", s=30, alpha=0.6)
@@ -551,13 +569,14 @@ def _build_waterfall(data: dict, options: dict) -> Figure:
     bottom = 0.0
     for i, (lbl, v) in enumerate(zip(labels, vals)):
         color = palette[0] if v >= 0 else palette[2] if len(palette) > 2 else "#e74c3c"
-        bar = ax.bar(i, v, bottom=bottom if i > 0 else 0, color=color, alpha=0.8,
+        # C16 fix: all bars start from accumulated bottom
+        bar = ax.bar(i, v, bottom=bottom, color=color, alpha=0.8,
                      edgecolor="white", linewidth=0.5)
+        # 连接线从前一根柱子顶部到当前柱子底部
         if i > 0:
-            bottom += v
-        # 连接线
-        if i > 0:
-            ax.plot([i - 1, i], [bottom - v, bottom - v], linewidth=0.8, color="#6e7080")
+            ax.plot([i - 1, i], [bottom, bottom], linewidth=0.8, color="#6e7080")
+        # C16 fix: accumulate bottom for all bars including first
+        bottom += v
 
     ax.set_xticks(range(len(labels)))
     ax.set_xticklabels(labels, fontsize=FONT_SIZE_TICK, rotation=30, ha="right")
