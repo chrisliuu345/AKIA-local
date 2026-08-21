@@ -62,12 +62,17 @@ class TimeStudyEngine:
         if bins is None:
             bins = max(5, min(20, int(np.sqrt(n))))
         hist, edges = np.histogram(times, bins=bins)
-        if n <= 5000:
+
+        # W85 fix: std=0时跳过正态性检验（常数数据无需检验）
+        std_val = float(times.std(ddof=1)) if n > 1 else 0.0
+        if n <= 5000 and std_val > 0:
             stat, p = stats.shapiro(times.values)
             normality = {"test": "Shapiro-Wilk", "statistic": float(stat), "p_value": float(p)}
-        else:
-            stat, p = stats.kstest(times.values, "norm", args=(times.mean(), times.std(ddof=1)))
+        elif n > 5000 and std_val > 0:
+            stat, p = stats.kstest(times.values, "norm", args=(times.mean(), std_val))
             normality = {"test": "Kolmogorov-Smirnov", "statistic": float(stat), "p_value": float(p)}
+        else:
+            normality = {"test": "N/A", "statistic": 0.0, "p_value": 1.0, "note": "数据为常数(std=0)"}
 
         return {
             "n": n,

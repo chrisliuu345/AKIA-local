@@ -209,10 +209,13 @@ class OneClickAnalyzer:
                 msa_df["operator"] = ["OP1" if i % 2 == 0 else "OP2" for i in range(len(msa_df))]
                 result = analyze_crossed(msa_df, col, "part", "operator")
                 pcts = result.get("percentages", {})
+                # W10 fix: 统一为0-1标度（与kpi_extractor一致）
+                grr_raw = pcts.get("grr_pct_tv")
+                grr_normalized = grr_raw / 100.0 if grr_raw is not None else None
                 return {
                     "analysis_type": "msa", "success": True,
                     "summary": {
-                        "grr_pct": pcts.get("grr_pct_tv"),
+                        "grr_pct": grr_normalized,
                         "ndc": result.get("ndc"),
                         "acceptable": result.get("acceptance"),
                     },
@@ -322,9 +325,10 @@ class OneClickAnalyzer:
                         lines.append(f"- **过程能力**: Cpk={cpk:.2f}, 等级: {level}")
                 elif label == "msa":
                     grr = s.get("grr_pct")
-                    if grr:
-                        ok = "可接受(<10%)" if grr < 10 else ("条件接受(10-30%)" if grr < 30 else "不可接受(>30%)")
-                        lines.append(f"- **MSA 量具 R&R**: GRR={grr:.1f}%, {ok}")
+                    if grr is not None:
+                        # W10 fix: 统一0-1标度（kpi_extractor归一化为0-1）
+                        ok = "可接受(<10%)" if grr < 0.1 else ("条件接受(10-30%)" if grr < 0.3 else "不可接受(>30%)")
+                        lines.append(f"- **MSA 量具 R&R**: GRR={grr*100:.1f}%, {ok}")
                 elif label == "regression":
                     r2 = s.get("r_squared")
                     if r2:

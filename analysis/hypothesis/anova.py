@@ -17,11 +17,14 @@ def one_way(
     data[measurement_col] = pd.to_numeric(data[measurement_col], errors="coerce")
     data = data.dropna(subset=[measurement_col, factor_col])
 
-    groups = [group[measurement_col].dropna().values for _, group in data.groupby(factor_col)]
-    groups = [g for g in groups if len(g) >= 2]
+    # W34 fix: 基于过滤后的数据重新分组，确保df/SS一致
+    groups_data = [(name, group[measurement_col].dropna().values) 
+                   for name, group in data.groupby(factor_col)]
+    groups = [g for _, g in groups_data if len(g) >= 2]
+    level_names = [name for name, g in groups_data if len(g) >= 2]
 
     if len(groups) < 2:
-        raise ValueError(f"需要至少2个有效组, 当前 {len(groups)}")
+        raise ValueError(f"需要至少2个有效组(每组n≥2), 当前 {len(groups)}")
 
     f_stat, p_value = stats.f_oneway(*groups)
 

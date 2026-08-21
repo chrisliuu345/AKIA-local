@@ -8,7 +8,7 @@ class SMEDTask:
     name: str = ""
     task_type: str = "internal"  # "internal" | "external"
     time_sec: float = 0.0
-    improved_time: float = 0.0          # 改善后时间
+    improved_time: float = 0.0          # 改善后时间 (None=未设置, 0=作业消除)
     convert_to_external: bool = False   # 是否可转化为外部作业
 
     @property
@@ -22,7 +22,11 @@ class SMEDTask:
     @property
     def improvement_pct(self) -> float:
         if self.time_sec > 0:
-            return round((self.time_sec - max(self.improved_time, 0)) / self.time_sec * 100, 1)
+            # W82 fix: improved_time=0 表示作业消除(100%改善)
+            # improved_time=None 表示未设置(返回0)
+            if self.improved_time is None:
+                return 0.0
+            return round((self.time_sec - self.improved_time) / self.time_sec * 100, 1)
         return 0.0
 
 @dataclass

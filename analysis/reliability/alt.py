@@ -14,12 +14,27 @@ class ALTEngine:
                        use_temp: float, activation_energy: float = 0.7) -> Dict[str, Any]:
         """Arrhenius 模型: L(T) = A * exp(Ea/(k*T))
         参数:
-            stress_temp: 加速应力温度 (K)
+            stress_temp: 加速应力温度 (K, 已转换)
             life: 对应寿命 (任意单位)
             use_temp: 使用温度 (Celsius), 自动转换为 K
             activation_energy: 激活能 (eV), 默认 0.7
         返回: AF, 外推寿命, 拟合参数, R²
         """
+        # W27 fix: 最小样本校验
+        if len(stress_temp) < 3 or len(life) < 3:
+            return {"error": f"样本量不足（需要至少3个数据点，当前stress={len(stress_temp)}, life={len(life)}）"}
+        if np.any(stress_temp <= 0):
+            return {"error": "stress_temp必须全部为正数（开尔文温度）"}
+        if np.any(life <= 0):
+            return {"error": "life必须全部为正数"}
+
+        # W28 fix: 统一温度单位约定 — stress_temp应为开尔文
+        # 如果传入值明显是摄氏度（< 200），给出警告
+        if np.any(stress_temp < 200):
+            import warnings
+            warnings.warn("stress_temp值较小(<200)，请确认是否已转换为开尔文温度(K)。"
+                         "如果传入的是摄氏度，请先转换：T_K = T_C + 273.15", UserWarning)
+
         T_use = use_temp + 273.15
         k = 8.617333262145e-5  # Boltzmann (eV/K)
 

@@ -13,6 +13,11 @@ def analyze(defects: pd.Series) -> Dict[str, Any]:
         raise ValueError(f"数据量不足: 需要至少 2 个子组, 当前 {n}")
 
     c = defects.values.astype(float)
+
+    # W31 fix: 校验缺陷数非负
+    if np.any(c < 0):
+        raise ValueError("缺陷数必须为非负数，检测到负值")
+
     c_bar = c.mean()
 
     c_ucl = c_bar + 3 * np.sqrt(c_bar)

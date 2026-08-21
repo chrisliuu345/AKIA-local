@@ -15,6 +15,10 @@ def analyze(defectives: pd.Series, sample_sizes: pd.Series) -> Dict[str, Any]:
     d = defectives.values.astype(float)
     ss = sample_sizes.values.astype(float)
 
+    # W30 fix: 校验sample_sizes为正数
+    if np.any(ss <= 0):
+        raise ValueError("sample_sizes 必须全部为正数，检测到 ≤0 的值")
+
     p = d / ss
     p_bar = d.sum() / ss.sum()
 
