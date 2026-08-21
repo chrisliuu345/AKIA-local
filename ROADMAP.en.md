@@ -9,10 +9,10 @@
 ## Version Roadmap Overview
 
 ```
-v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ──→ v2.6.3 ──→ v2.6.4 ──→ v2.6.5 ──→ v2.7.0 ──→ v2.7.5 ──→ v2.8.0 ──→ v2.8.5 ──→ v2.9.0 ──→ v2.9.5 ──→ v2.10.0
+v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ──→ v2.6.4 ──→ v2.6.5 ──→ v2.7.0 ──→ v2.7.5 ──→ v2.8.0 ──→ v2.8.5 ──→ v2.9.0 ──→ v2.9.5 ──→ v2.10.0
  Release   Code+AI    Eng Tools   Reports    Live      UX+Anim    HW Ext     ESP32 Deploy+   Security     RBAC+Auth    Stats Eng    UI Robust   Polish      Video      Macro       REST API   Supply     Digital    Web Ph.1   Web Ph.2
            (Done)     (Done)     (Done)    (Done)     (Done)     (Done)     Device Tab      (Done)       +Device      Hardening    +Reports    +Info #1    TimeStudy   +Info #2   +Info #3    Chain      Twin       Dash/Rpt   +Mobile
-                                                                           (Released)                  (TBD)       (TBD)        +Test       (TBD)      (TBD)       (TBD)      (TBD)      (TBD)       (TBD)      (TBD)
+                                                                           (Released)                  (Done)      (TBD)        +Test       (TBD)      (TBD)       (TBD)      (TBD)      (TBD)       (TBD)      (TBD)
 ```
 
 ---
@@ -199,9 +199,9 @@ Plugin index 33, LLM streaming refresh, validate_params complete, animation clea
 
 ---
 
-## v2.6.2 — RBAC Matrix + Auth Hardening + Device Reliability (TBD)
+## v2.6.2 — RBAC Matrix + Auth Hardening + Device Reliability (Completed)
 
-> Code review prerequisite fixes completed (12/19 Critical, commits ae04c38/d2c7426/53e888d): auth privilege escalation C01/C02/C03/C13/C14, nav_buttons pollution C08, functional/crash C07/C09/C10/C11/C12/C17, synthetic test data C18. Remaining 6 Critical + ~31 Warnings included in this version.
+> All tasks completed (Commits A-I, b8de78a…84c5945): RBAC guards/menu/sidebar/welcome filtering + auth lockout & forced password change + security fixes W01-W17 + device link C04/C05/C06/C19/W87-W100 + synthetic test data contract fixes + esp32_out real-device verification (COM3, 8 protocol checks passed) + MaixCAM network integration (TCP 192.168.50.46:9000, full end-to-end verification). Code review prerequisite fixes (12/19 Critical, commits ae04c38/d2c7426/53e888d): auth privilege escalation C01/C02/C03/C13/C14, nav_buttons pollution C08, functional/crash C07/C09/C10/C11/C12/C17, synthetic test data C18.
 
 ### RBAC Permission Matrix Enforcement (core)
 - Goal: make `_ROLE_PERMISSIONS` (admin/dept_admin/analyst/readonly) effective — two-layer "hide + block"
@@ -221,11 +221,11 @@ Plugin index 33, LLM streaming refresh, validate_params complete, animation clea
 - Warning: W87 discovery parallel scan, W88 monitor stop timeout, W89 registry persistence lock, W93 context_builder acceptance type check, W94 batch daily window, W97 esp32_in DS18B20 non-blocking, W98 esp32_in channel init tolerance, W100 esp32 RTC sync
 
 ### Hardware Wrap-up (moved from v2.6.1)
-- **esp32_out real-device verification**: flash second board, verify COMMAND→ACK drives real actuators (LED/relay/servo)
-- **MaixCAM**: network transport (TCP/SSH) device integration
+- **esp32_out real-device verification** ✅: second board flashed, COMMAND→ACK drives real actuators (LED/relay/servo)
+- **MaixCAM** ✅: network transport (TCP/SSH) device integration — firmware/maixcam_server.py deployed on device :9000; PC side TcpTransport/probe_network_device/monitor branch/add-network-device dialog; 18 unit tests + real-device end-to-end verification
 
 ### Tests
-- T44 sidebar missing `import_db_clicked` signal (pre-existing failure, fix during RBAC sidebar work)
+- T44 sidebar missing `import_db_clicked` signal ✅ (import_db routed via menu QAction + RBAC registration)
 
 ---
 
@@ -416,6 +416,7 @@ v2.0 (28)     v2.1 (28)     v2.2 (32)       v2.4 (34)     v2.5/2.6 (35)
 
 | Date | Version | Content |
 |------|---------|---------|
+| 08-21 | v2.6.2 | Completed: RBAC permission matrix (guards/menu greying/sidebar/welcome filtering) + auth hardening (login lockout + forced password change) + security fixes W01-W17 + device link C04/C05/C06/C19/W87-W100 + esp32_out real-device verification (COM3, LED/relay/servo ACK) + MaixCAM network integration (TCP :9000 end-to-end) · 296 tests |
 | 08-19 | v2.6.1-review | Code review fixes (12 Critical): auth privilege escalation C01/C02/C03/C13/C14 + nav_buttons C08 + functional/crash C07/C09/C10/C11/C12/C17 + synthetic test data C18 · 289 pytest · 44/45 smoke |
 | 08-19 | v2.6.1 | Security validation: password policy (≥8 chars + letters/digits, wired in 3 auth paths) + audit logging (core/audit.py public entry + 9 business events) + secret store (DPAPI encryption + SQL connection-string masking) · 282 tests |
 | 08-18 | v2.6.0 | Released: ESP32-IN deployment (FW 1.1.0 verified on hardware) + Device Monitoring Tab 35 (stop/resume, 20-row preview, data import) + ESP-32 config gating + PyInstaller onedir + Inno Setup installer · 278 tests |
