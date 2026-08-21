@@ -26,15 +26,21 @@ def normality_test(data: pd.Series, confidence_level: float = 0.95) -> Dict[str,
             "is_normal": sw_p > alpha,
         }
 
-    da_stat, da_p = stats.normaltest(clean)  # D'Agostino-Pearson
-    results["dagostino_pearson"] = {
-        "statistic": round(float(da_stat), 6),
-        "p_value": round(float(da_p), 6),
-        "is_normal": da_p > alpha,
-    }
+    # W21 fix: normaltest要求n≥8，n<8跳过
+    if n >= 8:
+        da_stat, da_p = stats.normaltest(clean)  # D'Agostino-Pearson
+        results["dagostino_pearson"] = {
+            "statistic": round(float(da_stat), 6),
+            "p_value": round(float(da_p), 6),
+            "is_normal": da_p > alpha,
+        }
 
     mean_ks, std_ks = clean.mean(), clean.std(ddof=1)
-    ks_stat, ks_p = stats.kstest(clean, lambda x: stats.norm.cdf(x, loc=mean_ks, scale=std_ks))
+    # W21 fix: std=0时跳过KS检验避免除零
+    if std_ks > 0:
+        ks_stat, ks_p = stats.kstest(clean, lambda x: stats.norm.cdf(x, loc=mean_ks, scale=std_ks))
+    else:
+        ks_stat, ks_p = 0.0, 1.0  # 常数数据视为正态
     results["kolmogorov_smirnov"] = {
         "statistic": round(float(ks_stat), 6),
         "p_value": round(float(ks_p), 6),

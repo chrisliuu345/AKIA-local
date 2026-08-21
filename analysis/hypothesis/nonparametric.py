@@ -26,10 +26,14 @@ def wilcoxon_signed_rank(a: np.ndarray, b: np.ndarray = None,
                          alternative: str = "two-sided") -> Dict[str, Any]:
     """Wilcoxon 符号秩检验 (配对样本或单样本)"""
     if b is not None:
-        clean_a = a[np.isfinite(a)]; clean_b = b[np.isfinite(b)]
-        n = min(len(clean_a), len(clean_b))
+        # W20 fix: 按索引对齐后过滤非有限值，避免位置截断错位
+        min_len = min(len(a), len(b))
+        valid_mask = np.isfinite(a[:min_len]) & np.isfinite(b[:min_len])
+        clean_a = a[:min_len][valid_mask]
+        clean_b = b[:min_len][valid_mask]
+        n = len(clean_a)
         if n < 5: return {"error": f"样本量不足 ({n})"}
-        stat, p = sp_stats.wilcoxon(clean_a[:n], clean_b[:n], alternative=alternative)
+        stat, p = sp_stats.wilcoxon(clean_a, clean_b, alternative=alternative)
         return {
             "test": "Wilcoxon Signed-Rank (paired)",
             "statistic": round(float(stat), 4),

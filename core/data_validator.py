@@ -125,7 +125,8 @@ class DataValidator:
                     kurtosis_val = stats.kurtosis(data)
 
             statistic, p_value = stats.shapiro(data) if len(data) <= 5000 else (None, None)
-            if len(data) > 5000 and not is_constant:
+            if len(data) > 5000 and not is_constant and std > 0:
+                # W92 fix: std=0时跳过kstest避免除零
                 statistic, p_value = stats.kstest(data, lambda x: stats.norm.cdf(x, loc=mean, scale=std))
 
             self.stats[col] = {
@@ -156,8 +157,13 @@ class DataValidator:
             method = "Shapiro-Wilk"
         else:
             m_s, s_s = clean.mean(), clean.std()
-            stat, p = stats.kstest(clean, lambda x: stats.norm.cdf(x, loc=m_s, scale=s_s))
-            method = "Kolmogorov-Smirnov"
+            # W92 fix: std=0时跳过kstest
+            if s_s > 0:
+                stat, p = stats.kstest(clean, lambda x: stats.norm.cdf(x, loc=m_s, scale=s_s))
+                method = "Kolmogorov-Smirnov"
+            else:
+                stat, p = 0.0, 1.0
+                method = "N/A (常数数据)"
 
         return {
             "is_normal": p > 0.05,

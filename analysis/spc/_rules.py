@@ -88,14 +88,18 @@ def _rule_4(values: np.ndarray, mean: float) -> List[Dict]:
 
 # ── 规则 5: 连续 3 点中有 2 点超出 2σ（同侧）─────────
 def _rule_5(values: np.ndarray, mean: float, sigma: float) -> List[Dict]:
+    """W18 fix: 超2σ的点中≥2点同侧（不要求全部3点同侧）"""
     violations = []
     n = len(values)
     if n < 3:
         return violations
     for i in range(n - 2):
         window = values[i:i + 3]
-        beyond = sum(1 for v in window if abs(v - mean) > 2 * sigma)
-        if beyond >= 2 and (all(v > mean for v in window) or all(v < mean for v in window)):
+        # 找出超出2σ的点及其位置
+        beyond_above = [j for j, v in enumerate(window) if v - mean > 2 * sigma]
+        beyond_below = [j for j, v in enumerate(window) if mean - v > 2 * sigma]
+        # 超2σ的点中≥2点同侧即判异
+        if len(beyond_above) >= 2 or len(beyond_below) >= 2:
             violations.append(_mk(i + 3, 5, values[i + 2]))
     return violations
 

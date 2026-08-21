@@ -22,6 +22,33 @@ def analyze(
         target = float(np.mean(values))
 
     sigma = float(np.std(values, ddof=1)) if n > 1 else 1.0
+
+    # W29 fix: 常数列σ=0时返回稳定态，避免满屏伪违规
+    if sigma == 0:
+        return {
+            "chart_type": "CUSUM",
+            "num_points": n,
+            "cusum_chart": {
+                "data": values.tolist(),
+                "cusum_plus": [0.0] * n,
+                "cusum_minus": [0.0] * n,
+                "target": round(float(target), 6),
+                "cl": 0.0,
+                "ucl": 0.0,
+                "lcl": 0.0,
+                "violations": [],
+            },
+            "summary": {
+                "target": round(float(target), 6),
+                "k": k,
+                "h": h,
+                "sigma": 0.0,
+                "k_absolute": 0.0,
+                "h_absolute": 0.0,
+                "note": "常数列（σ=0），过程稳定",
+            },
+        }
+
     k_abs = k * sigma
     h_abs = h * sigma
 

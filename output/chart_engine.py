@@ -387,6 +387,12 @@ def create_capability_chart(
     original_data: np.ndarray,
     title: str = "",
 ) -> Figure:
+    # W76 fix: 空数据时返回占位图
+    if original_data is None or len(original_data) == 0:
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
+        ax.text(0.5, 0.5, "无数据", ha="center", va="center", fontsize=14)
+        return fig
+
     fig, axes = plt.subplots(2, 1, figsize=(10, 8), dpi=_dpi(),
                               gridspec_kw={"height_ratios": [3, 1]})
 
@@ -438,11 +444,14 @@ def create_capability_chart(
 def create_pareto_chart(labels: List[str], values: List[float], title: str = "Pareto图") -> Figure:
     fig, ax1 = plt.subplots(figsize=(10, 5), dpi=_dpi())
 
+    # W77 fix: 全零值时跳过百分比曲线
+    total = sum(values)
+
     sorted_indices = np.argsort(values)[::-1]
     sorted_labels = [labels[i] for i in sorted_indices]
     sorted_values = [values[i] for i in sorted_indices]
 
-    cumulative = np.cumsum(sorted_values) / sum(sorted_values) * 100
+    cumulative = np.cumsum(sorted_values) / total * 100 if total > 0 else np.zeros_like(sorted_values)
 
     bars = ax1.bar(range(len(sorted_labels)), sorted_values, color=CHART_COLORS["primary"], alpha=0.8)
     ax1.set_ylabel("效应绝对值", fontsize=FONT_SIZE_LABEL)
@@ -484,6 +493,7 @@ def figure_to_bytes(fig: Figure, fmt: str = "png") -> io.BytesIO:
     buf = io.BytesIO()
     fig.savefig(buf, format=fmt, dpi=_dpi(), bbox_inches="tight")
     buf.seek(0)
+    plt.close(fig)  # W78 fix: 释放matplotlib资源，防止figure泄漏
     return buf
 
 

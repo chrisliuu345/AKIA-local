@@ -94,10 +94,11 @@ def two_sample(
 
 
 def paired(before: pd.Series, after: pd.Series, alternative: str = "two-sided") -> Dict[str, Any]:
-    b = before.dropna().astype(float)
-    a = after.dropna().astype(float)
-    common_len = min(len(b), len(a))
-    b, a = b[:common_len], a[:common_len]
+    # W19 fix: 按索引对齐后dropna，避免NaN位置不一致导致配对错位
+    paired_df = pd.DataFrame({"before": before, "after": after}).dropna()
+    b = paired_df["before"].astype(float)
+    a = paired_df["after"].astype(float)
+    common_len = len(b)
 
     if common_len < 2:
         raise ValueError(f"数据量不足: {common_len}")
