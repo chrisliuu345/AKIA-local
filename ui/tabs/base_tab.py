@@ -26,6 +26,10 @@ class BaseAnalysisTab(QWidget):
         self.df: pd.DataFrame = None
         self.parsed_info: Dict[str, Any] = {}
         self.current_result: Dict[str, Any] = {}
+        # W59-W62: 标准三件套契约 — 所有 Tab 的 current_result 必须包含以下键
+        # analysis_type: str  分析类型名称
+        # params: Dict         分析参数
+        # result: Dict         引擎返回结果
         self.current_figure = None
         self.canvas = None
         self._raw_data = {}
@@ -40,7 +44,12 @@ class BaseAnalysisTab(QWidget):
             if w:
                 w.setParent(None)
         import matplotlib.pyplot as plt
-        plt.close("all")
+        # W48: 仅关闭当前 figure，避免批量分析时误关其他 Tab 的图表
+        if self.current_figure is not None:
+            try:
+                plt.close(self.current_figure)
+            except Exception:
+                pass
         self.canvas = None
         self.current_figure = None
 

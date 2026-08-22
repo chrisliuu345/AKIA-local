@@ -465,9 +465,9 @@ class LLMDialog(QDialog):
                 pass
             self.worker.requestInterruption()
             self.llm.stop()
-            if not self.worker.wait(3000):
+            # W111: 非阻塞等待，避免 UI 冻结
+            if not self.worker.wait(1500):
                 self.worker.terminate()
-                self.worker.wait(1000)
         super().closeEvent(event)
 
     def _clear_chat(self):

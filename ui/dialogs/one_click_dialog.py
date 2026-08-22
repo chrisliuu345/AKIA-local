@@ -24,11 +24,14 @@ class AnalyzeWorker(QThread):
         self.selected = selected
 
     def run(self):
-        llm = LLMClient()
-        analyzer = OneClickAnalyzer(llm_client=llm if llm.available else None)
-        analyzer.set_progress_callback(lambda msg, pct: self.progress_msg.emit(msg, pct))
-        result = analyzer.run(self.raw_data, self.selected)
-        self.finished.emit(result)
+        try:
+            llm = LLMClient()
+            analyzer = OneClickAnalyzer(llm_client=llm if llm.available else None)
+            analyzer.set_progress_callback(lambda msg, pct: self.progress_msg.emit(msg, pct))
+            result = analyzer.run(self.raw_data, self.selected)
+            self.finished.emit(result)
+        except Exception as e:
+            self.finished.emit({"error": str(e)})
 
 
 class OneClickDialog(QDialog):

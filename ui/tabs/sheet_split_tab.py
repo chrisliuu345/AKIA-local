@@ -38,7 +38,7 @@ class SheetSplitTab(BaseAnalysisTab):
         cl.addRow(self.btn); layout.addWidget(cfg)
     def _open(self):
         f,_=QFileDialog.getOpenFileName(self,"打开","","Excel (*.xlsx *.xls *.xlsm)")
-        if f: self._file=f; self.file_lbl.setText(f); self.df=pd.read_excel(f,dtype=str)
+        if f: self._file=f; self.file_lbl.setText(f); self.df=pd.read_excel(f)
     def _run(self):
         if not self._file:
             QMessageBox.information(self, "提示", "请先打开一个Excel文件")

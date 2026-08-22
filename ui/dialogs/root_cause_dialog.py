@@ -137,10 +137,10 @@ class RootCauseDialog(QDialog):
             self.close()
             return
 
-        method_label = "SHAP + RandomForest" if result["method"] == "shap" else "RandomForest"
+        method_label = "SHAP + RandomForest" if result.get("method") == "shap" else "RandomForest"
         self.info_label.setText(
             f"{self.chart_type} | 异常点 {len(self.violations)} 个"
-            f"（联动行 {result['n_violation_rows']}） | 算法: {method_label}"
+            f"（联动行 {result.get('n_violation_rows', 0)}） | 算法: {method_label}"
         )
 
         causes: List[RootCause] = result["causes"]

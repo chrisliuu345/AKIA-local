@@ -51,6 +51,7 @@ class WorkerMachineTab(BaseAnalysisTab):
 
     def _resize_table(self):
         n=self.task_spin.value(); headers=["工序名","人工(s)","机器(s)","步行(s)"]
+        self.table.blockSignals(True)
         self.table.setColumnCount(4); self.table.setHorizontalHeaderLabels(headers)
         self.table.setRowCount(n)
         defaults=["装夹","粗加工","精加工","测量","卸料","清理","换刀"]
@@ -60,6 +61,7 @@ class WorkerMachineTab(BaseAnalysisTab):
             if not self.table.item(i,2): self.table.setItem(i,2,QTableWidgetItem("10"))
             if not self.table.item(i,3): self.table.setItem(i,3,QTableWidgetItem("0"))
         self.table.resizeColumnsToContents()
+        self.table.blockSignals(False)
 
     def _on_preset(self, name: str):
         if name=="自定义": return

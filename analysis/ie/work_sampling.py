@@ -19,11 +19,9 @@ BUILTIN_STATUSES = OrderedDict([
 
 
 def _z_value(confidence: float) -> float:
-    if confidence >= 0.99:
-        return 2.576
-    if confidence >= 0.95:
-        return 1.96
-    return 1.645
+    """W84: 使用 scipy 正态分位数函数，支持任意置信度"""
+    from scipy import stats
+    return float(stats.norm.ppf((1 + confidence) / 2))
 
 
 class WorkSamplingEngine:

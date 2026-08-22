@@ -252,6 +252,14 @@ class ReliabilityTab(BaseAnalysisTab):
             return
 
         r = result["result"]
+        # W66: 3P Weibull 拟合可能产生 NaN 参数，提前检测
+        import math
+        if any(math.isnan(v) for v in (r.beta, r.eta) if isinstance(v, float)):
+            self.result_table.setColumnCount(1)
+            self.result_table.setHorizontalHeaderLabels(["错误"])
+            self.result_table.setRowCount(1)
+            self.result_table.setItem(0, 0, QTableWidgetItem("拟合失败：参数为 NaN，请尝试其他拟合方法或检查数据"))
+            return
         # 更新 KPI
         self._kpi_labels["beta"].setText(f"β = {r.beta:.4f}")
         self._kpi_labels["eta"].setText(f"η = {r.eta:.1f}")

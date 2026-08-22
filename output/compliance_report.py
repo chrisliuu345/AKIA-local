@@ -69,7 +69,12 @@ class ComplianceReportGenerator:
     def generate(template_id: str, analyses: List[Dict],
                  output_path: str, charts: Dict[str, bytes] = None,
                  file_name: str = "") -> str:
-        template = ComplianceReportGenerator.load_template(template_id)
+        # W43: load_template 异常时 fallback 到内置默认模板
+        try:
+            template = ComplianceReportGenerator.load_template(template_id)
+        except (FileNotFoundError, ValueError) as e:
+            _logger.warning(f"加载合规模板 '{template_id}' 失败: {e}，使用默认模板")
+            template = {"name": "默认合规模板", "format": "docx", "sections": []}
         fmt = template.get("format", "docx")
         sections = template.get("sections", [])
 

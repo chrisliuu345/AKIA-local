@@ -82,13 +82,10 @@ class TestProtocol:
         assert not hb.is_timed_out()
         hb.mark_received()
         assert not hb.is_timed_out()
-        # Simulate time passing
-        original = time.time
-        try:
-            time.time = lambda: original() + 10
+        # W105: 用 mock.patch 替代直接赋值 time.time
+        from unittest.mock import patch
+        with patch("time.time", return_value=time.time() + 10):
             assert hb.is_timed_out()
-        finally:
-            time.time = original
 
 
 # ── Transport ──

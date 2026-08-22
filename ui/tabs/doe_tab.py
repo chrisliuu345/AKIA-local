@@ -26,6 +26,7 @@ class DOETab(BaseAnalysisTab):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self._original_df = None  # 备份原始数据，防止生成设计覆盖
         self._setup_ui()
 
     def _setup_ui(self):
@@ -243,6 +244,8 @@ class DOETab(BaseAnalysisTab):
             design_df = factorial.generate_design(factors, reps)
             result = {"chart_type": "2^k Factorial Design", "design": design_df.to_dict("records"),
                        "factors": factors, "runs": len(design_df), "replicates": reps}
+            if self._original_df is None:
+                self._original_df = self.df
             self.df = design_df
             self.set_data(design_df, self.parsed_info)
         elif method == "响应曲面分析 (CCD)":
@@ -261,6 +264,13 @@ class DOETab(BaseAnalysisTab):
             "chart_data": result,
         }
         return self.current_result
+
+    def _restore_original(self):
+        """恢复到用户导入的原始数据（撤销生成设计覆盖）"""
+        if self._original_df is not None:
+            self.df = self._original_df
+            self.set_data(self._original_df, self.parsed_info)
+            self._original_df = None
 
     def display_result(self, analysis: Dict[str, Any] = None):
         if analysis is None:

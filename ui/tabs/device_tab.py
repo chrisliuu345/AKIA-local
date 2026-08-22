@@ -384,6 +384,9 @@ class DeviceTab(BaseAnalysisTab):
                 time.sleep(0.1)
 
     def _on_update_devices(self, found: list):
+        # W52: 恢复按钮状态（主线程安全）
+        self.refresh_btn.setEnabled(True)
+        self.refresh_btn.setText(i18n.tr("device.refresh"))
         for info in found:
             self._add_device_info(info)
         self._rebuild_cards()
@@ -479,11 +482,11 @@ class DeviceTab(BaseAnalysisTab):
             try:
                 found = discover_devices(timeout=0.5)
                 self.update_devices.emit(found)
-            finally:
-                self.refresh_btn.setEnabled(True)
-                self.refresh_btn.setText(i18n.tr("device.refresh"))
+            except Exception:
+                self.update_devices.emit([])
 
         threading.Thread(target=_run, daemon=True).start()
+        # W52: 不在后台线程操作 QWidget；按钮恢复由 _on_update_devices 信号处理
 
     def _on_device_state_changed(self, device_id: str, state: DeviceState):
         self._rebuild_cards()
@@ -660,6 +663,7 @@ class DeviceTab(BaseAnalysisTab):
         )
 
     def closeEvent(self, event):
+        self._discovery_running = False
         self._monitor.stop()
         self._registry.stop_all()
         super().closeEvent(event)

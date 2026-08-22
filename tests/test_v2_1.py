@@ -93,8 +93,6 @@ def test_batch_scheduler_default_execute_raises():
     # 传入 None 应抛出 NotImplementedError（含 task 标识信息）
     with pytest.raises(NotImplementedError):
         BatchScheduler._default_execute(None)
-    assert "NotImplementedError" in BatchScheduler._default_execute.__code__.co_names \
-           or True  # 至少不再是 pass
 
 
 # ── 懒加载 ──
@@ -167,10 +165,8 @@ def test_data_profiler_empty_df():
     """DataProfiler 对空 DataFrame 不崩溃"""
     from core.data_profiler import DataProfiler
     dp = DataProfiler()
-    try:
-        result = dp.profile({"empty_sheet": pd.DataFrame()})
-    except Exception:
-        pass  # 空 DataFrame 可能以各种合理方式处理
+    result = dp.profile({"empty_sheet": pd.DataFrame()})
+    assert isinstance(result, dict), "profile() 应返回字典"
 
 
 def test_sheet_splitter_has_split_methods():

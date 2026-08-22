@@ -204,7 +204,12 @@ class TimeStudyTab(BaseAnalysisTab):
         confidence = {"90%": 0.90, "95%": 0.95, "99%": 0.99}.get(conf_text, 0.95)
 
         result = TimeStudyEngine.analyze(obs, rating, allowance, takt, confidence)
-        self.current_result = result
+        # W59-W62: 标准化 current_result 三件套
+        self.current_result = {
+            "analysis_type": "时间研究",
+            "params": {"rating": rating, "allowance": allowance, "confidence": confidence},
+            "result": result.get("result", result) if isinstance(result, dict) else result,
+        }
         self._display_result(result)
         self.analysis_completed.emit()
 
