@@ -710,9 +710,14 @@ class MainWindow(QMainWindow):
             try:
                 self.status_label.setText(f"正在从数据库加载 {len(table_names)} 个表...")
                 loader = SqlLoader()
-                loader.connect(config)
-                raw_data = loader.load(table_names)
-                loader.disconnect()
+                try:
+                    loader.connect(config)
+                    raw_data = loader.load(table_names)
+                finally:
+                    try:
+                        loader.disconnect()
+                    except Exception:
+                        pass
                 audit("import_db", self.current_user.username if self.current_user else "anonymous",
                       f"数据库 {config.get('database', '')} 表数={len(raw_data)}")
 
@@ -1045,11 +1050,15 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, i18n.tr("msg.no_data"), i18n.tr("msg.no_data_file"))
             return
 
+        from PySide6.QtWidgets import QApplication
         tabs = self._get_tabs(force_load=True)
         success = 0
         failed = 0
 
-        for idx, tab in tabs.items():
+        for i, (idx, tab) in enumerate(tabs.items()):
+            # W46: 每 3 个 Tab 让出一次事件循环，防止 UI 完全冻结
+            if i % 3 == 0:
+                QApplication.processEvents()
             if not _tab_is_runnable(tab):
                 continue
             try:

@@ -145,7 +145,12 @@ class SMEDTab(BaseAnalysisTab):
         result = self.run_analysis()
         if result:
             self.display_result(result)
-            self.current_result = result
+            # W59-W62: 标准化 current_result 三件套
+            self.current_result = {
+                "analysis_type": result.get("analysis_type", "SMED"),
+                "params": {},
+                "result": result.get("result", result),
+            }
             self.analysis_completed.emit()
 
     def run_analysis(self):

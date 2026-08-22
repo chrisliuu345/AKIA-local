@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QSpinBox, QDoubleSpinBox, QGroupBox, QFormLayout,
     QTableWidget, QTableWidgetItem, QTextEdit, QSplitter, QHeaderView,
-    QFrame, QStackedWidget, QScrollArea,
+    QFrame, QStackedWidget, QScrollArea, QCheckBox,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
@@ -88,6 +88,14 @@ class SPCTab(BaseAnalysisTab):
         ls_layout.addWidget(QLabel(i18n.tr("spc.lsl")))
         ls_layout.addWidget(self.lsl_spin)
         config_layout.addRow(self.row_lsl)
+
+        # W42: 规格限启用开关 — 默认关闭，避免 0.0 被误当作有效规格
+        self.spec_check = QCheckBox("启用规格限 (USL/LSL)")
+        self.spec_check.setToolTip("勾选后在控制图上显示规格限；未勾选时 USL/LSL 值不参与分析")
+        self.spec_check.stateChanged.connect(self._on_spec_toggled)
+        config_layout.addRow(self.spec_check)
+        self.row_usl.setVisible(False)
+        self.row_lsl.setVisible(False)
 
         self.cusum_k_spin = QDoubleSpinBox()
         self.cusum_k_spin.setRange(0.1, 10)
@@ -263,10 +271,21 @@ class SPCTab(BaseAnalysisTab):
         is_ewma = chart_type == "EWMA"
         is_std = not is_cusum and not is_ewma
         self.row_subgroup.setVisible(is_std)
-        self.row_usl.setVisible(is_std)
-        self.row_lsl.setVisible(is_std)
+        self._update_spec_visibility()
         self.row_cusum.setVisible(is_cusum)
         self.row_ewma.setVisible(is_ewma)
+
+    def _on_spec_toggled(self, state):
+        """W42: 规格限复选框切换"""
+        self._update_spec_visibility()
+
+    def _update_spec_visibility(self):
+        """根据图表类型和复选框状态决定规格限行可见性"""
+        chart_type = self.chart_type_combo.currentText()
+        is_std = chart_type not in ("CUSUM", "EWMA")
+        show = is_std and self.spec_check.isChecked()
+        self.row_usl.setVisible(show)
+        self.row_lsl.setVisible(show)
 
     def validate_params(self) -> tuple:
         if self.df is None:
@@ -338,6 +357,10 @@ class SPCTab(BaseAnalysisTab):
             "result": result,
             "chart_data": result,
         }
+        # W42: 规格限 — 仅在启用时传入，避免默认 0.0 被误用
+        if self.spec_check.isChecked():
+            result["usl"] = self.usl_spin.value()
+            result["lsl"] = self.lsl_spin.value()
 
         from config.settings import get_setting
         if not get_setting("nelson_rules_enabled", True):

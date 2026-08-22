@@ -212,6 +212,8 @@ class MSATab(BaseAnalysisTab):
                     parts = self.df[part].dropna().unique()
                     if len(parts) < 2:
                         return False, f"零件列 '{part}' 至少需要2个不同零件，当前：{len(parts)}"
+                elif "线性" in method:
+                    return False, "线性分析需要选择零件列"
                 elif "R&R" in method:
                     return False, "请选择零件列（可右键点击表格列标题设为零件列）"
             if "R&R" in method or "属性一致性" in method:

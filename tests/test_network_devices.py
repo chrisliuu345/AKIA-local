@@ -151,7 +151,8 @@ class TestTcpTransport:
     def test_close_idempotent(self):
         t = TcpTransport("127.0.0.1:1", connect_timeout=1)
         t.close()
-        t.close()
+        t.close()  # 第二次 close() 不抛异常即通过（幂等性）
+        assert not t.is_open()
 
 
 class TestProbeNetworkDevice:

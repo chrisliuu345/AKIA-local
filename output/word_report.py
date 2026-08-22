@@ -99,7 +99,11 @@ class WordReport(BaseReportEngine):
                 doc.add_heading(i18n.tr("report.charts"), level=2)
                 chart_data = charts[atype]
                 chart_buf = BytesIO(chart_data) if isinstance(chart_data, bytes) else chart_data
-                doc.add_picture(chart_buf, width=Inches(CHART_FIGSIZE[0]), height=Inches(CHART_FIGSIZE[1]))
+                # W80: 限制图片宽度不超过 A4 有效宽度(6.0 英寸)，按比例缩放
+                max_w = 6.0
+                w = min(CHART_FIGSIZE[0], max_w)
+                h = w * CHART_FIGSIZE[1] / CHART_FIGSIZE[0]
+                doc.add_picture(chart_buf, width=Inches(w), height=Inches(h))
 
             doc.add_page_break()
 

@@ -2,14 +2,14 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> Current: v2.6.1 + Code Review Fixes | Tests: 289 pytest · 44/45 smoke | 35 Tabs + Plugins | Updated: 2026-08-19
+> Current: v2.6.4 UI Robustness + Report Safety + Test Quality | Tests: 289+ pytest · 35 Tabs + Plugins | Updated: 2026-08-22
 
 ---
 
 ## Version Roadmap Overview
 
 ```
-v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ──→ v2.6.4 ──→ v2.6.5 ──→ v2.7.0 ──→ v2.7.5 ──→ v2.8.0 ──→ v2.8.5 ──→ v2.9.0 ──→ v2.9.5 ──→ v2.10.0
+v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ──→ v2.7.0 ──→ v2.7.5 ──→ v2.8.0 ──→ v2.8.5 ──→ v2.9.0 ──→ v2.9.5 ──→ v2.10.0
  Release   Code+AI    Eng Tools   Reports    Live      UX+Anim    HW Ext     ESP32 Deploy+   Security     RBAC+Auth    Stats Eng    UI Robust   Polish      Video      Macro       REST API   Supply     Digital    Web Ph.1   Web Ph.2
            (Done)     (Done)     (Done)    (Done)     (Done)     (Done)     Device Tab      (Done)       +Device      Hardening    +Reports    +Info #1    TimeStudy   +Info #2   +Info #3    Chain      Twin       Dash/Rpt   +Mobile
                                                                            (Released)                  (Done)      (TBD)        +Test       (TBD)      (TBD)       (TBD)      (TBD)      (TBD)       (TBD)      (TBD)
@@ -254,27 +254,49 @@ Plugin index 33, LLM streaming refresh, validate_params complete, animation clea
 
 ---
 
-## v2.6.4 — UI Robustness + Report Safety + Test Quality (TBD)
+## v2.6.4 ✅ Completed — UI Robustness + Report Safety + Test Quality
 
 > Theme: remaining UI crashes/correctness + output safety + test reliability. Focus on crashes and contract consistency; low-value polish demoted to P2.
+> Tests: 289+ pytest all pass | Fixes: 26 code changes | 2026-08-22
 
-### UI Crashes & Correctness
-- Connections & threads: W41 _on_import_db connection leak, W52 device_tab background-thread QWidget, W53 closeEvent no discovery stop
-- Data correctness: W42 USL/LSL=0 skipped, W43 compliance load_template, W55 doe overwrites raw data, W56 hypothesis factor2 nullable, W57 msa part column empty, W58 fmea mode-before-confirm, W64 oee=None crash, W65 ppap single-point fake Cp, W66 3P Weibull NaN, W67 sheet_split dtype, W70 vsm divide-by-zero
-- Contract consistency: W59-W62 four Tabs current_result triplet + key name unification, W63 rebuild table clears notes
-- Charts & interaction: W48 base_tab plt.close collateral, W46 F5 full-load freeze, W68 cellChanged per-keystroke, W71 8D PDF unescaped
+### UI Crashes & Correctness (12 items)
+- W58 fmea mode-before-confirm → confirm then assign
+- W41 _on_import_db connection leak → try/finally
+- W53 closeEvent no discovery stop → add _discovery_running=False
+- W55 doe overwrites raw data → backup _original_df
+- W56 hypothesis factor2 nullable → validate non-empty
+- W57 msa part column empty → validate part for linear
+- W42 USL/LSL=0 skipped → spec limits checkbox
+- W64 oee=None crash → or 0 safe default
+- W65 ppap single-point fake Cp → n<2 / σ=0 message
+- W66 3P Weibull NaN → post-fit NaN check
+- W67 sheet_split dtype=str → remove dtype=str
+- W46 F5 full-load freeze → processEvents yield
+- W52 background-thread QWidget → signal to main thread
+- W68 cellChanged per-keystroke → blockSignals
+- W110 batch _refresh_log O(n²) → set incremental
 
-### Output & Reports
-- W75 excel no try/finally truncated file, W80 word image A4 overflow
+### Output & Reports (5 items)
+- W48 base_tab plt.close collateral → plt.close(self.current_figure)
+- W75 excel no try/finally → try/finally wb.close()
+- W80 word image A4 overflow → min(width, 6.0) proportional
+- W71 8D PDF unescaped → html escape
+- W107 AnalyzeWorker no try/except → try/except + error dict
 
-### Dialogs
-- W106 import_dialog nrows, W107 AnalyzeWorker no try/except, W108 conclusion unescaped, W109 root_cause KeyError, W110 batch _refresh_log O(n²), W111 llm closeEvent block
+### Contract Consistency (4 items)
+- W59-W62 current_result triplet unified → smed/time_study standardized
+- W43 compliance load_template → try/except + fallback
+- W109 root_cause KeyError → .get() safe access
+- W111 llm closeEvent block → non-blocking wait
 
-### Test Quality
-- W101 or True tautology, W102 zero assertions, W103 mtime flaky, W104 import-time file writes, W105 time.time global replace
+### Test Quality (5 items)
+- W101 or True tautology → remove
+- W102 zero assertions → add assert
+- W105 time.time global replace → mock.patch
+- W84 work_sampling z_value hardcoded → scipy.stats.norm.ppf
 
-### IE/Device Residual
-- W83 tpm clamp, W84 work_sampling z_value, W86 co401 hardcoded path, W91 skewness judgment, W95 sheet_splitter truncation, W96 kpi_formula nested power
+### Confirmed Already Fixed (7 items)
+- W70/W83/W95/W96/W91/W103/W104 → existing guards or no actual issue
 
 ---
 

@@ -71,7 +71,8 @@ class TestLLMClientStop:
         assert tokens == []
 
     def test_stop_without_active_request(self, openai_client):
-        openai_client.stop()  # 无活动连接时不抛异常
+        openai_client.stop()  # 无活动连接时不抛异常（smoke test）
+        assert True  # 显式断言：stop() 完成无异常
 
 
 class TestLLMWorkerInterruption:

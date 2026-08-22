@@ -221,6 +221,12 @@ class HypothesisTab(BaseAnalysisTab):
                 groups = self.df[factor].dropna().unique()
                 if len(groups) < 2:
                     return False, f"因子列 '{factor}' 至少需要2个不同水平，当前：{len(groups)}"
+                if method == "双因素 ANOVA":
+                    factor2 = self.factor2_combo.currentText()
+                    if not factor2:
+                        return False, "双因素 ANOVA 需要选择第二个因子列"
+                    if factor2 == factor:
+                        return False, "两个因子列不能相同"
             d1 = pd.to_numeric(self.df[col1], errors="coerce").dropna()
             if len(d1) < 2:
                 return False, f"数据列1 '{col1}' 有效数据不足（仅{len(d1)}行）"

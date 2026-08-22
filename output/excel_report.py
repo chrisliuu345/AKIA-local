@@ -22,17 +22,18 @@ class ExcelReport(BaseReportEngine):
             title = i18n.tr("report.title")
         wb = xlsxwriter.Workbook(output_path, {"nan_inf_to_errors": True})
         self.workbook = wb
-        self._define_formats()
+        try:
+            self._define_formats()
 
-        summary_sheet = wb.add_worksheet(i18n.tr("report.summary_title"))
-        self._write_summary(summary_sheet, analyses, title)
+            summary_sheet = wb.add_worksheet(i18n.tr("report.summary_title"))
+            self._write_summary(summary_sheet, analyses, title)
 
-        for i, atype, params, result in self.iter_analyses(analyses):
-            sheet_name = self.safe_name(f"{atype}_{i+1}")
-            ws = wb.add_worksheet(sheet_name)
-            self._write_analysis_sheet(ws, atype, params, result)
-
-        wb.close()
+            for i, atype, params, result in self.iter_analyses(analyses):
+                sheet_name = self.safe_name(f"{atype}_{i+1}")
+                ws = wb.add_worksheet(sheet_name)
+                self._write_analysis_sheet(ws, atype, params, result)
+        finally:
+            wb.close()
         return output_path
 
     def _define_formats(self):

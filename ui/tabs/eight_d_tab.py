@@ -241,7 +241,10 @@ class EightDTab(BaseAnalysisTab):
                 code = f"D{i}"
                 step = getattr(self.report, f"d{i}")
                 story.append(Paragraph(f"{code}: {EightDReport.STEP_LABELS[code]}", styles["Heading2"]))
-                content = str(step.__dict__).replace("{", "").replace("}", "").replace("'", "")
+                # W71: HTML 转义用户输入，防止 <>& 等破坏 reportlab Paragraph
+                from xml.sax.saxutils import escape as _html_escape
+                raw = str(step.__dict__).replace("{", "").replace("}", "").replace("'", "")
+                content = _html_escape(raw)
                 story.append(Paragraph(content, styles["BodyText"]))
                 story.append(Spacer(1, 12))
             doc.build(story)
