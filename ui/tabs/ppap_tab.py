@@ -137,12 +137,20 @@ class PPAPTab(BaseAnalysisTab):
                 lsl = float(self.dim_table.item(r, 3).text() or 0)
                 vals_str = self.dim_table.item(r, 4).text() if self.dim_table.item(r, 4) else ""
                 vals = [float(v.strip()) for v in vals_str.split(",") if v.strip()]
-                if vals and usl > lsl:
-                    arr = np.array(vals)
-                    sigma = arr.std(ddof=1) if len(arr) > 1 else 0.001
-                    cp = (usl - lsl) / (6 * sigma) if sigma > 0 else 0
-                    cpk = min((usl - arr.mean()) / (3 * sigma), (arr.mean() - lsl) / (3 * sigma)) if sigma > 0 else 0
-                    self.dim_table.setItem(r, 5, QTableWidgetItem(f"Cp={cp:.2f} Cpk={cpk:.2f}"))
+                if len(vals) < 2:
+                    self.dim_table.setItem(r, 5, QTableWidgetItem("样本不足(n<2)"))
+                    continue
+                if usl <= lsl:
+                    self.dim_table.setItem(r, 5, QTableWidgetItem("USL≤LSL 无效"))
+                    continue
+                arr = np.array(vals)
+                sigma = arr.std(ddof=1)
+                if sigma == 0:
+                    self.dim_table.setItem(r, 5, QTableWidgetItem("σ=0 无法计算"))
+                    continue
+                cp = (usl - lsl) / (6 * sigma)
+                cpk = min((usl - arr.mean()) / (3 * sigma), (arr.mean() - lsl) / (3 * sigma))
+                self.dim_table.setItem(r, 5, QTableWidgetItem(f"Cp={cp:.2f} Cpk={cpk:.2f}"))
             except (ValueError, AttributeError):
                 continue
         QMessageBox.information(self, "计算完成", "Cp/Cpk 已更新")

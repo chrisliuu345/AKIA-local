@@ -225,7 +225,7 @@ class OEETab(BaseAnalysisTab):
         self._kpi_labels["performance"].setText(pct("performance"))
         self._kpi_labels["quality"].setText(pct("quality"))
 
-        oee = ov.get("oee", 0)
+        oee = ov.get("oee") or 0
         self._kpi_labels["oee"].setText(f"{oee:.1%}")
         if oee >= 0.85:
             color = "#27ae60"

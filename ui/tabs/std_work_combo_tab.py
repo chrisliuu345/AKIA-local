@@ -47,6 +47,7 @@ class StdWorkComboTab(BaseAnalysisTab):
 
     def _resize_table(self):
         n=self.step_spin.value(); headers=["工序名","手动(s)","自动(s)","步行(s)"]
+        self.table.blockSignals(True)
         self.table.setColumnCount(4); self.table.setHorizontalHeaderLabels(headers); self.table.setRowCount(n)
         defaults=["取料","装夹","加工","测量","调整","卸料","清洁","搬运"]
         for i in range(min(8,n)):
@@ -55,6 +56,7 @@ class StdWorkComboTab(BaseAnalysisTab):
             if not self.table.item(i,2): self.table.setItem(i,2,QTableWidgetItem("10"))
             if not self.table.item(i,3): self.table.setItem(i,3,QTableWidgetItem("2"))
         self.table.resizeColumnsToContents()
+        self.table.blockSignals(False)
 
     def _on_preset(self,name:str):
         if name=="自定义": return

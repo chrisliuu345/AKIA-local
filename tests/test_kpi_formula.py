@@ -11,11 +11,9 @@ from core.kpi_formula import (
 
 class TestValidate:
     def test_simple_expr_ok(self):
-        validate("cpk / (1 + grr_pct)")
-        validate("oee * 0.85 + 2.5")
-        validate("(a + b) ** 2")
-        validate("-x + 3.14")
-        validate("a // b % 2")
+        for expr in ["cpk / (1 + grr_pct)", "oee * 0.85 + 2.5",
+                     "(a + b) ** 2", "-x + 3.14", "a // b % 2"]:
+            validate(expr)  # 不应抛异常
 
     def test_empty_rejected(self):
         with pytest.raises(FormulaError):
@@ -59,7 +57,7 @@ class TestValidate:
             validate("a << 1")
 
     def test_chinese_variable_names(self):
-        validate("长度_mean / 长度_std")
+        validate("长度_mean / 长度_std")  # 不应抛异常
 
     def test_expr_too_long_rejected(self):
         with pytest.raises(FormulaError, match="过长"):

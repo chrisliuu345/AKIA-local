@@ -29,6 +29,7 @@ class BatchDialog(QDialog):
         self._log_timer = QTimer(self)
         self._log_timer.timeout.connect(self._refresh_log)
         self._log_timer.start(2000)
+        self._displayed_log_lines: set = set()  # W110: 增量追踪已显示行
 
     def _setup_ui(self):
         tc = theme_colors()
@@ -230,6 +231,8 @@ class BatchDialog(QDialog):
         self.log_view.append(msg)
 
     def _refresh_log(self):
+        # W110: O(1) 增量追加，替代 O(n²) 全量比对
         for entry in self.scheduler.get_log():
-            if entry not in self.log_view.toPlainText().split("\n"):
+            if entry not in self._displayed_log_lines:
+                self._displayed_log_lines.add(entry)
                 self.log_view.append(entry)

@@ -95,11 +95,19 @@ class FMEATab(BaseAnalysisTab):
         self._rebuild_table()
 
     def _on_mode_changed(self, idx: int):
-        self._mode = "dfmea" if idx == 1 else "pfmea"
+        new_mode = "dfmea" if idx == 1 else "pfmea"
+        if new_mode == self._mode:
+            return
         reply = QMessageBox.question(self, "切换模式",
                                      f"切换到{self.mode_combo.currentText()}模式? 当前数据将丢失。")
         if reply == QMessageBox.Yes:
+            self._mode = new_mode
             self._new_analysis()
+        else:
+            # 恢复 combo 到当前模式
+            self.mode_combo.blockSignals(True)
+            self.mode_combo.setCurrentIndex(0 if self._mode == "pfmea" else 1)
+            self.mode_combo.blockSignals(False)
 
     def _add_row(self):
         item = FMEAItem(function=f"新增功能{len(self._items)+1}")

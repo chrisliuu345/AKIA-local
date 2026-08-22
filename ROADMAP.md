@@ -2,14 +2,14 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> 当前: v2.6.3 统计引擎加固 | 测试: 104+ pytest · 35 个 Tab + 插件 | 更新: 2026-08-21
+> 当前: v2.6.4 UI健壮性 + 报告安全 + 测试质量 | 测试: 289+ pytest · 35 个 Tab + 插件 | 更新: 2026-08-22
 
 ---
 
 ## 版本总览
 
 ```
-v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ──→ v2.6.5 ──→ v2.7.0 ──→ v2.7.5 ──→ v2.8.0 ──→ v2.8.5 ──→ v2.9.0 ──→ v2.9.5 ──→ v2.10.0
+v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ──→ v2.7.0 ──→ v2.7.5 ──→ v2.8.0 ──→ v2.8.5 ──→ v2.9.0 ──→ v2.9.5 ──→ v2.10.0
  Release   代码+AI    工程工具    报告      实时监控    UX+动画     硬件扩展    ESP32部署+    安全校验     RBAC+认证    统计引擎    UI健壮性    体验打磨    视频时间    宏录制      REST API   供应链      数字孪生    Web一期     Web二期
            (完成)    (完成)     (完成)    (完成)     (完成)     (完成)     设备监控Tab     (已完成)     +设备加固     加固(完成)   +报告+测试  +Info一期   时间研究   +Info二期   +Info三期   协作        布局仿真    看板/报告   +移动应用
                                                                            (已发布)                    (已完成)    (已完成)    (待开发)    (待开发)    (待开发)    (待开发)    (待开发)    (待开发)    (待开发)
@@ -255,27 +255,50 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 
 ---
 
-## v2.6.4 — UI 健壮性 + 报告安全 + 测试质量（待开发）
+## v2.6.4 ✅ 已完成 — UI 健壮性 + 报告安全 + 测试质量
 
 > 主题：剩余 UI 崩溃/正确性 + 输出安全 + 测试可信度。聚焦崩溃与契约一致性，低价值打磨项降级 P2。
+> 测试: 289+ pytest 全部通过 | 修复: 26项代码修改 | 2026-08-22
 
-### UI 崩溃与正确性
-- 连接与线程：W41 _on_import_db 连接泄漏、W52 device_tab 后台线程改 QWidget、W53 closeEvent 未停 discovery
-- 数据正确性：W42 USL/LSL=0 跳过、W43 compliance load_template、W55 doe 覆盖原始数据、W56 hypothesis factor2 可空、W57 msa part 列空、W58 fmea 先改后确认、W64 oee=None 崩溃、W65 ppap 单点虚假 Cp、W66 3P Weibull NaN、W67 sheet_split dtype、W70 vsm 除零
-- 契约一致性：W59-W62 四个 Tab current_result 三件套 + 键名统一、W63 重建表清空备注
-- 图表与交互：W48 base_tab plt.close 误关、W46 F5 全量冻结、W68 cellChanged 每键触发、W71 8D PDF 未转义
+### UI 崩溃与正确性（12 项）
+- W58 fmea_tab 模式切换先改后确认 → 确认后才赋值
+- W41 _on_import_db 连接泄漏 → try/finally 包裹 connect/disconnect
+- W53 device_tab closeEvent 未停 discovery → 加 _discovery_running=False
+- W55 doe_tab 生成设计覆盖原始数据 → 备份 _original_df
+- W56 hypothesis_tab factor2 可空 → validate_params 加非空校验
+- W57 msa_tab 线性分析 part 列空 → validate_params 加 part 校验
+- W42 spc_tab USL/LSL=0 跳过 → 新增规格限启用复选框
+- W64 oee_tab oee=None 崩溃 → or 0 安全取值
+- W65 ppap_tab 单点虚假 Cp → n<2 / σ=0 提示
+- W66 reliability 3P Weibull NaN → 拟合后 NaN 检测
+- W67 sheet_split dtype=str → 移除 dtype=str
+- W46 main_window F5 全量冻结 → processEvents 让出事件循环
+- W52 device_tab 后台线程改 QWidget → 信号回主线程
+- W53 closeEvent 未停 discovery → 加 flag
+- W68 cellChanged 每键触发 → blockSignals
+- W110 batch _refresh_log O(n²) → set 增量追踪
 
-### 输出与报告
-- W75 excel 无 try/finally 残缺文件、W80 word 图片溢出 A4
+### 输出与报告（3 项）
+- W48 base_tab plt.close(“all”) 误关 → plt.close(self.current_figure)
+- W75 excel 无 try/finally → try/finally 包裹 wb.close()
+- W80 word 图片溢出 A4 → min(width, 6.0) 等比缩放
+- W71 8D PDF 未转义 → html escape
+- W107 AnalyzeWorker 无 try/except → try/except + error dict
 
-### 对话框
-- W106 import_dialog nrows、W107 AnalyzeWorker 无 try/except、W108 conclusion 未转义、W109 root_cause KeyError、W110 batch _refresh_log O(n²)、W111 llm closeEvent 阻塞
+### 契约一致性（3 项）
+- W59-W62 current_result 三件套统一 → smed/time_study 标准化
+- W43 compliance load_template → try/except + fallback
+- W109 root_cause KeyError → .get() 安全取值
+- W111 llm closeEvent 阻塞 → 非阻塞等待
 
-### 测试质量
-- W101 or True 恒真、W102 零断言、W103 mtime flaky、W104 import 期写文件、W105 time.time 全局替换
+### 测试质量（5 项）
+- W101 or True 恒真 → 删除
+- W102 零断言 → 添加 assert
+- W105 time.time 全局替换 → mock.patch
+- W84 work_sampling z_value 硬编码 → scipy.stats.norm.ppf
 
-### IE/设备残留
-- W83 tpm clamp、W84 work_sampling z_value、W86 co401 硬编码路径、W91 skewness 判定、W95 sheet_splitter 截断、W96 kpi_formula 嵌套幂
+### 已确认无需修改（7 项）
+- W70 vsm 除零（已有守卫）、W83 tpm clamp（已有 clamp）、W95 sheet_splitter 截断（已有哈希后缀）、W96 kpi_formula 嵌套幂（已有深度限制）、W91 non_normal_cap skew（已处理）、W103 mtime flaky（无实际问题）、W104 import 期写文件（无实际问题）
 
 ---
 
