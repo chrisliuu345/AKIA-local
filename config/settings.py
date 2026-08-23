@@ -7,7 +7,7 @@ import os
 
 # ── 应用信息 ──────────────────────────────────────────
 APP_NAME = "QA-Tool"
-APP_VERSION = "2.6.4"
+APP_VERSION = "2.6.5"
 ORGANIZATION = "QA-Tool"
 
 # ── 统计常量 ──────────────────────────────────────────
@@ -148,14 +148,21 @@ _user_overrides = {}
 
 
 def load_config() -> dict:
-    """加载用户配置，返回可合并的 dict"""
-    global _user_overrides
+    """加载用户配置，返回可合并的 dict，并同步全局变量"""
+    global _user_overrides, CHART_DPI, MSA_GRR_ACCEPTABLE, MSA_GRR_MARGINAL, MSA_NDC_THRESHOLD
     if os.path.exists(_USER_CONFIG_PATH):
         try:
             with open(_USER_CONFIG_PATH, "r", encoding="utf-8") as f:
                 _user_overrides = json.load(f)
         except Exception:
             _user_overrides = {}
+    if "chart_dpi" in _user_overrides:
+        CHART_DPI = _user_overrides["chart_dpi"]
+    if "msa_grr_acceptable" in _user_overrides:
+        MSA_GRR_ACCEPTABLE = _user_overrides["msa_grr_acceptable"]
+        MSA_GRR_MARGINAL = max(_user_overrides["msa_grr_acceptable"], MSA_GRR_MARGINAL)
+    if "msa_ndc_threshold" in _user_overrides:
+        MSA_NDC_THRESHOLD = _user_overrides["msa_ndc_threshold"]
     return dict(_user_overrides)
 
 

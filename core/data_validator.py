@@ -2,9 +2,8 @@
 数据校验模块 — 缺失值检测、异常值检测、正态性预检、数据完整性验证
 """
 
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Any
 import pandas as pd
-import numpy as np
 from scipy import stats
 
 

@@ -19,6 +19,20 @@ def _animations_enabled() -> bool:
     return bool(get_setting("animations_enabled", True))
 
 
+def cleanup(stack):
+    """W74: 清理指定 stack 的所有活跃动画，释放引用"""
+    key = id(stack)
+    prev = _ACTIVE.pop(key, None)
+    if prev:
+        for a in prev:
+            if a is not None and a.state() == QPropertyAnimation.Running:
+                a.stop()
+        for i in range(stack.count()):
+            w = stack.widget(i)
+            if w is not None:
+                w.setGraphicsEffect(None)
+
+
 def fade_in(widget, duration: int = 280, start_opacity: float = 0.0):
     """widget 淡入显示 (start_opacity→1)。动画关闭时直接显示。返回动画对象或 None。"""
     if widget is None:
@@ -34,7 +48,8 @@ def fade_in(widget, duration: int = 280, start_opacity: float = 0.0):
     anim.setStartValue(float(start_opacity))
     anim.setEndValue(1.0)
     anim.setEasingCurve(QEasingCurve.InOutCubic)
-    anim.finished.connect(lambda: widget.setGraphicsEffect(None))
+    anim.finished.connect(lambda: widget.setGraphicsEffect(None) if widget is not None else None)
+    widget.destroyed.connect(lambda: anim.stop() if anim.state() == QPropertyAnimation.Running else None)
     widget.show()
     anim.start(QPropertyAnimation.DeleteWhenStopped)
     return anim
@@ -55,6 +70,7 @@ def count_up(label, target: float, fmt, duration: int = 900):
     anim.setEasingCurve(QEasingCurve.OutCubic)
     anim.valueChanged.connect(lambda v: label.setText(fmt(v)))
     anim.finished.connect(lambda: label.setText(fmt(float(target))))
+    label.destroyed.connect(lambda: anim.stop() if anim.state() == QVariantAnimation.Running else None)
     anim.start(QVariantAnimation.DeleteWhenStopped)
     return anim
 
@@ -64,6 +80,7 @@ def cross_fade(stack, to_idx: int, duration: int = 400):
 
     - 动画关闭或索引非法时瞬切 (setCurrentIndex)
     - 快速连续切换会先打断上一轮动画并复位所有页的透明效果
+    - W74: 连接 destroyed 信号确保 stack 销毁时清理 _ACTIVE
     """
     if to_idx == stack.currentIndex() or to_idx < 0 or to_idx >= stack.count():
         return None
@@ -117,6 +134,8 @@ def cross_fade(stack, to_idx: int, duration: int = 400):
         out_anim.finished.connect(_switch)
         out_anim.start(QPropertyAnimation.DeleteWhenStopped)
         _ACTIVE[key] = [out_anim]
+        stack.destroyed.connect(lambda: cleanup(stack))
         return out_anim
     _switch()
+    stack.destroyed.connect(lambda: cleanup(stack))
     return None

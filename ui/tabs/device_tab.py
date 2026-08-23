@@ -3,7 +3,7 @@ import time
 
 from PySide6.QtWidgets import (
     QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QScrollArea, QWidget, QGroupBox, QTabWidget,
+    QScrollArea, QWidget, QTabWidget,
     QPlainTextEdit, QLineEdit, QGridLayout, QFrame,
     QSplitter, QSizePolicy, QCheckBox, QMessageBox,
     QInputDialog, QApplication, QTableWidget, QTableWidgetItem, QHeaderView,
@@ -18,7 +18,7 @@ from core.devices import (
     Device, Esp32InputDevice, Esp32OutputDevice, MaixcamVisionDevice,
     DeviceMonitor,
 )
-from ui.theme import colors as theme_colors, BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY
+from ui.theme import colors as theme_colors, BUTTON_SECONDARY
 from ui.tabs.base_tab import BaseAnalysisTab
 
 

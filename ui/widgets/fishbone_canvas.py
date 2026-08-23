@@ -3,9 +3,9 @@
 from PySide6.QtWidgets import (
     QGraphicsView, QGraphicsScene, QGraphicsItem,
     QGraphicsLineItem, QGraphicsRectItem, QGraphicsTextItem,
-    QGraphicsEllipseItem, QMenu, QInputDialog,
+    QMenu, QInputDialog,
 )
-from PySide6.QtCore import Qt, QPointF, QRectF, Signal, QObject
+from PySide6.QtCore import Qt, QPointF, QRectF, Signal
 from PySide6.QtGui import (
     QPen, QBrush, QColor, QFont, QPainter, QPolygonF, QPainterPath,
 )
@@ -407,11 +407,14 @@ class FishboneCanvas(QGraphicsView):
 
     def _render_children(self, parent_spike: _CauseSpike, node,
                          side: int, depth: int = 1):
-        """递归渲染子原因 (最多 3 层, depth 1=第2层, depth 2=第3层)"""
-        if depth > 2 or not node.children:  # 最多到第3层 (depth 0=spike本身, 1=孙, 2=曾孙)
+        """W73: 递归渲染子原因 (最多 3 层, depth 1=第2层, depth 2=第3层)"""
+        MAX_DEPTH = 2
+        MAX_CAUSES_PER_LEVEL = 20
+        if depth > MAX_DEPTH or not node.children:
             return
-        n = len(node.children)
-        for k, gc in enumerate(node.children):
+        n = min(len(node.children), MAX_CAUSES_PER_LEVEL)
+        for k in range(n):
+            gc = node.children[k]
             t = (k + 1) / (n + 1)
             s = 1 if k % 2 == 0 else -1
             child = parent_spike.add_child(gc.name, t, s)

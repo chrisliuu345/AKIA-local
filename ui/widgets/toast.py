@@ -6,9 +6,9 @@
     Toast.show(self, "导出失败: 文件被占用", type="error", duration=5000)
 """
 
-from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout, QApplication
+from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout
 from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QTimer, QPoint
-from PySide6.QtGui import QFont, QColor
+from PySide6.QtGui import QFont
 
 
 _TOAST_COLORS = {

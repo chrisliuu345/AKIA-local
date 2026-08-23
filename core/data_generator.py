@@ -1,7 +1,6 @@
 """随机数据生成器 — 7种分布 + MSA/DOE/SPC 模板"""
 
 import numpy as np, pandas as pd
-from typing import List, Optional
 
 
 class DataGenerator:

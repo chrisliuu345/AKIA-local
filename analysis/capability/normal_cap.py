@@ -1,12 +1,13 @@
 """
-正态过程能力分析 — Cp, Cpk, Pp, Ppk
+正态过程能力分析 — Cp, Cpk, Pp, Ppk, Cpm
 """
 
 from typing import Dict, Any, Optional
 import numpy as np
 import pandas as pd
 from scipy import stats
-from config.settings import CAPABILITY_GRADES, CONTROL_CHART_CONSTANTS
+from config.settings import CONTROL_CHART_CONSTANTS
+from analysis.capability._utils import get_capability_grade
 
 
 def analyze(
@@ -50,6 +51,16 @@ def analyze(
         else:
             pp, ppk = None, None
 
+        # Cpm 田口能力指数
+        cpm = None
+        if target is not None:
+            sigma_t = _estimate_sigma_t(clean, float(target))
+            if sigma_t > 0:
+                cpm = (usl - lsl) / (6 * sigma_t)
+            elif usl > lsl:
+                # σ_T=0 且有有效规格限时，Cpm 为无穷大
+                cpm = float("inf")
+
         if std_overall > 0:
             z_usl = (usl - mean) / std_overall
             z_lsl = (mean - lsl) / std_overall
@@ -68,6 +79,7 @@ def analyze(
             "target": float(target) if target is not None else None,
             "cp": round(float(cp), 4) if cp is not None else None,
             "cpk": round(float(cpk), 4) if cpk is not None else None,
+            "cpm": round(float(cpm), 4) if cpm is not None and cpm != float("inf") else ("inf" if cpm == float("inf") else None),
             "pp": round(float(pp), 4) if pp is not None else None,
             "ppk": round(float(ppk), 4) if ppk is not None else None,
             "ppm_total": round(float(ppm_total), 2),
@@ -75,7 +87,7 @@ def analyze(
             "ppm_lsl": round(float(ppm_lsl), 2),
             "expected_yield_within": round(float(expected_within * 100), 2),
             "expected_yield_overall": round(float((1 - ppm_total / 1e6) * 100), 2),
-            "grade": _get_capability_grade(cpk) if cpk is not None else "N/A",
+            "grade": get_capability_grade(cpk) if cpk is not None else "N/A",
             "sigma_level": round(float(min(cpk * 3, 6)), 2) if cpk is not None else None,
         }
     elif usl is not None:
@@ -132,8 +144,20 @@ def _estimate_within_sigma(data: np.ndarray, subgroup_size: int) -> float:
     return np.sqrt(np.mean(np.var(subgroups, ddof=1, axis=1)))
 
 
-def _get_capability_grade(cpk: float) -> str:
-    for grade, (low, high, desc) in CAPABILITY_GRADES.items():
-        if low <= cpk < high:
-            return f"{grade} ({desc})"
-    return "D (差)"
+def _estimate_sigma_t(data: np.ndarray, target: float) -> float:
+    """
+    估计 σ_T（田口标准差）
+    
+    σ_T = sqrt(Σ(xi - T)² / (n-1))
+    
+    Args:
+        data: 数据数组
+        target: 目标值
+        
+    Returns:
+        田口标准差
+    """
+    n = len(data)
+    if n < 2:
+        return 0.0
+    return float(np.sqrt(np.sum((data - target) ** 2) / (n - 1)))

@@ -9,8 +9,8 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QGroupBox, QFormLayout,
     QTableWidget, QTableWidgetItem, QSplitter, QHeaderView,
-    QStackedWidget, QMessageBox, QSpinBox, QInputDialog,
-    QColorDialog, QTextEdit,
+    QStackedWidget, QMessageBox, QInputDialog,
+    QColorDialog,
 )
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont, QColor

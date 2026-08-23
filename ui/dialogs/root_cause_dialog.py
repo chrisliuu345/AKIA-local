@@ -1,6 +1,6 @@
 """AI 根因分析对话框 — 根因排行榜 + 特征重要性图 + 相关性热力图"""
 
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import pandas as pd
 from PySide6.QtWidgets import (

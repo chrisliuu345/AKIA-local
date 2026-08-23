@@ -1056,9 +1056,8 @@ class MainWindow(QMainWindow):
         failed = 0
 
         for i, (idx, tab) in enumerate(tabs.items()):
-            # W46: 每 3 个 Tab 让出一次事件循环，防止 UI 完全冻结
-            if i % 3 == 0:
-                QApplication.processEvents()
+            # W49: 每个 Tab 让出事件循环，防止 UI 完全冻结
+            QApplication.processEvents()
             if not _tab_is_runnable(tab):
                 continue
             try:

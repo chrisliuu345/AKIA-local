@@ -2,7 +2,7 @@
 XBar-R 控制图分析
 """
 
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, List
 import numpy as np
 import pandas as pd
 from config.settings import CONTROL_CHART_CONSTANTS
