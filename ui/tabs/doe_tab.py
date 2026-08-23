@@ -10,16 +10,16 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QSpinBox, QGroupBox, QFormLayout, QTextEdit,
     QTableWidget, QTableWidgetItem, QSplitter, QHeaderView,
-    QFrame, QFileDialog, QStackedWidget,
+    QFrame, QStackedWidget,
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
 from analysis.doe import factorial, response_surface, box_behnken
 from output.chart_engine import create_pareto_chart
 from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
-from ui.theme import BUTTON_PRIMARY, BUTTON_SECONDARY, BUTTON_TOGGLE, BUTTON_PRIMARY_STRETCH
+from ui.theme import BUTTON_SECONDARY, BUTTON_TOGGLE, BUTTON_PRIMARY_STRETCH
 
 
 class DOETab(BaseAnalysisTab):

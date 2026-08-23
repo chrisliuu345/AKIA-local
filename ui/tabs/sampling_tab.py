@@ -1,16 +1,13 @@
 """抽样检验 Tab — AQL查表 + 随机/分层/系统抽样 + 序贯"""
 
-import numpy as np, pandas as pd
-from typing import Dict, Any
+import numpy as np
 from PySide6.QtWidgets import (
-    QWidget,QVBoxLayout,QHBoxLayout,QLabel,QPushButton,QGroupBox,
-    QFormLayout,QComboBox,QSpinBox,QDoubleSpinBox,QTableWidget,
-    QTableWidgetItem,QHeaderView,QStackedWidget,QFrame,QMessageBox,
+    QWidget,QVBoxLayout,QHBoxLayout,QLabel,QPushButton,QFormLayout,QComboBox,QSpinBox,QTableWidget,
+    QTableWidgetItem,QStackedWidget,QMessageBox,
 )
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont, QColor
+from PySide6.QtGui import QColor
 from ui.tabs.base_tab import BaseAnalysisTab
-from ui.theme import BUTTON_PRIMARY_STRETCH,BUTTON_SECONDARY,BUTTON_TOGGLE,FONT_18B,FONT_12B
+from ui.theme import BUTTON_PRIMARY_STRETCH,BUTTON_TOGGLE,FONT_18B
 from ui.theme import colors as theme_colors
 from core.sampling_engine import SamplingEngine
 

@@ -1,10 +1,9 @@
 """工作表拆分 — 按列值/行数/条件/分组"""
 
-import os, pandas as pd
+import pandas as pd
 from PySide6.QtWidgets import (QWidget,QVBoxLayout,QHBoxLayout,QLabel,QPushButton,
     QGroupBox,QFormLayout,QComboBox,QLineEdit,QSpinBox,QDoubleSpinBox,
-    QTableWidget,QTableWidgetItem,QFileDialog,QMessageBox)
-from PySide6.QtCore import Qt
+    QFileDialog,QMessageBox)
 from PySide6.QtGui import QFont
 from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_PRIMARY_STRETCH,BUTTON_SECONDARY

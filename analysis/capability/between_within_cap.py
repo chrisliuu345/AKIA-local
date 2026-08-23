@@ -5,7 +5,7 @@
 from typing import Dict, Any, Optional
 import numpy as np
 import pandas as pd
-from config.settings import CAPABILITY_GRADES
+from analysis.capability._utils import get_capability_grade
 
 
 def analyze(
@@ -65,7 +65,7 @@ def analyze(
             "lsl": float(lsl),
             "cp": round(float(cp), 4),
             "cpk": round(float(cpk), 4),
-            "grade": _get_grade(cpk),
+            "grade": get_capability_grade(cpk),
         }
 
     return result
@@ -87,8 +87,4 @@ def _estimate_between_sigma(means: pd.Series, within_std: float, counts: pd.Seri
     return float(np.sqrt(variance_between))
 
 
-def _get_grade(cpk: float) -> str:
-    for grade, (low, high, desc) in CAPABILITY_GRADES.items():
-        if low <= cpk < high:
-            return f"{grade} ({desc})"
-    return "D (差)"
+

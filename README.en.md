@@ -197,14 +197,16 @@ Password: admin
 
 ## License
 
-This project is licensed under the [GNU AGPL v3.0](LICENSE).
+This is a closed-source commercial software. Unauthorized copying, modification, or distribution is prohibited.
 
-- Distributing this project or modified versions of it requires providing the complete source code under AGPL-3.0
-- Running a modified version as a network service for users also requires offering the source code to those users (AGPL Section 13)
-- For commercial closed-source integration, please contact the maintainer to negotiate a separate license
-
-Please read the [Contributing Guide](CONTRIBUTING.en.md) before contributing.
+© 2026 QA-Tool. All rights reserved.
 
 ---
 
-*Built with Python 3.14 + PySide6 · 278 tests passing · 35 analysis tabs*
+## User Guide
+
+For detailed usage instructions, please refer to the [User Guide](使用指南.docx).
+
+---
+
+*Built with Python 3.14 + PySide6 · 450+ tests passing · 35 analysis tabs*

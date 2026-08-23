@@ -2,12 +2,11 @@
 Word 报告生成器 — 基于 python-docx 生成专业质量分析报告
 """
 
-import os
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from io import BytesIO
 from docx import Document
-from docx.shared import Inches, Pt, Cm, RGBColor
+from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.oxml.ns import qn

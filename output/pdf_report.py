@@ -164,7 +164,6 @@ class PDFReport(BaseReportEngine):
 
                 if chart_key and charts[chart_key]:
                     from io import BytesIO
-                    from reportlab.lib.utils import ImageReader
                     try:
                         img = Image(BytesIO(charts[chart_key]), width=14 * cm, height=9 * cm)
                         self.story.append(Spacer(1, 0.4 * cm))

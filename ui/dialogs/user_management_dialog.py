@@ -5,9 +5,8 @@
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox,
-    QComboBox, QLineEdit, QFormLayout, QGroupBox, QInputDialog, QWidget,
+    QComboBox, QLineEdit, QFormLayout, QInputDialog, QWidget,
 )
-from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
 from core.auth import AuthManager, _DEPARTMENTS, _TEAMS

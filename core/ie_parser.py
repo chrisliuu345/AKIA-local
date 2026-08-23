@@ -7,7 +7,7 @@ import difflib
 from typing import Dict, List, Optional, Tuple, Any
 import pandas as pd
 
-from core.data_objects import OBJECT_CLASSES, get_all_types
+from core.data_objects import OBJECT_CLASSES
 
 
 _SHEET_KEYWORDS = {

@@ -8,12 +8,11 @@ from PySide6.QtWidgets import (
     QTableWidget, QTableWidgetItem, QFileDialog,
     QGroupBox, QHeaderView, QDialogButtonBox, QMessageBox,
 )
-from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
 from config.settings import SUPPORTED_EXCEL_EXTENSIONS, MAX_PREVIEW_ROWS
 from core.excel_utils import read_excel_auto
-from ui.theme import colors as theme_colors, BUTTON_PRIMARY
+from ui.theme import colors as theme_colors
 
 
 class ImportDialog(QDialog):
@@ -152,7 +151,15 @@ class ImportDialog(QDialog):
                 self.file_label.setText(os.path.basename(file_path))
                 self.file_label.setStyleSheet("")
 
-                total_rows = sum(len(xl.parse(s, nrows=0)) for s in self.sheet_names) if self.sheet_names else 0
+                total_rows = 0
+                for s in self.sheet_names:
+                    try:
+                        if hasattr(xl, 'book') and hasattr(xl.book, 'get_sheet_by_name'):
+                            total_rows += xl.book.get_sheet_by_name(s).max_row or 0
+                        else:
+                            total_rows += len(xl.parse(s))
+                    except Exception:
+                        total_rows += 0
                 info_parts = [
                     f"工作表: {len(self.sheet_names)} 个  ({', '.join(self.sheet_names[:6])}"
                     f"{' ...' if len(self.sheet_names) > 6 else ''})  |  估算总行数: ~{total_rows}"

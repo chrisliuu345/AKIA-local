@@ -5,7 +5,6 @@
 from typing import Dict, Any, List
 import numpy as np
 import pandas as pd
-from scipy import stats
 
 
 def generate_ccd(factors: List[str], alpha: str = "rotatable", center_points: int = 3) -> pd.DataFrame:

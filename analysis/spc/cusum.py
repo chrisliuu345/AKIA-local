@@ -2,7 +2,7 @@
 CUSUM (累积和) 控制图分析 — 双侧 Tabular CUSUM
 """
 
-from typing import Dict, Any, List
+from typing import Dict, Any
 import numpy as np
 import pandas as pd
 

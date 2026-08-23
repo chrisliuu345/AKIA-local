@@ -1,13 +1,18 @@
 """
 非正态过程能力分析 — Box-Cox变换 + Johnson变换
-
-注意: Johnson 变换当前为 z-score 标准化(近似), 规格限按同一标准化参数变换。
 """
 
 from typing import Dict, Any, Optional
 import numpy as np
 import pandas as pd
 from scipy import stats
+from analysis.capability._utils import get_capability_grade
+from analysis.capability.johnson_transform import (
+    johnson_transform,
+    inverse_transform,
+    transform_value as johnson_transform_value,
+    JOHNSON_TYPES,
+)
 
 
 def analyze(
@@ -42,12 +47,22 @@ def analyze(
 
     shift = 0.0
     lam: Optional[float] = None
+    johnson_params = None
+    johnson_type = None
+    
     if method == "box_cox":
         if np.any(clean <= 0):
             shift = abs(clean.min()) + 0.001
             transformed, lam = stats.boxcox(clean + shift)
         else:
             transformed, lam = stats.boxcox(clean)
+    elif method == "johnson":
+        # 使用真正的 Johnson 变换
+        result_johnson = johnson_transform(clean, method="auto")
+        transformed = result_johnson["transformed"]
+        johnson_params = result_johnson.get("params", {})
+        johnson_type = result_johnson.get("type")
+        lam = None  # Johnson 变换不使用 lambda
     else:
         transformed, lam = _johnson_transform(clean)
 
@@ -60,6 +75,8 @@ def analyze(
         "chart_type": "Non-Normal Capability",
         "method": method,
         "transform_param": round(float(lam), 6) if lam is not None else None,
+        "johnson_type": johnson_type,
+        "johnson_params": johnson_params,
         "summary": {
             "sample_size": n,
             "original_mean": round(mean_orig, 6),
@@ -76,8 +93,10 @@ def analyze(
     if not (has_usl or has_lsl):
         return result
 
-    usl_t = _transform_value(float(usl), method, lam, shift, mean_orig, std_orig) if has_usl else None
-    lsl_t = _transform_value(float(lsl), method, lam, shift, mean_orig, std_orig) if has_lsl else None
+    usl_t = _transform_value(float(usl), method, lam, shift, mean_orig, std_orig,
+                              johnson_params, johnson_type) if has_usl else None
+    lsl_t = _transform_value(float(lsl), method, lam, shift, mean_orig, std_orig,
+                              johnson_params, johnson_type) if has_lsl else None
 
     if has_usl and has_lsl:
         # W24 fix: std_t=0时用None替代inf，避免除零
@@ -106,7 +125,7 @@ def analyze(
         "pp": round(float(pp), 4) if pp is not None else None,
         "ppk": round(float(ppk), 4) if ppk is not None else None,
         "ppm_total": round(float(ppm), 2) if ppm is not None else None,
-        "grade": _get_grade(ppk) if ppk is not None else "N/A",
+        "grade": get_capability_grade(ppk) if ppk is not None else "N/A",
         "sigma_level": round(float(min(ppk * 3, 6)), 2) if ppk is not None else None,
     }
     if has_usl:
@@ -129,10 +148,12 @@ def _johnson_transform(data: np.ndarray) -> tuple:
 
 
 def _transform_value(value: float, method: str, lam: Optional[float],
-                     shift: float, mean: float, std: float) -> float:
+                     shift: float, mean: float, std: float,
+                     johnson_params: Optional[Dict] = None,
+                     johnson_type: Optional[str] = None) -> float:
     """把原始尺度下的规格限变换到变换后尺度, 与数据变换口径完全一致"""
-    if method == "johnson":
-        return (value - mean) / std if std > 0 else value
+    if method == "johnson" and johnson_params and johnson_type:
+        return johnson_transform_value(value, johnson_params, johnson_type)
     x = value + shift
     if x <= 0:
         return -1e9
@@ -141,14 +162,4 @@ def _transform_value(value: float, method: str, lam: Optional[float],
     return float((x ** lam - 1) / lam)
 
 
-def _get_grade(ppk: float) -> str:
-    if ppk >= 1.67:
-        return "A+ (特优)"
-    elif ppk >= 1.33:
-        return "A (优)"
-    elif ppk >= 1.00:
-        return "B (良好)"
-    elif ppk >= 0.67:
-        return "C (一般)"
-    else:
-        return "D (差)"
+

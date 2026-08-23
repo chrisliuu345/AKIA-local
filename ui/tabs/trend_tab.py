@@ -5,10 +5,9 @@ import pandas as pd
 from typing import Dict, Any
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
+    QWidget, QVBoxLayout, QLabel, QPushButton,
     QGroupBox, QFormLayout, QComboBox, QSpinBox, QCheckBox,
-    QTableWidget, QTableWidgetItem, QSplitter, QHeaderView,
-    QScrollArea, QFrame, QListWidget, QAbstractItemView,
+    QTableWidget, QTableWidgetItem, QSplitter, QScrollArea, QFrame, QListWidget, QAbstractItemView,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
@@ -16,9 +15,8 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
-from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
-from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY
+from ui.theme import BUTTON_PRIMARY_STRETCH
 from ui.theme import colors as theme_colors
 
 TREND_COLORS = ["#4da6ff", "#ff6b6b", "#51cf66", "#ffa726", "#cc5de8", "#20c997"]
@@ -131,13 +129,16 @@ class TrendTab(BaseAnalysisTab):
         plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]
         plt.rcParams["axes.unicode_minus"] = False
 
-        fig = Figure(figsize=(max(10, n * 0.02), 5.5), dpi=100)
+        MAX_POINTS = 1000
+        fig_w = min(20, max(10, n * 0.02)) if n <= MAX_POINTS else 15
+        fig = Figure(figsize=(fig_w, 5.5), dpi=100)
         fig.set_facecolor(tc["bg_card"])
         ax = fig.add_subplot(111)
         ax.set_facecolor(tc["bg_body"])
 
         # 统计摘要
         stats_rows = []
+        sampled_note = ""
         for j, vcol in enumerate(val_cols):
             vals = pd.to_numeric(self.df[vcol], errors="coerce")
             mask = dates.notna() & vals.notna()
@@ -146,11 +147,25 @@ class TrendTab(BaseAnalysisTab):
             idx = np.argsort(d); d, v = d[idx], v[idx]
             color = TREND_COLORS[j % len(TREND_COLORS)]
 
-            ax.plot(d, v, "o-", color=color, linewidth=1.5, markersize=3,
+            d_plot, v_plot = d, v
+            if len(d) > MAX_POINTS:
+                step = max(1, len(d) // MAX_POINTS)
+                sampled_idx = list(range(0, len(d), step))
+                min_i = int(np.argmin(v)); max_i = int(np.argmax(v))
+                if min_i not in sampled_idx: sampled_idx.append(min_i)
+                if max_i not in sampled_idx: sampled_idx.append(max_i)
+                if 0 not in sampled_idx: sampled_idx.append(0)
+                if len(d)-1 not in sampled_idx: sampled_idx.append(len(d)-1)
+                sampled_idx = sorted(set(sampled_idx))
+                d_plot, v_plot = d[sampled_idx], v[sampled_idx]
+                if j == 0:
+                    sampled_note = f" (采样 {len(d_plot)}/{len(d)})"
+
+            ax.plot(d_plot, v_plot, "o-", color=color, linewidth=1.5, markersize=3,
                     label=vcol, alpha=0.85)
 
             if self.cb_fill.isChecked():
-                ax.fill_between(d, v, alpha=0.06, color=color)
+                ax.fill_between(d_plot, v_plot, alpha=0.06, color=color)
 
             # 移动平均
             ma_w = self.ma_spin.value()
@@ -178,7 +193,7 @@ class TrendTab(BaseAnalysisTab):
 
         ax.set_xlabel("日期", fontsize=10)
         ax.set_ylabel("数值", fontsize=10)
-        ax.set_title("多系列趋势分析", fontsize=12, fontweight="bold")
+        ax.set_title(f"多系列趋势分析{sampled_note}", fontsize=12, fontweight="bold")
         ax.legend(fontsize=8, ncol=min(3, len(val_cols)), loc="upper left")
         ax.grid(True, alpha=0.3)
         fig.autofmt_xdate()

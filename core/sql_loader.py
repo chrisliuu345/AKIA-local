@@ -93,7 +93,7 @@ class SqlLoader:
                 result[name] = df
             except Exception:
                 try:
-                    from sqlalchemy import Table, MetaData, select
+                    from sqlalchemy import MetaData, select
                     metadata = MetaData()
                     metadata.reflect(bind=self.engine, only=[name])
                     if name in metadata.tables:
@@ -115,7 +115,7 @@ class SqlLoader:
         if not self.engine:
             raise RuntimeError("未连接到数据库")
         try:
-            from sqlalchemy import Table, MetaData, select
+            from sqlalchemy import MetaData, select
             metadata = MetaData()
             metadata.reflect(bind=self.engine, only=[table_name])
             if table_name in metadata.tables:
