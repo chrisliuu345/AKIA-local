@@ -12,10 +12,9 @@
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
-import pandas as pd
 from scipy import stats as sp_stats
 
 
@@ -142,7 +141,6 @@ class MTBFAnalyzer:
         cum_t = np.cumsum(tbf)
         T = cum_t[-1]
         sum_ti = np.sum(cum_t[:-1])
-        mean_ratio = sum_ti / ((n - 1) * T / 2) if T > 0 else 1.0
 
         stat = ((sum_ti - (n - 1) * T / 2)
                 / (T * np.sqrt((n - 1) / 12)))

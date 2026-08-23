@@ -4,20 +4,19 @@
 
 import json
 import base64
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QLineEdit, QComboBox, QCheckBox, QGroupBox, QListWidget,
     QListWidgetItem, QDialogButtonBox, QMessageBox, QSpinBox,
-    QWidget, QFormLayout,
+    QFormLayout,
 )
 from PySide6.QtCore import Qt, QSettings, Signal
-from PySide6.QtGui import QFont
 
 from core.i18n import i18n
 from core.log_util import get_logger
-from core.sql_loader import SqlLoader, DEFAULT_PORTS
+from core.sql_loader import SqlLoader
 from ui.theme import colors as theme_colors
 
 

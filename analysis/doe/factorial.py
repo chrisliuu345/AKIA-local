@@ -2,7 +2,7 @@
 因子设计 — 全因子/2^k因子设计
 """
 
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List
 import numpy as np
 import pandas as pd
 from scipy import stats

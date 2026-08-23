@@ -2,10 +2,9 @@
 量具R&R分析 — 交叉(Crossed)和嵌套(Nested)
 """
 
-from typing import Dict, Any, List
+from typing import Dict, Any
 import numpy as np
 import pandas as pd
-from scipy import stats
 from config import settings as _cfg
 
 

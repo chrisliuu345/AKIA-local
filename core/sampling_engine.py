@@ -1,7 +1,7 @@
 """抽样检验引擎 — GB/T 2828.1 AQL + 随机/分层/系统抽样 + 序贯"""
 
 import numpy as np, pandas as pd
-from typing import List, Dict, Tuple, Optional
+from typing import List, Tuple
 
 # GB/T 2828.1 样本字码表 (批量范围 → 一般II级字码)
 _LOT_CODE = [

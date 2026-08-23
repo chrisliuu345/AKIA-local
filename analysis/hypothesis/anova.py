@@ -2,8 +2,7 @@
 方差分析 (ANOVA) — 单因素/双因素/一般线性模型
 """
 
-from typing import Dict, Any, List
-import numpy as np
+from typing import Dict, Any
 import pandas as pd
 from scipy import stats
 

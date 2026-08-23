@@ -2,13 +2,12 @@
 
 import numpy as np
 import pandas as pd
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QGroupBox, QFormLayout, QComboBox, QDoubleSpinBox,
-    QTableWidget, QTableWidgetItem, QSplitter, QHeaderView,
-    QScrollArea, QFrame, QListWidget, QAbstractItemView,
+    QGroupBox, QFormLayout, QDoubleSpinBox,
+    QTableWidget, QTableWidgetItem, QSplitter, QScrollArea, QFrame, QListWidget, QAbstractItemView,
     QMessageBox,
 )
 from PySide6.QtCore import Qt
@@ -17,12 +16,11 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
-from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY
 from ui.theme import colors as theme_colors
 from analysis.capability import normal_cap
-from core.formatting import format_cp, format_pvalue
+from core.formatting import format_cp
 
 
 class CapComparisonTab(BaseAnalysisTab):

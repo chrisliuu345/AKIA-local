@@ -3,7 +3,6 @@
 import numpy as np
 from typing import Dict, Any
 from scipy import stats as sp_stats
-from scipy.optimize import curve_fit
 
 
 class ALTEngine:
@@ -17,7 +16,7 @@ class ALTEngine:
             stress_temp: 加速应力温度 (K, 已转换)
             life: 对应寿命 (任意单位)
             use_temp: 使用温度 (Celsius), 自动转换为 K
-            activation_energy: 激活能 (eV), 默认 0.7
+            activation_energy: 激活能 (eV), 默认 0.7 (保留参数, 实际由回归拟合)
         返回: AF, 外推寿命, 拟合参数, R²
         """
         # W27 fix: 最小样本校验

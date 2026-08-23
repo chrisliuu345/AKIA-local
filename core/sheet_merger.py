@@ -1,7 +1,7 @@
 """工作表合并引擎 — 追加/JOIN/批量合并"""
 
-import os, pandas as pd, numpy as np
-from typing import List, Dict, Optional
+import os, pandas as pd
+from typing import List, Dict
 
 
 class SheetMerger:

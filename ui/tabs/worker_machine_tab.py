@@ -1,18 +1,16 @@
 """人机配合分析 V2 — 可编辑表格 + 预设 + 利用率统计"""
 
-import numpy as np
 from PySide6.QtWidgets import (
     QWidget,QVBoxLayout,QHBoxLayout,QLabel,QPushButton,
-    QGroupBox,QFormLayout,QSpinBox,QDoubleSpinBox,QTableWidget,
-    QTableWidgetItem,QSplitter,QHeaderView,QScrollArea,QFrame,QComboBox,QMessageBox,
+    QSpinBox,QDoubleSpinBox,QTableWidget,
+    QTableWidgetItem,QScrollArea,QFrame,QComboBox,
 )
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt, matplotlib.patches as mpatches
 from ui.tabs.base_tab import BaseAnalysisTab
-from ui.theme import BUTTON_PRIMARY_STRETCH,BUTTON_SECONDARY,FONT_18B,FONT_12B,FONT_10
+from ui.theme import BUTTON_PRIMARY_STRETCH,FONT_18B,FONT_10
 from ui.theme import colors as theme_colors
 
 C={"worker":"#4da6ff","idle":"#363648","machine":"#ff6b6b","walk":"#ffa726","load":"#51cf66"}

@@ -1,7 +1,7 @@
 """非参数检验 — Mann-Whitney U / Wilcoxon / Kruskal-Wallis"""
 
 import numpy as np
-from typing import Dict, Any, List
+from typing import Dict, Any
 from scipy import stats as sp_stats
 
 

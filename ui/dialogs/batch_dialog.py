@@ -2,18 +2,15 @@
 批量调度对话框 — 任务列表 + 编辑面板 + 日志
 """
 
-import json
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QLineEdit, QComboBox, QTextEdit, QListWidget, QListWidgetItem,
-    QGroupBox, QFormLayout, QFileDialog, QMessageBox, QSplitter,
-    QDialogButtonBox, QWidget, QCheckBox,
+    QGroupBox, QFormLayout, QFileDialog, QSplitter,
+    QWidget, QCheckBox,
 )
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QFont
 
 from core.batch_scheduler import BatchTask, BatchScheduler
-from core.template_parser import TemplateParser
 from ui.theme import colors as theme_colors, BUTTON_SECONDARY, BUTTON_TOGGLE
 
 

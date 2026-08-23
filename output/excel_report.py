@@ -1,7 +1,5 @@
 """Excel 报告生成器"""
 
-import numpy as np
-import pandas as pd
 import xlsxwriter
 
 from core.i18n import i18n

@@ -4,8 +4,8 @@ RPN = 严重度(S) × 发生度(O) × 检出度(D)
 分级: RPN ≥ 100 高风险(红), ≥ 50 中风险(橙), < 50 低风险
 """
 
-from dataclasses import dataclass, field
-from typing import List, Optional
+from dataclasses import dataclass
+from typing import List
 
 
 @dataclass

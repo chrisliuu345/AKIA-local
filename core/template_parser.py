@@ -5,7 +5,7 @@
 import json
 import logging
 import os
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Any
 import pandas as pd
 
 logger = logging.getLogger(__name__)

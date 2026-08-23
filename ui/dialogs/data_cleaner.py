@@ -3,16 +3,13 @@
 """
 
 import pandas as pd
-import numpy as np
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QFormLayout,
     QTabWidget, QWidget, QLabel, QPushButton,
-    QComboBox, QDoubleSpinBox, QSpinBox, QCheckBox,
-    QTableWidget, QTableWidgetItem, QHeaderView,
-    QDialogButtonBox, QFileDialog, QMessageBox, QSplitter,
+    QComboBox, QTableWidget, QTableWidgetItem, QHeaderView,
+    QFileDialog, QMessageBox, QSplitter,
 )
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
 from ui.theme import colors as theme_colors
 import re
 

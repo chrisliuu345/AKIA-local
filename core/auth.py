@@ -6,9 +6,9 @@ import json
 import os
 import hashlib
 import base64
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from core.password_policy import validate_password
 from core.audit import audit as _audit  # W04: 统一审计实现
