@@ -1,7 +1,6 @@
 """LPA 分层审核表引擎 — 模板生成 + Excel 导出"""
 
 from typing import List, Dict
-import os
 
 LPA_TEMPLATES = {
     "5S": [

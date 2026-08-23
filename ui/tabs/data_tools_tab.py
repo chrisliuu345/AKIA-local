@@ -1,14 +1,11 @@
 """数据工具集 — 随机生成器 / 格式转换 / 异常值检测"""
 
-import os, pandas as pd, numpy as np
+import pandas as pd, numpy as np
 from PySide6.QtWidgets import (
-    QWidget,QVBoxLayout,QHBoxLayout,QLabel,QPushButton,QGroupBox,
-    QFormLayout,QComboBox,QSpinBox,QDoubleSpinBox,QTableWidget,
-    QTableWidgetItem,QHeaderView,QStackedWidget,QFrame,QMessageBox,
-    QFileDialog, QTextEdit, QCheckBox,
+    QWidget,QVBoxLayout,QHBoxLayout,QLabel,QPushButton,QFormLayout,QComboBox,QSpinBox,QDoubleSpinBox,QTableWidget,
+    QTableWidgetItem,QStackedWidget,QMessageBox,
+    QFileDialog,
 )
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
 from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_PRIMARY_STRETCH,BUTTON_SECONDARY,BUTTON_TOGGLE,FONT_18B
 from ui.theme import colors as theme_colors
@@ -36,13 +33,29 @@ class DataToolsTab(BaseAnalysisTab):
         for b,j in [(self.btn_gen,0),(self.btn_conv,1),(self.btn_out,2)]: b.setChecked(j==i)
         self.stack.setCurrentIndex(i)
 
+    def _on_dist_changed(self,dist):
+        labels={
+            "正态":("μ:","σ:"),
+            "对数正态":("μ:","σ:"),
+            "指数":("scale:",""),
+            "均匀":("low:","high:"),
+            "Weibull":("scale:","shape:"),
+            "二项":("trials:","prob:"),
+            "泊松":("λ:",""),
+        }
+        l1,l2=labels.get(dist,("μ/scale:","σ/shape:"))
+        self.gen_mu_label.setText(l1)
+        self.gen_sigma_label.setText(l2)
+        self.gen_sigma.setVisible(l2!="")
+        self.gen_mu.setVisible(l1!="")
+
     # ── 生成器 ──
     def _gen_panel(self,tc):
         w=QWidget(); l=QFormLayout(w)
-        self.gen_dist=QComboBox(); self.gen_dist.addItems(DataGenerator.DISTS); l.addRow("分布:",self.gen_dist)
+        self.gen_dist=QComboBox(); self.gen_dist.addItems(DataGenerator.DISTS); self.gen_dist.currentTextChanged.connect(self._on_dist_changed); l.addRow("分布:",self.gen_dist)
         self.gen_n=QSpinBox(); self.gen_n.setRange(10,999999); self.gen_n.setValue(100); l.addRow("样本量:",self.gen_n)
-        self.gen_mu=QDoubleSpinBox(); self.gen_mu.setRange(-9999,9999); self.gen_mu.setValue(10); l.addRow("μ/scale:",self.gen_mu)
-        self.gen_sigma=QDoubleSpinBox(); self.gen_sigma.setRange(0.01,9999); self.gen_sigma.setValue(1); l.addRow("σ/shape:",self.gen_sigma)
+        self.gen_mu=QDoubleSpinBox(); self.gen_mu.setRange(-9999,9999); self.gen_mu.setValue(10); self.gen_mu_label=QLabel("μ/scale:"); l.addRow(self.gen_mu_label,self.gen_mu)
+        self.gen_sigma=QDoubleSpinBox(); self.gen_sigma.setRange(0.01,9999); self.gen_sigma.setValue(1); self.gen_sigma_label=QLabel("σ/shape:"); l.addRow(self.gen_sigma_label,self.gen_sigma)
         tmpl=QHBoxLayout()
         self.btn_spc_tmpl=QPushButton("SPC模板"); self.btn_spc_tmpl.setStyleSheet(BUTTON_SECONDARY); self.btn_spc_tmpl.clicked.connect(lambda:self._gen_template("spc"))
         self.btn_msa_tmpl=QPushButton("MSA模板"); self.btn_msa_tmpl.setStyleSheet(BUTTON_SECONDARY); self.btn_msa_tmpl.clicked.connect(lambda:self._gen_template("msa"))
@@ -57,7 +70,26 @@ class DataToolsTab(BaseAnalysisTab):
         return w
     def _do_gen(self):
         dist=self.gen_dist.currentText(); n=self.gen_n.value()
-        data=DataGenerator.generate(dist,n,mu=self.gen_mu.value(),sigma=self.gen_sigma.value(),scale=self.gen_mu.value(),shape=self.gen_sigma.value(),lam=int(self.gen_mu.value()),prob=0.5,trials=10,low=0,high=self.gen_mu.value()*2)
+        mu_val=self.gen_mu.value(); sigma_val=self.gen_sigma.value()
+        if dist=="正态":
+            data=DataGenerator.generate(dist,n,mu=mu_val,sigma=sigma_val)
+        elif dist=="对数正态":
+            data=DataGenerator.generate(dist,n,mu=mu_val,sigma=sigma_val)
+        elif dist=="指数":
+            data=DataGenerator.generate(dist,n,scale=mu_val)
+        elif dist=="均匀":
+            if mu_val >= sigma_val:
+                QMessageBox.warning(self,"参数错误",f"W51: 均匀分布要求 low < high (当前 low={mu_val}, high={sigma_val})")
+                return
+            data=DataGenerator.generate(dist,n,low=mu_val,high=sigma_val)
+        elif dist=="Weibull":
+            data=DataGenerator.generate(dist,n,scale=mu_val,shape=sigma_val)
+        elif dist=="二项":
+            data=DataGenerator.generate(dist,n,trials=int(mu_val),prob=sigma_val)
+        elif dist=="泊松":
+            data=DataGenerator.generate(dist,n,lam=int(mu_val))
+        else:
+            data=DataGenerator.generate(dist,n)
         self._gen_df=pd.DataFrame({"value":data})
         self._show_df(self._gen_df)
     def _gen_template(self,t):
@@ -126,11 +158,23 @@ class DataToolsTab(BaseAnalysisTab):
             outliers=z>3
         else:  # Grubbs
             from scipy import stats as sp_stats
-            g=(s.max()-s.mean())/s.std()
-            n=len(s); t=sp_stats.t.ppf(1-0.05/(2*n),n-2)
-            g_crit=((n-1)/np.sqrt(n))*np.sqrt(t**2/(n-2+t**2))
-            outliers=pd.Series(False,index=s.index)
-            if g>g_crit: outliers.iloc[-1]=True
+            n=len(s)
+            if n<3:
+                outliers=pd.Series(False,index=s.index)
+            else:
+                mean_val=s.mean(); std_val=s.std()
+                if std_val==0:
+                    outliers=pd.Series(False,index=s.index)
+                else:
+                    t=sp_stats.t.ppf(1-0.05/(2*n),n-2)
+                    g_crit=((n-1)/np.sqrt(n))*np.sqrt(t**2/(n-2+t**2))
+                    g_max=(s.max()-mean_val)/std_val
+                    g_min=(mean_val-s.min())/std_val
+                    outliers=pd.Series(False,index=s.index)
+                    if g_max>g_crit:
+                        outliers[s.idxmax()]=True
+                    if g_min>g_crit:
+                        outliers[s.idxmin()]=True
         flagged=s[outliers]
         hdrs=["行号","值","判定"]; self.result.setColumnCount(3); self.result.setHorizontalHeaderLabels(hdrs)
         self.result.setRowCount(len(flagged))

@@ -3,9 +3,8 @@
 """
 
 import os
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any
 import pandas as pd
-import numpy as np
 from config.settings import SUPPORTED_EXCEL_EXTENSIONS, MAX_PREVIEW_ROWS, CHUNK_SIZE
 from core.ie_parser import IEDataParser
 from core.log_util import get_logger
@@ -79,7 +78,7 @@ class DataLoader:
                 pass
         return pd.read_excel(file_path, sheet_name=sheet_name, dtype=str, engine="openpyxl")
 
-    load_chunked = load_head  # 兼容旧名称
+    load_chunked = load_head  # DEPRECATED: 仅向后兼容，请使用 load_head
 
     def load_chunked_iter(self, file_path: str, sheet_name: str = "Sheet1",
                           chunk_size: int = CHUNK_SIZE):

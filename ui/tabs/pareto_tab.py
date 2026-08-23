@@ -1,23 +1,19 @@
 """帕累托图增强 Tab — 列选择 + 排序 + 累计百分比 + 二层钻取"""
 
-from typing import Dict, Any, List
+from typing import Dict, Any
 
-import numpy as np
 import pandas as pd
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
+    QWidget, QVBoxLayout, QLabel, QPushButton,
     QComboBox, QGroupBox, QFormLayout, QFrame,
-    QTableWidget, QTableWidgetItem, QSplitter, QHeaderView,
-    QScrollArea, QSpinBox, QDoubleSpinBox,
+    QTableWidget, QTableWidgetItem, QSplitter, QScrollArea, QSpinBox, QDoubleSpinBox,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
-from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY
 from ui.theme import colors as theme_colors

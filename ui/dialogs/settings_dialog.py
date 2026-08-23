@@ -5,10 +5,8 @@
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QFormLayout, QComboBox, QSpinBox,
     QDoubleSpinBox, QDialogButtonBox, QGroupBox, QCheckBox, QTabWidget, QWidget,
-    QLineEdit, QLabel, QPushButton, QHBoxLayout, QMessageBox,
+    QLineEdit, QLabel, QPushButton, QHBoxLayout,
 )
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
 
 from config.settings import (
     FONT_FAMILY, CHART_DPI, MSA_GRR_ACCEPTABLE, MSA_NDC_THRESHOLD, get_setting,

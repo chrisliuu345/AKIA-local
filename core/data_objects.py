@@ -4,9 +4,7 @@ Process, TimeObservation, QualityRecord, MaterialFlow, Resource
 """
 
 from dataclasses import dataclass, field, asdict
-from typing import Dict, List, Optional, Any, Tuple
-import json
-import re
+from typing import Dict, List, Optional
 
 
 @dataclass
@@ -108,11 +106,7 @@ class QualityRecord:
     }
 
     def to_dict(self) -> Dict:
-        d = asdict(self)
-        for k in ("usl", "lsl", "target"):
-            if d[k] is None:
-                d[k] = None
-        return d
+        return asdict(self)
 
     @classmethod
     def from_dict(cls, d: Dict) -> "QualityRecord":

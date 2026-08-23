@@ -3,15 +3,11 @@
 import pandas as pd, numpy as np
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QTableWidget, QTableWidgetItem, QHeaderView, QGroupBox,
-    QFormLayout, QComboBox, QDoubleSpinBox, QCheckBox,
-    QSplitter, QScrollArea, QFrame, QMessageBox, QProgressBar,
-    QWidget,
+    QTableWidget, QTableWidgetItem, QHeaderView, QSplitter, QMessageBox, QWidget,
 )
-from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QFont, QColor
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
 from ui.theme import colors as theme_colors, BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY
-from scipy import stats as sp_stats
 
 class DataCleanWizard(QDialog):
     def __init__(self, df: pd.DataFrame, parent=None):

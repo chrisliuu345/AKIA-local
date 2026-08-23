@@ -2,18 +2,50 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> Current: v2.6.4 UI Robustness + Report Safety + Test Quality | Tests: 289+ pytest · 35 Tabs + Plugins | Updated: 2026-08-22
+> Current: v2.6.5 Numbered-Defect Cleanup + Info Batch #1 | Tests: 450+ pytest · 35 Tabs + Plugins | Updated: 2026-08-23
 
 ---
 
 ## Version Roadmap Overview
 
+> **Roadmap Rework (2026-08-22)**: everything from v2.6.5 onward has been re-planned — shifting from "adding features" to "deepening existing capabilities", organized around core competitive strengths with numbered-defect fixes first. See [Core Competitive Positioning](#core-competitive-positioning-2026-08-rework).
+
 ```
-v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ──→ v2.7.0 ──→ v2.7.5 ──→ v2.8.0 ──→ v2.8.5 ──→ v2.9.0 ──→ v2.9.5 ──→ v2.10.0
- Release   Code+AI    Eng Tools   Reports    Live      UX+Anim    HW Ext     ESP32 Deploy+   Security     RBAC+Auth    Stats Eng    UI Robust   Polish      Video      Macro       REST API   Supply     Digital    Web Ph.1   Web Ph.2
-           (Done)     (Done)     (Done)    (Done)     (Done)     (Done)     Device Tab      (Done)       +Device      Hardening    +Reports    +Info #1    TimeStudy   +Info #2   +Info #3    Chain      Twin       Dash/Rpt   +Mobile
-                                                                           (Released)                  (Done)      (TBD)        +Test       (TBD)      (TBD)       (TBD)      (TBD)      (TBD)       (TBD)      (TBD)
+v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ✅ ──→ v2.7.0 ──→ v2.8.0 ──→ v2.9.0 ──→ v3.0.0
 ```
+
+| Stage | Version | Theme |
+|-------|---------|-------|
+| Done | v2.0 ~ v2.6.5 | Release → Code+AI → Eng Tools → Reports → Live Monitoring → UX+Anim → HW Expansion → ESP32 Deploy → Security → RBAC+Auth → Stats Hardening → UI Robustness → Defect Cleanup |
+| TBD | v2.6.5 | Numbered-defect cleanup + Info batch #1 |
+| TBD | v2.7.0 | Statistical engine deepening + Info batch #2 |
+| TBD | v2.8.0 | Workflow integration (differentiation core) + Info batch #3 |
+| TBD | v2.9.0 | Integration deepening & report pipeline |
+| TBD | v3.0.0 | Stabilization milestone + Info wrap-up |
+
+---
+
+## Core Competitive Positioning (2026-08 Rework)
+
+> Based on the 2026-08 open-source landscape survey (JASP / Jamovi / Cassini / SigmaExacta / Point85 OEE / pyDOE / R ecosystem qcc·FrF2·gageRR, etc.): **no open-source project simultaneously covers SPC + capability + MSA + hypothesis testing + DOE + IE tools + FMEA/8D/PPAP + AI + hardware + Chinese in one desktop application.** Closest competitors and their gaps: Cassini (SPC platform) lacks IE/FMEA/PPAP/Chinese; JASP lacks IE/FMEA/hardware/Chinese; SigmaExacta covers only FMEA/8D/PPAP (web PWA); the only near-complete coverage is the commercial package Datalyzer.
+
+### Differentiation Pillars (by uniqueness)
+
+| # | Pillar | Open-source landscape | Deepening track |
+|---|--------|----------------------|-----------------|
+| 1 | **Quality workflow integration** (FMEA→Control Plan→SPC→PPAP→8D data chain) | Blank: SigmaExacta's three tools are disconnected; no characteristic-level data model exists | **v2.8.0 (differentiation core)** |
+| 2 | **Statistical engine depth on par with Minitab** | Fragmented: R packages complete but no GUI; JASP QC coverage narrow | **v2.7.0 (core value)** |
+| 3 | **Chinese-first + offline desktop** (factory-floor scenarios) | Blank: no open-source QE tool offers a native Chinese UI | Ongoing guarantee |
+| 4 | **Local LLM AI** (Ollama + RAG, offline & auditable) | Competitor AI is all cloud-dependent or prototype-stage | Post-v3.0.0 |
+| 5 | **ESP32 hardware integration** (gage/sensor acquisition → SPC) | Nearly blank (only Cassini MQTT / Point85 OPC-UA, both in paid tiers) | Post-v3.0.0 |
+
+### Planning Principles
+
+1. **Numbered-defect fixes first** — major-version iteration starts only after the full W-series cleanup (v2.6.5)
+2. **Deepen, don't expand** — v2.6.5~v3.0.0 adds no new Tabs and no standalone feature modules; all effort goes into correctness, depth, and integration of existing capabilities
+3. **Statistical correctness verified against known values** — every new statistical method must ship unit tests validated on NIST / authoritative published datasets
+4. **Info debt paid in batches** — 151 tech-debt items spread across four batches (v2.6.5 / v2.7.0 / v2.8.0 / v3.0.0) without blocking the main line
+5. **Test baseline never shrinks** — 289+ is the floor; full regression every release
 
 ---
 
@@ -229,9 +261,10 @@ Plugin index 33, LLM streaming refresh, validate_params complete, animation clea
 
 ---
 
-## v2.6.3 — Statistical Engine Hardening (TBD)
+## v2.6.3 ✅ Completed — Statistical Engine Hardening
 
 > Theme: statistical correctness — the core value of a quality tool. Fixes statistical boundary defects and constant-table errors found in the full-codebase review.
+> Tests: 104+ pytest all pass | Fixes: 2 Critical + 29 Warning | 2026-08-21
 
 ### Critical Statistical Correctness
 - C15 `gage_rr.py` AV/PV constant table: SPC d2 → MSA d2* (n=2 overestimate 25%, n=3 ~13%), add d2* factor table to settings.py
@@ -259,7 +292,7 @@ Plugin index 33, LLM streaming refresh, validate_params complete, animation clea
 > Theme: remaining UI crashes/correctness + output safety + test reliability. Focus on crashes and contract consistency; low-value polish demoted to P2.
 > Tests: 289+ pytest all pass | Fixes: 26 code changes | 2026-08-22
 
-### UI Crashes & Correctness (12 items)
+### UI Crashes & Correctness (15 items)
 - W58 fmea mode-before-confirm → confirm then assign
 - W41 _on_import_db connection leak → try/finally
 - W53 closeEvent no discovery stop → add _discovery_running=False
@@ -289,7 +322,7 @@ Plugin index 33, LLM streaming refresh, validate_params complete, animation clea
 - W109 root_cause KeyError → .get() safe access
 - W111 llm closeEvent block → non-blocking wait
 
-### Test Quality (5 items)
+### Test Quality (4 items)
 - W101 or True tautology → remove
 - W102 zero assertions → add assert
 - W105 time.time global replace → mock.patch
@@ -300,123 +333,166 @@ Plugin index 33, LLM streaming refresh, validate_params complete, animation clea
 
 ---
 
-## v2.6.5 — UX Polish + Info Cleanup #1 (TBD)
+## v2.6.5 ✅ Done — Numbered-Defect Cleanup + Info Batch #1
 
-> Theme: pay down UI polish items demoted from v2.6.4 + custom chart templates + first tranche of tech debt. First release of the detailed long-term backlog schedule.
+> Theme: full W-series cleanup (10 items) + first tech-debt batch. No new features in this release — it establishes a clean baseline for the deepening versions that follow.
+> Tests: 450+ pytest all pass | Fixes: 10 W-series + 6 Info items | 2026-08-23
 
-### P2-5 Custom Control Chart Templates
-- Serialize control-chart configs (spec limits / colors / Nelson rule sets / chart styles) as JSON templates
-- Template manager dialog: save / load / delete / rename, persisted in user_config.json
-- One-click template apply from control-chart Tabs
+### W-Series Cleanup (10 items, each with a regression test)
 
-### P2-7 UI Polish (demoted from v2.6.4, 8 items)
-- W49 bulk-fill block, W50 Grubbs label, W51 uniform μ, W69 trend no sampling
-- W72 sidebar height, W73 fishbone iteration, W74 animate cleanup, W99 esp32 buf (dup of C04, close after re-verification)
+| ID | Origin | Issue summary | Action |
+|----|--------|---------------|--------|
+| W49 | demoted v2.6.4 | Bulk-fill blocks UI | Fix (chunked/async processing) |
+| W50 | demoted v2.6.4 | Grubbs label error | Fix |
+| W51 | demoted v2.6.4 | Uniform-distribution μ error | Fix |
+| W69 | demoted v2.6.4 | Trend analysis has no sampling (large-data stalls) | Fix (auto sampling) |
+| W72 | demoted v2.6.4 | Sidebar height issue | Fix |
+| W73 | demoted v2.6.4 | Fishbone iteration issue | Fix |
+| W74 | demoted v2.6.4 | animate cleanup missing | Fix |
+| W99 | demoted v2.6.4 | esp32 transport buf (duplicate of C04) | Re-verify, then close with a recorded note |
+| W86 | unassigned | `utils/co401_analysis.py:5` / `co401_round2.py:5` hardcoded `sys.path.insert(0, r"D:\...")` | Fix (remove hardcoded path; move one-off scripts out of `utils/`) |
+| W106 | unassigned | `ui/dialogs/import_dialog.py:155` `xl.parse(s, nrows=0)` always returns 0 rows | Fix (column-name read logic) |
 
-### P2-6 Info Cleanup #1 (~50 items)
-- Dead code removal + unused imports (mechanical volume first, tool-assisted scan + manual review)
+### Info Cleanup Batch #1 (~50 items)
+- Dead code removal + unused imports (tool-assisted scan + manual review)
 
----
-
-## v2.7.0 — Video Time Study (TBD)
-
-> Theme: P2-3 video time study — frame-level timing + AI motion recognition.
-
-### Core Features
-- Video import → frame extraction → Pose/Hands keypoint extraction (OpenCV + MediaPipe) → motion segmentation (thresholds + state machine) → operation cycle timing
-- New Tab 36: timeline + motion-segment list + cycle statistics, interoperable with time_study data
-- Risk note: MediaPipe compatibility with Python 3.14 unverified (official support usually lags); fallback options ONNX Runtime / OpenCV DNN
-- Risk note: PyInstaller bundle size will grow significantly (OpenCV adds ~60MB)
-
----
-
-## v2.7.5 — Batch Macro Record/Replay + Info Cleanup #2 (TBD)
-
-> Theme: P2-4 macro record/replay — operation-sequence automation.
-
-### Core Features
-- Macro recorder: intercept key handlers to record action + params → JSON macro scripts
-- Macro manager dialog: save / load / edit / delete
-- Replay engine: dry-run pre-check + step-confirm mode; integrates with F5 batch analysis
-
-### P2-6 Info Cleanup #2 (~50 items)
-- Duplicate-implementation merge + single source of truth
+### Acceptance Criteria
+- Open W-series items = 0 ✅ (W99 re-verified and closed on record)
+- ≥10 new regression tests ✅ (27 W-fix regression tests)
+- Full pytest suite passes and stays at or above the 289 baseline ✅ (450+ tests)
 
 ---
 
-## v2.8.0 — REST API Service + Info Cleanup #3 (TBD)
+## v2.7.0 — Statistical Engine Deepening (TBD)
 
-> Theme: P3-3 REST API — service-ize core analysis, paving the way for supply chain / web / mobile (dependency-chain root).
+> Theme: close the statistical gaps versus Minitab — reinforcing the core value of a quality-analysis tool. The gap list comes from a 2026-08 code-level audit (not guesswork).
+> **Quality rule: every new method ships unit tests validated against NIST StRD / AIAG handbook / authoritative published known-value datasets.**
 
-### Core Features
-- FastAPI wrapping core analysis engines: `/analyze/{tool}` (35 engines), `/kpi`, `/alerts`, `/devices`
-- API Key auth (reusing v2.6.2 RBAC matrix), OpenAPI auto docs
-- Architecture decision (during development): embedded uvicorn thread in desktop (localhost) vs standalone headless process
-- For MES/ERP consumption
+### Current Baseline (already present — not rebuilt)
+9 control-chart types + Nelson 8 rules · Cp/Cpk/Pp/Ppk + Box-Cox + between/within capability · Gage R&R (crossed/nested) + linearity/bias + attribute agreement Kappa · t-tests / one-&two-way ANOVA / normality / variance / 3 non-parametric · full factorial + CCD + Box-Behnken · linear/multiple regression · Weibull 2P/3P + MTBF + ALT (Arrhenius/IPL) · AQL attribute sampling (GB/T 2828.1)
 
-### P2-6 Info Cleanup #3 (~51 items)
+### P1 Core Gaps (7 items — mandatory this release)
+
+| Area | New method | Planned location |
+|------|-----------|------------------|
+| MSA | **Type 1 gage study** (Cg/Cgk; single gage × reference part) | `analysis/msa/type1_study.py` |
+| Capability | **True Johnson transformation** (SU/SB selection; current code is z-score standardization only, not a real transform) | rework `analysis/capability/non_normal_cap.py` |
+| Capability | **Cpm** (Taguchi index; currently only a scattered calc inside time_study, not in the capability engine) | `analysis/capability/normal_cap.py` |
+| SPC | **Hotelling T² multivariate chart** (joint multi-characteristic monitoring, T² + Q residual charts) | `analysis/spc/hotelling.py` |
+| Hypothesis | **Equivalence testing (TOST)** (1/2-sample mean equivalence) | `analysis/hypothesis/equivalence.py` |
+| Hypothesis | **Chi-square goodness/independence + 2-proportion tests** | `analysis/hypothesis/proportion.py` |
+| Distribution | **General distribution fitting** (normal/lognormal/exponential/Gamma/Weibull MLE) + AD/KS/chi-square GoF | new `analysis/distribution/fitting.py` |
+
+### P2 Important Gaps (6 items — target this release, may spill to v2.9.0)
+
+| Area | New method |
+|------|-----------|
+| SPC | Laney P'/U' charts (over-/under-dispersed count data) |
+| Capability | Non-normal percentile-method indices (transformation-free) |
+| Statistics | Tolerance intervals (normal / non-parametric) |
+| Hypothesis | Mood's median test + Friedman test (complete blocks) |
+| Sampling | Variables sampling (GB/T 6378 / ANSI/ASQ Z1.9) |
+| Sampling | C=0 sampling plans (zero-defect acceptance) |
+
+### P3 Spillover (wrapped up in v2.9.0)
+- I-MR-R/BW between-within charts · fractional factorial / Taguchi OA designs · logistic regression · regression residual diagnostic 4-plot · DOE main-effects/interaction/contour plot wiring (contour generator exists but is not wired to the DOE tab)
+
+### Info Cleanup Batch #2 (~50 items)
+- Duplicate-implementation merge + single source of truth (e.g., variance_tests/normality duplication, audit dual implementation)
+
+### Acceptance Criteria
+- All new methods pass known-value verification tests
+- New methods wired into existing Tabs (MSA/capability/SPC/hypothesis/sampling/chart entries — **no new Tabs**)
+- Full pytest suite passes
+
+---
+
+## v2.8.0 — Workflow Integration (TBD — Differentiation Core)
+
+> Theme: connect the FMEA→Control Plan→SPC→PPAP→8D data chain — a differentiation barrier no open-source project implements.
+> Current state (2026-08 audit): the five engineering Tabs are fully siloed — no shared characteristic-ID data model; PPAP's Cp/Cpk parses manually typed text instead of calling the capability engine; FMEA/CP/8D data is not serialized into .qap (only statistical Tab 1-6 results are); report templates cannot auto-pull analysis results.
+
+### Shared Data Model (foundation)
+- New `core/project_context.py`: `QualityCharacteristic` dataclass (characteristic ID / process step / spec limits / unit / data-source binding) + `ProjectContext` project-level context
+- Replaces the tab-indexed flat `MainWindow.analyses` dict (compatibility layer for gradual migration)
+- .qap serialization extended: FMEA / control plan / 8D engineering data persisted
+
+### Five Integration Links
+
+| # | Link | Implementation |
+|---|------|----------------|
+| 1 | FMEA → Control Plan | One-click generation of CP rows from high-risk items (AP/RPN threshold): characteristic / control method / reaction plan |
+| 2 | Control Plan → SPC | CP control items generate an SPC watch list (characteristic + spec limits + chart type pre-configured) |
+| 3 | Capability/MSA → PPAP | PPAP #8 (MSA) / #11 (initial capability) auto-pull the latest analysis results, replacing manual entry |
+| 4 | FMEA → 8D D4 | Failure causes/mechanisms injected into the fishbone skeleton (replacing hardcoded 6M defaults) |
+| 5 | 8D D7 → FMEA/CP | "Standards updated" drives FMEA/CP review reminders and revision flags |
+
+### Info Cleanup Batch #3 (~51 items)
 - i18n consistency + magic-number constants + private-API replacement
 
----
-
-## v2.8.5 — Supply Chain Quality Collaboration (TBD)
-
-> Theme: P3-1 supply chain collaboration — P2P data sharing built on the v2.8.0 REST API layer.
-
-### Core Features
-- Supplier data package export/import (encrypted JSON, keys reuse DPAPI secret store)
-- CPK multi-level drill-through: part number → lot → process → parameter
-- Part-number mapping management (own ↔ supplier part numbers)
-- New "Supply Chain" Tab (index 37)
+### Acceptance Criteria
+- End-to-end scenario test: import data → FMEA flags high risk → generate CP → SPC monitoring → PPAP auto-fill, one chain with no manual re-entry
+- .qap save/open round-trips engineering data (incl. FMEA/CP/8D); legacy .qap files load with backward compatibility
 
 ---
 
-## v2.9.0 — Digital Twin Layout Simulation (TBD)
+## v2.9.0 — Integration Deepening & Report Pipeline (TBD)
 
-> Theme: P3-2 digital twin — 2D line layout + discrete-event simulation.
+> Theme: cross-module result reuse + report auto-aggregation + v2.7.0 P3 spillover wrap-up.
 
-### Core Features
-- QGraphicsScene 2D layout editor: drag-and-drop stations / conveyors / buffers
-- Station properties bound to live data (cycle time / yield / OEE from the KPI extractor)
-- Discrete-event simulation: bottleneck detection / WIP accumulation analysis / before-after comparison
-- Interoperable with VSM / line balancing; new Tab (index 38)
+### Report Pipeline
+- Report template auto-aggregation: one-click pull of latest Cpk / %GRR / SPC violations / 8D status / PPAP completion into the template context (currently callers must build the context dict manually)
 
----
+### Cross-Tab Result Reuse
+- SPC ↔ capability share σ (one computation per dataset; control-state vs summary-state unified)
+- MSA measurement error injected into capability analysis (measurement-uncertainty-corrected Cpk, optional toggle)
 
-## v2.9.5 — Web Frontend Phase 1 (TBD)
+### v2.7.0 P3 Wrap-up
+- I-MR-R/BW charts · fractional factorial / Taguchi designs · logistic regression · residual diagnostic 4-plot
 
-> Theme: P3-4 progressive dual-stack phase 1 — read-only web views for dashboard and reports (desktop retained long-term).
-
-### Core Features
-- React scaffold (Vite + TypeScript), reusing the REST API
-- Web dashboard: KPI tiles + chart carousel (desktop display_mode equivalent)
-- Web report viewer: browse generated reports (PDF/HTML)
-- Embedded static-file server in the desktop app (same port serves web assets)
+### Acceptance Criteria
+- Integration tests cover all integration links (v2.8.0's five links + report aggregation)
+- Full pytest suite passes
 
 ---
 
-## v2.10.0 — Web Phase 2 + Mobile App + Info Wrap-up (TBD)
+## v3.0.0 — Stabilization Milestone (TBD)
 
-> Theme: P3-4 phase 2 (analysis interaction) + P3-5 mobile app + P2-6 wrap-up.
+> Theme: Info wrap-up + full regression + performance baseline + milestone release.
 
-### Core Features
-- Web analysis interaction core flow: pick data → run analysis → view results (desktop main workflow equivalent)
-- Mobile app (Flutter / React Native): report viewing + alert push (webhook / FCM), reusing the same REST API
-- P2-6 remaining items cleared + full regression verification
+### Scope
+- Info-series cleanup wrap-up (remaining items) + full regression verification
+- Performance baselines and regression gates: startup time / large-file (100k-row) import time / peak memory
+- Bilingual doc sync (README / ROADMAP / CONTRIBUTING) + version-history table archived
+- PyInstaller + Inno Setup installer release
+
+### Acceptance Criteria
+- All C / W / Info numbered items cleared
+- Full regression passes; test count at or above the 289 baseline (never lower)
+- Performance baselines met and recorded
 
 ---
 
-## Original Backlog Scheduling Note
+## Post-3.0.0 Backlog (registered only — not scheduled)
 
-> **Note**: P2-1 (Low-code Formula Editor) and P2-2 (Shop Floor Display Mode) were moved up to v2.4 E4 (Dashboard UI & Control Enhancement).
-> The original "Long-Term Backlog (P2/P3)" list has been fully allocated: P2-3→v2.7.0 · P2-4→v2.7.5 · P2-5/P2-7→v2.6.5 · P2-6 in three tranches across v2.6.5/v2.7.5/v2.8.0 + wrap-up in v2.10.0 · P3-1→v2.8.5 · P3-2→v2.9.0 · P3-3→v2.8.0 · P3-4 phase 1→v2.9.5 phase 2→v2.10.0 · P3-5→v2.10.0.
+### Core-Competitiveness Extensions (evaluate after 3.0.0)
+- **AI deepening**: upgrade the local LLM from "chat assistant" to "whole-analysis interpretation engine" — auto-generated engineering interpretation for every analysis result, anomaly diagnosis suggestions, knowledge-base linkage (staying offline & auditable)
+- **Hardware deepening**: ESP32 device acquisition → real-time SPC closed loop (acquire → control chart → alert → COMMAND feedback), wireless gage acquisition, more sensor types
+
+### Shelved Legacy Plan Items (2026-08-22 rework decision)
+- P2-3 Video time study (MediaPipe/OpenCV pose estimation)
+- P2-4 Batch macro record/replay
+- P2-5 Custom control-chart templates (note: v2.8.0's "CP→SPC pre-configuration" link covers its core scenario)
+- P3-1 Supply-chain quality collaboration · P3-2 Digital twin layout simulation · P3-3 REST API service · P3-4 Web frontend · P3-5 Mobile app
 
 ---
 
 ## Sidebar Evolution
 
+> **Note**: no new Tabs during the v2.6.5 ~ v3.0.0 rework period (focus on deepening existing features); the 35-Tab + plugin structure stays unchanged.
+
 ```
-v2.0 (28)     v2.1 (28)     v2.2 (32)       v2.4 (34)     v2.5/2.6 (35)
+v2.0 (28)     v2.1 (28)     v2.2 (32)       v2.4 (34)     v2.5/2.6 (35)   v2.6.5~3.0.0 (35)
  Home (0)       Same           Same             Same           Same
  Quality (1-6)  Same           Same             Same           Same
  IE (7-11,21-22) Same          +SMED(29)+TPM(31)  Same         Same
@@ -438,6 +514,8 @@ v2.0 (28)     v2.1 (28)     v2.2 (32)       v2.4 (34)     v2.5/2.6 (35)
 
 | Date | Version | Content |
 |------|---------|---------|
+| 08-23 | v2.6.5 | Completed: W-series numbered-defect cleanup (W49/W50/W51/W69/W72/W73/W74/W86/W99/W106) + Info batch #1 (dead code/unused imports/state-drift bug fixes) · 450+ tests |
+| 08-22 | v2.6.5-planning | Roadmap rework: v2.6.5~v3.0.0 shifted from "feature expansion" to "deepening existing capabilities" (defect cleanup → stats-engine deepening → workflow integration → integration deepening → stabilization); legacy feature items P2-3/P2-4/P2-5/P3-1~P3-5 shelved until after 3.0.0; core competitive positioning established from the open-source landscape survey |
 | 08-21 | v2.6.2 | Completed: RBAC permission matrix (guards/menu greying/sidebar/welcome filtering) + auth hardening (login lockout + forced password change) + security fixes W01-W17 + device link C04/C05/C06/C19/W87-W100 + esp32_out real-device verification (COM3, LED/relay/servo ACK) + MaixCAM network integration (TCP :9000 end-to-end) · 296 tests |
 | 08-19 | v2.6.1-review | Code review fixes (12 Critical): auth privilege escalation C01/C02/C03/C13/C14 + nav_buttons C08 + functional/crash C07/C09/C10/C11/C12/C17 + synthetic test data C18 · 289 pytest · 44/45 smoke |
 | 08-19 | v2.6.1 | Security validation: password policy (≥8 chars + letters/digits, wired in 3 auth paths) + audit logging (core/audit.py public entry + 9 business events) + secret store (DPAPI encryption + SQL connection-string masking) · 282 tests |

@@ -3,16 +3,14 @@
 """
 
 import io
-import os
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Tuple
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_agg import FigureCanvasAgg
 import seaborn as sns
 from config.settings import (
     CHART_COLORS, CHART_DPI, CHART_FIGSIZE,
-    FONT_FAMILY, FONT_SIZE_TITLE, FONT_SIZE_LABEL, FONT_SIZE_TICK,
+    FONT_SIZE_TITLE, FONT_SIZE_LABEL, FONT_SIZE_TICK,
     get_effective, get_setting,
 )
 from core.i18n import i18n
@@ -504,7 +502,6 @@ def save_figure(fig: Figure, file_path: str) -> str:
 
 
 def create_correlation_heatmap(df, numeric_cols=None, title="相关矩阵热力图") -> Figure:
-    import pandas as pd
     if numeric_cols is None:
         numeric_cols = df.select_dtypes(include="number").columns.tolist()
     else:

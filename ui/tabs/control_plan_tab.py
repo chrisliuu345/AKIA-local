@@ -1,14 +1,13 @@
 """控制计划 Tab — 工序→特性→规格→测量→控制方法的交互编辑表"""
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QGroupBox, QTableWidget, QTableWidgetItem, QHeaderView,
+    QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
+    QTableWidget, QTableWidgetItem, QHeaderView,
     QFileDialog, QMessageBox,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
-from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY
 from ui.theme import colors as theme_colors

@@ -1,8 +1,8 @@
 """
-P控制图 (不合格品率控制图)
+P控制图 (不合格品率控制图) — 向量化实现
 """
 
-from typing import Dict, Any, List
+from typing import Dict, Any
 import numpy as np
 import pandas as pd
 
@@ -22,22 +22,23 @@ def analyze(defectives: pd.Series, sample_sizes: pd.Series) -> Dict[str, Any]:
     p = d / ss
     p_bar = d.sum() / ss.sum()
 
-    ucl_vals = []
-    lcl_vals = []
-    for i in range(n):
-        se = np.sqrt(p_bar * (1 - p_bar) / ss[i])
-        ucl_vals.append(p_bar + 3 * se)
-        lcl_vals.append(max(p_bar - 3 * se, 0))
+    # 向量化 UCL/LCL 计算
+    se = np.sqrt(p_bar * (1 - p_bar) / ss)
+    ucl_vals = p_bar + 3 * se
+    lcl_vals = np.maximum(p_bar - 3 * se, 0)
+
+    # 向量化违规检测
+    violations_mask = (p > ucl_vals) | (p < lcl_vals)
+    violations_idx = np.where(violations_mask)[0]
 
     violations = []
-    for i in range(n):
-        if p[i] > ucl_vals[i] or p[i] < lcl_vals[i]:
-            violations.append({
-                "point": i + 1,
-                "value": round(float(p[i]), 6),
-                "ucl": round(float(ucl_vals[i]), 6),
-                "lcl": round(float(lcl_vals[i]), 6),
-            })
+    for i in violations_idx:
+        violations.append({
+            "point": int(i + 1),
+            "value": round(float(p[i]), 6),
+            "ucl": round(float(ucl_vals[i]), 6),
+            "lcl": round(float(lcl_vals[i]), 6),
+        })
 
     return {
         "chart_type": "P-Chart",

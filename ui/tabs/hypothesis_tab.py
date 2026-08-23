@@ -9,18 +9,18 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QComboBox, QDoubleSpinBox, QSpinBox, QGroupBox, QFormLayout,
-    QTableWidget, QTableWidgetItem, QTextEdit, QSplitter, QHeaderView,
-    QFrame, QFileDialog, QStackedWidget,
+    QComboBox, QDoubleSpinBox, QGroupBox, QFormLayout,
+    QTableWidget, QTextEdit, QSplitter, QHeaderView,
+    QFrame, QStackedWidget,
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
 from analysis.hypothesis import t_tests, anova, normality, variance_tests
 from output.chart_engine import create_histogram
 from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
-from ui.theme import BUTTON_PRIMARY, BUTTON_SECONDARY, BUTTON_TOGGLE, BUTTON_PRIMARY_STRETCH
+from ui.theme import BUTTON_SECONDARY, BUTTON_TOGGLE, BUTTON_PRIMARY_STRETCH
 from core.formatting import format_pvalue
 
 

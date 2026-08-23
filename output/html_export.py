@@ -5,7 +5,6 @@ import io
 import base64
 from typing import Dict, List
 from datetime import datetime
-from io import BytesIO
 
 from config.settings import APP_VERSION, CHART_COLORS
 

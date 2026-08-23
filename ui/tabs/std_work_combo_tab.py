@@ -1,18 +1,16 @@
 """标准作业组合票 V2 — 可编辑表格 + 预设 + 余力统计"""
 
-import numpy as np
 from PySide6.QtWidgets import (
     QWidget,QVBoxLayout,QHBoxLayout,QLabel,QPushButton,
-    QGroupBox,QFormLayout,QSpinBox,QDoubleSpinBox,QTableWidget,
-    QTableWidgetItem,QSplitter,QHeaderView,QScrollArea,QFrame,QComboBox,QMessageBox,
+    QSpinBox,QDoubleSpinBox,QTableWidget,
+    QTableWidgetItem,QScrollArea,QFrame,QComboBox,
 )
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt, matplotlib.patches as mpatches
 from ui.tabs.base_tab import BaseAnalysisTab
-from ui.theme import BUTTON_PRIMARY_STRETCH,BUTTON_SECONDARY,FONT_18B,FONT_10
+from ui.theme import BUTTON_PRIMARY_STRETCH,FONT_18B,FONT_10
 from ui.theme import colors as theme_colors
 
 C_W="#4da6ff"; C_A="#51cf66"; C_WK="#ffa726"; C_I="#363648"
