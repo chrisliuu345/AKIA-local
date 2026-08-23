@@ -2,7 +2,7 @@
 DOE分析引擎 — 效应Pareto、交互作用、残差诊断
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 import numpy as np
 import pandas as pd
 from scipy import stats

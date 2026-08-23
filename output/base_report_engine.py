@@ -1,6 +1,6 @@
 """BaseReportEngine — 所有报告生成器的共享逻辑"""
 
-from typing import Dict, Any, List, Tuple, Iterator
+from typing import Dict, List, Tuple, Iterator
 from datetime import datetime
 
 from config.settings import APP_NAME, APP_VERSION

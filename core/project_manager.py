@@ -6,10 +6,8 @@ import json
 import os
 import io
 import zipfile
-import tempfile
-import shutil
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from PySide6.QtCore import QSettings
 
 import pandas as pd

@@ -3,13 +3,12 @@
 """
 
 from typing import Dict, Any, List
-import pandas as pd
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QComboBox, QDoubleSpinBox, QSpinBox, QGroupBox, QFormLayout,
+    QComboBox, QDoubleSpinBox, QGroupBox, QFormLayout,
     QTableWidget, QTableWidgetItem, QSplitter, QHeaderView,
-    QFrame, QStackedWidget, QMessageBox,
+    QStackedWidget, QMessageBox,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
@@ -18,7 +17,7 @@ from matplotlib.figure import Figure
 
 from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
-from ui.theme import BUTTON_PRIMARY, BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY, BUTTON_TOGGLE
+from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY, BUTTON_TOGGLE
 from core.data_objects import TimeObservation
 from analysis.ie.time_study import TimeStudyEngine
 

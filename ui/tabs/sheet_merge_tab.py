@@ -1,10 +1,9 @@
 """工作表合并 — 追加/JOIN/批量/Sheet"""
 
 import os, pandas as pd
-from PySide6.QtWidgets import (QWidget,QVBoxLayout,QHBoxLayout,QLabel,QPushButton,
+from PySide6.QtWidgets import (QVBoxLayout,QHBoxLayout,QLabel,QPushButton,
     QGroupBox,QFormLayout,QComboBox,QLineEdit,QTableWidget,QTableWidgetItem,
     QFileDialog,QMessageBox,QTextEdit)
-from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_PRIMARY_STRETCH,BUTTON_SECONDARY

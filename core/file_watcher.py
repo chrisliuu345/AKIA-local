@@ -8,7 +8,6 @@ Qt-free 纯 Python 模块：
 
 import os
 import threading
-import time
 from datetime import datetime
 
 import pandas as pd

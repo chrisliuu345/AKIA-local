@@ -1,12 +1,11 @@
 """LPA分层审核表 — 模板选择 + Excel导出"""
 
-from PySide6.QtWidgets import (QWidget,QVBoxLayout,QHBoxLayout,QLabel,QPushButton,
+from PySide6.QtWidgets import (QVBoxLayout,QLabel,QPushButton,
     QGroupBox,QFormLayout,QLineEdit,QTextEdit,QFileDialog,QMessageBox,
-    QCheckBox,QScrollArea,QFrame)
-from PySide6.QtCore import Qt
+    QCheckBox)
 from PySide6.QtGui import QFont
 from ui.tabs.base_tab import BaseAnalysisTab
-from ui.theme import BUTTON_PRIMARY_STRETCH,BUTTON_SECONDARY
+from ui.theme import BUTTON_PRIMARY_STRETCH
 from ui.theme import colors as theme_colors
 from core.layered_form import LPAEngine,LPA_TEMPLATES
 

@@ -2,7 +2,7 @@
 方差齐性检验
 """
 
-from typing import Dict, Any, List
+from typing import Dict, Any
 import numpy as np
 import pandas as pd
 from scipy import stats

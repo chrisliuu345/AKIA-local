@@ -4,7 +4,7 @@
 """
 
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
+    QDialog, QVBoxLayout, QLabel, QPushButton,
     QLineEdit, QMessageBox,
 )
 from PySide6.QtCore import Qt

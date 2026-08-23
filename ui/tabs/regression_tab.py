@@ -9,16 +9,16 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QGroupBox, QFormLayout, QTextEdit,
-    QTableWidget, QTableWidgetItem, QSplitter, QHeaderView,
-    QFrame, QFileDialog, QStackedWidget,
+    QTableWidget, QHeaderView,
+    QStackedWidget,
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
 from analysis.regression.linear_regression import analyze as reg_analyze
 from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
-from ui.theme import BUTTON_PRIMARY, BUTTON_SECONDARY, BUTTON_TOGGLE, BUTTON_PRIMARY_STRETCH
+from ui.theme import BUTTON_SECONDARY, BUTTON_TOGGLE, BUTTON_PRIMARY_STRETCH
 from core.formatting import format_pvalue
 
 
@@ -274,7 +274,7 @@ class RegressionTab(BaseAnalysisTab):
         self._clear_canvas()
         try:
             import matplotlib.pyplot as plt
-            from config.settings import CHART_DPI, CHART_FIGSIZE
+            from config.settings import CHART_DPI
             fitted = result.get("fitted_values", [])
             residuals = result.get("residuals", [])
             actual = result.get("actual_values", [])

@@ -1,6 +1,5 @@
 import time
 from collections import deque
-from typing import Any
 
 from core.devices.protocol import DeviceState
 from core.devices.transport import Transport

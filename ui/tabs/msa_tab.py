@@ -10,17 +10,17 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QDoubleSpinBox, QGroupBox, QFormLayout,
-    QTableWidget, QTableWidgetItem, QTextEdit, QSplitter, QHeaderView,
-    QFrame, QMenu, QFileDialog, QStackedWidget,
+    QTableWidget, QTextEdit, QSplitter, QHeaderView,
+    QFrame, QMenu, QStackedWidget,
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
 from analysis.msa import gage_rr, linearity_bias, attribute_agree
 from output.chart_engine import create_histogram
 from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
-from ui.theme import BUTTON_PRIMARY, BUTTON_SECONDARY, BUTTON_TOGGLE, BUTTON_PRIMARY_STRETCH
+from ui.theme import BUTTON_SECONDARY, BUTTON_TOGGLE, BUTTON_PRIMARY_STRETCH
 from core.formatting import format_pvalue
 
 

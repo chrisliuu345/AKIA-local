@@ -2,7 +2,7 @@
 线性回归分析 — 简单线性回归 / 多元回归
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 import numpy as np
 import pandas as pd
 from scipy import stats

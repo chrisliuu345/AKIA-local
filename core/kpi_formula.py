@@ -11,7 +11,7 @@ KPI 指标 (core/kpi_extractor.build_variable_namespace) + 数据列统计 (mean
 """
 
 import ast
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 import pandas as pd
 

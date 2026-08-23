@@ -1,6 +1,6 @@
 """可靠性分析 Tab — Weibull 寿命分析 + MTBF/MTTR"""
 
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 
 import numpy as np
 import pandas as pd
@@ -8,8 +8,7 @@ import pandas as pd
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QGroupBox, QFormLayout, QFrame,
-    QTableWidget, QTableWidgetItem, QSplitter, QHeaderView,
-    QStackedWidget, QCheckBox, QGridLayout, QScrollArea,
+    QTableWidget, QTableWidgetItem, QSplitter, QStackedWidget, QCheckBox, QGridLayout, QScrollArea,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
@@ -19,7 +18,7 @@ import matplotlib.pyplot as plt
 
 from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
-from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY, BUTTON_TOGGLE
+from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_TOGGLE
 from ui.theme import colors as theme_colors
 from analysis.reliability.weibull import WeibullAnalyzer
 from analysis.reliability.mtbf import MTBFAnalyzer

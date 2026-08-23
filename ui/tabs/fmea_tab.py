@@ -1,14 +1,13 @@
 """FMEA 工作表 Tab — DFMEA/PFMEA 交互编辑 + RPN 自动计算 + 风险着色"""
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QGroupBox, QTableWidget, QTableWidgetItem, QHeaderView,
+    QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
+    QTableWidget, QTableWidgetItem, QHeaderView,
     QComboBox, QMessageBox, QFileDialog,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QColor
 
-from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY
 from ui.theme import colors as theme_colors

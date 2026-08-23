@@ -256,6 +256,13 @@ class CategoryGroup(QWidget):
         if not self._expanded:
             self.container.hide()
 
+    def _recalc_height(self):
+        """W72: 重新计算展开高度，确保动态内容变化后高度正确"""
+        self._expanded_height = self.container.sizeHint().height()
+        if self._expanded:
+            self.container.setMaximumHeight(self._expanded_height)
+            self.setMaximumHeight(self._header_height + self._expanded_height)
+
     def set_active(self, index: int):
         tc = theme_colors(self)
         accent_bright = tc["accent_bright"]
@@ -301,6 +308,7 @@ class CategoryGroup(QWidget):
         for idx, key in self.items:
             if idx in self.sub_buttons:
                 self.sub_buttons[idx].setText(i18n.tr(key))
+        self._recalc_height()
 
 
 class Sidebar(QWidget):
@@ -519,11 +527,7 @@ class Sidebar(QWidget):
                 group.sub_widgets.append(btn)
                 group.container_layout.insertWidget(group.container_layout.count() - 1, btn)
                 self.nav_buttons[index] = btn
-                # 更新收起/展开高度
-                group._expanded_height = group.container.sizeHint().height()
-                if group._expanded:
-                    group.container.setMaximumHeight(group._expanded_height)
-                    group.setMaximumHeight(40 + group._expanded_height)
+                group._recalc_height()
                 break
 
     def _rebuild_history(self):

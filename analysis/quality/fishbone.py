@@ -6,7 +6,7 @@
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import numpy as np
 
@@ -90,7 +90,6 @@ class FishboneEngine:
                figsize: tuple = (14, 7),
                dpi: int = 100):
         """使用 matplotlib 绘制鱼骨图，返回 Figure"""
-        import matplotlib
         import matplotlib.pyplot as plt
         from matplotlib.figure import Figure
 

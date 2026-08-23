@@ -2,7 +2,7 @@
 偏倚和线性研究
 """
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 import numpy as np
 import pandas as pd
 from scipy import stats

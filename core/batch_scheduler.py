@@ -7,7 +7,7 @@ import os
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional, Callable
+from typing import Dict, List, Callable
 
 from PySide6.QtCore import QObject, QTimer, QThread, Signal
 

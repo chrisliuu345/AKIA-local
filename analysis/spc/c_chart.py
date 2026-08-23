@@ -2,7 +2,7 @@
 C控制图 (缺陷数控制图)
 """
 
-from typing import Dict, Any, List
+from typing import Dict, Any
 import numpy as np
 import pandas as pd
 

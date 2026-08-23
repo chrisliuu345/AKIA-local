@@ -6,11 +6,11 @@ import pandas as pd
 
 from PySide6.QtWidgets import (
     QWidget, QFileDialog, QTableWidgetItem, QMenu, QApplication,
-    QVBoxLayout, QLabel, QPushButton, QFrame, QHBoxLayout,
+    QVBoxLayout, QLabel, QPushButton, QFrame,
 )
 from PySide6.QtCore import Signal, Qt, QPropertyAnimation, QEasingCurve
 from PySide6.QtGui import QImage, QFont
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
+from matplotlib.backends.backend_qtagg import NavigationToolbar2QT
 
 from core.i18n import i18n
 from ui.theme import colors as theme_colors
@@ -113,13 +113,13 @@ class BaseAnalysisTab(QWidget):
             cleaned_df, info = sdf, {}
         self.set_data(cleaned_df, info)
 
-    def _populate_preview_table(self, df: pd.DataFrame, max_rows: int = 0):
-        """填充数据预览表格。max_rows=0 表示显示全部行。
+    def _populate_preview_table(self, df: pd.DataFrame, max_rows: int = 500):
+        """填充数据预览表格。max_rows=500 默认限 500 行防止大数据阻塞 UI (W49)。
 
         注意：图表渲染采用智能系统抽样以保持可读性（详见 output/chart_engine.py），
         分析计算基于全量数据，仅在图表绘制时进行等距抽样 + 判异点强制保留。
         """
-        n = len(df) if max_rows <= 0 else min(max_rows, len(df))
+        n = min(max_rows, len(df))
         self.data_table.setRowCount(n)
         self.data_table.setColumnCount(len(df.columns))
         self.data_table.setHorizontalHeaderLabels(list(df.columns))

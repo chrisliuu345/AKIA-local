@@ -2,7 +2,7 @@
 通用统计图表生成器 — 12 种图表（分批交付，D1 前 6 种）
 """
 
-from typing import Dict, Any, List, Optional, OrderedDict
+from typing import List, OrderedDict
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt

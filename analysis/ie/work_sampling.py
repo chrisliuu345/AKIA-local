@@ -3,9 +3,8 @@
 """
 
 from collections import OrderedDict
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any
 import numpy as np
-from scipy import stats
 
 
 BUILTIN_STATUSES = OrderedDict([

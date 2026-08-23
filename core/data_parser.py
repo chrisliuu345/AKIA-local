@@ -3,7 +3,7 @@
 """
 
 import re
-from typing import Dict, List, Optional, Any, Tuple, Union
+from typing import Dict, List, Optional, Any, Tuple
 import pandas as pd
 import numpy as np
 

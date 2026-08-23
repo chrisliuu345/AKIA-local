@@ -4,7 +4,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 
 np.random.seed(42)
-output_path = r"D:\AI-agent\projects\ie-quality-analyzer\公司仪器测试数据.xlsx"
+output_path = "公司仪器测试数据.xlsx"
 
 writer = pd.ExcelWriter(output_path, engine="xlsxwriter")
 

@@ -6,10 +6,7 @@ from typing import Dict, Any
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QGroupBox, QFormLayout, QComboBox,
-    QTableWidget, QTableWidgetItem, QSplitter, QHeaderView,
-    QScrollArea, QFrame, QListWidget, QAbstractItemView, QGridLayout,
-    QFileDialog, QMessageBox,
+    QScrollArea, QFrame, QListWidget, QAbstractItemView,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
@@ -17,9 +14,8 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
-from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
-from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY
+from ui.theme import BUTTON_PRIMARY_STRETCH
 from ui.theme import colors as theme_colors
 
 

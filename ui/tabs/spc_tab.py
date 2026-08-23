@@ -5,7 +5,6 @@ SPC 控制图分析页 — 含图表嵌入
 from typing import Dict, Any
 import pandas as pd
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from matplotlib.figure import Figure
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
@@ -20,7 +19,7 @@ from analysis.spc import xbar_r, xbar_s, imr, p_chart, np_chart, c_chart, u_char
 from output.chart_engine import create_control_chart
 from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
-from ui.theme import BUTTON_PRIMARY, BUTTON_SECONDARY, BUTTON_TOGGLE, BUTTON_PRIMARY_STRETCH
+from ui.theme import BUTTON_SECONDARY, BUTTON_TOGGLE, BUTTON_PRIMARY_STRETCH
 
 
 class SPCTab(BaseAnalysisTab):

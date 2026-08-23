@@ -10,7 +10,6 @@ from PySide6.QtWidgets import (
     QListWidget, QListWidgetItem, QLineEdit, QSplitter, QMessageBox,
 )
 from PySide6.QtCore import Qt, QSettings
-from PySide6.QtGui import QFont
 
 from core.i18n import i18n
 from core.kpi_formula import (
