@@ -466,7 +466,9 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 - **持续数据流**：ESP32/MaixCAM 设备持续采集 → 实时入数据库（SQLite/PostgreSQL）
 - **Web 实时仪表板**：基于 FastAPI + WebSocket 的实时控制图 · 班次/产线/工位多维视图
 - **OOC/OOS 告警**：控制限/规格限越界即时通知（邮件/webhook/桌面弹窗）· Nelson 规则实时检测
-- **数据连接器框架**：PLC（OPC-UA/Modbus）· CMM（DMIS）· 量具（RS232/USB）驱动插件架构
+- **数据连接器框架（协议优先+插件化）**：OPC-UA 客户端（覆盖 95% 工厂 PLC）· Modbus TCP/RTU · MQTT 订阅（ESP32/Arduino Opta/Raspberry Pi 统一接入）· CMM DMIS · 量具 RS232/USB · 驱动插件架构（每种硬件一个插件，按需安装）
+- **设备抽象层**：`DeviceDriver` 接口统一抽象 · 底层协议可替换 · 不绑定特定硬件
+- **硬件推荐文档**：Arduino Opta WiFi（$185，工业级 CE/UL/DIN-rail，原生 MQTT/Modbus）或 ESP32（$10-20，原型验证）
 - **产线可视化**：产线拓扑图 · 工位状态灯（绿/黄/红）· 实时 OEE 看板
 
 ### 验收标准
