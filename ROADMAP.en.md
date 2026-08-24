@@ -2,185 +2,65 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> Current: v2.6.5 Numbered-Defect Cleanup + Info Batch #1 | Tests: 450+ pytest · 35 Tabs + Plugins | Updated: 2026-08-23
+> Current: v2.7.0 Statistical Engine Deepening (engines fully delivered, UI wrap-up in progress) | Tests: 537+ pytest · 35 Tabs + Plugins | Updated: 2026-08-24
 
 ---
 
 ## Version Roadmap Overview
 
-> **Roadmap Rework (2026-08-22)**: everything from v2.6.5 onward has been re-planned — shifting from "adding features" to "deepening existing capabilities", organized around core competitive strengths with numbered-defect fixes first. See [Core Competitive Positioning](#core-competitive-positioning-2026-08-rework).
+> **Strategic Repositioning (2026-08-24)**: positioning shifted from enterprise multi-company platform to **personal subscription quality engineering tool** (Minitab-like), with differentiation core in real-time factory data integration + IE engineering tools + five-chain workflow + BYOK AI Agent (QAM Harness). See [Core Competitive Positioning](#core-competitive-positioning-2026-08-rework).
 
 ```
-v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ✅ ──→ v2.7.0 ──→ v2.8.0 ──→ v2.9.0 ──→ v3.0.0
+v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ✅ ──→ v2.7.0 ✅ ──→ v2.8.0 ──→ v2.9.0 ──→ v3.0.0 ──→ v3.1.0 ──→ v3.2.0 ──→ v3.3.0 ──→ v3.4.0 ──→ v3.5.0 ──→ v3.6.0 ──→ v3.7.0 ──→ v3.8.0 ──→ v3.9.0 ──→ v4.0.0
 ```
 
 | Stage | Version | Theme |
 |-------|---------|-------|
-| Done | v2.0 ~ v2.6.5 | Release → Code+AI → Eng Tools → Reports → Live Monitoring → UX+Anim → HW Expansion → ESP32 Deploy → Security → RBAC+Auth → Stats Hardening → UI Robustness → Defect Cleanup |
-| TBD | v2.6.5 | Numbered-defect cleanup + Info batch #1 |
-| TBD | v2.7.0 | Statistical engine deepening + Info batch #2 |
-| TBD | v2.8.0 | Workflow integration (differentiation core) + Info batch #3 |
+| Done | v2.0 ~ v2.7.0 | Release → Code+AI → Eng Tools → Reports → Live Monitoring → UX+Anim → HW Expansion → ESP32 Deploy → Security → RBAC+Auth → Stats Hardening → UI Robustness → Defect Cleanup → Stats Engine Deepening |
+| TBD | v2.8.0 | Workflow integration (differentiation core) + P1 UI wrap-up + Info batches #2/#3 |
 | TBD | v2.9.0 | Integration deepening & report pipeline |
-| TBD | v3.0.0 | Stabilization milestone + Info wrap-up |
+| TBD | v3.0.0 | Stabilization milestone + Info wrap-up + PyInstaller release |
+| TBD | v3.1.0 | DOE & Power Analysis |
+| TBD | v3.2.0 | Time Series & Forecasting |
+| TBD | v3.3.0 | Reliability & Survival Analysis |
+| TBD | v3.4.0 | MSA & Capability Deepening |
+| TBD | v3.5.0 | Graph Builder Enhancement & Interactive Experience |
+| TBD | v3.6.0 | Real-Time SPC Cloud Dashboard & Data Connectors |
+| TBD | v3.7.0 | QAM Harness (BYOK AI Agent Platform) |
+| TBD | v3.8.0 | Video Time Study |
+| TBD | v3.9.0 | Predictive Analytics & Machine Learning |
+| TBD | v4.0.0 | TBD (defined based on v3.x progress & market feedback) |
 
 ---
 
 ## Core Competitive Positioning (2026-08 Rework)
 
-> Based on the 2026-08 open-source landscape survey (JASP / Jamovi / Cassini / SigmaExacta / Point85 OEE / pyDOE / R ecosystem qcc·FrF2·gageRR, etc.): **no open-source project simultaneously covers SPC + capability + MSA + hypothesis testing + DOE + IE tools + FMEA/8D/PPAP + AI + hardware + Chinese in one desktop application.** Closest competitors and their gaps: Cassini (SPC platform) lacks IE/FMEA/PPAP/Chinese; JASP lacks IE/FMEA/hardware/Chinese; SigmaExacta covers only FMEA/8D/PPAP (web PWA); the only near-complete coverage is the commercial package Datalyzer.
+> **Positioning**: personal subscription quality engineering tool (Minitab-like), with differentiation core in real-time factory data integration + IE engineering tools + five-chain workflow + BYOK AI Agent.
+> Based on the 2026-08 open-source landscape survey (JASP / Jamovi / Cassini / SigmaExacta / Point85 OEE / pyDOE / R ecosystem qcc·FrF2·gageRR, etc.) and Minitab feature benchmarking: **no open-source project simultaneously covers SPC + capability + MSA + hypothesis testing + DOE + IE tools + FMEA/8D/PPAP + AI + hardware + Chinese in one desktop application.** The only near-complete coverage is the commercial package Datalyzer (~$2,593/year).
 
 ### Differentiation Pillars (by uniqueness)
 
-| # | Pillar | Open-source landscape | Deepening track |
+| # | Pillar | Competitor landscape | Deepening track |
 |---|--------|----------------------|-----------------|
-| 1 | **Quality workflow integration** (FMEA→Control Plan→SPC→PPAP→8D data chain) | Blank: SigmaExacta's three tools are disconnected; no characteristic-level data model exists | **v2.8.0 (differentiation core)** |
-| 2 | **Statistical engine depth on par with Minitab** | Fragmented: R packages complete but no GUI; JASP QC coverage narrow | **v2.7.0 (core value)** |
-| 3 | **Chinese-first + offline desktop** (factory-floor scenarios) | Blank: no open-source QE tool offers a native Chinese UI | Ongoing guarantee |
-| 4 | **Local LLM AI** (Ollama + RAG, offline & auditable) | Competitor AI is all cloud-dependent or prototype-stage | Post-v3.0.0 |
-| 5 | **ESP32 hardware integration** (gage/sensor acquisition → SPC) | Nearly blank (only Cassini MQTT / Point85 OPC-UA, both in paid tiers) | Post-v3.0.0 |
+| 1 | **Quality workflow integration** (FMEA→Control Plan→SPC→PPAP→8D data chain) | Blank: SigmaExacta's three tools are disconnected; Minitab has no such chain | **v2.8.0 (differentiation core)** |
+| 2 | **Real-time factory integration** (ESP32/MaixCAM native desktop integration, PLC/CMM/gage data connectors) | Minitab requires separate Prolink + Real-Time SPC purchase; nearly blank in open-source | **v3.6.0 (cloud dashboard + data connectors)** |
+| 3 | **IE engineering tool suite** (SMED/TPM/OEE/8D/FMEA/PPAP/control plan) | Minitab has no IE tools; JASP/Cassini lack FMEA/PPAP | **v2.2.0 delivered, ongoing deepening** |
+| 4 | **QAM Harness** (BYOK AI Agent, proactive-suggestion type, multi-provider API integration) | Minitab Copilot cloud-only; competitor AI all cloud-dependent or prototype | **v3.7.0** |
+| 5 | **Chinese-first + offline desktop** (factory-floor scenarios, GB/T standards built-in) | Blank: no open-source QE tool offers a native Chinese UI | Ongoing guarantee |
 
 ### Planning Principles
 
 1. **Numbered-defect fixes first** — major-version iteration starts only after the full W-series cleanup (v2.6.5)
-2. **Deepen, don't expand** — v2.6.5~v3.0.0 adds no new Tabs and no standalone feature modules; all effort goes into correctness, depth, and integration of existing capabilities
-3. **Statistical correctness verified against known values** — every new statistical method must ship unit tests validated on NIST / authoritative published datasets
-4. **Info debt paid in batches** — 151 tech-debt items spread across four batches (v2.6.5 / v2.7.0 / v2.8.0 / v3.0.0) without blocking the main line
-5. **Test baseline never shrinks** — 289+ is the floor; full regression every release
+2. **v2.6.5~v3.0.0 deepen, don't expand** — no new Tabs, no standalone feature modules; all effort goes into correctness, depth, and integration of existing capabilities
+3. **v3.1.0~v3.5.0 continuous small releases** — each release focuses on one statistical domain (benchmarked against Minitab core capabilities)
+4. **v3.5.0+ major feature expansions** — centered on differentiation core (real-time factory / QAM Harness / video study / predictive analytics)
+5. **Statistical correctness verified against known values** — every new statistical method must ship unit tests validated on NIST / authoritative published datasets
+6. **Test baseline never shrinks** — 537+ is the floor (ratcheted upward per release); full regression every release
+7. **Personal subscription positioning** — no enterprise multi-company platform / RBAC tiers / server deployment; focus on desktop standalone + real-time device connectivity
 
 ---
 
-## v2.1 ✅ Completed — Code Quality & AI Enhancement
-
-### Direction A: Code Quality & Architecture Optimization
-- 5 P0 bug fixes (p_chart data swap / PDF watermark / NameError ×3)
-- 12 bare-except eliminations, 2 iterrows vectorizations
-- Tab lazy loading (TAB_REGISTRY 32 entries + importlib on-demand), startup time halved
-- 200+ unused imports cleaned, 60+ dead code removed
-- welcome_page 4 dead features fixed, diagnostics apply_all fix
-- Tests: 65 → 87 (+22)
-- Key fixes: `pd.to_numeric` replaces `select_dtypes`, `removeWidget` prevents Stack index shift, `iloc` for duplicate column safety
-
-### Direction C: AI Intelligence Enhancement
-- Knowledge base 99 → 124 entries (+25: SMED/8D/TPM/PPAP/AQL/Weibull/ALT/non-parametric)
-- Hybrid search: TF-IDF (0.5) + keyword (0.3) + title (0.2)
-- AI Chat V2: 8 preset templates + 20-round history + MD export + QSettings persistence + streaming refresh
-- One-click analysis: Profile → Recommend → Execute → AI write-up → PDF/MD
-- LLM thread management (closeEvent quit+wait)
-
-### UX Improvements
-- Import sheet → auto-route to 21 non-IE tools (sheet_map 22 entries)
-- Welcome page dual entry (Sheet / IE Data)
-- IE recognition 100+ alias expansion; near-constant column silent suppression
-- Version → 2.1, Build exe (36.8MB) with logo + knowledge base
-
----
-
-## v2.2 ✅ Completed — Engineering Tools Extension
-
-### Phase A: v2.1 Legacy Fixes (9 items)
-Plugin index 33, LLM streaming refresh, validate_params complete, animation cleanup, welcome page recent projects, diagnostics apply_all, Chart Tab widget cleanup, data validation, profile_result
-
-### Phase B: New Engineering Tools (4 modules)
-
-| Index | Module | Engine | Tab |
-|:--:|------|------|------|
-| 29 | SMED | `analysis/ie/smed.py` | `ui/tabs/smed_tab.py` |
-| 30 | 8D Problem Solving | `analysis/quality/eight_d_engine.py` | `ui/tabs/eight_d_tab.py` |
-| 31 | TPM | `analysis/ie/tpm.py` | `ui/tabs/tpm_tab.py` |
-| 32 | PPAP | `analysis/quality/ppap_engine.py` | `ui/tabs/ppap_tab.py` |
-
-**Sidebar**: 32 Tabs (+4 new) · Plugin start index 33
-
----
-
-## v2.3 ✅ Completed — Report Enhancement
-
-### Phase A: v2.2 Legacy Fixes (4 items)
-- A1: 8D D4 page embedded FishboneCanvas (6M skeleton, render_fishbone)
-- A2: PPAP status change real-time completion refresh
-- A3: PPAP completion unified to engine `completion_pct` (submission-level based)
-- A4: `analysis/ie/__init__.py` and `analysis/quality/__init__.py` export new modules
-
-### Phase B: Report System (4 items)
-
-| # | Module | File | Description |
-|:--:|------|------|------|
-| D1 | Template Engine | `core/report_templates.py` | string.Template, 5 built-in HTML templates |
-| D2 | Template Dialog | `ui/dialogs/template_dialog.py` | Select → Preview → Export PDF/Word/HTML |
-| D3 | Compliance Report | `output/compliance_report.py` | Framework with IATF/ISO clause references |
-| D4 | HTML Export | `output/html_export.py` | matplotlib→base64 inline, self-contained offline HTML |
-
-### Menu Restructure
-6 menus: File | Analysis | AI | Tools | View | Help — with categorized submenus covering all 32 tabs
-
----
-
-## v2.4 ✅ Completed — Real-Time Monitoring & Integration (Direction E)
-
-### E1. File Watcher Real-Time SPC ✅ (1.5 days)
-- File change → auto import → update control chart → out-of-spec alert
-- Implemented: `core/file_watcher.py` (polling FileMonitor daemon thread + stable-state confirm, Qt-free), `ui/tabs/monitor_tab.py` (index 33)
-
-### E2. Multi-Plant / Multi-Line Comparison ✅ (1 day)
-- Same metric multi-line side-by-side · Cp/Cpk comparison · Violation summary
-- Implemented: `core/plant_compare.py` (summarize_plant / build_comparison), `ui/tabs/multi_plant_tab.py` (index 34)
-
-### E3. Alert Notification System ✅ (0.5 days)
-- Multi-channel alerts (popup / sound / log) · Configurable rules · Alert aggregation / dedup
-- Implemented: `core/alert_rules.py` (AlertTracker NEW/ONGOING/CLEARED state machine + AlertLog ring buffer + configurable rules via user_config), MonitorTab alert banner + popup + beep + log panel
-
-### E4. Dashboard UI & Control Enhancement ✅ (3 days) — P2-1/P2-2 moved up from v2.5
-
-**Phase 1:**
-- F0: Unified KPI extractor `core/kpi_extractor.py` — fixes 3 broken card metrics (OEE / %GRR / SPC violations had wrong key paths), provides variable namespace for the formula engine
-- F1: Real-time refresh — signal-driven (`analysis_completed` → `_notify_dashboard`) + QTimer(5s) polling fallback + auto-refresh toggle
-- F2: Custom card layout — show/hide + reorder dialog (`ui/dialogs/layout_dialog.py`), QSettings persistence
-
-**Phase 2:**
-- F3: Low-code formula editor (P2-1) — `core/kpi_formula.py` AST whitelist parser (23 attack cases rejected, length/depth guards) + `ui/dialogs/formula_dialog.py`, custom KPI cards with live evaluation
-- F4: Shop floor display mode (P2-2) — full-screen dashboard `ui/dialogs/display_mode.py`, big-number KPI tiles (FONT_36B), chart carousel (QTimer 8s), ESC/arrow keys, F11 shortcut
-
-**Status**: Direction E fully implemented — E1/E2/E3 completed (Tabs 33-34, alert system, 215 tests).
-
-**Estimate**: 6 days total (E1 1.5 + E2 1 + E3 0.5 + E4 3) | New Tabs 33-34 | Sidebar 32→34
-
----
-
-## v2.4.1 ✅ Completed — Dashboard & Display-Mode Visual Enhancement
-
-- **Adaptive card grid**: ≤3 cards → 1 column (560×260) / ≤6 → 2 columns (330×220) / more → 3 columns (240×170); scrollable overflow preserved for many cards
-- **Card details**: update timestamp (HH:MM), status color dot (Cpk/OEE/GRR/violations graded red/orange/green), dynamic font sizes per column count
-- **Animation infrastructure** `ui/widgets/animate.py`: fade_in / count_up / cross_fade (QPropertyAnimation/QVariantAnimation, InOutCubic), settings toggle (default on, user_config.json)
-- **Big-screen**: KPI number count-up + tile fade-in + carousel cross-fade
-- **Big-screen chart rendering**: charts rendered at chart-area aspect ratio (deepcopy + set_size_inches, 300ms resize debounce re-render) — fixes stretched/compressed charts with no distortion or clipping
-- **Big-screen readability**: chart PNG white background (was dark background with black text)
-- **Fixes**: F5 batch analysis DataFrame truth-value ambiguity; skip non-runnable tabs (Dashboard etc.) in batch analysis; duplicate display-mode window guard
-- Tests: 201 → 215
-
----
-
-## v2.5 ✅ Completed — Hardware Expansion (ESP32)
-
-### H1. ESP32 Device Framework ✅ (core/devices + Tab 35)
-- JSON-lines serial protocol (utf-8, `\n`-terminated): HELLO→ACK→READY handshake · PING/PONG heartbeat (3s/9s) · DATA/COMMAND/RECOGNITION messages
-- `core/devices/`: protocol.py (encode/decode/HandshakeProtocol/Heartbeat), transport.py (SerialTransport daemon read thread), discovery.py (comport scan + HELLO probe), registry.py (state machine + user_config.json persistence), device.py (Device / Esp32InputDevice / Esp32OutputDevice / MaixcamVisionDevice)
-- `ui/tabs/device_tab.py` (index 35): device cards + detail tabs (events / data preview / output console / recognition records) + auto-discovery (3s) + import device data to analysis
-- Sidebar "监控" group: Live Monitor (33) / Multi-Plant (34) / Device Monitor (35) · Plugin start index 36
-- Tests: test_devices.py 30 (all mocked, no hardware)
-
-### H2. MicroPython Firmware ✅ (firmware/esp32_in.py + esp32_out.py, v1.1.0)
-- MicroPython **v1.20.0** on-board (official v1.21+ broke `machine.UART(0)`: REPL UART driver never installed → `ESP_ERR_INVALID_STATE`/128B-TX-FIFO stall)
-- Both firmware files use **UART1 remapped to the onboard bridge** (`machine.UART(1, tx=1, rx=3)`, 115200) + boot self-announce (HELLO + META) so PC auto-discovery can find the board
-- `esp32_in.py`: 7 configurable channels (DS18B20 temp on GPIO4 + 6× ADC 32/33/34/35/36/39, ATTN_11DB) → DATA every 1s · answers HELLO/PING
-- `esp32_out.py`: COMMAND `<name>:on/off|duty>` grammar (led GPIO2 / relay GPIO25 digital, servo GPIO13 PWM) → ACK reply
-- REPL escape hatch: hold BOOT (GPIO0 low) at power-on → firmware exits, REPL stays available (maintenance path)
-- Protocol simulation test (`TEMP/fw_proto_test.py`, fake machine + UART pipe): boot announce / META / HELLO reply / PONG / DATA / COMMAND+ACK all pass
-- Flash: copy to board as `main.py` (esptool.py installs MicroPython image only; board: ESP32-D0WD-V3, 4MB, no SPIRAM, no auto-reset quirks — DTR/RTS pulse handled by host code)
-
-### H3. Real-Device Verification (Partially Complete)
-- ✅ **esp32_in live on COM3** (`esp32_in_6cc84055ec48`, FW 1.1.0): auto-discovery (HELLO probe + boot announce) → ONLINE → META 7 channels → DATA every 1s · end-to-end verified via `TEMP/e2e_hw_check.py` (hello+pong+meta+data PASS) and device-tab smoke (preview table with channel names/units, one-click import → multi-column DataFrame)
-- ⏳ **esp32_out**: firmware + simulated protocol tests pass; flash second board and verify COMMAND→ACK on real actuator pins → **moved to v2.6.1**
-- ⏳ **MaixCAM**: network transport (TCP/SSH, no serial) → **moved to v2.6.1**
+> **Archive note (2026-08-24)**: the plan sections for v2.1 ~ v2.5 (Code Quality & AI / Engineering Tools / Report Enhancement / Live Monitoring & Dashboard / ESP32 Hardware Expansion) have been trimmed; the full records remain in the [Version History](#version-history) table at the end of this document.
 
 ---
 
@@ -363,15 +243,17 @@ Plugin index 33, LLM streaming refresh, validate_params complete, animation clea
 
 ---
 
-## v2.7.0 — Statistical Engine Deepening (TBD)
+## v2.7.0 ✅ Completed — Statistical Engine Deepening
 
 > Theme: close the statistical gaps versus Minitab — reinforcing the core value of a quality-analysis tool. The gap list comes from a 2026-08 code-level audit (not guesswork).
 > **Quality rule: every new method ships unit tests validated against NIST StRD / AIAG handbook / authoritative published known-value datasets.**
+> Status (2026-08-23): P1 (7 engines) + P2 (6 engines with UI integration) + code quality review (9 fixes) complete · 122 new tests · 537+ tests
+> Leftovers: 5 P1 UI entries pending (Type 1 / Hotelling T² / TOST / χ² & 2-proportion / distribution fitting; Cpm and Johnson are already live via existing entries) → registered as v2.8.0 pre-tasks; Info batch #2 deferred
 
 ### Current Baseline (already present — not rebuilt)
 9 control-chart types + Nelson 8 rules · Cp/Cpk/Pp/Ppk + Box-Cox + between/within capability · Gage R&R (crossed/nested) + linearity/bias + attribute agreement Kappa · t-tests / one-&two-way ANOVA / normality / variance / 3 non-parametric · full factorial + CCD + Box-Behnken · linear/multiple regression · Weibull 2P/3P + MTBF + ALT (Arrhenius/IPL) · AQL attribute sampling (GB/T 2828.1)
 
-### P1 Core Gaps (7 items — mandatory this release)
+### P1 Core Gaps (7 items) — ✅ engines all complete
 
 | Area | New method | Planned location |
 |------|-----------|------------------|
@@ -382,6 +264,8 @@ Plugin index 33, LLM streaming refresh, validate_params complete, animation clea
 | Hypothesis | **Equivalence testing (TOST)** (1/2-sample mean equivalence) | `analysis/hypothesis/equivalence.py` |
 | Hypothesis | **Chi-square goodness/independence + 2-proportion tests** | `analysis/hypothesis/proportion.py` |
 | Distribution | **General distribution fitting** (normal/lognormal/exponential/Gamma/Weibull MLE) + AD/KS/chi-square GoF | new `analysis/distribution/fitting.py` |
+
+> UI wiring status: Cpm (auto-shown with capability results once a target is set) ✅ · Johnson (existing capability-Tab method option) ✅ · Type 1 / Hotelling T² / TOST / χ² & 2-proportion / distribution fitting → pending (v2.8.0 pre-tasks)
 
 ### P2 Important Gaps (6 items — target this release, may spill to v2.9.0)
 
@@ -397,13 +281,13 @@ Plugin index 33, LLM streaming refresh, validate_params complete, animation clea
 ### P3 Spillover (wrapped up in v2.9.0)
 - I-MR-R/BW between-within charts · fractional factorial / Taguchi OA designs · logistic regression · regression residual diagnostic 4-plot · DOE main-effects/interaction/contour plot wiring (contour generator exists but is not wired to the DOE tab)
 
-### Info Cleanup Batch #2 (~50 items)
+### Info Cleanup Batch #2 (~50 items) — deferred to the v2.8.0 cycle
 - Duplicate-implementation merge + single source of truth (e.g., variance_tests/normality duplication, audit dual implementation)
 
 ### Acceptance Criteria
-- All new methods pass known-value verification tests
-- New methods wired into existing Tabs (MSA/capability/SPC/hypothesis/sampling/chart entries — **no new Tabs**)
-- Full pytest suite passes
+- All new methods pass known-value verification tests ✅
+- New methods wired into existing Tabs (MSA/capability/SPC/hypothesis/sampling/chart entries — **no new Tabs**) — P2 fully wired ✅; the 5 remaining P1 entries deferred to v2.8.0 pre-tasks
+- Full pytest suite passes ✅ (537+ tests)
 
 ---
 
@@ -411,6 +295,10 @@ Plugin index 33, LLM streaming refresh, validate_params complete, animation clea
 
 > Theme: connect the FMEA→Control Plan→SPC→PPAP→8D data chain — a differentiation barrier no open-source project implements.
 > Current state (2026-08 audit): the five engineering Tabs are fully siloed — no shared characteristic-ID data model; PPAP's Cp/Cpk parses manually typed text instead of calling the capability engine; FMEA/CP/8D data is not serialized into .qap (only statistical Tab 1-6 results are); report templates cannot auto-pull analysis results.
+
+### Pre-Tasks (v2.7.0 leftovers)
+- **P1 UI wiring (5 entries)**: Type 1 gage study entry in the MSA Tab · Hotelling T² entry in the SPC Tab · TOST and χ²/2-proportion entries in the hypothesis Tab · distribution-fitting entry (chart/capability Tab extension)
+- Info batch #2 (duplicate-implementation merge + single source of truth)
 
 ### Shared Data Model (foundation)
 - New `core/project_context.py`: `QualityCharacteristic` dataclass (characteristic ID / process step / spec limits / unit / data-source binding) + `ProjectContext` project-level context
@@ -427,8 +315,9 @@ Plugin index 33, LLM streaming refresh, validate_params complete, animation clea
 | 4 | FMEA → 8D D4 | Failure causes/mechanisms injected into the fishbone skeleton (replacing hardcoded 6M defaults) |
 | 5 | 8D D7 → FMEA/CP | "Standards updated" drives FMEA/CP review reminders and revision flags |
 
-### Info Cleanup Batch #3 (~51 items)
-- i18n consistency + magic-number constants + private-API replacement
+### Info Cleanup Batch #3 (~51 items, merged with the deferred batch #2)
+- Batch #2: duplicate-implementation merge + single source of truth (variance_tests/normality duplication, audit dual implementation)
+- Batch #3: i18n consistency + magic-number constants + private-API replacement
 
 ### Acceptance Criteria
 - End-to-end scenario test: import data → FMEA flags high risk → generate CP → SPC monitoring → PPAP auto-fill, one chain with no manual re-entry
@@ -459,6 +348,7 @@ Plugin index 33, LLM streaming refresh, validate_params complete, animation clea
 ## v3.0.0 — Stabilization Milestone (TBD)
 
 > Theme: Info wrap-up + full regression + performance baseline + milestone release.
+> Positioning: v3.0.0 closes the "deepening era" — the performance baseline established here becomes the regression gate for every subsequent release (v3.1.0+).
 
 ### Scope
 - Info-series cleanup wrap-up (remaining items) + full regression verification
@@ -468,45 +358,186 @@ Plugin index 33, LLM streaming refresh, validate_params complete, animation clea
 
 ### Acceptance Criteria
 - All C / W / Info numbered items cleared
-- Full regression passes; test count at or above the 289 baseline (never lower)
+- Full regression passes; test count at or above the 537 baseline (never lower)
 - Performance baselines met and recorded
 
 ---
 
-## Post-3.0.0 Backlog (registered only — not scheduled)
+## v3.1.0 — DOE & Power Analysis (TBD)
 
-### Core-Competitiveness Extensions (evaluate after 3.0.0)
-- **AI deepening**: upgrade the local LLM from "chat assistant" to "whole-analysis interpretation engine" — auto-generated engineering interpretation for every analysis result, anomaly diagnosis suggestions, knowledge-base linkage (staying offline & auditable)
-- **Hardware deepening**: ESP32 device acquisition → real-time SPC closed loop (acquire → control chart → alert → COMMAND feedback), wireless gage acquisition, more sensor types
+> Theme: complete the full experimental-design chain, benchmarked against Minitab DOE module.
+> Position: first release of the v3.x continuous-small-release sequence, focused on a single statistical domain.
 
-### Shelved Legacy Plan Items (2026-08-22 rework decision)
-- P2-3 Video time study (MediaPipe/OpenCV pose estimation)
-- P2-4 Batch macro record/replay
-- P2-5 Custom control-chart templates (note: v2.8.0's "CP→SPC pre-configuration" link covers its core scenario)
-- P3-1 Supply-chain quality collaboration · P3-2 Digital twin layout simulation · P3-3 REST API service · P3-4 Web frontend · P3-5 Mobile app
+### Core Content
+- **Screening designs**: Plackett-Burman · Definitive Screening
+- **Full/fractional factorial**: 2-level full factorial · 2-level fractional (1/2, 1/4, 1/8) · Center points · Blocking
+- **Taguchi designs**: L4/L8/L9/L16/L27 · Nominal-the-best / Larger-is-better / Smaller-is-better · SN ratio
+- **Response surface**: Central Composite Design (CCD) · Box-Behnken · Mixture designs (Simplex Centroid/Lattice/Extreme Vertices)
+- **Power & Sample Size**: Power analysis for t-test/proportion/variance/ANOVA · Sample-size calculator · OC curves
+- **DOE wizard UI**: step-by-step guidance (select design → define factors → generate design table → analyze → response surface)
+
+### Acceptance Criteria
+- Plackett-Burman / CCD / Box-Behnken design generation correctness verified against Minitab output
+- Power & Sample Size calculations cross-validated with Minitab
+- DOE end-to-end test: design generation → data entry → analysis → response-surface visualization
 
 ---
 
-## Sidebar Evolution
+## v3.2.0 — Time Series & Forecasting (TBD)
 
-> **Note**: no new Tabs during the v2.6.5 ~ v3.0.0 rework period (focus on deepening existing features); the 35-Tab + plugin structure stays unchanged.
+> Theme: complete full time-series analysis capability, supporting trend forecasting and seasonal decomposition.
 
-```
-v2.0 (28)     v2.1 (28)     v2.2 (32)       v2.4 (34)     v2.5/2.6 (35)   v2.6.5~3.0.0 (35)
- Home (0)       Same           Same             Same           Same
- Quality (1-6)  Same           Same             Same           Same
- IE (7-11,21-22) Same          +SMED(29)+TPM(31)  Same         Same
- Charts (12,18-20) Same        Same             Same           Same
- Eng (13-17)     Same         +8D(30)+PPAP(32)   Same           Same
- Worksheet (23-25) Same        Same             Same           Same
- Sampling (26)   Same          Same             Same           Same
- Report (27)     Same          Same             Same           Same
- Data (28)       Same          Same             Same           Same
- —               —             —                Live Monitor (33) Same
- —               —             —                Multi-Plant (34)   Same
- —               —             —                —                 Device (35)
- Plugins (dynamic) Same        Same             Same             Same
-```
+### Core Content
+- **ARIMA modeling**: automatic p/d/q selection (AIC/BIC optimal) · manual parameter setting · residual diagnostics (ACF/PACF/Q-Q)
+- **Exponential smoothing**: single-parameter · double-parameter (Holt linear trend) · Holt-Winters (additive/multiplicative seasonality)
+- **ACF/PACF plots**: autocorrelation/partial-autocorrelation visualization · Ljung-Box test · Durbin-Watson statistic
+- **Seasonal decomposition**: additive/multiplicative models · trend + seasonal + residual decomposition plots
+- **Forecasting UI**: forecast-horizon selection · confidence-interval visualization · multi-model comparison (AIC/BIC ranking)
+
+### Acceptance Criteria
+- ARIMA auto-ordering cross-validated with statsmodels
+- Holt-Winters forecast results compared with Minitab
+- Time-series end-to-end test: data import → ACF/PACF → modeling → forecasting → visualization
+
+---
+
+## v3.3.0 — Reliability & Survival Analysis (TBD)
+
+> Theme: complete the full reliability engineering chain, benchmarked against Minitab Reliability module.
+
+### Core Content
+- **Weibull analysis enhanced**: Weibull 3P/4P (MLE estimation) · confidence intervals · goodness-of-fit tests · probability plots
+- **Survival analysis**: Kaplan-Meier survival curves · Log-rank test · Cox proportional-hazards regression
+- **Accelerated Life Testing (ALT)**: Arrhenius / Power Law / Inverse Power Law · ALT test plans · lifetime prediction
+- **Warranty analysis**: first-time-failure prediction · warranty-cost estimation · lifetime data regression
+- **Reliability Block Diagram (RBD)**: series systems · parallel systems · mixed systems · system reliability calculation
+- **MTBF/MTTF**: confidence-interval estimation · growth curves (Crow-AMSAA)
+
+### Acceptance Criteria
+- Weibull 3P/4P MLE estimates cross-validated with Minitab
+- Kaplan-Meier curves compared with statsmodels
+- ALT lifetime prediction validated against authoritative published values
+
+---
+
+## v3.4.0 — MSA & Capability Deepening (TBD)
+
+> Theme: deepen measurement-system analysis and process capability to Minitab-level advanced features.
+
+### Core Content
+- **Nonparametric capability analysis**: capability assessment without distribution assumption (Edgeworth approximation / data transformation)
+- **Automated capability analysis**: automatic best-fit distribution detection → optimal transformation selection → capability metrics output
+- **Capability Sixpack**: six-panel chart (control chart + histogram + probability plot + statistics + defect rate + capability chart)
+- **Attribute agreement analysis**: Kappa coefficient (Cohen's / Fleiss's) · effective Kappa · bias matrix
+- **EMP method gage study**: Wheeler's EMP Crossed · signal criteria · discrimination-grade classification
+- **Gage R&R enhanced**: variance-component chart · operator×part interaction plot · uncertainty budget
+
+### Acceptance Criteria
+- Nonparametric capability compared with Minitab Nonparametric Capability
+- Capability Sixpack six-panel linkage correctness
+- EMP method validated against Wheeler published values
+
+---
+
+## v3.5.0 — Graph Builder Enhancement & Interactive Experience (TBD)
+
+> Theme: upgrade the existing chart tool to Minitab Graph Builder-level interactive experience.
+
+### Core Content
+- **Interactive chart gallery**: thumbnail preview panel (replacing pure dropdown) · category grouping (basic stats / regression / DOE / time series / reliability)
+- **Chart editing enhanced**: draggable reference/target lines · data-label display · legend customization · axis formatting
+- **Heatmaps & correlation plots**: correlation-matrix heatmap · scatterplot matrix · significance markers
+- **Table builder**: drag-and-drop descriptive statistics table · interactive cross-tabs · grouped statistical summaries
+- **One-click export**: Excel (.xlsx) · PowerPoint (.pptx) · Word (.docx) · high-resolution PNG/SVG
+- **Faceting**: grouping variable → multi-chart grid layout · row/column/facet-wrap faceting
+
+### Acceptance Criteria
+- Chart gallery load time < 200ms
+- Exported file format compatibility verified (Excel/PPT/Word open correctly)
+- Interactive edit response latency < 100ms
+
+---
+
+## v3.6.0 — Real-Time SPC Cloud Dashboard & Data Connectors (TBD)
+
+> Theme: upgrade ESP32/MaixCAM device framework to Minitab Real-Time SPC-level real-time monitoring capability.
+
+### Core Content
+- **Continuous data stream**: ESP32/MaixCAM continuous acquisition → real-time database (SQLite/PostgreSQL)
+- **Web real-time dashboard**: FastAPI + WebSocket live control charts · shift/line/station multi-dimensional views
+- **OOC/OOS alerts**: control-limit / spec-limit breach instant notification (email/webhook/desktop popup) · Nelson-rule real-time detection
+- **Data connector framework**: PLC (OPC-UA/Modbus) · CMM (DMIS) · gage (RS232/USB) driver plugin architecture
+- **Line visualization**: line topology map · station status lights (green/yellow/red) · real-time OEE dashboard
+
+### Acceptance Criteria
+- Data-stream latency < 500ms (device → control chart)
+- WebSocket concurrency of 50 connections without performance degradation
+- PLC/gage connector mock tests pass
+
+---
+
+## v3.7.0 — QAM Harness (BYOK AI Agent Platform) (TBD)
+
+> Theme: build a professional engineering-analysis AI Agent platform, BYOK model, proactive-suggestion type.
+
+### Core Content
+- **BYOK architecture**: users configure their own API keys in settings (OpenAI / Anthropic / Google / DeepSeek / Z.ai / KIMI) · encrypted key storage (cross-platform secret store) · connectivity test
+- **Proactive-suggestion Agent**: data profiling → automatic analysis-method recommendation (e.g., skewed data suggests Box-Cox) · automatic engineering interpretation of results (conclusion / cause hypotheses / recommended actions) · anomaly root-cause recommendation
+- **Knowledge-base RAG**: built-in quality engineering knowledge base (IE/quality engineering/lean methodology) · user-extensible · TF-IDF retrieval (upgradeable to vector search)
+- **Multi-turn conversation**: conversational analysis guidance · follow-up / clarification / deep-dive · context persistence (same analysis session)
+- **Data privacy**: first cloud API call triggers privacy dialog (explicitly states data sent to provider) · user confirmation persisted
+- **Stats-in-plain-English**: automatic口语化 interpretation of P-values / Cp / Cpk / etc. · non-statistician readable
+
+### Acceptance Criteria
+- 6-provider API key configuration + connectivity test full flow
+- Proactive suggestion accuracy human review (engineer rating ≥ 3.5/5)
+- Data privacy dialog block rate 100% until acknowledged
+
+---
+
+## v3.8.0 — Video Time Study (TBD)
+
+> Theme: introduce vision-based motion analysis and time study, independent Tab 36.
+
+### Core Content
+- **Camera input layer**: USB/IP camera unified abstraction (OpenCV) · RTSP/HTTP/MJPEG stream support · resolution selection · real-time preview
+- **Pose estimation**: MediaPipe Pose (33 landmarks) · frame-level inference · configurable confidence threshold
+- **Action classification**: 4-class detection based on landmark angles/displacement (working/idle/walking/carrying) · configurable rules
+- **Cycle detection**: automatic cycle segmentation based on action state transitions · real-time cycle-time calculation · anomaly cycle flagging
+- **Analysis engine**: reusing `analysis/ie/time_study.py` · outlier removal · normal fitting · standard-time calculation
+- **Tab 36 launch**: camera selection/preview/calibration/recording/analysis/export end-to-end flow · UI guidance
+
+### Acceptance Criteria
+- Camera preview ≥ 15 FPS
+- Manual marking latency < 100ms
+- Video analysis end-to-end test passes
+
+---
+
+## v3.9.0 — Predictive Analytics & Machine Learning (TBD)
+
+> Theme: complete Minitab Predictive Analytics-level machine learning capability.
+
+### Core Content
+- **CART classification & regression trees**: tree building · pruning (pre/post) · confusion matrix · ROC curve
+- **Random Forests**: Bagging + feature randomness · OOB error estimation · feature-importance ranking
+- **Gradient Boosting (XGBoost)**: boosting iterations · learning-rate / depth tuning · SHAP feature explanation
+- **MARS (Multivariate Adaptive Regression Splines)**: piecewise-linear regression · basis-function selection · interaction detection
+- **AutoML model selection**: automatic algorithm trial · AIC/BIC/AUC ranking · optimal model recommendation
+- **Feature engineering**: missing-value imputation · binning · encoding · feature crossing · standardization/normalization
+- **Model evaluation**: cross-validation · learning curves · overfitting diagnosis · residual analysis
+
+### Acceptance Criteria
+- CART/Random Forests cross-validated with scikit-learn
+- AutoML automatic model selection consistent with manual selection
+- Predictive analytics end-to-end test: data prep → feature engineering → modeling → evaluation → visualization
+
+---
+
+## v4.0.0 — TBD
+
+> Theme: defined based on v3.x actual progress and market feedback.
+> Candidate directions: video time study deepening · digital-twin layout simulation · supply-chain quality collaboration · additional hardware integration
 
 ---
 
@@ -514,6 +545,8 @@ v2.0 (28)     v2.1 (28)     v2.2 (32)       v2.4 (34)     v2.5/2.6 (35)   v2.6.5
 
 | Date | Version | Content |
 |------|---------|---------|
+| 08-24 | v3.x-planning | Strategic repositioning: shifted from enterprise multi-company platform to personal subscription quality engineering tool (Minitab-like); deleted old v3.1~v3.6 (enterprise RBAC/cross-platform/HA/security compliance/two-tier governance); re-designed v3.1~v4.0 roadmap (DOE→time series→reliability→MSA→Graph Builder→real-time SPC→QAM Harness→video study→predictive analytics); core competitiveness pillars reduced from 6 to 5 (workflow integration / real-time factory / IE tool suite / QAM Harness / Chinese localization) |
+| 08-24 | v3.x-AI-arch | AI architecture decision: pillar 4 redefined from "local LLM" to "AI assistant (cloud API + local model tiered)"; v3.1.0 adds AI API management panel (6-provider GUI config + data privacy prompt); v3.2.0 server adds AI proxy forwarding; v4.0.0 local LLM positioned as enterprise-exclusive |
 | 08-23 | v2.7.0 | Completed: P1 phase (7 core features + 4 performance optimizations) + P2 phase (6 items) + Code quality review (9 fixes) + UI integration (4 Tabs: SPC/capability/hypothesis/sampling) · 537+ tests |
 | 08-23 | v2.6.5 | Completed: W-series numbered-defect cleanup (W49/W50/W51/W69/W72/W73/W74/W86/W99/W106) + Info batch #1 (dead code/unused imports/state-drift bug fixes) · 450+ tests |
 | 08-22 | v2.6.5-planning | Roadmap rework: v2.6.5~v3.0.0 shifted from "feature expansion" to "deepening existing capabilities" (defect cleanup → stats-engine deepening → workflow integration → integration deepening → stabilization); legacy feature items P2-3/P2-4/P2-5/P3-1~P3-5 shelved until after 3.0.0; core competitive positioning established from the open-source landscape survey |
@@ -535,3 +568,28 @@ v2.0 (28)     v2.1 (28)     v2.2 (32)       v2.4 (34)     v2.5/2.6 (35)   v2.6.5
 | 08-10 | v2.1 | Released: 87 tests · AI enhanced · Lazy loading · One-click analysis · Column selector fix |
 | 08-10 | v2.1-dev | Code audit: 5 bugs · 200+ imports · 60+ dead code · 15 duplicate groups |
 | 08-04 | v2.0 | Initial release: 28 tabs · 65 tests · AI assistant · Plugin system |
+
+---
+
+## Sidebar Evolution
+
+> **Note**: no new Tabs during the v2.6.5 ~ v3.0.0 rework period (focus on deepening existing features); the 35-Tab + plugin structure stays unchanged.
+> v3.0.0+ new capabilities are preferentially added as entries/modes inside existing Tabs; genuinely new Tabs are defined explicitly in their own version plan.
+
+```
+v2.0 (28)     v2.1 (28)     v2.2 (32)       v2.4 (34)     v2.5/2.6 (35)   v3.0.0 (35)      v3.8.0 (36)
+ Home (0)       Same           Same             Same           Same             Same                Same
+ Quality (1-6)  Same           Same             Same           Same             Same                Same
+ IE (7-11,21-22) Same          +SMED(29)+TPM(31)  Same         Same             Same                Same
+ Charts (12,18-20) Same        Same             Same           Same             Same                Same
+ Eng (13-17)     Same         +8D(30)+PPAP(32)   Same           Same             Same                Same
+ Worksheet (23-25) Same        Same             Same           Same             Same                Same
+ Sampling (26)   Same          Same             Same           Same             Same                Same
+ Report (27)     Same          Same             Same           Same             Same                Same
+ Data (28)       Same          Same             Same           Same             Same                Same
+ —               —             —                Live Monitor (33) Same             Same                Same
+ —               —             —                Multi-Plant (34)   Same             Same                Same
+ —               —             —                —                 Device (35)      Same                Same
+ —               —             —                —                 —                Video Time Study (36)
+ Plugins (dynamic) Same        Same             Same             Same             Same                Same
+```
