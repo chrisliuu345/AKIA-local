@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
-from analysis.hypothesis import t_tests, anova, normality, variance_tests
+from analysis.hypothesis import t_tests, anova, normality, variance_tests, nonparametric
 from output.chart_engine import create_histogram
 from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
@@ -49,7 +49,7 @@ class HypothesisTab(BaseAnalysisTab):
         config_layout = QFormLayout(config_group)
 
         self.test_combo = QComboBox()
-        self.test_combo.addItems(["单样本 t检验", "双样本 t检验", "配对 t检验", "单因素 ANOVA", "双因素 ANOVA", "正态性检验", "方差齐性检验"])
+        self.test_combo.addItems(["单样本 t检验", "双样本 t检验", "配对 t检验", "单因素 ANOVA", "双因素 ANOVA", "正态性检验", "方差齐性检验", "Mood 中位数检验", "Friedman 检验", "Mann-Whitney U", "Wilcoxon 符号秩", "Kruskal-Wallis"])
         config_layout.addRow("检验方法:", self.test_combo)
 
         self.col1_combo = QComboBox()
@@ -285,6 +285,27 @@ class HypothesisTab(BaseAnalysisTab):
         elif method == "方差齐性检验":
             groups = [pd.to_numeric(self.df[c], errors="coerce").dropna() for c in [col1, col2]]
             result = variance_tests.variance_tests(*groups, confidence)
+        elif method == "Mood 中位数检验":
+            groups = [pd.to_numeric(self.df[c], errors="coerce").dropna().values 
+                     for c in [col1, col2] if c and c in self.df.columns]
+            result = nonparametric.mood_median_test(*groups)
+        elif method == "Friedman 检验":
+            groups = [pd.to_numeric(self.df[c], errors="coerce").dropna().values 
+                     for c in [col1, col2] if c and c in self.df.columns]
+            result = nonparametric.friedman_test(*groups)
+        elif method == "Mann-Whitney U":
+            g1 = pd.to_numeric(self.df[col1], errors="coerce").dropna().values
+            g2 = pd.to_numeric(self.df[col2], errors="coerce").dropna().values
+            result = nonparametric.mann_whitney(g1, g2, alternative=alternative)
+        elif method == "Wilcoxon 符号秩":
+            g1 = pd.to_numeric(self.df[col1], errors="coerce").dropna().values
+            g2 = pd.to_numeric(self.df[col2], errors="coerce").dropna().values
+            result = nonparametric.wilcoxon_signed_rank(g1, g2, alternative=alternative)
+        elif method == "Kruskal-Wallis":
+            groups = [pd.to_numeric(self.df[col1], errors="coerce").dropna().values]
+            if col2 and col2 in self.df.columns:
+                groups.append(pd.to_numeric(self.df[col2], errors="coerce").dropna().values)
+            result = nonparametric.kruskal_wallis(*groups)
 
         self.current_result = {
             "analysis_type": method,

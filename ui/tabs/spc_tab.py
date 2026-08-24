@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
-from analysis.spc import xbar_r, xbar_s, imr, p_chart, np_chart, c_chart, u_chart, cusum, ewma
+from analysis.spc import xbar_r, xbar_s, imr, p_chart, np_chart, c_chart, u_chart, cusum, ewma, laney
 from output.chart_engine import create_control_chart
 from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
@@ -47,7 +47,7 @@ class SPCTab(BaseAnalysisTab):
         config_layout = QFormLayout(config_group)
 
         self.chart_type_combo = QComboBox()
-        self.chart_type_combo.addItems(["XBar-R", "XBar-S", "I-MR", "P Chart", "NP Chart", "C Chart", "U Chart", "CUSUM", "EWMA"])
+        self.chart_type_combo.addItems(["XBar-R", "XBar-S", "I-MR", "P Chart", "NP Chart", "C Chart", "U Chart", "CUSUM", "EWMA", "Laney P'", "Laney U'"])
         config_layout.addRow(i18n.tr("spc.chart_type"), self.chart_type_combo)
 
         self.col_combo = QComboBox()
@@ -131,6 +131,19 @@ class SPCTab(BaseAnalysisTab):
         ewma_layout.addWidget(QLabel("  L:"))
         ewma_layout.addWidget(self.ewma_L_spin)
         config_layout.addRow(self.row_ewma)
+
+        self.laney_alpha_spin = QDoubleSpinBox()
+        self.laney_alpha_spin.setRange(0.0001, 0.1)
+        self.laney_alpha_spin.setValue(0.0027)
+        self.laney_alpha_spin.setSingleStep(0.0001)
+        self.laney_alpha_spin.setDecimals(4)
+        self.row_laney = QWidget()
+        self.row_laney.setVisible(False)
+        laney_layout = QHBoxLayout(self.row_laney)
+        laney_layout.setContentsMargins(0, 0, 0, 0)
+        laney_layout.addWidget(QLabel("Laney \u03b1:"))
+        laney_layout.addWidget(self.laney_alpha_spin)
+        config_layout.addRow(self.row_laney)
 
         self.chart_type_combo.currentTextChanged.connect(self._on_chart_type_changed)
 
@@ -268,11 +281,13 @@ class SPCTab(BaseAnalysisTab):
     def _on_chart_type_changed(self, chart_type: str):
         is_cusum = chart_type == "CUSUM"
         is_ewma = chart_type == "EWMA"
-        is_std = not is_cusum and not is_ewma
+        is_laney = chart_type in ("Laney P'", "Laney U'")
+        is_std = not is_cusum and not is_ewma and not is_laney
         self.row_subgroup.setVisible(is_std)
         self._update_spec_visibility()
         self.row_cusum.setVisible(is_cusum)
         self.row_ewma.setVisible(is_ewma)
+        self.row_laney.setVisible(is_laney)
 
     def _on_spec_toggled(self, state):
         """W42: 规格限复选框切换"""
@@ -281,7 +296,7 @@ class SPCTab(BaseAnalysisTab):
     def _update_spec_visibility(self):
         """根据图表类型和复选框状态决定规格限行可见性"""
         chart_type = self.chart_type_combo.currentText()
-        is_std = chart_type not in ("CUSUM", "EWMA")
+        is_std = chart_type not in ("CUSUM", "EWMA", "Laney P'", "Laney U'")
         show = is_std and self.spec_check.isChecked()
         self.row_usl.setVisible(show)
         self.row_lsl.setVisible(show)
@@ -349,6 +364,12 @@ class SPCTab(BaseAnalysisTab):
             result = cusum.analyze(data, k=self.cusum_k_spin.value(), h=self.cusum_h_spin.value())
         elif chart_type == "EWMA":
             result = ewma.analyze(data, lam=self.ewma_lam_spin.value(), L=self.ewma_L_spin.value())
+        elif chart_type == "Laney P'":
+            sample_sizes = pd.Series([subgroup_size] * len(data))
+            result = laney.laney_p_prime(data.values, sample_sizes.values, alpha=self.laney_alpha_spin.value())
+        elif chart_type == "Laney U'":
+            sample_sizes = pd.Series([subgroup_size] * len(data))
+            result = laney.laney_u_prime(data.values, sample_sizes.values, alpha=self.laney_alpha_spin.value())
 
         self.current_result = {
             "analysis_type": chart_type,
@@ -365,7 +386,7 @@ class SPCTab(BaseAnalysisTab):
         if not get_setting("nelson_rules_enabled", True):
             for chart_key in ("xbar_chart", "r_chart", "s_chart", "i_chart", "mr_chart",
                               "p_chart", "np_chart", "c_chart", "u_chart",
-                              "cusum_chart", "ewma_chart"):
+                              "cusum_chart", "ewma_chart", "laney_p_chart", "laney_u_chart"):
                 chart = result.get(chart_key, {})
                 if isinstance(chart, dict):
                     chart["violations"] = []

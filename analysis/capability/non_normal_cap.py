@@ -1,5 +1,5 @@
 """
-非正态过程能力分析 — Box-Cox变换 + Johnson变换
+非正态过程能力分析 — Box-Cox变换 + Johnson变换 + 百分位法
 """
 
 from typing import Dict, Any, Optional
@@ -21,10 +21,28 @@ def analyze(
     lsl: Optional[float] = None,
     method: str = "box_cox",
 ) -> Dict[str, Any]:
+    """非正态过程能力分析
+
+    Args:
+        data: 数据序列
+        usl: 上规格限
+        lsl: 下规格限
+        method: 变换方法
+            - "box_cox": Box-Cox变换
+            - "johnson": Johnson变换
+            - "percentile": 百分位法（不依赖变换）
+
+    Returns:
+        Dict包含能力指数和统计量
+    """
     clean = data.dropna().values.astype(float)
     n = len(clean)
     if n < 5:
         raise ValueError(f"数据量不足: {n}")
+
+    # 百分位法单独处理
+    if method == "percentile":
+        return _analyze_percentile(clean, usl, lsl)
 
     # W24 fix: 常数数据提前检测，boxcox无法处理
     if np.std(clean) == 0:
@@ -136,6 +154,126 @@ def analyze(
         capability["ppl"] = round(float(pp), 4)
     result["capability"] = capability
 
+    return result
+
+
+def _analyze_percentile(
+    data: np.ndarray,
+    usl: Optional[float] = None,
+    lsl: Optional[float] = None,
+) -> Dict[str, Any]:
+    """百分位法能力分析
+
+    不依赖分布假设，直接使用经验分布函数计算能力指数。
+
+    基于公式:
+    - Pp = (USL - LSL) / (6 * σ_percentile)
+    - Ppk = min((USL - P50) / (3 * σ_percentile), (P50 - LSL) / (3 * σ_percentile))
+    - σ_percentile = (P99.865 - P0.135) / 6  (基于正态分布的百分位数)
+
+    或使用更稳健的:
+    - σ_percentile = IQR / 1.35  (四分位距法)
+    """
+    n = len(data)
+    mean = float(np.mean(data))
+    std = float(np.std(data, ddof=1))
+
+    # 计算百分位数
+    p50 = float(np.percentile(data, 50))
+    p0135 = float(np.percentile(data, 0.135))
+    p99865 = float(np.percentile(data, 99.865))
+    q25 = float(np.percentile(data, 25))
+    q75 = float(np.percentile(data, 75))
+
+    # 使用百分位数估计标准差
+    # 方法1: 基于正态分布百分位数
+    sigma_percentile_1 = (p99865 - p0135) / 6
+
+    # 方法2: IQR法（更稳健）
+    iqr = q75 - q25
+    sigma_percentile_2 = iqr / 1.35
+
+    # 使用方法1（与Minitab兼容）
+    sigma_percentile = sigma_percentile_1 if sigma_percentile_1 > 0 else sigma_percentile_2
+
+    result = {
+        "chart_type": "Non-Normal Capability",
+        "method": "percentile",
+        "transform_param": None,
+        "summary": {
+            "sample_size": n,
+            "original_mean": round(mean, 6),
+            "original_std": round(std, 6),
+            "skewness": round(float(stats.skew(data)), 6),
+            "kurtosis": round(float(stats.kurtosis(data)), 6),
+            "percentiles": {
+                "p0_135": round(p0135, 6),
+                "p25": round(q25, 6),
+                "p50": round(p50, 6),
+                "p75": round(q75, 6),
+                "p99_865": round(p99865, 6),
+            },
+            "iqr": round(iqr, 6),
+            "sigma_percentile": round(sigma_percentile, 6),
+        },
+    }
+
+    has_usl = usl is not None
+    has_lsl = lsl is not None
+
+    if not (has_usl or has_lsl):
+        return result
+
+    capability = {}
+
+    if has_usl and has_lsl:
+        if sigma_percentile > 0:
+            pp = (usl - lsl) / (6 * sigma_percentile)
+            ppk = min((usl - p50) / (3 * sigma_percentile), (p50 - lsl) / (3 * sigma_percentile))
+
+            # 使用经验分布估计PPM
+            # 超出USL的比例
+            p_above_usl = np.mean(data > usl)
+            # 低于LSL的比例
+            p_below_lsl = np.mean(data < lsl)
+            ppm = (p_above_usl + p_below_lsl) * 1e6
+        else:
+            pp, ppk, ppm = None, None, None
+
+        capability["pp"] = round(float(pp), 4) if pp is not None else None
+        capability["ppk"] = round(float(ppk), 4) if ppk is not None else None
+        capability["ppm_total"] = round(float(ppm), 2) if ppm is not None else None
+        capability["usl"] = float(usl)
+        capability["lsl"] = float(lsl)
+    elif has_usl:
+        if sigma_percentile > 0:
+            pp = (usl - p50) / (3 * sigma_percentile)
+            p_above_usl = np.mean(data > usl)
+            ppm = p_above_usl * 1e6
+        else:
+            pp, ppm = None, None
+
+        capability["pp"] = round(float(pp), 4) if pp is not None else None
+        capability["ppk"] = capability["pp"]
+        capability["ppm_total"] = round(float(ppm), 2) if ppm is not None else None
+        capability["usl"] = float(usl)
+    else:
+        if sigma_percentile > 0:
+            pp = (p50 - lsl) / (3 * sigma_percentile)
+            p_below_lsl = np.mean(data < lsl)
+            ppm = p_below_lsl * 1e6
+        else:
+            pp, ppm = None, None
+
+        capability["pp"] = round(float(pp), 4) if pp is not None else None
+        capability["ppk"] = capability["pp"]
+        capability["ppm_total"] = round(float(ppm), 2) if ppm is not None else None
+        capability["lsl"] = float(lsl)
+
+    capability["grade"] = get_capability_grade(capability.get("ppk")) if capability.get("ppk") is not None else "N/A"
+    capability["sigma_level"] = round(float(min(capability["ppk"] * 3, 6)), 2) if capability.get("ppk") is not None else None
+
+    result["capability"] = capability
     return result
 
 

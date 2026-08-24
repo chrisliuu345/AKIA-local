@@ -385,14 +385,14 @@ Plugin index 33, LLM streaming refresh, validate_params complete, animation clea
 
 ### P2 Important Gaps (6 items — target this release, may spill to v2.9.0)
 
-| Area | New method |
-|------|-----------|
-| SPC | Laney P'/U' charts (over-/under-dispersed count data) |
-| Capability | Non-normal percentile-method indices (transformation-free) |
-| Statistics | Tolerance intervals (normal / non-parametric) |
-| Hypothesis | Mood's median test + Friedman test (complete blocks) |
-| Sampling | Variables sampling (GB/T 6378 / ANSI/ASQ Z1.9) |
-| Sampling | C=0 sampling plans (zero-defect acceptance) |
+| Area | New method | Status |
+|------|-----------|--------|
+| SPC | Laney P'/U' charts (over-/under-dispersed count data) | ✅ Complete |
+| Capability | Non-normal percentile-method indices (transformation-free) | ✅ Complete |
+| Statistics | Tolerance intervals (normal / non-parametric) | ✅ Complete |
+| Hypothesis | Mood's median test + Friedman test (complete blocks) | ✅ Complete |
+| Sampling | Variables sampling (GB/T 6378 / ANSI/ASQ Z1.9) | ✅ Complete |
+| Sampling | C=0 sampling plans (zero-defect acceptance) | ✅ Complete |
 
 ### P3 Spillover (wrapped up in v2.9.0)
 - I-MR-R/BW between-within charts · fractional factorial / Taguchi OA designs · logistic regression · regression residual diagnostic 4-plot · DOE main-effects/interaction/contour plot wiring (contour generator exists but is not wired to the DOE tab)
@@ -514,6 +514,7 @@ v2.0 (28)     v2.1 (28)     v2.2 (32)       v2.4 (34)     v2.5/2.6 (35)   v2.6.5
 
 | Date | Version | Content |
 |------|---------|---------|
+| 08-23 | v2.7.0 | Completed: P1 phase (7 core features + 4 performance optimizations) + P2 phase (6 items) + Code quality review (9 fixes) + UI integration (4 Tabs: SPC/capability/hypothesis/sampling) · 537+ tests |
 | 08-23 | v2.6.5 | Completed: W-series numbered-defect cleanup (W49/W50/W51/W69/W72/W73/W74/W86/W99/W106) + Info batch #1 (dead code/unused imports/state-drift bug fixes) · 450+ tests |
 | 08-22 | v2.6.5-planning | Roadmap rework: v2.6.5~v3.0.0 shifted from "feature expansion" to "deepening existing capabilities" (defect cleanup → stats-engine deepening → workflow integration → integration deepening → stabilization); legacy feature items P2-3/P2-4/P2-5/P3-1~P3-5 shelved until after 3.0.0; core competitive positioning established from the open-source landscape survey |
 | 08-21 | v2.6.2 | Completed: RBAC permission matrix (guards/menu greying/sidebar/welcome filtering) + auth hardening (login lockout + forced password change) + security fixes W01-W17 + device link C04/C05/C06/C19/W87-W100 + esp32_out real-device verification (COM3, LED/relay/servo ACK) + MaixCAM network integration (TCP :9000 end-to-end) · 296 tests |
