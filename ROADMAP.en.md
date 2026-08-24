@@ -466,7 +466,9 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 - **Continuous data stream**: ESP32/MaixCAM continuous acquisition → real-time database (SQLite/PostgreSQL)
 - **Web real-time dashboard**: FastAPI + WebSocket live control charts · shift/line/station multi-dimensional views
 - **OOC/OOS alerts**: control-limit / spec-limit breach instant notification (email/webhook/desktop popup) · Nelson-rule real-time detection
-- **Data connector framework**: PLC (OPC-UA/Modbus) · CMM (DMIS) · gage (RS232/USB) driver plugin architecture
+- **Data connector framework (protocol-first + plugin architecture)**: OPC-UA client (covers 95% of factory PLCs) · Modbus TCP/RTU · MQTT subscription (ESP32 / Arduino Opta / Raspberry Pi unified access) · CMM DMIS · gage RS232/USB · driver plugin architecture (one plugin per hardware type, installed on demand)
+- **Device abstraction layer**: `DeviceDriver` interface unified abstraction · underlying protocols replaceable · no hardware lock-in
+- **Hardware recommendation docs**: Arduino Opta WiFi ($185, industrial CE/UL/DIN-rail, native MQTT/Modbus) or ESP32 ($10-20, prototype validation)
 - **Line visualization**: line topology map · station status lights (green/yellow/red) · real-time OEE dashboard
 
 ### Acceptance Criteria
