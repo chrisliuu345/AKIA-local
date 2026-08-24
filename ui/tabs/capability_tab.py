@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
-from analysis.capability import normal_cap, non_normal_cap, between_within_cap
+from analysis.capability import normal_cap, non_normal_cap, between_within_cap, tolerance_interval
 from output.chart_engine import create_capability_chart
 from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
@@ -49,7 +49,7 @@ class CapabilityTab(BaseAnalysisTab):
         config_layout = QFormLayout(config_group)
 
         self.method_combo = QComboBox()
-        self.method_combo.addItems(["正态过程能力", "非正态 (Box-Cox)", "非正态 (Johnson)", "组间/组内能力"])
+        self.method_combo.addItems(["正态过程能力", "非正态 (Box-Cox)", "非正态 (Johnson)", "非正态 (百分位法)", "组间/组内能力", "公差区间 (正态)", "公差区间 (非参数)"])
         config_layout.addRow("分析方法:", self.method_combo)
 
         self.col_combo = QComboBox()
@@ -81,6 +81,44 @@ class CapabilityTab(BaseAnalysisTab):
         self.subgroup_spin.setRange(1, 25)
         self.subgroup_spin.setValue(5)
         config_layout.addRow("子组大小:", self.subgroup_spin)
+
+        self.ti_confidence_spin = QDoubleSpinBox()
+        self.ti_confidence_spin.setRange(0.5, 0.999)
+        self.ti_confidence_spin.setValue(0.95)
+        self.ti_confidence_spin.setSingleStep(0.01)
+        self.ti_confidence_spin.setDecimals(3)
+        self.row_ti_confidence = QWidget()
+        self.row_ti_confidence.setVisible(False)
+        ti_conf_layout = QHBoxLayout(self.row_ti_confidence)
+        ti_conf_layout.setContentsMargins(0, 0, 0, 0)
+        ti_conf_layout.addWidget(QLabel("置信水平:"))
+        ti_conf_layout.addWidget(self.ti_confidence_spin)
+        config_layout.addRow(self.row_ti_confidence)
+
+        self.ti_proportion_spin = QDoubleSpinBox()
+        self.ti_proportion_spin.setRange(0.5, 0.999)
+        self.ti_proportion_spin.setValue(0.99)
+        self.ti_proportion_spin.setSingleStep(0.01)
+        self.ti_proportion_spin.setDecimals(3)
+        self.row_ti_proportion = QWidget()
+        self.row_ti_proportion.setVisible(False)
+        ti_prop_layout = QHBoxLayout(self.row_ti_proportion)
+        ti_prop_layout.setContentsMargins(0, 0, 0, 0)
+        ti_prop_layout.addWidget(QLabel("总体比例:"))
+        ti_prop_layout.addWidget(self.ti_proportion_spin)
+        config_layout.addRow(self.row_ti_proportion)
+
+        self.ti_method_combo = QComboBox()
+        self.ti_method_combo.addItems(["双侧", "单侧上", "单侧下"])
+        self.row_ti_method = QWidget()
+        self.row_ti_method.setVisible(False)
+        ti_method_layout = QHBoxLayout(self.row_ti_method)
+        ti_method_layout.setContentsMargins(0, 0, 0, 0)
+        ti_method_layout.addWidget(QLabel("区间类型:"))
+        ti_method_layout.addWidget(self.ti_method_combo)
+        config_layout.addRow(self.row_ti_method)
+
+        self.method_combo.currentTextChanged.connect(self._on_method_changed)
 
         self.run_btn = QPushButton(i18n.tr("cap.run_btn"))
         self.run_btn.setFont(QFont("Microsoft YaHei", 12, QFont.Bold))
@@ -192,6 +230,17 @@ class CapabilityTab(BaseAnalysisTab):
 
         layout.addWidget(splitter)
 
+    def _on_method_changed(self, method: str):
+        """方法切换时控制参数可见性"""
+        is_tolerance = method.startswith("公差区间")
+        is_normal_like = method in ("正态过程能力", "组间/组内能力")
+        
+        self.row_ti_confidence.setVisible(is_tolerance)
+        self.row_ti_proportion.setVisible(is_tolerance)
+        self.row_ti_method.setVisible(is_tolerance)
+        self.subgroup_spin.setVisible(is_normal_like)
+        self.target_spin.setVisible(not is_tolerance)
+
     def set_data(self, df: pd.DataFrame, parsed_info: Dict[str, Any]):
         self.df = df
         self.parsed_info = parsed_info
@@ -250,10 +299,29 @@ class CapabilityTab(BaseAnalysisTab):
         if method == "正态过程能力":
             result = normal_cap.analyze(data, usl, lsl, target, sub_size)
         elif method.startswith("非正态"):
-            m = "box_cox" if "Box-Cox" in method else "johnson"
+            if "百分位法" in method:
+                m = "percentile"
+            else:
+                m = "box_cox" if "Box-Cox" in method else "johnson"
             result = non_normal_cap.analyze(data, usl, lsl, m)
         elif method == "组间/组内能力":
             result = between_within_cap.analyze(self.df, col, self.parsed_info.get("subgroup_column", ""), usl, lsl)
+        elif method == "公差区间 (正态)":
+            ti_method = "two-sided" if "双侧" in self.ti_method_combo.currentText() else "one-sided"
+            result = tolerance_interval.tolerance_interval_normal(
+                data.values, 
+                confidence=self.ti_confidence_spin.value(),
+                proportion=self.ti_proportion_spin.value(),
+                method=ti_method
+            )
+        elif method == "公差区间 (非参数)":
+            ti_method = "two-sided" if "双侧" in self.ti_method_combo.currentText() else "one-sided"
+            result = tolerance_interval.tolerance_interval_nonparam(
+                data.values,
+                confidence=self.ti_confidence_spin.value(),
+                proportion=self.ti_proportion_spin.value(),
+                method=ti_method
+            )
 
         self.current_result = {
             "analysis_type": method,
