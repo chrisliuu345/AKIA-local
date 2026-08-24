@@ -2,185 +2,65 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> 当前: v2.6.5 编号缺陷清零 + Info 一期 | 测试: 450+ pytest · 35 个 Tab + 插件 | 更新: 2026-08-23
+> 当前: v2.7.0 统计引擎深化（引擎全量交付，UI 收尾中）| 测试: 537+ pytest · 35 个 Tab + 插件 | 更新: 2026-08-24
 
 ---
 
 ## 版本总览
 
-> **规划重构（2026-08-22）**：v2.6.5 起的规划已全面重构 — 从"增加功能"转向"现有功能深化"，以核心竞争力为主线，编号缺陷修复优先。详见[核心竞争力定位](#核心竞争力定位2026-08-重规划)。
+> **战略重定位（2026-08-24）**：定位从企业级多公司平台调整为**个人订阅级质量工程工具**（类 Minitab），差异化核心为实时工厂数据集成 + IE 工程工具 + 五链工作流 + BYOK AI Agent（QAM Harness）。详见[核心竞争力定位](#核心竞争力定位2026-08-重规划)。
 
 ```
-v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ✅ ──→ v2.7.0 ──→ v2.8.0 ──→ v2.9.0 ──→ v3.0.0
+v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ✅ ──→ v2.7.0 ✅ ──→ v2.8.0 ──→ v2.9.0 ──→ v3.0.0 ──→ v3.1.0 ──→ v3.2.0 ──→ v3.3.0 ──→ v3.4.0 ──→ v3.5.0 ──→ v3.6.0 ──→ v3.7.0 ──→ v3.8.0 ──→ v3.9.0 ──→ v4.0.0
 ```
 
 | 阶段 | 版本 | 主题 |
 |------|---------|------|
-| 已完成 | v2.0 ~ v2.6.5 | Release → 代码+AI → 工程工具 → 报告 → 实时监控 → UX+动画 → 硬件扩展 → ESP32 部署 → 安全校验 → RBAC+认证 → 统计引擎加固 → UI 健壮性 → 缺陷清零 |
-| 待开发 | v2.6.5 | 编号缺陷清零 + Info 一期 |
-| 待开发 | v2.7.0 | 统计引擎深化 + Info 二期 |
-| 待开发 | v2.8.0 | 工作流贯通（差异化核心）+ Info 三期 |
+| 已完成 | v2.0 ~ v2.7.0 | Release → 代码+AI → 工程工具 → 报告 → 实时监控 → UX+动画 → 硬件扩展 → ESP32 部署 → 安全校验 → RBAC+认证 → 统计引擎加固 → UI 健壮性 → 缺陷清零 → 统计引擎深化 |
+| 待开发 | v2.8.0 | 工作流贯通（差异化核心）+ P1 UI 收尾 + Info 二/三期 |
 | 待开发 | v2.9.0 | 深化整合与报告贯通 |
-| 待开发 | v3.0.0 | 稳定化里程碑 + Info 收尾 |
+| 待开发 | v3.0.0 | 稳定化里程碑 + Info 收尾 + PyInstaller 发布 |
+| 待开发 | v3.1.0 | DOE 与功效分析 |
+| 待开发 | v3.2.0 | 时间序列与预测 |
+| 待开发 | v3.3.0 | 可靠性与生存分析 |
+| 待开发 | v3.4.0 | MSA 与能力深化 |
+| 待开发 | v3.5.0 | Graph Builder 增强与交互体验 |
+| 待开发 | v3.6.0 | 实时 SPC 云看板与数据连接器 |
+| 待开发 | v3.7.0 | QAM Harness（BYOK AI Agent 平台） |
+| 待开发 | v3.8.0 | 视频时间研究 |
+| 待开发 | v3.9.0 | 预测分析与机器学习 |
+| 待开发 | v4.0.0 | 待定（根据 v3.x 进展定义） |
 
 ---
 
 ## 核心竞争力定位（2026-08 重规划）
 
-> 基于 2026-08 开源竞品全景调研（JASP / Jamovi / Cassini / SigmaExacta / Point85 OEE / pyDOE / R 生态 qcc·FrF2·gageRR 等）：**开源界不存在任何同时覆盖 SPC + 能力 + MSA + 假设检验 + DOE + IE 工具 + FMEA/8D/PPAP + AI + 硬件 + 中文的桌面一体化软件。** 最接近者各自缺口：Cassini（SPC 平台）缺 IE/FMEA/PPAP/中文；JASP 缺 IE/FMEA/硬件/中文；SigmaExacta 仅覆盖 FMEA/8D/PPAP（Web PWA）；唯一近全覆盖者为商业软件 Datalyzer。
+> **定位**：个人订阅级质量工程工具（类 Minitab），差异化核心为实时工厂数据集成 + IE 工程工具 + 五链工作流 + BYOK AI Agent。
+> 基于 2026-08 开源竞品全景调研（JASP / Jamovi / Cassini / SigmaExacta / Point85 OEE / pyDOE / R 生态 qcc·FrF2·gageRR 等）及 Minitab 功能对标：**开源界不存在任何同时覆盖 SPC + 能力 + MSA + 假设检验 + DOE + IE 工具 + FMEA/8D/PPAP + AI + 硬件 + 中文的桌面一体化软件。** 唯一近全覆盖者为商业软件 Datalyzer（~$2593/年）。
 
 ### 差异化支柱（按独特性排序）
 
-| # | 支柱 | 开源竞品现状 | 深化主线 |
-|---|------|--------------|----------|
-| 1 | **质量工作流贯通**（FMEA→控制计划→SPC→PPAP→8D 数据链） | 空白：SigmaExacta 三件套互不联通，无特征级数据模型 | **v2.8.0（差异化核心）** |
-| 2 | **统计引擎深度对标 Minitab** | 分散：R 包方法全但无 GUI；JASP QC 覆盖窄 | **v2.7.0（本体价值）** |
-| 3 | **中文优先 + 离线桌面**（工厂车间场景） | 空白：无开源 QE 工具提供原生中文 UI | 全程保障 |
-| 4 | **本地 LLM AI**（Ollama + RAG，离线可审计） | 竞品 AI 全部云依赖或原型阶段 | v3.0.0 后 |
-| 5 | **ESP32 硬件互联**（量具/传感器直采→SPC） | 近乎空白（仅 Cassini MQTT / Point85 OPC-UA，均在付费层） | v3.0.0 后 |
+| # | 支柱 | 竞品现状 | 深化主线 |
+|---|------|----------|----------|
+| 1 | **质量工作流贯通**（FMEA→控制计划→SPC→PPAP→8D 数据链） | 空白：SigmaExacta 三件套互不联通，Minitab 无此链路 | **v2.8.0（差异化核心）** |
+| 2 | **实时工厂集成**（ESP32/MaixCAM 原生桌面集成，PLC/CMM/量具数据连接器） | Minitab 需额外购买 Prolink + Real-Time SPC；开源近乎空白 | **v3.6.0（云看板 + 数据连接器）** |
+| 3 | **IE 工程工具套件**（SMED/TPM/OEE/8D/FMEA/PPAP/控制计划） | Minitab 无 IE 工具；JASP/Cassini 无 FMEA/PPAP | **v2.2.0 已完成，持续深化** |
+| 4 | **QAM Harness**（BYOK AI Agent，主动建议型，多供应商 API 接入） | Minitab Copilot 仅限云端；竞品 AI 全部云依赖或原型阶段 | **v3.7.0** |
+| 5 | **中文优先 + 离线桌面**（工厂车间场景，GB/T 标准内置） | 空白：无开源 QE 工具提供原生中文 UI | 全程保障 |
 
 ### 规划原则
 
 1. **编号缺陷修复优先** — W 系列全部清零（v2.6.5）后方可进入大版本迭代
-2. **只深化、不扩张** — v2.6.5~v3.0.0 不新增 Tab、不新增独立功能模块，全部投入现有能力的正确性、深度与贯通性
-3. **统计正确性以已知值验证** — 新增统计方法必须以 NIST/权威文献已知值数据集做单元测试
-4. **Info 分批穿插清偿** — 151 项技术债分四批（v2.6.5 / v2.7.0 / v2.8.0 / v3.0.0），不阻塞深化主线
-5. **测试基线只增不减** — 289+ 为下限，每版本全量回归
+2. **v2.6.5~v3.0.0 只深化、不扩张** — 不新增 Tab、不新增独立功能模块，全部投入现有能力的正确性、深度与贯通性
+3. **v3.1.0~v3.5.0 持续小版本** — 每版本聚焦一个统计领域补齐（对标 Minitab 核心能力），不贪多
+4. **v3.5.0+ 大版本迭代** — 围绕差异化核心（实时工厂/QAM Harness/视频研究/预测分析）做功能拓展
+5. **统计正确性以已知值验证** — 新增统计方法必须以 NIST/权威文献已知值数据集做单元测试
+6. **测试基线只增不减** — 537+ 为下限（随版本上浮），每版本全量回归
+7. **个人订阅定位** — 不做企业多公司平台/RBAC分层/服务器部署；专注桌面单机 + 实时设备连接
 
 ---
 
-## v2.1 ✅ 已完成 — 代码质量与 AI 增强
-
-### 方向 A：代码质量与架构优化
-- 5 个 P0 级 Bug 修复（p_chart 数据串位 / PDF 水印 / NameError ×3）
-- 消除 12 处裸 except，2 处 iterrows 向量化
-- Tab 懒加载（TAB_REGISTRY 32 项 + importlib 按需加载），启动时间减半
-- 清理 200+ 未使用 import、60+ 死代码
-- welcome_page 4 个失效功能修复、diagnostics apply_all 修复
-- 测试: 65 → 87（+22）
-- 关键修复：`pd.to_numeric` 替代 `select_dtypes`、`removeWidget` 防止 Stack 索引错位、`iloc` 保证重复列安全
-
-### 方向 C：AI 智能增强
-- 知识库 99 → 124 条（+25：SMED/8D/TPM/PPAP/AQL/Weibull/ALT/非参数）
-- 混合检索：TF-IDF (0.5) + 关键词 (0.3) + 标题 (0.2)
-- AI 对话 V2：8 个预设模板 + 20 轮历史 + MD 导出 + QSettings 持久化 + 流式刷新
-- 一键分析：画像 → 推荐 → 执行 → AI 报告 → PDF/MD
-- LLM 线程管理（closeEvent quit+wait）
-
-### UX 改进
-- 导入表格 → 自动路由到 21 个非 IE 工具（sheet_map 22 项）
-- 欢迎页双入口（表格 / IE 数据）
-- IE 识别 100+ 别名扩展；近常数列静默抑制
-- 版本 → 2.1，构建 exe（36.8MB）带 logo + 知识库
-
----
-
-## v2.2 ✅ 已完成 — 工程工具扩展
-
-### 阶段 A：v2.1 遗留修复（9 项）
-插件索引 33、LLM 流式刷新、validate_params 补全、动画清理、欢迎页最近项目、diagnostics apply_all、Chart Tab 控件清理、数据校验、profile_result
-
-### 阶段 B：新工程工具（4 个模块）
-
-| 索引 | 模块 | 引擎 | Tab |
-|:--:|------|------|------|
-| 29 | SMED | `analysis/ie/smed.py` | `ui/tabs/smed_tab.py` |
-| 30 | 8D 问题解决 | `analysis/quality/eight_d_engine.py` | `ui/tabs/eight_d_tab.py` |
-| 31 | TPM | `analysis/ie/tpm.py` | `ui/tabs/tpm_tab.py` |
-| 32 | PPAP | `analysis/quality/ppap_engine.py` | `ui/tabs/ppap_tab.py` |
-
-**侧边栏**: 32 个 Tab（+4 新增）· 插件起始索引 33
-
----
-
-## v2.3 ✅ 已完成 — 报告增强
-
-### 阶段 A：v2.2 遗留修复（4 项）
-- A1: 8D D4 页嵌入 FishboneCanvas（6M 骨架、render_fishbone）
-- A2: PPAP 状态变更实时完成度刷新
-- A3: PPAP 完成度统一到引擎 `completion_pct`（基于提交层级）
-- A4: `analysis/ie/__init__.py` 与 `analysis/quality/__init__.py` 导出新模块
-
-### 阶段 B：报告系统（4 项）
-
-| # | 模块 | 文件 | 说明 |
-|:--:|------|------|------|
-| D1 | 模板引擎 | `core/report_templates.py` | string.Template，5 套内置 HTML 模板 |
-| D2 | 模板对话框 | `ui/dialogs/template_dialog.py` | 选择 → 预览 → 导出 PDF/Word/HTML |
-| D3 | 合规报告 | `output/compliance_report.py` | 框架带 IATF/ISO 条款引用 |
-| D4 | HTML 导出 | `output/html_export.py` | matplotlib→base64 内联，自包含离线 HTML |
-
-### 菜单重构
-6 个菜单：文件 | 分析 | AI | 工具 | 视图 | 帮助 —— 分类子菜单覆盖全部 32 个 Tab
-
----
-
-## v2.4 ✅ 已完成 — 实时监控与集成（方向 E）
-
-### E1. 文件监视实时 SPC ✅（1.5 天）
-- 文件变更 → 自动导入 → 更新控制图 → 超规格预警
-- 实现：`core/file_watcher.py`（轮询 FileMonitor 守护线程 + 稳定态确认，Qt-free）、`ui/tabs/monitor_tab.py`（索引 33）
-
-### E2. 多工厂/多线体对比 ✅（1 天）
-- 同指标多线并排 · Cp/Cpk 对比 · 违规汇总
-- 实现：`core/plant_compare.py`（summarize_plant / build_comparison）、`ui/tabs/multi_plant_tab.py`（索引 34）
-
-### E3. 预警通知系统 ✅（0.5 天）
-- 多渠道预警（弹窗 / 声音 / 日志）· 可配置规则 · 预警聚合/去重
-- 实现：`core/alert_rules.py`（AlertTracker NEW/ONGOING/CLEARED 状态机 + AlertLog 环形缓冲 + user_config 规则配置）、MonitorTab 预警横幅 + 弹窗 + 蜂鸣 + 日志面板
-
-### E4. 看板 UI 与控制增强 ✅（3 天）— P2-1/P2-2 自 v2.5 提前
-
-**阶段 1：**
-- F0: 统一 KPI 提取器 `core/kpi_extractor.py` — 修复 3 个错误卡片指标（OEE / %GRR / SPC 违规键路径错误），为公式引擎提供变量命名空间
-- F1: 实时刷新 — 信号驱动（`analysis_completed` → `_notify_dashboard`）+ QTimer(5s) 轮询兜底 + 自动刷新开关
-- F2: 自定义卡片布局 — 显示/隐藏 + 排序对话框（`ui/dialogs/layout_dialog.py`），QSettings 持久化
-
-**阶段 2：**
-- F3: 低代码公式编辑器（P2-1）— `core/kpi_formula.py` AST 白名单解析器（拒绝 23 类攻击用例，长度/深度防护）+ `ui/dialogs/formula_dialog.py`，自定义 KPI 卡片实时求值
-- F4: 车间看板模式（P2-2）— 全屏看板 `ui/dialogs/display_mode.py`，大数字 KPI 磁贴（FONT_36B），图表轮播（QTimer 8s），ESC/方向键，F11 快捷键
-
-**状态**: 方向 E 全部实现 — E1/E2/E3 完成（Tab 33-34、预警系统、215 测试）
-
-**估算**: 6 天总计（E1 1.5 + E2 1 + E3 0.5 + E4 3）| 新增 Tab 33-34 | 侧边栏 32→34
-
----
-
-## v2.4.1 ✅ 已完成 — 看板与显示模式视觉增强
-
-- **自适应卡片网格**: ≤3 卡片 → 1 列（560×260）/ ≤6 → 2 列（330×220）/ 更多 → 3 列（240×170）；多卡片滚动溢出保留
-- **卡片详情**: 更新时间戳（HH:MM）、状态色点（Cpk/OEE/GRR/违规 红/橙/绿分级）、按列数动态字号
-- **动画基础设施** `ui/widgets/animate.py`: fade_in / count_up / cross_fade（QPropertyAnimation/QVariantAnimation, InOutCubic），设置开关（默认开，user_config.json）
-- **大屏**: KPI 数字滚动 + 磁贴淡入 + 轮播交叉淡化
-- **大屏图表渲染**: 按图表区宽高比渲染（deepcopy + set_size_inches，300ms 防抖重绘）— 修复拉伸/压缩变形与裁切
-- **大屏可读性**: 图表 PNG 白底（原深色底黑字）
-- **修复**: F5 批量分析 DataFrame 真值歧义；批量分析跳过不可运行 Tab（Dashboard 等）；显示模式窗口防重复
-- 测试: 201 → 215
-
----
-
-## v2.5 ✅ 已完成 — 硬件扩展（ESP32）
-
-### H1. ESP32 设备框架 ✅（core/devices + Tab 35）
-- JSON-lines 串口协议（utf-8, `\n` 结尾）：HELLO→ACK→READY 握手 · PING/PONG 心跳（3s/9s）· DATA/COMMAND/RECOGNITION 消息
-- `core/devices/`: protocol.py（encode/decode/HandshakeProtocol/Heartbeat）、transport.py（SerialTransport 守护读线程）、discovery.py（comport 扫描 + HELLO 探测）、registry.py（状态机 + user_config.json 持久化）、device.py（Device / Esp32InputDevice / Esp32OutputDevice / MaixcamVisionDevice）
-- `ui/tabs/device_tab.py`（索引 35）：设备卡片 + 详情页（事件 / 数据预览 / 输出控制台 / 识别记录）+ 自动发现（3s）+ 设备数据导入分析
-- 侧边栏"监控"组：实时监控 (33) / 多工厂 (34) / 设备监控 (35) · 插件起始索引 36
-- 测试: test_devices.py 30（全部 mock，无硬件依赖）
-
-### H2. MicroPython 固件 ✅（firmware/esp32_in.py + esp32_out.py, v1.1.0）
-- 板载 MicroPython **v1.20.0**（官方 v1.21+ 破坏 `machine.UART(0)`：REPL UART 驱动未安装 → `ESP_ERR_INVALID_STATE`/128B-TX-FIFO 停滞）
-- 两份固件均使用 **UART1 重映射到板载桥接芯片**（`machine.UART(1, tx=1, rx=3)`, 115200）+ 开机自上报（HELLO + META）供 PC 自动发现
-- `esp32_in.py`: 7 个可配置通道（DS18B20 温度 @GPIO4 + 6× ADC 32/33/34/35/36/39, ATTN_11DB）→ 每秒 DATA · 应答 HELLO/PING
-- `esp32_out.py`: COMMAND `<name>:on/off|duty>` 语法（led GPIO2 / 继电器 GPIO25 数字, 舵机 GPIO13 PWM）→ ACK 应答
-- REPL 逃生舱：上电时按住 BOOT（GPIO0 低电平）→ 固件退出，REPL 保持可用（维护通道）
-- 协议仿真测试（`TEMP/fw_proto_test.py`, 伪 machine + UART 管道）：开机上报 / META / HELLO 应答 / PONG / DATA / COMMAND+ACK 全部通过
-- 烧录：复制到板子为 `main.py`（esptool.py 仅安装 MicroPython 镜像；板子：ESP32-D0WD-V3, 4MB, 无 SPIRAM, DTR/RTS 复位脉冲由主机代码处理）
-
-### H3. 实机验证（部分完成）
-- ✅ **esp32_in 在 COM3 实测**（`esp32_in_6cc84055ec48`, FW 1.1.0）：自动发现（HELLO 探测 + 开机上报）→ ONLINE → META 7 通道 → 每秒 DATA · 经 `TEMP/e2e_hw_check.py`（hello+pong+meta+data PASS）与设备页冒烟（预览表含通道名/单位、一键导入 → 多列 DataFrame）端到端验证
-- ⏳ **esp32_out**: 固件 + 协议仿真测试通过；第二块板烧录并验证 COMMAND→ACK 真实执行器 → **移入 v2.6.1**
-- ⏳ **MaixCAM**: 网络传输（TCP/SSH，非串口）→ **移入 v2.6.1**
+> **归档说明（2026-08-24）**：v2.1 ~ v2.5（代码质量与 AI / 工程工具扩展 / 报告增强 / 实时监控与看板 / ESP32 硬件扩展）规划章节已精简，完整记录见文末[版本历史](#版本历史)表。
 
 ---
 
@@ -363,15 +243,17 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 
 ---
 
-## v2.7.0 — 统计引擎深化（待开发）
+## v2.7.0 ✅ 已完成 — 统计引擎深化
 
 > 主题：对标 Minitab 补齐统计方法缺口 — 强化"质量分析软件"的本体价值。缺口清单来自 2026-08 代码级审计（非臆测）。
 > **质量铁律：每个新方法以 NIST StRD / AIAG 手册 / 权威文献已知值数据集做单元测试验证。**
+> 状态（2026-08-23）：P1（7 项引擎）+ P2（6 项引擎与 UI 集成）+ 代码质量审查（9 项修复）完成 · 122 个新增测试 · 537+ tests
+> 遗留：P1 中 5 项 UI 入口待接入（Type 1 / Hotelling T² / TOST / χ²·2比例 / 分布拟合；Cpm 与 Johnson 已随既有入口生效）→ 登记为 v2.8.0 前置收尾任务；Info 二期顺延
 
 ### 现状基线（已具备，不重复建设）
 9 类控制图 + Nelson 8 规则 · Cp/Cpk/Pp/Ppk + Box-Cox + 组内组间能力 · Gage R&R（交叉/嵌套）+ 线性/偏倚 + 属性一致性 Kappa · t 检验/单双因素 ANOVA/正态性/方差齐性/非参数 3 种 · 全因子 + CCD + Box-Behnken · 线性/多元回归 · Weibull 2P/3P + MTBF + ALT（Arrhenius/IPL）· AQL 计数抽样（GB/T 2828.1）
 
-### P1 核心缺口（7 项，本版本必做）
+### P1 核心缺口（7 项）— ✅ 引擎全部完成
 
 | 领域 | 新增方法 | 实现位置（规划） |
 |------|----------|------------------|
@@ -382,6 +264,8 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 | 假设检验 | **等价检验 TOST**（1/2 样本均值等价） | `analysis/hypothesis/equivalence.py` |
 | 假设检验 | **卡方拟合/独立性检验 + 2 比例检验** | `analysis/hypothesis/proportion.py` |
 | 分布拟合 | **通用分布拟合**（正态/对数正态/指数/Gamma/Weibull MLE）+ AD/KS/卡方拟合优度 | 新 `analysis/distribution/fitting.py` |
+
+> UI 接入状态：Cpm（目标值输入后随能力结果自动展示）✅ · Johnson（能力 Tab 既有方法选项）✅ · Type 1 / Hotelling T² / TOST / χ²·2比例 / 分布拟合 → 待接入（v2.8.0 前置收尾）
 
 ### P2 重要缺口（6 项，本版本尽量做，可溢出至 v2.9.0）
 
@@ -397,13 +281,13 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 ### P3 溢出项（v2.9.0 收尾）
 - I-MR-R/BW 组内组间控制图 · 部分因子/田口直交表设计 · Logistic 回归 · 回归残差诊断四图 · DOE 主效应/交互/等高线图接线（contour 生成器已存在但未接 DOE Tab）
 
-### Info 清零二期（~50 项）
+### Info 清零二期（~50 项）— 顺延至 v2.8.0 周期
 - 重复实现合并 + 单一数据源统一（如 variance_tests/normality 重复、audit 双实现）
 
 ### 验收标准
-- 新方法 NIST 已知值验证测试全部通过
-- 新方法 UI 接入对应现有 Tab（MSA/能力/SPC/假设检验/抽样/图表入口扩展，**不新增 Tab**）
-- 全量 pytest 通过
+- 新方法 NIST 已知值验证测试全部通过 ✅
+- 新方法 UI 接入对应现有 Tab（MSA/能力/SPC/假设检验/抽样/图表入口扩展，**不新增 Tab**）— P2 全部接入 ✅；P1 余 5 项入口顺延至 v2.8.0 前置收尾
+- 全量 pytest 通过 ✅（537+ tests）
 
 ---
 
@@ -411,6 +295,10 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 
 > 主题：打通 FMEA→控制计划→SPC→PPAP→8D 数据链 — 开源界无人实现的差异化壁垒。
 > 现状（2026-08 审计）：五个工程 Tab 完全孤岛化 — 无共享特征 ID 数据模型；PPAP 的 Cp/Cpk 靠手输文本解析而非调用能力分析引擎；FMEA/CP/8D 数据不进 .qap 序列化（仅统计 Tab 1-6 结果序列化）；报告模板不能自动拉取分析结果。
+
+### 前置收尾（v2.7.0 遗留）
+- **P1 UI 入口接入（5 项）**：MSA Tab 增加 Type 1 量具研究入口 · SPC Tab 增加 Hotelling T² 入口 · 假设检验 Tab 增加 TOST 与 χ²·2比例检验入口 · 分布拟合入口（图表/能力 Tab 扩展）
+- Info 清零二期（重复实现合并 + 单一数据源统一）
 
 ### 共享数据模型（地基）
 - 新建 `core/project_context.py`：`QualityCharacteristic` 数据类（特征 ID / 工序 / 规格限 / 单位 / 数据源绑定）+ `ProjectContext` 项目级上下文
@@ -427,8 +315,9 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 | 4 | FMEA → 8D D4 | 失效原因/机理注入鱼骨图骨架（替代硬编码 6M 默认值） |
 | 5 | 8D D7 → FMEA/CP | "标准已更新"驱动 FMEA/CP 复审提醒与修订标记 |
 
-### Info 清零三期（~51 项）
-- i18n 一致性 + 魔法数字常量化 + 私有 API 替换
+### Info 清零三期（~51 项，与顺延的二期合并清偿）
+- 二期：重复实现合并 + 单一数据源统一（variance_tests/normality 重复、audit 双实现）
+- 三期：i18n 一致性 + 魔法数字常量化 + 私有 API 替换
 
 ### 验收标准
 - 端到端场景测试：导入数据 → FMEA 识别高风险 → 生成 CP → SPC 监控 → PPAP 自动填充，一条链无手输中断
@@ -459,6 +348,7 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 ## v3.0.0 — 稳定化里程碑（待开发）
 
 > 主题：Info 收尾 + 全量回归 + 性能基线 + 里程碑发布。
+> 定位：v3.0.0 是"深化时代"的收官 — 本版本建立的性能基线自此成为后续所有版本（v3.1.0+）的回归门禁。
 
 ### 内容
 - Info 系列清零收尾（剩余项）+ 全量回归验证
@@ -468,52 +358,194 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 
 ### 验收标准
 - C / W / Info 编号项全部清零
-- 全量回归通过，测试数不低于 289 基线（只增不减）
+- 全量回归通过，测试数不低于 537 基线（只增不减）
 - 性能基线达标并记录在案
 
 ---
 
-## 3.0.0 后 Backlog（仅登记，不排期）
+## v3.1.0 — DOE 与功效分析（待开发）
 
-### 核心竞争力延伸（3.0.0 后评估启动）
-- **AI 深化**：本地 LLM 从"对话助手"升级为"全分析解读引擎" — 每个分析结果自动生成工程解读、异常诊断建议、知识库联动（保持离线可审计）
-- **硬件深化**：ESP32 设备直采 → 实时 SPC 闭环（采集→控制图→预警→COMMAND 反馈）、量具无线采集、更多传感器类型
+> 主题：补齐实验设计全链路，对标 Minitab DOE 模块。
+> 定位：v3.x 持续小版本序列第一弹，聚焦单一统计领域深度补齐。
 
-### 搁置的旧规划项（2026-08-22 重规划决策）
-- P2-3 视频时间研究（MediaPipe/OpenCV 姿态估计）
-- P2-4 批量宏录制/回放
-- P2-5 自定义控制图模板（注：v2.8.0 工作流贯通的"CP→SPC 预配置"覆盖其核心场景）
-- P3-1 供应链质量协作 · P3-2 数字孪生布局仿真 · P3-3 REST API 服务 · P3-4 Web 前端 · P3-5 移动应用
+### 核心内容
+- **筛选设计**：Plackett-Burman 设计 · Definitive Screening 设计
+- **全因子/部分因子**：2 水平全因子 · 2 水平部分因子（1/2, 1/4, 1/8）· 中心点 · 区组化
+- **田口设计**：Taguchi L4/L8/L9/L16/L27 · 望大/望小/望目特性 · SN 比计算
+- **响应面设计**：中心复合设计(CCD) · Box-Behnken 设计 · 混合设计（Simplex Centroid/Lattice/Extreme Vertices）
+- **功效与样本量**：t 检验/比例/方差/ANOVA 的 Power 分析 · 样本量计算器 · OC 曲线
+- **DOE 向导 UI**：分步引导（选设计→填因子→生成设计表→分析→响应曲面）
+
+### 验收标准
+- Plackett-Burman / CCD / Box-Behnken 设计生成正确性验证（对比 Minitab 输出）
+- Power & Sample Size 计算与 Minitab 交叉验证
+- DOE 全流程 E2E 测试：设计生成→数据录入→分析→响应曲面可视化
+
+---
+
+## v3.2.0 — 时间序列与预测（待开发）
+
+> 主题：补齐全时间序列分析能力，支持趋势预测与季节性分解。
+
+### 核心内容
+- **ARIMA 建模**：自动 p/d/q 选择（AIC/BIC 最优）· 手动参数设置 · 残差诊断（ACF/PACF/Q-Q）
+- **指数平滑**：单参数平滑 · 双参数平滑（Holt 线性趋势）· Holt-Winters（加法/乘法季节性）
+- **ACF/PACF 图**：自相关/偏自相关可视化 · Ljung-Box 检验 · Durbin-Watson 统计量
+- **季节性分解**：加法/乘法模型 · 趋势+季节+残差 分解图
+- **预测 UI**：预测步数选择 · 置信区间可视化 · 多模型对比（AIC/BIC 排名）
+
+### 验收标准
+- ARIMA 自动选阶与 statsmodels 交叉验证
+- Holt-Winters 预测结果与 Minitab 对比
+- 时间序列全流程 E2E 测试：数据导入→ACF/PACF→建模→预测→可视化
 
 ---
 
-## 侧边栏演进
+## v3.3.0 — 可靠性与生存分析（待开发）
 
-> **注**：v2.6.5 ~ v3.0.0 重规划期**不新增 Tab**（聚焦现有功能深化），35 Tab + 插件结构保持不变。
+> 主题：补齐可靠性工程全链路，对标 Minitab Reliability 模块。
 
-```
-v2.0 (28)     v2.1 (28)     v2.2 (32)       v2.4 (34)     v2.5/2.6 (35)   v2.6.5~3.0.0 (35)
- Home (0)       Same           Same             Same           Same
- Quality (1-6)  Same           Same             Same           Same
- IE (7-11,21-22) Same          +SMED(29)+TPM(31)  Same         Same
- Charts (12,18-20) Same        Same             Same           Same
- Eng (13-17)     Same         +8D(30)+PPAP(32)   Same           Same
- Worksheet (23-25) Same        Same             Same           Same
- Sampling (26)   Same          Same             Same           Same
- Report (27)     Same          Same             Same           Same
- Data (28)       Same          Same             Same           Same
- —               —             —                Live Monitor (33) Same
- —               —             —                Multi-Plant (34)   Same
- —               —             —                —                 Device (35)
- Plugins (dynamic) Same        Same             Same             Same
-```
+### 核心内容
+- **Weibull 分析增强**：Weibull 3P/4P（MLE 估计）· 置信区间 · 拟合优度检验 · 概率图
+- **生存分析**：Kaplan-Meier 生存曲线 · Log-rank 检验 · Cox 比例风险回归
+- **加速寿命试验(ALT)**：Arrhenius / Power Law / Inverse Power Law · ALT 试验计划 · 寿命预测
+- **保修分析**：首次失效预测 · 保修成本估算 · 寿命数据回归
+- **可靠性框图(RBD)**：串联系统 · 并联系统 · 混合系统 · 系统可靠度计算
+- **MTBF/MTTF**：置信区间估计 · 增长曲线（Crow-AMSAA）
+
+### 验收标准
+- Weibull 3P/4P MLE 估计与 Minitab 交叉验证
+- Kaplan-Meier 曲线与 statsmodels 对比
+- ALT 寿命预测与权威文献已知值验证
 
 ---
+
+## v3.4.0 — MSA 与能力深化（待开发）
+
+> 主题：深化测量系统分析与过程能力，补齐 Minitab 级高级功能。
+
+### 核心内容
+- **非参数能力分析**：不假设分布的能力评估（Edgeworth 近似 / 数据转换）
+- **自动能力分析**：自动检测最佳拟合分布 → 选择最优变换 → 输出能力指标
+- **Capability Sixpack**：六合图（控制图+能力直方图+概率图+统计量+不合格品率+能力图）
+- **属性一致性分析**：Kappa 系数（Cohen's / Fleiss's）· 有效 Kappa · 偏差矩阵
+- **EMP 方法量具研究**：Wheeler's EMP Crossed · 判异准则 · 分辨力分级
+- **Gage R&R 增强**：方差分量图 · 型号×操作员交互效应图 · 不确定度预算
+
+### 验收标准
+- 非参数能力与 Minitab Nonparametric Capability 对比
+- Capability Sixpack 六图联动正确性
+- EMP 方法与 Wheeler 文献已知值验证
+
+---
+
+## v3.5.0 — Graph Builder 增强与交互体验（待开发）
+
+> 主题：将现有图表工具升级为 Minitab Graph Builder 级交互体验。
+
+### 核心内容
+- **交互式图库**：缩略图预览面板（替代纯下拉框）· 按类别分组（基础统计/回归/DOE/时间序列/可靠性）
+- **图表编辑增强**：参考线/目标线可拖拽 · 数据标签显示 · 图例自定义 · 坐标轴格式化
+- **热力图与相关图**：相关系数矩阵热力图 · 散点矩阵图 · 相关系数显著性标记
+- **表格构建器**：拖拽式描述统计表 · 交互式交叉表 · 分组统计摘要
+- **一键导出**：Excel (.xlsx) · PowerPoint (.pptx) · Word (.docx) · 高分辨率 PNG/SVG
+- **小多图(Faceting)**：分组变量 → 多图网格布局 · 行/列/封面 faceting
+
+### 验收标准
+- 图库面板加载时间 < 200ms
+- 导出文件格式兼容性验证（Excel/PPT/Word 正常打开）
+- 交互式编辑操作响应延迟 < 100ms
+
+---
+
+## v3.6.0 — 实时 SPC 云看板与数据连接器（待开发）
+
+> 主题：将 ESP32/MaixCAM 设备框架升级为 Minitab Real-Time SPC 级实时监控能力。
+
+### 核心内容
+- **持续数据流**：ESP32/MaixCAM 设备持续采集 → 实时入数据库（SQLite/PostgreSQL）
+- **Web 实时仪表板**：基于 FastAPI + WebSocket 的实时控制图 · 班次/产线/工位多维视图
+- **OOC/OOS 告警**：控制限/规格限越界即时通知（邮件/webhook/桌面弹窗）· Nelson 规则实时检测
+- **数据连接器框架**：PLC（OPC-UA/Modbus）· CMM（DMIS）· 量具（RS232/USB）驱动插件架构
+- **产线可视化**：产线拓扑图 · 工位状态灯（绿/黄/红）· 实时 OEE 看板
+
+### 验收标准
+- 数据流延迟 < 500ms（设备→控制图）
+- WebSocket 并发 50 连接无性能退化
+- PLC/量具连接器 Mock 测试通过
+
+---
+
+## v3.7.0 — QAM Harness（BYOK AI Agent 平台）（待开发）
+
+> 主题：打造工程分析专业化 AI Agent 平台，用户自带 API Key，主动建议型分析。
+
+### 核心内容
+- **BYOK 架构**：用户在设置面板配置自有 API Key（OpenAI / Anthropic / Google / DeepSeek / Z.ai / KIMI）· Key 加密存储（跨平台密钥库）· 连通性测试
+- **主动建议型 Agent**：数据画像 → 自动推荐分析方法（如检测到偏态建议 Box-Cox）· 分析结果自动工程解读（结论/原因假设/建议动作）· 异常根因智能推荐
+- **知识库 RAG**：内置质量工程知识库（IE/质量工程/精益生产方法论）· 用户可扩展 · TF-IDF 检索（后续升级向量检索）
+- **多轮对话**：对话式分析引导 · 追问/澄清/深入 · 上下文保持（同一分析会话）
+- **数据隐私**：首次 cloud API 调用隐私弹窗（明确告知数据发送至供应商）· 用户确认后持久化
+- **统计结果人话解释**：P 值/Cp/Cpk 等指标自动口语化解读 · 非统计人员可读
+
+### 验收标准
+- 6 家供应商 API Key 配置 + 连通性测试全流程
+- 主动建议准确率人工评审（工程师评分 ≥ 3.5/5）
+- 数据隐私弹窗拦截率 100%
+
+---
+
+## v3.8.0 — 视频时间研究（待开发）
+
+> 主题：引入基于视觉的动作分析与时间研究，独立 Tab 36。
+
+### 核心内容
+- **摄像头输入层**：USB/IP 摄像头统一抽象（OpenCV）· RTSP/HTTP/MJPEG 流支持 · 分辨率选择 · 实时预览
+- **姿态估计**：MediaPipe Pose（33 关键点）· 帧级推理 · 置信度阈值可调
+- **动作分类**：基于关键点角度/位移的 4 类判定（工作/空闲/走动/搬运）· 规则可配置
+- **周期检测**：基于动作状态切换自动分割周期 · 周期时间实时计算 · 异常周期标记
+- **分析引擎**：复用 `analysis/ie/time_study.py` · 周期时间异常值剔除 · 正态拟合 · 标准工时计算
+- **Tab 36 上线**：摄像头选择/预览/标定/采集/分析/导出全流程 · UI 引导
+
+### 验收标准
+- 摄像头预览帧率 ≥ 15 FPS
+- 手动标记延迟 < 100ms
+- 视频分析全流程 E2E 测试通过
+
+---
+
+## v3.9.0 — 预测分析与机器学习（待开发）
+
+> 主题：补齐 Minitab Predictive Analytics 级机器学习能力。
+
+### 核心内容
+- **CART 分类回归树**：树构建 · 剪枝（预剪枝/后剪枝）· 混淆矩阵 · ROC 曲线
+- **Random Forests 随机森林**：Bagging + 特征随机 ·OOB 误差估计 · 特征重要性排序
+- **Gradient Boosting (XGBoost)**：提升迭代 · 学习率/深度调参 · SHAP 特征解释
+- **MARS 多元自适应回归**：分段线性回归 · 基函数选择 · 交互项检测
+- **AutoML 模型选择**：自动尝试多种算法 · AIC/BIC/AUC 排名 · 最优模型推荐
+- **特征工程**：缺失值填充 · 分箱 · 编码 · 特征交叉 · 标准化/归一化
+- **模型评估**：交叉验证 · 学习曲线 · 过拟合诊断 · 残差分析
+
+### 验收标准
+- CART/Random Forests 与 scikit-learn 交叉验证
+- AutoML 自动选模与人工选模对比一致性
+- 预测分析全流程 E2E 测试：数据准备→特征工程→建模→评估→可视化
+
+---
+
+## v4.0.0 — 待定
+
+> 主题：根据 v3.x 实际进展和市场反馈再定义。
+> 方向候选：视频时间研究深化 · 数字孪生布局仿真 · 供应链质量协作 · 更多硬件集成
 
 ## 版本历史
 
 | 日期 | 版本 | 内容 |
 |------|---------|---------|
+| 08-24 | v3.x-planning | 战略重定位：从企业级多公司平台调整为个人订阅级质量工程工具（类 Minitab）；删除 v3.1~v3.6 旧规划（企业RBAC/跨平台/高可用/安全合规/双层治理）；重新设计 v3.1~v4.0 路线（DOE→时间序列→可靠性→MSA→Graph Builder→实时SPC→QAM Harness→视频研究→预测分析）；核心竞争力支柱从6个精简为5个（工作流贯通/实时工厂集成/IE工具套件/QAM Harness/中文本土化） |
+| 08-24 | v3.x-AI-架构 | AI 架构决策：支柱 4 从"本地 LLM"调整为"AI 智能助手（云端 API + 本地模型分层）"；v3.1.0 新增 AI API 管理面板（6 家供应商 GUI 配置 + 数据隐私提示）；v3.2.0 服务端增加 AI 代理转发；v4.0.0 本地 LLM 定位为企业版专属功能 |
+| 08-24 | v3.x-视频研究 | 视频时间研究方案确定：独立 Tab 36 · 标准 USB/IP 摄像头 + PC 端 OpenCV/MediaPipe 路线 · 穿插 v3.1~v3.5 三阶段交付（v3.1 摄像头输入层 + v3.3 姿态估计 + v3.5 完整分析上线）· MaixCAM 分阶段定位（当前 IoT 采集终端 → v4.0 条件触发升级视觉检测平台） |
 | 08-23 | v2.7.0 | 已完成：P1期（7项核心功能+4项性能优化）+ P2期（6项功能）+ 代码质量审查（9项修复）+ UI集成（4个Tab：SPC/能力/假设检验/抽样） · 537+ tests |
 | 08-23 | v2.6.5 | 已完成：W系列编号缺陷清零（W49/W50/W51/W69/W72/W73/W74/W86/W99/W106）+ Info一期（死代码/未使用import/状态漂移bug修复）· 450+ tests |
 | 08-22 | v2.6.5-planning | 规划重构：v2.6.5~v3.0.0 从"功能扩张"转向"现有功能深化"（缺陷清零 → 统计引擎深化 → 工作流贯通 → 深化整合 → 稳定化）；旧功能项 P2-3/P2-4/P2-5/P3-1~P3-5 搁置至 3.0.0 后；基于开源竞品调研确立核心竞争力定位 |
@@ -535,3 +567,28 @@ v2.0 (28)     v2.1 (28)     v2.2 (32)       v2.4 (34)     v2.5/2.6 (35)   v2.6.5
 | 08-10 | v2.1 | 已发布：87 tests · AI 增强 · 懒加载 · 一键分析 · 列选择器修复 |
 | 08-10 | v2.1-dev | 代码审计：5 bugs · 200+ imports · 60+ 死代码 · 15 重复分组 |
 | 08-04 | v2.0 | 初始发布：28 tabs · 65 tests · AI 助手 · 插件系统 |
+
+---
+
+## 侧边栏演进
+
+> **注**：v2.6.5 ~ v3.0.0 重规划期**不新增 Tab**（聚焦现有功能深化），35 Tab + 插件结构保持不变。
+> v3.0.0 后新增能力优先以现有 Tab 内的入口/模式呈现，确需新增 Tab 的由对应版本规划单独定义。
+
+```
+v2.0 (28)     v2.1 (28)     v2.2 (32)       v2.4 (34)     v2.5/2.6 (35)   v3.0.0 (35)      v3.8.0 (36)
+ Home (0)       Same           Same             Same           Same             Same                Same
+ Quality (1-6)  Same           Same             Same           Same             Same                Same
+ IE (7-11,21-22) Same          +SMED(29)+TPM(31)  Same         Same             Same                Same
+ Charts (12,18-20) Same        Same             Same           Same             Same                Same
+ Eng (13-17)     Same         +8D(30)+PPAP(32)   Same           Same             Same                Same
+ Worksheet (23-25) Same        Same             Same           Same             Same                Same
+ Sampling (26)   Same          Same             Same           Same             Same                Same
+ Report (27)     Same          Same             Same           Same             Same                Same
+ Data (28)       Same          Same             Same           Same             Same                Same
+ —               —             —                Live Monitor (33) Same             Same                Same
+ —               —             —                Multi-Plant (34)   Same             Same                Same
+ —               —             —                —                 Device (35)      Same                Same
+ —               —             —                —                 —                Video Time Study (36)
+ Plugins (dynamic) Same        Same             Same             Same             Same                Same
+```
