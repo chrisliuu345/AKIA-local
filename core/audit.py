@@ -1,7 +1,6 @@
 """
 审计日志 — 公共入口
 格式: [YYYY-MM-DD HH:MM:SS] operator: action detail
-core/auth.py 通过此模块写入审计记录（W04 统一实现）。
 """
 
 import os
