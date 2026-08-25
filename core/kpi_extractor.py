@@ -127,6 +127,91 @@ def _extract_weibull(r: dict) -> dict:
     }
 
 
+def _extract_tolerance(r: dict) -> dict:
+    """公差区间 — 正态/非参数 均有 lower/upper/width"""
+    if not _scalar(r.get("lower")) or not _scalar(r.get("upper")):
+        return {}
+    return {
+        "tolerance_lower": r.get("lower"),
+        "tolerance_upper": r.get("upper"),
+        "tolerance_width": r.get("width"),
+        "confidence": r.get("confidence"),
+        "proportion": r.get("proportion"),
+    }
+
+
+def _extract_smed(r: dict) -> dict:
+    """SMED 快速换模 — improvement_pct/total_before/total_after"""
+    if not _scalar(r.get("improvement_pct")):
+        return {}
+    return {
+        "improvement_pct": r.get("improvement_pct"),
+        "total_before": r.get("total_before"),
+        "total_after": r.get("total_after"),
+    }
+
+
+def _extract_work_sampling(r: dict) -> dict:
+    """Work Sampling — utilization.productive_pct → worker_utilization"""
+    util = r.get("utilization")
+    if not isinstance(util, dict):
+        return {}
+    pct = util.get("productive_pct")
+    if not _scalar(pct):
+        return {}
+    return {"worker_utilization": pct / 100.0 if pct > 1 else pct}
+
+
+def _extract_multi_plant(r: dict) -> dict:
+    """多工厂对比 — best_cpk/worst_cpk/total_violations"""
+    if not _scalar(r.get("best_cpk")) and not _scalar(r.get("worst_cpk")):
+        return {}
+    return {
+        "best_cpk": r.get("best_cpk"),
+        "worst_cpk": r.get("worst_cpk"),
+        "total_violations": r.get("total_violations"),
+    }
+
+
+def _extract_doe(r: dict) -> dict:
+    """DOE — model_r_squared / r_squared 兼容"""
+    rs = r.get("r_squared") or r.get("model_r_squared")
+    if not _scalar(rs):
+        return {}
+    return {"r_squared": rs}
+
+
+def _extract_time_study(r: dict) -> dict:
+    """时间研究 — standard_time 在 results[] 列表内"""
+    results = r.get("results")
+    if not isinstance(results, list) or not results:
+        return {}
+    first = results[0]
+    st = first.get("standard_time") if isinstance(first, dict) else None
+    ct = first.get("avg_time") if isinstance(first, dict) else None
+    out = {}
+    if _scalar(st):
+        out["standard_time"] = st
+    if _scalar(ct):
+        out["cycle_time"] = ct
+    return out
+
+
+def _extract_normality(r: dict) -> dict:
+    """正态性检验 — tests 子字典中的 p_value"""
+    tests = r.get("tests")
+    if not isinstance(tests, dict):
+        return {}
+    for test_name in ("shapiro_wilk", "dagostino_pearson", "kolmogorov_smirnov"):
+        sub = tests.get(test_name)
+        if isinstance(sub, dict) and _scalar(sub.get("p_value")):
+            return {
+                "p_value": sub["p_value"],
+                "is_significant": 1 if sub["p_value"] < 0.05 else 0,
+            }
+    return {}
+
+
 def _extract_ie_default(r: dict) -> dict:
     """线平衡/VSM/工时研究等 — summary/current 嵌套下的通用指标 (仅标量)"""
     metrics = {}
@@ -177,6 +262,27 @@ def extract_metrics(analyses: Dict[int, Dict]) -> Dict[str, Dict[str, Any]]:
             metrics.update(_extract_reliability(r))
         if "beta" in r and "eta" in r:
             metrics.update(_extract_weibull(r))
+        # 公差区间
+        if "lower" in r and "upper" in r and "width" in r:
+            metrics.update(_extract_tolerance(r))
+        # SMED
+        if "improvement_pct" in r:
+            metrics.update(_extract_smed(r))
+        # Work Sampling
+        if isinstance(r.get("utilization"), dict):
+            metrics.update(_extract_work_sampling(r))
+        # 多工厂对比
+        if "best_cpk" in r or "worst_cpk" in r:
+            metrics.update(_extract_multi_plant(r))
+        # DOE (model_r_squared 兼容)
+        if "model_r_squared" in r:
+            metrics.update(_extract_doe(r))
+        # 时间研究 (standard_time 在 results[] 内)
+        if isinstance(r.get("results"), list):
+            metrics.update(_extract_time_study(r))
+        # 正态性检验 (tests 子字典)
+        if isinstance(r.get("tests"), dict):
+            metrics.update(_extract_normality(r))
         # 兜底: IE 类通用指标
         metrics.update({k: v for k, v in _extract_ie_default(r).items()
                         if k not in metrics})
