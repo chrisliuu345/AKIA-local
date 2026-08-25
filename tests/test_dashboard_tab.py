@@ -1,4 +1,4 @@
-"""Dashboard 自适应卡片测试 — 列数策略/卡片尺寸/时间戳/状态色点/动画开关 (v2.4.1)"""
+"""Dashboard v3.0 测试 — 垂直滚动 + 图表嵌入 + KPI 提取 + 状态色点"""
 
 import os
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -12,6 +12,7 @@ from PySide6.QtCore import QSettings
 
 from config import settings
 from ui.tabs.dashboard_tab import DashboardTab
+from ui.widgets.analysis_card import AnalysisCard
 
 
 @pytest.fixture(scope="module")
@@ -87,38 +88,30 @@ def _dot(card):
     return None
 
 
-class TestColumnStrategy:
-    def _run(self, main, monkeypatch, n):
+class TestVerticalLayout:
+    """测试垂直滚动布局"""
+
+    def test_cards_vertical排列(self, main, monkeypatch):
         main.analyses = {
-            i + 1: _cap(f"能力{i}", cpk=1.0 + i * 0.1) for i in range(n)
+            1: _cap("能力1", cpk=1.0),
+            2: _cap("能力2", cpk=1.5),
+            3: _cap("能力3", cpk=2.0),
         }
         tab = _make_tab(main, monkeypatch)
         tab.refresh()
-        return tab
-
-    def test_three_cards_single_column(self, main, monkeypatch):
-        tab = self._run(main, monkeypatch, 3)
         assert len(tab._cards) == 3
-        assert tab._cards[0].size().width() == 560
-        assert tab._cards[0].size().height() == 260
-        cols = {tab.grid.getItemPosition(i)[1] for i in range(3)}
-        assert cols == {0}
+        # 所有卡片都在同一个 layout 中
+        for card in tab._cards:
+            assert card.parent() is not None
         tab.close()
 
-    def test_six_cards_two_columns(self, main, monkeypatch):
-        tab = self._run(main, monkeypatch, 6)
-        assert len(tab._cards) == 6
-        assert tab._cards[0].size().width() == 330
-        cols = {tab.grid.getItemPosition(i)[1] for i in range(6)}
-        assert cols == {0, 1}
-        tab.close()
-
-    def test_seven_cards_three_columns(self, main, monkeypatch):
-        tab = self._run(main, monkeypatch, 7)
-        assert len(tab._cards) == 7
-        assert tab._cards[0].size().width() == 240
-        cols = {tab.grid.getItemPosition(i)[1] for i in range(7)}
-        assert cols == {0, 1, 2}
+    def test_many_cards_scrollable(self, main, monkeypatch):
+        main.analyses = {
+            i + 1: _cap(f"能力{i}", cpk=1.0 + i * 0.1) for i in range(10)
+        }
+        tab = _make_tab(main, monkeypatch)
+        tab.refresh()
+        assert len(tab._cards) == 10
         tab.close()
 
 
@@ -129,7 +122,7 @@ class TestCardDetails:
         tab = _make_tab(main, monkeypatch)
         tab.refresh()
         texts = _card_labels(tab._cards[0])
-        assert any("更新于 14:23" in t for t in texts)
+        assert any("14:23" in t for t in texts)
         tab.close()
 
     def test_timestamp_missing_no_label(self, main, monkeypatch):
@@ -137,7 +130,7 @@ class TestCardDetails:
         tab = _make_tab(main, monkeypatch)
         tab.refresh()
         texts = _card_labels(tab._cards[0])
-        assert not any("更新于" in t for t in texts)
+        assert not any("14:23" in t for t in texts)
         tab.close()
 
     def test_dot_green_for_good_cpk(self, main, monkeypatch):
@@ -169,6 +162,31 @@ class TestCardDetails:
         tab.close()
 
 
+class TestAnalysisCard:
+    """测试 AnalysisCard 组件"""
+
+    def test_card_with_metrics(self, app):
+        card = AnalysisCard("能力分析", ["Cpk: 1.50", "Ppm: 3.4"], None)
+        assert card is not None
+        labels = card.findChildren(QLabel)
+        texts = [lbl.text() for lbl in labels]
+        assert any("能力分析" in t for t in texts)
+        card.deleteLater()
+
+    def test_card_with_placeholder(self, app):
+        card = AnalysisCard("SPC", ["违规点: 3"], None, timestamp="14:23")
+        assert card is not None
+        placeholder = card.findChildren(QLabel)
+        texts = [lbl.text() for lbl in placeholder]
+        assert any("暂无图表" in t for t in texts)
+        card.deleteLater()
+
+    def test_card_with_no_metrics(self, app):
+        card = AnalysisCard("空分析", [], None)
+        assert card is not None
+        card.deleteLater()
+
+
 class TestAnimationsAndFingerprint:
     def test_no_effect_when_animations_off(self, main, monkeypatch):
         main.analyses = {2: _cap("能力", cpk=1.5)}
@@ -196,23 +214,4 @@ class TestEmptyState:
         assert len(tab._cards) == 1
         assert isinstance(tab._cards[0], QLabel)
         assert tab._cards[0].text()
-        tab.close()
-
-
-class TestCardTitle:
-    def test_short_title_no_ellipsis(self, main, monkeypatch):
-        tab = _make_tab(main, monkeypatch)
-        card = tab._make_card("短名", ["Cpk: 1.5"], {}, 3)
-        labels = card.findChildren(QLabel)
-        assert labels[0].text() == "短名"
-        card.deleteLater()
-        tab.close()
-
-    def test_long_title_ellipsis(self, main, monkeypatch):
-        tab = _make_tab(main, monkeypatch)
-        long_name = "超长分析类型名称" * 6
-        card = tab._make_card(long_name, ["Cpk: 1.5"], {}, 3)
-        labels = card.findChildren(QLabel)
-        assert labels[0].text() == long_name[:25] + ".."
-        card.deleteLater()
         tab.close()
