@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (
     QTextEdit, QLineEdit, QWidget, QComboBox, QFileDialog,
 )
 from PySide6.QtCore import Qt, QThread, Signal, QSettings
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QTextCursor
 
 from ui.theme import colors as theme_colors
 
@@ -105,16 +105,38 @@ class LLMDialog(QDialog):
         # 模型选择
         self.model_combo = QComboBox()
         self.model_combo.setMaximumWidth(180)
-        from core.llm_client import OLLAMA_MODELS, OPENAI_MODELS
-        self.model_combo.addItems(list(OLLAMA_MODELS) + list(OPENAI_MODELS))
+        self._populate_models()
         # 恢复上次选择
         s = QSettings("QA-Tool", "LLM")
         saved = s.value("model", "")
-        if saved and self.model_combo.findText(saved) >= 0:
-            self.model_combo.setCurrentText(saved)
+        if saved:
+            idx = self.model_combo.findText(saved)
+            if idx >= 0:
+                self.model_combo.setCurrentIndex(idx)
+            else:
+                # 之前保存的模型不在列表中，添加为自定义
+                self.model_combo.addItem(saved)
+                self.model_combo.setCurrentText(saved)
         self.model_combo.currentTextChanged.connect(self._on_model_change)
         header.addWidget(QLabel("模型:"))
         header.addWidget(self.model_combo)
+
+        # 刷新模型列表按钮
+        refresh_btn = QPushButton("⟳")
+        refresh_btn.setFixedSize(24, 24)
+        refresh_btn.setToolTip("刷新 Ollama 模型列表")
+        refresh_btn.setCursor(Qt.PointingHandCursor)
+        refresh_btn.clicked.connect(self._refresh_models)
+        header.addWidget(refresh_btn)
+
+        # 自定义模型输入
+        self.custom_model_input = QLineEdit()
+        self.custom_model_input.setMaximumWidth(140)
+        self.custom_model_input.setPlaceholderText("自定义模型名...")
+        self.custom_model_input.setMinimumHeight(24)
+        self.custom_model_input.setVisible(False)
+        self.custom_model_input.returnPressed.connect(self._apply_custom_model)
+        header.addWidget(self.custom_model_input)
 
         self.provider_lbl = QLabel(self._provider_label())
         self.provider_lbl.setFont(QFont("Microsoft YaHei", 8))
@@ -251,6 +273,42 @@ class LLMDialog(QDialog):
     def _provider_label(self) -> str:
         return "OpenAI" if self.llm.provider == "openai" else "Ollama"
 
+    def _populate_models(self):
+        """填充模型下拉框"""
+        self.model_combo.clear()
+        # 动态获取 Ollama 模型
+        if self.llm.provider == "ollama":
+            models = self.llm.get_models()
+            self.model_combo.addItems(models)
+        else:
+            from core.llm_client import OPENAI_MODELS
+            self.model_combo.addItems(OPENAI_MODELS)
+        # 添加自定义选项
+        self.model_combo.addItem("自定义...")
+
+    def _refresh_models(self):
+        """刷新 Ollama 模型列表"""
+        self.llm.available = self.llm._check_available()
+        if self.llm.provider == "ollama":
+            self._populate_models()
+            count = self.model_combo.count() - 1  # 减去"自定义..."
+            self.append_msg("system", f"已刷新模型列表，找到 {count} 个模型")
+        self._update_status()
+
+    def _apply_custom_model(self):
+        """应用自定义模型名"""
+        custom_name = self.custom_model_input.text().strip()
+        if not custom_name:
+            return
+        # 检查是否已在列表中
+        idx = self.model_combo.findText(custom_name)
+        if idx < 0:
+            # 添加到下拉框（在"自定义..."之前）
+            self.model_combo.insertItem(self.model_combo.count() - 1, custom_name)
+        self.model_combo.setCurrentText(custom_name)
+        self.custom_model_input.setVisible(False)
+        self.custom_model_input.clear()
+
     def _update_status(self):
         tc = theme_colors(self)
         if self.llm.available:
@@ -262,6 +320,11 @@ class LLMDialog(QDialog):
 
     def _on_model_change(self, model: str):
         from core.llm_client import OPENAI_MODELS
+        if model == "自定义...":
+            self.custom_model_input.setVisible(True)
+            self.custom_model_input.setFocus()
+            return
+        self.custom_model_input.setVisible(False)
         if model in OPENAI_MODELS:
             self.llm.set_model(model, "openai")
         else:
@@ -314,6 +377,16 @@ class LLMDialog(QDialog):
             self._offline_reply(text)
             return
 
+        # 显示"思考中..."指示器
+        self.chat_view.append(
+            "<p style='margin:4px 0' id='thinking'>"
+            "<span style='color:#2ca02c; font-size:14px;'>&#9679;</span> "
+            "<span style='color:#999999;'>思考中...</span></p>"
+        )
+        self.chat_view.verticalScrollBar().setValue(
+            self.chat_view.verticalScrollBar().maximum()
+        )
+
         # ── 构建增强上下文 ──
         full_prompt = self._build_context_prompt(text)
 
@@ -321,6 +394,7 @@ class LLMDialog(QDialog):
         self.worker.token_received.connect(self._on_token)
         self.worker.finished.connect(self._on_finished)
         self._current_ai_msg = ""
+        self._streaming_block_added = False
         self.worker.start()
 
     def _build_context_prompt(self, question: str) -> str:
@@ -373,21 +447,31 @@ class LLMDialog(QDialog):
 
     def _on_token(self, token: str):
         self._current_ai_msg += token
-        # 流式刷新: append新段落, 后续token用cursor删除再重写
+        # 流式刷新: 第一个token移除"思考中"，后续token更新内容
         if not hasattr(self, '_streaming_block_added') or not self._streaming_block_added:
-            safe = html.escape(self._current_ai_msg).replace("\n", "<br>")
-            self.chat_view.append(
-                '<p style="margin:4px 0"><b style="color:#2ca02c">AI:</b> ' + safe + "</p>"
-            )
-            self._streaming_block_added = True
-        else:
+            # 移除"思考中..."指示器，显示实际内容
             cursor = self.chat_view.textCursor()
-            cursor.movePosition(cursor.End)
-            cursor.movePosition(cursor.StartOfBlock, cursor.KeepAnchor)
+            cursor.movePosition(QTextCursor.End)
+            cursor.movePosition(QTextCursor.StartOfBlock, QTextCursor.KeepAnchor)
             cursor.removeSelectedText()
             safe = html.escape(self._current_ai_msg).replace("\n", "<br>")
             cursor.insertHtml(
-                '<p style="margin:4px 0"><b style="color:#2ca02c">AI:</b> ' + safe + "</p>"
+                "<p style='margin:4px 0'>"
+                "<span style='color:#2ca02c; font-size:14px;'>&#9679;</span> "
+                f"<span style='color:#2ca02c;'>{safe}</span></p>"
+            )
+            self._streaming_block_added = True
+        else:
+            # 后续 token：更新当前内容
+            cursor = self.chat_view.textCursor()
+            cursor.movePosition(QTextCursor.End)
+            cursor.movePosition(QTextCursor.StartOfBlock, QTextCursor.KeepAnchor)
+            cursor.removeSelectedText()
+            safe = html.escape(self._current_ai_msg).replace("\n", "<br>")
+            cursor.insertHtml(
+                "<p style='margin:4px 0'>"
+                "<span style='color:#2ca02c; font-size:14px;'>&#9679;</span> "
+                f"<span style='color:#2ca02c;'>{safe}</span></p>"
             )
         self.chat_view.verticalScrollBar().setValue(
             self.chat_view.verticalScrollBar().maximum()
@@ -442,14 +526,19 @@ class LLMDialog(QDialog):
     def append_msg(self, role: str, text: str):
         if role == "system":
             prefix, color = "系统", "#8e8ea0"
+            dot_color = "#8e8ea0"
         elif role == "user":
             prefix, color = "你", "#4da6ff"
+            dot_color = "#4da6ff"
         else:
             prefix, color = "AI", "#2ca02c"
+            dot_color = "#2ca02c"
 
         safe = html.escape(text).replace("\n", "<br>")
         self.chat_view.append(
-            f"<p style='margin:4px 0'><b style='color:{color}'>{prefix}:</b> {safe}</p>"
+            f"<p style='margin:4px 0'>"
+            f"<span style='color:{dot_color}; font-size:14px;'>&#9679;</span> "
+            f"<span style='color:{color};'>{safe}</span></p>"
         )
         self.chat_view.verticalScrollBar().setValue(
             self.chat_view.verticalScrollBar().maximum()

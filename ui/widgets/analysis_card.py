@@ -85,7 +85,7 @@ class AnalysisCard(QFrame):
         title_lbl = ElidedLabel(self._atype)
         title_lbl.setFont(FONT_11B)
         title_lbl.setStyleSheet(f"color:{tc['accent_bright']}; background:transparent;")
-        title_lbl.setMinimumWidth(80)
+        title_lbl.setMinimumWidth(120)
         hdr.addWidget(title_lbl, 1)
 
         if timestamp:
@@ -93,6 +93,7 @@ class AnalysisCard(QFrame):
             ts_lbl.setFont(FONT_9)
             ts_lbl.setStyleSheet(f"color:{tc['text_muted']}; background:transparent;")
             ts_lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            ts_lbl.setFixedWidth(50)
             hdr.addWidget(ts_lbl)
 
         dot = QLabel("●")
