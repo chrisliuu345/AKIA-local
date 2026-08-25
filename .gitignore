@@ -16,3 +16,4 @@ HANDOVER.md
 .github/agents/
 TEMP/dev_private_key.pem
 TEMP/*.pem
+.integrity_baseline.json
