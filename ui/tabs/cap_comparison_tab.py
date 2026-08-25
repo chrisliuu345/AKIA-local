@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from config.settings import CAPABILITY_GRADES
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
@@ -241,10 +242,12 @@ class CapComparisonTab(BaseAnalysisTab):
                        color="#ffa726", alpha=0.6, hatch="//")
 
         # 阈值线
-        ax.axhline(y=1.0, color="#6e7080", linestyle="--", linewidth=1, alpha=0.6)
-        ax.axhline(y=1.33, color="#a0a3ae", linestyle=":", linewidth=1, alpha=0.5)
-        ax.text(n - 0.5, 1.0, "Cp=1.0", fontsize=7, color="#6e7080", va="bottom")
-        ax.text(n - 0.5, 1.33, "Cp=1.33", fontsize=7, color="#a0a3ae", va="bottom")
+        cpk_b = CAPABILITY_GRADES["B"][0]  # 1.00
+        cpk_a = CAPABILITY_GRADES["A"][0]  # 1.33
+        ax.axhline(y=cpk_b, color="#6e7080", linestyle="--", linewidth=1, alpha=0.6)
+        ax.axhline(y=cpk_a, color="#a0a3ae", linestyle=":", linewidth=1, alpha=0.5)
+        ax.text(n - 0.5, cpk_b, f"Cp={cpk_b}", fontsize=7, color="#6e7080", va="bottom")
+        ax.text(n - 0.5, cpk_a, f"Cp={cpk_a}", fontsize=7, color="#a0a3ae", va="bottom")
 
         ax.set_xticks(x)
         ax.set_xticklabels(labels, fontsize=9, rotation=25, ha="right")

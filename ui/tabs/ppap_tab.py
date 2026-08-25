@@ -13,13 +13,18 @@ from ui.theme import BUTTON_PRIMARY_STRETCH
 from analysis.quality.ppap_engine import (
     PPAPReport, PPAP_ITEMS, SUBMISSION_LEVELS
 )
+from config.settings import CAPABILITY_GRADES
 
 
 class PPAPTab(BaseAnalysisTab):
     def __init__(self, parent=None):
+        self._project_context = None
         super().__init__(parent)
         self.report = PPAPReport()
         self._setup_ui()
+
+    def set_project_context(self, ctx):
+        self._project_context = ctx
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
@@ -99,6 +104,10 @@ class PPAPTab(BaseAnalysisTab):
 
         # 操作
         btn_row = QHBoxLayout()
+        auto_btn = QPushButton("自动填充 (从分析结果)")
+        auto_btn.setStyleSheet(BUTTON_PRIMARY_STRETCH)
+        auto_btn.clicked.connect(self._auto_fill_from_analyses)
+        btn_row.addWidget(auto_btn)
         save_btn = QPushButton("保存 PPAP")
         save_btn.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         save_btn.clicked.connect(self._save)
@@ -108,6 +117,14 @@ class PPAPTab(BaseAnalysisTab):
         export_btn.clicked.connect(self._export_xlsx)
         btn_row.addWidget(export_btn)
         layout.addLayout(btn_row)
+
+    def _auto_fill_from_analyses(self):
+        """从主窗口的分析结果自动填充 PPAP"""
+        main_win = self.window()
+        if main_win and hasattr(main_win, 'analyses'):
+            self.auto_populate_from_analyses(main_win.analyses)
+        else:
+            QMessageBox.information(self, "自动填充", "无法获取分析结果。请先运行分析。")
 
     def _refresh_matrix(self):
         level = self.level_combo.currentData()
@@ -196,7 +213,8 @@ class PPAPTab(BaseAnalysisTab):
             elif "能力" in analysis_type or "Capability" in analysis_type:
                 cap = result.get("capability", {})
                 cpk = cap.get("cpk", 0)
-                is_capable = cpk >= 1.33 if cpk else False
+                cpk_a = CAPABILITY_GRADES["A"][0]  # 1.33
+                is_capable = cpk >= cpk_a if cpk else False
 
                 status = "complete" if is_capable else "in_progress"
                 self.report.items[10].status = status  # PPAP #11 (index 10)

@@ -20,6 +20,7 @@ from PySide6.QtGui import QPixmap, QPainter
 
 from core.i18n import i18n
 from core.kpi_extractor import extract_metrics
+from config.settings import CAPABILITY_GRADES, MSA_GRR_ACCEPTABLE, MSA_GRR_MARGINAL
 from ui.theme import FONT_36B, FONT_18B, FONT_14B, FONT_12
 from ui.widgets.animate import fade_in, count_up, cross_fade
 from ui.widgets.elided_label import ElidedLabel
@@ -230,11 +231,13 @@ class DisplayModeWindow(QWidget):
                                max(oee_vals) * 100, lambda v: f"{v:.1f}%", ACCENT)
         if cpk_vals:
             best = max(cpk_vals)
-            color = "#27ae60" if best >= 1.33 else (ACCENT_WARN if best >= 1.0 else "#e74c3c")
+            cpk_a = CAPABILITY_GRADES["A"][0]  # 1.33
+            cpk_b = CAPABILITY_GRADES["B"][0]  # 1.00
+            color = "#27ae60" if best >= cpk_a else (ACCENT_WARN if best >= cpk_b else "#e74c3c")
             self._add_kpi_tile(i18n.tr("display.kpi_cpk"), best, lambda v: f"{v:.3f}", color)
         if grr_vals:
             grr = min(grr_vals)
-            color = "#27ae60" if grr < 0.1 else (ACCENT_WARN if grr < 0.3 else "#e74c3c")
+            color = "#27ae60" if grr < MSA_GRR_ACCEPTABLE else (ACCENT_WARN if grr < MSA_GRR_MARGINAL else "#e74c3c")
             self._add_kpi_tile(i18n.tr("display.kpi_grr"), grr * 100, lambda v: f"{v:.1f}%", color)
         if viol_sum > 0:
             self._add_kpi_tile(i18n.tr("display.kpi_violations"), float(viol_sum),
