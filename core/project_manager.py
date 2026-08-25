@@ -7,12 +7,12 @@ import os
 import io
 import zipfile
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from PySide6.QtCore import QSettings
 
 import pandas as pd
 
-VERSION = "1.5"
+VERSION = "1.6"
 RECENT_MAX = 8
 
 
@@ -24,12 +24,14 @@ class ProjectManager:
     def save_project(path: str, raw_data: Dict[str, pd.DataFrame],
                      analyses: Dict[int, Dict[str, Any]],
                      chart_bytes: Dict[str, bytes],
-                     annotations: str = "") -> str:
+                     annotations: str = "",
+                     project_context: Optional[Dict[str, Any]] = None) -> str:
         """保存项目为 .qap 文件。
 
         raw_data: {sheet_name: DataFrame}
         analyses: {tab_idx: {analysis_type, params, result}}
         chart_bytes: {label: PNG bytes}
+        project_context: {project_name, characteristics, fmea_items, ...} (可选)
         """
         if not path.endswith(".qap"):
             path += ".qap"
@@ -40,6 +42,7 @@ class ProjectManager:
             "sheet_count": len(raw_data),
             "analysis_count": len(analyses),
             "tab_indices": list(analyses.keys()),
+            "has_context": project_context is not None,
         }
 
         with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -63,6 +66,11 @@ class ProjectManager:
             zf.writestr("analyses.json",
                         json.dumps(analyses_serializable, indent=2, ensure_ascii=False, default=str))
 
+            # project context (FMEA/CP/PPAP/8D + 质量特性)
+            if project_context:
+                zf.writestr("context.json",
+                            json.dumps(_sanitize_for_json(project_context), indent=2, ensure_ascii=False, default=str))
+
             # charts
             for label, png_data in chart_bytes.items():
                 zf.writestr(f"charts/{_safe_name(label)}.png", png_data)
@@ -85,6 +93,7 @@ class ProjectManager:
             "analyses": {tab_idx: {...}},
             "chart_bytes": {label: PNG bytes},
             "annotations": str,
+            "project_context": dict | None,
         }
         """
         if not os.path.exists(path):
@@ -95,6 +104,7 @@ class ProjectManager:
         chart_bytes: Dict[str, bytes] = {}
         manifest: Dict = {}
         annotations = ""
+        project_context = None
 
         with zipfile.ZipFile(path, "r") as zf:
             for name in zf.namelist():
@@ -108,6 +118,8 @@ class ProjectManager:
                     raw = json.loads(zf.read(name).decode("utf-8"))
                     for k, v in raw.items():
                         analyses[int(k)] = v
+                elif name == "context.json":
+                    project_context = json.loads(zf.read(name).decode("utf-8"))
                 elif name.startswith("charts/") and name.endswith(".png"):
                     label = name[7:-4]  # strip "charts/" and ".png"
                     chart_bytes[label] = zf.read(name)
@@ -121,6 +133,7 @@ class ProjectManager:
             "analyses": analyses,
             "chart_bytes": chart_bytes,
             "annotations": annotations,
+            "project_context": project_context,
         }
 
     # ── 只读元信息 ────────────────────────────────────
@@ -190,7 +203,8 @@ class SharedProjectManager:
     @staticmethod
     def save_shared(path: str, raw_data: Dict[str, pd.DataFrame],
                     analyses: Dict[int, Dict], chart_bytes: Dict[str, bytes],
-                    department: str, annotations: str = "") -> str:
+                    department: str, annotations: str = "",
+                    project_context: Optional[Dict[str, Any]] = None) -> str:
         """保存项目到共享目录"""
         safe_dept = os.path.basename(department or PUBLIC_DEPT)
         dept_dir = os.path.join(SHARED_DIR, safe_dept)
@@ -204,7 +218,7 @@ class SharedProjectManager:
         if not basename.endswith(".qap"):
             basename += ".qap"
         full_path = os.path.join(dept_dir, basename)
-        return ProjectManager.save_project(full_path, raw_data, analyses, chart_bytes, annotations)
+        return ProjectManager.save_project(full_path, raw_data, analyses, chart_bytes, annotations, project_context)
 
     @staticmethod
     def list_shared(department: str = "", role: str = "") -> List[Dict[str, str]]:
