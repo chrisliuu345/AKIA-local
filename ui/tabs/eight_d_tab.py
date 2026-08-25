@@ -198,6 +198,84 @@ class EightDTab(BaseAnalysisTab):
         w = self._w.get(key)
         return w.toPlainText() if hasattr(w, 'toPlainText') else (w.text() if w else "")
 
+    def import_fmea_causes(self, fmea_items: list):
+        """从 FMEA 导入失效原因到 D4 鱼骨图
+
+        将 FMEA 的 cause 字段按 6M 分类注入鱼骨图骨架。
+        """
+        from analysis.quality.fishbone import CauseNode
+
+        # 按 6M 分类映射（简化版，根据关键词匹配）
+        six_m_mapping = {
+            "人员": ["培训", "技能", "经验", "疲劳", "操作", "人员"],
+            "机器": ["设备", "机器", "精度", "维护", "保养", "磨损"],
+            "材料": ["原料", "材料", "来料", "批次", "成分"],
+            "方法": ["工艺", "参数", "SOP", "流程", "方法", "标准"],
+            "测量": ["量具", "测量", "检测", "仪器", "校准"],
+            "环境": ["温度", "湿度", "振动", "清洁", "环境"],
+        }
+
+        # 收集 FMEA 中的原因
+        causes_by_category = {cat: [] for cat in six_m_mapping}
+        for item in fmea_items:
+            cause = item.get("cause", "") if isinstance(item, dict) else getattr(item, "cause", "")
+            if not cause:
+                continue
+
+            # 匹配到对应的 6M 分类
+            matched = False
+            for category, keywords in six_m_mapping.items():
+                if any(kw in cause for kw in keywords):
+                    causes_by_category[category].append(cause)
+                    matched = True
+                    break
+            if not matched:
+                # 默认归入"方法"
+                causes_by_category["方法"].append(cause)
+
+        # 构建鱼骨图分支
+        branches_6m = {}
+        for category, causes in causes_by_category.items():
+            root = CauseNode(name=category)
+            # 去重
+            unique_causes = list(dict.fromkeys(causes))
+            for cause in unique_causes[:5]:  # 每个分支最多5个原因
+                root.children.append(CauseNode(name=cause, level=1))
+            if root.children:  # 只添加有原因的分支
+                branches_6m[category] = root
+
+        # 更新鱼骨图
+        canvas = self._w.get("d4_fishbone")
+        if canvas and branches_6m:
+            problem = self._w.get("d4_root", QLineEdit()).text() or ""
+            canvas.render_fishbone(branches_6m, problem=problem)
+
+            QMessageBox.information(self, "导入完成",
+                                    f"已从 FMEA 导入 {len(fmea_items)} 个失效原因到鱼骨图。")
+        else:
+            QMessageBox.information(self, "导入提示",
+                                    "未找到可匹配的失效原因，或鱼骨图未加载。")
+
+    def check_standards_update(self) -> dict:
+        """检查 D7 标准更新状态，返回需要复审的信息
+
+        Returns: {
+            "has_update": bool,
+            "standards_updated": str,
+            "preventive_actions": str,
+            "review_needed": bool,
+        }
+        """
+        standards = self._text("d7_std")
+        preventive = self._text("d7_prev")
+
+        return {
+            "has_update": bool(standards),
+            "standards_updated": standards,
+            "preventive_actions": preventive,
+            "review_needed": bool(standards),  # 有标准更新就需要复审
+        }
+
     def _save(self):
         r = self.report
         r.title = self._w["title"].text()
