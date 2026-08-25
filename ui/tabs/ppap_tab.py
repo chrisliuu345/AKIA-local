@@ -166,6 +166,73 @@ class PPAPTab(BaseAnalysisTab):
         pct = self.report.completion_pct
         self.pct_label.setText(f"完成度: {pct}% (等级{level}: {len(self.report.required_items())}项)")
 
+    def auto_populate_from_analyses(self, analyses: dict):
+        """从分析结果自动填充 PPAP 项目状态
+
+        Args:
+            analyses: {tab_idx: {analysis_type, params, result}} 分析结果字典
+        """
+        updated = []
+
+        # 扫描分析结果，填充 #8 (MSA) 和 #11 (初始能力)
+        for idx, analysis in analyses.items():
+            analysis_type = analysis.get("analysis_type", "")
+            result = analysis.get("result", {})
+
+            # #8: MSA — Gage R&R 或 Type 1
+            if "R&R" in analysis_type or "Type 1" in analysis_type or "MSA" in analysis_type:
+                pct_grr = result.get("percentages", {}).get("pct_grr", 0)
+                cap = result.get("capability", {})
+                is_capable = cap.get("is_capable", False) if cap else (pct_grr < 30)
+
+                status = "complete" if is_capable else "in_progress"
+                self.report.items[7].status = status  # PPAP #8 (index 7)
+                cb = self.matrix.cellWidget(7, 2)
+                if cb:
+                    cb.setCurrentText(status)
+                updated.append(f"#8 MSA: {status}")
+
+            # #11: 初始能力 — Capability 分析
+            elif "能力" in analysis_type or "Capability" in analysis_type:
+                cap = result.get("capability", {})
+                cpk = cap.get("cpk", 0)
+                is_capable = cpk >= 1.33 if cpk else False
+
+                status = "complete" if is_capable else "in_progress"
+                self.report.items[10].status = status  # PPAP #11 (index 10)
+                cb = self.matrix.cellWidget(10, 2)
+                if cb:
+                    cb.setCurrentText(status)
+                updated.append(f"#11 能力: Cpk={cpk:.2f} → {status}")
+
+            # #4: DFMEA — FMEA 分析
+            elif "FMEA" in analysis_type:
+                status = "complete"
+                self.report.items[3].status = status  # PPAP #4 (index 3)
+                cb = self.matrix.cellWidget(3, 2)
+                if cb:
+                    cb.setCurrentText(status)
+                updated.append(f"#4 FMEA: {status}")
+
+            # #7: 控制计划
+            elif "控制计划" in analysis_type or "Control Plan" in analysis_type:
+                status = "complete"
+                self.report.items[6].status = status  # PPAP #7 (index 6)
+                cb = self.matrix.cellWidget(6, 2)
+                if cb:
+                    cb.setCurrentText(status)
+                updated.append(f"#7 控制计划: {status}")
+
+        self._update_pct()
+
+        if updated:
+            QMessageBox.information(self, "PPAP 自动填充",
+                                    f"已更新以下项目:\n" + "\n".join(updated))
+        else:
+            QMessageBox.information(self, "PPAP 自动填充",
+                                    "未找到可填充的分析结果。\n"
+                                    "请先运行 MSA/能力/FMEA 分析。")
+
     def _save(self):
         self.report.part_number = self.part_no.text()
         self.report.part_name = self.part_name.text()

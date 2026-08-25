@@ -65,6 +65,13 @@ class FMEATab(BaseAnalysisTab):
         self.btn_sort.clicked.connect(self._sort)
         toolbar.addWidget(self.btn_sort)
 
+        self.btn_gen_cp = QPushButton("生成控制计划")
+        self.btn_gen_cp.setStyleSheet(BUTTON_SECONDARY)
+        self.btn_gen_cp.setCursor(Qt.PointingHandCursor)
+        self.btn_gen_cp.setToolTip("将高风险项(RPN≥100)自动转换为控制计划行")
+        self.btn_gen_cp.clicked.connect(self._generate_cp)
+        toolbar.addWidget(self.btn_gen_cp)
+
         self.btn_export = QPushButton("导出Excel")
         self.btn_export.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.btn_export.setCursor(Qt.PointingHandCursor)
@@ -125,6 +132,45 @@ class FMEATab(BaseAnalysisTab):
     def _sort(self):
         self._items = self._engine.sort_by_rpn(self._items)
         self._rebuild_table()
+
+    def _generate_cp(self):
+        """将高风险 FMEA 条目生成控制计划行"""
+        # 统计高风险项
+        high_risk = [item for item in self._items if item.rpn >= 100]
+        if not high_risk:
+            QMessageBox.information(self, "生成控制计划",
+                                    "没有高风险项(RPN≥100)，无需生成控制计划。")
+            return
+
+        reply = QMessageBox.question(
+            self, "生成控制计划",
+            f"将 {len(high_risk)} 个高风险项(RPN≥100)生成控制计划行？\n"
+            f"将自动切换到控制计划 Tab 并导入数据。"
+        )
+        if reply != QMessageBox.Yes:
+            return
+
+        # 生成 CP 行
+        cp_rows = self._engine.generate_cp_rows(self._items, rpn_threshold=100)
+
+        # 存储到 current_result 供外部读取
+        self.current_result = {
+            "analysis_type": "FMEA → CP",
+            "params": {"rpn_threshold": 100},
+            "result": {"cp_rows": cp_rows, "source": "fmea"},
+            "chart_data": {},
+        }
+
+        # 通知主窗口切换到控制计划 Tab 并导入数据
+        main_win = self.window()
+        if hasattr(main_win, '_import_cp_from_fmea'):
+            main_win._import_cp_from_fmea(cp_rows)
+        else:
+            # 备用方案：直接通过 signal 通知
+            self.analysis_completed.emit()
+
+        QMessageBox.information(self, "生成完成",
+                                f"已生成 {len(cp_rows)} 行控制计划，请切换到控制计划 Tab 查看。")
 
     def _export(self):
         path, _ = QFileDialog.getSaveFileName(self, "导出FMEA", "FMEA.xlsx", "Excel (*.xlsx)")
