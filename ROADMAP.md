@@ -353,7 +353,7 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 
 **实际**：15 个文件，删除/简化 ~800 行（main_window.py -192行，settings_dialog.py -135行，main.py -13行，测试文件 -100行，5个文件全删 -1200行）
 
-### 阶段 2: 离线许可系统（标准版安全方案）
+### 阶段 2: 离线许可系统（标准版安全方案） ✅ 已完成
 
 **安全层级**：
 
@@ -367,15 +367,15 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 | L6 | VM/模拟器检测 | 防止分析环境 |
 
 **新建文件**：
-- `core/license.py` — 主模块：硬件ID采集 + Ed25519验证 + AES解密 + 完整性校验
+- `core/license.py` — 主模块：硬件ID采集 + Ed25519验证 + 完整性校验
 - `core/license_keys.py` — 内置公钥（Ed25519 Raw, 32 bytes）
-- `core/anti_debug.py` — 分散式反调试
+- `core/anti_debug.py` — 分散式反调试（67 个检查点）
 - `core/integrity.py` — 运行时完整性校验
 - `tools/license_generator.py` — 离线签发工具（开发者用，含私钥）
 - `ui/dialogs/license_dialog.py` — 激活对话框
 - `tests/test_license.py` — license 单元测试
 
-**预计**：7 个新建，+900 行
+**实际**：7 个新建，+900 行
 
 ### 阶段 3: 构建方式切换 Nuitka
 
