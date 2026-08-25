@@ -353,7 +353,7 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 
 **Actual**: 15 files, deleted/simplified ~800 lines (main_window.py -192, settings_dialog.py -135, main.py -13, test files -100, 5 files fully deleted -1200)
 
-### Phase 2: Offline License System (Standard Security)
+### Phase 2: Offline License System (Standard Security) ✅ Complete
 
 **Security layers**:
 
@@ -367,15 +367,15 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 | L6 | VM/emulator detection | Prevent analysis environments |
 
 **New files**:
-- `core/license.py` — main module: hardware ID + Ed25519 verify + AES decrypt + integrity
+- `core/license.py` — main module: hardware ID + Ed25519 verify + integrity
 - `core/license_keys.py` — embedded public key (Ed25519 Raw, 32 bytes)
-- `core/anti_debug.py` — scattered anti-debugging
+- `core/anti_debug.py` — scattered anti-debugging (67 check points)
 - `core/integrity.py` — runtime integrity verification
 - `tools/license_generator.py` — offline signing tool (developer, contains private key)
 - `ui/dialogs/license_dialog.py` — activation dialog
 - `tests/test_license.py` — license unit tests
 
-**Estimated**: 7 new files, +900 lines
+**Actual**: 7 new files, +900 lines
 
 ### Phase 3: Build Migration — Nuitka + PyArmor
 
