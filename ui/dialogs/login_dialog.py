@@ -3,12 +3,13 @@
 认证加固：登录锁定提示 + must_change_password 强制改密 + W11 默认凭据提示控制
 """
 
+import os
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QLabel, QPushButton,
-    QLineEdit, QMessageBox,
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
+    QLineEdit, QMessageBox, QWidget,
 )
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QPixmap, QIcon
 
 from core.auth import AuthManager, User
 from core.password_policy import validate_password
@@ -98,43 +99,61 @@ class LoginDialog(QDialog):
     def _setup_ui(self):
         tc = theme_colors()
         self.setWindowTitle("QA-Tool — 登录")
-        self.setFixedSize(380, 240)
+        self.setFixedSize(380, 300)
         self.setStyleSheet(f"background-color: {tc['bg_body']};")
 
         layout = QVBoxLayout(self)
-        layout.setSpacing(14)
-        layout.setContentsMargins(40, 30, 40, 20)
+        layout.setSpacing(6)
+        layout.setContentsMargins(40, 20, 40, 16)
 
-        title = QLabel("🔐 QA-Tool")
-        title.setFont(QFont("Microsoft YaHei", 18, QFont.Bold))
+        # Logo 图标
+        logo_path = os.path.join(os.path.dirname(__file__), "..", "..", "assets", "logo.ico")
+        if not os.path.exists(logo_path):
+            logo_path = os.path.join(os.path.dirname(__file__), "..", "..", "logo.png")
+        if os.path.exists(logo_path):
+            logo_label = QLabel()
+            logo_pixmap = QPixmap(logo_path).scaled(48, 48, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            logo_label.setPixmap(logo_pixmap)
+            logo_label.setAlignment(Qt.AlignCenter)
+            layout.addWidget(logo_label)
+
+        # 标题
+        title = QLabel("QA-Tool")
+        title.setFont(QFont("Microsoft YaHei", 20, QFont.Bold))
         title.setAlignment(Qt.AlignCenter)
-        title.setStyleSheet(f"color: {tc['accent_bright']};")
+        title.setStyleSheet(f"color: {tc['text_primary']};")
         layout.addWidget(title)
 
-        self.user_edit = QLineEdit()
-        self.user_edit.setPlaceholderText("用户名")
-        self.user_edit.setMinimumHeight(34)
-        self.user_edit.setStyleSheet(
-            f"QLineEdit {{ background: {tc['bg_card']}; color: {tc['text_primary']};"
-            f"border: 1px solid {tc['border']}; border-radius: 6px; padding: 6px 12px; }}"
-        )
-        layout.addWidget(self.user_edit)
+        # 副标题
+        subtitle = QLabel("质量工程分析平台")
+        subtitle.setFont(QFont("Microsoft YaHei", 9))
+        subtitle.setAlignment(Qt.AlignCenter)
+        subtitle.setStyleSheet(f"color: {tc['text_muted']};")
+        layout.addWidget(subtitle)
 
-        self.pass_edit = QLineEdit()
-        self.pass_edit.setPlaceholderText("密码")
-        self.pass_edit.setEchoMode(QLineEdit.Password)
-        self.pass_edit.setMinimumHeight(34)
-        self.pass_edit.setStyleSheet(self.user_edit.styleSheet())
+        layout.addSpacing(8)
+
+        # 用户名输入框 (带图标)
+        user_row = self._make_input_row("👤", "用户名", tc)
+        self.user_edit = user_row["input"]
+        layout.addWidget(user_row["widget"])
+
+        # 密码输入框 (带图标)
+        pass_row = self._make_input_row("🔑", "密码", tc, echo=QLineEdit.Password)
+        self.pass_edit = pass_row["input"]
         self.pass_edit.returnPressed.connect(self._on_login)
-        layout.addWidget(self.pass_edit)
+        layout.addWidget(pass_row["widget"])
 
+        layout.addSpacing(4)
+
+        # 登录按钮
         self.login_btn = QPushButton("登 录")
-        self.login_btn.setMinimumHeight(40)
-        self.login_btn.setFont(QFont("Microsoft YaHei", 12, QFont.Bold))
+        self.login_btn.setMinimumHeight(38)
+        self.login_btn.setFont(QFont("Microsoft YaHei", 11, QFont.Bold))
         self.login_btn.setCursor(Qt.PointingHandCursor)
         self.login_btn.setStyleSheet(
             f"QPushButton {{ background-color: {tc['accent']}; color: #fff;"
-            f"border: none; border-radius: 8px; }}"
+            f"border: none; border-radius: 6px; }}"
             f"QPushButton:hover {{ background-color: {tc['accent_bright']}; }}"
         )
         self.login_btn.clicked.connect(self._on_login)
@@ -145,8 +164,41 @@ class LoginDialog(QDialog):
         if hint_text:
             hint = QLabel(hint_text)
             hint.setAlignment(Qt.AlignCenter)
-            hint.setStyleSheet(f"color: {tc['text_muted']}; font-size: 11px;")
+            hint.setStyleSheet(f"color: {tc['text_muted']}; font-size: 10px;")
             layout.addWidget(hint)
+
+    def _make_input_row(self, icon: str, placeholder: str, tc: dict, echo=None) -> dict:
+        """创建带图标的输入框行"""
+        container = QWidget()
+        row = QHBoxLayout(container)
+        row.setContentsMargins(0, 0, 0, 0)
+        row.setSpacing(0)
+
+        # 图标
+        icon_label = QLabel(icon)
+        icon_label.setFixedSize(32, 34)
+        icon_label.setAlignment(Qt.AlignCenter)
+        icon_label.setStyleSheet(
+            f"background: {tc['bg_card']}; color: {tc['text_muted']};"
+            f"border: 1px solid {tc['border']}; border-radius: 6px 0 0 6px;"
+            f"border-right: none; font-size: 14px;"
+        )
+        row.addWidget(icon_label)
+
+        # 输入框
+        input_edit = QLineEdit()
+        input_edit.setPlaceholderText(placeholder)
+        input_edit.setMinimumHeight(34)
+        if echo:
+            input_edit.setEchoMode(echo)
+        input_edit.setStyleSheet(
+            f"QLineEdit {{ background: {tc['bg_card']}; color: {tc['text_primary']};"
+            f"border: 1px solid {tc['border']}; border-radius: 0 6px 6px 0;"
+            f"padding: 6px 12px; }}"
+        )
+        row.addWidget(input_edit)
+
+        return {"widget": container, "input": input_edit}
 
     def _get_default_hint(self) -> str:
         """W11: 仅在 admin 未改密时显示默认凭据提示"""

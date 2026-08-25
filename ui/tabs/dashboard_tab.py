@@ -18,6 +18,7 @@ from ui.theme import colors as theme_colors
 from ui.widgets.elided_label import ElidedLabel
 from ui.widgets.animate import fade_in
 from ui.widgets.analysis_card import AnalysisCard
+from config.settings import CAPABILITY_GRADES, MSA_GRR_ACCEPTABLE, MSA_GRR_MARGINAL, OEE_WORLD_CLASS, OEE_GOOD
 from core.formatting import format_cp, format_pvalue, format_pct
 from core.i18n import i18n
 from core.kpi_extractor import extract_metrics
@@ -82,9 +83,11 @@ _STATUS_COLORS = {"na": "#6e7080", "good": "#27ae60", "warn": "#ffa726", "bad": 
 def _cpk_status(cpk):
     if cpk is None:
         return None
-    if cpk < 1.0:
+    cpk_b = CAPABILITY_GRADES["B"][0]  # 1.00
+    cpk_a = CAPABILITY_GRADES["A"][0]  # 1.33
+    if cpk < cpk_b:
         return "bad"
-    if cpk < 1.33:
+    if cpk < cpk_a:
         return "warn"
     return "good"
 
@@ -92,9 +95,9 @@ def _cpk_status(cpk):
 def _oee_status(oee):
     if oee is None:
         return None
-    if oee < 0.6:
+    if oee < OEE_GOOD:
         return "bad"
-    if oee < 0.8:
+    if oee < OEE_WORLD_CLASS:
         return "warn"
     return "good"
 
@@ -102,9 +105,9 @@ def _oee_status(oee):
 def _grr_status(grr):
     if grr is None:
         return None
-    if grr >= 0.3:
+    if grr >= MSA_GRR_MARGINAL:
         return "bad"
-    if grr >= 0.1:
+    if grr >= MSA_GRR_ACCEPTABLE:
         return "warn"
     return "good"
 

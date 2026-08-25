@@ -1,11 +1,12 @@
 """FMEA 失效模式与影响分析引擎 — DFMEA/PFMEA 数据模型 + RPN 计算
 
 RPN = 严重度(S) × 发生度(O) × 检出度(D)
-分级: RPN ≥ 100 高风险(红), ≥ 50 中风险(橙), < 50 低风险
+分级: RPN >= RPN_HIGH(100) 高风险(红), >= RPN_MEDIUM(50) 中风险(橙), < 50 低风险
 """
 
 from dataclasses import dataclass
 from typing import List
+from config.settings import RPN_CRITICAL, RPN_HIGH, RPN_MEDIUM
 
 
 @dataclass
@@ -30,9 +31,9 @@ class FMEAItem:
 
     @property
     def risk_level(self) -> str:
-        if self.rpn >= 100:
+        if self.rpn >= RPN_HIGH:
             return "high"
-        if self.rpn >= 50:
+        if self.rpn >= RPN_MEDIUM:
             return "medium"
         return "low"
 
@@ -131,7 +132,7 @@ class FMEAEngine:
         return pd.DataFrame(data, columns=FMEAItem.HEADERS)
 
     @staticmethod
-    def generate_cp_rows(items: List[FMEAItem], rpn_threshold: int = 100) -> list:
+    def generate_cp_rows(items: List[FMEAItem], rpn_threshold: int = RPN_HIGH) -> list:
         """从高风险 FMEA 条目生成控制计划行
 
         映射关系:
@@ -168,9 +169,9 @@ class FMEAEngine:
                 control_method = f"{item.control} → {item.recommended_action}"
 
             # 反应计划：基于风险等级
-            if item.rpn >= 200:
+            if item.rpn >= RPN_CRITICAL:
                 reaction = "停线+通知质量/工程"
-            elif item.rpn >= 100:
+            elif item.rpn >= RPN_HIGH:
                 reaction = "隔离+通知责任人"
             else:
                 reaction = "记录+跟踪"

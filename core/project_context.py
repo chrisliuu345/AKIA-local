@@ -7,6 +7,7 @@
 from dataclasses import dataclass, field
 from typing import Dict, Any, List, Optional
 from datetime import datetime
+from config.settings import RPN_HIGH
 
 
 @dataclass
@@ -121,7 +122,7 @@ class ProjectContext:
         return self.analysis_snapshots.get(key)
 
     # ── 五链查询 ──────────────────────────────────────
-    def get_high_risk_fmea_items(self, threshold: int = 100) -> List[dict]:
+    def get_high_risk_fmea_items(self, threshold: int = RPN_HIGH) -> List[dict]:
         """获取高风险 FMEA 条目 (RPN >= threshold)"""
         return [item for item in self.fmea_items if item.get("rpn", 0) >= threshold]
 
