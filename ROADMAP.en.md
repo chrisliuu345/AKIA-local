@@ -326,23 +326,83 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 
 ---
 
-## v2.9.0 — Integration Deepening & Report Pipeline (TBD)
+## v2.9.0 — Security Architecture Refactor + Offline License System (TBD)
 
-> Theme: cross-module result reuse + report auto-aggregation + v2.7.0 P3 spillover wrap-up.
+> Theme: remove RBAC auth system → implement offline license verification → migrate build to Nuitka.
+> Positioning: prepare for commercial licensing while significantly improving anti-cracking capabilities.
 
-### Report Pipeline
-- Report template auto-aggregation: one-click pull of latest Cpk / %GRR / SPC violations / 8D status / PPAP completion into the template context (currently callers must build the context dict manually)
+### Phase 1: Remove Auth System
 
-### Cross-Tab Result Reuse
-- SPC ↔ capability share σ (one computation per dataset; control-state vs summary-state unified)
-- MSA measurement error injected into capability analysis (measurement-uncertainty-corrected Cpk, optional toggle)
+**Delete files**:
+- `core/auth.py` (408 lines) — AuthManager, User, 4-tier role permissions
+- `core/password_policy.py` (23 lines) — password complexity validation
+- `ui/dialogs/login_dialog.py` (239 lines) — login dialog
+- `ui/dialogs/user_management_dialog.py` (276 lines) — user management dialog
+- `tests/test_auth_hardening.py` — auth hardening tests
+- `tests/test_rbac_ui.py` — RBAC UI tests
+- `tests/test_security_fixes.py` — security fix tests
+- `TEMP/qa-tool-security-fix-backup/` — backup directory
 
-### v2.7.0 P3 Wrap-up
-- I-MR-R/BW charts · fractional factorial / Taguchi designs · logistic regression · residual diagnostic 4-plot
+**Simplify files**:
+- `core/audit.py` — remove auth audit events, keep general audit
+- `ui/main_window.py` — remove 28 `_check_permission` calls + role logic
+- `ui/dialogs/settings_dialog.py` — remove account tab
+- `ui/sidebar.py` — remove `set_permission_filter`
+- `ui/welcome_page.py` — remove `set_permission_filter`
+- `main.py` — remove AuthManager + LoginDialog, simplify startup
+
+**Estimated**: ~15 files, -1500 lines
+
+### Phase 2: Offline License System (Standard Security)
+
+**Security layers**:
+
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| L1 | Ed25519 asymmetric signing | License unforgeable (no private key in binary) |
+| L2 | Hardware fingerprint binding | License bound to specific machine (CPU+board+disk+MAC) |
+| L3 | AES-256-GCM encryption | License content encrypted at rest |
+| L4 | Runtime integrity checks | Multi-point SHA-256 verification against tampering |
+| L5 | Anti-debugging checks | 50+ scattered detection points (sys.gettrace/process scan/timing) |
+| L6 | VM/emulator detection | Prevent analysis environments |
+
+**New files**:
+- `core/license.py` — main module: hardware ID + Ed25519 verify + AES decrypt + integrity
+- `core/license_keys.py` — embedded public key (Ed25519 Raw, 32 bytes)
+- `core/anti_debug.py` — scattered anti-debugging
+- `core/integrity.py` — runtime integrity verification
+- `tools/license_generator.py` — offline signing tool (developer, contains private key)
+- `ui/dialogs/license_dialog.py` — activation dialog
+- `tests/test_license.py` — license unit tests
+
+**Estimated**: 7 new files, +900 lines
+
+### Phase 3: Build Migration — Nuitka + PyArmor
+
+**Nuitka compilation**:
+- Python → C → native machine code (irreversible decompilation)
+- Replaces PyInstaller (.pyc trivially decompiled in seconds)
+- Output: 10-50MB exe, 10-20% faster startup
+
+**PyArmor Pro protection** (¥512, one-time):
+- BCC mode: critical functions compiled to C
+- RFT mode: rename all identifiers
+- FLY mode: control flow flattening
+- Purchase: https://pyarmor.dashingsoft.com/cart/order.html
+- Payment: WeChat / Alipay / Bank Transfer (China)
+
+**New/modified files**:
+- `build_nuitka.py` — Nuitka build script
+- `pyarmor_config.py` — PyArmor BCC config
+- `pyproject.toml` — update build config
+- `.github/workflows/build.yml` — CI switched to Nuitka
 
 ### Acceptance Criteria
-- Integration tests cover all integration links (v2.8.0's five links + report aggregation)
 - Full pytest suite passes
+- Nuitka build succeeds, no .pyc file leakage
+- License sign → activate → verify full workflow passes
+- Hardware fingerprint binding verified: machine change requires re-activation
+- Anti-debug checks verified (50+ scattered points)
 
 ---
 
