@@ -326,23 +326,83 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 
 ---
 
-## v2.9.0 — 深化整合与报告贯通（待开发）
+## v2.9.0 — 安全架构重构 + 离线许可系统（待开发）
 
-> 主题：跨模块结果复用 + 报告自动聚合 + v2.7.0 P3 溢出收尾。
+> 主题：移除 RBAC 角色权限系统 → 实现离线许可验证 → 构建方式切换 Nuitka。
+> 定位：为未来许可商业化做准备，同时大幅提升反破解能力。
 
-### 报告贯通
-- 报告模板自动聚合：一键拉取最新 Cpk / %GRR / SPC 违规 / 8D 状态 / PPAP 完成度等填充模板上下文（当前需调用方手动传 context dict）
+### 阶段 1: 删除 Auth 系统
 
-### 跨 Tab 结果复用
-- SPC ↔ 能力分析共享 σ（同一数据一次计算，控制态/汇总态统一）
-- MSA 测量误差注入能力分析（测量不确定度修正的 Cpk，可选开关）
+**删除文件**：
+- `core/auth.py` (408行) — AuthManager、User、4级角色权限矩阵
+- `core/password_policy.py` (23行) — 密码复杂度校验
+- `ui/dialogs/login_dialog.py` (239行) — 登录对话框
+- `ui/dialogs/user_management_dialog.py` (276行) — 用户管理对话框
+- `tests/test_auth_hardening.py` — auth 加固测试
+- `tests/test_rbac_ui.py` — RBAC UI 测试
+- `tests/test_security_fixes.py` — 安全修复测试
+- `TEMP/qa-tool-security-fix-backup/` — 备份目录
 
-### v2.7.0 P3 收尾
-- I-MR-R/BW 控制图 · 部分因子/田口设计 · Logistic 回归 · 残差诊断四图
+**简化文件**：
+- `core/audit.py` — 移除 auth 审计事件，保留通用审计
+- `ui/main_window.py` — 移除 28 处 `_check_permission` 调用 + 角色逻辑
+- `ui/dialogs/settings_dialog.py` — 移除账户标签页
+- `ui/sidebar.py` — 移除 `set_permission_filter`
+- `ui/welcome_page.py` — 移除 `set_permission_filter`
+- `main.py` — 移除 AuthManager + LoginDialog，简化启动
+
+**预计**：~15 个文件，-1500 行
+
+### 阶段 2: 离线许可系统（标准版安全方案）
+
+**安全层级**：
+
+| 层级 | 技术 | 作用 |
+|------|------|------|
+| L1 | Ed25519 非对称签名 | License 不可伪造（无私钥） |
+| L2 | 硬件指纹绑定 | License 绑定特定机器（CPU+主板+磁盘+MAC） |
+| L3 | AES-256-GCM 加密 | License 内容加密存储 |
+| L4 | 运行时完整性校验 | 多点 SHA-256 校验防篡改 |
+| L5 | 反调试检查 | 50+ 处分散检测（sys.gettrace/进程扫描/时序分析） |
+| L6 | VM/模拟器检测 | 防止分析环境 |
+
+**新建文件**：
+- `core/license.py` — 主模块：硬件ID采集 + Ed25519验证 + AES解密 + 完整性校验
+- `core/license_keys.py` — 内置公钥（Ed25519 Raw, 32 bytes）
+- `core/anti_debug.py` — 分散式反调试
+- `core/integrity.py` — 运行时完整性校验
+- `tools/license_generator.py` — 离线签发工具（开发者用，含私钥）
+- `ui/dialogs/license_dialog.py` — 激活对话框
+- `tests/test_license.py` — license 单元测试
+
+**预计**：7 个新建，+900 行
+
+### 阶段 3: 构建方式切换 Nuitka + PyArmor
+
+**Nuitka 编译**：
+- Python → C → 原生机器码（不可逆向还原）
+- 替代 PyInstaller（.pyc 可秒级反编译）
+- 输出 10-50MB exe，启动速度提升 10-20%
+
+**PyArmor Pro 保护**（¥512，一次性）：
+- BCC 模式：关键函数转为编译 C 代码
+- RFT 模式：重命名所有标识符
+- FLY 模式：控制流扁平化
+- 购买地址：https://pyarmor.dashingsoft.com/cart/order.html
+- 支付方式：微信 / 支付宝 / 银行转账
+
+**新建/修改文件**：
+- `build_nuitka.py` — Nuitka 构建脚本
+- `pyarmor_config.py` — PyArmor BCC 配置
+- `pyproject.toml` — 更新构建配置
+- `.github/workflows/build.yml` — CI 改用 Nuitka
 
 ### 验收标准
-- 集成测试覆盖全部贯通链路（v2.8.0 五链 + 报告聚合）
 - 全量 pytest 通过
+- Nuitka 构建成功，无 .pyc 文件泄漏
+- License 签发 → 激活 → 验证 全流程通过
+- 硬件指纹绑定验证：换机需重新激活
+- 反调试检查分散验证（50+ 处）
 
 ---
 
