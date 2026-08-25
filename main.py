@@ -214,7 +214,7 @@ def main():
         if pct == 28:
             from ui.main_window import MainWindow
         elif pct == 70:
-            window = MainWindow(user=None, splash=splash)
+            window = MainWindow(splash=splash)
 
     # ── 关闭 Splash，显示主窗口 ──
     splash.close()
