@@ -568,6 +568,47 @@ class MainWindow(QMainWindow):
                 if tab is not None and hasattr(tab, 'refresh_if_changed'):
                     tab.refresh_if_changed()
 
+    def _import_cp_from_fmea(self, cp_rows: list):
+        """从 FMEA 导入控制计划行"""
+        # 控制计划 Tab 在 _tab_registry 中的索引
+        from ui._tab_registry import TAB_REGISTRY
+        cp_idx = None
+        for idx, entry in enumerate(TAB_REGISTRY):
+            if "控制计划" in str(entry):
+                cp_idx = idx
+                break
+        if cp_idx is None:
+            return
+
+        # 懒加载控制计划 Tab
+        self._lazy_load_tab(cp_idx)
+        cp_tab = self._tab_cache.get(cp_idx)
+        if cp_tab is None:
+            return
+
+        # 导入数据
+        if hasattr(cp_tab, '_rows'):
+            cp_tab._rows.extend(cp_rows)
+            cp_tab._rebuild_table()
+
+        # 切换到控制计划 Tab
+        self._switch_tab(cp_idx)
+
+    def _import_spc_from_cp(self, spc_items: list):
+        """从控制计划导入 SPC 监控清单"""
+        # 存储 SPC 清单供 SPC Tab 使用
+        self._spc_monitoring_list = spc_items
+
+        # 切换到 SPC Tab
+        from ui._tab_registry import TAB_REGISTRY
+        spc_idx = None
+        for idx, entry in enumerate(TAB_REGISTRY):
+            if "SPC" in str(entry):
+                spc_idx = idx
+                break
+        if spc_idx is not None:
+            self._switch_tab(spc_idx)
+
     def _on_import_quality(self):
         if not self._check_permission("import"):
             return

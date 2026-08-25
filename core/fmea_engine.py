@@ -129,3 +129,63 @@ class FMEAEngine:
         import pandas as pd
         data = [i.to_row() for i in items]
         return pd.DataFrame(data, columns=FMEAItem.HEADERS)
+
+    @staticmethod
+    def generate_cp_rows(items: List[FMEAItem], rpn_threshold: int = 100) -> list:
+        """从高风险 FMEA 条目生成控制计划行
+
+        映射关系:
+        - FMEA.function → CP.工序名称
+        - FMEA.failure_mode + FMEA.cause → CP.特性
+        - FMEA.control → CP.控制方法
+        - FMEA.recommended_action → CP.反应计划
+        - FMEA.severity → 决定抽样频率
+
+        Returns: List[list]，每个 list 对应 CP_HEADERS 的一行
+        """
+        cp_rows = []
+        for item in items:
+            if item.rpn < rpn_threshold:
+                continue
+
+            # 根据严重度决定抽样频率
+            if item.severity >= 8:
+                frequency = "每件"
+                sample_size = "100%"
+            elif item.severity >= 5:
+                frequency = "每小时"
+                sample_size = "5"
+            else:
+                frequency = "每批"
+                sample_size = "10"
+
+            # 生成特性描述
+            characteristic = f"{item.failure_mode} ({item.cause})" if item.cause else item.failure_mode
+
+            # 控制方法：现有控制 + 推荐措施
+            control_method = item.control
+            if item.recommended_action:
+                control_method = f"{item.control} → {item.recommended_action}"
+
+            # 反应计划：基于风险等级
+            if item.rpn >= 200:
+                reaction = "停线+通知质量/工程"
+            elif item.rpn >= 100:
+                reaction = "隔离+通知责任人"
+            else:
+                reaction = "记录+跟踪"
+
+            cp_row = [
+                f"OP{len(cp_rows)*10+10:02d}",  # 工序编号
+                item.function,                     # 工序名称
+                characteristic,                    # 特性
+                "",                                # 规格/公差 (需手动填写)
+                "",                                # 测量方法 (需手动填写)
+                sample_size,                       # 样本量
+                frequency,                         # 抽样频率
+                control_method,                    # 控制方法
+                reaction,                          # 反应计划
+            ]
+            cp_rows.append(cp_row)
+
+        return cp_rows
