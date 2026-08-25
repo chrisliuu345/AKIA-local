@@ -1,6 +1,6 @@
 """
 QA-Tool — 主入口
-Minitab式启动: Splash画面 → 精细化进度 → 主窗口 → 登录
+Minitab式启动: Splash画面 → 精细化进度 → 主窗口
 """
 
 import sys
@@ -211,10 +211,7 @@ def main():
         app.processEvents()
 
         # 在特定阶段执行实际初始化
-        if pct == 10:
-            from core.auth import AuthManager
-            auth = AuthManager()
-        elif pct == 28:
+        if pct == 28:
             from ui.main_window import MainWindow
         elif pct == 70:
             window = MainWindow(user=None, splash=splash)
@@ -227,17 +224,7 @@ def main():
     if os.path.exists(LOGO_PATH):
         window.setWindowIcon(QIcon(LOGO_PATH))
 
-    # ── 登录 ──
-    from ui.dialogs.login_dialog import LoginDialog
-    login = LoginDialog(auth, parent=window)
-    if login.exec() != LoginDialog.Accepted:
-        window.close()
-        return 0
-
-    window.current_user = login.user
-    window.refresh_menu_for_user()
-    role_suffix = f" — {login.user.role}" if login.user else ""
-    window.setWindowTitle(f"{APP_NAME} v{APP_VERSION}{role_suffix}")
+    window.setWindowTitle(f"{APP_NAME} v{APP_VERSION}")
 
     try:
         return app.exec()

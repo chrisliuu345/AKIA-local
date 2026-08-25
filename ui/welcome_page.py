@@ -26,7 +26,6 @@ class WelcomePage(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._recent_items: list = []  # [(name, path), ...]
-        self._card_permissions: list = []  # [(card_widget, permission_or_None), ...]
         self._setup_ui()
 
     def set_recent_projects(self, items: list):
@@ -94,16 +93,15 @@ class WelcomePage(QWidget):
         cards_layout.addStretch()
 
         card_defs = [
-            ("", "导入工作表", "Excel/CSV → SPC/能力/MSA/图表/工程工具…", self.import_data_clicked, "import"),
-            ("", "导入IE数据", "工序表/时间观测/物流/资源 → IE工具", self.import_ie_clicked, "import"),
+            ("", "导入工作表", "Excel/CSV → SPC/能力/MSA/图表/工程工具…", self.import_data_clicked, None),
+            ("", "导入IE数据", "工序表/时间观测/物流/资源 → IE工具", self.import_ie_clicked, None),
             ("", "最近项目", "打开最近使用的 .qap 项目", self.open_project_clicked, None),
             ("", "新建分析", "直接跳转到 SPC 分析模块", self.new_analysis_clicked, None),
             ("", i18n.tr("sidebar.diagnose"), "一键智能诊断数据质量", self.diagnose_clicked, None),
         ]
 
-        for _, title, desc, signal, perm in card_defs:
+        for _, title, desc, signal, _perm in card_defs:
             card = self._make_card(title, desc, signal)
-            self._card_permissions.append((card, perm))
             cards_layout.addWidget(card)
 
         cards_layout.addStretch()
@@ -279,8 +277,3 @@ class WelcomePage(QWidget):
 
     def refresh_texts(self):
         self.title_label.setText(i18n.tr("welcome.title"))
-
-    def set_permission_filter(self, allowed_permissions: set):
-        """根据权限过滤欢迎页卡片 — 无权限的卡片隐藏"""
-        for card, perm in self._card_permissions:
-            card.setVisible(perm is None or perm in allowed_permissions)

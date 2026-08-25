@@ -1,27 +1,5 @@
 """v2.6.1 安全校验回归测试: 密码策略 / DPAPI 凭据存储 / SQL 连接串脱敏"""
 
-# ── 密码策略 ──
-
-def test_password_policy():
-    from core.password_policy import validate_password, MIN_PASSWORD_LEN
-    assert MIN_PASSWORD_LEN == 8
-    ok, _ = validate_password("abc12345")
-    assert ok
-    ok, _ = validate_password("Abc12345")
-    assert ok
-    # 长度不足
-    ok, _ = validate_password("a1b2c3")
-    assert not ok
-    # 纯字母
-    ok, _ = validate_password("abcdefgh")
-    assert not ok
-    # 纯数字
-    ok, _ = validate_password("12345678")
-    assert not ok
-    # 空
-    ok, _ = validate_password("")
-    assert not ok
-
 
 # ── DPAPI 密码存储 ──
 

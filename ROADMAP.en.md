@@ -331,7 +331,7 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 > Theme: remove RBAC auth system → implement offline license verification → migrate build to Nuitka.
 > Positioning: prepare for commercial licensing while significantly improving anti-cracking capabilities.
 
-### Phase 1: Remove Auth System
+### Phase 1: Remove Auth System ✅ Complete
 
 **Delete files**:
 - `core/auth.py` (408 lines) — AuthManager, User, 4-tier role permissions
@@ -351,7 +351,7 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 - `ui/welcome_page.py` — remove `set_permission_filter`
 - `main.py` — remove AuthManager + LoginDialog, simplify startup
 
-**Estimated**: ~15 files, -1500 lines
+**Actual**: 15 files, deleted/simplified ~800 lines (main_window.py -192, settings_dialog.py -135, main.py -13, test files -100, 5 files fully deleted -1200)
 
 ### Phase 2: Offline License System (Standard Security)
 
