@@ -14,3 +14,5 @@ dist/
 .DS_Store
 HANDOVER.md
 .github/agents/
+TEMP/dev_private_key.pem
+TEMP/*.pem
