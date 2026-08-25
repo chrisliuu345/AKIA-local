@@ -27,7 +27,6 @@ from core.data_profiler import DataProfiler
 from core.project_manager import ProjectManager
 from core.project_context import ProjectContext
 from core.audit import audit
-from core.auth import AuthManager
 
 from ui.sidebar import Sidebar
 from ui._tab_registry import INDEX_MAP
@@ -54,15 +53,10 @@ def _tab_is_runnable(tab) -> bool:
     return _tab_has_data(tab) and callable(getattr(tab, 'run_and_display', None))
 
 
-_TAB_PERMISSIONS = {28: "import"}
-
-
 class MainWindow(QMainWindow):
-    def __init__(self, user=None, splash=None):
+    def __init__(self, splash=None):
         super().__init__()
-        self.current_user = user
-        role_suffix = f" — {user.role}" if user else ""
-        self.setWindowTitle(f"{APP_NAME} v{APP_VERSION}{role_suffix}")
+        self.setWindowTitle(f"{APP_NAME} v{APP_VERSION}")
         self.resize(1300, 880)
         self.setMinimumSize(1040, 700)
 
@@ -88,7 +82,6 @@ class MainWindow(QMainWindow):
         self.profile_result: Dict[str, Any] = {}
         self.analyses: Dict[int, Dict[str, Any]] = {}
         self.project_context = ProjectContext()
-        self._action_permissions: list = []
 
         _step(73, "构建界面布局...")
         self._setup_ui()
@@ -123,28 +116,6 @@ class MainWindow(QMainWindow):
 
         _step(85, "主窗口初始化完成")
 
-        # 直接以已登录用户构造时 (如测试/未来嵌入) 也应用权限过滤 (P2-3)
-        if self.current_user:
-            self.refresh_menu_for_user()
-
-    def _has_permission(self, action: str) -> bool:
-        if self.current_user is None:
-            return True
-        return AuthManager.check_permission(self.current_user, action)
-
-    def _check_permission(self, action: str) -> bool:
-        if self._has_permission(action):
-            return True
-        audit("permission_denied",
-              self.current_user.username if self.current_user else "anonymous",
-              f"action={action}")
-        QMessageBox.warning(self, "权限不足", f"当前角色无「{action}」操作权限")
-        return False
-
-    def _reg(self, action: QAction, permission: str):
-        """注册 action 权限映射，供 refresh_menu_for_user 置灰"""
-        self._action_permissions.append((action, permission))
-        return action
 
     def _setup_ui(self):
         divider_color = "#3a3a3a"
@@ -232,24 +203,20 @@ class MainWindow(QMainWindow):
         import_quality_action = QAction("📂 " + i18n.tr("sidebar.import_quality"), self)
         import_quality_action.setShortcut("Ctrl+O")
         import_quality_action.triggered.connect(self._on_import_quality)
-        self._reg(import_quality_action, "import")
         file_menu.addAction(import_quality_action)
 
         import_ie_action = QAction("🏭 " + i18n.tr("sidebar.import_ie"), self)
         import_ie_action.triggered.connect(self._on_import_ie)
-        self._reg(import_ie_action, "import")
         file_menu.addAction(import_ie_action)
 
         import_db_action = QAction("🗄️ " + i18n.tr("sidebar.import_db"), self)
         import_db_action.triggered.connect(self._on_import_db)
-        self._reg(import_db_action, "import")
         file_menu.addAction(import_db_action)
 
         file_menu.addSeparator()
 
         template_action = QAction("📋 " + i18n.tr("menu.import_template"), self)
         template_action.triggered.connect(self._on_import_template)
-        self._reg(template_action, "import")
         file_menu.addAction(template_action)
 
         file_menu.addSeparator()
@@ -257,15 +224,12 @@ class MainWindow(QMainWindow):
         export_menu = _pin(file_menu.addMenu(i18n.tr("menu.export")))
         export_xlsx = QAction("📊 " + i18n.tr("menu.export_xlsx"), self)
         export_xlsx.triggered.connect(lambda: self._on_export_all("xlsx"))
-        self._reg(export_xlsx, "export")
         export_menu.addAction(export_xlsx)
         export_docx = QAction("📝 " + i18n.tr("menu.export_docx"), self)
         export_docx.triggered.connect(lambda: self._on_export_all("docx"))
-        self._reg(export_docx, "export")
         export_menu.addAction(export_docx)
         export_pdf = QAction("📄 " + i18n.tr("menu.export_pdf"), self)
         export_pdf.triggered.connect(lambda: self._on_export_all("pdf"))
-        self._reg(export_pdf, "export")
         export_menu.addAction(export_pdf)
 
         try:
@@ -286,20 +250,16 @@ class MainWindow(QMainWindow):
         save_project_action = QAction("💾 " + i18n.tr("menu.save_project"), self)
         save_project_action.setShortcut("Ctrl+Shift+S")
         save_project_action.triggered.connect(self._on_save_project)
-        self._reg(save_project_action, "export")
         file_menu.addAction(save_project_action)
         open_project_action = QAction("📂 " + i18n.tr("menu.open_project"), self)
         open_project_action.setShortcut("Ctrl+Shift+O")
         open_project_action.triggered.connect(self._on_load_project)
-        self._reg(open_project_action, "view")
         file_menu.addAction(open_project_action)
         save_shared_action = QAction("📤 " + i18n.tr("menu.save_shared"), self)
         save_shared_action.triggered.connect(self._on_save_shared)
-        self._reg(save_shared_action, "share_project")
         file_menu.addAction(save_shared_action)
         load_shared_action = QAction("📥 " + i18n.tr("menu.load_shared"), self)
         load_shared_action.triggered.connect(self._on_load_shared)
-        self._reg(load_shared_action, "view_shared")
         file_menu.addAction(load_shared_action)
 
         # 最近项目
@@ -316,11 +276,9 @@ class MainWindow(QMainWindow):
         save_session = QAction("💾 " + i18n.tr("menu.save_session"), self)
         save_session.setShortcut("Ctrl+S")
         save_session.triggered.connect(self._on_save_session)
-        self._reg(save_session, "export")
         file_menu.addAction(save_session)
         load_session = QAction("📂 " + i18n.tr("menu.load_session"), self)
         load_session.triggered.connect(self._on_load_session)
-        self._reg(load_session, "view")
         file_menu.addAction(load_session)
 
         file_menu.addSeparator()
@@ -390,7 +348,6 @@ class MainWindow(QMainWindow):
         run_all = QAction(i18n.tr("menu.run"), self)
         run_all.setShortcut("F5")
         run_all.triggered.connect(self._on_run_all_analyses)
-        self._reg(run_all, "analyze")
         analysis_menu.addAction(run_all)
 
         # ── AI — 从工具菜单拆出 ──
@@ -400,7 +357,6 @@ class MainWindow(QMainWindow):
         ai_menu.addAction(ai_chat)
         one_click = QAction(i18n.tr("menu.one_click"), self)
         one_click.triggered.connect(self._on_one_click_analysis)
-        self._reg(one_click, "analyze")
         ai_menu.addAction(one_click)
         ai_menu.addSeparator()
         template_act = QAction(i18n.tr("menu.template"), self)
@@ -408,30 +364,18 @@ class MainWindow(QMainWindow):
         ai_menu.addAction(template_act)
         html_act = QAction(i18n.tr("menu.html_export"), self)
         html_act.triggered.connect(self._on_html_export)
-        self._reg(html_act, "export")
         ai_menu.addAction(html_act)
 
         # ── 工具 — 精简后 ──
         tools_menu = _pin(menubar.addMenu(i18n.tr("menu.tools")))
         settings_act = QAction(i18n.tr("menu.settings"), self, triggered=self._on_settings)
-        self._reg(settings_act, "settings")
         tools_menu.addAction(settings_act)
-        account_act = QAction(i18n.tr("menu.account_settings", "账户设置"), self,
-                              triggered=self._on_account_settings)
-        self._reg(account_act, "account")
-        tools_menu.addAction(account_act)
         batch_act = QAction(i18n.tr("menu.batch"), self, triggered=self._on_batch_scheduler)
-        self._reg(batch_act, "analyze")
         tools_menu.addAction(batch_act)
-        self._user_mgmt_action = QAction(i18n.tr("menu.user_mgmt"), self,
-                                         triggered=self._on_user_management)
-        tools_menu.addAction(self._user_mgmt_action)
         tools_menu.addSeparator()
         clean_act = QAction(i18n.tr("sidebar.data_clean"), self, triggered=self._on_data_cleaner)
-        self._reg(clean_act, "clean")
         tools_menu.addAction(clean_act)
         clean_wiz_act = QAction(i18n.tr("menu.data_clean_wizard"), self, triggered=self._on_data_clean_wizard)
-        self._reg(clean_wiz_act, "clean")
         tools_menu.addAction(clean_wiz_act)
         tools_menu.addAction(QAction(i18n.tr("sidebar.template_help_tip"), self,
                                      triggered=self._on_template_help))
@@ -469,8 +413,6 @@ class MainWindow(QMainWindow):
 
     def _on_one_click_analysis(self):
         """一键智能分析 — 画像 → 推荐 → 执行 → 报告"""
-        if not self._check_permission("analyze"):
-            return
         raw_data = self.current_data.get("raw_data", {})
         if not raw_data:
             QMessageBox.warning(self, "无数据", "请先导入数据文件后再运行一键分析")
@@ -485,8 +427,6 @@ class MainWindow(QMainWindow):
         dlg.exec()
 
     def _on_html_export(self):
-        if not self._check_permission("export"):
-            return
         if not self.analyses:
             QMessageBox.warning(self, "无数据", "请先导入数据并运行分析")
             return
@@ -529,9 +469,6 @@ class MainWindow(QMainWindow):
 
     def _switch_tab(self, index: int):
         if 0 <= index < self.stack.count():
-            required = _TAB_PERMISSIONS.get(index, "view")
-            if not self._check_permission(required):
-                return
             # 懒加载: 首次访问时按需创建
             if index > 0:
                 self._lazy_load_tab(index)
@@ -609,15 +546,13 @@ class MainWindow(QMainWindow):
         self._switch_tab(1)
 
     def _on_import_quality(self):
-        if not self._check_permission("import"):
-            return
         dialog = ImportDialog(self, mode="quality")
         if dialog.exec():
             file_path, sheet_names = dialog.get_selection()
             try:
                 self.status_label.setText(f"{i18n.tr('status.loading')}{file_path}...")
                 raw_data = self.data_loader.load(file_path)
-                audit("import_data", self.current_user.username if self.current_user else "anonymous",
+                audit("import_data", "user",
                       f"质量数据 {os.path.basename(file_path)}")
                 self.current_data = {
                     "file_path": file_path,
@@ -675,15 +610,13 @@ class MainWindow(QMainWindow):
                 self.status_label.setText(i18n.tr("status.failed"))
 
     def _on_import_ie(self):
-        if not self._check_permission("import"):
-            return
         dialog = ImportDialog(self, mode="ie")
         if dialog.exec():
             file_path, sheet_names = dialog.get_selection()
             try:
                 self.status_label.setText(f"{i18n.tr('status.loading')}{file_path}...")
                 raw_data = self.data_loader.load(file_path)
-                audit("import_data", self.current_user.username if self.current_user else "anonymous",
+                audit("import_data", "user",
                       f"IE 数据 {os.path.basename(file_path)}")
                 ie_data = self.data_loader.load_ie_data()
 
@@ -740,8 +673,6 @@ class MainWindow(QMainWindow):
                 self.status_label.setText(i18n.tr("status.failed"))
 
     def _on_import_db(self):
-        if not self._check_permission("import"):
-            return
         dialog = DbConnectionDialog(self)
         if dialog.exec():
             config, table_names = dialog.get_selection()
@@ -758,7 +689,7 @@ class MainWindow(QMainWindow):
                         loader.disconnect()
                     except Exception:
                         pass
-                audit("import_db", self.current_user.username if self.current_user else "anonymous",
+                audit("import_db", "user",
                       f"数据库 {config.get('database', '')} 表数={len(raw_data)}")
 
                 self.current_data = {
@@ -864,8 +795,6 @@ class MainWindow(QMainWindow):
             self.status_label.setText(f"Sheet 已自动匹配: {sheets_info}")
 
     def _on_import_template(self):
-        if not self._check_permission("import"):
-            return
         file_path, _ = QFileDialog.getOpenFileName(
             self, i18n.tr("menu.import_template"), "",
             "Excel/JSON (*.xlsx *.xls *.xlsm *.json);;All (*.*)",
@@ -1084,8 +1013,6 @@ class MainWindow(QMainWindow):
             tab.refresh_if_changed()
 
     def _on_run_all_analyses(self):
-        if not self._check_permission("analyze"):
-            return
         if not self.current_data:
             QMessageBox.warning(self, i18n.tr("msg.no_data"), i18n.tr("msg.no_data_file"))
             return
@@ -1149,8 +1076,6 @@ class MainWindow(QMainWindow):
         entry = INDEX_MAP.get(idx)
         if not entry or not tab_allowed(idx):
             return None
-        if not self._has_permission(_TAB_PERMISSIONS.get(idx, "view")):
-            return None
 
         _, _, class_name, module_path, _ = entry
         try:
@@ -1184,27 +1109,6 @@ class MainWindow(QMainWindow):
             tab.export_clicked.connect(lambda tid=idx: self._on_export_single(tid, "docx"))
         if hasattr(tab, 'analysis_completed'):
             tab.analysis_completed.connect(lambda tid=idx: self._on_analysis_finished(tid))
-        if callable(getattr(tab, 'run_and_display', None)):
-            _orig_run = tab.run_and_display
-
-            def _guarded_run(*args, _orig=_orig_run, **kwargs):
-                if not self._check_permission("analyze"):
-                    return
-                return _orig(*args, **kwargs)
-
-            # 实例属性替换 + 按钮重连: tab.__init__ 中按钮已预绑定原始方法,
-            # 仅替换实例属性无法拦截按钮点击 (P0-1)
-            tab.run_and_display = _guarded_run
-            for attr in ("run_btn", "btn_run"):
-                btn = getattr(tab, attr, None)
-                if btn is not None:
-                    try:
-                        btn.clicked.disconnect()
-                    except (RuntimeError, TypeError):
-                        pass
-                    btn.clicked.connect(_guarded_run)
-                    break
-
         # 注入 project_context 到五链相关 Tab
         _CONTEXT_TABS = {1, 16, 17, 30, 32}  # SPC, FMEA, CP, 8D, PPAP
         if idx in _CONTEXT_TABS and hasattr(tab, 'set_project_context'):
@@ -1242,8 +1146,6 @@ class MainWindow(QMainWindow):
         return charts
 
     def _on_export_single(self, idx: int, fmt: str = "docx"):
-        if not self._check_permission("export"):
-            return
         result = self.analyses.get(idx)
         if not result:
             QMessageBox.warning(self, i18n.tr("msg.no_results"), i18n.tr("msg.run_first"))
@@ -1269,15 +1171,13 @@ class MainWindow(QMainWindow):
                     from output.pdf_report import generate_pdf_report
                     generate_pdf_report([result], file_path, charts=charts)
                 self.status_label.setText(f"{i18n.tr('status.exported')}{file_path}")
-                audit("export", self.current_user.username if self.current_user else "anonymous",
+                audit("export", "user",
                       f"单Tab导出 {fmt} {os.path.basename(file_path)}")
                 QMessageBox.information(self, i18n.tr("msg.export_complete"), f"{i18n.tr('msg.export_saved')}\n{file_path}")
             except Exception as e:
                 QMessageBox.critical(self, i18n.tr("msg.export_failed"), str(e))
 
     def _on_export_all(self, fmt: str = "docx"):
-        if not self._check_permission("export"):
-            return
         if not self.analyses:
             QMessageBox.warning(self, i18n.tr("msg.no_results"), i18n.tr("msg.run_first"))
             return
@@ -1303,15 +1203,13 @@ class MainWindow(QMainWindow):
                     from output.pdf_report import generate_pdf_report
                     generate_pdf_report(analyses_list, file_path, charts=charts)
                 self.status_label.setText(f"{i18n.tr('status.exported')}{file_path}")
-                audit("export", self.current_user.username if self.current_user else "anonymous",
+                audit("export", "user",
                       f"汇总导出 {fmt} {os.path.basename(file_path)}")
                 QMessageBox.information(self, i18n.tr("msg.export_complete"), f"{i18n.tr('msg.export_saved')}\n{file_path}")
             except Exception as e:
                 QMessageBox.critical(self, i18n.tr("msg.export_failed"), str(e))
 
     def _on_export_compliance(self, template_id: str):
-        if not self._check_permission("export"):
-            return
         if not self.analyses:
             QMessageBox.warning(self, i18n.tr("msg.no_results"), i18n.tr("msg.run_first"))
             return
@@ -1332,7 +1230,7 @@ class MainWindow(QMainWindow):
                     file_path, charts=charts,
                 )
                 self.status_label.setText(f"{i18n.tr('status.exported')}{file_path}")
-                audit("export", self.current_user.username if self.current_user else "anonymous",
+                audit("export", "user",
                       f"合规报告 {template_id} {os.path.basename(file_path)}")
                 QMessageBox.information(self, i18n.tr("msg.export_complete"),
                                         f"{i18n.tr('msg.export_saved')}\n{file_path}")
@@ -1340,8 +1238,6 @@ class MainWindow(QMainWindow):
                 QMessageBox.critical(self, i18n.tr("msg.export_failed"), str(e))
 
     def _on_save_project(self):
-        if not self._check_permission("export"):
-            return
         if not self.current_data:
             QMessageBox.warning(self, "无数据", "请先导入数据并运行分析")
             return
@@ -1414,8 +1310,6 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "加载完成", success_msg)
 
     def _on_load_project(self):
-        if not self._check_permission("view"):
-            return
         path, _ = QFileDialog.getOpenFileName(
             self, "打开项目", "", "QA-Tool 项目 (*.qap)"
         )
@@ -1432,8 +1326,6 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "加载失败", str(e))
 
     def _load_project_by_path(self, path: str):
-        if not self._check_permission("view"):
-            return
         """通过路径直接加载项目（供欢迎页最近项目使用）"""
         try:
             self.status_label.setText("正在加载项目...")
@@ -1471,8 +1363,6 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "文件不存在", f"项目文件已移动或删除:\n{path}")
 
     def _on_save_session(self):
-        if not self._check_permission("export"):
-            return
         file_path, _ = QFileDialog.getSaveFileName(
             self, i18n.tr("menu.save_session"), "session.json", "JSON (*.json)"
         )
@@ -1537,8 +1427,6 @@ class MainWindow(QMainWindow):
             self.status_label.setText(f"{i18n.tr('status.session_saved')}{path}")
 
     def _on_load_session(self):
-        if not self._check_permission("view"):
-            return
         file_path, _ = QFileDialog.getOpenFileName(
             self, i18n.tr("menu.load_session"), "", "JSON (*.json)"
         )
@@ -1606,50 +1494,16 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 QMessageBox.critical(self, i18n.tr("msg.import_failed"), str(e))
 
-    def _on_account_settings(self):
-        """账户设置 — 所有登录角色可自助修改部门/班组/显示名/密码 (P2-5)"""
-        if not self._check_permission("account"):
-            return
-        if not self.current_user:
-            return
-        from core.auth import AuthManager
-        dialog = SettingsDialog(self, user=self.current_user, account_only=True)
-        if dialog.exec():
-            acct = dialog.get_account_values()
-            if acct:
-                auth = AuthManager()
-                auth.update_user(self.current_user.username, **acct)
-                self.current_user.department = acct.get("department", "")
-                self.current_user.team = acct.get("team", "")
-                self.current_user.display_name = acct.get("display_name", "")
-            audit("account_settings", self.current_user.username, "账户设置保存")
-            self.statusBar().showMessage("账户设置已保存", 3000)
-
     def _on_settings(self):
-        if not self._check_permission("settings"):
-            return
         from config.settings import save_config
-        from core.auth import AuthManager
-        dialog = SettingsDialog(self, user=self.current_user)
+        dialog = SettingsDialog(self)
         if dialog.exec():
             save_config(dialog.get_values())
             from output.chart_engine import setup_chinese_font
             setup_chinese_font()
-            # 保存账户设置
-            if self.current_user:
-                acct = dialog.get_account_values()
-                if acct:
-                    auth = AuthManager()
-                    auth.update_user(self.current_user.username, **acct)
-                    self.current_user.department = acct.get("department", "")
-                    self.current_user.team = acct.get("team", "")
-                    self.current_user.display_name = acct.get("display_name", "")
-            audit("settings", self.current_user.username if self.current_user else "anonymous", "设置保存")
             self.statusBar().showMessage("设置已保存", 3000)
 
     def _on_data_cleaner(self):
-        if not self._check_permission("clean"):
-            return
         idx = self.stack.currentIndex()
         tabs = self._get_tabs()
         current_tab = tabs.get(idx)
@@ -1676,39 +1530,7 @@ class MainWindow(QMainWindow):
                     f"数据清洗已完成，已更新 {len(updated)} 个分析模块", 5000
                 )
 
-    def refresh_menu_for_user(self):
-        """登录后刷新菜单: 根据角色置灰/启用各操作入口 (W44 action-key)"""
-        for action, perm in self._action_permissions:
-            action.setEnabled(self._has_permission(perm))
-        # 用户管理: 仅 admin/dept_admin 可见
-        if hasattr(self, "_user_mgmt_action"):
-            self._user_mgmt_action.setVisible(
-                bool(self.current_user and self.current_user.can_manage_users)
-            )
-        # 侧边栏 + 欢迎页权限过滤
-        self._apply_permission_filter()
-
-    def _apply_permission_filter(self):
-        """根据当前用户权限过滤侧边栏与欢迎页可见项"""
-        if self.current_user is None:
-            # user=None 全放行 — 侧边栏全按钮 + 欢迎页全部卡片
-            all_perm = {p for _, p in self.welcome_page._card_permissions if p is not None}
-            self.sidebar.set_permission_filter(set(self.sidebar.nav_buttons.keys()))
-            self.welcome_page.set_permission_filter(all_perm)
-            return
-        perms = AuthManager.get_permissions(self.current_user.role)
-        # 侧边栏: tab 权限映射
-        allowed_indices = {0}  # home 永远可见
-        for idx in list(self.sidebar.nav_buttons.keys()):
-            tab_perm = _TAB_PERMISSIONS.get(idx, "view")
-            if tab_perm in perms:
-                allowed_indices.add(idx)
-        self.sidebar.set_permission_filter(allowed_indices)
-        self.welcome_page.set_permission_filter(perms)
-
     def _on_data_clean_wizard(self):
-        if not self._check_permission("clean"):
-            return
         if not self.current_data:
             QMessageBox.information(self, "提示", "请先导入数据文件")
             return
@@ -1725,7 +1547,7 @@ class MainWindow(QMainWindow):
             raw[first_key] = cleaned
             self.current_data["raw_data"] = raw
             self._route_sheets_to_tabs(raw, worksheet_mode=False)
-            audit("data_clean", self.current_user.username if self.current_user else "anonymous",
+            audit("data_clean", "user",
                   f"清洗 {first_key}")
             self.statusBar().showMessage("数据清洗向导完成", 5000)
 
@@ -1765,8 +1587,6 @@ class MainWindow(QMainWindow):
         super().closeEvent(event)
 
     def _on_batch_scheduler(self):
-        if not self._check_permission("analyze"):
-            return
         from ui.dialogs.batch_dialog import BatchDialog
         dlg = BatchDialog(self)
         dlg.exec()
@@ -1788,24 +1608,16 @@ class MainWindow(QMainWindow):
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_F11:
-            if self._check_permission("view"):
-                self._open_display_mode()
+            self._open_display_mode()
             return
         super().keyPressEvent(event)
 
-    def _on_user_management(self):
-        from ui.dialogs.user_management_dialog import UserManagementDialog
-        dlg = UserManagementDialog(self.current_user, self)
-        dlg.exec()
-
     def _on_save_shared(self):
-        if not self._check_permission("share_project"):
-            return
-        if not self.current_data or not self.current_user:
+        if not self.current_data:
             QMessageBox.warning(self, "无数据", "请先导入数据并运行分析")
             return
         from core.project_manager import SharedProjectManager
-        dept = self.current_user.department or "公共"
+        dept = "公共"
         path, _ = QFileDialog.getSaveFileName(
             self, "保存到共享目录", "QA_Shared.qap", "QA-Tool 项目 (*.qap)"
         )
@@ -1817,7 +1629,7 @@ class MainWindow(QMainWindow):
             for label, buf in self._collect_charts(list(self.analyses.keys())).items():
                 charts[label] = buf.getvalue() if hasattr(buf, 'getvalue') else buf
             SharedProjectManager.save_shared(path, raw, self.analyses, charts, dept)
-            audit("share_project", self.current_user.username if self.current_user else "anonymous",
+            audit("share_project", "user",
                   f"保存 {os.path.basename(path)}")
             self.status_label.setText("共享项目已保存")
             QMessageBox.information(self, "保存完成", f"项目已共享到部门: {dept}")
@@ -1825,11 +1637,9 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "保存失败", str(e))
 
     def _on_load_shared(self):
-        if not self._check_permission("view_shared"):
-            return
         from core.project_manager import SharedProjectManager
-        dept = self.current_user.department if self.current_user else ""
-        role = self.current_user.role if self.current_user else ""
+        dept = ""
+        role = ""
         projects = SharedProjectManager.list_shared(department=dept, role=role)
         if not projects:
             QMessageBox.information(self, "共享项目", "共享目录中没有可用的项目")
@@ -1950,13 +1760,11 @@ class MainWindow(QMainWindow):
         event.ignore()
 
     def _load_and_route(self, file_path: str):
-        if not self._check_permission("import"):
-            return
         try:
             self.status_label.setText(f"加载中... {file_path}")
             raw_data = self.data_loader.load(file_path)
             audit("import_data",
-                  self.current_user.username if self.current_user else "anonymous",
+                  "user",
                   f"拖拽导入 {os.path.basename(file_path)}")
             self.current_data = {"file_path": file_path, "raw_data": raw_data}
             self.data_label.setText(os.path.basename(file_path))

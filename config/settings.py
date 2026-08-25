@@ -155,6 +155,7 @@ _USER_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "user_config.j
 _user_overrides = {}
 
 
+
 def load_config() -> dict:
     """加载用户配置，返回可合并的 dict，并同步全局变量"""
     global _user_overrides, CHART_DPI, MSA_GRR_ACCEPTABLE, MSA_GRR_MARGINAL, MSA_NDC_THRESHOLD
@@ -213,6 +214,11 @@ def tab_allowed(idx: int) -> bool:
     if idx == ESP32_DEVICE_TAB_INDEX:
         return esp32_extension_enabled()
     return True
+
+
+# --- org constants ---
+DEPARTMENTS = ['质量部', '生产部', 'IE部', '研发部', '供应链', '其他']
+TEAMS = ['一组', '二组', '三组', '白班', '夜班', 'A班', 'B班', 'C班']
 
 
 load_config()

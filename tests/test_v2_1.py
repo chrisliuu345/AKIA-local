@@ -196,27 +196,6 @@ def test_format_cp_boundaries():
     assert isinstance(r2, str) and len(r2) > 0
 
 
-# ── 认证 ──
-
-def test_auth_hash_verify_roundtrip():
-    """密码哈希往返验证"""
-    from core.auth import _hash_password, _verify_password
-    pw_hash = _hash_password("test123")
-    assert _verify_password("test123", pw_hash)
-    assert not _verify_password("wrong", pw_hash)
-
-
-def test_auth_role_permissions_structure():
-    """四级角色均有权限制定义"""
-    from core.auth import _ROLE_PERMISSIONS
-    assert "admin" in _ROLE_PERMISSIONS
-    assert "dept_admin" in _ROLE_PERMISSIONS
-    assert "analyst" in _ROLE_PERMISSIONS
-    assert "readonly" in _ROLE_PERMISSIONS
-    # 所有角色至少有权查看
-    for perms in _ROLE_PERMISSIONS.values():
-        assert "view" in perms, f"角色缺少 view 权限"
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])
