@@ -10,12 +10,12 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QSpinBox, QDoubleSpinBox, QGroupBox, QFormLayout,
     QTableWidget, QTableWidgetItem, QTextEdit, QSplitter, QHeaderView,
-    QFrame, QStackedWidget, QScrollArea, QCheckBox, QMessageBox,
+    QFrame, QStackedWidget, QScrollArea, QCheckBox, QMessageBox, QListWidget, QListWidgetItem,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
-from analysis.spc import xbar_r, xbar_s, imr, p_chart, np_chart, c_chart, u_chart, cusum, ewma, laney
+from analysis.spc import xbar_r, xbar_s, imr, p_chart, np_chart, c_chart, u_chart, cusum, ewma, laney, hotelling
 from output.chart_engine import create_control_chart
 from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
@@ -47,7 +47,7 @@ class SPCTab(BaseAnalysisTab):
         config_layout = QFormLayout(config_group)
 
         self.chart_type_combo = QComboBox()
-        self.chart_type_combo.addItems(["XBar-R", "XBar-S", "I-MR", "P Chart", "NP Chart", "C Chart", "U Chart", "CUSUM", "EWMA", "Laney P'", "Laney U'"])
+        self.chart_type_combo.addItems(["XBar-R", "XBar-S", "I-MR", "P Chart", "NP Chart", "C Chart", "U Chart", "CUSUM", "EWMA", "Laney P'", "Laney U'", "Hotelling T²"])
         config_layout.addRow(i18n.tr("spc.chart_type"), self.chart_type_combo)
 
         self.col_combo = QComboBox()
@@ -144,6 +144,20 @@ class SPCTab(BaseAnalysisTab):
         laney_layout.addWidget(QLabel("Laney \u03b1:"))
         laney_layout.addWidget(self.laney_alpha_spin)
         config_layout.addRow(self.row_laney)
+
+        self.hotelling_cols_list = QListWidget()
+        self.hotelling_cols_list.setMaximumHeight(120)
+        self.hotelling_cols_list.setSelectionMode(QListWidget.NoSelection)
+        self.hotelling_select_all = QCheckBox("全选")
+        self.hotelling_select_all.stateChanged.connect(self._on_hotelling_select_all)
+        self.row_hotelling = QWidget()
+        self.row_hotelling.setVisible(False)
+        hotelling_layout = QHBoxLayout(self.row_hotelling)
+        hotelling_layout.setContentsMargins(0, 0, 0, 0)
+        hotelling_layout.addWidget(QLabel("分析变量:"))
+        hotelling_layout.addWidget(self.hotelling_cols_list)
+        hotelling_layout.addWidget(self.hotelling_select_all)
+        config_layout.addRow(self.row_hotelling)
 
         self.chart_type_combo.currentTextChanged.connect(self._on_chart_type_changed)
 
@@ -276,18 +290,27 @@ class SPCTab(BaseAnalysisTab):
         self.parsed_info = parsed_info
         self.col_combo.clear()
         self.col_combo.addItems(list(df.columns))
+        # Hotelling T² 多变量列选择器
+        self.hotelling_cols_list.clear()
+        for col in df.columns:
+            item = QListWidgetItem(col)
+            item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+            item.setCheckState(Qt.Unchecked)
+            self.hotelling_cols_list.addItem(item)
         self._populate_preview_table(df)
 
     def _on_chart_type_changed(self, chart_type: str):
         is_cusum = chart_type == "CUSUM"
         is_ewma = chart_type == "EWMA"
         is_laney = chart_type in ("Laney P'", "Laney U'")
-        is_std = not is_cusum and not is_ewma and not is_laney
+        is_hotelling = chart_type == "Hotelling T²"
+        is_std = not is_cusum and not is_ewma and not is_laney and not is_hotelling
         self.row_subgroup.setVisible(is_std)
         self._update_spec_visibility()
         self.row_cusum.setVisible(is_cusum)
         self.row_ewma.setVisible(is_ewma)
         self.row_laney.setVisible(is_laney)
+        self.row_hotelling.setVisible(is_hotelling)
 
     def _on_spec_toggled(self, state):
         """W42: 规格限复选框切换"""
@@ -304,6 +327,15 @@ class SPCTab(BaseAnalysisTab):
     def validate_params(self) -> tuple:
         if self.df is None:
             return False, "请先导入数据文件"
+        chart_type = self.chart_type_combo.currentText()
+        
+        # Hotelling T² 使用多变量列选择器
+        if chart_type == "Hotelling T²":
+            selected_cols = self._get_hotelling_columns()
+            if len(selected_cols) < 2:
+                return False, "Hotelling T² 需要至少选择 2 个分析变量"
+            return True, ""
+        
         col = self.col_combo.currentText()
         if not col:
             return False, "请选择测量列（可点击右侧表格列标题快速选择）"
@@ -313,7 +345,6 @@ class SPCTab(BaseAnalysisTab):
             return False, f"列 '{col}' 在当前数据表中不存在，请点击右侧表格列标题重新选择"
         if len(data) < 2:
             return False, f"测量列 '{col}' 有效数据不足（仅{len(data)}行），至少需要2行"
-        chart_type = self.chart_type_combo.currentText()
         if chart_type in ("XBar-R", "XBar-S", "NP Chart"):
             subgroup_size = self.subgroup_spin.value()
             if len(data) < subgroup_size * 2:
@@ -339,37 +370,57 @@ class SPCTab(BaseAnalysisTab):
             self.result_text.setText(f"▎分析失败\n{str(e)}")
             return None
 
+    def _get_hotelling_columns(self) -> list:
+        """获取 Hotelling T² 选中的列"""
+        selected = []
+        for i in range(self.hotelling_cols_list.count()):
+            item = self.hotelling_cols_list.item(i)
+            if item.checkState() == Qt.Checked:
+                selected.append(item.text())
+        return selected
+
+    def _on_hotelling_select_all(self, state):
+        """全选/全不选 Hotelling 列"""
+        check_state = Qt.Checked if state == 2 else Qt.Unchecked
+        for i in range(self.hotelling_cols_list.count()):
+            item = self.hotelling_cols_list.item(i)
+            item.setCheckState(check_state)
+
     def run_analysis(self) -> Dict[str, Any]:
         col = self.col_combo.currentText()
         chart_type = self.chart_type_combo.currentText()
         subgroup_size = self.subgroup_spin.value()
-        data = pd.to_numeric(self.df[col], errors="coerce").dropna()
 
         result = {}
-        if chart_type == "XBar-R":
-            result = xbar_r.analyze(data, subgroup_size)
-        elif chart_type == "XBar-S":
-            result = xbar_s.analyze(data, subgroup_size)
-        elif chart_type == "I-MR":
-            result = imr.analyze(data)
-        elif chart_type == "P Chart":
-            result = p_chart.analyze(data, pd.Series([subgroup_size] * len(data)))
-        elif chart_type == "NP Chart":
-            result = np_chart.analyze(data, subgroup_size)
-        elif chart_type == "C Chart":
-            result = c_chart.analyze(data)
-        elif chart_type == "U Chart":
-            result = u_chart.analyze(data, pd.Series([subgroup_size] * len(data)))
-        elif chart_type == "CUSUM":
-            result = cusum.analyze(data, k=self.cusum_k_spin.value(), h=self.cusum_h_spin.value())
-        elif chart_type == "EWMA":
-            result = ewma.analyze(data, lam=self.ewma_lam_spin.value(), L=self.ewma_L_spin.value())
-        elif chart_type == "Laney P'":
-            sample_sizes = pd.Series([subgroup_size] * len(data))
-            result = laney.laney_p_prime(data.values, sample_sizes.values, alpha=self.laney_alpha_spin.value())
-        elif chart_type == "Laney U'":
-            sample_sizes = pd.Series([subgroup_size] * len(data))
-            result = laney.laney_u_prime(data.values, sample_sizes.values, alpha=self.laney_alpha_spin.value())
+        if chart_type == "Hotelling T²":
+            selected_cols = self._get_hotelling_columns()
+            result = hotelling.analyze(self.df, selected_cols)
+        else:
+            data = pd.to_numeric(self.df[col], errors="coerce").dropna()
+            if chart_type == "XBar-R":
+                result = xbar_r.analyze(data, subgroup_size)
+            elif chart_type == "XBar-S":
+                result = xbar_s.analyze(data, subgroup_size)
+            elif chart_type == "I-MR":
+                result = imr.analyze(data)
+            elif chart_type == "P Chart":
+                result = p_chart.analyze(data, pd.Series([subgroup_size] * len(data)))
+            elif chart_type == "NP Chart":
+                result = np_chart.analyze(data, subgroup_size)
+            elif chart_type == "C Chart":
+                result = c_chart.analyze(data)
+            elif chart_type == "U Chart":
+                result = u_chart.analyze(data, pd.Series([subgroup_size] * len(data)))
+            elif chart_type == "CUSUM":
+                result = cusum.analyze(data, k=self.cusum_k_spin.value(), h=self.cusum_h_spin.value())
+            elif chart_type == "EWMA":
+                result = ewma.analyze(data, lam=self.ewma_lam_spin.value(), L=self.ewma_L_spin.value())
+            elif chart_type == "Laney P'":
+                sample_sizes = pd.Series([subgroup_size] * len(data))
+                result = laney.laney_p_prime(data.values, sample_sizes.values, alpha=self.laney_alpha_spin.value())
+            elif chart_type == "Laney U'":
+                sample_sizes = pd.Series([subgroup_size] * len(data))
+                result = laney.laney_u_prime(data.values, sample_sizes.values, alpha=self.laney_alpha_spin.value())
 
         self.current_result = {
             "analysis_type": chart_type,
@@ -411,7 +462,29 @@ class SPCTab(BaseAnalysisTab):
         table_headers = ["项目", "值"]
         table_data = []
 
-        if chart_type in ("XBar-R", "XBar-S", "I-MR"):
+        if chart_type == "Hotelling T²":
+            t2_chart = result.get("t2_chart", {})
+            lines.append(f"\n【T² 控制图】")
+            lines.append(f"  变量数: {result.get('num_variables', '')}")
+            lines.append(f"  样本数: {result.get('num_samples', '')}")
+            lines.append(f"  CL: {t2_chart.get('cl', '')}")
+            lines.append(f"  UCL: {t2_chart.get('ucl', '')}")
+            violations = t2_chart.get("violations", [])
+            if violations:
+                lines.append(f"\n判异点: {len(violations)} 个")
+                for v in violations[:10]:
+                    lines.append(f"  点{v.get('point', '')}: {v.get('desc', '')}")
+            hotelling_test = result.get("hotelling_test", {})
+            if hotelling_test:
+                lines.append(f"\n【多元正态性检验】")
+                lines.append(f"  偏度统计量: {hotelling_test.get('skewness_statistic', '')}")
+                lines.append(f"  峰度统计量: {hotelling_test.get('kurtosis_statistic', '')}")
+                lines.append(f"  结论: {hotelling_test.get('interpretation', '')}")
+            table_data.append(["变量数", str(result.get('num_variables', ''))])
+            table_data.append(["样本数", str(result.get('num_samples', ''))])
+            table_data.append(["T² UCL", str(t2_chart.get('ucl', ''))])
+
+        elif chart_type in ("XBar-R", "XBar-S", "I-MR"):
             xbar_key = "xbar_chart" if "xbar_chart" in result else "i_chart"
             chart = result.get(xbar_key, result)
             cl, ucl, lcl = chart.get('cl', ''), chart.get('ucl', ''), chart.get('lcl', '')
@@ -469,6 +542,10 @@ class SPCTab(BaseAnalysisTab):
         self._switch_result_view(0)
 
     def _extract_violations(self, result: Dict[str, Any]) -> list:
+        # Hotelling T² 格式
+        t2_chart = result.get("t2_chart", {})
+        if t2_chart and t2_chart.get("violations"):
+            return t2_chart["violations"]
         for key in ("xbar_chart", "r_chart", "s_chart", "i_chart", "mr_chart",
                     "p_chart", "np_chart", "c_chart", "u_chart",
                     "cusum_chart", "ewma_chart"):

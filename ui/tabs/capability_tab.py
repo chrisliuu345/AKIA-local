@@ -17,6 +17,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
 from analysis.capability import normal_cap, non_normal_cap, between_within_cap, tolerance_interval
+from analysis.distribution import fitting
 from output.chart_engine import create_capability_chart
 from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
@@ -49,7 +50,7 @@ class CapabilityTab(BaseAnalysisTab):
         config_layout = QFormLayout(config_group)
 
         self.method_combo = QComboBox()
-        self.method_combo.addItems(["正态过程能力", "非正态 (Box-Cox)", "非正态 (Johnson)", "非正态 (百分位法)", "组间/组内能力", "公差区间 (正态)", "公差区间 (非参数)"])
+        self.method_combo.addItems(["正态过程能力", "非正态 (Box-Cox)", "非正态 (Johnson)", "非正态 (百分位法)", "组间/组内能力", "公差区间 (正态)", "公差区间 (非参数)", "分布拟合"])
         config_layout.addRow("分析方法:", self.method_combo)
 
         self.col_combo = QComboBox()
@@ -117,6 +118,16 @@ class CapabilityTab(BaseAnalysisTab):
         ti_method_layout.addWidget(QLabel("区间类型:"))
         ti_method_layout.addWidget(self.ti_method_combo)
         config_layout.addRow(self.row_ti_method)
+
+        self.dist_combo = QComboBox()
+        self.dist_combo.addItems(["正态", "对数正态", "指数", "Gamma", "Weibull"])
+        self.row_dist = QWidget()
+        self.row_dist.setVisible(False)
+        dist_layout = QHBoxLayout(self.row_dist)
+        dist_layout.setContentsMargins(0, 0, 0, 0)
+        dist_layout.addWidget(QLabel("分布类型:"))
+        dist_layout.addWidget(self.dist_combo)
+        config_layout.addRow(self.row_dist)
 
         self.method_combo.currentTextChanged.connect(self._on_method_changed)
 
@@ -234,12 +245,16 @@ class CapabilityTab(BaseAnalysisTab):
         """方法切换时控制参数可见性"""
         is_tolerance = method.startswith("公差区间")
         is_normal_like = method in ("正态过程能力", "组间/组内能力")
+        is_dist_fit = method == "分布拟合"
         
         self.row_ti_confidence.setVisible(is_tolerance)
         self.row_ti_proportion.setVisible(is_tolerance)
         self.row_ti_method.setVisible(is_tolerance)
         self.subgroup_spin.setVisible(is_normal_like)
-        self.target_spin.setVisible(not is_tolerance)
+        self.target_spin.setVisible(not is_tolerance and not is_dist_fit)
+        self.usl_spin.setVisible(not is_dist_fit)
+        self.lsl_spin.setVisible(not is_dist_fit)
+        self.row_dist.setVisible(is_dist_fit)
 
     def set_data(self, df: pd.DataFrame, parsed_info: Dict[str, Any]):
         self.df = df
@@ -322,6 +337,12 @@ class CapabilityTab(BaseAnalysisTab):
                 proportion=self.ti_proportion_spin.value(),
                 method=ti_method
             )
+        elif method == "分布拟合":
+            dist_map = {"正态": "normal", "对数正态": "lognormal", "指数": "exponential", "Gamma": "gamma", "Weibull": "weibull"}
+            dist_name = dist_map.get(self.dist_combo.currentText(), "normal")
+            fit_result = fitting.fit_distribution(data, dist_name)
+            gof_result = fitting.goodness_of_fit(data, dist_name)
+            result = {**fit_result, **gof_result}
 
         self.current_result = {
             "analysis_type": method,
@@ -348,31 +369,58 @@ class CapabilityTab(BaseAnalysisTab):
                 self._clear_canvas()
 
         lines = [f"=== {analysis.get('analysis_type', '')} ===\n"]
-        lines.append("【数据摘要】")
-        for k, v in summary.items():
-            lines.append(f"  {k}: {v}")
 
-        if normality:
-            lines.append(f"\n【正态性检验】")
-            pv = normality.get('p_value', '')
-            pv_str = format_pvalue(pv) if isinstance(pv, (int, float)) else str(pv)
-            lines.append(f"  p值: {pv_str}, 正态: {normality.get('is_normal', '')}")
-
-        if cap:
-            lines.append(f"\n【过程能力指标】")
-            for k, v in cap.items():
+        # 分布拟合特殊处理
+        if "distribution" in result and "params" in result:
+            lines.append(f"分布: {result.get('distribution', '')}")
+            lines.append(f"样本量: {result.get('sample_size', '')}")
+            params = result.get("params", {})
+            if params:
+                lines.append(f"\n【参数估计】")
+                for k, v in params.items():
+                    lines.append(f"  {k}: {v}")
+            data_stats = result.get("data_stats", {})
+            if data_stats:
+                lines.append(f"\n【数据统计】")
+                for k, v in data_stats.items():
+                    lines.append(f"  {k}: {v}")
+            tests = result.get("tests", {})
+            if tests:
+                lines.append(f"\n【拟合优度检验】")
+                for test_name, test_result in tests.items():
+                    if isinstance(test_result, dict):
+                        stat = test_result.get("statistic", "")
+                        pv = test_result.get("p_value", "")
+                        interp = test_result.get("interpretation", "")
+                        lines.append(f"  {test_name}: 统计量={stat}, p={pv}")
+                        if interp:
+                            lines.append(f"    {interp}")
+        else:
+            lines.append("【数据摘要】")
+            for k, v in summary.items():
                 lines.append(f"  {k}: {v}")
-            grade = cap.get("grade", "")
-            if grade:
-                lines.append(f"\n  能力等级: {grade}")
-                if "D" in str(grade):
-                    lines.append("  过程能力不足，建议改进！")
-                elif "C" in str(grade):
-                    lines.append("  过程能力一般，考虑改进。")
-                elif "B" in str(grade):
-                    lines.append("  过程能力良好。")
-                else:
-                    lines.append("  过程能力优秀！")
+
+            if normality:
+                lines.append(f"\n【正态性检验】")
+                pv = normality.get('p_value', '')
+                pv_str = format_pvalue(pv) if isinstance(pv, (int, float)) else str(pv)
+                lines.append(f"  p值: {pv_str}, 正态: {normality.get('is_normal', '')}")
+
+            if cap:
+                lines.append(f"\n【过程能力指标】")
+                for k, v in cap.items():
+                    lines.append(f"  {k}: {v}")
+                grade = cap.get("grade", "")
+                if grade:
+                    lines.append(f"\n  能力等级: {grade}")
+                    if "D" in str(grade):
+                        lines.append("  过程能力不足，建议改进！")
+                    elif "C" in str(grade):
+                        lines.append("  过程能力一般，考虑改进。")
+                    elif "B" in str(grade):
+                        lines.append("  过程能力良好。")
+                    else:
+                        lines.append("  过程能力优秀！")
 
         self.result_text.setPlainText("\n".join(lines))
         self.result_text.update()
