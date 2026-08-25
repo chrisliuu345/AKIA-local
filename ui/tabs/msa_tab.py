@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
-from analysis.msa import gage_rr, linearity_bias, attribute_agree
+from analysis.msa import gage_rr, linearity_bias, attribute_agree, type1_study
 from output.chart_engine import create_histogram
 from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
@@ -49,7 +49,7 @@ class MSATab(BaseAnalysisTab):
         config_layout = QFormLayout(config_group)
 
         self.method_combo = QComboBox()
-        self.method_combo.addItems(["量具R&R (交叉)", "量具R&R (嵌套)", "偏倚分析", "线性分析", "属性一致性分析"])
+        self.method_combo.addItems(["量具R&R (交叉)", "量具R&R (嵌套)", "偏倚分析", "线性分析", "属性一致性分析", "Type 1 量具研究"])
         config_layout.addRow("分析方法:", self.method_combo)
 
         self.measure_col = QComboBox()
@@ -226,6 +226,13 @@ class MSATab(BaseAnalysisTab):
                     return False, "请选择操作员列（可右键点击表格列标题设为操作员列）"
         except KeyError as e:
             return False, f"列选择错误：{e} 在当前数据表中不存在，请点击表格列标题重新选择"
+        # Type 1 量具研究校验
+        if "Type 1" in method:
+            if reference == 0.0:
+                return False, "Type 1 量具研究需要设置参考值（真值）"
+            data = pd.to_numeric(self.df[measure], errors="coerce").dropna()
+            if len(data) < 5:
+                return False, f"Type 1 量具研究至少需要 5 个观测值，当前 {len(data)}"
         return True, ""
 
     def run_and_display(self) -> Dict[str, Any]:
@@ -267,6 +274,9 @@ class MSATab(BaseAnalysisTab):
             result = linearity_bias.analyze_linearity(self.df, measure, part)
         elif "属性一致性" in method:
             result = attribute_agree.analyze(self.df, measure, part, operator)
+        elif "Type 1" in method:
+            data = pd.to_numeric(self.df[measure], errors="coerce").dropna()
+            result = type1_study.analyze(data, reference, tolerance=tolerance)
 
         self.current_result = {
             "analysis_type": method,
@@ -316,6 +326,22 @@ class MSATab(BaseAnalysisTab):
             pv = result.get('p_value', '')
             pv_str = format_pvalue(pv) if isinstance(pv, (int, float)) else str(pv)
             lines.append(f"  p值: {pv_str}")
+        # Type 1 量具研究结果
+        cap = result.get("capability", {})
+        if cap:
+            lines.append(f"\n【Type 1 能力指标】")
+            lines.append(f"  Cg: {cap.get('cg', '')}")
+            lines.append(f"  Cgk: {cap.get('cgk', '')}")
+            lines.append(f"  偏倚: {cap.get('bias', '')} ({cap.get('bias_pct', '')}%)")
+            lines.append(f"  可接受: {'是' if cap.get('is_capable') else '否'}")
+        bias_test = result.get("bias_test", {})
+        if bias_test:
+            lines.append(f"\n【偏倚 t 检验】")
+            lines.append(f"  平均偏倚: {bias_test.get('mean_bias', '')}")
+            pv = bias_test.get('p_value', '')
+            pv_str = format_pvalue(pv) if isinstance(pv, (int, float)) else str(pv)
+            lines.append(f"  p值: {pv_str}")
+            lines.append(f"  结论: {bias_test.get('interpretation', '')}")
 
         self.result_text.setPlainText("\n".join(lines))
         self.result_text.update()
