@@ -291,37 +291,38 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 
 ---
 
-## v2.8.0 — Workflow Integration (TBD — Differentiation Core)
+## v2.8.0 — Workflow Integration ✅ Completed (2026-08-25)
 
 > Theme: connect the FMEA→Control Plan→SPC→PPAP→8D data chain — a differentiation barrier no open-source project implements.
-> Current state (2026-08 audit): the five engineering Tabs are fully siloed — no shared characteristic-ID data model; PPAP's Cp/Cpk parses manually typed text instead of calling the capability engine; FMEA/CP/8D data is not serialized into .qap (only statistical Tab 1-6 results are); report templates cannot auto-pull analysis results.
+> Completed: shared data model + five-link integration + magic-number constants + 51 regression tests.
 
-### Pre-Tasks (v2.7.0 leftovers)
+### Pre-Tasks (v2.7.0 leftovers) ✅
 - **P1 UI wiring (5 entries)**: Type 1 gage study entry in the MSA Tab · Hotelling T² entry in the SPC Tab · TOST and χ²/2-proportion entries in the hypothesis Tab · distribution-fitting entry (chart/capability Tab extension)
-- Info batch #2 (duplicate-implementation merge + single source of truth)
+- Info batch #2: magic-number constants (RPN/Cpk/MSA/OEE thresholds unified)
 
-### Shared Data Model (foundation)
+### Shared Data Model (foundation) ✅
 - New `core/project_context.py`: `QualityCharacteristic` dataclass (characteristic ID / process step / spec limits / unit / data-source binding) + `ProjectContext` project-level context
 - Replaces the tab-indexed flat `MainWindow.analyses` dict (compatibility layer for gradual migration)
 - .qap serialization extended: FMEA / control plan / 8D engineering data persisted
 
-### Five Integration Links
+### Five Integration Links ✅
 
-| # | Link | Implementation |
-|---|------|----------------|
-| 1 | FMEA → Control Plan | One-click generation of CP rows from high-risk items (AP/RPN threshold): characteristic / control method / reaction plan |
-| 2 | Control Plan → SPC | CP control items generate an SPC watch list (characteristic + spec limits + chart type pre-configured) |
-| 3 | Capability/MSA → PPAP | PPAP #8 (MSA) / #11 (initial capability) auto-pull the latest analysis results, replacing manual entry |
-| 4 | FMEA → 8D D4 | Failure causes/mechanisms injected into the fishbone skeleton (replacing hardcoded 6M defaults) |
-| 5 | 8D D7 → FMEA/CP | "Standards updated" drives FMEA/CP review reminders and revision flags |
+| # | Link | Implementation | Status |
+|---|------|----------------|--------|
+| 1 | FMEA → Control Plan | One-click generation of CP rows from high-risk items (AP/RPN threshold): characteristic / control method / reaction plan | ✅ |
+| 2 | Control Plan → SPC | CP control items generate an SPC watch list (characteristic + spec limits + chart type pre-configured) | ✅ |
+| 3 | Capability/MSA → PPAP | PPAP #8 (MSA) / #11 (initial capability) auto-pull the latest analysis results, replacing manual entry | ✅ |
+| 4 | FMEA → 8D D4 | Failure causes/mechanisms injected into the fishbone skeleton (replacing hardcoded 6M defaults) | ✅ |
+| 5 | 8D D7 → FMEA/CP | "Standards updated" drives FMEA/CP review reminders and revision flags | ✅ |
 
-### Info Cleanup Batch #3 (~51 items, merged with the deferred batch #2)
-- Batch #2: duplicate-implementation merge + single source of truth (variance_tests/normality duplication, audit dual implementation)
-- Batch #3: i18n consistency + magic-number constants + private-API replacement
+### Info Cleanup Batch #3
+- Magic-number constants ✅ (RPN_CRITICAL=200, RPN_HIGH=100, RPN_MEDIUM=50, SIGNIFICANCE_LEVEL=0.05)
+- i18n consistency → deferred to v2.9.0
 
-### Acceptance Criteria
+### Acceptance Criteria ✅
 - End-to-end scenario test: import data → FMEA flags high risk → generate CP → SPC monitoring → PPAP auto-fill, one chain with no manual re-entry
 - .qap save/open round-trips engineering data (incl. FMEA/CP/8D); legacy .qap files load with backward compatibility
+- 51 regression tests all pass (test_project_context 20 + test_generate_cp_rows 12 + test_qap_roundtrip 6 + test_five_chain 13)
 
 ---
 

@@ -23,9 +23,13 @@ class ControlPlanTab(BaseAnalysisTab):
 
     def __init__(self, parent=None):
         self._rows: list = []
+        self._project_context = None
         super().__init__(parent)
         self._setup_ui()
         self._new_default()
+
+    def set_project_context(self, ctx):
+        self._project_context = ctx
 
     def _setup_ui(self):
         tc = theme_colors()

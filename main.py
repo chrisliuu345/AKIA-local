@@ -20,47 +20,112 @@ from config.settings import APP_NAME, APP_VERSION
 
 LOGO_PATH = os.path.join(os.path.dirname(__file__), "logo.png")
 
+# 颜色
+COLOR_UPPER = "#0d2847"   # 深蓝色
+COLOR_LOWER = "#4da6ff"   # 浅蓝色
+COLOR_BAR_BG = "#0a1e38"  # 进度条底色
+COLOR_BAR_FILL = "#ffffff" # 进度条填充色（白色）
 
-# 保存原始 splash 画布（不含进度条和文字），每次重绘基于它
-_SPLASH_BASE: QPixmap = None
+# Splash 逻辑尺寸（不受 DPI 影响的固定显示比例）
+_SPLASH_LOGICAL_W = 300
+_SPLASH_LOGICAL_H = 200
+_SPLASH_SPLIT_RATIO = 0.81  # 深蓝区域占比
 
 
-def _update_splash(splash: QSplashScreen, pct: int, status: str = ""):
-    """在 splash 底部绘制进度条 + 状态文字（每次从原始画布重绘, 避免重叠）"""
-    global _SPLASH_BASE
-    if _SPLASH_BASE is None:
-        _SPLASH_BASE = QPixmap(splash.pixmap())
+def _get_screen_dpr():
+    """获取主屏幕的 devicePixelRatio"""
+    try:
+        from PySide6.QtGui import QGuiApplication
+        screen = QGuiApplication.primaryScreen()
+        if screen:
+            return screen.devicePixelRatio()
+    except Exception:
+        pass
+    return 1.0
 
-    pm = QPixmap(_SPLASH_BASE)
+
+def _create_splash_canvas() -> QPixmap:
+    """创建双色 splash 画布（自适应 DPI）"""
+    dpr = _get_screen_dpr()
+    # 逻辑尺寸 × DPR = 实际像素，保证清晰且大小固定
+    w = int(_SPLASH_LOGICAL_W * dpr)
+    h = int(_SPLASH_LOGICAL_H * dpr)
+    split_y = int(h * _SPLASH_SPLIT_RATIO)
+    bar_h = max(2, int(3 * dpr))
+    margin_x = int(14 * dpr)
+    margin_top = int(28 * dpr)
+    margin_bottom = int(10 * dpr)
+    font_size = max(7, int(9 * dpr))
+
+    pm = QPixmap(w, h)
+    pm.fill(QColor(COLOR_LOWER))
+
     painter = QPainter(pm)
-    w, h = pm.width(), pm.height()
-    bar_w = int(w * 0.7)
-    bar_h = 6
-    bar_x = (w - bar_w) // 2
-    bar_y = h - 46
+    painter.setRenderHint(QPainter.SmoothPixmapTransform)
+    painter.setRenderHint(QPainter.Antialiasing)
 
-    # 清除底部区域 (用背景色覆盖旧进度条+旧文字)
+    # 上方深蓝区域
     painter.setPen(Qt.NoPen)
-    painter.setBrush(QColor("#181822"))
-    painter.drawRect(0, bar_y - 28, w, 80)
+    painter.setBrush(QColor(COLOR_UPPER))
+    painter.drawRect(0, 0, w, split_y)
+
+    # Logo（高清缩放）
+    if os.path.exists(LOGO_PATH):
+        logo = QPixmap(LOGO_PATH)
+        if not logo.isNull():
+            max_h = split_y - margin_top - margin_bottom
+            max_w = w - margin_x * 2
+            scaled = logo.scaled(max_w, max_h, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            x = (w - scaled.width()) // 2
+            y = (split_y - scaled.height()) // 2
+            painter.drawPixmap(x, y, scaled)
+
+    # 下方文字区域：右对齐
+    painter.setPen(QColor(COLOR_UPPER))
+    font = QFont("Microsoft YaHei", -1, QFont.Bold)
+    font.setPixelSize(font_size)
+    painter.setFont(font)
+    text_rect = Qt.AlignRight | Qt.AlignVCenter
+    painter.drawText(0, split_y, w - int(16 * dpr), h - split_y, text_rect, "IE-Quality Analysis Tool")
+
+    painter.end()
+    return pm
+
+
+def _update_splash(splash: QSplashScreen, pct: int, base: QPixmap = None):
+    """更新进度条（位于两色交接处）"""
+    global _splash_base
+    if base is not None:
+        _splash_base = base
+    if _splash_base is None:
+        return
+    pm = QPixmap(_splash_base)
+    painter = QPainter(pm)
+
+    w = pm.width()
+    h = pm.height()
+    dpr = _get_screen_dpr()
+    split_y = int(h * _SPLASH_SPLIT_RATIO)
+    bar_h = max(2, int(3 * dpr))
+    bar_y = split_y - bar_h // 2
+    fill_w = int(w * pct / 100)
 
     # 进度条底色
-    painter.setBrush(QColor(60, 60, 70))
-    painter.drawRoundedRect(bar_x, bar_y, bar_w, bar_h, 3, 3)
+    painter.setPen(Qt.NoPen)
+    painter.setBrush(QColor(COLOR_BAR_BG))
+    painter.drawRect(0, bar_y, w, bar_h)
 
     # 进度填充
-    fill_w = int(bar_w * pct / 100)
-    painter.setBrush(QColor("#4da6ff"))
-    painter.drawRoundedRect(bar_x, bar_y, fill_w, bar_h, 3, 3)
-
-    # 状态文字 (离进度条上方 22px)
-    if status:
-        painter.setPen(QColor("#a0a3ae"))
-        painter.setFont(QFont("Microsoft YaHei", 9))
-        painter.drawText(0, bar_y - 22, w, 16, Qt.AlignCenter, status)
+    if fill_w > 0:
+        painter.setBrush(QColor(COLOR_BAR_FILL))
+        painter.drawRect(0, bar_y, fill_w, bar_h)
 
     painter.end()
     splash.setPixmap(pm)
+
+
+# 保存原始画布
+_splash_base: QPixmap = None
 
 
 def main():
@@ -130,45 +195,19 @@ def main():
         QProgressBar::chunk { background-color: #1b5faa; border-radius: 3px; }
     """)
 
-    # ── Splash 启动画面 ──
-    splash_img = QPixmap(LOGO_PATH) if os.path.exists(LOGO_PATH) else None
-    if splash_img and not splash_img.isNull():
-        scaled = splash_img.scaled(320, 192, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        canvas = QPixmap(400, 300)
-        canvas.fill(QColor("#181822"))
-        painter = QPainter(canvas)
-        x = (canvas.width() - scaled.width()) // 2
-        y = (canvas.height() - scaled.height()) // 2 - 24
-        painter.drawPixmap(x, y, scaled)
-        painter.end()
-        splash = QSplashScreen(canvas)
-    else:
-        splash = QSplashScreen()
+    # ── Splash 启动画面（双色设计）──
+    global _splash_base
+    _splash_base = _create_splash_canvas()
+    splash = QSplashScreen(_splash_base)
     splash.show()
     splash.raise_()
     app.processEvents()
 
-    # ── 精细化加载 (12 步) ──
-    steps = [
-        (5,  "初始化运行环境..."),
-        (10, "加载认证系统..."),
-        (20, "初始化用户数据..."),
-        (28, "加载核心分析引擎..."),
-        (35, "导入 SPC 控制图模块..."),
-        (42, "导入过程能力分析模块..."),
-        (48, "导入 MSA/假设检验/DOE 模块..."),
-        (55, "加载 IE 工业工程模块..."),
-        (62, "加载工程工具模块..."),
-        (70, "构建应用主窗口..."),
-        (78, "初始化侧栏导航..."),
-        (85, "连接信号与数据路由..."),
-        (92, "恢复窗口布局..."),
-        (97, "准备就绪..."),
-        (100, "启动完成"),
-    ]
+    # ── 精细化加载 (12 步, 仅更新进度条) ──
+    steps = [5, 10, 20, 28, 35, 42, 48, 55, 62, 70, 78, 85, 92, 97, 100]
 
-    for pct, status in steps:
-        _update_splash(splash, pct, status)
+    for pct in steps:
+        _update_splash(splash, pct)
         app.processEvents()
 
         # 在特定阶段执行实际初始化

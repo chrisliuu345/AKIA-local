@@ -4,7 +4,7 @@ import json, os, threading, urllib.request, urllib.error
 from typing import Generator, List
 
 OLLAMA_MODELS = ["qwen2.5:7b", "qwen2.5:14b", "llama3.2", "deepseek-r1:8b"]
-OPENAI_MODELS = ["deepseek-chat", "glm-4-flash", "gpt-4o-mini", "custom"]
+OPENAI_MODELS = ["deepseek-chat", "glm-4-flash", "gpt-4o-mini"]
 
 
 class LLMClient:
@@ -44,13 +44,31 @@ class LLMClient:
         return bool(self.api_base and self.api_key)
 
     def get_models(self) -> List[str]:
+        """获取可用模型列表。Ollama 从 /api/tags 动态获取，失败时返回默认列表。"""
         if self.provider == "ollama":
             try:
                 req = urllib.request.Request(f"{self.OLLAMA_BASE}/api/tags", method="GET")
                 with urllib.request.urlopen(req, timeout=3) as resp:
-                    return [m["name"] for m in json.loads(resp.read().decode()).get("models", [])]
-            except Exception: return OLLAMA_MODELS
-        return OPENAI_MODELS
+                    data = json.loads(resp.read().decode())
+                    models = data.get("models", [])
+                    if models:
+                        # 按名称排序，过滤掉 engine 内部模型
+                        names = sorted([m["name"] for m in models])
+                        return names
+                    return list(OLLAMA_MODELS)
+            except Exception:
+                return list(OLLAMA_MODELS)
+        return list(OPENAI_MODELS)
+
+    def is_model_available(self, model: str) -> bool:
+        """检查指定模型是否在 Ollama 中可用"""
+        if self.provider != "ollama":
+            return True
+        try:
+            models = self.get_models()
+            return model in models
+        except Exception:
+            return False
 
     def generate(self, prompt: str, model: str = None) -> Generator[str, None, None]:
         self._stop_event.clear()

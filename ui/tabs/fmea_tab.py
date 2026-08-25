@@ -12,6 +12,7 @@ from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY
 from ui.theme import colors as theme_colors
 from core.fmea_engine import FMEAItem, FMEAEngine
+from config.settings import RPN_HIGH
 
 
 class FMEATab(BaseAnalysisTab):
@@ -20,9 +21,13 @@ class FMEATab(BaseAnalysisTab):
         self._engine = FMEAEngine()
         self._items: list = []
         self._mode = "pfmea"
+        self._project_context = None
         super().__init__(parent)
         self._setup_ui()
         self._new_analysis()
+
+    def set_project_context(self, ctx):
+        self._project_context = ctx
 
     def _setup_ui(self):
         tc = theme_colors()
@@ -68,7 +73,7 @@ class FMEATab(BaseAnalysisTab):
         self.btn_gen_cp = QPushButton("生成控制计划")
         self.btn_gen_cp.setStyleSheet(BUTTON_SECONDARY)
         self.btn_gen_cp.setCursor(Qt.PointingHandCursor)
-        self.btn_gen_cp.setToolTip("将高风险项(RPN≥100)自动转换为控制计划行")
+        self.btn_gen_cp.setToolTip(f"将高风险项(RPN≥{RPN_HIGH})自动转换为控制计划行")
         self.btn_gen_cp.clicked.connect(self._generate_cp)
         toolbar.addWidget(self.btn_gen_cp)
 
@@ -136,27 +141,27 @@ class FMEATab(BaseAnalysisTab):
     def _generate_cp(self):
         """将高风险 FMEA 条目生成控制计划行"""
         # 统计高风险项
-        high_risk = [item for item in self._items if item.rpn >= 100]
+        high_risk = [item for item in self._items if item.rpn >= RPN_HIGH]
         if not high_risk:
             QMessageBox.information(self, "生成控制计划",
-                                    "没有高风险项(RPN≥100)，无需生成控制计划。")
+                                    f"没有高风险项(RPN≥{RPN_HIGH})，无需生成控制计划。")
             return
 
         reply = QMessageBox.question(
             self, "生成控制计划",
-            f"将 {len(high_risk)} 个高风险项(RPN≥100)生成控制计划行？\n"
+            f"将 {len(high_risk)} 个高风险项(RPN≥{RPN_HIGH})生成控制计划行？\n"
             f"将自动切换到控制计划 Tab 并导入数据。"
         )
         if reply != QMessageBox.Yes:
             return
 
         # 生成 CP 行
-        cp_rows = self._engine.generate_cp_rows(self._items, rpn_threshold=100)
+        cp_rows = self._engine.generate_cp_rows(self._items, rpn_threshold=RPN_HIGH)
 
         # 存储到 current_result 供外部读取
         self.current_result = {
             "analysis_type": "FMEA → CP",
-            "params": {"rpn_threshold": 100},
+            "params": {"rpn_threshold": RPN_HIGH},
             "result": {"cp_rows": cp_rows, "source": "fmea"},
             "chart_data": {},
         }

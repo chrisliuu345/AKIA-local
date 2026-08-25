@@ -25,8 +25,12 @@ from ui.theme import BUTTON_SECONDARY, BUTTON_TOGGLE, BUTTON_PRIMARY_STRETCH
 class SPCTab(BaseAnalysisTab):
 
     def __init__(self, parent=None):
+        self._project_context = None
         super().__init__(parent)
         self._setup_ui()
+
+    def set_project_context(self, ctx):
+        self._project_context = ctx
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
@@ -298,6 +302,10 @@ class SPCTab(BaseAnalysisTab):
             item.setCheckState(Qt.Unchecked)
             self.hotelling_cols_list.addItem(item)
         self._populate_preview_table(df)
+
+    def import_from_cp(self, spc_items: list):
+        """从控制计划导入 SPC 监控清单"""
+        self._cp_monitoring_list = spc_items
 
     def _on_chart_type_changed(self, chart_type: str):
         is_cusum = chart_type == "CUSUM"
