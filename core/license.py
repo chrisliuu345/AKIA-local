@@ -176,6 +176,13 @@ class LicenseManager:
         with open(self._license_path, 'w', encoding='utf-8') as f:
             json.dump(license_data, f, indent=2, ensure_ascii=False)
 
+        # 设置文件权限（仅所有者可读写）
+        try:
+            if os.name != 'nt':  # Windows 不支持 chmod
+                os.chmod(self._license_path, 0o600)
+        except OSError:
+            pass
+
         return True, "激活成功"
 
     def get_license_info(self) -> dict:
