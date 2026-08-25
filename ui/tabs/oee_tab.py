@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from config.settings import OEE_WORLD_CLASS, OEE_GOOD, OEE_FAIR
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
@@ -227,11 +228,11 @@ class OEETab(BaseAnalysisTab):
 
         oee = ov.get("oee") or 0
         self._kpi_labels["oee"].setText(f"{oee:.1%}")
-        if oee >= 0.85:
+        if oee >= OEE_WORLD_CLASS:
             color = "#27ae60"
-        elif oee >= 0.65:
+        elif oee >= OEE_GOOD:
             color = tc["accent_bright"]
-        elif oee >= 0.40:
+        elif oee >= OEE_FAIR:
             color = "#e67e22"
         else:
             color = "#e74c3c"
@@ -288,8 +289,8 @@ class OEETab(BaseAnalysisTab):
                 if b[key] is not None and v > 0:
                     ax1.text(xi + (k - 1.5) * width, v + 0.015, f"{v:.0%}",
                              ha="center", fontsize=7, color=tc["text_secondary"])
-        ax1.axhline(0.85, color="#e74c3c", linestyle="--", linewidth=1.2)
-        ax1.text(len(labels) - 0.5, 0.865, "世界级 85%", fontsize=8,
+        ax1.axhline(OEE_WORLD_CLASS, color="#e74c3c", linestyle="--", linewidth=1.2)
+        ax1.text(len(labels) - 0.5, OEE_WORLD_CLASS + 0.015, f"世界级 {OEE_WORLD_CLASS:.0%}", fontsize=8,
                  color="#e74c3c", ha="right")
         ax1.set_xticks(x)
         ax1.set_xticklabels(labels)

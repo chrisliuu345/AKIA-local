@@ -7,7 +7,7 @@ import os
 
 # ── 应用信息 ──────────────────────────────────────────
 APP_NAME = "QA-Tool"
-APP_VERSION = "2.7.0"
+APP_VERSION = "2.8.0"
 ORGANIZATION = "QA-Tool"
 
 # ── 统计常量 ──────────────────────────────────────────
@@ -135,6 +135,14 @@ MSA_D2_STAR = {
 OEE_WORLD_CLASS = 0.85
 OEE_GOOD = 0.65
 OEE_FAIR = 0.40
+
+# ── FMEA RPN 阈值 ──────────────────────────────────────
+RPN_CRITICAL = 200   # RPN >= 200: 停线整改
+RPN_HIGH = 100       # RPN >= 100: 高风险，需生成控制计划
+RPN_MEDIUM = 50      # RPN >= 50: 中等风险
+
+# ── 统计显著性 ──────────────────────────────────────────
+SIGNIFICANCE_LEVEL = 0.05
 
 # ── 根因分析权重 (SHAP三路融合) ────────────────────────
 ROOT_CAUSE_W_IMPORTANCE = 0.4

@@ -5,6 +5,7 @@ import pandas as pd
 
 from core.data_profiler import DataProfiler
 from core.log_util import get_logger
+from config.settings import CAPABILITY_GRADES, MSA_GRR_ACCEPTABLE, MSA_GRR_MARGINAL
 
 _log = get_logger(__name__)
 
@@ -321,13 +322,15 @@ class OneClickAnalyzer:
                 elif label == "capability":
                     cpk = s.get("cpk")
                     if cpk:
-                        level = "充足(Cpk≥1.33)" if cpk >= 1.33 else ("尚可(Cpk≥1.0)" if cpk >= 1.0 else "不足(Cpk<1.0)")
+                        cpk_a = CAPABILITY_GRADES["A"][0]  # 1.33
+                        cpk_b = CAPABILITY_GRADES["B"][0]  # 1.00
+                        level = f"充足(Cpk≥{cpk_a})" if cpk >= cpk_a else (f"尚可(Cpk≥{cpk_b})" if cpk >= cpk_b else f"不足(Cpk<{cpk_b})")
                         lines.append(f"- **过程能力**: Cpk={cpk:.2f}, 等级: {level}")
                 elif label == "msa":
                     grr = s.get("grr_pct")
                     if grr is not None:
                         # W10 fix: 统一0-1标度（kpi_extractor归一化为0-1）
-                        ok = "可接受(<10%)" if grr < 0.1 else ("条件接受(10-30%)" if grr < 0.3 else "不可接受(>30%)")
+                        ok = f"可接受(<{MSA_GRR_ACCEPTABLE*100:.0f}%)" if grr < MSA_GRR_ACCEPTABLE else (f"条件接受({MSA_GRR_ACCEPTABLE*100:.0f}-{MSA_GRR_MARGINAL*100:.0f}%)" if grr < MSA_GRR_MARGINAL else f"不可接受(>{MSA_GRR_MARGINAL*100:.0f}%)")
                         lines.append(f"- **MSA 量具 R&R**: GRR={grr*100:.1f}%, {ok}")
                 elif label == "regression":
                     r2 = s.get("r_squared")

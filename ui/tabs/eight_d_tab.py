@@ -24,10 +24,14 @@ def _make_row(parent, label, widget):
 
 class EightDTab(BaseAnalysisTab):
     def __init__(self, parent=None):
+        self._project_context = None
         super().__init__(parent)
         self.report = EightDReport()
         self._w = {}
         self._setup_ui()
+
+    def set_project_context(self, ctx):
+        self._project_context = ctx
 
     def _setup_ui(self):
         body = QHBoxLayout(self)
@@ -57,6 +61,11 @@ class EightDTab(BaseAnalysisTab):
             btn.setStyleSheet(BUTTON_SECONDARY)
             btn.clicked.connect(slot)
             ll.addWidget(btn)
+        fmea_btn = QPushButton("导入 FMEA 原因")
+        fmea_btn.setStyleSheet(BUTTON_SECONDARY)
+        fmea_btn.setToolTip("从 FMEA 导入失效原因到 D4 鱼骨图")
+        fmea_btn.clicked.connect(self._import_from_fmea)
+        ll.addWidget(fmea_btn)
         ll.addStretch()
         body.addWidget(left)
 
@@ -184,6 +193,10 @@ class EightDTab(BaseAnalysisTab):
             add("d7_prev", t)
             lay.addWidget(t)
             add("d7_std", _make_row(lay, "标准/文件更新:", QLineEdit()))
+            review_btn = QPushButton("检查复审需求")
+            review_btn.setStyleSheet(BUTTON_SECONDARY)
+            review_btn.clicked.connect(self._check_review)
+            lay.addWidget(review_btn)
         elif code == "D8":
             lay.addWidget(QLabel("团队表彰:"))
             t = QTextEdit()
@@ -276,6 +289,18 @@ class EightDTab(BaseAnalysisTab):
             "review_needed": bool(standards),  # 有标准更新就需要复审
         }
 
+    def _check_review(self):
+        """检查 D7 复审需求并显示结果"""
+        result = self.check_standards_update()
+        if result["review_needed"]:
+            msg = (f"标准已更新，需要复审:\n\n"
+                   f"更新内容: {result['standards_updated']}\n\n"
+                   f"预防措施: {result['preventive_actions'] or '(未填写)'}\n\n"
+                   "请检查 FMEA 和控制计划是否需要更新。")
+        else:
+            msg = "未检测到标准更新，无需复审。"
+        QMessageBox.information(self, "复审检查", msg)
+
     def _save(self):
         r = self.report
         r.title = self._w["title"].text()
@@ -302,6 +327,25 @@ class EightDTab(BaseAnalysisTab):
         r.d7 = D7Step(preventive_actions=self._text("d7_prev"), standards_updated=self._text("d7_std"))
         r.d8 = D8Step(recognition_notes=self._text("d8_recog"), closure_date=self._text("d8_date"))
         QMessageBox.information(self, "保存完成", "8D 报告已暂存")
+
+    def _import_from_fmea(self):
+        """从 FMEA 导入失效原因到 D4 鱼骨图"""
+        fmea_items = []
+        if self._project_context and self._project_context.fmea_items:
+            fmea_items = self._project_context.fmea_items
+        else:
+            main_win = self.window()
+            if main_win and hasattr(main_win, '_tab_cache'):
+                fmea_tab = main_win._tab_cache.get(16)
+                if fmea_tab and hasattr(fmea_tab, '_items'):
+                    fmea_items = [
+                        {"cause": item.cause, "effect": item.effect, "rpn": item.rpn}
+                        for item in fmea_tab._items if hasattr(item, 'cause')
+                    ]
+        if not fmea_items:
+            QMessageBox.information(self, "导入 FMEA", "未找到 FMEA 数据。请先完成 FMEA 分析。")
+            return
+        self.import_fmea_causes(fmea_items)
 
     def _export_pdf(self):
         self._save()

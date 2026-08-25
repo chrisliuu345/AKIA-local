@@ -25,6 +25,7 @@ from core.session_manager import SessionManager
 from core.i18n import i18n
 from core.data_profiler import DataProfiler
 from core.project_manager import ProjectManager
+from core.project_context import ProjectContext
 from core.audit import audit
 from core.auth import AuthManager
 
@@ -71,8 +72,8 @@ class MainWindow(QMainWindow):
 
         def _step(pct, msg):
             if splash:
-                from main import _update_splash
-                _update_splash(splash, pct, msg)
+                from main import _update_splash, _splash_base
+                _update_splash(splash, pct, _splash_base)
                 QApplication.processEvents()
 
         _step(71, "初始化数据加载器...")
@@ -86,6 +87,7 @@ class MainWindow(QMainWindow):
         self.current_data: Dict[str, Any] = {}
         self.profile_result: Dict[str, Any] = {}
         self.analyses: Dict[int, Dict[str, Any]] = {}
+        self.project_context = ProjectContext()
         self._action_permissions: list = []
 
         _step(73, "构建界面布局...")
@@ -596,18 +598,15 @@ class MainWindow(QMainWindow):
 
     def _import_spc_from_cp(self, spc_items: list):
         """从控制计划导入 SPC 监控清单"""
-        # 存储 SPC 清单供 SPC Tab 使用
         self._spc_monitoring_list = spc_items
 
+        # 注入到 SPC Tab
+        spc_tab = self._tab_cache.get(1)
+        if spc_tab and hasattr(spc_tab, 'import_from_cp'):
+            spc_tab.import_from_cp(spc_items)
+
         # 切换到 SPC Tab
-        from ui._tab_registry import TAB_REGISTRY
-        spc_idx = None
-        for idx, entry in enumerate(TAB_REGISTRY):
-            if "SPC" in str(entry):
-                spc_idx = idx
-                break
-        if spc_idx is not None:
-            self._switch_tab(spc_idx)
+        self._switch_tab(1)
 
     def _on_import_quality(self):
         if not self._check_permission("import"):
@@ -1206,6 +1205,11 @@ class MainWindow(QMainWindow):
                     btn.clicked.connect(_guarded_run)
                     break
 
+        # 注入 project_context 到五链相关 Tab
+        _CONTEXT_TABS = {1, 16, 17, 30, 32}  # SPC, FMEA, CP, 8D, PPAP
+        if idx in _CONTEXT_TABS and hasattr(tab, 'set_project_context'):
+            tab.set_project_context(self.project_context)
+
     def _get_tabs(self, force_load: bool = False):
         """获取 Tab 字典。force_load=False 仅返回已缓存的(懒加载友好)；force_load=True 全量加载"""
         result = {}
@@ -1352,7 +1356,10 @@ class MainWindow(QMainWindow):
             charts = {}
             for label, buf in self._collect_charts(list(self.analyses.keys())).items():
                 charts[label] = buf.getvalue() if hasattr(buf, 'getvalue') else buf
-            ProjectManager.save_project(path, raw, self.analyses, charts, "")
+            ProjectManager.save_project(
+                path, raw, self.analyses, charts, "",
+                project_context=self.project_context.to_dict() if self.project_context else None,
+            )
             self.status_label.setText(f"项目已保存: {path}")
             recent = ProjectManager.recent_projects()
             self._rebuild_recent_menu(recent)
@@ -1377,6 +1384,21 @@ class MainWindow(QMainWindow):
         self.data_loader.metadata = self.current_data["metadata"]
         self._route_sheets_to_tabs(raw_data)
         self.analyses = project["analyses"]
+
+        # 恢复 project_context
+        ctx_dict = project.get("project_context")
+        if ctx_dict:
+            from core.project_context import ProjectContext as PC
+            self.project_context = PC.from_dict(ctx_dict)
+        else:
+            self.project_context = ProjectContext()
+        # 重新注入到已加载的 Tab
+        _CONTEXT_TABS = {1, 16, 17, 30, 32}
+        for idx in _CONTEXT_TABS:
+            tab = self._tab_cache.get(idx)
+            if tab and hasattr(tab, 'set_project_context'):
+                tab.set_project_context(self.project_context)
+
         info = project["manifest"]
         suffix = f" [{info.get('sheet_count', 0)} sheets]" if data_label_suffix else ""
         self.data_label.setText(f" {os.path.basename(path)}{suffix}")
