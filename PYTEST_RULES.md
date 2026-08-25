@@ -1,6 +1,6 @@
 # ⚠️ pytest 运行规则
 
-**绝对禁止**: `pytest tests/` 批量运行
+**绝对禁止**: `pytest tests/` 批量运行或同时运行多个单测试
 **正确方式**: `pytest tests/test_xxx.py` 逐文件执行
 
 ## 死机原因

@@ -671,15 +671,3 @@ class Sidebar(QWidget):
         self.llm_btn.setText("  " + i18n.tr("sidebar.llm"))
         self.collapse_btn.setText("  " + i18n.tr("sidebar.collapse"))
         self._refresh_styles()
-
-    def set_permission_filter(self, allowed_indices: set):
-        """根据权限过滤侧栏导航按钮 — 无权限的 Tab 按钮隐藏
-        组级可见性基于 allowed_indices 而非 btn.isVisible()，
-        避免折叠状态(容器隐藏)导致 isVisible() 恒 False 误隐藏整个分组"""
-        for idx, btn in self.nav_buttons.items():
-            if idx == 0:
-                continue
-            btn.setVisible(idx in allowed_indices)
-        for group in self.categories:
-            has_visible = any(idx in allowed_indices for idx in group.sub_buttons)
-            group.setVisible(has_visible or not group.sub_buttons)
