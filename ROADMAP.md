@@ -329,9 +329,9 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 ## v2.9.0 — 安全架构重构 + 离线许可系统（待开发）
 
 > 主题：移除 RBAC 角色权限系统 → 实现离线许可验证 → 构建方式切换 Nuitka。
-> 定位：为未来许可商业化做准备，同时大幅提升反破解能力。
+> 定位：为未来许可商业化做准备，同时首次提升反破解能力。
 
-### 阶段 1: 删除 Auth 系统
+### 阶段 1: 删除 Auth 系统 ✅ 已完成
 
 **删除文件**：
 - `core/auth.py` (408行) — AuthManager、User、4级角色权限矩阵
@@ -351,7 +351,7 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 - `ui/welcome_page.py` — 移除 `set_permission_filter`
 - `main.py` — 移除 AuthManager + LoginDialog，简化启动
 
-**预计**：~15 个文件，-1500 行
+**实际**：15 个文件，删除/简化 ~800 行（main_window.py -192行，settings_dialog.py -135行，main.py -13行，测试文件 -100行，5个文件全删 -1200行）
 
 ### 阶段 2: 离线许可系统（标准版安全方案）
 
@@ -377,23 +377,15 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 
 **预计**：7 个新建，+900 行
 
-### 阶段 3: 构建方式切换 Nuitka + PyArmor
+### 阶段 3: 构建方式切换 Nuitka
 
 **Nuitka 编译**：
 - Python → C → 原生机器码（不可逆向还原）
 - 替代 PyInstaller（.pyc 可秒级反编译）
 - 输出 10-50MB exe，启动速度提升 10-20%
 
-**PyArmor Pro 保护**（¥512，一次性）：
-- BCC 模式：关键函数转为编译 C 代码
-- RFT 模式：重命名所有标识符
-- FLY 模式：控制流扁平化
-- 购买地址：https://pyarmor.dashingsoft.com/cart/order.html
-- 支付方式：微信 / 支付宝 / 银行转账
-
 **新建/修改文件**：
 - `build_nuitka.py` — Nuitka 构建脚本
-- `pyarmor_config.py` — PyArmor BCC 配置
 - `pyproject.toml` — 更新构建配置
 - `.github/workflows/build.yml` — CI 改用 Nuitka
 
