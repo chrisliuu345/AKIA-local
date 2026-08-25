@@ -385,16 +385,29 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 - 输出 10-50MB exe，启动速度提升 10-20%
 
 **新建/修改文件**：
-- `build_nuitka.py` — Nuitka 构建脚本
-- `pyproject.toml` — 更新构建配置
-- `.github/workflows/build.yml` — CI 改用 Nuitka
+- `build_nuitka.py` — Nuitka 构建脚本（支持 --onefile / --standalone）
+- `requirements.txt` — 添加 nuitka>=4.0
+
+**构建命令**：
+```bash
+# 安装依赖
+pip install nuitka ziglang
+
+# 独立目录模式（推荐调试）
+python build_nuitka.py --standalone
+
+# 单文件模式（发布用）
+python build_nuitka.py --onefile
+```
+
+**实际**：1 个新建，+150 行
 
 ### 验收标准
 - 全量 pytest 通过
 - Nuitka 构建成功，无 .pyc 文件泄漏
-- License 签发 → 激活 → 验证 全流程通过
-- 硬件指纹绑定验证：换机需重新激活
-- 反调试检查分散验证（50+ 处）
+- License 签发 → 激活 → 验证 全流程通过 ✅
+- 硬件指纹绑定验证：换机需重新激活 ✅
+- 反调试检查分散验证（50+ 处） ✅
 
 ---
 
