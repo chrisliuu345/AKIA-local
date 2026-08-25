@@ -50,6 +50,13 @@ class ControlPlanTab(BaseAnalysisTab):
         self.btn_delete.clicked.connect(self._delete_row)
         toolbar.addWidget(self.btn_delete)
 
+        self.btn_gen_spc = QPushButton("生成SPC清单")
+        self.btn_gen_spc.setStyleSheet(BUTTON_SECONDARY)
+        self.btn_gen_spc.setCursor(Qt.PointingHandCursor)
+        self.btn_gen_spc.setToolTip("将控制计划中的控制项生成 SPC 监控清单")
+        self.btn_gen_spc.clicked.connect(self._generate_spc_list)
+        toolbar.addWidget(self.btn_gen_spc)
+
         toolbar.addStretch()
 
         self.btn_export = QPushButton("导出Excel")
@@ -112,6 +119,56 @@ class ControlPlanTab(BaseAnalysisTab):
             while len(self._rows) <= row:
                 self._rows.append([""] * len(CP_HEADERS))
             self._rows[row][col] = item.text().strip()
+
+    def _generate_spc_list(self):
+        """从控制计划生成 SPC 监控清单"""
+        # 找出包含控制图的行
+        spc_items = []
+        for row in self._rows:
+            control_method = row[7] if len(row) > 7 else ""
+            if "控制图" in control_method or "SPC" in control_method.upper():
+                spc_items.append({
+                    "process": row[1] if len(row) > 1 else "",
+                    "characteristic": row[2] if len(row) > 2 else "",
+                    "tolerance": row[3] if len(row) > 3 else "",
+                    "method": control_method,
+                    "sample_size": row[5] if len(row) > 5 else "",
+                    "frequency": row[6] if len(row) > 6 else "",
+                })
+
+        if not spc_items:
+            QMessageBox.information(self, "生成SPC清单",
+                                    "控制计划中没有包含控制图的监控项。\n"
+                                    "请在控制方法列中填写如'XBar-R控制图'等SPC方法。")
+            return
+
+        # 构建 SPC 监控清单文本
+        lines = ["=== SPC 监控清单 ===\n"]
+        for i, item in enumerate(spc_items, 1):
+            lines.append(f"{i}. {item['process']} - {item['characteristic']}")
+            lines.append(f"   规格: {item['tolerance']}")
+            lines.append(f"   方法: {item['method']}")
+            lines.append(f"   样本: {item['sample_size']}, 频率: {item['frequency']}")
+            lines.append("")
+
+        # 存储结果
+        self.current_result = {
+            "analysis_type": "CP → SPC",
+            "params": {},
+            "result": {"spc_items": spc_items, "source": "control_plan"},
+            "chart_data": {},
+        }
+
+        # 通知主窗口
+        main_win = self.window()
+        if hasattr(main_win, '_import_spc_from_cp'):
+            main_win._import_spc_from_cp(spc_items)
+        else:
+            self.analysis_completed.emit()
+
+        QMessageBox.information(self, "生成完成",
+                                f"已生成 {len(spc_items)} 个 SPC 监控项。\n"
+                                "请在 SPC Tab 中选择对应列进行分析。")
 
     def _rebuild_table(self):
         self.table.blockSignals(True)
