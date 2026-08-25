@@ -1,14 +1,14 @@
-"""Dashboard 汇总面板 — 统一KPI提取器 + 实时刷新 + 卡片布局自定义 + 批量导出
+"""Dashboard 汇总面板 v3.0 — 垂直滚动 + 图表嵌入 + KPI 提取器 + 批量导出
 
-v2.4 第一阶段 (F0/F1/F2):
-- F0: 改用 core/kpi_extractor 渲染卡片 (修复 OEE/%GRR/SPC违规 3 项坏指标)
-- F1: 信号驱动 (MainWindow._notify_dashboard) + QTimer(5s) 轮询兜底 + 自动刷新开关
-- F2: 布局设置对话框 — 卡片显隐 + 排序, QSettings 持久化
+v3.0 重构:
+- 从卡片网格改为垂直滚动窗口，每张分析卡片纵向排列
+- 卡片内嵌入 matplotlib 图表快照 (QPixmap)
+- 增强 KPI 提取器覆盖所有分析类型
 """
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QGridLayout, QFrame, QScrollArea, QFileDialog, QMessageBox, QCheckBox,
+    QFrame, QScrollArea, QFileDialog, QMessageBox, QCheckBox,
 )
 from PySide6.QtCore import QTimer, QSettings, Qt
 from PySide6.QtGui import QFont
@@ -17,6 +17,7 @@ from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY, FONT_18B
 from ui.theme import colors as theme_colors
 from ui.widgets.elided_label import ElidedLabel
 from ui.widgets.animate import fade_in
+from ui.widgets.analysis_card import AnalysisCard
 from core.formatting import format_cp, format_pvalue, format_pct
 from core.i18n import i18n
 from core.kpi_extractor import extract_metrics
@@ -58,15 +59,22 @@ _METRIC_SPECS = {
     "standard_time": ("dashboard.metric.std_time",  lambda v: f"{v:.2f}"),
     "bottleneck_count": ("dashboard.metric.bottleneck", lambda v: f"{v}"),
     "worker_utilization": ("dashboard.metric.utilization", format_pct),
+    # v3.0 新增: 公差区间 / SMED / 多工厂 / 时间研究
+    "tolerance_lower":  ("dashboard.metric.tol_lower", lambda v: f"{v:.2f}"),
+    "tolerance_upper":  ("dashboard.metric.tol_upper", lambda v: f"{v:.2f}"),
+    "tolerance_width":  ("dashboard.metric.tol_width", lambda v: f"{v:.2f}"),
+    "confidence":       ("dashboard.metric.confidence", format_pct),
+    "proportion":       ("dashboard.metric.proportion", format_pct),
+    "improvement_pct":  ("dashboard.metric.improve",    format_pct),
+    "total_before":     ("dashboard.metric.total_before", lambda v: f"{v:.1f}s"),
+    "total_after":      ("dashboard.metric.total_after",  lambda v: f"{v:.1f}s"),
+    "best_cpk":         ("dashboard.metric.best_cpk",    format_cp),
+    "worst_cpk":        ("dashboard.metric.worst_cpk",   format_cp),
+    "total_violations": ("dashboard.metric.total_viol",  lambda v: f"{v}"),
 }
 
 _REFRESH_INTERVAL_MS = 5000
 
-# v2.4.1: 卡片自适应 — 卡片少则放大填充界面, 多则小卡滚动扩展 (QScrollArea 天然支持)
-_CARD_SIZES = {1: (560, 260), 2: (330, 220), 3: (240, 170)}
-_ROW_CAPS = {1: 10, 2: 8, 3: 6}          # 大卡展示更多指标行 (内容细节)
-_ROW_FONT_SIZES = {1: 13, 2: 12, 3: 11}  # 行字号随列数
-_TITLE_FONT_PT = 12
 _STATUS_RANK = {"na": 0, "good": 1, "warn": 2, "bad": 3}
 _STATUS_COLORS = {"na": "#6e7080", "good": "#27ae60", "warn": "#ffa726", "bad": "#e74c3c"}
 
@@ -159,13 +167,15 @@ class DashboardTab(BaseAnalysisTab):
         hdr.addWidget(self.btn_export)
         layout.addLayout(hdr)
 
-        # 卡片网格
+        # 垂直滚动卡片容器
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
         self.card_container = QWidget()
-        self.grid = QGridLayout(self.card_container)
-        self.grid.setSpacing(12)
+        self.card_layout = QVBoxLayout(self.card_container)
+        self.card_layout.setContentsMargins(0, 0, 0, 0)
+        self.card_layout.setSpacing(16)
+        self.card_layout.addStretch()
         scroll.setWidget(self.card_container)
         layout.addWidget(scroll, 1)
 
@@ -213,18 +223,20 @@ class DashboardTab(BaseAnalysisTab):
     def _show_empty(self):
         empty = QLabel(i18n.tr("dashboard.empty"))
         empty.setStyleSheet("color: #6e7080; font-size: 14px; padding: 40px;")
-        self.grid.addWidget(empty, 0, 0)
-        self._cards.append(empty)  # 加入统一管理, 下次 refresh 一并清理
+        empty.setAlignment(Qt.AlignCenter)
+        self.card_layout.insertWidget(0, empty)
+        self._cards.append(empty)
 
     def refresh(self):
         # 清除旧卡片
         for c in self._cards:
             if c.parent():
                 c.setParent(None)
+                c.deleteLater()
         self._cards.clear()
-        # 移除 layout 项的同时销毁 widget — 否则孤儿 widget 残留在容器上叠加显示
-        while self.grid.count():
-            item = self.grid.takeAt(0)
+        # 清空 layout (保留末尾 stretch)
+        while self.card_layout.count():
+            item = self.card_layout.takeAt(0)
             w = item.widget()
             if w:
                 w.setParent(None)
@@ -235,14 +247,16 @@ class DashboardTab(BaseAnalysisTab):
         parent = self.window()
         if not parent or not hasattr(parent, "analyses") or not parent.analyses:
             self._show_empty()
+            self.card_layout.addStretch()
             return
 
         metrics_map = extract_metrics(parent.analyses)
         if not metrics_map:
             self._show_empty()
+            self.card_layout.addStretch()
             return
 
-        # F2: 用户布局顺序 + 隐藏过滤 (QSettings 数据损坏防御)
+        # F2: 用户布局顺序 + 隐藏过滤
         order = self._settings.value("order", [])
         hidden_raw = self._settings.value("hidden", [])
         if not isinstance(order, (list, tuple)):
@@ -252,40 +266,62 @@ class DashboardTab(BaseAnalysisTab):
         rest = [k for k in sorted(metrics_map) if k not in ordered and k not in hidden]
         keys = ordered + rest
 
-        # v2.4.1: 先收集卡片数据, 按总数定列数/尺寸 — 卡片少则放大填充, 多则滚动扩展
+        # 收集公式卡片
         from ui.dialogs.formula_dialog import FormulaDialog
         formulas = FormulaDialog.load_formulas()
         variables = describe_variables(parent.analyses, self._get_analysis_df())
 
-        entries = []  # (kind, payload...)
+        # 收集 tab 实例映射 (用于获取图表)
+        tabs = parent._get_tabs() if hasattr(parent, "_get_tabs") else {}
+
+        card_idx = 0
+
+        # 先添加公式卡片
         for name, expr in formulas.items():
-            entries.append(("formula", name, expr))
+            card = self._make_formula_card(name, expr, variables)
+            self.card_layout.insertWidget(card_idx, card)
+            self._cards.append(card)
+            fade_in(card)
+            card_idx += 1
+
+        # 再添加分析卡片 (带图表)
         for atype in keys:
             rows = self._collect_rows(metrics_map[atype])
-            if not rows:
-                continue  # 无可显示指标的卡片 (防御)
-            entries.append(("metric", atype, rows, metrics_map[atype]))
+            metrics = metrics_map[atype]
 
-        cols = 1 if len(entries) <= 3 else (2 if len(entries) <= 6 else 3)
-        card_w, card_h = _CARD_SIZES[cols]
+            # 查找对应的 tab 实例和图表
+            fig = None
+            timestamp = ""
+            for idx, entry in parent.analyses.items():
+                if isinstance(entry, dict) and entry.get("analysis_type") == atype:
+                    ts = entry.get("_completed_at", "")
+                    if ts and (not timestamp or ts > timestamp):
+                        timestamp = ts
+                    tab = tabs.get(idx)
+                    if tab and hasattr(tab, "current_figure") and tab.current_figure is not None:
+                        fig = tab.current_figure
 
-        for i, entry in enumerate(entries):
-            if entry[0] == "formula":
-                card = self._make_formula_card(entry[1], entry[2], variables, cols)
-            else:
-                card = self._make_card(entry[1], entry[2], entry[3], cols)
-            if card is None:
-                continue
-            card.setFixedSize(card_w, card_h)
-            row, col = divmod(i, cols)
-            self.grid.addWidget(card, row, col)
+            ts_str = self._format_time(timestamp) if timestamp else ""
+            status = self._status_color(metrics)
+
+            card = AnalysisCard(
+                atype=atype,
+                rows=rows,
+                figure=fig,
+                status_color=status,
+                timestamp=ts_str,
+            )
+            self.card_layout.insertWidget(card_idx, card)
             self._cards.append(card)
-            fade_in(card)  # 动画关闭时走瞬显路径
+            fade_in(card)
+            card_idx += 1
 
-    # ── F0: 指标卡片 (从提取器数据渲染) ──────────────────
+        self.card_layout.addStretch()
+
+    # ── 指标收集 ──────────────────────────────────────────
     @staticmethod
     def _collect_rows(metrics: dict):
-        """收集可显示指标行 — 无上限, 由 _make_card 按列数截断"""
+        """收集可显示指标行"""
         rows = []
         for name, value in metrics.items():
             if value is None or value == "":
@@ -297,7 +333,7 @@ class DashboardTab(BaseAnalysisTab):
             try:
                 text = fmt(value)
             except (TypeError, ValueError):
-                continue  # 非标量或格式不符的指标静默跳过
+                continue
             rows.append(f"{i18n.tr(key)}: {text}")
         return rows
 
@@ -330,60 +366,12 @@ class DashboardTab(BaseAnalysisTab):
 
     @staticmethod
     def _format_time(ts: str) -> str:
-        """ISO '2026-08-14T14:23:45' → '14:23' (timespec=seconds 保证格式)"""
+        """ISO '2026-08-14T14:23:45' → '14:23'"""
         if len(ts) >= 16:
             return ts[11:16]
         return ts
 
-    def _make_card(self, atype: str, rows, metrics: dict, cols: int):
-        tc = theme_colors()
-        rows = rows[:_ROW_CAPS[cols]]
-        if not rows:
-            return None
-
-        frame = QFrame()
-        frame.setStyleSheet(
-            f"QFrame {{ background:{tc['bg_card']}; border:1px solid {tc['border']};"
-            f"border-radius:10px; padding:10px; }}"
-        )
-        l = QVBoxLayout(frame)
-        l.setSpacing(4)
-
-        # 标题行: 标题 + 状态色点
-        hdr = QHBoxLayout()
-        title = QLabel(atype[:25] + (".." if len(atype) > 25 else ""))
-        title.setFont(QFont("Microsoft YaHei", _TITLE_FONT_PT, QFont.Bold))
-        title.setStyleSheet(f"color:{tc['accent_bright']};")
-        title.setWordWrap(True)
-        title.setToolTip(atype)
-        hdr.addWidget(title)
-        hdr.addStretch()
-        dot = QLabel("●")
-        dot.setFixedSize(14, 14)
-        dot.setAlignment(Qt.AlignCenter)
-        dot.setStyleSheet(f"color: {self._status_color(metrics)}; font-size: 10px;")
-        hdr.addWidget(dot)
-        l.addLayout(hdr)
-
-        # v2.4.1: 更新时间戳 (内容细节)
-        ts = self._latest_time(atype)
-        if ts:
-            t = QLabel(i18n.tr("dashboard.last_update").format(time=self._format_time(ts)))
-            t.setStyleSheet(f"color:{tc['text_muted']}; font-size:9px;")
-            t.setToolTip(f"{atype} — {ts}")
-            l.addWidget(t)
-
-        # 指标行用 ElidedLabel 单行显示 — 超宽自动省略, tooltip 全文 (v2.3.1 组件复用)
-        row_font = QFont("Microsoft YaHei", _ROW_FONT_SIZES[cols])
-        for text in rows:
-            lbl = ElidedLabel(text)
-            lbl.setFont(row_font)
-            lbl.setToolTip(f"{atype} — {text}")
-            l.addWidget(lbl)
-        l.addStretch()
-        return frame
-
-    # ── F4: 大屏模式 ─────────────────────────────────────
+    # ── 大屏模式 ──────────────────────────────────────────
     def _open_display_mode(self):
         parent = self.window()
         if not parent or not hasattr(parent, "analyses") or not parent.analyses:
@@ -397,13 +385,8 @@ class DashboardTab(BaseAnalysisTab):
             self._display_window = DisplayModeWindow(parent)
             self._display_window.showFullScreen()
 
-    # ── F3: 公式编辑器与自定义卡片 ───────────────────────
+    # ── 公式编辑器 ───────────────────────────────────────
     def _get_analysis_df(self):
-        """从主窗口当前数据取主数据表 (供公式变量列统计)
-
-        带缓存 — DataParser.prepare 是重清洗操作, 同一数据源不重复解析。
-        id() 键安全: 缓存持有 df 引用, 旧对象 id 不可能被复用。
-        """
         parent = self.window()
         if not parent or not hasattr(parent, "current_data"):
             return None
@@ -431,8 +414,8 @@ class DashboardTab(BaseAnalysisTab):
         dlg.exec()
         self.refresh()
 
-    def _make_formula_card(self, name: str, expr: str, variables: dict, cols: int):
-        """渲染单张自定义公式卡片 — 求值失败显示 '无法求值'"""
+    def _make_formula_card(self, name: str, expr: str, variables: dict):
+        """渲染单张自定义公式卡片"""
         tc = theme_colors()
         frame = QFrame()
         frame.setStyleSheet(
@@ -442,7 +425,7 @@ class DashboardTab(BaseAnalysisTab):
         l = QVBoxLayout(frame)
         l.setSpacing(6)
         title = ElidedLabel(name)
-        title.setFont(QFont("Microsoft YaHei", _TITLE_FONT_PT, QFont.Bold))
+        title.setFont(QFont("Microsoft YaHei", 12, QFont.Bold))
         title.setStyleSheet(f"color:{tc['accent_bright']};")
         title.setToolTip(f"{name} = {expr}")
         l.addWidget(title)
@@ -462,7 +445,7 @@ class DashboardTab(BaseAnalysisTab):
         l.addStretch()
         return frame
 
-    # ── F2: 布局对话框 ───────────────────────────────────
+    # ── 布局对话框 ───────────────────────────────────────
     def _open_layout_dialog(self):
         parent = self.window()
         items = []
@@ -470,13 +453,13 @@ class DashboardTab(BaseAnalysisTab):
             items = list(extract_metrics(parent.analyses).keys())
         if not items:
             QMessageBox.information(self, i18n.tr("dashboard.layout"), i18n.tr("dashboard.empty"))
-            return  # 空列表时不打开对话框, 防止覆盖已保存布局
+            return
         from ui.dialogs.layout_dialog import LayoutDialog
         dlg = LayoutDialog(self, items, self._settings)
         if dlg.exec() == dlg.Accepted:
             self.refresh()
 
-    # ── 批量导出 (保留) ───────────────────────────────────
+    # ── 批量导出 ─────────────────────────────────────────
     def _batch_export(self):
         parent = self.window()
         if not parent or not hasattr(parent, "analyses") or not parent.analyses:
@@ -492,7 +475,6 @@ class DashboardTab(BaseAnalysisTab):
         with zipfile.ZipFile(path, "w") as zf:
             for idx, r in parent.analyses.items():
                 atype = r.get("analysis_type", f"analysis_{idx}")
-                # Excel 导出
                 try:
                     from output.excel_report import ExcelReport
                     buf = io.BytesIO()
@@ -502,7 +484,6 @@ class DashboardTab(BaseAnalysisTab):
                 except Exception:
                     import logging
                     logging.warning(f"dashboard: 导出 {atype} 失败", exc_info=True)
-                # 图表 PNG
                 tab = parent._get_tabs().get(idx)
                 if tab and hasattr(tab, "current_figure") and tab.current_figure:
                     buf = figure_to_bytes(tab.current_figure, "png")
@@ -510,7 +491,5 @@ class DashboardTab(BaseAnalysisTab):
         QMessageBox.information(self, i18n.tr("dashboard.export"), f"{path}")
 
     def closeEvent(self, event):
-        # 注: tab 常驻 QStackedWidget, 此方法当前不会被调用; 保留以防御
-        # 未来 tab 从 stack 移除时定时器空转
         self._timer.stop()
         super().closeEvent(event)

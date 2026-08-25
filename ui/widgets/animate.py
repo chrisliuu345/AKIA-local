@@ -33,6 +33,15 @@ def cleanup(stack):
                 w.setGraphicsEffect(None)
 
 
+def _safe_stop(anim):
+    """安全停止动画 — 防止 C++ 对象已删除时的 RuntimeError"""
+    try:
+        if anim is not None and anim.state() == QPropertyAnimation.Running:
+            anim.stop()
+    except (RuntimeError, AttributeError):
+        pass
+
+
 def fade_in(widget, duration: int = 280, start_opacity: float = 0.0):
     """widget 淡入显示 (start_opacity→1)。动画关闭时直接显示。返回动画对象或 None。"""
     if widget is None:
@@ -49,7 +58,7 @@ def fade_in(widget, duration: int = 280, start_opacity: float = 0.0):
     anim.setEndValue(1.0)
     anim.setEasingCurve(QEasingCurve.InOutCubic)
     anim.finished.connect(lambda: widget.setGraphicsEffect(None) if widget is not None else None)
-    widget.destroyed.connect(lambda: anim.stop() if anim.state() == QPropertyAnimation.Running else None)
+    widget.destroyed.connect(lambda *_args: _safe_stop(anim))
     widget.show()
     anim.start(QPropertyAnimation.DeleteWhenStopped)
     return anim
@@ -70,7 +79,7 @@ def count_up(label, target: float, fmt, duration: int = 900):
     anim.setEasingCurve(QEasingCurve.OutCubic)
     anim.valueChanged.connect(lambda v: label.setText(fmt(v)))
     anim.finished.connect(lambda: label.setText(fmt(float(target))))
-    label.destroyed.connect(lambda: anim.stop() if anim.state() == QVariantAnimation.Running else None)
+    label.destroyed.connect(lambda *_args: _safe_stop(anim))
     anim.start(QVariantAnimation.DeleteWhenStopped)
     return anim
 

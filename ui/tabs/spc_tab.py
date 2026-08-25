@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QSpinBox, QDoubleSpinBox, QGroupBox, QFormLayout,
     QTableWidget, QTableWidgetItem, QTextEdit, QSplitter, QHeaderView,
-    QFrame, QStackedWidget, QScrollArea, QCheckBox,
+    QFrame, QStackedWidget, QScrollArea, QCheckBox, QMessageBox,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
@@ -475,25 +475,37 @@ class SPCTab(BaseAnalysisTab):
             chart = result.get(key)
             if isinstance(chart, dict) and chart.get("violations"):
                 return chart["violations"]
+        # Laney P'/U' 格式: {"n_violations": N, "violation_indices": [...]}
+        for key in ("laney_p_chart", "laney_u_chart"):
+            chart = result.get(key)
+            if isinstance(chart, dict):
+                indices = chart.get("violation_indices", [])
+                if indices:
+                    return [{"point": i, "rule": "Laney", "desc": f"点 {i} 越界"} for i in indices]
         v = result.get("violations", [])
         return v if isinstance(v, list) else []
 
     def _on_root_cause(self):
         if self.df is None or self.current_result is None:
+            QMessageBox.information(self, "根因分析", "请先运行 SPC 分析")
             return
         col = self.col_combo.currentText()
         result = self.current_result.get("result", {})
         violations = self._extract_violations(result)
         if not violations:
+            QMessageBox.information(self, "根因分析", "当前分析结果无异常点，无法进行根因分析")
             return
-        from ui.dialogs.root_cause_dialog import RootCauseDialog
-        dlg = RootCauseDialog(
-            self.df, col, violations,
-            subgroup_size=self.subgroup_spin.value(),
-            chart_type=self.chart_type_combo.currentText(),
-            parent=self,
-        )
-        dlg.exec()
+        try:
+            from ui.dialogs.root_cause_dialog import RootCauseDialog
+            dlg = RootCauseDialog(
+                self.df, col, violations,
+                subgroup_size=self.subgroup_spin.value(),
+                chart_type=self.chart_type_combo.currentText(),
+                parent=self,
+            )
+            dlg.exec()
+        except Exception as e:
+            QMessageBox.warning(self, "根因分析", f"分析失败: {e}")
 
     def _render_chart(self, result: Dict, chart_type: str):
         self._clear_canvas()
