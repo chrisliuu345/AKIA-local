@@ -19,3 +19,4 @@ SQLAlchemy>=2.0
 pymysql>=1.0.0
 psycopg2-binary>=2.9.0
 pyserial>=3.5
+cryptography>=42.0
