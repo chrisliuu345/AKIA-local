@@ -228,6 +228,16 @@ def analyze(
     Computes main effects, ANOVA, alias structure, Pareto data.
     """
     data = df[[response_col] + factor_cols].dropna()
+    # Validate all selected columns are numeric
+    for col in [response_col] + factor_cols:
+        coerced = pd.to_numeric(data[col], errors="coerce")
+        n_nan = coerced.isna().sum()
+        if n_nan > 0:
+            bad_vals = data[col][coerced.isna()].unique()[:5]
+            raise ValueError(
+                "列 '" + col + "' 包含非数值数据，无法进行DOE分析。"
+                "示例: " + str(list(bad_vals)) + "。请确保选择的响应列和因子列均为数值类型。"
+            )
     response = data[response_col].values.astype(float)
     design = data[factor_cols].values.astype(float)
     n = len(response)
