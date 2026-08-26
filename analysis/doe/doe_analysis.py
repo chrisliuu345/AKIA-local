@@ -13,7 +13,7 @@ def analyze(
     response_col: str,
     factor_cols: List[str],
 ) -> Dict[str, Any]:
-    data = df.copy()
+    data = df
     data = data.dropna(subset=[response_col] + factor_cols)
 
     response = data[response_col].astype(float).values
@@ -85,14 +85,13 @@ def _compute_residuals(
     k = len(factor_cols)
     y_pred = np.full(len(response), np.mean(response))
 
-    for i, f in enumerate(factor_cols):
-        y_pred += (main_effects.get(f, 0) / 2) * design[:, i]
+    main_coeffs = np.array([main_effects.get(f, 0) for f in factor_cols]) / 2
+    y_pred += design @ main_coeffs
 
-    idx = 0
     for i in range(k):
         for j in range(i + 1, k):
             label = f"{factor_cols[i]}*{factor_cols[j]}"
             y_pred += (interaction_effects.get(label, 0) / 2) * (design[:, i] * design[:, j])
-            idx += 1
+
 
     return response - y_pred
