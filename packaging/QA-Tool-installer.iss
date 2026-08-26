@@ -1,5 +1,5 @@
 #define MyAppName "QA-Tool"
-#define MyAppVersion "2.6.2"
+#define MyAppVersion "3.0.0"
 #define MyAppPublisher "QA-Tool"
 #define MyAppExeName "QA-Tool.exe"
 
