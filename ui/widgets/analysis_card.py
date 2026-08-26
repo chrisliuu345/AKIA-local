@@ -71,7 +71,7 @@ class AnalysisCard(QFrame):
             f"AnalysisCard {{ background:{tc['bg_card']}; "
             f"border:1px solid {tc['border']}; border-radius:{CARD_RADIUS}px; }}"
         )
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.setMinimumWidth(400)
 
         outer = QVBoxLayout(self)
@@ -82,10 +82,12 @@ class AnalysisCard(QFrame):
         hdr = QHBoxLayout()
         hdr.setSpacing(6)
 
-        title_lbl = ElidedLabel(self._atype)
+        title_lbl = QLabel(self._atype)
         title_lbl.setFont(FONT_11B)
+        title_lbl.setWordWrap(True)
         title_lbl.setStyleSheet(f"color:{tc['accent_bright']}; background:transparent;")
         title_lbl.setMinimumWidth(120)
+        title_lbl.setToolTip(self._atype)
         hdr.addWidget(title_lbl, 1)
 
         if timestamp:
@@ -143,6 +145,7 @@ class AnalysisCard(QFrame):
         for text in rows:
             lbl = ElidedLabel(text)
             lbl.setFont(metric_font)
+            lbl.setWordWrap(True)
             lbl.setStyleSheet(f"color:{tc['text_primary']}; background:transparent;")
             lbl.setMinimumWidth(60)
             flow.addWidget(lbl)
