@@ -43,22 +43,23 @@ def analyze_response_surface(
     response_col: str,
     factor_cols: List[str],
 ) -> Dict[str, Any]:
-    data = df.copy()
-    data = data.dropna(subset=[response_col] + factor_cols)
+    data = df.dropna(subset=[response_col] + factor_cols)
 
     response = data[response_col].astype(float).values
     k = len(factor_cols)
     design = data[factor_cols].astype(float).values
 
     n = len(data)
-    X = np.column_stack([np.ones(n), design])
 
+    X_list = [np.ones(n), design]
+    # Quadratic terms
     for i in range(k):
-        X = np.column_stack([X, design[:, i] ** 2])
-
+        X_list.append(design[:, i] ** 2)
+    # Interaction terms
     for i in range(k):
         for j in range(i + 1, k):
-            X = np.column_stack([X, design[:, i] * design[:, j]])
+            X_list.append(design[:, i] * design[:, j])
+    X = np.column_stack(X_list)
 
     try:
         coeffs, residuals, rank, sv = np.linalg.lstsq(X, response, rcond=None)
@@ -95,22 +96,13 @@ def analyze_response_surface(
 
 
 def _get_factorial_points(k: int) -> np.ndarray:
-    points = []
-    for i in range(2 ** k):
-        point = []
-        for j in range(k):
-            point.append(1 if (i >> j) & 1 else -1)
-        points.append(point)
-    return np.array(points)
+    idx = np.arange(2 ** k)
+    points = 2 * ((idx[:, np.newaxis] >> np.arange(k)) & 1).astype(int) - 1
+    return points
 
 
 def _get_axial_points(k: int, alpha: float) -> np.ndarray:
-    points = []
-    for i in range(k):
-        pos = np.zeros(k)
-        pos[i] = alpha
-        neg = np.zeros(k)
-        neg[i] = -alpha
-        points.append(pos)
-        points.append(neg)
-    return np.array(points)
+    axial = np.zeros((2 * k, k))
+    axial[np.arange(k), np.arange(k)] = alpha
+    axial[k + np.arange(k), np.arange(k)] = -alpha
+    return axial
