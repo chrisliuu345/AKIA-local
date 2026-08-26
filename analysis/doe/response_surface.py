@@ -44,6 +44,16 @@ def analyze_response_surface(
     factor_cols: List[str],
 ) -> Dict[str, Any]:
     data = df.dropna(subset=[response_col] + factor_cols)
+    # Validate all selected columns are numeric
+    for col in [response_col] + factor_cols:
+        coerced = pd.to_numeric(data[col], errors="coerce")
+        n_nan = coerced.isna().sum()
+        if n_nan > 0:
+            bad_vals = data[col][coerced.isna()].unique()[:5]
+            raise ValueError(
+                "列 '" + col + "' 包含非数值数据，无法进行DOE分析。"
+                "示例: " + str(list(bad_vals)) + "。请确保选择的响应列和因子列均为数值类型。"
+            )
 
     response = data[response_col].astype(float).values
     k = len(factor_cols)
