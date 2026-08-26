@@ -89,11 +89,11 @@ AQL 抽样（GB/T 2828.1 / ANSI/ASQ Z1.4）· 随机 / 分层 / 系统抽样 · 
 
 ### 方式 1：安装器（推荐）
 
-下载 `QA-Tool-Setup-2.6.0.exe`（135MB，Inno Setup 中文安装向导），安装到 Program Files。安装时可选择是否包含 ESP-32 硬件拓展。
+下载 `QA-Tool-Setup-3.0.0.exe`（135MB，Inno Setup 中文安装向导），安装到 Program Files。安装时可选择是否包含 ESP-32 硬件拓展。
 
 ### 方式 2：便携版
 
-下载 `QA-Tool-v2.6.0-portable.zip`（约 230MB），解压后直接运行 `QA-Tool.exe`，无需安装。
+下载 `QA-Tool-v3.0.0-portable.zip`（约 230MB），解压后直接运行 `QA-Tool.exe`，无需安装。
 
 ### 方式 3：源码运行
 
@@ -169,7 +169,7 @@ python main.py
 ├── plugins/             # 第三方插件
 ├── output/              # 报告引擎（Word/Excel/PDF/HTML）
 ├── packaging/           # Inno Setup 安装脚本
-└── tests/               # 278 个 pytest 测试
+└── tests/               # 624 个 pytest 测试
 ```
 
 ---
@@ -189,6 +189,10 @@ python main.py
 
 | 日期 | 版本 | 亮点 |
 |------|---------|------------|
+| 2026-08-25 | **v3.0.0** | 624 tests · 重大版本升级 |
+| 2026-08-23 | **v2.9.0** | 性能优化 · Bug 修复 · 580 tests |
+| 2026-08-21 | **v2.8.0** | 功能增强 · 540 tests |
+| 2026-08-19 | **v2.7.0** | 模块改进 · 500 tests |
 | 2026-08-18 | **v2.6.0** | ESP32-IN 部署拓展（固件 v1.1.0 实机验证）· 设备监控 Tab 35（停止/继续监控、20 行预览、数据导入）· ESP-32 配置门控 · onedir 打包 + Inno Setup 安装器 · 278 tests |
 | 2026-08-15 | **v2.4.1** | 自适应看板卡片网格 · 淡入/数字滚动/交叉淡化动画 · 大屏宽高比与可读性修复 · 批量分析防护 · 215 tests |
 | 2026-08-13 | **v2.4** | 看板增强：统一 KPI 提取器 · 实时刷新 · 卡片布局 · 公式编辑器 · 车间看板模式 |
@@ -213,4 +217,4 @@ python main.py
 
 ---
 
-*基于 Python 3.14 + PySide6 构建 · 450+ 测试通过 · 35 个分析 Tab*
+*基于 Python 3.14 + PySide6 构建 · 624 测试通过 · 35 个分析 Tab*
