@@ -177,6 +177,11 @@ _MIN_ABERRATION_TABLE = {
     (8, 4): {"generators": ["AB", "AC", "AD", "AE"], "resolution": 3, "defining_relation": "I=ABD=ACE=BCF"},
 }
 
+# DOE mixture design constants
+MIXTURE_DESIGN_TYPES = ["simplex_lattice", "simplex_centroid", "extreme_vertices"]
+MIXTURE_MODELS = ["linear", "quadratic", "special_cubic"]
+MIXTURE_MAX_COMPONENTS = 10
+
 
 # ── 用户配置持久化 ────────────────────────────────────
 _USER_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "user_config.json")
