@@ -86,11 +86,11 @@ AQL Lookup (GB/T 2828.1 / ANSI/ASQ Z1.4) · Random / Stratified / Systematic Sam
 
 ### Option 1: Installer (Recommended)
 
-Download `QA-Tool-Setup-2.6.0.exe` (135MB, Inno Setup Chinese wizard), install to Program Files. Optionally include the ESP-32 hardware extension during install.
+Download `QA-Tool-Setup-3.0.0.exe` (135MB, Inno Setup Chinese wizard), install to Program Files. Optionally include the ESP-32 hardware extension during install.
 
 ### Option 2: Portable
 
-Download `QA-Tool-v2.6.0-portable.zip` (~230MB), extract and run `QA-Tool.exe`. No installation required.
+Download `QA-Tool-v3.0.0-portable.zip` (~230MB), extract and run `QA-Tool.exe`. No installation required.
 
 ### Option 3: From Source
 
@@ -103,8 +103,7 @@ python main.py
 ### Default Login
 
 ```
-Username: admin
-Password: admin
+
 ```
 
 ---
@@ -165,7 +164,7 @@ Password: admin
 ├── plugins/             # Third-party plugins
 ├── output/              # Report engines (Word/Excel/PDF/HTML)
 ├── packaging/           # Inno Setup installer script
-└── tests/               # 278 pytest tests
+└── tests/               # 624 pytest tests
 ```
 
 ---
@@ -209,4 +208,4 @@ For detailed usage instructions, please refer to the [User Guide](使用指南.d
 
 ---
 
-*Built with Python 3.14 + PySide6 · 450+ tests passing · 35 analysis tabs*
+*Built with Python 3.14 + PySide6 · 624 tests passing · 35 analysis tabs*

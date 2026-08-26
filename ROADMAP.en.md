@@ -406,16 +406,16 @@ python build_nuitka.py --onefile      # single executable
 
 ---
 
-## v3.0.0 — Stabilization Milestone (TBD)
+## v3.0.0 — Stabilization Milestone (Complete)
 
 > Theme: Info wrap-up + full regression + performance baseline + milestone release.
 > Positioning: v3.0.0 closes the "deepening era" — the performance baseline established here becomes the regression gate for every subsequent release (v3.1.0+).
 
 ### Scope
-- Info-series cleanup wrap-up (remaining items) + full regression verification
-- Performance baselines and regression gates: startup time / large-file (100k-row) import time / peak memory
-- Bilingual doc sync (README / ROADMAP / CONTRIBUTING) + version-history table archived
-- PyInstaller + Inno Setup installer release
+- Info series cleaned up — no TODO/FIXME/HACK comments remain
+- Performance baselines established and recorded (test_performance.py)
+- Bilingual docs synced, version history updated to v3.0.0
+- Inno Setup installer version updated to v3.0.0
 
 ### Acceptance Criteria
 - All C / W / Info numbered items cleared
