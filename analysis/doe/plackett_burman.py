@@ -1,4 +1,4 @@
-"""
+﻿"""
 Plackett-Burman 筛选设计 — Hadamard 矩阵构造 + 效应分析
 
 参考文献:
@@ -40,12 +40,16 @@ def _hadamard_from_base(base_row: List[int]) -> np.ndarray:
     h = np.zeros((n, n - 1), dtype=int)
     # 第一行
     h[0, :] = base_row
-    # 循环移位生成后续行
-    for i in range(1, n - 1):
-        h[i, :] = np.roll(base_row, -i)
+    # 向量化循环移位生成后续行
+    indices = np.arange(n - 1)
+    shifts = np.arange(1, n - 1)[:, np.newaxis]
+    h[1:-1, :] = np.asarray(base_row)[(indices - shifts) % (n - 1)]
     # 最后一行全 -1（Plackett-Burman 规则）
     h[n - 1, :] = -1
     return h
+
+
+_H2 = np.array([[1, 1], [1, -1]], dtype=int)
 
 
 def _sylvester_hadamard(k: int) -> np.ndarray:
@@ -60,9 +64,9 @@ def _sylvester_hadamard(k: int) -> np.ndarray:
     -------
     np.ndarray : shape (2^k, 2^k)
     """
-    h = np.array([[1, 1], [1, -1]])
+    h = _H2.copy()
     for _ in range(k - 1):
-        h = np.kron(h, np.array([[1, 1], [1, -1]]))
+        h = np.kron(h, _H2)
     return h
 
 
@@ -192,7 +196,7 @@ def analyze(
         - pareto_data: Pareto 图数据
         - model_r_squared: 模型 R²
     """
-    data = df[[response_col] + factor_cols].dropna().copy()
+    data = df[[response_col] + factor_cols].dropna()
     response = data[response_col].values.astype(float)
     design = data[factor_cols].values.astype(float)
     n = len(response)
@@ -200,59 +204,46 @@ def analyze(
 
     # ── 主效应计算 ──
     grand_mean = float(np.mean(response))
-    effects = {}
-    for i, f in enumerate(factor_cols):
-        mask_high = design[:, i] > 0
-        mask_low = design[:, i] < 0
-        n_high = np.sum(mask_high)
-        n_low = np.sum(mask_low)
-        if n_high > 0 and n_low > 0:
-            effect = float(np.mean(response[mask_high]) - np.mean(response[mask_low]))
-        else:
-            effect = 0.0
-        effects[f] = round(effect, 6)
+
+    # Vectorized effect computation
+    design_f = design
+    high_mask = design_f > 0
+    low_mask = design_f < 0
+    n_high = high_mask.sum(axis=0)
+    n_low = low_mask.sum(axis=0)
+    sum_high = (response[:, np.newaxis] * high_mask).sum(axis=0)
+    sum_low = (response[:, np.newaxis] * low_mask).sum(axis=0)
+    valid = (n_high > 0) & (n_low > 0)
+    effects_arr = np.where(valid, sum_high / n_high - sum_low / n_low, 0.0)
 
     # ── ANOVA ──
     ss_total = float(np.sum((response - grand_mean) ** 2))
     df_total = n - 1
 
-    ss_model = 0.0
-    ss_effects = {}
-    df_model = 0
-
-    for f in factor_cols:
-        mask_high = design[:, factor_cols.index(f)] > 0
-        mask_low = design[:, factor_cols.index(f)] < 0
-        n_high = np.sum(mask_high)
-        n_low = np.sum(mask_low)
-        if n_high > 0 and n_low > 0:
-            effect = effects[f]
-            # SS = n * (effect/2)^2，对平衡设计精确
-            ss_f = n * (effect / 2) ** 2
-        else:
-            ss_f = 0.0
-        ss_effects[f] = round(ss_f, 6)
-        ss_model += ss_f
-        df_model += 1
+    # SS computation (vectorized)
+    ss_arr = np.where(valid, n * (effects_arr / 2) ** 2, 0.0)
+    ss_model = float(np.sum(ss_arr))
+    ss_effects = {factor_cols[i]: round(float(ss_arr[i]), 6) for i in range(k)}
 
     ss_error = max(ss_total - ss_model, 0.0)
-    df_error = max(df_total - df_model, 1)
+    df_error = max(df_total - k, 1)
 
-    # F 值和 p 值
-    f_values = {}
-    p_values = {}
-    ms_effects = {}
-    for f in factor_cols:
-        ms_f = ss_effects[f]
-        ms_effects[f] = round(ms_f, 6)
-        if df_error > 0 and ss_error > 0:
-            f_val = ms_f / (ss_error / df_error)
-            p_val = 1.0 - stats.f.cdf(max(f_val, 0), 1, df_error)
-        else:
-            f_val = 0.0
-            p_val = 1.0
-        f_values[f] = round(f_val, 4)
-        p_values[f] = round(p_val, 6)
+    # F/p computation (vectorized)
+    ms_arr = ss_arr.copy()
+    if df_error > 0 and ss_error > 0:
+        f_arr = ms_arr / (ss_error / df_error)
+        p_arr = 1.0 - stats.f.cdf(np.maximum(f_arr, 0), 1, df_error)
+    elif ss_error == 0 and df_error > 0:
+        f_arr = np.full(k, float('inf'))
+        p_arr = np.zeros(k)
+    else:
+        f_arr = np.zeros(k)
+        p_arr = np.ones(k)
+
+    effects = {factor_cols[i]: round(float(effects_arr[i]), 6) for i in range(k)}
+    f_values = {factor_cols[i]: round(float(f_arr[i]), 4) if f_arr[i] != float('inf') else f_arr[i] for i in range(k)}
+    p_values = {factor_cols[i]: round(float(p_arr[i]), 6) for i in range(k)}
+    ms_effects = {factor_cols[i]: round(float(ms_arr[i]), 6) for i in range(k)}
 
     # 显著因子
     significant = [f for f in factor_cols if p_values.get(f, 1.0) < alpha]
