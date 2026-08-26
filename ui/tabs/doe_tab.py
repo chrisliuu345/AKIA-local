@@ -234,9 +234,10 @@ class DOETab(BaseAnalysisTab):
         result = {}
         if method == "因子设计分析":
             response = self.response_combo.currentText()
-            factor_cols = [c for c in self.df.columns if c != response and c in self.parsed_info.get("numeric_columns", [])]
-            if len(factor_cols) < 1:
-                factor_cols = [c for c in self.df.columns if c != response][:4]
+            numeric_cols = self.parsed_info.get("numeric_columns", [])
+            if not numeric_cols:
+                numeric_cols = list(self.df.select_dtypes(include="number").columns)
+            factor_cols = [c for c in numeric_cols if c != response]
             result = factorial.analyze_factorial(self.df, response, factor_cols)
         elif method == "生成 2^k 因子设计":
             factors = ["A", "B", "C"]
@@ -250,11 +251,17 @@ class DOETab(BaseAnalysisTab):
             self.set_data(design_df, self.parsed_info)
         elif method == "响应曲面分析 (CCD)":
             response = self.response_combo.currentText()
-            factor_cols = [c for c in self.df.columns if c != response and c not in self.parsed_info.get("identifier_columns", [])][:3]
+            numeric_cols = self.parsed_info.get("numeric_columns", [])
+            if not numeric_cols:
+                numeric_cols = list(self.df.select_dtypes(include="number").columns)
+            factor_cols = [c for c in numeric_cols if c != response][:3]
             result = response_surface.analyze_response_surface(self.df, response, factor_cols)
         elif method == "Box-Behnken 设计":
             response = self.response_combo.currentText()
-            factor_cols = [c for c in self.df.columns if c != response and c not in self.parsed_info.get("identifier_columns", [])][:3]
+            numeric_cols = self.parsed_info.get("numeric_columns", [])
+            if not numeric_cols:
+                numeric_cols = list(self.df.select_dtypes(include="number").columns)
+            factor_cols = [c for c in numeric_cols if c != response][:3]
             result = box_behnken.analyze_box_behnken(self.df, response, factor_cols)
 
         self.current_result = {
