@@ -429,6 +429,15 @@ def analyze(
     dict with response_table, anova, optimal, predicted_sn, contribution_pct
     """
     data = df[factor_cols + [response_col]].dropna()
+    # Validate response column is numeric
+    coerced = pd.to_numeric(data[response_col], errors="coerce")
+    n_nan = coerced.isna().sum()
+    if n_nan > 0:
+        bad_vals = data[response_col][coerced.isna()].unique()[:5]
+        raise ValueError(
+            "列 '" + response_col + "' 包含非数值数据，无法进行DOE分析。"
+            "示例: " + str(list(bad_vals)) + "。请确保选择的响应列为数值类型。"
+        )
     response = data[response_col].values.astype(float)
     design = data[factor_cols]
 
