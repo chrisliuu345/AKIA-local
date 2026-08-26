@@ -149,6 +149,35 @@ ROOT_CAUSE_W_IMPORTANCE = 0.4
 ROOT_CAUSE_W_CORRELATION = 0.3
 ROOT_CAUSE_W_LINKAGE = 0.3
 
+# DOE fractional factorial constants
+FRACTIONAL_FRACTIONS = ["1/2", "1/4", "1/8"]
+FRACTIONAL_MAX_K = 15
+FRACTIONAL_MAX_P = 5
+
+RESOLUTION_DESCRIPTIONS = {
+    3: "Resolution III: main effects aliased with 2FI",
+    4: "Resolution IV: main effects clear, 2FI aliased with 2FI",
+    5: "Resolution V: main effects and 2FI clear",
+    6: "Resolution VI: 2FI clear of 3FI",
+}
+
+_MIN_ABERRATION_TABLE = {
+    (3, 1): {"generators": ["AB"], "resolution": 3, "defining_relation": "I=ABC"},
+    (4, 1): {"generators": ["ABC"], "resolution": 4, "defining_relation": "I=ABCD"},
+    (4, 2): {"generators": ["AB", "AC"], "resolution": 3, "defining_relation": "I=ABC=ABD=BCD"},
+    (5, 1): {"generators": ["ABCD"], "resolution": 5, "defining_relation": "I=ABCDE"},
+    (5, 2): {"generators": ["AB", "AC"], "resolution": 3, "defining_relation": "I=ABD=ACE=BCDE"},
+    (6, 1): {"generators": ["ABCDE"], "resolution": 6, "defining_relation": "I=ABCDEF"},
+    (6, 2): {"generators": ["ABC", "ADE"], "resolution": 4, "defining_relation": "I=ABCE=ADEF=BCDF"},
+    (6, 3): {"generators": ["AB", "AC", "BC"], "resolution": 3, "defining_relation": "I=ABD=ACE=BCF=ABCDEF"},
+    (7, 2): {"generators": ["ABCDE", "ABCDG"], "resolution": 5, "defining_relation": "I=ABCDE=ABCDG=DEFG"},
+    (7, 3): {"generators": ["ABC", "ABD", "ACD"], "resolution": 4, "defining_relation": "I=ABCE=ABDF=ACDG"},
+    (7, 4): {"generators": ["AB", "AC", "AD", "AE"], "resolution": 3, "defining_relation": "I=ABD=ACE=BCF"},
+    (8, 3): {"generators": ["ABCD", "ABCE", "ABDE"], "resolution": 4, "defining_relation": "I=ABCD=ABCE=ABDE"},
+    (8, 4): {"generators": ["AB", "AC", "AD", "AE"], "resolution": 3, "defining_relation": "I=ABD=ACE=BCF"},
+}
+
+
 # ── 用户配置持久化 ────────────────────────────────────
 _USER_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "user_config.json")
 
