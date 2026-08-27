@@ -14,7 +14,6 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QPixmap
 
 from ui.theme import colors as theme_colors, FONT_11B, FONT_10, FONT_9
-from ui.widgets.elided_label import ElidedLabel
 from ui.widgets.flow_layout import FlowLayout
 
 try:
@@ -143,11 +142,12 @@ class AnalysisCard(QFrame):
 
         metric_font = FONT_10
         for text in rows:
-            lbl = ElidedLabel(text)
+            lbl = QLabel(text)
             lbl.setFont(metric_font)
             lbl.setWordWrap(True)
             lbl.setStyleSheet(f"color:{tc['text_primary']}; background:transparent;")
             lbl.setMinimumWidth(60)
+            lbl.setMinimumHeight(20)
             flow.addWidget(lbl)
 
         return container
