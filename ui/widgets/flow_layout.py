@@ -54,6 +54,9 @@ class FlowLayout(QLayout):
         self._do_layout(rect, test_only=False)
 
     def sizeHint(self) -> QSize:
+        w = self.geometry().width()
+        if w > 0:
+            return QSize(w, self.heightForWidth(w))
         return self.minimumSize()
 
     def minimumSize(self) -> QSize:
