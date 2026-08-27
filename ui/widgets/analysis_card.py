@@ -24,9 +24,9 @@ except ImportError:
     _HAS_MPL = False
 
 # 图表快照尺寸 (px)
-CHART_SNAPSHOT_W = 500
-CHART_SNAPSHOT_H = 300
-CHART_DPI = 100
+CHART_SNAPSHOT_W = 1000
+CHART_SNAPSHOT_H = 600
+CHART_DPI = 200
 
 # 卡片内边距
 CARD_PADDING = 16
@@ -110,7 +110,7 @@ class AnalysisCard(QFrame):
             metrics_widget = self._build_metrics_widget(rows, tc)
             outer.addWidget(metrics_widget)
 
-        # ── 图表快照区 ──
+        # ── 图表快照区 (仅当有图表时显示) ──
         pm = figure_to_pixmap(figure) if figure is not None else None
         if pm is not None:
             chart_lbl = QLabel()
@@ -122,15 +122,6 @@ class AnalysisCard(QFrame):
             chart_lbl.setStyleSheet(f"background:{tc['bg_body']}; border-radius:6px;")
             chart_lbl.setMinimumHeight(180)
             outer.addWidget(chart_lbl, 1)
-        else:
-            placeholder = QLabel("暂无图表")
-            placeholder.setAlignment(Qt.AlignCenter)
-            placeholder.setFont(FONT_10)
-            placeholder.setMinimumHeight(120)
-            placeholder.setStyleSheet(
-                f"color:{tc['text_dim']}; background:{tc['bg_body']}; border-radius:6px;"
-            )
-            outer.addWidget(placeholder, 1)
 
     def _build_metrics_widget(self, rows: list[str], tc: dict) -> QFrame:
         """将指标行排列在 FlowLayout 中，自动换行防止截断"""
@@ -140,14 +131,14 @@ class AnalysisCard(QFrame):
         )
         flow = FlowLayout(container, margin=10, h_spacing=12, v_spacing=4)
 
-        metric_font = FONT_10
+        metric_font = FONT_11B
         for text in rows:
             lbl = QLabel(text)
             lbl.setFont(metric_font)
             lbl.setWordWrap(True)
             lbl.setStyleSheet(f"color:{tc['text_primary']}; background:transparent;")
             lbl.setMinimumWidth(60)
-            lbl.setMinimumHeight(20)
+            lbl.setMinimumHeight(24)
             flow.addWidget(lbl)
 
         return container
