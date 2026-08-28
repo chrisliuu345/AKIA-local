@@ -515,8 +515,6 @@ class Sidebar(QWidget):
         """动态添加插件项到侧栏「第三方插件」分类"""
         for group in self.categories:
             if group.title_key == "sidebar.plugins":
-                from PySide6.QtWidgets import QPushButton
-                from PySide6.QtGui import QFont
                 btn = QPushButton(name)
                 btn.setFont(QFont(get_ui_font(), 10))
                 btn.setFixedHeight(32)
