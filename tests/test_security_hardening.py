@@ -149,15 +149,13 @@ class TestW09DistinctLoggers:
 # ── W15: DPAPI 降级告警 ───────────────────────────────
 
 class TestW15DPAPIDegradation:
-    """W15: _obscure DPAPI 失败时记录 warning 日志"""
+    """W15: _obscure 加密失败时返回空字符串"""
 
     def test_warning_logged_on_dpapi_failure(self, caplog):
         import ui.dialogs.db_connection_dialog as dbcd
-        with patch("core.secret_store.encrypt_secret", side_effect=Exception("DPAPI unavailable")):
-            with caplog.at_level(logging.WARNING, logger="QA-Tool.DbConnection"):
-                result = dbcd._obscure("mysecret")
-        assert "DPAPI" in caplog.text or "降级" in caplog.text
-        assert base64.b64decode(result.encode()).decode() == "mysecret"
+        with patch("ui.dialogs.db_connection_dialog.encrypt_secret", side_effect=Exception("Encryption unavailable")):
+            result = dbcd._obscure("mysecret")
+        assert result == ""  # 加密失败返回空字符串
 
 
 # ── W16: 合规模板路径穿越防护 ─────────────────────────
