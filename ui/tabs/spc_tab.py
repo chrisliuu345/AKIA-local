@@ -582,7 +582,6 @@ class SPCTab(BaseAnalysisTab):
             return
         try:
             from ui.dialogs.root_cause_dialog import RootCauseDialog
-from ui.font_config import get_ui_font
             dlg = RootCauseDialog(
                 self.df, col, violations,
                 subgroup_size=self.subgroup_spin.value(),
