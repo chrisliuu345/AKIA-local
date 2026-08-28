@@ -14,6 +14,7 @@ from config.settings import (
     get_effective, get_setting,
 )
 from core.i18n import i18n
+from ui.font_config import get_ui_font
 
 
 def _dpi():
@@ -25,8 +26,10 @@ def setup_chinese_font():
     fm._load_fontmanager(try_read_cache=False)
     available = {f.name for f in fm.fontManager.ttflist}
 
+    # 使用 font_config 获取平台感知字体
+    platform_font = get_ui_font()
     preferred = [
-        "Microsoft YaHei", "SimHei", "Noto Sans SC",
+        platform_font, "Microsoft YaHei", "SimHei", "Noto Sans SC",
         "Noto Sans JP", "Noto Sans", "DejaVu Sans",
         "Arial Unicode MS", "WenQuanYi Micro Hei",
     ]

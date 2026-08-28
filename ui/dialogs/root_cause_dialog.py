@@ -172,7 +172,7 @@ class RootCauseDialog(QDialog):
 
     def _render_charts(self, causes: List[RootCause]):
         tc = theme_colors()
-        plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]
+        # plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]  # redundant, handled by chart_engine.setup_chinese_font()
         plt.rcParams["axes.unicode_minus"] = False
 
         self.fig.clear()

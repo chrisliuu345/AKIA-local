@@ -20,55 +20,42 @@ from reportlab.pdfbase.cidfonts import UnicodeCIDFont
 from config.settings import APP_NAME, APP_VERSION
 from core.i18n import i18n
 from output.base_report_engine import BaseReportEngine
+from ui.font_config import get_pdf_font_paths, get_pdf_font_candidates
 
 
 def _find_cjk_fonts():
     """Robustly locate and register Chinese fonts for PDF.
 
-    Priorities (best → fallback):
-      1. 微软雅黑 (msyh.ttc) — regular=idx0, bold=idx1
-      2. 黑体 (simhei.ttf) — single weight
-      3. 宋体 (simsun.ttc) — regular only
-      4. Noto Sans SC / Noto Serif SC
-      5. STSong-Light (built-in CID font with limited coverage)
+    Platform-aware font detection:
+      - Windows: msyh.ttc, simhei.ttf, simsun.ttc
+      - Linux: Noto Sans CJK SC, WenQuanYi
+      - macOS: PingFang, STHeiti
     """
-    font_dir = "C:/Windows/Fonts"
+    font_dirs = get_pdf_font_paths()
+    font_candidates = get_pdf_font_candidates()
 
-    candidates = [
-        # (regular_path, regular_index, bold_path, bold_index)   indexed by ttc subfontIndex
-        (os.path.join(font_dir, "msyh.ttc"), 0, os.path.join(font_dir, "msyh.ttc"), 1),
-        (os.path.join(font_dir, "msyh.ttc"), 0, os.path.join(font_dir, "msyhbd.ttf"), 0),
-        (os.path.join(font_dir, "simhei.ttf"), 0, os.path.join(font_dir, "simhei.ttf"), 0),
-        (os.path.join(font_dir, "simsun.ttc"), 0, os.path.join(font_dir, "simsun.ttc"), 0),
-        (os.path.join(font_dir, "NotoSansSC-VF.ttf"), 0, os.path.join(font_dir, "NotoSansSC-VF.ttf"), 0),
-        (os.path.join(font_dir, "NotoSansSC-Regular.ttf"), 0, os.path.join(font_dir, "NotoSansSC-Bold.ttf"), 0),
-    ]
+    for font_dir in font_dirs:
+        for font_name in font_candidates:
+            font_path = os.path.join(font_dir, font_name)
+            if not os.path.exists(font_path):
+                continue
+            try:
+                fname = "CNFont"
+                fname_bold = "CNFontBold"
 
-    for reg_path, reg_idx, bold_path, bold_idx in candidates:
-        if not os.path.exists(reg_path):
-            continue
-        try:
-            fname = "CNFont"
-            fname_bold = "CNFontBold"
-
-            if reg_path.endswith(".ttc"):
-                pdfmetrics.registerFont(TTFont(fname, reg_path, subfontIndex=reg_idx))
-            else:
-                pdfmetrics.registerFont(TTFont(fname, reg_path))
-
-            if bold_path == reg_path and bold_idx == reg_idx:
-                pdfmetrics.registerFont(TTFont(fname_bold, reg_path, subfontIndex=bold_idx)) if bold_path.endswith(".ttc") else pdfmetrics.registerFont(TTFont(fname_bold, bold_path))
-            elif os.path.exists(bold_path):
-                if bold_path.endswith(".ttc"):
-                    pdfmetrics.registerFont(TTFont(fname_bold, bold_path, subfontIndex=bold_idx))
+                if font_path.endswith(".ttc"):
+                    pdfmetrics.registerFont(TTFont(fname, font_path, subfontIndex=0))
+                    try:
+                        pdfmetrics.registerFont(TTFont(fname_bold, font_path, subfontIndex=1))
+                    except Exception:
+                        fname_bold = fname
                 else:
-                    pdfmetrics.registerFont(TTFont(fname_bold, bold_path))
-            else:
-                fname_bold = fname
+                    pdfmetrics.registerFont(TTFont(fname, font_path))
+                    fname_bold = fname
 
-            return fname, fname_bold
-        except Exception:
-            continue
+                return fname, fname_bold
+            except Exception:
+                continue
 
     try:
         pdfmetrics.registerFont(UnicodeCIDFont("STSong-Light"))
