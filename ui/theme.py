@@ -2,9 +2,10 @@
 
 from PySide6.QtGui import QPalette, QColor, QFont
 from PySide6.QtWidgets import QApplication
+from ui.font_config import get_ui_font
 
 # ── 字体常量 (集中管理, 避免 160 处重复 QFont 声明) ──
-FONT_FAMILY = "Microsoft YaHei"
+FONT_FAMILY = get_ui_font()
 
 def _f(size: int, bold: bool = False) -> QFont:
     f = QFont(FONT_FAMILY, size)
