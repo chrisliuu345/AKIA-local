@@ -1,4 +1,4 @@
-﻿"""
+"""
 Plackett-Burman 筛选设计 — Hadamard 矩阵构造 + 效应分析
 
 参考文献:
