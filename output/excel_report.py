@@ -4,6 +4,7 @@ import xlsxwriter
 
 from core.i18n import i18n
 from output.base_report_engine import BaseReportEngine
+from ui.font_config import get_ui_font
 
 
 class ExcelReport(BaseReportEngine):
@@ -36,46 +37,47 @@ class ExcelReport(BaseReportEngine):
 
     def _define_formats(self):
         wb = self.workbook
+        font_name = get_ui_font()
         self.formats = {
             "title": wb.add_format({
                 "bold": True, "font_size": 16, "align": "center", "valign": "vcenter",
-                "font_name": "Microsoft YaHei",
+                "font_name": font_name,
             }),
             "heading1": wb.add_format({
-                "bold": True, "font_size": 14, "font_name": "Microsoft YaHei",
+                "bold": True, "font_size": 14, "font_name": font_name,
                 "bg_color": "#1f77b4", "font_color": "white",
                 "border": 1, "text_wrap": True,
             }),
             "heading2": wb.add_format({
-                "bold": True, "font_size": 12, "font_name": "Microsoft YaHei",
+                "bold": True, "font_size": 12, "font_name": font_name,
                 "bg_color": "#d9e6f2", "border": 1,
             }),
             "header": wb.add_format({
-                "bold": True, "font_size": 10, "font_name": "Microsoft YaHei",
+                "bold": True, "font_size": 10, "font_name": font_name,
                 "bg_color": "#4472C4", "font_color": "white", "border": 1,
                 "text_wrap": True,
             }),
             "cell": wb.add_format({
-                "font_size": 10, "font_name": "Microsoft YaHei",
+                "font_size": 10, "font_name": font_name,
                 "border": 1, "num_format": "0.0000",
             }),
             "cell_text": wb.add_format({
-                "font_size": 10, "font_name": "Microsoft YaHei", "border": 1,
+                "font_size": 10, "font_name": font_name, "border": 1,
             }),
             "warning": wb.add_format({
-                "font_size": 10, "font_name": "Microsoft YaHei",
+                "font_size": 10, "font_name": font_name,
                 "bg_color": "#fff2cc", "border": 1,
             }),
             "error": wb.add_format({
-                "font_size": 10, "font_name": "Microsoft YaHei",
+                "font_size": 10, "font_name": font_name,
                 "bg_color": "#f4cccc", "font_color": "red", "border": 1,
             }),
             "good": wb.add_format({
-                "font_size": 10, "font_name": "Microsoft YaHei",
+                "font_size": 10, "font_name": font_name,
                 "bg_color": "#d9ead3", "border": 1,
             }),
             "footer": wb.add_format({
-                "font_size": 9, "font_name": "Microsoft YaHei",
+                "font_size": 9, "font_name": font_name,
                 "italic": True, "align": "right",
             }),
         }
