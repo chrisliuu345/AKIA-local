@@ -312,7 +312,6 @@ class DOETab(BaseAnalysisTab):
     def _open_power_dialog(self):
         """打开 Power & Sample Size 对话框"""
         from ui.dialogs.power_dialog import PowerDialog
-from ui.font_config import get_ui_font
         dlg = PowerDialog(self)
         dlg.exec()
 

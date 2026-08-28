@@ -1670,7 +1670,6 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "智能诊断", "请先导入数据文件，系统将自动分析数据特征")
             return
         from ui.dialogs.diagnosis_dialog import DiagnosisDialog
-from ui.font_config import get_ui_font
         dlg = DiagnosisDialog(self.profile_result, self)
         dlg.apply_clicked.connect(self._apply_diagnosis)
         dlg.exec()
