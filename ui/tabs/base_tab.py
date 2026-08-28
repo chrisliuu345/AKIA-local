@@ -14,6 +14,7 @@ from matplotlib.backends.backend_qtagg import NavigationToolbar2QT
 
 from core.i18n import i18n
 from ui.theme import colors as theme_colors
+from ui.font_config import get_ui_font
 
 
 class BaseAnalysisTab(QWidget):

@@ -23,6 +23,7 @@ from core.formatting import format_cp, format_pvalue, format_pct
 from core.i18n import i18n
 from core.kpi_extractor import extract_metrics
 from core.kpi_formula import evaluate, describe_variables, FormulaError
+from ui.font_config import get_ui_font
 
 # 指标显示名 (i18n 键) + 格式化器
 # 百分比类指标统一为 0-1 分数 (extractor 已归一化), format_pct 直接使用

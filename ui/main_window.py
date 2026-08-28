@@ -32,6 +32,7 @@ from ui.sidebar import Sidebar
 from ui._tab_registry import INDEX_MAP
 _PLUGIN_TAB_START = max(INDEX_MAP.keys()) + 1
 from ui.theme import colors as theme_colors
+from ui.font_config import get_ui_font
 from ui.widgets.elided_label import ElidedLabel
 # Tab 类按需通过 _lazy_load_tab() + importlib 加载，无需顶层导入
 from ui.welcome_page import WelcomePage
