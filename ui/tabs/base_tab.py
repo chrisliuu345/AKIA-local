@@ -160,7 +160,6 @@ class BaseAnalysisTab(QWidget):
         action = menu.exec(self.canvas.mapToGlobal(pos))
         if action == popout:
             from ui.dialogs.chart_viewer import ChartViewer
-from ui.font_config import get_ui_font
             viewer = ChartViewer(self.current_figure, self, "图表查看")
             viewer.exec()
         elif action == save_png:
