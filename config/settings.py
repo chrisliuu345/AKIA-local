@@ -75,7 +75,8 @@ CHART_DPI = 120
 CHART_FIGSIZE = (10, 6)
 
 # ── 中文支持 ──────────────────────────────────────────
-FONT_FAMILY = ["Microsoft YaHei", "SimHei", "WenQuanYi Micro Hei", "sans-serif"]
+from ui.font_config import get_ui_font
+FONT_FAMILY = [get_ui_font(), "Microsoft YaHei", "SimHei", "Noto Sans SC", "WenQuanYi Micro Hei", "sans-serif"]
 FONT_SIZE_TITLE = 14
 FONT_SIZE_LABEL = 11
 FONT_SIZE_TICK = 9
