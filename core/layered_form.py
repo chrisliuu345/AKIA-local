@@ -1,6 +1,7 @@
 """LPA 分层审核表引擎 — 模板生成 + Excel 导出"""
 
 from typing import List, Dict
+from ui.font_config import get_ui_font
 
 LPA_TEMPLATES = {
     "5S": [
@@ -55,7 +56,7 @@ class LPAEngine:
         categories = selected_categories or list(LPA_TEMPLATES.keys())
         auditors = auditors or ["审核员A", "审核员B"]
         header_fill = PatternFill(start_color="1b5faa", end_color="1b5faa", fill_type="solid")
-        header_font = Font(name="Microsoft YaHei", color="FFFFFF", bold=True, size=10)
+        header_font = Font(name=get_ui_font(), color="FFFFFF", bold=True, size=10)
         pass_fill = PatternFill(start_color="c6efce", end_color="c6efce", fill_type="solid")
         fail_fill = PatternFill(start_color="ffc7ce", end_color="ffc7ce", fill_type="solid")
         thin_border = Border(

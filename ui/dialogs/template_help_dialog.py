@@ -1,20 +1,23 @@
 """分析模板格式说明弹窗"""
 
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QLabel, QPushButton,
+    QDialog, QVBoxLayout, QLabel, QPushButton, QScrollArea,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
+from ui.font_config import get_ui_font
 
 
-HELP_TEXT = """<style>
-body { color: #d0d3da; background: #1e1e28; font-family: "Microsoft YaHei", sans-serif; }
-h3 { margin-top: 14px; color: #4da6ff; }
-code { background: #35354a; color: #e0a040; padding: 2px 5px; border-radius: 3px; }
-pre { background: #14141e; color: #c0c4ce; padding: 8px 12px; border-radius: 4px; border-left: 3px solid #1b5faa; }
-table { border-collapse: collapse; width: 100%; }
-th { background: #2c2c3a; color: #d0d3da; padding: 4px 8px; border: 1px solid #3a3a48; text-align: left; }
-td { color: #b0b4be; padding: 4px 8px; border: 1px solid #3a3a48; }
+def _get_help_text():
+    font = get_ui_font()
+    return f"""<style>
+body {{ color: #d0d3da; background: #1e1e28; font-family: "{font}", sans-serif; }}
+h3 {{ margin-top: 14px; color: #4da6ff; }}
+code {{ background: #35354a; color: #e0a040; padding: 2px 5px; border-radius: 3px; }}
+pre {{ background: #14141e; color: #c0c4ce; padding: 8px 12px; border-radius: 4px; border-left: 3px solid #1b5faa; }}
+table {{ border-collapse: collapse; width: 100%; }}
+th {{ background: #2c2c3a; color: #d0d3da; padding: 4px 8px; border: 1px solid #3a3a48; text-align: left; }}
+td {{ color: #b0b4be; padding: 4px 8px; border: 1px solid #3a3a48; }}
 </style>
 
 <h3>支持格式</h3>
@@ -95,7 +98,7 @@ class TemplateHelpDialog(QDialog):
 
         layout.addWidget(title)
 
-        help_label = QLabel(HELP_TEXT)
+        help_label = QLabel(_get_help_text())
         help_label.setWordWrap(True)
         help_label.setTextFormat(Qt.RichText)
         from PySide6.QtWidgets import QScrollArea
