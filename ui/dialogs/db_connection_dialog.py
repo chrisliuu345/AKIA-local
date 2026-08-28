@@ -3,7 +3,6 @@
 """
 
 import json
-import base64
 from typing import Dict, List, Tuple
 
 from PySide6.QtWidgets import (
@@ -16,6 +15,7 @@ from PySide6.QtCore import Qt, QSettings, Signal
 
 from core.i18n import i18n
 from core.log_util import get_logger
+from core.secret_store import encrypt_secret, decrypt_secret
 from core.sql_loader import SqlLoader
 from ui.theme import colors as theme_colors
 
@@ -24,25 +24,25 @@ _logger = get_logger("DbConnection")
 
 
 def _obscure(text: str) -> str:
-    """加密密码 — Windows DPAPI 优先，失败降级 base64（兼容旧数据/异常场景）"""
+    """加密密码 — 跨平台加密（Windows DPAPI / Linux keyring+Fernet）"""
+    if not text:
+        return ""
     try:
-        from core.secret_store import encrypt_secret
         return encrypt_secret(text)
     except Exception as e:
-        _logger.warning(f"DPAPI 加密失败，降级为 base64（非加密）: {e}")
-        return base64.b64encode(text.encode()).decode()
+        _logger.warning(f"Encryption failed: {e}")
+        return ""
 
 
 def _unobscure(text: str) -> str:
-    """解密密码 — 支持 dpapi: 前缀与旧版无前缀 base64"""
+    """解密密码 — 支持多种格式（dpapi: / keyring: / 旧版 base64）"""
+    if not text:
+        return ""
     try:
-        from core.secret_store import decrypt_secret
         return decrypt_secret(text)
-    except Exception:
-        try:
-            return base64.b64decode(text.encode()).decode()
-        except Exception:
-            return ""
+    except Exception as e:
+        _logger.warning(f"Decryption failed: {e}")
+        return ""
 
 
 def _load_saved_configs() -> Dict[str, dict]:
