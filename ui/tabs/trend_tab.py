@@ -126,7 +126,7 @@ class TrendTab(BaseAnalysisTab):
 
         self._clear_canvas()
         tc = theme_colors()
-        plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]
+        # plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]  # redundant, handled by chart_engine.setup_chinese_font()
         plt.rcParams["axes.unicode_minus"] = False
 
         MAX_POINTS = 1000

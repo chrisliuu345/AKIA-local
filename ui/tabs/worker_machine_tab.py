@@ -92,7 +92,8 @@ class WorkerMachineTab(BaseAnalysisTab):
         self.stats_lbl.setText(f"总人工作业: {total_work}s | 总机器: {total_machine}s | 步行: {total_walk}s | 人工利用率: {util_worker:.0f}% | 机器利用率: {util_machine:.0f}%")
         # 图表
         self._clear_canvas(); tc=theme_colors()
-        plt.rcParams["font.sans-serif"]=["Microsoft YaHei"]; plt.rcParams["axes.unicode_minus"]=False
+        # plt.rcParams["font.sans-serif"]=["Microsoft YaHei"]  # redundant, handled by chart_engine.setup_chinese_font()
+        plt.rcParams["axes.unicode_minus"]=False
         fig=Figure(figsize=(12,max(4,n*1.2)),dpi=100); fig.set_facecolor(tc["bg_card"])
         ax=fig.add_subplot(111); ax.set_facecolor(tc["bg_body"])
         cum=0; y_labels=[]

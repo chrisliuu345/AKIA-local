@@ -93,7 +93,7 @@ class FishboneEngine:
         import matplotlib.pyplot as plt
         from matplotlib.figure import Figure
 
-        plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]
+        # plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]  # redundant, handled by chart_engine.setup_chinese_font()
         plt.rcParams["axes.unicode_minus"] = False
 
         fig = Figure(figsize=figsize, dpi=dpi)

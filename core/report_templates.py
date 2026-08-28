@@ -6,6 +6,7 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 
 from config.settings import APP_VERSION
+from ui.font_config import get_ui_font
 
 
 TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "config" / "templates"
@@ -18,60 +19,67 @@ TEMPLATES = {
     "ppap": {"name": "PPAP提交", "file": "ppap.html"},
 }
 
-_BUILTIN_TEMPLATES = {
-    "daily": """<!DOCTYPE html><html><head><meta charset="utf-8"><title>质量日报</title>
-<style>body{font-family:'Microsoft YaHei',sans-serif;max-width:800px;margin:auto;padding:20px;color:#333}
-h1{color:#1b5faa;border-bottom:2px solid #1b5faa}h2{color:#555}.kpi{display:flex;gap:20px;margin:10px 0}
-.kpi div{flex:1;background:#f0f4f8;padding:12px;border-radius:8px;text-align:center}
-.kpi .val{font-size:28px;font-weight:bold;color:#1b5faa}table{width:100%;border-collapse:collapse;margin:10px 0}
-td,th{border:1px solid #ddd;padding:6px;text-align:center}th{background:#1b5faa;color:#fff}
-.footer{color:#888;font-size:12px;margin-top:30px}</style></head><body>
+
+def _get_font_family() -> str:
+    """获取平台感知的字体族"""
+    return get_ui_font()
+
+
+def _ensure_templates():
+    """确保模板目录和文件存在"""
+    TEMPLATE_DIR.mkdir(parents=True, exist_ok=True)
+    font_family = _get_font_family()
+    
+    _BUILTIN_TEMPLATES = {
+        "daily": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>质量日报</title>
+<style>body{{font-family:'{font_family}',sans-serif;max-width:800px;margin:auto;padding:20px;color:#333}}
+h1{{color:#1b5faa;border-bottom:2px solid #1b5faa}}h2{{color:#555}}.kpi{{display:flex;gap:20px;margin:10px 0}}
+.kpi div{{flex:1;background:#f0f4f8;padding:12px;border-radius:8px;text-align:center}}
+.kpi .val{{font-size:28px;font-weight:bold;color:#1b5faa}}table{{width:100%;border-collapse:collapse;margin:10px 0}}
+td,th{{border:1px solid #ddd;padding:6px;text-align:center}}th{{background:#1b5faa;color:#fff}}
+.footer{{color:#888;font-size:12px;margin-top:30px}}</style></head><body>
 <h1>质量日报</h1><p>日期: $date | 产品: $product | 部门: $department</p>
 <h2>关键指标</h2><div class="kpi">$kpi_cards</div>
 <h2>分析摘要</h2>$summary_table
 <div class="footer"><p>QA-Tool v$version · 自动生成于 $timestamp</p></div></body></html>""",
 
-    "monthly_spc": """<!DOCTYPE html><html><head><meta charset="utf-8"><title>月度SPC报告</title>
-<style>body{font-family:'Microsoft YaHei',sans-serif;max-width:900px;margin:auto;padding:20px;color:#333}
-h1{color:#1b5faa}h2{color:#555;border-bottom:1px solid #ddd}table{width:100%;border-collapse:collapse;margin:10px 0}
-td,th{border:1px solid #ddd;padding:6px}th{background:#1b5faa;color:#fff}.warn{color:#e74c3c}.ok{color:#27ae60}</style></head><body>
+        "monthly_spc": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>月度SPC报告</title>
+<style>body{{font-family:'{font_family}',sans-serif;max-width:900px;margin:auto;padding:20px;color:#333}}
+h1{{color:#1b5faa}}h2{{color:#555;border-bottom:1px solid #ddd}}table{{width:100%;border-collapse:collapse;margin:10px 0}}
+td,th{{border:1px solid #ddd;padding:6px}}th{{background:#1b5faa;color:#fff}}.warn{{color:#e74c3c}}.ok{{color:#27ae60}}</style></head><body>
 <h1>月度SPC统计过程控制报告</h1><p>期间: $period | 产品: $product</p>
 <h2>过程能力汇总</h2>$capability_table
 <h2>SPC违规统计</h2>$spc_violations
 <h2>MSA评估</h2>$msa_summary
 <div class="footer"><p>QA-Tool v$version · $timestamp</p></div></body></html>""",
 
-    "audit": """<!DOCTYPE html><html><head><meta charset="utf-8"><title>审核报告</title>
-<style>body{font-family:'Microsoft YaHei',sans-serif;max-width:800px;margin:auto;padding:20px;color:#333}
-h1{color:#1b5faa}h2{color:#555}table{width:100%;border-collapse:collapse;margin:10px 0}
-td,th{border:1px solid #ddd;padding:6px}th{background:#1b5faa;color:#fff}
-.pass{color:#27ae60}.fail{color:#e74c3c}</style></head><body>
+        "audit": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>审核报告</title>
+<style>body{{font-family:'{font_family}',sans-serif;max-width:800px;margin:auto;padding:20px;color:#333}}
+h1{{color:#1b5faa}}h2{{color:#555}}table{{width:100%;border-collapse:collapse;margin:10px 0}}
+td,th{{border:1px solid #ddd;padding:6px}}th{{background:#1b5faa;color:#fff}}
+.pass{{color:#27ae60}}.fail{{color:#e74c3c}}</style></head><body>
 <h1>LPA分层过程审核报告</h1><p>审核日期: $date | 审核员: $auditor</p>
 <h2>审核结果</h2>$audit_table
 <h2>不符合项</h2>$nc_list
 <div class="footer"><p>QA-Tool v$version · $timestamp</p></div></body></html>""",
 
-    "8d": """<!DOCTYPE html><html><head><meta charset="utf-8"><title>8D报告</title>
-<style>body{font-family:'Microsoft YaHei',sans-serif;max-width:800px;margin:auto;padding:20px;color:#333}
-h1{color:#1b5faa}h2{color:#555;border-bottom:1px solid #ddd}.step{margin:10px 0;padding:10px;background:#f8f9fa;border-radius:6px}
-.step h3{margin:0;color:#1b5faa}</style></head><body>
+        "8d": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>8D报告</title>
+<style>body{{font-family:'{font_family}',sans-serif;max-width:800px;margin:auto;padding:20px;color:#333}}
+h1{{color:#1b5faa}}h2{{color:#555;border-bottom:1px solid #ddd}}.step{{margin:10px 0;padding:10px;background:#f8f9fa;border-radius:6px}}
+.step h3{{margin:0;color:#1b5faa}}</style></head><body>
 <h1>8D问题解决报告</h1><p>$title_info</p>$steps_html
 <div class="footer"><p>QA-Tool v$version · $timestamp</p></div></body></html>""",
 
-    "ppap": """<!DOCTYPE html><html><head><meta charset="utf-8"><title>PPAP提交</title>
-<style>body{font-family:'Microsoft YaHei',sans-serif;max-width:900px;margin:auto;padding:20px;color:#333}
-h1{color:#1b5faa}table{width:100%;border-collapse:collapse;margin:10px 0}
-td,th{border:1px solid #ddd;padding:6px;text-align:center}th{background:#1b5faa;color:#fff}
-.done{background:#d4edda}.pending{background:#fff3cd}.na{background:#e2e3e5}</style></head><body>
+        "ppap": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>PPAP提交</title>
+<style>body{{font-family:'{font_family}',sans-serif;max-width:900px;margin:auto;padding:20px;color:#333}}
+h1{{color:#1b5faa}}table{{width:100%;border-collapse:collapse;margin:10px 0}}
+td,th{{border:1px solid #ddd;padding:6px;text-align:center}}th{{background:#1b5faa;color:#fff}}
+.done{{background:#d4edda}}.pending{{background:#fff3cd}}.na{{background:#e2e3e5}}</style></head><body>
 <h1>PPAP生产件批准</h1><p>$ppap_info</p><h2>提交状态</h2>$items_table
 <h2>尺寸报告</h2>$dim_table
 <div class="footer"><p>QA-Tool v$version · $timestamp</p></div></body></html>""",
-}
-
-
-def _ensure_templates():
-    """确保模板目录和文件存在"""
-    TEMPLATE_DIR.mkdir(parents=True, exist_ok=True)
+    }
+    
     for key, info in TEMPLATES.items():
         fpath = TEMPLATE_DIR / info["file"]
         if not fpath.exists():

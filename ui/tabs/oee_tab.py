@@ -262,7 +262,7 @@ class OEETab(BaseAnalysisTab):
     def _draw_charts(self, result: Dict[str, Any]):
         self._clear_canvas()
         tc = theme_colors()
-        plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]
+        # plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]  # redundant, handled by chart_engine.setup_chinese_font()
         plt.rcParams["axes.unicode_minus"] = False
 
         fig = Figure(figsize=(11, 4.8), dpi=100)
