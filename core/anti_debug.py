@@ -6,7 +6,6 @@ import os
 import platform
 import time
 import ctypes
-import struct
 import subprocess
 import socket
 from typing import List
