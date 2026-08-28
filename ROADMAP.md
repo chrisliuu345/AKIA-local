@@ -540,12 +540,17 @@ sudo apt install fonts-noto-cjk
 
 ### 执行计划
 
-| 阶段 | 时间 | 内容 |
-|------|------|------|
-| Phase 1 | Day 1-2 | 核心修复：font_config + secret_store + anti_debug |
-| Phase 2 | Day 3-4 | 输出系统：5 个输出模块字体更新 |
-| Phase 3 | Day 5-6 | UI 与构建：theme/main + Nuitka 适配 |
-| Phase 4 | Day 7-8 | 打包与测试：AppImage + Ubuntu/Debian 集成测试 |
+| 阶段 | 时间 | 内容 | 交付物 |
+|------|------|------|--------|
+| **Phase 1** | Day 1-2 | 核心基础设施：字体解析模块 + 凭证存储 + 反调试修复 | font_config.py, secret_store.py, anti_debug.py |
+| **Phase 2** | Day 3-4 | 输出系统：PDF/Excel/Word/HTML 字体 + matplotlib 清理 | 5 个输出模块 + 12 个文件清理 |
+| **Phase 3** | Day 5-6 | UI 系统：核心 UI + 20 Tab + 10 对话框 | 30+ 文件字体更新 |
+| **Phase 4** | Day 7-8 | 构建打包：Nuitka 适配 + AppImage + 许可证移除 + 测试 | build_linux.sh, qa-tool.desktop, 文档 |
+
+### 测试策略
+
+- 每阶段完成后运行全量 pytest 回归（688+ tests）
+- Phase 4 完成后进行 Ubuntu/Debian 双平台集成测试
 
 ### 验收标准
 
