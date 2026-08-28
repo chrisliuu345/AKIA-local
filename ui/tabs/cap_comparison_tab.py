@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY
 from ui.theme import colors as theme_colors
+from ui.font_config import get_ui_font
 from analysis.capability import normal_cap
 from core.formatting import format_cp
 
@@ -42,7 +43,7 @@ class CapComparisonTab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel("工序能力对比图")
-        self.title_label.setFont(QFont("Microsoft YaHei", 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
@@ -99,7 +100,7 @@ class CapComparisonTab(BaseAnalysisTab):
         self.btn_run.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.btn_run.setCursor(Qt.PointingHandCursor)
         self.btn_run.setMinimumHeight(44)
-        self.btn_run.setFont(QFont("Microsoft YaHei", 12, QFont.Bold))
+        self.btn_run.setFont(QFont(get_ui_font(), 12, QFont.Bold))
         self.btn_run.clicked.connect(self._run)
         left_layout.addWidget(self.btn_run)
 

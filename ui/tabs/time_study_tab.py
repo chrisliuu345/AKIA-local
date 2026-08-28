@@ -18,6 +18,7 @@ from matplotlib.figure import Figure
 from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY, BUTTON_TOGGLE
+from ui.font_config import get_ui_font
 from core.data_objects import TimeObservation
 from analysis.ie.time_study import TimeStudyEngine
 
@@ -34,7 +35,7 @@ class TimeStudyTab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel(i18n.tr("ie.time_study.title"))
-        self.title_label.setFont(QFont("Microsoft YaHei", 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
@@ -84,7 +85,7 @@ class TimeStudyTab(BaseAnalysisTab):
         self.btn_analyze.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.btn_analyze.setCursor(Qt.PointingHandCursor)
         self.btn_analyze.setMinimumHeight(44)
-        self.btn_analyze.setFont(QFont("Microsoft YaHei", 12, QFont.Bold))
+        self.btn_analyze.setFont(QFont(get_ui_font(), 12, QFont.Bold))
         self.btn_analyze.clicked.connect(self._on_one_click_analyze)
         config_layout.addRow(self.btn_analyze)
 
@@ -126,7 +127,7 @@ class TimeStudyTab(BaseAnalysisTab):
         toggle_row = QHBoxLayout()
         toggle_row.setSpacing(8)
         self.btn_view_chart = QPushButton(i18n.tr("tab.view_chart"))
-        self.btn_view_chart.setFont(QFont("Microsoft YaHei", 11))
+        self.btn_view_chart.setFont(QFont(get_ui_font(), 11))
         self.btn_view_chart.setFixedHeight(30)
         self.btn_view_chart.setCheckable(True)
         self.btn_view_chart.setChecked(True)
@@ -134,7 +135,7 @@ class TimeStudyTab(BaseAnalysisTab):
         self.btn_view_chart.clicked.connect(lambda: self._switch_result_view(0))
         toggle_row.addWidget(self.btn_view_chart)
         self.btn_view_data = QPushButton(i18n.tr("tab.view_data"))
-        self.btn_view_data.setFont(QFont("Microsoft YaHei", 11))
+        self.btn_view_data.setFont(QFont(get_ui_font(), 11))
         self.btn_view_data.setFixedHeight(30)
         self.btn_view_data.setCheckable(True)
         self.btn_view_data.setStyleSheet(BUTTON_TOGGLE)
@@ -142,7 +143,7 @@ class TimeStudyTab(BaseAnalysisTab):
         toggle_row.addWidget(self.btn_view_data)
         toggle_row.addStretch()
         self.btn_save_png = QPushButton(i18n.tr("chart_tab.save_png"))
-        self.btn_save_png.setFont(QFont("Microsoft YaHei", 11))
+        self.btn_save_png.setFont(QFont(get_ui_font(), 11))
         self.btn_save_png.setFixedHeight(30)
         self.btn_save_png.setStyleSheet(BUTTON_SECONDARY)
         self.btn_save_png.clicked.connect(self._on_save_png)

@@ -8,6 +8,7 @@ from PySide6.QtGui import QFont
 
 from core.report_templates import ReportTemplateEngine
 from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY
+from ui.font_config import get_ui_font
 
 
 class TemplateDialog(QDialog):
@@ -41,7 +42,7 @@ class TemplateDialog(QDialog):
         # 预览区
         self.preview = QTextEdit()
         self.preview.setReadOnly(True)
-        self.preview.setFont(QFont("Microsoft YaHei", 10))
+        self.preview.setFont(QFont(get_ui_font(), 10))
         layout.addWidget(self.preview, 1)
 
         # 导出按钮
