@@ -7,6 +7,7 @@ from typing import Dict, List
 from datetime import datetime
 
 from config.settings import APP_VERSION, CHART_COLORS
+from ui.font_config import get_ui_font
 
 
 def _fig_to_base64(fig) -> str:
@@ -37,11 +38,12 @@ def export_html(analyses: List[Dict], charts: Dict[str, bytes] = None,
             img_tags += f'<div class="chart"><h3>{_html.escape(label)}</h3><img src="data:image/png;base64,{b64}" style="max-width:100%"></div>\n'
 
     safe_title = _html.escape(title)
+    font_family = get_ui_font()
     html_doc = f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head><meta charset="utf-8"><title>{safe_title}</title>
 <style>
-body{{font-family:'Microsoft YaHei',sans-serif;max-width:1000px;margin:auto;padding:20px;background:#181822;color:#e1e2e6}}
+body{{font-family:'{font_family}',sans-serif;max-width:1000px;margin:auto;padding:20px;background:#181822;color:#e1e2e6}}
 h1{{color:#4da6ff;border-bottom:2px solid #3a3a48;padding-bottom:10px}}
 h3{{color:#a0a3ae}}.summary{{background:#262632;padding:12px;border-radius:8px;margin:8px 0}}
 .chart{{margin:16px 0;background:#1c1c26;padding:12px;border-radius:8px}}

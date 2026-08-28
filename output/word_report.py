@@ -13,6 +13,7 @@ from docx.oxml.ns import qn
 from config.settings import APP_NAME, APP_VERSION, CHART_FIGSIZE
 from core.i18n import i18n
 from output.base_report_engine import BaseReportEngine
+from ui.font_config import get_ui_font
 
 def _hdg(num: int, atype: str) -> str:
     """Generate section heading"""
@@ -22,10 +23,10 @@ def _hdg(num: int, atype: str) -> str:
 class WordReport(BaseReportEngine):
     """生成 Word (.docx) 格式的质量分析报告"""
 
-    def __init__(self, font: str = "微软雅黑", font_size: int = 11):
+    def __init__(self, font: str = None, font_size: int = 11):
         super().__init__()
         self.document = Document()
-        self.font = font
+        self.font = font or get_ui_font()
         self.font_size = font_size
         self._setup_styles()
 

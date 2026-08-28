@@ -214,7 +214,7 @@ class CapComparisonTab(BaseAnalysisTab):
     def _draw_chart(self, results: list):
         self._clear_canvas()
         tc = theme_colors()
-        plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]
+        # plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]  # redundant, handled by chart_engine.setup_chinese_font()
         plt.rcParams["axes.unicode_minus"] = False
 
         n = len(results)

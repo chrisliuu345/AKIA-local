@@ -177,7 +177,7 @@ class ParetoTab(BaseAnalysisTab):
     def _draw_chart(self, labels: list, values: list):
         self._clear_canvas()
         tc = theme_colors()
-        plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]
+        # plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]  # redundant, handled by chart_engine.setup_chinese_font()
         plt.rcParams["axes.unicode_minus"] = False
 
         # 使用 chart_engine 的 create_pareto_chart 获得标准图表，再增强
