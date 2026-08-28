@@ -86,7 +86,8 @@ class StdWorkComboTab(BaseAnalysisTab):
         self.stats_lbl.setText(f"手动: {total_man}s | 自动: {total_auto}s | 步行: {total_walk}s | 合计: {total}s | 余力: {slack}s ({(1-total/takt)*100:.0f}%)")
         # 图表
         self._clear_canvas(); tc=theme_colors()
-        plt.rcParams["font.sans-serif"]=["Microsoft YaHei"]; plt.rcParams["axes.unicode_minus"]=False
+        # plt.rcParams["font.sans-serif"]=["Microsoft YaHei"]  # redundant, handled by chart_engine.setup_chinese_font()
+        plt.rcParams["axes.unicode_minus"]=False
         fig=Figure(figsize=(10,max(4.5,n*0.9)),dpi=100); fig.set_facecolor(tc["bg_card"])
         ax=fig.add_subplot(111); ax.set_facecolor(tc["bg_body"])
         y_labels=[]

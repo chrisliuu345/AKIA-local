@@ -304,7 +304,7 @@ class ReliabilityTab(BaseAnalysisTab):
     def _draw_weibull_charts(self, r):
         self._clear_canvas()
         tc = theme_colors()
-        plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]
+        # plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]  # redundant, handled by chart_engine.setup_chinese_font()
         plt.rcParams["axes.unicode_minus"] = False
 
         fig = Figure(figsize=(11, 5.5), dpi=100)
@@ -435,7 +435,7 @@ class ReliabilityTab(BaseAnalysisTab):
     def _draw_mtbf_chart(self, result: Dict[str, Any]):
         self._clear_canvas()
         tc = theme_colors()
-        plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]
+        # plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]  # redundant, handled by chart_engine.setup_chinese_font()
         plt.rcParams["axes.unicode_minus"] = False
 
         r = result["overall"]
