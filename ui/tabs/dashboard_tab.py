@@ -458,7 +458,6 @@ class DashboardTab(BaseAnalysisTab):
             QMessageBox.information(self, i18n.tr("dashboard.layout"), i18n.tr("dashboard.empty"))
             return
         from ui.dialogs.layout_dialog import LayoutDialog
-from ui.font_config import get_ui_font
         dlg = LayoutDialog(self, items, self._settings)
         if dlg.exec() == dlg.Accepted:
             self.refresh()

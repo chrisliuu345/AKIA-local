@@ -46,7 +46,6 @@ class _LabelNode(QGraphicsItem):
 
     def _calc_rect(self):
         from PySide6.QtGui import QFontMetrics
-from ui.font_config import get_ui_font
         fm = QFontMetrics(self._font)
         tw = fm.horizontalAdvance(self._text)
         th = fm.height()
