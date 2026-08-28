@@ -10,6 +10,7 @@ from ui.font_config import get_ui_font
 from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout
 from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QTimer, QPoint
 from PySide6.QtGui import QFont
+from ui.font_config import get_ui_font
 
 
 _TOAST_COLORS = {

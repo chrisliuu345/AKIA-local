@@ -20,6 +20,7 @@ from output.chart_engine import create_control_chart
 from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_SECONDARY, BUTTON_TOGGLE, BUTTON_PRIMARY_STRETCH
+from ui.font_config import get_ui_font
 
 
 class SPCTab(BaseAnalysisTab):

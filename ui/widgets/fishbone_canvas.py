@@ -9,6 +9,7 @@ from PySide6.QtCore import Qt, QPointF, QRectF, Signal
 from PySide6.QtGui import (
     QPen, QBrush, QColor, QFont, QPainter, QPolygonF, QPainterPath,
 )
+from ui.font_config import get_ui_font
 
 
 M6_COLORS = [
