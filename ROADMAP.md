@@ -2,7 +2,7 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> 当前: v3.1.0 DOE与功效分析（已交付）| 测试: 624+ pytest · 35 个 Tab + 插件 | 更新: 2026-08-28
+> 当前: v3.1.0 DOE与功效分析（已交付）| 测试: 688+ pytest · 35 个 Tab + 插件 | 更新: 2026-08-28
 
 ---
 
@@ -11,21 +11,22 @@
 > **战略重定位（2026-08-24）**：定位从企业级多公司平台调整为**个人订阅级质量工程工具**（类 Minitab），差异化核心为实时工厂数据集成 + IE 工程工具 + 五链工作流 + BYOK AI Agent（QAM Harness）。详见[核心竞争力定位](#核心竞争力定位2026-08-重规划)。
 
 ```
-v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ✅ ──→ v2.7.0 ✅ ──→ v2.8.0 ✅ ──→ v2.9.0 ✅ ──→ v3.0.0 ✅ ──→ v3.1.0 ✅ ──→ v3.2.0 ──→ v3.3.0 ──→ v3.4.0 ──→ v3.5.0 ──→ v3.6.0 ──→ v3.7.0 ──→ v3.8.0 ──→ v3.9.0 ──→ v4.0.0
+v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ✅ ──→ v2.7.0 ✅ ──→ v2.8.0 ✅ ──→ v2.9.0 ✅ ──→ v3.0.0 ✅ ──→ v3.1.0 ✅ ──→ v3.2.0 (Linux移植) ──→ v3.3.0 ──→ v3.4.0 ──→ v3.5.0 ──→ v3.6.0 ──→ v3.7.0 ──→ v3.8.0 ──→ v3.9.0 ──→ v4.0.0
 ```
 
 | 阶段 | 版本 | 主题 |
 |------|---------|------|
 | 已完成 | v2.0 ~ v3.1.0 | Release → 代码+AI → 工程工具 → 报告 → 实时监控 → UX+动画 → 硬件扩展 → ESP32 部署 → 安全校验 → RBAC+认证 → 统计引擎加固 → UI 健壮性 → 缺陷清零 → 统计引擎深化 → 工作流贯通 → 安全架构重构 → 稳定化里程碑 → DOE与功效分析 |
-| 待开发 | v3.2.0 | 时间序列与预测 |
-| 待开发 | v3.3.0 | 可靠性与生存分析 |
-| 待开发 | v3.4.0 | MSA 与能力深化 |
-| 待开发 | v3.5.0 | Graph Builder 增强与交互体验 |
-| 待开发 | v3.6.0 | 实时 SPC 云看板与数据连接器 |
-| 待开发 | v3.7.0 | QAM Harness（BYOK AI Agent 平台） |
-| 待开发 | v3.8.0 | 视频时间研究 |
-| 待开发 | v3.9.0 | 预测分析与机器学习 |
-| 待开发 | v4.0.0 | 待定（根据 v3.x 进展定义） |
+| 待开发 | v3.2.0 | **Linux 移植 + 双系统发行**（Debian/Ubuntu） |
+| 待开发 | v3.3.0 | 时间序列与预测 |
+| 待开发 | v3.4.0 | 可靠性与生存分析 |
+| 待开发 | v3.5.0 | MSA 与能力深化 |
+| 待开发 | v3.6.0 | Graph Builder 增强与交互体验 |
+| 待开发 | v3.7.0 | 实时 SPC 云看板与数据连接器 |
+| 待开发 | v3.8.0 | QAM Harness（BYOK AI Agent 平台） |
+| 待开发 | v3.9.0 | 视频时间研究 |
+| 待开发 | v4.0.0 | 预测分析与机器学习 |
+| 待开发 | v4.1.0 | 待定（根据 v3.x 进展定义） |
 
 ---
 
@@ -455,7 +456,109 @@ python build_nuitka.py --onefile
 
 ---
 
-## v3.2.0 — 时间序列与预测（待开发）
+## v3.2.0 — Linux 移植 + 双系统发行（待开发）
+
+> 主题：跨平台移植 — 支持 Linux（Debian/Ubuntu 系），实现 Windows/Linux 双系统发行。
+> 目标发行版：Debian 13 / elementary OS 8.1 / Ubuntu 22.04+
+> 预计工期：8 天（1-2 周）
+> 变更：v3.2.0 起取消许可证系统，仅保留代码本体加密防破译
+
+### 核心问题分析
+
+| 优先级 | 问题 | 影响 | 解决方案 |
+|--------|------|------|----------|
+| **P0** | `core/secret_store.py` DPAPI 加密 | Linux 凭证存储完全失效 | 替换为 keyring + cryptography |
+| **P0** | `output/pdf_report.py` 硬编码 `C:/Windows/Fonts` | PDF 中文显示空白 | 添加 Linux 字体搜索路径 |
+| **P1** | 100+ 处硬编码 `Microsoft YaHei` | UI 字体渲染异常 | 创建平台感知字体解析模块 |
+| **P1** | `core/anti_debug.py:434` 引用 `WindowsError` | Linux 启动崩溃 | 替换为 `OSError` |
+| **P2** | `build_nuitka.py` Windows 专属参数 | 构建脚本失败 | 添加平台检测 |
+| **P2** | 无 Linux 打包方案 | 无法分发 | AppImage |
+
+### 文件变更清单
+
+| 文件 | 改动 | 说明 |
+|------|------|------|
+| `ui/font_config.py` | **新建** | 平台感知 CJK 字体解析 |
+| `core/secret_store.py` | 重写 | DPAPI → keyring + cryptography |
+| `ui/theme.py` | 小改 | 使用 font_config |
+| `main.py` | 小改 | 启动字体检测 |
+| `output/pdf_report.py` | 小改 | Linux 字体路径 |
+| `output/excel_report.py` | 小改 | 字体名称 |
+| `output/word_report.py` | 小改 | 字体名称 |
+| `output/html_export.py` | 小改 | 字体名称 |
+| `core/report_templates.py` | 小改 | 字体名称 |
+| `core/anti_debug.py` | 小改 | WindowsError → OSError |
+| `build_nuitka.py` | 小改 | 平台检测 |
+| `core/license.py` | 简化 | v3.2.0 起取消许可证 |
+
+### 字体策略（平台感知）
+
+```python
+# ui/font_config.py — 核心逻辑
+def get_cjk_font() -> str:
+    """检测并返回最佳 CJK 字体"""
+    if sys.platform == 'linux':
+        # Linux: 检测 Noto Sans CJK SC / WenQuanYi
+        return _detect_linux_font()
+    elif sys.platform == 'darwin':
+        return "PingFang SC"
+    return "Microsoft YaHei"  # Windows
+```
+
+### 凭证存储（跨平台）
+
+```python
+# core/secret_store.py — Linux 替代方案
+if sys.platform == 'win32':
+    # 保留 DPAPI（Windows）
+    from ._dpapi import encrypt_secret, decrypt_secret
+else:
+    # Linux/macOS: keyring + cryptography
+    from cryptography.fernet import Fernet
+    import keyring
+    # ... 实现
+```
+
+### Linux 系统依赖
+
+```bash
+# PySide6 运行时依赖
+sudo apt install libegl1 libgl1
+
+# ESP32 串口访问
+sudo usermod -aG dialout $USER
+
+# 可选：CJK 字体
+sudo apt install fonts-noto-cjk
+```
+
+### 打包方案：AppImage
+
+- 单文件分发，无依赖
+- 覆盖 Debian/Ubuntu 全系列
+- 构建脚本：`build_linux.sh`
+
+### 执行计划
+
+| 阶段 | 时间 | 内容 |
+|------|------|------|
+| Phase 1 | Day 1-2 | 核心修复：font_config + secret_store + anti_debug |
+| Phase 2 | Day 3-4 | 输出系统：5 个输出模块字体更新 |
+| Phase 3 | Day 5-6 | UI 与构建：theme/main + Nuitka 适配 |
+| Phase 4 | Day 7-8 | 打包与测试：AppImage + Ubuntu/Debian 集成测试 |
+
+### 验收标准
+
+- Ubuntu 22.04+ / Debian 13 应用正常启动
+- 中文 UI 正常显示，无方块
+- PDF/Excel/Word/HTML 中文导出正常
+- ESP32 串口通信 Linux 下正常
+- AppImage 单文件分发可用
+- 全量 pytest 通过（688+ tests）
+
+---
+
+## v3.3.0 — 时间序列与预测（待开发）
 
 > 主题：补齐全时间序列分析能力，支持趋势预测与季节性分解。
 
@@ -618,6 +721,7 @@ python build_nuitka.py --onefile
 | 日期 | 版本 | 内容 |
 |------|---------|---------|
 | 08-28 | v3.1.0 | DOE与功效分析完成：筛选设计(PB/DSD) + 部分因子 + 田口 + 混合设计 + Power & Sample Size引擎 + 独立对话框 + E2E测试 |
+| 08-28 | v3.2.0-planning | Linux移植规划：跨平台字体系统 + keyring凭证存储 + AppImage打包 + 双系统发行 |
 | 08-24 | v3.x-planning | 战略重定位：从企业级多公司平台调整为个人订阅级质量工程工具（类 Minitab）；删除 v3.1~v3.6 旧规划（企业RBAC/跨平台/高可用/安全合规/双层治理）；重新设计 v3.1~v4.0 路线（DOE→时间序列→可靠性→MSA→Graph Builder→实时SPC→QAM Harness→视频研究→预测分析）；核心竞争力支柱从6个精简为5个（工作流贯通/实时工厂集成/IE工具套件/QAM Harness/中文本土化） |
 | 08-24 | v3.x-AI-架构 | AI 架构决策：支柱 4 从"本地 LLM"调整为"AI 智能助手（云端 API + 本地模型分层）"；v3.1.0 新增 AI API 管理面板（6 家供应商 GUI 配置 + 数据隐私提示）；v3.2.0 服务端增加 AI 代理转发；v4.0.0 本地 LLM 定位为企业版专属功能 |
 | 08-24 | v3.x-视频研究 | 视频时间研究方案确定：独立 Tab 36 · 标准 USB/IP 摄像头 + PC 端 OpenCV/MediaPipe 路线 · 穿插 v3.1~v3.5 三阶段交付（v3.1 摄像头输入层 + v3.3 姿态估计 + v3.5 完整分析上线）· MaixCAM 分阶段定位（当前 IoT 采集终端 → v4.0 条件触发升级视觉检测平台） |
