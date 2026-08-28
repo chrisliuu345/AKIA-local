@@ -8,6 +8,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
 
 from ui.theme import colors as theme_colors
+from ui.font_config import get_ui_font
 
 ICON_COLORS = {
     "SPC": "#1b5faa", "CPK": "#217ca3", "MSA": "#6b4c9a",
@@ -39,11 +40,11 @@ class DiagnosisDialog(QDialog):
         # 标题行
         title_row = QHBoxLayout()
         title = QLabel("数据智能诊断")
-        title.setFont(QFont("Microsoft YaHei", 20, QFont.Bold))
+        title.setFont(QFont(get_ui_font(), 20, QFont.Bold))
         title_row.addWidget(title)
         title_row.addStretch()
         btn_export = QPushButton("导出报告")
-        btn_export.setFont(QFont("Microsoft YaHei", 10))
+        btn_export.setFont(QFont(get_ui_font(), 10))
         btn_export.setFixedHeight(32)
         btn_export.setCursor(Qt.PointingHandCursor)
         btn_export.setStyleSheet(
@@ -52,7 +53,7 @@ class DiagnosisDialog(QDialog):
         btn_export.clicked.connect(self._export_report)
         title_row.addWidget(btn_export)
         btn_all = QPushButton("全部应用")
-        btn_all.setFont(QFont("Microsoft YaHei", 10))
+        btn_all.setFont(QFont(get_ui_font(), 10))
         btn_all.setFixedHeight(32)
         btn_all.setCursor(Qt.PointingHandCursor)
         btn_all.setStyleSheet(
@@ -69,7 +70,7 @@ class DiagnosisDialog(QDialog):
             f"工作表 {gs.get('total_sheets',0)} 个 · "
             f"总行数 {gs.get('total_rows',0):,} · "
             f"数据问题 {gs.get('total_issues',0)} 个")
-        overview.setFont(QFont("Microsoft YaHei", 10))
+        overview.setFont(QFont(get_ui_font(), 10))
         overview.setStyleSheet(f"color: {tc['text_secondary']}; padding: 2px 0;")
         root.addWidget(overview)
 
@@ -103,7 +104,7 @@ class DiagnosisDialog(QDialog):
         root.addWidget(scroll, 1)
 
         close_btn = QPushButton("关闭")
-        close_btn.setFont(QFont("Microsoft YaHei", 11))
+        close_btn.setFont(QFont(get_ui_font(), 11))
         close_btn.setMinimumHeight(36)
         close_btn.clicked.connect(self.close)
         root.addWidget(close_btn)
@@ -116,7 +117,7 @@ class DiagnosisDialog(QDialog):
         layout = QVBoxLayout(card); layout.setSpacing(4)
 
         title = QLabel(label)
-        title.setFont(QFont("Microsoft YaHei", 9))
+        title.setFont(QFont(get_ui_font(), 9))
         title.setAlignment(Qt.AlignCenter)
         title.setStyleSheet(f"color: {tc['text_secondary']}; background: transparent;")
         layout.addWidget(title)
@@ -132,7 +133,7 @@ class DiagnosisDialog(QDialog):
         layout.addWidget(bar)
 
         pct = QLabel(f"{int(value * 100)}%")
-        pct.setFont(QFont("Microsoft YaHei", 12, QFont.Bold))
+        pct.setFont(QFont(get_ui_font(), 12, QFont.Bold))
         pct.setAlignment(Qt.AlignCenter)
         pct.setStyleSheet(f"color: {self._gauge_color(value)}; background: transparent;")
         layout.addWidget(pct)
@@ -154,10 +155,10 @@ class DiagnosisDialog(QDialog):
         # Header
         hdr = QHBoxLayout()
         hl = QLabel(f" {sn}")
-        hl.setFont(QFont("Microsoft YaHei", 13, QFont.Bold))
+        hl.setFont(QFont(get_ui_font(), 13, QFont.Bold))
         hdr.addWidget(hl)
         info = QLabel(f"{sheet['row_count']} 行  {sheet['column_count']} 列")
-        info.setFont(QFont("Microsoft YaHei", 10))
+        info.setFont(QFont(get_ui_font(), 10))
         info.setStyleSheet(f"color: {tc['text_secondary']};")
         hdr.addWidget(info)
         hdr.addStretch()
@@ -170,7 +171,7 @@ class DiagnosisDialog(QDialog):
             headers = ["列名", "类型", "缺失%", "偏度", "异常点", "分布"]
             for j, h in enumerate(headers):
                 lbl = QLabel(h)
-                lbl.setFont(QFont("Microsoft YaHei", 9, QFont.Bold))
+                lbl.setFont(QFont(get_ui_font(), 9, QFont.Bold))
                 lbl.setStyleSheet(f"color: {tc['text_secondary']}; padding: 2px 4px;")
                 grid.addWidget(lbl, 0, j)
             for i, c in enumerate(cols[:12], 1):
@@ -183,7 +184,7 @@ class DiagnosisDialog(QDialog):
                 ]
                 for j, v in enumerate(vals):
                     lbl = QLabel(v)
-                    lbl.setFont(QFont("Microsoft YaHei", 9))
+                    lbl.setFont(QFont(get_ui_font(), 9))
                     lbl.setStyleSheet(f"color: {tc['text_primary']}; padding: 1px 4px;")
                     if j == 1 and c["category"] == "measurement":
                         lbl.setStyleSheet(f"color: {tc['accent_bright']}; font-weight: bold; padding: 1px 4px;")
@@ -211,7 +212,7 @@ class DiagnosisDialog(QDialog):
                 ("可选用", low_recs, "·")]:
                 if not group_recs: continue
                 sec = QLabel(f" {star} {group_title} ({len(group_recs)})")
-                sec.setFont(QFont("Microsoft YaHei", 11, QFont.Bold))
+                sec.setFont(QFont(get_ui_font(), 11, QFont.Bold))
                 sec.setStyleSheet(f"color: {CONF_COLORS.get(group_recs[0]['confidence']['grade'], tc['accent'])}; padding: 4px 0;")
                 layout.addWidget(sec)
                 for rec in group_recs[:5]:
@@ -223,7 +224,7 @@ class DiagnosisDialog(QDialog):
             layout.addSpacing(4)
             for iss in issues[:5]:
                 il = QLabel(f"  {iss}")
-                il.setFont(QFont("Microsoft YaHei", 9))
+                il.setFont(QFont(get_ui_font(), 9))
                 il.setStyleSheet("color: #e74c3c;")
                 layout.addWidget(il)
         return card
@@ -234,7 +235,7 @@ class DiagnosisDialog(QDialog):
         # 图标
         icon_text = rec["icon"][:3]
         icon = QLabel(icon_text)
-        icon.setFont(QFont("Microsoft YaHei", 10, QFont.Bold))
+        icon.setFont(QFont(get_ui_font(), 10, QFont.Bold))
         icon.setFixedSize(38, 38)
         icon.setAlignment(Qt.AlignCenter)
         icolor = ICON_COLORS.get(rec["icon"], tc["accent"])
@@ -245,11 +246,11 @@ class DiagnosisDialog(QDialog):
         # 中间文字
         text_col = QVBoxLayout(); text_col.setSpacing(2)
         title = QLabel(f"{rec['tab_name']} · {rec['method']}")
-        title.setFont(QFont("Microsoft YaHei", 11, QFont.Bold))
+        title.setFont(QFont(get_ui_font(), 11, QFont.Bold))
         title.setStyleSheet(f"color: {tc['text_primary']};")
         text_col.addWidget(title)
         reason = QLabel(rec["reason"])
-        reason.setFont(QFont("Microsoft YaHei", 9))
+        reason.setFont(QFont(get_ui_font(), 9))
         reason.setStyleSheet(f"color: {tc['text_muted']};")
         text_col.addWidget(reason)
 
@@ -260,7 +261,7 @@ class DiagnosisDialog(QDialog):
         cbar.setRange(0, 100); cbar.setValue(int(pct * 100))
         cbar.setTextVisible(True); cbar.setFormat(f" {int(pct * 100)}%")
         cbar.setFixedSize(60, 16)
-        cbar.setFont(QFont("Microsoft YaHei", 8))
+        cbar.setFont(QFont(get_ui_font(), 8))
         ccolor = CONF_COLORS.get(conf.get("grade", "optional"), "#6e7080")
         cbar.setStyleSheet(
             f"QProgressBar {{ background: {tc['bg_body']}; border: none; border-radius: 3px; text-align: center; }} "
@@ -269,7 +270,7 @@ class DiagnosisDialog(QDialog):
         row.addWidget(cbar)
 
         btn = QPushButton("配置")
-        btn.setFont(QFont("Microsoft YaHei", 9))
+        btn.setFont(QFont(get_ui_font(), 9))
         btn.setFixedSize(52, 28)
         btn.setCursor(Qt.PointingHandCursor)
         btn.setStyleSheet(

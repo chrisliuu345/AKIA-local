@@ -11,6 +11,7 @@ from PySide6.QtGui import QFont, QColor
 from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY
 from ui.theme import colors as theme_colors
+from ui.font_config import get_ui_font
 from core.fmea_engine import FMEAItem, FMEAEngine
 from config.settings import RPN_HIGH
 
@@ -35,7 +36,7 @@ class FMEATab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel("FMEA 失效模式与影响分析")
-        self.title_label.setFont(QFont("Microsoft YaHei", 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
@@ -87,7 +88,7 @@ class FMEATab(BaseAnalysisTab):
 
         # 风险统计
         self.stats_label = QLabel("")
-        self.stats_label.setFont(QFont("Microsoft YaHei", 10))
+        self.stats_label.setFont(QFont(get_ui_font(), 10))
         layout.addWidget(self.stats_label)
 
         # FMEA 主表格

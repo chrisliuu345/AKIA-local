@@ -13,6 +13,7 @@ import numpy as np
 
 from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY, FONT_12B
+from ui.font_config import get_ui_font
 from analysis.ie.smed import SMEDEngine, SMEDTask
 
 
@@ -89,7 +90,7 @@ class SMEDTab(BaseAnalysisTab):
 
         # — 改善摘要 —
         self.summary_label = QLabel("")
-        self.summary_label.setFont(QFont("Microsoft YaHei", 11))
+        self.summary_label.setFont(QFont(get_ui_font(), 11))
         layout.addWidget(self.summary_label)
 
     def _add_row(self, name="", ttype="internal", t=0, imp=0, conv=False):

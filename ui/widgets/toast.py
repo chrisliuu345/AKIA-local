@@ -2,6 +2,7 @@
 
 用法:
     from ui.widgets.toast import Toast
+from ui.font_config import get_ui_font
     Toast.show(self, "分析完成", type="success")
     Toast.show(self, "导出失败: 文件被占用", type="error", duration=5000)
 """
@@ -48,7 +49,7 @@ class Toast(QFrame):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 6, 16, 6)
         label = QLabel(message)
-        label.setFont(QFont("Microsoft YaHei", 10))
+        label.setFont(QFont(get_ui_font(), 10))
         label.setStyleSheet(f"color: #e1e2e6; background: transparent;")
         label.setWordWrap(True)
         layout.addWidget(label)

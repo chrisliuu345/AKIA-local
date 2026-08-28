@@ -23,6 +23,7 @@ from core.alert_rules import AlertTracker, AlertLog, AlertRules, AlertState, for
 from output.chart_engine import create_control_chart
 from ui.theme import colors as theme_colors, BUTTON_PRIMARY_STRETCH
 from ui.tabs.base_tab import BaseAnalysisTab
+from ui.font_config import get_ui_font
 
 MONITOR_ANALYSIS_TYPE = "实时SPC监控"
 
@@ -48,7 +49,7 @@ class MonitorTab(BaseAnalysisTab):
         layout.setSpacing(10)
 
         title = QLabel(i18n.tr("monitor.title"))
-        title.setFont(QFont("Microsoft YaHei", 18, QFont.Bold))
+        title.setFont(QFont(get_ui_font(), 18, QFont.Bold))
         title.setStyleSheet(f"color: {tc['text_primary']}; background: transparent;")
         layout.addWidget(title)
 
@@ -90,14 +91,14 @@ class MonitorTab(BaseAnalysisTab):
         # 控制行
         ctrl = QHBoxLayout()
         self.toggle_btn = QPushButton(i18n.tr("monitor.start"))
-        self.toggle_btn.setFont(QFont("Microsoft YaHei", 12, QFont.Bold))
+        self.toggle_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
         self.toggle_btn.setFixedHeight(44)
         self.toggle_btn.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.toggle_btn.setCursor(Qt.PointingHandCursor)
         self.toggle_btn.clicked.connect(self._on_toggle)
         ctrl.addWidget(self.toggle_btn)
         self.status_label = QLabel(i18n.tr("monitor.status_idle"))
-        self.status_label.setFont(QFont("Microsoft YaHei", 10))
+        self.status_label.setFont(QFont(get_ui_font(), 10))
         self.status_label.setStyleSheet(f"color: {tc['text_secondary']};")
         ctrl.addWidget(self.status_label)
         ctrl.addStretch()

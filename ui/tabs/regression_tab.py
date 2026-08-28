@@ -19,6 +19,7 @@ from analysis.regression.linear_regression import analyze as reg_analyze
 from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_SECONDARY, BUTTON_TOGGLE, BUTTON_PRIMARY_STRETCH
+from ui.font_config import get_ui_font
 from core.formatting import format_pvalue
 
 
@@ -38,7 +39,7 @@ class RegressionTab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel(i18n.tr("reg.title"))
-        self.title_label.setFont(QFont("Microsoft YaHei", 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
         layout.addWidget(self.title_label)
 
         top_layout = QHBoxLayout()
@@ -62,7 +63,7 @@ class RegressionTab(BaseAnalysisTab):
         config_layout.addRow(i18n.tr("reg.factor3"), self.factor3_combo)
 
         self.run_btn = QPushButton(i18n.tr("reg.run_btn"))
-        self.run_btn.setFont(QFont("Microsoft YaHei", 12, QFont.Bold))
+        self.run_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
         self.run_btn.setMinimumHeight(44)
         self.run_btn.setCursor(Qt.PointingHandCursor)
         self.run_btn.setStyleSheet(BUTTON_PRIMARY_STRETCH)
@@ -70,7 +71,7 @@ class RegressionTab(BaseAnalysisTab):
         config_layout.addRow(self.run_btn)
 
         self.save_png_btn = QPushButton(i18n.tr("reg.save_png"))
-        self.save_png_btn.setFont(QFont("Microsoft YaHei", 12, QFont.Bold))
+        self.save_png_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
         self.save_png_btn.setMinimumHeight(40)
         self.save_png_btn.setCursor(Qt.PointingHandCursor)
         self.save_png_btn.setStyleSheet(BUTTON_SECONDARY)
@@ -78,7 +79,7 @@ class RegressionTab(BaseAnalysisTab):
         config_layout.addRow(self.save_png_btn)
 
         self.corr_btn = QPushButton(i18n.tr("reg.correlation"))
-        self.corr_btn.setFont(QFont("Microsoft YaHei", 12, QFont.Bold))
+        self.corr_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
         self.corr_btn.setMinimumHeight(40)
         self.corr_btn.setCursor(Qt.PointingHandCursor)
         self.corr_btn.setStyleSheet(BUTTON_SECONDARY)
@@ -86,7 +87,7 @@ class RegressionTab(BaseAnalysisTab):
         config_layout.addRow(self.corr_btn)
 
         self.export_btn = QPushButton(i18n.tr("reg.export_btn"))
-        self.export_btn.setFont(QFont("Microsoft YaHei", 12, QFont.Bold))
+        self.export_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
         self.export_btn.setMinimumHeight(44)
         self.export_btn.setCursor(Qt.PointingHandCursor)
         self.export_btn.setStyleSheet(BUTTON_PRIMARY_STRETCH)
@@ -109,13 +110,13 @@ class RegressionTab(BaseAnalysisTab):
 
         bottom_layout = QVBoxLayout()
         self.result_label = QLabel(i18n.tr("reg.result"))
-        self.result_label.setFont(QFont("Microsoft YaHei", 14, QFont.Bold))
+        self.result_label.setFont(QFont(get_ui_font(), 14, QFont.Bold))
         bottom_layout.addWidget(self.result_label)
 
         toggle_row = QHBoxLayout()
         toggle_row.setSpacing(8)
         self.btn_view_chart = QPushButton(i18n.tr("tab.view_chart"))
-        self.btn_view_chart.setFont(QFont("Microsoft YaHei", 11))
+        self.btn_view_chart.setFont(QFont(get_ui_font(), 11))
         self.btn_view_chart.setFixedHeight(30)
         self.btn_view_chart.setCheckable(True)
         self.btn_view_chart.setChecked(True)
@@ -123,7 +124,7 @@ class RegressionTab(BaseAnalysisTab):
         self.btn_view_chart.clicked.connect(lambda: self._switch_result_view(0))
         toggle_row.addWidget(self.btn_view_chart)
         self.btn_view_data = QPushButton(i18n.tr("tab.view_data"))
-        self.btn_view_data.setFont(QFont("Microsoft YaHei", 11))
+        self.btn_view_data.setFont(QFont(get_ui_font(), 11))
         self.btn_view_data.setFixedHeight(30)
         self.btn_view_data.setCheckable(True)
         self.btn_view_data.setStyleSheet(BUTTON_TOGGLE)
@@ -145,7 +146,7 @@ class RegressionTab(BaseAnalysisTab):
         data_layout.setContentsMargins(0, 0, 0, 0)
         self.result_text = QTextEdit()
         self.result_text.setReadOnly(True)
-        self.result_text.setFont(QFont("Microsoft YaHei", 12))
+        self.result_text.setFont(QFont(get_ui_font(), 12))
         self.result_text.setMinimumHeight(80)
         data_layout.addWidget(self.result_text)
         self.result_table = QTableWidget()

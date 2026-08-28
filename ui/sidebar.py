@@ -13,6 +13,7 @@ from core.i18n import i18n
 from config.settings import APP_VERSION, tab_allowed
 from ui.theme import colors as theme_colors
 from ui.widgets.elided_label import ElidedLabel
+from ui.font_config import get_ui_font
 
 
 HOME_ITEM = (0, "sidebar.home")
@@ -157,7 +158,7 @@ class CategoryGroup(QWidget):
         header_layout.addWidget(self._arrow_label)
 
         self._title_label = QLabel(i18n.tr(self.title_key))
-        self._title_label.setFont(QFont("Microsoft YaHei", 12, QFont.Bold))
+        self._title_label.setFont(QFont(get_ui_font(), 12, QFont.Bold))
         self._title_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         header_layout.addWidget(self._title_label, 1)
 
@@ -174,7 +175,7 @@ class CategoryGroup(QWidget):
                 if not tab_allowed(idx):
                     continue
                 btn = QPushButton()
-                btn.setFont(QFont("Microsoft YaHei", 10))
+                btn.setFont(QFont(get_ui_font(), 10))
                 btn.setFixedHeight(32)
                 btn.setCursor(Qt.PointingHandCursor)
                 btn.setCheckable(True)
@@ -187,7 +188,7 @@ class CategoryGroup(QWidget):
 
         if not self.items:
             placeholder = QLabel(i18n.tr("sidebar.coming_soon"))
-            placeholder.setFont(QFont("Microsoft YaHei", 9))
+            placeholder.setFont(QFont(get_ui_font(), 9))
             placeholder.setStyleSheet(f"color: {tc['text_dim']}; padding: 4px 8px;")
             placeholder.setAlignment(Qt.AlignLeft)
             self.sub_widgets.append(placeholder)
@@ -336,13 +337,13 @@ class Sidebar(QWidget):
 
         # Brand
         self.brand_label = QLabel(i18n.tr("sidebar.brand"))
-        self.brand_label.setFont(QFont("Microsoft YaHei", 14))
+        self.brand_label.setFont(QFont(get_ui_font(), 14))
         self.brand_label.setAlignment(Qt.AlignCenter)
         self.brand_label.setStyleSheet(f"color: {tc['text_primary']};")
         layout.addWidget(self.brand_label)
 
         ver = QLabel(f"v{APP_VERSION}")
-        ver.setFont(QFont("Microsoft YaHei", 9))
+        ver.setFont(QFont(get_ui_font(), 9))
         ver.setAlignment(Qt.AlignCenter)
         ver.setStyleSheet(f"color: {tc['text_secondary']};")
         layout.addWidget(ver)
@@ -351,7 +352,7 @@ class Sidebar(QWidget):
 
         # Home button (always visible, independent)
         self.home_btn = QPushButton()
-        self.home_btn.setFont(QFont("Microsoft YaHei", 12))
+        self.home_btn.setFont(QFont(get_ui_font(), 12))
         self.home_btn.setMinimumHeight(46)
         self.home_btn.setCursor(Qt.PointingHandCursor)
         self.home_btn.setCheckable(True)
@@ -385,7 +386,7 @@ class Sidebar(QWidget):
         layout.addSpacing(6)
 
         self.diagnose_btn = QPushButton()
-        self.diagnose_btn.setFont(QFont("Microsoft YaHei", 11, QFont.Bold))
+        self.diagnose_btn.setFont(QFont(get_ui_font(), 11, QFont.Bold))
         self.diagnose_btn.setMinimumHeight(40)
         self.diagnose_btn.setCursor(Qt.PointingHandCursor)
         self.diagnose_btn.clicked.connect(self.diagnose_clicked.emit)
@@ -397,7 +398,7 @@ class Sidebar(QWidget):
         layout.addSpacing(4)
 
         self.llm_btn = QPushButton()
-        self.llm_btn.setFont(QFont("Microsoft YaHei", 11, QFont.Bold))
+        self.llm_btn.setFont(QFont(get_ui_font(), 11, QFont.Bold))
         self.llm_btn.setMinimumHeight(40)
         self.llm_btn.setCursor(Qt.PointingHandCursor)
         self.llm_btn.clicked.connect(self.llm_clicked.emit)
@@ -411,12 +412,12 @@ class Sidebar(QWidget):
         # History
         history_header = QHBoxLayout()
         hl = QLabel(i18n.tr("sidebar.history"))
-        hl.setFont(QFont("Microsoft YaHei", 10, QFont.Bold))
+        hl.setFont(QFont(get_ui_font(), 10, QFont.Bold))
         hl.setStyleSheet(f"color: {tc['text_secondary']}; padding: 2px 4px;")
         history_header.addWidget(hl)
         history_header.addStretch()
         self.clear_hist_btn = QPushButton(i18n.tr("sidebar.history_clear"))
-        self.clear_hist_btn.setFont(QFont("Microsoft YaHei", 8))
+        self.clear_hist_btn.setFont(QFont(get_ui_font(), 8))
         self.clear_hist_btn.setFixedSize(40, 20)
         self.clear_hist_btn.setCursor(Qt.PointingHandCursor)
         self.clear_hist_btn.setStyleSheet(
@@ -445,7 +446,7 @@ class Sidebar(QWidget):
         scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 
         self.collapse_btn = QPushButton("  " + i18n.tr("sidebar.collapse"))
-        self.collapse_btn.setFont(QFont("Microsoft YaHei", 10))
+        self.collapse_btn.setFont(QFont(get_ui_font(), 10))
         self.collapse_btn.setMinimumHeight(32)
         self.collapse_btn.setCursor(Qt.PointingHandCursor)
         self.collapse_btn.setToolTip(i18n.tr("sidebar.collapse") + " (Ctrl+B)")
@@ -517,7 +518,7 @@ class Sidebar(QWidget):
                 from PySide6.QtWidgets import QPushButton
                 from PySide6.QtGui import QFont
                 btn = QPushButton(name)
-                btn.setFont(QFont("Microsoft YaHei", 10))
+                btn.setFont(QFont(get_ui_font(), 10))
                 btn.setFixedHeight(32)
                 btn.setCursor(Qt.PointingHandCursor)
                 btn.setCheckable(True)
@@ -563,13 +564,13 @@ class Sidebar(QWidget):
 
             # v2.3.1: ElidedLabel 自动省略, 不再预截断, tooltip 保留全文
             type_lbl = ElidedLabel(entry["type"])
-            type_lbl.setFont(QFont("Microsoft YaHei", 9))
+            type_lbl.setFont(QFont(get_ui_font(), 9))
             type_lbl.setStyleSheet(f"color: {tc['text_primary']};")
             rlayout.addWidget(type_lbl, 1)
 
             if entry["result"]:
                 res_lbl = QLabel(entry["result"][:8])
-                res_lbl.setFont(QFont("Microsoft YaHei", 8))
+                res_lbl.setFont(QFont(get_ui_font(), 8))
                 res_lbl.setFixedWidth(50)
                 res_lbl.setAlignment(Qt.AlignCenter)
                 is_positive = "A" in entry["result"] or "可" in entry["result"]
