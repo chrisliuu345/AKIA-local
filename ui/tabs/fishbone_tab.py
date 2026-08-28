@@ -14,6 +14,7 @@ from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY
 from ui.theme import colors as theme_colors
 from ui.widgets.fishbone_canvas import FishboneCanvas
+from ui.font_config import get_ui_font
 from analysis.quality.fishbone import FishboneEngine
 
 
@@ -33,7 +34,7 @@ class FishboneTab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel("鱼骨图 (石川图)")
-        self.title_label.setFont(QFont("Microsoft YaHei", 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
@@ -53,7 +54,7 @@ class FishboneTab(BaseAnalysisTab):
         prob_group = QGroupBox("问题描述")
         prob_layout = QFormLayout(prob_group)
         self.problem_input = QLineEdit(self._problem)
-        self.problem_input.setFont(QFont("Microsoft YaHei", 12))
+        self.problem_input.setFont(QFont(get_ui_font(), 12))
         self.problem_input.textChanged.connect(self._on_problem_changed)
         prob_layout.addRow("问题:", self.problem_input)
         left_layout.addWidget(prob_group)
@@ -134,7 +135,7 @@ class FishboneTab(BaseAnalysisTab):
         for bname, root in self._branches.items():
             branch_item = QTreeWidgetItem([bname, f"{self._count_children(root)}项"])
             branch_item.setData(0, Qt.UserRole, {"type": "branch"})
-            branch_item.setFont(0, QFont("Microsoft YaHei", 10, QFont.Bold))
+            branch_item.setFont(0, QFont(get_ui_font(), 10, QFont.Bold))
             self._add_tree_children(branch_item, root)
             self.tree.addTopLevelItem(branch_item)
         self.tree.expandAll()

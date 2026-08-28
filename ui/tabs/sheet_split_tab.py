@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (QWidget,QVBoxLayout,QHBoxLayout,QLabel,QPushButto
 from PySide6.QtGui import QFont
 from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_PRIMARY_STRETCH,BUTTON_SECONDARY
+from ui.font_config import get_ui_font
 from core.sheet_splitter import SheetSplitter
 
 class SheetSplitTab(BaseAnalysisTab):
@@ -14,7 +15,7 @@ class SheetSplitTab(BaseAnalysisTab):
         super().__init__(parent); self._file=""; self._output=""; self._setup_ui()
     def _setup_ui(self):
         layout=QVBoxLayout(self); layout.setContentsMargins(12,12,12,12)
-        self.title_label=QLabel("工作表拆分"); self.title_label.setFont(QFont("Microsoft YaHei",18,QFont.Bold))
+        self.title_label=QLabel("工作表拆分"); self.title_label.setFont(QFont(get_ui_font(), 18,QFont.Bold))
         layout.addWidget(self.title_label); layout.addSpacing(4)
         fg=QGroupBox("源文件")
         fl=QHBoxLayout(fg)

@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from ui.theme import colors as theme_colors, BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY
+from ui.font_config import get_ui_font
 
 class DataCleanWizard(QDialog):
     def __init__(self, df: pd.DataFrame, parent=None):
@@ -27,16 +28,16 @@ class DataCleanWizard(QDialog):
 
         # 标题 + 统计
         hdr = QHBoxLayout()
-        self.title = QLabel("数据清洗向导"); self.title.setFont(QFont("Microsoft YaHei", 18, QFont.Bold))
+        self.title = QLabel("数据清洗向导"); self.title.setFont(QFont(get_ui_font(), 18, QFont.Bold))
         hdr.addWidget(self.title); hdr.addStretch()
-        self.summary = QLabel(""); self.summary.setFont(QFont("Microsoft YaHei", 10))
+        self.summary = QLabel(""); self.summary.setFont(QFont(get_ui_font(), 10))
         self.summary.setStyleSheet(f"color: {tc['text_secondary']};")
         hdr.addWidget(self.summary)
         root.addLayout(hdr)
 
         # 发现的问题
         self.issue_list = QLabel("正在扫描...")
-        self.issue_list.setFont(QFont("Microsoft YaHei", 10))
+        self.issue_list.setFont(QFont(get_ui_font(), 10))
         self.issue_list.setStyleSheet(f"color: {tc['text_secondary']}; padding: 4px 8px; background: {tc['bg_card']}; border-radius: 6px;")
         self.issue_list.setWordWrap(True)
         root.addWidget(self.issue_list)
@@ -55,7 +56,7 @@ class DataCleanWizard(QDialog):
         self.btn_rescan = QPushButton("重新扫描"); self.btn_rescan.setStyleSheet(BUTTON_SECONDARY)
         self.btn_rescan.clicked.connect(self._scan); btns.addWidget(self.btn_rescan)
         self.btn_fix_all = QPushButton("一键修复全部"); self.btn_fix_all.setStyleSheet(BUTTON_PRIMARY_STRETCH)
-        self.btn_fix_all.setFont(QFont("Microsoft YaHei", 11, QFont.Bold)); self.btn_fix_all.clicked.connect(self._fix_all)
+        self.btn_fix_all.setFont(QFont(get_ui_font(), 11, QFont.Bold)); self.btn_fix_all.clicked.connect(self._fix_all)
         btns.addWidget(self.btn_fix_all)
         self.btn_apply = QPushButton("应用并关闭"); self.btn_apply.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.btn_apply.clicked.connect(self.accept); btns.addWidget(self.btn_apply)

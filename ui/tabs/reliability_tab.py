@@ -20,6 +20,7 @@ from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_TOGGLE
 from ui.theme import colors as theme_colors
+from ui.font_config import get_ui_font
 from analysis.reliability.weibull import WeibullAnalyzer
 from analysis.reliability.mtbf import MTBFAnalyzer
 
@@ -52,7 +53,7 @@ class ReliabilityTab(BaseAnalysisTab):
 
         # ── 标题 ──
         self.title_label = QLabel(i18n.tr("reliability.title"))
-        self.title_label.setFont(QFont("Microsoft YaHei", 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
@@ -112,7 +113,7 @@ class ReliabilityTab(BaseAnalysisTab):
         self.btn_analyze_w.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.btn_analyze_w.setCursor(Qt.PointingHandCursor)
         self.btn_analyze_w.setMinimumHeight(44)
-        self.btn_analyze_w.setFont(QFont("Microsoft YaHei", 12, QFont.Bold))
+        self.btn_analyze_w.setFont(QFont(get_ui_font(), 12, QFont.Bold))
         self.btn_analyze_w.clicked.connect(self._run_weibull)
         w_config_layout.addRow(self.btn_analyze_w)
 
@@ -138,7 +139,7 @@ class ReliabilityTab(BaseAnalysisTab):
         self.btn_analyze_m.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.btn_analyze_m.setCursor(Qt.PointingHandCursor)
         self.btn_analyze_m.setMinimumHeight(44)
-        self.btn_analyze_m.setFont(QFont("Microsoft YaHei", 12, QFont.Bold))
+        self.btn_analyze_m.setFont(QFont(get_ui_font(), 12, QFont.Bold))
         self.btn_analyze_m.clicked.connect(self._run_mtbf)
         m_config_layout.addRow(self.btn_analyze_m)
 
@@ -158,12 +159,12 @@ class ReliabilityTab(BaseAnalysisTab):
             card_layout = QVBoxLayout(card)
             card_layout.setContentsMargins(12, 8, 12, 8)
             title_lbl = QLabel(key.upper())
-            title_lbl.setFont(QFont("Microsoft YaHei", 9))
+            title_lbl.setFont(QFont(get_ui_font(), 9))
             title_lbl.setStyleSheet(f"color: {tc['text_muted']};")
             title_lbl.setAlignment(Qt.AlignCenter)
             card_layout.addWidget(title_lbl)
             val_lbl = QLabel("—")
-            val_lbl.setFont(QFont("Microsoft YaHei", 16, QFont.Bold))
+            val_lbl.setFont(QFont(get_ui_font(), 16, QFont.Bold))
             val_lbl.setStyleSheet(f"color: {tc['accent_bright']};")
             val_lbl.setAlignment(Qt.AlignCenter)
             card_layout.addWidget(val_lbl)

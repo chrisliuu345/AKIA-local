@@ -7,6 +7,7 @@ from PySide6.QtGui import QFont
 from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_PRIMARY_STRETCH
 from ui.theme import colors as theme_colors
+from ui.font_config import get_ui_font
 from core.layered_form import LPAEngine,LPA_TEMPLATES
 
 class LayeredFormTab(BaseAnalysisTab):
@@ -15,7 +16,7 @@ class LayeredFormTab(BaseAnalysisTab):
     def _setup_ui(self):
         tc=theme_colors()
         layout=QVBoxLayout(self); layout.setContentsMargins(12,12,12,12)
-        self.title_label=QLabel("LPA 分层审核表"); self.title_label.setFont(QFont("Microsoft YaHei",18,QFont.Bold))
+        self.title_label=QLabel("LPA 分层审核表"); self.title_label.setFont(QFont(get_ui_font(), 18,QFont.Bold))
         layout.addWidget(self.title_label); layout.addSpacing(4)
         cfg=QGroupBox("模板配置")
         cl=QFormLayout(cfg)

@@ -10,6 +10,7 @@ from PySide6.QtCore import Qt, QThread, Signal, QSettings
 from PySide6.QtGui import QFont, QTextCursor
 
 from ui.theme import colors as theme_colors
+from ui.font_config import get_ui_font
 
 # ── 预设问题模板 ──
 PRESET_QUESTIONS = [
@@ -94,11 +95,11 @@ class LLMDialog(QDialog):
         # ── 顶部标题栏 ──
         header = QHBoxLayout()
         title = QLabel("AI 分析助手")
-        title.setFont(QFont("Microsoft YaHei", 16, QFont.Bold))
+        title.setFont(QFont(get_ui_font(), 16, QFont.Bold))
         header.addWidget(title)
 
         self.llm_status = QLabel("")
-        self.llm_status.setFont(QFont("Microsoft YaHei", 9))
+        self.llm_status.setFont(QFont(get_ui_font(), 9))
         header.addWidget(self.llm_status)
         header.addStretch()
 
@@ -139,7 +140,7 @@ class LLMDialog(QDialog):
         header.addWidget(self.custom_model_input)
 
         self.provider_lbl = QLabel(self._provider_label())
-        self.provider_lbl.setFont(QFont("Microsoft YaHei", 8))
+        self.provider_lbl.setFont(QFont(get_ui_font(), 8))
         self.provider_lbl.setStyleSheet(f"color: {tc['text_muted']};")
         header.addWidget(self.provider_lbl)
 
@@ -170,7 +171,7 @@ class LLMDialog(QDialog):
         self._preset_btns = []
         for label, question in PRESET_QUESTIONS:
             btn = QPushButton(label)
-            btn.setFont(QFont("Microsoft YaHei", 8))
+            btn.setFont(QFont(get_ui_font(), 8))
             btn.setFixedHeight(22)
             btn.setCursor(Qt.PointingHandCursor)
             btn.setToolTip(question[:60] + "…")
@@ -189,7 +190,7 @@ class LLMDialog(QDialog):
         kb_row = QHBoxLayout()
         kb_row.setSpacing(6)
         self.kb_input = QLineEdit()
-        self.kb_input.setFont(QFont("Microsoft YaHei", 10))
+        self.kb_input.setFont(QFont(get_ui_font(), 10))
         self.kb_input.setPlaceholderText("搜索知识库：GRR 判定 / AQL 抽样表 / SMED / 8D / 控制图选择 ...")
         self.kb_input.setMinimumHeight(28)
         self.kb_input.setStyleSheet(
@@ -199,7 +200,7 @@ class LLMDialog(QDialog):
         self.kb_input.installEventFilter(self)
         kb_row.addWidget(self.kb_input, 1)
         kb_btn = QPushButton("检索")
-        kb_btn.setFont(QFont("Microsoft YaHei", 10))
+        kb_btn.setFont(QFont(get_ui_font(), 10))
         kb_btn.setFixedSize(50, 28)
         kb_btn.setCursor(Qt.PointingHandCursor)
         kb_btn.setStyleSheet(
@@ -214,7 +215,7 @@ class LLMDialog(QDialog):
         # ── 对话显示区 ──
         self.chat_view = QTextEdit()
         self.chat_view.setReadOnly(True)
-        self.chat_view.setFont(QFont("Microsoft YaHei", 11))
+        self.chat_view.setFont(QFont(get_ui_font(), 11))
         self.chat_view.setStyleSheet(
             f"QTextEdit {{ background: {tc['bg_card']}; border: 1px solid {tc['border_light']}; "
             f"border-radius: 6px; padding: 8px; }}"
@@ -225,7 +226,7 @@ class LLMDialog(QDialog):
         input_row = QHBoxLayout()
         input_row.setSpacing(6)
         self.input_box = QLineEdit()
-        self.input_box.setFont(QFont("Microsoft YaHei", 11))
+        self.input_box.setFont(QFont(get_ui_font(), 11))
         self.input_box.setPlaceholderText("输入问题，或点击上方模板快速提问…")
         self.input_box.setMinimumHeight(36)
         self.input_box.setStyleSheet(
@@ -236,7 +237,7 @@ class LLMDialog(QDialog):
         input_row.addWidget(self.input_box, 1)
 
         self.send_btn = QPushButton("发送")
-        self.send_btn.setFont(QFont("Microsoft YaHei", 11, QFont.Bold))
+        self.send_btn.setFont(QFont(get_ui_font(), 11, QFont.Bold))
         self.send_btn.setMinimumHeight(36)
         self.send_btn.setMinimumWidth(66)
         self.send_btn.setCursor(Qt.PointingHandCursor)

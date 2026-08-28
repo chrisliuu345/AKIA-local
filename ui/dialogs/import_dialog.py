@@ -13,6 +13,7 @@ from PySide6.QtGui import QFont
 from config.settings import SUPPORTED_EXCEL_EXTENSIONS, MAX_PREVIEW_ROWS
 from core.excel_utils import read_excel_auto
 from ui.theme import colors as theme_colors
+from ui.font_config import get_ui_font
 
 
 class ImportDialog(QDialog):
@@ -39,7 +40,7 @@ class ImportDialog(QDialog):
 
         header_layout = QHBoxLayout()
         mode_badge = QLabel(f"  {mode_label}  ")
-        mode_badge.setFont(QFont("Microsoft YaHei", 10, QFont.Bold))
+        mode_badge.setFont(QFont(get_ui_font(), 10, QFont.Bold))
         mode_badge.setStyleSheet(
             f"background-color: {mode_color}; color: white; border-radius: 4px; padding: 4px 8px;"
         )
@@ -59,7 +60,7 @@ class ImportDialog(QDialog):
         layout.addWidget(file_group)
 
         self.info_label = QLabel("")
-        self.info_label.setFont(QFont("Microsoft YaHei", 9))
+        self.info_label.setFont(QFont(get_ui_font(), 9))
         self.info_label.setStyleSheet(f"color: {tc['text_secondary']}; padding: 2px 6px;")
         layout.addWidget(self.info_label)
 
@@ -67,7 +68,7 @@ class ImportDialog(QDialog):
         hint_layout = QVBoxLayout(hint_group)
         self.hint_label = QLabel(self._get_format_hint())
         self.hint_label.setWordWrap(True)
-        self.hint_label.setFont(QFont("Microsoft YaHei", 9))
+        self.hint_label.setFont(QFont(get_ui_font(), 9))
         self.hint_label.setStyleSheet(f"color: {tc['text_secondary']}; padding: 4px;")
         hint_layout.addWidget(self.hint_label)
         layout.addWidget(hint_group)

@@ -428,7 +428,7 @@ class DashboardTab(BaseAnalysisTab):
         l = QVBoxLayout(frame)
         l.setSpacing(6)
         title = ElidedLabel(name)
-        title.setFont(QFont("Microsoft YaHei", 12, QFont.Bold))
+        title.setFont(QFont(get_ui_font(), 12, QFont.Bold))
         title.setStyleSheet(f"color:{tc['accent_bright']};")
         title.setToolTip(f"{name} = {expr}")
         l.addWidget(title)
@@ -458,6 +458,7 @@ class DashboardTab(BaseAnalysisTab):
             QMessageBox.information(self, i18n.tr("dashboard.layout"), i18n.tr("dashboard.empty"))
             return
         from ui.dialogs.layout_dialog import LayoutDialog
+from ui.font_config import get_ui_font
         dlg = LayoutDialog(self, items, self._settings)
         if dlg.exec() == dlg.Accepted:
             self.refresh()

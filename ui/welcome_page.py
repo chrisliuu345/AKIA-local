@@ -10,6 +10,7 @@ from PySide6.QtGui import (
 )
 from ui.theme import colors as theme_colors
 from ui.widgets.elided_label import ElidedLabel
+from ui.font_config import get_ui_font
 
 from core.i18n import i18n
 from config.settings import APP_VERSION
@@ -43,7 +44,7 @@ class WelcomePage(QWidget):
         header_layout = QVBoxLayout(header)
         header_layout.setSpacing(4)
 
-        title_font = QFont("Microsoft YaHei", 36, QFont.Bold)
+        title_font = QFont(get_ui_font(), 36, QFont.Bold)
         title_font.setLetterSpacing(QFont.AbsoluteSpacing, 3)
         self.title_label = QLabel(i18n.tr("welcome.title"))
         self.title_label.setFont(title_font)
@@ -52,7 +53,7 @@ class WelcomePage(QWidget):
         header_layout.addWidget(self.title_label)
 
         self.subtitle_label = QLabel("AI 工业质量 + IE 分析平台")
-        self.subtitle_label.setFont(QFont("Microsoft YaHei", 12))
+        self.subtitle_label.setFont(QFont(get_ui_font(), 12))
         self.subtitle_label.setAlignment(Qt.AlignCenter)
         self.subtitle_label.setStyleSheet(
             f"color: {tc['text_secondary']}; background: transparent;")
@@ -109,7 +110,7 @@ class WelcomePage(QWidget):
 
         # ── 最近项目 ──
         recent_header = QLabel("最近项目")
-        recent_header.setFont(QFont("Microsoft YaHei", 11, QFont.Bold))
+        recent_header.setFont(QFont(get_ui_font(), 11, QFont.Bold))
         recent_header.setStyleSheet(
             f"color: {tc['text_secondary']}; background: transparent; padding: 0 4px;")
         body_layout.addWidget(recent_header)
@@ -122,7 +123,7 @@ class WelcomePage(QWidget):
         body_layout.addWidget(self.recent_list)
 
         self._no_recent = QLabel("暂无最近项目 — 导入数据或打开项目开始分析")
-        self._no_recent.setFont(QFont("Microsoft YaHei", 10))
+        self._no_recent.setFont(QFont(get_ui_font(), 10))
         self._no_recent.setStyleSheet(
             f"color: {tc['text_muted']}; background: {tc['bg_card']}; "
             f"border: 1px dashed {tc['border']}; border-radius: 8px; padding: 18px;")
@@ -132,7 +133,7 @@ class WelcomePage(QWidget):
         body_layout.addStretch()
 
         self.version_label = QLabel(f"v{APP_VERSION}")
-        self.version_label.setFont(QFont("Microsoft YaHei", 10))
+        self.version_label.setFont(QFont(get_ui_font(), 10))
         self.version_label.setAlignment(Qt.AlignCenter)
         self.version_label.setStyleSheet(
             f"color: {tc['text_secondary']}; background: transparent; padding-bottom: 8px;")
@@ -164,14 +165,14 @@ class WelcomePage(QWidget):
         card_layout.setSpacing(4)
 
         title_lbl = QLabel(title)
-        title_lbl.setFont(QFont("Microsoft YaHei", 10, QFont.Bold))
+        title_lbl.setFont(QFont(get_ui_font(), 10, QFont.Bold))
         title_lbl.setAlignment(Qt.AlignCenter)
         title_lbl.setStyleSheet(
             f"color: {tc['text_primary']}; background: transparent; border: none;")
         card_layout.addWidget(title_lbl)
 
         desc_lbl = QLabel(desc)
-        desc_lbl.setFont(QFont("Microsoft YaHei", 8))
+        desc_lbl.setFont(QFont(get_ui_font(), 8))
         desc_lbl.setAlignment(Qt.AlignCenter)
         desc_lbl.setStyleSheet(
             f"color: {tc['text_muted']}; background: transparent; border: none;")
@@ -195,7 +196,7 @@ class WelcomePage(QWidget):
 
         if not self._recent_items:
             self._no_recent = QLabel("暂无最近项目 — 导入数据或打开项目开始分析")
-            self._no_recent.setFont(QFont("Microsoft YaHei", 10))
+            self._no_recent.setFont(QFont(get_ui_font(), 10))
             self._no_recent.setStyleSheet(
                 f"color: {tc['text_muted']}; background: {tc['bg_card']}; "
                 f"border: 1px dashed {tc['border']}; border-radius: 8px; padding: 18px;")
@@ -215,14 +216,14 @@ class WelcomePage(QWidget):
                 row_layout.setContentsMargins(0, 0, 0, 0)
 
                 name_lbl = QLabel(name)
-                name_lbl.setFont(QFont("Microsoft YaHei", 10))
+                name_lbl.setFont(QFont(get_ui_font(), 10))
                 name_lbl.setStyleSheet(
                     f"color: {tc['text_primary']}; background: transparent; border: none;")
                 row_layout.addWidget(name_lbl, 1)
 
                 # v2.3.1: 长路径自动省略号, tooltip 显示完整路径
                 path_lbl = ElidedLabel(path)
-                path_lbl.setFont(QFont("Microsoft YaHei", 8))
+                path_lbl.setFont(QFont(get_ui_font(), 8))
                 path_lbl.setMaximumWidth(360)
                 path_lbl.setStyleSheet(
                     f"color: {tc['text_muted']}; background: transparent; border: none;")
