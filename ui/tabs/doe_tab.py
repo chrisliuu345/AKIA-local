@@ -16,6 +16,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
 from analysis.doe import factorial, response_surface, box_behnken
+from analysis.doe import plackett_burman, definitive_screening, fractional, taguchi, mixture
 from output.chart_engine import create_pareto_chart
 from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
@@ -48,7 +49,22 @@ class DOETab(BaseAnalysisTab):
         config_layout = QFormLayout(config_group)
 
         self.method_combo = QComboBox()
-        self.method_combo.addItems(["因子设计分析", "生成 2^k 因子设计", "响应曲面分析 (CCD)", "Box-Behnken 设计"])
+        self.method_combo.addItems([
+            "── 筛选设计 ──",
+            "Plackett-Burman 筛选设计",
+            "Definitive Screening 设计",
+            "── 因子设计 ──",
+            "全因子 2^k 设计分析",
+            "生成全因子 2^k 设计",
+            "部分因子 2^(k-p) 设计",
+            "── 响应曲面 ──",
+            "响应曲面分析 (CCD)",
+            "Box-Behnken 设计",
+            "── 田口设计 ──",
+            "田口正交阵列分析",
+            "── 混合设计 ──",
+            "混合设计分析",
+        ])
         config_layout.addRow("方法:", self.method_combo)
 
         self.response_combo = QComboBox()
@@ -74,6 +90,14 @@ class DOETab(BaseAnalysisTab):
         self.run_btn.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.run_btn.clicked.connect(self.run_and_display)
         config_layout.addRow(self.run_btn)
+
+        self.power_btn = QPushButton("📊 Power & Sample Size")
+        self.power_btn.setFont(QFont("Microsoft YaHei", 12, QFont.Bold))
+        self.power_btn.setMinimumHeight(40)
+        self.power_btn.setCursor(Qt.PointingHandCursor)
+        self.power_btn.setStyleSheet(BUTTON_SECONDARY)
+        self.power_btn.clicked.connect(self._open_power_dialog)
+        config_layout.addRow(self.power_btn)
 
         self.save_png_btn = QPushButton(i18n.tr("doe.save_png"))
         self.save_png_btn.setFont(QFont("Microsoft YaHei", 12, QFont.Bold))
@@ -193,7 +217,9 @@ class DOETab(BaseAnalysisTab):
 
     def validate_params(self) -> tuple:
         method = self.method_combo.currentText()
-        if method == "生成 2^k 因子设计":
+        if method.startswith("──"):
+            return False, "请从下拉菜单中选择一个有效的分析方法"
+        if method == "生成全因子 2^k 设计":
             return True, ""
         if self.df is None:
             return False, "请先导入数据文件"
@@ -232,15 +258,27 @@ class DOETab(BaseAnalysisTab):
     def run_analysis(self) -> Dict[str, Any]:
         method = self.method_combo.currentText()
         result = {}
-        if method == "因子设计分析":
-            response = self.response_combo.currentText()
-            numeric_cols = self.parsed_info.get("numeric_columns", [])
-            if not numeric_cols:
-                numeric_cols = list(self.df.select_dtypes(include="number").columns)
-            factor_cols = [c for c in numeric_cols if c != response]
+
+        # 跳过分隔行
+        if method.startswith("──"):
+            return None
+
+        response = self.response_combo.currentText()
+        numeric_cols = self.parsed_info.get("numeric_columns", [])
+        if not numeric_cols:
+            numeric_cols = list(self.df.select_dtypes(include="number").columns)
+        factor_cols = [c for c in numeric_cols if c != response]
+
+        if method == "Plackett-Burman 筛选设计":
+            result = plackett_burman.analyze(self.df, response, factor_cols)
+        elif method == "Definitive Screening 设计":
+            result = definitive_screening.analyze(self.df, response, factor_cols)
+        elif method == "全因子 2^k 设计分析":
             result = factorial.analyze_factorial(self.df, response, factor_cols)
-        elif method == "生成 2^k 因子设计":
-            factors = ["A", "B", "C"]
+        elif method == "生成全因子 2^k 设计":
+            factors = factor_cols[:3] if len(factor_cols) >= 3 else factor_cols
+            if not factors:
+                factors = ["A", "B", "C"]
             reps = self.replicates_spin.value()
             design_df = factorial.generate_design(factors, reps)
             result = {"chart_type": "2^k Factorial Design", "design": design_df.to_dict("records"),
@@ -249,20 +287,19 @@ class DOETab(BaseAnalysisTab):
                 self._original_df = self.df
             self.df = design_df
             self.set_data(design_df, self.parsed_info)
+        elif method == "部分因子 2^(k-p) 设计":
+            result = fractional.analyze(self.df, response, factor_cols)
         elif method == "响应曲面分析 (CCD)":
-            response = self.response_combo.currentText()
-            numeric_cols = self.parsed_info.get("numeric_columns", [])
-            if not numeric_cols:
-                numeric_cols = list(self.df.select_dtypes(include="number").columns)
-            factor_cols = [c for c in numeric_cols if c != response][:3]
-            result = response_surface.analyze_response_surface(self.df, response, factor_cols)
+            result = response_surface.analyze_response_surface(self.df, response, factor_cols[:3])
         elif method == "Box-Behnken 设计":
-            response = self.response_combo.currentText()
-            numeric_cols = self.parsed_info.get("numeric_columns", [])
-            if not numeric_cols:
-                numeric_cols = list(self.df.select_dtypes(include="number").columns)
-            factor_cols = [c for c in numeric_cols if c != response][:3]
-            result = box_behnken.analyze_box_behnken(self.df, response, factor_cols)
+            result = box_behnken.analyze_box_behnken(self.df, response, factor_cols[:3])
+        elif method == "田口正交阵列分析":
+            result = taguchi.analyze(self.df, response, factor_cols)
+        elif method == "混合设计分析":
+            result = mixture.analyze(self.df, response, factor_cols)
+
+        if result is None:
+            return None
 
         self.current_result = {
             "analysis_type": method,
@@ -271,6 +308,12 @@ class DOETab(BaseAnalysisTab):
             "chart_data": result,
         }
         return self.current_result
+
+    def _open_power_dialog(self):
+        """打开 Power & Sample Size 对话框"""
+        from ui.dialogs.power_dialog import PowerDialog
+        dlg = PowerDialog(self)
+        dlg.exec()
 
     def _restore_original(self):
         """恢复到用户导入的原始数据（撤销生成设计覆盖）"""
@@ -334,7 +377,10 @@ class DOETab(BaseAnalysisTab):
 
         self.result_text.setPlainText("\n".join(lines))
         self.result_text.update()
-        self._switch_result_view(0)
+        if self.canvas is not None:
+            self._switch_result_view(0)
+        else:
+            self._switch_result_view(1)
         self.result_text.update()
 
     def _render_pareto(self, pareto_data: list):
