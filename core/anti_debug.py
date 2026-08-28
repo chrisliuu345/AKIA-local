@@ -163,7 +163,7 @@ def _check_nt_global_flag() -> List[str]:
                     ).value
                     if nt_global_flag & 0x70:
                         issues.append(f"NtGlobalFlag suspicious: 0x{nt_global_flag:08x}")
-                except (ValueError, OSError, WindowsError):
+                except (ValueError, OSError):
                     pass
         except Exception:
             pass
@@ -246,7 +246,7 @@ def _check_hardware_breakpoints() -> List[str]:
 
             if ctx.Eip != 0:
                 issues.append("Hardware breakpoint context detected")
-        except (Exception, OSError, WindowsError, ValueError, MemoryError):
+        except (Exception, OSError, ValueError, MemoryError):
             pass
     return issues
 
@@ -286,7 +286,7 @@ def _check_process_hiding() -> List[str]:
                         if proc_info.contents.NextEntryOffset == 0:
                             break
                         offset += proc_info.contents.NextEntryOffset
-        except (Exception, OSError, WindowsError, ValueError, MemoryError):
+        except (Exception, OSError, ValueError, MemoryError):
             pass
     return issues
 
@@ -336,7 +336,7 @@ def _check_cpu_instruction_pointer() -> List[str]:
             ctx = CONTEXT()
             ctx.ContextFlags = 0x00100000
             kernel32.GetThreadContext(kernel32.GetCurrentThread(), ctypes.byref(ctx))
-        except (Exception, OSError, WindowsError, ValueError, MemoryError):
+        except (Exception, OSError, ValueError, MemoryError):
             pass
     return issues
 
@@ -431,7 +431,7 @@ def _check_rdtsc() -> List[str]:
     try:
         import ctypes
         rdtsc = ctypes.CDLL(None).rdtsc if hasattr(ctypes.CDLL(None), 'rdtsc') else None
-    except (Exception, OSError, WindowsError):
+    except (Exception, OSError):
         pass
     return issues
 
@@ -506,7 +506,7 @@ def _check_debug_primitives() -> List[str]:
             if not h_process:
                 return issues
             debug_object = ctypes.c_void_p()
-        except (Exception, OSError, WindowsError, ValueError, MemoryError):
+        except (Exception, OSError, ValueError, MemoryError):
             pass
     return issues
 
