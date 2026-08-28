@@ -16,6 +16,7 @@ from analysis.doe.power_analysis import (
     TEST_TYPE_LABELS, power_one_way_anova_delta,
 )
 from ui.theme import colors as theme_colors, BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY
+from ui.font_config import get_ui_font
 
 
 class PowerDialog(QDialog):
@@ -36,7 +37,7 @@ class PowerDialog(QDialog):
 
         # ── 标题 ──
         title = QLabel("Power & Sample Size 分析")
-        title.setFont(QFont("Microsoft YaHei", 16, QFont.Bold))
+        title.setFont(QFont(get_ui_font(), 16, QFont.Bold))
         layout.addWidget(title)
 
         # ── 检验类型选择 ──
@@ -82,7 +83,7 @@ class PowerDialog(QDialog):
 
         self.result_text = QTextEdit()
         self.result_text.setReadOnly(True)
-        self.result_text.setFont(QFont("Microsoft YaHei", 12))
+        self.result_text.setFont(QFont(get_ui_font(), 12))
         self.result_text.setMinimumHeight(100)
         result_layout.addWidget(self.result_text)
 

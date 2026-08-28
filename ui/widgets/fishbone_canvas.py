@@ -30,7 +30,7 @@ class _LabelNode(QGraphicsItem):
                  color: QColor = TEXT_COLOR):
         super().__init__()
         self._text = text
-        self._font = QFont("Microsoft YaHei", font_size)
+        self._font = QFont(get_ui_font(), font_size)
         self._font.setBold(bold)
         self._color = color
         self._padding = 6
@@ -46,6 +46,7 @@ class _LabelNode(QGraphicsItem):
 
     def _calc_rect(self):
         from PySide6.QtGui import QFontMetrics
+from ui.font_config import get_ui_font
         fm = QFontMetrics(self._font)
         tw = fm.horizontalAdvance(self._text)
         th = fm.height()
@@ -130,7 +131,7 @@ class _ProblemBox(QGraphicsRectItem):
         self.setFlag(QGraphicsItem.ItemIsSelectable, False)
 
         self.label = QGraphicsTextItem(text, self)
-        self.label.setFont(QFont("Microsoft YaHei", 13, QFont.Bold))
+        self.label.setFont(QFont(get_ui_font(), 13, QFont.Bold))
         self.label.setDefaultTextColor(TEXT_COLOR)
         self.label.setPos(x + 8, y - 14)
 
@@ -349,7 +350,7 @@ class FishboneCanvas(QGraphicsView):
 
         n = len(branches)
         if n == 0:
-            t = self._scene.addText("请添加分析分支", QFont("Microsoft YaHei", 14))
+            t = self._scene.addText("请添加分析分支", QFont(get_ui_font(), 14))
             t.setDefaultTextColor(MUTED_COLOR)
             return
 

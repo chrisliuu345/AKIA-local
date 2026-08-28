@@ -136,7 +136,7 @@ class MainWindow(QMainWindow):
         strip_layout.setContentsMargins(0, 14, 0, 0)
         strip_layout.setSpacing(0)
         self.expand_btn = QPushButton("»")
-        self.expand_btn.setFont(QFont("Microsoft YaHei", 12, QFont.Bold))
+        self.expand_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
         self.expand_btn.setFixedSize(26, 40)
         self.expand_btn.setCursor(Qt.PointingHandCursor)
         self.expand_btn.setToolTip(i18n.tr("sidebar.expand") + " (Ctrl+B)")
@@ -1670,6 +1670,7 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "智能诊断", "请先导入数据文件，系统将自动分析数据特征")
             return
         from ui.dialogs.diagnosis_dialog import DiagnosisDialog
+from ui.font_config import get_ui_font
         dlg = DiagnosisDialog(self.profile_result, self)
         dlg.apply_clicked.connect(self._apply_diagnosis)
         dlg.exec()

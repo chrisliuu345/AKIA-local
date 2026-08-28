@@ -90,7 +90,7 @@ class TemplateHelpDialog(QDialog):
         layout = QVBoxLayout(self)
 
         title = QLabel("分析模板格式说明")
-        title.setFont(QFont("Microsoft YaHei", 14))
+        title.setFont(QFont(get_ui_font(), 14))
         title.setStyleSheet("color: #d0d3da;")
 
         layout.addWidget(title)
@@ -99,6 +99,7 @@ class TemplateHelpDialog(QDialog):
         help_label.setWordWrap(True)
         help_label.setTextFormat(Qt.RichText)
         from PySide6.QtWidgets import QScrollArea
+from ui.font_config import get_ui_font
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QScrollArea.NoFrame)
