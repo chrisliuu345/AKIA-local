@@ -9,6 +9,7 @@ from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtGui import QFont
 
 from ui.theme import colors as theme_colors
+from ui.font_config import get_ui_font
 
 from core.one_click_analyzer import OneClickAnalyzer
 from core.llm_client import LLMClient
@@ -56,11 +57,11 @@ class OneClickDialog(QDialog):
 
         # ── 标题 ──
         title = QLabel("一键智能分析")
-        title.setFont(QFont("Microsoft YaHei", 16, QFont.Bold))
+        title.setFont(QFont(get_ui_font(), 16, QFont.Bold))
         layout.addWidget(title)
 
         desc = QLabel("自动画像数据 → 推荐分析组合 → 批量执行 → AI 撰写报告")
-        desc.setFont(QFont("Microsoft YaHei", 9))
+        desc.setFont(QFont(get_ui_font(), 9))
         desc.setStyleSheet(f"color: {tc['text_muted']};")
         layout.addWidget(desc)
 
@@ -78,14 +79,14 @@ class OneClickDialog(QDialog):
             f"工作表: {', '.join(sheet_names[:6])}"
             + ("…" if len(sheet_names) > 6 else "")
         )
-        self.info_label.setFont(QFont("Microsoft YaHei", 10))
+        self.info_label.setFont(QFont(get_ui_font(), 10))
         self.info_label.setWordWrap(True)
         info_layout.addWidget(self.info_label)
         layout.addWidget(info_card)
 
         # ── 步骤2: 分析范围选择 ──
         select_label = QLabel("选择分析范围（推荐项已勾选）:")
-        select_label.setFont(QFont("Microsoft YaHei", 11, QFont.Bold))
+        select_label.setFont(QFont(get_ui_font(), 11, QFont.Bold))
         layout.addWidget(select_label)
 
         scroll = QScrollArea()
@@ -123,7 +124,7 @@ class OneClickDialog(QDialog):
         # ── 报告预览 ──
         self.report_view = QTextEdit()
         self.report_view.setReadOnly(True)
-        self.report_view.setFont(QFont("Microsoft YaHei", 10))
+        self.report_view.setFont(QFont(get_ui_font(), 10))
         self.report_view.setStyleSheet(
             f"QTextEdit {{ background: {tc['bg_card']}; border: 1px solid {tc['border_light']}; "
             f"border-radius: 6px; padding: 8px; }}"
@@ -137,7 +138,7 @@ class OneClickDialog(QDialog):
         btn_row.addStretch()
 
         self.run_btn = QPushButton("开始分析")
-        self.run_btn.setFont(QFont("Microsoft YaHei", 11, QFont.Bold))
+        self.run_btn.setFont(QFont(get_ui_font(), 11, QFont.Bold))
         self.run_btn.setMinimumHeight(36)
         self.run_btn.setMinimumWidth(120)
         self.run_btn.setCursor(Qt.PointingHandCursor)
@@ -151,7 +152,7 @@ class OneClickDialog(QDialog):
         btn_row.addWidget(self.run_btn)
 
         self.export_pdf_btn = QPushButton("导出 PDF")
-        self.export_pdf_btn.setFont(QFont("Microsoft YaHei", 10))
+        self.export_pdf_btn.setFont(QFont(get_ui_font(), 10))
         self.export_pdf_btn.setMinimumHeight(36)
         self.export_pdf_btn.setCursor(Qt.PointingHandCursor)
         self.export_pdf_btn.setStyleSheet(
@@ -164,7 +165,7 @@ class OneClickDialog(QDialog):
         btn_row.addWidget(self.export_pdf_btn)
 
         self.export_md_btn = QPushButton("导出 Markdown")
-        self.export_md_btn.setFont(QFont("Microsoft YaHei", 10))
+        self.export_md_btn.setFont(QFont(get_ui_font(), 10))
         self.export_md_btn.setMinimumHeight(36)
         self.export_md_btn.setCursor(Qt.PointingHandCursor)
         self.export_md_btn.setStyleSheet(
@@ -177,7 +178,7 @@ class OneClickDialog(QDialog):
         btn_row.addWidget(self.export_md_btn)
 
         close_btn = QPushButton("关闭")
-        close_btn.setFont(QFont("Microsoft YaHei", 10))
+        close_btn.setFont(QFont(get_ui_font(), 10))
         close_btn.setMinimumHeight(36)
         close_btn.clicked.connect(self.accept)
         btn_row.addWidget(close_btn)
@@ -194,14 +195,14 @@ class OneClickDialog(QDialog):
             row = QHBoxLayout()
             row.setSpacing(6)
             cb = QCheckBox(f"{rec['label']}")
-            cb.setFont(QFont("Microsoft YaHei", 10))
+            cb.setFont(QFont(get_ui_font(), 10))
             cb.setChecked(rec.get("priority") == "high")
 
             priority_color = {"high": "#ff6b6b", "medium": "#ffa726", "low": "#66bb6a"}
             badge = QLabel({
                 "high": "★ 推荐", "medium": "☆ 建议", "low": "· 可选"
             }.get(rec.get("priority", ""), ""))
-            badge.setFont(QFont("Microsoft YaHei", 8))
+            badge.setFont(QFont(get_ui_font(), 8))
             badge.setStyleSheet(
                 f"color: {priority_color.get(rec.get('priority',''), '#888')}; "
                 f"background: transparent; padding: 0 4px;"
@@ -210,7 +211,7 @@ class OneClickDialog(QDialog):
             row.addWidget(badge)
 
             reason_lbl = QLabel(rec.get("reason", ""))
-            reason_lbl.setFont(QFont("Microsoft YaHei", 8))
+            reason_lbl.setFont(QFont(get_ui_font(), 8))
             reason_lbl.setStyleSheet(f"color: {theme_colors()['text_muted']}; background: transparent;")
             row.addWidget(reason_lbl, 1)
 

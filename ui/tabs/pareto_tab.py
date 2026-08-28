@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY
 from ui.theme import colors as theme_colors
+from ui.font_config import get_ui_font
 from output.chart_engine import create_pareto_chart
 
 
@@ -41,7 +42,7 @@ class ParetoTab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel("帕累托图 (Pareto)")
-        self.title_label.setFont(QFont("Microsoft YaHei", 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
@@ -81,7 +82,7 @@ class ParetoTab(BaseAnalysisTab):
         self.btn_draw.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.btn_draw.setCursor(Qt.PointingHandCursor)
         self.btn_draw.setMinimumHeight(44)
-        self.btn_draw.setFont(QFont("Microsoft YaHei", 12, QFont.Bold))
+        self.btn_draw.setFont(QFont(get_ui_font(), 12, QFont.Bold))
         self.btn_draw.clicked.connect(self._draw)
         config_layout.addRow(self.btn_draw)
 

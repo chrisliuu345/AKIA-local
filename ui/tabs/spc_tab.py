@@ -37,7 +37,7 @@ class SPCTab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel(i18n.tr("spc.title"))
-        self.title_label.setFont(QFont("Microsoft YaHei", 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
@@ -166,7 +166,7 @@ class SPCTab(BaseAnalysisTab):
         self.chart_type_combo.currentTextChanged.connect(self._on_chart_type_changed)
 
         self.run_btn = QPushButton(i18n.tr("spc.run_btn"))
-        self.run_btn.setFont(QFont("Microsoft YaHei", 12, QFont.Bold))
+        self.run_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
         self.run_btn.setMinimumHeight(44)
         self.run_btn.setCursor(Qt.PointingHandCursor)
         self.run_btn.setStyleSheet(BUTTON_PRIMARY_STRETCH)
@@ -174,7 +174,7 @@ class SPCTab(BaseAnalysisTab):
         config_layout.addRow(self.run_btn)
 
         self.save_png_btn = QPushButton(i18n.tr("spc.save_png"))
-        self.save_png_btn.setFont(QFont("Microsoft YaHei", 12, QFont.Bold))
+        self.save_png_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
         self.save_png_btn.setMinimumHeight(40)
         self.save_png_btn.setCursor(Qt.PointingHandCursor)
         self.save_png_btn.setStyleSheet(BUTTON_SECONDARY)
@@ -182,7 +182,7 @@ class SPCTab(BaseAnalysisTab):
         config_layout.addRow(self.save_png_btn)
 
         self.root_cause_btn = QPushButton(i18n.tr("spc.root_cause"))
-        self.root_cause_btn.setFont(QFont("Microsoft YaHei", 12, QFont.Bold))
+        self.root_cause_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
         self.root_cause_btn.setMinimumHeight(40)
         self.root_cause_btn.setCursor(Qt.PointingHandCursor)
         self.root_cause_btn.setStyleSheet(BUTTON_SECONDARY)
@@ -192,7 +192,7 @@ class SPCTab(BaseAnalysisTab):
         config_layout.addRow(self.root_cause_btn)
 
         self.export_btn = QPushButton(i18n.tr("spc.export_btn"))
-        self.export_btn.setFont(QFont("Microsoft YaHei", 12, QFont.Bold))
+        self.export_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
         self.export_btn.setMinimumHeight(44)
         self.export_btn.setCursor(Qt.PointingHandCursor)
         self.export_btn.setStyleSheet(BUTTON_PRIMARY_STRETCH)
@@ -225,13 +225,13 @@ class SPCTab(BaseAnalysisTab):
         bottom_layout.setSpacing(6)
 
         self.result_label = QLabel(i18n.tr("spc.result"))
-        self.result_label.setFont(QFont("Microsoft YaHei", 13, QFont.Bold))
+        self.result_label.setFont(QFont(get_ui_font(), 13, QFont.Bold))
         bottom_layout.addWidget(self.result_label)
 
         toggle_row = QHBoxLayout()
         toggle_row.setSpacing(8)
         self.btn_view_chart = QPushButton(i18n.tr("tab.view_chart"))
-        self.btn_view_chart.setFont(QFont("Microsoft YaHei", 11))
+        self.btn_view_chart.setFont(QFont(get_ui_font(), 11))
         self.btn_view_chart.setFixedHeight(30)
         self.btn_view_chart.setCheckable(True)
         self.btn_view_chart.setChecked(True)
@@ -239,7 +239,7 @@ class SPCTab(BaseAnalysisTab):
         self.btn_view_chart.clicked.connect(lambda: self._switch_result_view(0))
         toggle_row.addWidget(self.btn_view_chart)
         self.btn_view_data = QPushButton(i18n.tr("tab.view_data"))
-        self.btn_view_data.setFont(QFont("Microsoft YaHei", 11))
+        self.btn_view_data.setFont(QFont(get_ui_font(), 11))
         self.btn_view_data.setFixedHeight(30)
         self.btn_view_data.setCheckable(True)
         self.btn_view_data.setStyleSheet(BUTTON_TOGGLE)
@@ -268,7 +268,7 @@ class SPCTab(BaseAnalysisTab):
         data_layout.setContentsMargins(0, 0, 0, 0)
         self.result_text = QTextEdit()
         self.result_text.setReadOnly(True)
-        self.result_text.setFont(QFont("Microsoft YaHei", 12))
+        self.result_text.setFont(QFont(get_ui_font(), 12))
         self.result_text.setMinimumHeight(80)
         data_layout.addWidget(self.result_text)
         self.result_table = QTableWidget()
@@ -582,6 +582,7 @@ class SPCTab(BaseAnalysisTab):
             return
         try:
             from ui.dialogs.root_cause_dialog import RootCauseDialog
+from ui.font_config import get_ui_font
             dlg = RootCauseDialog(
                 self.df, col, violations,
                 subgroup_size=self.subgroup_spin.value(),

@@ -20,6 +20,7 @@ from core.devices import (
 )
 from ui.theme import colors as theme_colors, BUTTON_SECONDARY
 from ui.tabs.base_tab import BaseAnalysisTab
+from ui.font_config import get_ui_font
 
 
 DEVICE_ICONS = {
@@ -85,12 +86,12 @@ class DeviceCard(QFrame):
         icon.setStyleSheet("background: transparent;")
         top.addWidget(icon)
         name = _ElidedLabel(device.display_name)
-        name.setFont(QFont("Microsoft YaHei", 10, QFont.Bold))
+        name.setFont(QFont(get_ui_font(), 10, QFont.Bold))
         name.setStyleSheet(f"color: {tc['text_primary']}; background: transparent;")
         name.setToolTip(device.display_name)
         top.addWidget(name, 1)
         badge = QLabel(DEVICE_BADGE.get(device.device_type, "UNKNOWN"))
-        badge.setFont(QFont("Microsoft YaHei", 8))
+        badge.setFont(QFont(get_ui_font(), 8))
         badge.setStyleSheet(
             f"color: {tc['text_muted']}; background: {tc['bg_body']}; "
             f"border-radius: 4px; padding: 1px 6px;"
@@ -116,7 +117,7 @@ class DeviceCard(QFrame):
             DeviceState.DISCOVERED: i18n.tr("device.status_online"),
         }.get(device.state, "?")
         status_lbl = QLabel(status_text)
-        status_lbl.setFont(QFont("Microsoft YaHei", 9))
+        status_lbl.setFont(QFont(get_ui_font(), 9))
         status_lbl.setStyleSheet(f"color: {state_color}; background: transparent;")
         status_row.addWidget(status_lbl)
 
@@ -126,7 +127,7 @@ class DeviceCard(QFrame):
             parts.append(i18n.tr("device.heartbeat_ago").format(n=int(hb)))
         if parts:
             info_lbl = QLabel(" · ".join(parts))
-            info_lbl.setFont(QFont("Microsoft YaHei", 8))
+            info_lbl.setFont(QFont(get_ui_font(), 8))
             info_lbl.setStyleSheet(f"color: {tc['text_dim']}; background: transparent;")
             status_row.addWidget(info_lbl)
         status_row.addStretch()
@@ -151,7 +152,7 @@ class DeviceCard(QFrame):
             f"QPushButton:disabled {{ color: {tc['text_dim']}; border-color: {tc['border']}; }}"
         )
         for b in (self._stop_btn, self._resume_btn):
-            b.setFont(QFont("Microsoft YaHei", 9))
+            b.setFont(QFont(get_ui_font(), 9))
         self._stop_btn.clicked.connect(lambda: self.monitor_stop_requested.emit(self.device_id))
         self._resume_btn.clicked.connect(lambda: self.monitor_resume_requested.emit(self.device_id))
         btn_row.addWidget(self._stop_btn)
@@ -220,13 +221,13 @@ class DeviceTab(BaseAnalysisTab):
         layout.setSpacing(10)
 
         title = QLabel(i18n.tr("device.title"))
-        title.setFont(QFont("Microsoft YaHei", 18, QFont.Bold))
+        title.setFont(QFont(get_ui_font(), 18, QFont.Bold))
         title.setStyleSheet(f"color: {tc['text_primary']}; background: transparent;")
         layout.addWidget(title)
 
         toolbar = QHBoxLayout()
         self.auto_check = QCheckBox(i18n.tr("device.auto_discover"))
-        self.auto_check.setFont(QFont("Microsoft YaHei", 10))
+        self.auto_check.setFont(QFont(get_ui_font(), 10))
         self.auto_check.setStyleSheet(f"color: {tc['text_primary']};")
         toolbar.addWidget(self.auto_check)
 
@@ -247,7 +248,7 @@ class DeviceTab(BaseAnalysisTab):
         toolbar.addWidget(self.add_network_btn)
 
         self.online_label = QLabel(i18n.tr("device.online_count").format(online=0, total=0))
-        self.online_label.setFont(QFont("Microsoft YaHei", 10))
+        self.online_label.setFont(QFont(get_ui_font(), 10))
         self.online_label.setStyleSheet(f"color: {tc['text_secondary']};")
         toolbar.addWidget(self.online_label)
         toolbar.addStretch()
@@ -264,7 +265,7 @@ class DeviceTab(BaseAnalysisTab):
         self.card_grid.setSpacing(8)
         self.card_grid.setAlignment(Qt.AlignTop | Qt.AlignLeft)
         self._empty_hint = QLabel(i18n.tr("device.no_devices"))
-        self._empty_hint.setFont(QFont("Microsoft YaHei", 11))
+        self._empty_hint.setFont(QFont(get_ui_font(), 11))
         self._empty_hint.setStyleSheet(f"color: {tc['text_muted']}; background: transparent;")
         self._empty_hint.setAlignment(Qt.AlignCenter)
         self.card_grid.addWidget(self._empty_hint, 0, 0)
@@ -321,7 +322,7 @@ class DeviceTab(BaseAnalysisTab):
         self.detail_tabs.addTab(self._recognition_list, i18n.tr("device.detail.recognition"))
 
         self._detail_placeholder = QLabel(i18n.tr("device.detail.no_selection"))
-        self._detail_placeholder.setFont(QFont("Microsoft YaHei", 11))
+        self._detail_placeholder.setFont(QFont(get_ui_font(), 11))
         self._detail_placeholder.setStyleSheet(f"color: {tc['text_muted']};")
         self._detail_placeholder.setAlignment(Qt.AlignCenter)
         self.detail_tabs.addTab(self._detail_placeholder, i18n.tr("device.detail.no_selection"))

@@ -16,6 +16,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QPixmap, QPainter, QColor, QIcon
 
 from config.settings import APP_NAME, APP_VERSION
+from ui.font_config import get_ui_font
 
 
 LOGO_PATH = os.path.join(os.path.dirname(__file__), "logo.png")
@@ -82,7 +83,7 @@ def _create_splash_canvas() -> QPixmap:
 
     # 下方文字区域：右对齐
     painter.setPen(QColor(COLOR_UPPER))
-    font = QFont("Microsoft YaHei", -1, QFont.Bold)
+    font = QFont(get_ui_font(), -1, QFont.Bold)
     font.setPixelSize(font_size)
     painter.setFont(font)
     text_rect = Qt.AlignRight | Qt.AlignVCenter
@@ -136,7 +137,7 @@ def main():
     if os.path.exists(LOGO_PATH):
         app.setWindowIcon(QIcon(LOGO_PATH))
 
-    font = QFont("Microsoft YaHei", 10)
+    font = QFont(get_ui_font(), 10)
     app.setFont(font)
     app.setStyle("Fusion")
 

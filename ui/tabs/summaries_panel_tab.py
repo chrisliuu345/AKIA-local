@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_PRIMARY_STRETCH
 from ui.theme import colors as theme_colors
+from ui.font_config import get_ui_font
 
 
 class SummaryPanelTab(BaseAnalysisTab):
@@ -36,7 +37,7 @@ class SummaryPanelTab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel("统计摘要面板")
-        self.title_label.setFont(QFont("Microsoft YaHei", 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 

@@ -160,6 +160,7 @@ class BaseAnalysisTab(QWidget):
         action = menu.exec(self.canvas.mapToGlobal(pos))
         if action == popout:
             from ui.dialogs.chart_viewer import ChartViewer
+from ui.font_config import get_ui_font
             viewer = ChartViewer(self.current_figure, self, "图表查看")
             viewer.exec()
         elif action == save_png:
@@ -195,7 +196,7 @@ class BaseAnalysisTab(QWidget):
 
         msg = message or "请先导入数据文件"
         msg_lbl = QLabel(msg)
-        msg_lbl.setFont(QFont("Microsoft YaHei", 12))
+        msg_lbl.setFont(QFont(get_ui_font(), 12))
         msg_lbl.setAlignment(Qt.AlignCenter)
         msg_lbl.setStyleSheet(f"color: {tc['text_secondary']}; background: transparent;")
         layout.addWidget(msg_lbl)
@@ -203,7 +204,7 @@ class BaseAnalysisTab(QWidget):
         # 按钮需单独恢复鼠标事件
         btn = QPushButton("导入数据")
         btn.setAttribute(Qt.WA_TransparentForMouseEvents, False)
-        btn.setFont(QFont("Microsoft YaHei", 11, QFont.Bold))
+        btn.setFont(QFont(get_ui_font(), 11, QFont.Bold))
         btn.setFixedSize(160, 40)
         btn.setCursor(Qt.PointingHandCursor)
         btn.setStyleSheet(

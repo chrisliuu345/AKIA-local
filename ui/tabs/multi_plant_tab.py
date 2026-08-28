@@ -21,6 +21,7 @@ from core.i18n import i18n
 from core.plant_compare import summarize_plant, build_comparison
 from ui.theme import colors as theme_colors, BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY
 from ui.tabs.base_tab import BaseAnalysisTab
+from ui.font_config import get_ui_font
 
 MULTI_PLANT_ANALYSIS_TYPE = "多工厂对比"
 
@@ -41,7 +42,7 @@ class MultiPlantTab(BaseAnalysisTab):
         layout.setSpacing(10)
 
         title = QLabel(i18n.tr("multi_plant.title"))
-        title.setFont(QFont("Microsoft YaHei", 18, QFont.Bold))
+        title.setFont(QFont(get_ui_font(), 18, QFont.Bold))
         title.setStyleSheet(f"color: {tc['text_primary']}; background: transparent;")
         layout.addWidget(title)
 
@@ -72,14 +73,14 @@ class MultiPlantTab(BaseAnalysisTab):
         # 运行行
         ctrl = QHBoxLayout()
         self.run_btn = QPushButton(i18n.tr("multi_plant.run"))
-        self.run_btn.setFont(QFont("Microsoft YaHei", 12, QFont.Bold))
+        self.run_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
         self.run_btn.setFixedHeight(44)
         self.run_btn.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.run_btn.setCursor(Qt.PointingHandCursor)
         self.run_btn.clicked.connect(self._on_run)
         ctrl.addWidget(self.run_btn)
         self.status_label = QLabel("")
-        self.status_label.setFont(QFont("Microsoft YaHei", 10))
+        self.status_label.setFont(QFont(get_ui_font(), 10))
         self.status_label.setStyleSheet(f"color: {tc['text_secondary']};")
         ctrl.addWidget(self.status_label)
         ctrl.addStretch()

@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 
 from analysis.ai.root_cause import RootCauseAnalyzer, RootCause
 from ui.theme import colors as theme_colors
+from ui.font_config import get_ui_font
 
 
 class RootCauseDialog(QDialog):
@@ -49,12 +50,12 @@ class RootCauseDialog(QDialog):
 
         header = QHBoxLayout()
         title = QLabel(f"AI 根因分析 — {self.target_column}")
-        title.setFont(QFont("Microsoft YaHei", 16, QFont.Bold))
+        title.setFont(QFont(get_ui_font(), 16, QFont.Bold))
         title.setStyleSheet(f"color: {tc['text_primary']};")
         header.addWidget(title)
         header.addStretch()
         self.info_label = QLabel("")
-        self.info_label.setFont(QFont("Microsoft YaHei", 10))
+        self.info_label.setFont(QFont(get_ui_font(), 10))
         self.info_label.setStyleSheet(f"color: {tc['text_secondary']};")
         header.addWidget(self.info_label)
         layout.addLayout(header)
@@ -66,7 +67,7 @@ class RootCauseDialog(QDialog):
         left_layout = QVBoxLayout(left)
         left_layout.setContentsMargins(0, 0, 0, 0)
         rank_label = QLabel("根因排行榜（综合得分 = 0.4×重要性 + 0.3×相关性 + 0.3×异常联动）")
-        rank_label.setFont(QFont("Microsoft YaHei", 10, QFont.Bold))
+        rank_label.setFont(QFont(get_ui_font(), 10, QFont.Bold))
         rank_label.setStyleSheet(f"color: {tc['text_secondary']};")
         left_layout.addWidget(rank_label)
 
@@ -107,7 +108,7 @@ class RootCauseDialog(QDialog):
         btn_row = QHBoxLayout()
         btn_row.addStretch()
         close_btn = QPushButton("关闭")
-        close_btn.setFont(QFont("Microsoft YaHei", 11))
+        close_btn.setFont(QFont(get_ui_font(), 11))
         close_btn.setMinimumSize(90, 34)
         close_btn.setCursor(Qt.PointingHandCursor)
         close_btn.setStyleSheet(
