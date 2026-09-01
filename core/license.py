@@ -6,7 +6,7 @@
 
 import os
 from enum import Enum
-from typing import Optional
+from typing import Optional, Tuple
 
 
 class LicenseStatus(Enum):
