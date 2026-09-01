@@ -1,0 +1,23 @@
+#!/bin/bash
+# postinst — deb 包安装后脚本
+
+set -e
+
+# 创建符号链接到 /usr/local/bin
+if [ ! -L /usr/local/bin/qa-tool ]; then
+    ln -sf /opt/qa-tool/bin/qa-tool /usr/local/bin/qa-tool
+fi
+
+# 更新桌面数据库
+if command -v update-desktop-database >/dev/null 2>&1; then
+    update-desktop-database /usr/share/applications || true
+fi
+
+# 更新图标缓存
+if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+    gtk-update-icon-cache /usr/share/icons/hicolor || true
+fi
+
+echo "QA-Tool 安装完成!"
+echo "  可执行文件: /opt/qa-tool/bin/qa-tool"
+echo "  启动命令: qa-tool 或从应用程序菜单启动"

@@ -86,11 +86,11 @@ AQL Lookup (GB/T 2828.1 / ANSI/ASQ Z1.4) · Random / Stratified / Systematic Sam
 
 ### Option 1: Installer (Recommended)
 
-Download `QA-Tool-Setup-3.0.0.exe` (135MB, Inno Setup Chinese wizard), install to Program Files. Optionally include the ESP-32 hardware extension during install.
+Download `QA-Tool-Setup-3.2.0.exe` (135MB, Inno Setup Chinese wizard), install to Program Files. Optionally include the ESP-32 hardware extension during install.
 
 ### Option 2: Portable
 
-Download `QA-Tool-v3.0.0-portable.zip` (~230MB), extract and run `QA-Tool.exe`. No installation required.
+Download `QA-Tool-v3.2.0-portable.zip` (~230MB), extract and run `QA-Tool.exe`. No installation required.
 
 ### Option 3: From Source
 
@@ -98,12 +98,6 @@ Download `QA-Tool-v3.0.0-portable.zip` (~230MB), extract and run `QA-Tool.exe`. 
 # Requires Python 3.11+
 pip install -r requirements.txt
 python main.py
-```
-
-### Default Login
-
-```
-
 ```
 
 ---
@@ -118,9 +112,9 @@ python main.py
 | Charts | matplotlib · seaborn |
 | Reporting | reportlab (PDF) · python-docx (Word) · openpyxl (Excel) |
 | AI | Ollama · OpenAI-compatible API · char-ngram TF-IDF RAG |
-| Auth | PBKDF2-SHA256 (150K rounds) |
+| Auth | Ed25519 offline license · hardware fingerprint binding |
 | Hardware | pyserial · MicroPython (ESP32, v1.20.0) |
-| Packaging | PyInstaller (onedir) + Inno Setup installer |
+| Packaging | Nuitka (onedir / onefile) + Inno Setup installer |
 
 ---
 
@@ -141,7 +135,6 @@ python main.py
 │   ├── charts/          # Chart generators (15 types)
 │   └── ai/              # AI root cause analysis (SHAP)
 ├── core/                # Core engines (incl. hardware devices)
-│   ├── auth.py          # 4-level RBAC + PBKDF2 auth
 │   ├── devices/         # ESP32 device framework (protocol/transport/discovery/registry)
 │   ├── data_loader.py   # Excel/CSV loader
 │   ├── data_profiler.py # Smart diagnostics (20+ recommendation types)
@@ -164,14 +157,14 @@ python main.py
 ├── plugins/             # Third-party plugins
 ├── output/              # Report engines (Word/Excel/PDF/HTML)
 ├── packaging/           # Inno Setup installer script
-└── tests/               # 624 pytest tests
+└── tests/               # 857 pytest tests
 ```
 
 ---
 
 ## Enterprise Features
 
-- **Multi-user**: 4-level roles (admin / dept_admin / analyst / readonly) + department / team
+- **Offline license**: Ed25519 signing + hardware fingerprint binding + AES-256 encryption
 - **.qap project files**: ZIP-packaged projects containing data + charts + analyses
 - **SQL Direct Connect**: MySQL / PostgreSQL / SQL Server
 - **Batch Scheduling**: Scheduled tasks (daily / hourly / one-shot)
@@ -208,4 +201,4 @@ For detailed usage instructions, please refer to the [User Guide](使用指南.d
 
 ---
 
-*Built with Python 3.14 + PySide6 · 624 tests passing · 35 analysis tabs*
+*Built with Python 3.14 + PySide6 · 857 tests passing · 35 analysis tabs*

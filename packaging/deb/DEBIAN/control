@@ -1,0 +1,23 @@
+Package: qa-tool
+Version: 3.2.0
+Section: science
+Priority: optional
+Architecture: amd64
+Depends: libegl1, libgl1
+Recommends: fonts-noto-cjk
+Maintainer: QA-Tool Team <team@qa-tool.com>
+Homepage: https://github.com/chrisliuu345/QA-Tool
+Description: 工业工程与质量分析工具
+ QA-Tool 是一款面向质量工程（QE）与工业工程（IE）的桌面分析工具。
+ .
+ 主要功能:
+ - SPC 统计过程控制（12种控制图 + Nelson 8条判异规则）
+ - 过程能力分析（Cp/Cpk/Pp/Ppk + Box-Cox/Johnson变换）
+ - MSA 测量系统分析（Gauge R&R + Type1 + 属性一致性）
+ - 假设检验（t检验/ANOVA/非参数/等价检验）
+ - DOE 试验设计（全因子/部分因子/田口/混合设计/Power分析）
+ - IE 工业工程（SMED/TPM/OEE/8D/FMEA/PPAP）
+ - AI 智能洞察（Ollama/OpenAI API）
+ - ESP32 硬件数据采集与监控
+ .
+ 测试: 820+ pytest 通过
