@@ -337,6 +337,7 @@
   "sidebar.spc": "SPC 控制图",
   "sidebar.template_help_tip": "查看模板格式说明",
   "sidebar.time_study": "工时研究",
+  "sidebar.time_series": "时间序列分析",
   "sidebar.vsm": "价值流",
   "sidebar.work_sampling": "工作抽样",
   "spc.chart_type": "控制图类型:",
