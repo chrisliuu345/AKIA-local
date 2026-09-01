@@ -182,6 +182,9 @@ def build_nuitka(mode):
     cmd.append("--assume-yes-for-downloads")
     cmd.append("--remove-output")
 
+    # 入口文件（必须最后）
+    cmd.append(str(ENTRY_POINT))
+
     # ── 打印完整命令 ─────────────────────────────────────────
     print("[cmd] 构建命令:")
     cmd_display = " \\\n  ".join(cmd)
