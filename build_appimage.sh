@@ -14,7 +14,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_NAME="QA-Tool"
-APP_VERSION="3.2.0"
+APP_VERSION="3.3.0"
 BUILD_DIR="${SCRIPT_DIR}/build"
 APPDIR_DIR="${BUILD_DIR}/AppDir"
 

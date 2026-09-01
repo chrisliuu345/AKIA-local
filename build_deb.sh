@@ -14,7 +14,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_NAME="qa-tool"
-APP_VERSION="3.2.0"
+APP_VERSION="3.3.0"
 DEB_DIR="${SCRIPT_DIR}/build/${APP_NAME}_${APP_VERSION}_amd64"
 
 echo "=========================================="
