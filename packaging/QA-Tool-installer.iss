@@ -1,5 +1,5 @@
 #define MyAppName "QA-Tool"
-#define MyAppVersion "3.0.0"
+#define MyAppVersion "3.2.0"
 #define MyAppPublisher "QA-Tool"
 #define MyAppExeName "QA-Tool.exe"
 
@@ -36,7 +36,7 @@ Name: "desktopicon"; Description: "创建桌面快捷方式"; GroupDescription: 
 Name: "startmenu"; Description: "创建开始菜单快捷方式"; GroupDescription: "附加任务:"; Flags: unchecked
 
 [Files]
-Source: "..\dist\QA-Tool\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
+Source: "..\build\QA-Tool.dist\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
 
 [Icons]
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon; IconFilename: "{app}\{#MyAppExeName}"
