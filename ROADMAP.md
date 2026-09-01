@@ -581,7 +581,7 @@ sudo apt install fonts-noto-cjk
 
 ---
 
-## v3.3.0 — 可靠性与生存分析（待开发）
+## v3.4.0 — 可靠性与生存分析（待开发）
 
 > 主题：补齐可靠性工程全链路，对标 Minitab Reliability 模块。
 
@@ -600,7 +600,7 @@ sudo apt install fonts-noto-cjk
 
 ---
 
-## v3.4.0 — MSA 与能力深化（待开发）
+## v3.5.0 — MSA 与能力深化（待开发）
 
 > 主题：深化测量系统分析与过程能力，补齐 Minitab 级高级功能。
 
@@ -619,7 +619,7 @@ sudo apt install fonts-noto-cjk
 
 ---
 
-## v3.5.0 — Graph Builder 增强与交互体验（待开发）
+## v3.6.0 — Graph Builder 增强与交互体验（待开发）
 
 > 主题：将现有图表工具升级为 Minitab Graph Builder 级交互体验。
 
@@ -638,7 +638,7 @@ sudo apt install fonts-noto-cjk
 
 ---
 
-## v3.6.0 — 实时 SPC 云看板与数据连接器（待开发）
+## v3.7.0 — 实时 SPC 云看板与数据连接器（待开发）
 
 > 主题：将 ESP32/MaixCAM 设备框架升级为 Minitab Real-Time SPC 级实时监控能力。
 
@@ -658,7 +658,7 @@ sudo apt install fonts-noto-cjk
 
 ---
 
-## v3.7.0 — QAM Harness（BYOK AI Agent 平台）（待开发）
+## v3.8.0 — QAM Harness（BYOK AI Agent 平台）（待开发）
 
 > 主题：打造工程分析专业化 AI Agent 平台，用户自带 API Key，主动建议型分析。
 
@@ -677,7 +677,7 @@ sudo apt install fonts-noto-cjk
 
 ---
 
-## v3.8.0 — 视频时间研究（待开发）
+## v3.9.0 — 视频时间研究（待开发）
 
 > 主题：引入基于视觉的动作分析与时间研究，独立 Tab 36。
 
@@ -696,7 +696,7 @@ sudo apt install fonts-noto-cjk
 
 ---
 
-## v3.9.0 — 预测分析与机器学习（待开发）
+## v4.0.0 — 预测分析与机器学习（待开发）
 
 > 主题：补齐 Minitab Predictive Analytics 级机器学习能力。
 
