@@ -2,7 +2,6 @@
 
 用法:
     from ui.widgets.toast import Toast
-from ui.font_config import get_ui_font
     Toast.show(self, "分析完成", type="success")
     Toast.show(self, "导出失败: 文件被占用", type="error", duration=5000)
 """

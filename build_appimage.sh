@@ -43,7 +43,7 @@ mkdir -p "${APPDIR_DIR}/usr/share/applications"
 mkdir -p "${APPDIR_DIR}/usr/share/icons/hicolor/256x256/apps"
 
 # 查找 Nuitka 输出目录
-NUITKA_OUTPUT=$(find "${BUILD_DIR}" -maxdepth 1 -type d -name "QA-Tool.dist" | head -1)
+NUITKA_OUTPUT=$(find "${BUILD_DIR}" -maxdepth 1 -type d -name "main.dist" | head -1)
 if [ -z "${NUITKA_OUTPUT}" ]; then
     echo "[error] 未找到 Nuitka 输出目录"
     exit 1

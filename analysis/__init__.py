@@ -12,5 +12,6 @@ QA-Tool 统计分析引擎
   ai          — AI 智能分析 (根因分析 SHAP+RF+相关性)
   charts      — 图表生成 (通用图表生成器 12种图表)
   reliability — 可靠性工程 (Weibull寿命分析/MTBF/MTTR)
+  time_series — 时间序列分析 (ACF/PACF/季节分解/指数平滑/ARIMA/预测)
 """
-__all__ = ["spc", "capability", "msa", "hypothesis", "doe", "regression", "ie", "ai", "charts", "reliability"]
+__all__ = ["spc", "capability", "msa", "hypothesis", "doe", "regression", "ie", "ai", "charts", "reliability", "time_series"]

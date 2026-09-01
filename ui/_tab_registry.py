@@ -56,6 +56,8 @@ TAB_REGISTRY = [
     (34, "sidebar.multi_plant",      "MultiPlantTab",       "ui.tabs.multi_plant_tab",      "sidebar.monitoring"),
     # ── v2.5 硬件拓展 (35) ──
     (35, "sidebar.device",           "DeviceTab",           "ui.tabs.device_tab",           "sidebar.monitoring"),
+    # ── v3.3.0 时间序列 (36) ──
+    (36, "sidebar.time_series",      "TimeSeriesTab",       "ui.tabs.time_series_tab",      "sidebar.quality_tools"),
 ]
 
 # 构建快速索引: index → registry entry
