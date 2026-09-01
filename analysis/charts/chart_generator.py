@@ -625,6 +625,192 @@ def _apply_figure_theme(fig: Figure, options: dict):
             ax.xaxis.label.set_color("#e1e2e6")
 
 
+def _build_acf(data: dict, options: dict) -> Figure:
+    """ACF 自相关函数图"""
+    acf_data = data.get("acf", {})
+    acf_vals = acf_data.get("acf_values", [])
+    conf_lower = acf_data.get("confidence_lower", [])
+    conf_upper = acf_data.get("confidence_upper", [])
+    n_lags = len(acf_vals)
+
+    fig, ax = plt.subplots(figsize=(8, 4), dpi=_dpi())
+    lags_x = list(range(n_lags))
+    ax.bar(lags_x, acf_vals, color="#4da6ff", width=0.6, alpha=0.8, label="ACF")
+    if conf_lower and conf_upper:
+        ax.fill_between(lags_x, conf_lower[:n_lags], conf_upper[:n_lags],
+                        color="#4da6ff", alpha=0.15, label="置信区间")
+    ax.axhline(y=0, color="#e1e2e6", linewidth=0.8)
+    ax.set_xlabel("滞后阶数", fontsize=FONT_SIZE_LABEL)
+    ax.set_ylabel("自相关系数", fontsize=FONT_SIZE_LABEL)
+    ax.set_title("ACF 自相关函数", fontsize=FONT_SIZE_TITLE)
+    ax.legend(fontsize=FONT_SIZE_TICK)
+    fig.tight_layout()
+    return fig
+
+
+def _build_pacf(data: dict, options: dict) -> Figure:
+    """PACF 偏自相关函数图"""
+    pacf_data = data.get("pacf", {})
+    pacf_vals = pacf_data.get("pacf_values", [])
+    conf_lower = pacf_data.get("confidence_lower", [])
+    conf_upper = pacf_data.get("confidence_upper", [])
+    n_lags = len(pacf_vals)
+
+    fig, ax = plt.subplots(figsize=(8, 4), dpi=_dpi())
+    lags_x = list(range(n_lags))
+    ax.bar(lags_x, pacf_vals, color="#e74c3c", width=0.6, alpha=0.8, label="PACF")
+    if conf_lower and conf_upper:
+        ax.fill_between(lags_x, conf_lower[:n_lags], conf_upper[:n_lags],
+                        color="#e74c3c", alpha=0.15, label="置信区间")
+    ax.axhline(y=0, color="#e1e2e6", linewidth=0.8)
+    ax.set_xlabel("滞后阶数", fontsize=FONT_SIZE_LABEL)
+    ax.set_ylabel("偏自相关系数", fontsize=FONT_SIZE_LABEL)
+    ax.set_title("PACF 偏自相关函数", fontsize=FONT_SIZE_TITLE)
+    ax.legend(fontsize=FONT_SIZE_TICK)
+    fig.tight_layout()
+    return fig
+
+
+def _build_acf_pacf(data: dict, options: dict) -> Figure:
+    """ACF/PACF 组合双子图"""
+    acf_data = data.get("acf", {})
+    pacf_data = data.get("pacf", {})
+    acf_vals = acf_data.get("acf_values", [])
+    pacf_vals = pacf_data.get("pacf_values", [])
+    acf_cl = acf_data.get("confidence_lower", [])
+    acf_cu = acf_data.get("confidence_upper", [])
+    pacf_cl = pacf_data.get("confidence_lower", [])
+    pacf_cu = pacf_data.get("confidence_upper", [])
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 4), dpi=_dpi())
+    n1 = len(acf_vals)
+    n2 = len(pacf_vals)
+
+    ax1.bar(range(n1), acf_vals, color="#4da6ff", width=0.6, alpha=0.8)
+    if acf_cl and acf_cu:
+        ax1.fill_between(range(n1), acf_cl[:n1], acf_cu[:n1], color="#4da6ff", alpha=0.15)
+    ax1.axhline(y=0, color="#e1e2e6", linewidth=0.8)
+    ax1.set_title("ACF", fontsize=FONT_SIZE_TITLE)
+    ax1.set_xlabel("滞后阶数", fontsize=FONT_SIZE_LABEL)
+
+    ax2.bar(range(n2), pacf_vals, color="#e74c3c", width=0.6, alpha=0.8)
+    if pacf_cl and pacf_cu:
+        ax2.fill_between(range(n2), pacf_cl[:n2], pacf_cu[:n2], color="#e74c3c", alpha=0.15)
+    ax2.axhline(y=0, color="#e1e2e6", linewidth=0.8)
+    ax2.set_title("PACF", fontsize=FONT_SIZE_TITLE)
+    ax2.set_xlabel("滞后阶数", fontsize=FONT_SIZE_LABEL)
+
+    fig.tight_layout()
+    return fig
+
+
+def _build_decomposition(data: dict, options: dict) -> Figure:
+    """季节性分解三子图（趋势 + 季节 + 残差）"""
+    trend = data.get("trend", [])
+    seasonal = data.get("seasonal", [])
+    residual = data.get("residual", [])
+
+    n = max(len(trend), len(seasonal), len(residual))
+    x = list(range(n))
+
+    fig, axes = plt.subplots(3, 1, figsize=(10, 8), dpi=_dpi(), sharex=True)
+
+    axes[0].plot(x[:len(trend)], trend, color="#4da6ff", linewidth=1.2)
+    axes[0].set_title("趋势 (Trend)", fontsize=FONT_SIZE_TITLE)
+    axes[0].set_ylabel("趋势分量", fontsize=FONT_SIZE_LABEL)
+
+    axes[1].plot(x[:len(seasonal)], seasonal, color="#27ae60", linewidth=1.2)
+    axes[1].set_title("季节 (Seasonal)", fontsize=FONT_SIZE_TITLE)
+    axes[1].set_ylabel("季节分量", fontsize=FONT_SIZE_LABEL)
+
+    axes[2].plot(x[:len(residual)], residual, color="#e74c3c", linewidth=0.8, alpha=0.7)
+    axes[2].axhline(y=0, color="#e1e2e6", linewidth=0.6)
+    axes[2].set_title("残差 (Residual)", fontsize=FONT_SIZE_TITLE)
+    axes[2].set_ylabel("残差分量", fontsize=FONT_SIZE_LABEL)
+    axes[2].set_xlabel("时间步", fontsize=FONT_SIZE_LABEL)
+
+    fig.tight_layout()
+    return fig
+
+
+def _build_forecast(data: dict, options: dict) -> Figure:
+    """预测曲线（历史 + 预测 + 置信区间）"""
+    historical = data.get("historical", [])
+    forecast = data.get("forecast", [])
+    conf_lower = data.get("confidence_lower", [])
+    conf_upper = data.get("confidence_upper", [])
+
+    n_hist = len(historical)
+    n_fc = len(forecast)
+    x_hist = list(range(n_hist))
+    x_fc = list(range(n_hist, n_hist + n_fc))
+
+    fig, ax = plt.subplots(figsize=(10, 5), dpi=_dpi())
+    ax.plot(x_hist, historical, color="#4da6ff", linewidth=1.2, label="历史数据")
+    if forecast:
+        ax.plot(x_fc, forecast, color="#e74c3c", linewidth=1.5, linestyle="--", label="预测值")
+    if conf_lower and conf_upper:
+        ax.fill_between(x_fc, conf_lower, conf_upper, color="#e74c3c", alpha=0.15, label="置信区间")
+    ax.axvline(x=n_hist - 0.5, color="#ffa726", linewidth=0.8, linestyle=":", alpha=0.7)
+    ax.legend(fontsize=FONT_SIZE_TICK)
+    ax.set_xlabel("时间步", fontsize=FONT_SIZE_LABEL)
+    ax.set_ylabel("值", fontsize=FONT_SIZE_LABEL)
+    ax.set_title("预测结果", fontsize=FONT_SIZE_TITLE)
+    fig.tight_layout()
+    return fig
+
+
+def _build_qq(data: dict, options: dict) -> Figure:
+    """残差 Q-Q 正态概率图"""
+    theoretical = data.get("qq_theoretical", [])
+    sample = data.get("qq_sample", [])
+    if not theoretical or not sample:
+        fig, ax = plt.subplots(figsize=(6, 6), dpi=_dpi())
+        ax.text(0.5, 0.5, "无 Q-Q 数据", ha="center", va="center", fontsize=14)
+        return fig
+
+    fig, ax = plt.subplots(figsize=(6, 6), dpi=_dpi())
+    ax.scatter(theoretical, sample, s=8, alpha=0.6, color="#4da6ff", label="残差分位数")
+    mn = min(min(theoretical), min(sample))
+    mx = max(max(theoretical), max(sample))
+    ax.plot([mn, mx], [mn, mx], color="#e74c3c", linewidth=1.2, linestyle="--", label="参考线")
+    ax.set_xlabel("理论分位数", fontsize=FONT_SIZE_LABEL)
+    ax.set_ylabel("样本分位数", fontsize=FONT_SIZE_LABEL)
+    ax.set_title("Q-Q 正态概率图", fontsize=FONT_SIZE_TITLE)
+    ax.legend(fontsize=FONT_SIZE_TICK)
+    fig.tight_layout()
+    return fig
+
+
+def _build_resid_acf_pacf(data: dict, options: dict) -> Figure:
+    """残差 ACF/PACF 组合图"""
+    resid_acf = data.get("resid_acf", [])
+    resid_pacf = data.get("resid_pacf", [])
+    n1 = len(resid_acf)
+    n2 = len(resid_pacf)
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 4), dpi=_dpi())
+
+    ax1.bar(range(n1), resid_acf, color="#4da6ff", width=0.6, alpha=0.8)
+    ax1.axhline(y=0, color="#e1e2e6", linewidth=0.8)
+    ci = 1.96 / np.sqrt(n1) if n1 > 1 else 0.2
+    ax1.axhline(y=ci, color="#ffa726", linewidth=0.6, linestyle="--", alpha=0.5)
+    ax1.axhline(y=-ci, color="#ffa726", linewidth=0.6, linestyle="--", alpha=0.5)
+    ax1.set_title("残差 ACF", fontsize=FONT_SIZE_TITLE)
+    ax1.set_xlabel("滞后阶数", fontsize=FONT_SIZE_LABEL)
+
+    ax2.bar(range(n2), resid_pacf, color="#e74c3c", width=0.6, alpha=0.8)
+    ax2.axhline(y=0, color="#e1e2e6", linewidth=0.8)
+    ci2 = 1.96 / np.sqrt(n2) if n2 > 1 else 0.2
+    ax2.axhline(y=ci2, color="#ffa726", linewidth=0.6, linestyle="--", alpha=0.5)
+    ax2.axhline(y=-ci2, color="#ffa726", linewidth=0.6, linestyle="--", alpha=0.5)
+    ax2.set_title("残差 PACF", fontsize=FONT_SIZE_TITLE)
+    ax2.set_xlabel("滞后阶数", fontsize=FONT_SIZE_LABEL)
+
+    fig.tight_layout()
+    return fig
+
+
 # ── 统一入口 ──
 
 BUILDERS = {
@@ -643,6 +829,13 @@ BUILDERS = {
     "气泡图": _build_bubble,
     "雷达图": _build_radar,
     "瀑布图": _build_waterfall,
+    "ACF图": _build_acf,
+    "PACF图": _build_pacf,
+    "ACF/PACF图": _build_acf_pacf,
+    "分解图": _build_decomposition,
+    "预测图": _build_forecast,
+    "Q-Q图": _build_qq,
+    "残差ACF/PACF图": _build_resid_acf_pacf,
 }
 
 
