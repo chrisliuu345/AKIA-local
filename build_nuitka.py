@@ -1,5 +1,5 @@
 """
-build_nuitka.py — QA-Tool Nuitka 构建脚本
+build_nuitka.py — QA-Tool Nuitka 构建脚本（跨平台）
 
 用法:
     python build_nuitka.py --onefile      # 单文件模式
@@ -17,11 +17,12 @@ from pathlib import Path
 # ── 项目基础路径 ──────────────────────────────────────────────
 PROJECT_DIR = Path(__file__).resolve().parent
 ENTRY_POINT = PROJECT_DIR / "main.py"
-ICON_PATH = PROJECT_DIR / "assets" / "logo.ico"
+ICON_PATH_WIN = PROJECT_DIR / "assets" / "logo.ico"
+ICON_PATH_LINUX = PROJECT_DIR / "assets" / "logo.png"
 VERSION_INFO = PROJECT_DIR / "version_info.txt"
 
 APP_NAME = "QA-Tool"
-APP_VERSION = "2.8.0"
+APP_VERSION = "3.2.0"
 
 # ── 构建输出目录 ──────────────────────────────────────────────
 BUILD_DIR = PROJECT_DIR / "build"
@@ -54,8 +55,6 @@ HIDDEN_IMPORTS = [
     "reportlab.pdfbase.cidfonts",
     "PIL",
     "PIL.Image",
-    "core.license",
-    "core.license_keys",
     "core.anti_debug",
     "core.integrity",
 ]
@@ -81,7 +80,7 @@ def clean_old_dirs():
         BUILD_DIR / "QA-Tool.build",
         BUILD_DIR / "QA-Tool.dist",
         NUITKA_BUILD_DIR,
-        NUitKA_DIST_DIR,
+        NUITKA_DIST_DIR,
     ]
     for d in dirs_to_clean:
         if d.exists():
@@ -114,6 +113,7 @@ def build_nuitka(mode):
 
     print("\n" + "=" * 60)
     print("  Nuitka 构建 — 模式: " + mode)
+    print("  平台: " + sys.platform)
     print("=" * 60 + "\n")
 
     # ── 构造命令 ──────────────────────────────────────────────
@@ -130,25 +130,33 @@ def build_nuitka(mode):
     # 插件
     cmd.append("--enable-plugin=pyside6")
 
-    # 窗口模式（无控制台）
-    cmd.append("--windows-console-mode=disable")
-
-    # Windows 图标
-    if ICON_PATH.exists():
-        cmd.append("--windows-icon-from-ico=" + str(ICON_PATH))
-
-    # Windows 版本信息
-    if VERSION_INFO.exists():
-        cmd.append("--windows-version-info=" + str(VERSION_INFO))
-
-    # Windows 文件描述与公司信息
-    cmd.append("--windows-company-name=QA-Tool")
-    cmd.append("--windows-product-name=QA-Tool")
-    cmd.append("--windows-file-version=" + APP_VERSION)
-    cmd.append("--windows-product-version=" + APP_VERSION)
-
-    # 文件描述中不能有空格和其他特殊字符，使用连字符
-    cmd.append("--windows-file-description=QA-Tool Quality Analysis Tool")
+    # ── 平台特定选项 ──────────────────────────────────────────
+    if sys.platform == "win32":
+        # Windows 专属选项
+        cmd.append("--windows-console-mode=disable")
+        
+        if ICON_PATH_WIN.exists():
+            cmd.append("--windows-icon-from-ico=" + str(ICON_PATH_WIN))
+        
+        if VERSION_INFO.exists():
+            cmd.append("--windows-version-info=" + str(VERSION_INFO))
+        
+        cmd.append("--windows-company-name=QA-Tool")
+        cmd.append("--windows-product-name=QA-Tool")
+        cmd.append("--windows-file-version=" + APP_VERSION)
+        cmd.append("--windows-product-version=" + APP_VERSION)
+        cmd.append("--windows-file-description=QA-Tool Quality Analysis Tool")
+    
+    elif sys.platform == "linux":
+        # Linux 专属选项
+        if ICON_PATH_LINUX.exists():
+            cmd.append("--linux-icon=" + str(ICON_PATH_LINUX))
+    
+    elif sys.platform == "darwin":
+        # macOS 专属选项
+        if ICON_PATH_LINUX.exists():
+            cmd.append("--macos-create-app-bundle")
+            cmd.append("--macos-app-icon=" + str(ICON_PATH_LINUX))
 
     # 强制包含所有数据目录
     for src_rel, dest_rel in DATA_DIRS:
@@ -176,7 +184,6 @@ def build_nuitka(mode):
 
     # ── 打印完整命令 ─────────────────────────────────────────
     print("[cmd] 构建命令:")
-    # 将命令格式化为可读的形式
     cmd_display = " \\\n  ".join(cmd)
     print("  " + cmd_display + "\n")
 
@@ -207,13 +214,10 @@ def build_nuitka(mode):
 def report_output(mode):
     """查找构建输出并报告路径与大小"""
     if mode == "onefile":
-        # onefile 输出在 dist 目录
         candidates = list(DIST_DIR.glob("QA-Tool*"))
         if not candidates:
-            # 也检查 build 目录
             candidates = list(BUILD_DIR.glob("QA-Tool*"))
     else:
-        # standalone 输出在 build 目录
         candidates = list(BUILD_DIR.glob("QA-Tool*"))
 
     if not candidates:
@@ -232,7 +236,6 @@ def report_output(mode):
             print("  文件大小: " + "{:.1f}".format(size_mb) + " MB")
         elif path.is_dir():
             print("\n  输出目录: " + str(path))
-            # 计算目录总大小
             total = sum(f.stat().st_size for f in path.rglob("*") if f.is_file())
             size_mb = total / (1024 * 1024)
             print("  目录大小: " + "{:.1f}".format(size_mb) + " MB")
@@ -242,7 +245,7 @@ def report_output(mode):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="QA-Tool Nuitka 构建脚本",
+        description="QA-Tool Nuitka 构建脚本（跨平台）",
     )
     parser.add_argument(
         "--onefile",
@@ -268,8 +271,10 @@ def main():
         sys.exit(1)
 
     # ── 检查图标文件 ─────────────────────────────────────────
-    if not ICON_PATH.exists():
-        print("[warn] 图标文件不存在: " + str(ICON_PATH) + "，将不使用自定义图标")
+    if sys.platform == "win32" and not ICON_PATH_WIN.exists():
+        print("[warn] 图标文件不存在: " + str(ICON_PATH_WIN) + "，将不使用自定义图标")
+    elif sys.platform == "linux" and not ICON_PATH_LINUX.exists():
+        print("[warn] 图标文件不存在: " + str(ICON_PATH_LINUX) + "，将不使用自定义图标")
 
     # ── 清理旧构建 ─────────────────────────────────────────
     print("[clean] 清理旧构建目录...")

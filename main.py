@@ -1,6 +1,5 @@
 """
 QA-Tool — 主入口
-Minitab式启动: Splash画面 → 精细化进度 → 主窗口
 """
 
 import sys

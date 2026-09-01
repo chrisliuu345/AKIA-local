@@ -137,7 +137,7 @@ python main.py
 ├── config/              # 配置 + 知识库 + 模板
 ├── output/              # 报告引擎（Word/Excel/PDF/HTML）
 ├── firmware/            # ESP32 MicroPython 固件
-└── tests/               # 688 个 pytest 测试
+└── tests/               # 857 个 pytest 测试
 ```
 
 ---
