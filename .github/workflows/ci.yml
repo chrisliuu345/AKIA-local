@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Create venv and install dependencies
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -r requirements.txt
+          .venv/bin/pip install -r dev-requirements.txt
+
+      - name: Run tests (per-file, single-threaded)
+        env:
+          QT_QPA_PLATFORM: "offscreen"
+        run: |
+          FAILED=0
+          for f in tests/test_*.py; do
+            echo "::group:: $f"
+            .venv/bin/python -m pytest "$f" -v --tb=short || FAILED=1
+            echo "::endgroup::"
+          done
+          exit $FAILED
