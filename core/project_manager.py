@@ -206,7 +206,9 @@ class SharedProjectManager:
                     department: str, annotations: str = "",
                     project_context: Optional[Dict[str, Any]] = None) -> str:
         """保存项目到共享目录"""
-        safe_dept = os.path.basename(department or PUBLIC_DEPT)
+        # 统一路径分隔符（Windows 反斜杠 → Linux 正斜杠）
+        dept_norm = (department or PUBLIC_DEPT).replace("\\", "/")
+        safe_dept = os.path.basename(dept_norm)
         dept_dir = os.path.join(SHARED_DIR, safe_dept)
         # W08: realpath 解析符号链接, 防止 symlink 逃逸共享目录
         real_dept_dir = os.path.realpath(dept_dir)

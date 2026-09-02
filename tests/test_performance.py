@@ -1,4 +1,4 @@
-﻿# Performance baseline tests
+# Performance baseline tests
 import pytest
 import time
 import os
