@@ -811,6 +811,131 @@ def _build_resid_acf_pacf(data: dict, options: dict) -> Figure:
     return fig
 
 
+def _build_km_curve(data: dict, options: dict) -> Figure:
+    """Kaplan-Meier 生存曲线"""
+    timeline = data.get("timeline", [])
+    sf = data.get("survival_function", [])
+    ci_lower = data.get("confidence_lower", [])
+    ci_upper = data.get("confidence_upper", [])
+    label = data.get("label", "KM Estimate")
+
+    fig, ax = plt.subplots(figsize=(10, 5), dpi=_dpi())
+
+    if timeline and sf:
+        ax.step(timeline, sf, where="post", color="#4da6ff", linewidth=1.5, label=label)
+        if ci_lower and ci_upper and len(ci_lower) == len(timeline):
+            ax.fill_between(timeline, ci_lower, ci_upper, alpha=0.15, color="#4da6ff",
+                            step="post", label="置信区间")
+
+    ax.set_xlabel("时间", fontsize=FONT_SIZE_LABEL)
+    ax.set_ylabel("生存概率 S(t)", fontsize=FONT_SIZE_LABEL)
+    ax.set_title("Kaplan-Meier 生存曲线", fontsize=FONT_SIZE_TITLE)
+    ax.set_ylim(-0.05, 1.05)
+    ax.legend(fontsize=FONT_SIZE_TICK)
+    fig.tight_layout()
+    return fig
+
+
+def _build_km_compare(data: dict, options: dict) -> Figure:
+    """双组 Kaplan-Meier 生存曲线对比"""
+    fig, ax = plt.subplots(figsize=(10, 5), dpi=_dpi())
+
+    for key, color, lbl in [("group_a", "#4da6ff", "A"), ("group_b", "#e74c3c", "B")]:
+        group = data.get(key, {})
+        t = group.get("timeline", [])
+        sf = group.get("survival_function", [])
+        ci_l = group.get("confidence_lower", [])
+        ci_u = group.get("confidence_upper", [])
+        name = group.get("label", lbl)
+        if t and sf:
+            ax.step(t, sf, where="post", color=color, linewidth=1.5, label=name)
+            if ci_l and ci_u and len(ci_l) == len(t):
+                ax.fill_between(t, ci_l, ci_u, alpha=0.1, color=color, step="post")
+
+    p_val = data.get("summary", {}).get("logrank_p_value", None)
+    if p_val is not None:
+        sig = "显著" if p_val < 0.05 else "不显著"
+        ax.text(0.02, 0.02, f"Log-rank p={p_val:.4f} ({sig})",
+                transform=ax.transAxes, fontsize=10, color="#e1e2e6")
+
+    ax.set_xlabel("时间", fontsize=FONT_SIZE_LABEL)
+    ax.set_ylabel("生存概率 S(t)", fontsize=FONT_SIZE_LABEL)
+    ax.set_title("Kaplan-Meier 双组对比", fontsize=FONT_SIZE_TITLE)
+    ax.set_ylim(-0.05, 1.05)
+    ax.legend(fontsize=FONT_SIZE_TICK)
+    fig.tight_layout()
+    return fig
+
+
+def _build_rbd(data: dict, options: dict) -> Figure:
+    """可靠性框图可视化"""
+    components = data.get("components", [])
+    structure = data.get("summary", {}).get("structure", "series")
+    sys_r = data.get("summary", {}).get("system_reliability", 0)
+
+    fig, ax = plt.subplots(figsize=(max(8, len(components) * 2), 4), dpi=_dpi())
+    ax.set_xlim(-0.5, len(components) + 0.5)
+    ax.set_ylim(-1, 2)
+    ax.axis("off")
+
+    # 绘制每个组件框
+    for i, comp in enumerate(components):
+        r = comp.get("reliability", 0)
+        name = comp.get("name", f"C{i+1}")
+        color = "#27ae60" if r > 0.95 else "#ffa726" if r > 0.8 else "#e74c3c"
+
+        rect = plt.Rectangle((i + 0.1, 0.3), 0.8, 1.0, facecolor=color, alpha=0.3,
+                              edgecolor=color, linewidth=1.5)
+        ax.add_patch(rect)
+        ax.text(i + 0.5, 1.0, name, ha="center", va="center", fontsize=10, color="#e1e2e6")
+        ax.text(i + 0.5, 0.6, f"R={r:.3f}", ha="center", va="center", fontsize=9, color="#a0a3ae")
+
+        # 连接线
+        if i < len(components) - 1:
+            ax.annotate("", xy=(i + 1.1, 0.8), xytext=(i + 0.9, 0.8),
+                        arrowprops=dict(arrowstyle="->", color="#e1e2e6", lw=1.5))
+
+    # 系统可靠度标签
+    ax.text(0.5, -0.3, f"结构: {structure}  |  系统 R = {sys_r:.4f}",
+            transform=ax.transAxes, fontsize=11, color="#e1e2e6",
+            bbox=dict(boxstyle="round,pad=0.3", facecolor="#262632", edgecolor="#3a3a48"))
+
+    fig.tight_layout()
+    return fig
+
+
+def _build_warranty_cost(data: dict, options: dict) -> Figure:
+    """保修成本分析图"""
+    summary = data.get("summary", {})
+    r_warranty = summary.get("reliability_at_warranty_end", 0)
+    failure_prob = summary.get("failure_probability", 0)
+    expected_failures = summary.get("expected_failures", 0)
+    warranty_cost = summary.get("warranty_cost_estimate", 0)
+    total_units = summary.get("total_units", 0)
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4), dpi=_dpi())
+
+    # 左图: 可靠性 vs 失效率饼图
+    sizes = [r_warranty, failure_prob]
+    labels = [f"可靠\n{r_warranty:.1%}", f"失效\n{failure_prob:.1%}"]
+    colors = ["#27ae60", "#e74c3c"]
+    ax1.pie(sizes, labels=labels, colors=colors, autopct="", startangle=90,
+            textprops={"fontsize": 11, "color": "#e1e2e6"})
+    ax1.set_title("保修期末状态", fontsize=FONT_SIZE_TITLE)
+
+    # 右图: 成本分解
+    cost_ok = total_units * r_warranty * 0  # 无保修成本
+    cost_fail = warranty_cost
+    bars = ax2.bar(["可靠产品", "失效产品"], [0, cost_fail], color=["#27ae60", "#e74c3c"], alpha=0.7)
+    ax2.set_ylabel("成本", fontsize=FONT_SIZE_LABEL)
+    ax2.set_title(f"保修总成本: {warranty_cost:,.0f}", fontsize=FONT_SIZE_TITLE)
+    ax2.text(1, cost_fail * 0.5, f"{expected_failures:.0f} 次失效\n× {summary.get('cost_per_failure', 0)} /次",
+             ha="center", va="center", fontsize=10, color="#e1e2e6")
+
+    fig.tight_layout()
+    return fig
+
+
 # ── 统一入口 ──
 
 BUILDERS = {
@@ -836,6 +961,10 @@ BUILDERS = {
     "预测图": _build_forecast,
     "Q-Q图": _build_qq,
     "残差ACF/PACF图": _build_resid_acf_pacf,
+    "KM生存曲线": _build_km_curve,
+    "KM双组对比": _build_km_compare,
+    "RBD框图": _build_rbd,
+    "保修成本图": _build_warranty_cost,
 }
 
 
