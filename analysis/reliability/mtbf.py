@@ -14,6 +14,7 @@
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Tuple
 
+import math
 import numpy as np
 from scipy import stats as sp_stats
 
@@ -155,3 +156,93 @@ class MTBFAnalyzer:
             trend = "improving"  # 失效事件偏前段/故障间隔变长 = 改善
 
         return round(stat, 4), trend
+
+
+def crow_amsaa(
+    failure_times: list,
+    total_time: Optional[float] = None,
+    confidence_level: float = 0.90,
+) -> Dict[str, Any]:
+    """
+    Crow-AMSAA (Power Law) 增长模型
+
+    用于可靠性增长试验，估计强度函数 λ(t) = β·t^(β-1)/α
+
+    Args:
+        failure_times: 失效时间列表（累积时间）
+        total_time: 总试验时间（默认取最后一个失效时间）
+        confidence_level: 置信水平
+
+    Returns:
+        Crow-AMSAA 分析结果
+    """
+    times = np.sort(np.asarray(failure_times, dtype=float))
+    times = times[times > 0]
+    n = len(times)
+
+    if n < 3:
+        return {
+            "analysis_type": "reliability.mtbf.crow_amsaa",
+            "error": f"失效事件不足: {n}（至少需要 3 个）",
+        }
+
+    T = total_time if total_time and total_time > times[-1] else float(times[-1])
+
+    # MLE 估计 β 和 α
+    # ln(λ(t)) = ln(β/α) + (β-1)·ln(t)
+    # 对数似然: L = n·ln(β/α) + (β-1)·Σln(ti) - T^β/α
+    from scipy.optimize import minimize_scalar
+
+    def neg_loglik(beta):
+        if beta <= 0.01:
+            return 1e12
+        alpha = T ** beta / n
+        if alpha <= 0:
+            return 1e12
+        ll = n * (math.log(beta) - math.log(alpha)) + (beta - 1) * np.sum(np.log(times)) - T ** beta / alpha
+        return -ll
+
+    result = minimize_scalar(neg_loglik, bounds=(0.1, 5.0), method="bounded")
+    beta = result.x
+    alpha = T ** beta / n
+
+    # MTBF 在时间 T 的估计
+    mtbf_at_T = alpha / (beta * T ** (beta - 1)) if beta > 0 else float("inf")
+
+    # MTBF 在时间 t=1 的估计（初始 MTBF）
+    mtbf_initial = alpha / beta if beta > 0 else float("inf")
+
+    # 增长率
+    growth_rate = 1 - beta  # β < 1 → 正增长
+
+    # 趋势判断
+    if beta < 0.95:
+        trend = "improving"
+    elif beta > 1.05:
+        trend = "degrading"
+    else:
+        trend = "stable"
+
+    # 置信区间 (基于 Fisher 信息)
+    z = sp_stats.norm.ppf((1 + confidence_level) / 2)
+    # β 的标准误差近似
+    se_beta = 1.0 / (math.sqrt(n) * abs(math.log(beta) + 1)) if beta > 0 else 1.0
+    beta_ci_low = max(0.01, beta - z * se_beta)
+    beta_ci_high = beta + z * se_beta
+
+    return {
+        "analysis_type": "reliability.mtbf.crow_amsaa",
+        "summary": {
+            "n_failures": int(n),
+            "total_time": round(T, 4),
+            "beta": round(beta, 4),
+            "alpha": round(alpha, 4),
+            "mtbf_at_T": round(mtbf_at_T, 4),
+            "mtbf_initial": round(mtbf_initial, 4),
+            "growth_rate": round(growth_rate, 4),
+            "trend": trend,
+            "beta_ci_low": round(beta_ci_low, 4),
+            "beta_ci_high": round(beta_ci_high, 4),
+            "confidence_level": confidence_level,
+        },
+    }
