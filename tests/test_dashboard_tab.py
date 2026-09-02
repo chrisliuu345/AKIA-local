@@ -178,7 +178,10 @@ class TestAnalysisCard:
         assert card is not None
         placeholder = card.findChildren(QLabel)
         texts = [lbl.text() for lbl in placeholder]
-        assert any("暂无图表" in t for t in texts)
+        # figure=None → no chart area, just title + metrics + timestamp + dot
+        assert any("SPC" in t for t in texts)
+        assert any("14:23" in t for t in texts)
+        assert any("违规点: 3" in t for t in texts)
         card.deleteLater()
 
     def test_card_with_no_metrics(self, app):
