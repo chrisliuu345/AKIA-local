@@ -1,7 +1,14 @@
-"""ALT 加速寿命试验 — Arrhenius / 逆幂律模型"""
+"""ALT 加速寿命试验 — Arrhenius / 逆幂律 / Eyring / 试验规划
 
+模型:
+  Arrhenius      — 温度应力 (热老化)
+  Inverse Power  — 电压/压力/载荷应力
+  Eyring         — 通用温度应力 (更精确的 Arrhenius 扩展)
+"""
+
+import math
 import numpy as np
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 from scipy import stats as sp_stats
 
 
@@ -106,3 +113,121 @@ class ALTEngine:
             "life_95ci_high": round(life_high, 2),
             "use_stress": use_stress,
         }
+
+    @staticmethod
+    def eyring(stress_temp: np.ndarray, life: np.ndarray,
+               use_temp: float) -> Dict[str, Any]:
+        """Eyring 模型: L(T) = (A/T) * exp(B/T)
+        比 Arrhenius 更精确的热应力模型
+        参数:
+            stress_temp: 加速应力温度 (K)
+            life: 对应寿命
+            use_temp: 使用温度 (Celsius)
+        """
+        if len(stress_temp) < 3 or len(life) < 3:
+            return {"error": f"样本量不足（需要至少3个数据点）"}
+        if np.any(stress_temp <= 0):
+            return {"error": "stress_temp必须全部为正数（开尔文温度）"}
+        if np.any(life <= 0):
+            return {"error": "life必须全部为正数"}
+
+        T_use = use_temp + 273.15
+
+        # 拟合: ln(L*T) = ln(A) + B/T
+        x = 1.0 / stress_temp
+        y = np.log(life * stress_temp)
+
+        slope, intercept, r, p, std_err = sp_stats.linregress(x, y)
+        B_fitted = slope
+        A_fitted = np.exp(intercept)
+
+        # 寿命预测
+        life_pred = (A_fitted / T_use) * math.exp(B_fitted / T_use)
+
+        # 加速因子
+        life_stress = (A_fitted / np.mean(stress_temp)) * math.exp(B_fitted / np.mean(stress_temp))
+        af = life_pred / life_stress if life_stress > 0 else float("inf")
+
+        # 置信区间
+        y_pred = slope * x + intercept
+        residuals = y - y_pred
+        se = np.sqrt(np.sum(residuals ** 2) / (len(x) - 2))
+        life_low = math.exp(math.log(life_pred) - 1.96 * se)
+        life_high = math.exp(math.log(life_pred) + 1.96 * se)
+
+        return {
+            "model": "Eyring",
+            "A_factor": round(A_fitted, 4),
+            "B_parameter": round(B_fitted, 2),
+            "r_squared": round(r ** 2, 4),
+            "acceleration_factor": round(af, 2),
+            "life_at_use": round(life_pred, 2),
+            "life_95ci_low": round(life_low, 2),
+            "life_95ci_high": round(life_high, 2),
+            "use_temperature_K": round(T_use, 2),
+        }
+
+
+def alt_trial_plan(
+    model: str,
+    stress_levels: List[float],
+    use_condition: float,
+    target_life: float,
+    n_per_level: int = 10,
+    total_sample: int = 60,
+    confidence_level: float = 0.90,
+) -> Dict[str, Any]:
+    """
+    ALT 试验规划
+
+    根据加速模型和目标，规划试验应力水平和样本量分配。
+
+    Args:
+        model: "arrhenius" | "eyring" | "inverse_power"
+        stress_levels: 计划的加速应力水平列表
+        use_condition: 正常使用条件 (温度K 或 应力值)
+        target_life: 目标外推寿命
+        n_per_level: 每个应力水平的样本量
+        total_sample: 总样本量
+        confidence_level: 置信水平
+
+    Returns:
+        试验规划结果
+    """
+    if len(stress_levels) < 2:
+        return {"error": "至少需要2个应力水平"}
+    if n_per_level < 3:
+        return {"error": "每个应力水平至少3个样本"}
+    if any(s <= 0 for s in stress_levels):
+        return {"error": "应力水平必须全部为正"}
+
+    n_levels = len(stress_levels)
+    allocated = min(n_per_level, total_sample // n_levels)
+    actual_total = allocated * n_levels
+
+    # 估算试验时间（基于目标寿命和应力比）
+    if model == "arrhenius":
+        k = 8.617333262145e-5
+        avg_af = np.mean([math.exp(0.7 / k * (1.0 / s - 1.0 / use_condition)) for s in stress_levels])
+        estimated_test_time = target_life / avg_af
+    elif model == "inverse_power":
+        avg_af = np.mean([(use_condition / s) ** 2 for s in stress_levels])
+        estimated_test_time = target_life / avg_af
+    else:
+        estimated_test_time = None
+
+    # Z 值
+    z = sp_stats.norm.ppf((1 + confidence_level) / 2)
+
+    return {
+        "model": model,
+        "n_stress_levels": n_levels,
+        "stress_levels": stress_levels,
+        "use_condition": use_condition,
+        "n_per_level": allocated,
+        "total_sample_size": actual_total,
+        "target_life": target_life,
+        "estimated_test_time": round(estimated_test_time, 2) if estimated_test_time else None,
+        "confidence_level": confidence_level,
+        "z_value": round(float(z), 4),
+    }
