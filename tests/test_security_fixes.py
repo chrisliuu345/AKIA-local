@@ -4,9 +4,13 @@
 # ── DPAPI 密码存储 ──
 
 def test_secret_store_roundtrip():
+    import sys
     from core.secret_store import encrypt_secret, decrypt_secret
     enc = encrypt_secret("S3cret@!db")
-    assert enc.startswith("dpapi:")
+    if sys.platform == "win32":
+        assert enc.startswith("dpapi:")
+    else:
+        assert enc.startswith("keyring:")
     assert decrypt_secret(enc) == "S3cret@!db"
 
 
