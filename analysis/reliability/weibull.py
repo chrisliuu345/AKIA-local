@@ -265,7 +265,7 @@ class WeibullAnalyzer:
     # ──────────────────────────────────────────────
     def _fit_4p_mle(self, failures: np.ndarray, censored: np.ndarray,
                     all_times: np.ndarray) -> Optional[WeibullResult]:
-        """数值优化 4P Weibull — 以 3P 结果为初始值，gamma 允许负值
+        """数值优化 4P Weibull — 以 2P 结果为初始值，gamma 允许负值
 
         4P Weibull 扩展了 3P 的约束，允许 location 参数为负值，
         从而覆盖更广的失效时间分布范围。
@@ -495,7 +495,7 @@ class WeibullAnalyzer:
 
         f0 = _nll(params)
         for i in range(n):
-            for j in range(n):
+            for j in range(i, n):  # 仅上三角，利用对称性
                 p_pp = params.copy()
                 p_pm = params.copy()
                 p_mp = params.copy()
@@ -509,6 +509,8 @@ class WeibullAnalyzer:
                 p_mm[i] -= eps
                 p_mm[j] -= eps
                 hessian[i][j] = (_nll(p_pp) - _nll(p_pm) - _nll(p_mp) + _nll(p_mm)) / (4 * eps * eps)
+                if i != j:
+                    hessian[j][i] = hessian[i][j]  # 对称镜像
 
         # 标准误差 = sqrt(diag(H^-1))
         try:
