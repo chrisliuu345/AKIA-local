@@ -52,7 +52,7 @@ def analyze(
         return {"analysis_type": "reliability.warranty", "error": "总出货量必须为正"}
 
     if censored is not None:
-        E = censored.loc[T.index].astype(int)
+        E = censored.reindex(T.index, fill_value=0).astype(int)
     else:
         E = pd.Series(np.ones(n, dtype=int), index=T.index)
 
