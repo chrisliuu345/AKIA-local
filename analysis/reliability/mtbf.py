@@ -186,6 +186,12 @@ def crow_amsaa(
             "error": f"失效事件不足: {n}（至少需要 3 个）",
         }
 
+    if total_time is not None and total_time <= 0:
+        return {
+            "analysis_type": "reliability.mtbf.crow_amsaa",
+            "error": "total_time必须为正",
+        }
+
     T = total_time if total_time and total_time > times[-1] else float(times[-1])
 
     # MLE 估计 β 和 α

@@ -13,6 +13,22 @@ import numpy as np
 from typing import Any, Dict, List, Optional
 
 
+def _compute_system_r(
+    reliabilities: List[float], structure: str,
+    parallel_groups: Optional[List[List[int]]], k: int,
+) -> float:
+    """内部辅助: 计算系统可靠度"""
+    if structure == "series":
+        return _series(reliabilities)
+    elif structure == "parallel":
+        return _parallel(reliabilities)
+    elif structure == "mixed":
+        return _mixed(reliabilities, parallel_groups)
+    elif structure == "k_out_of_n":
+        return _k_out_of_n(reliabilities, k)
+    return 0.0
+
+
 def calculate_system_reliability(
     components: List[Dict[str, Any]],
     structure: str = "series",
@@ -48,37 +64,30 @@ def calculate_system_reliability(
     reliabilities = [c["reliability"] for c in components]
     names = [c.get("name", f"Component_{i}") for i, c in enumerate(components)]
 
-    if structure == "series":
-        sys_r = _series(reliabilities)
-    elif structure == "parallel":
-        sys_r = _parallel(reliabilities)
-    elif structure == "mixed":
-        if parallel_groups is None:
-            return {"analysis_type": "reliability.rbd", "error": "混合结构需要 parallel_groups 参数"}
-        sys_r = _mixed(reliabilities, parallel_groups)
-    elif structure == "k_out_of_n":
-        if k_out_of_n is None:
-            return {"analysis_type": "reliability.rbd", "error": "k/n 表决系统需要 k_out_of_n 参数"}
-        k = k_out_of_n.get("k", 1)
-        sys_r = _k_out_of_n(reliabilities, k)
-    else:
-        return {"analysis_type": "reliability.rbd", "error": f"未知结构: {structure}"}
+    # 校验结构参数
+    if structure == "mixed" and parallel_groups is None:
+        return {"analysis_type": "reliability.rbd", "error": "混合结构需要 parallel_groups 参数"}
+    if structure == "k_out_of_n" and k_out_of_n is None:
+        return {"analysis_type": "reliability.rbd", "error": "k/n 表决系统需要 k_out_of_n 参数"}
+
+    k_val = k_out_of_n.get("k", 1) if k_out_of_n else 1
+
+    sys_r = _compute_system_r(reliabilities, structure, parallel_groups, k_val)
 
     # 计算每个组件的贡献度（对系统可靠度的敏感度）
+    # 优化: series/parallel 使用解析导数，k_out_of_n 使用数值扰动
     contributions = []
     for i, r_i in enumerate(reliabilities):
-        # 扰动法: 将组件 i 的可靠度提高 1%，看系统可靠度变化
-        perturbed = reliabilities.copy()
-        perturbed[i] = min(1.0, r_i + 0.01)
         if structure == "series":
-            r_perturbed = _series(perturbed)
+            sensitivity = sys_r / r_i if r_i > 1e-12 else 0.0
         elif structure == "parallel":
-            r_perturbed = _parallel(perturbed)
-        elif structure == "mixed":
-            r_perturbed = _mixed(perturbed, parallel_groups)
+            sensitivity = (1 - sys_r) / (1 - r_i) if r_i < 1 - 1e-12 else 0.0
         else:
-            r_perturbed = _k_out_of_n(perturbed, k_out_of_n.get("k", 1) if k_out_of_n else 1)
-        sensitivity = (r_perturbed - sys_r) / 0.01 if abs(r_i - 1.0) > 1e-9 else 0.0
+            # mixed / k_out_of_n: 数值扰动
+            perturbed = reliabilities.copy()
+            perturbed[i] = min(1.0, r_i + 0.01)
+            r_perturbed = _compute_system_r(perturbed, structure, parallel_groups, k_val)
+            sensitivity = (r_perturbed - sys_r) / 0.01 if abs(r_i - 1.0) > 1e-9 else 0.0
         contributions.append({
             "name": names[i],
             "reliability": round(r_i, 6),
@@ -146,7 +155,7 @@ def _k_out_of_n(reliabilities: List[float], k: int) -> float:
 
     for ri in reliabilities:
         # 从后往前更新，避免覆盖
-        for j in range(min(n, sum(1 for _ in dp)), 0, -1):
+        for j in range(n, 0, -1):
             dp[j] = dp[j] * (1 - ri) + dp[j - 1] * ri
         dp[0] = dp[0] * (1 - ri)
 
