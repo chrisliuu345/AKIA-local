@@ -1,11 +1,13 @@
-"""Weibull 寿命数据分析 — 2P/3P MLE 拟合 + 可靠性指标
+"""Weibull 寿命数据分析 — 2P/3P/4P MLE 拟合 + 可靠性指标 + 置信区间
 
 使用 scipy.stats.weibull_min 进行极大似然估计 (MLE):
   - 2P Weibull: 固定 location=0
-  - 3P Weibull: 自由 location (需要足够数据量才能稳定收敛)
+  - 3P Weibull: 自由 location ≥ 0 (需要足够数据量才能稳定收敛)
+  - 4P Weibull: 自由 location（允许负值，扩展分布范围）
 
 输出:
-  - 形状参数 β, 尺度参数 η, 位置参数 γ (3P)
+  - 形状参数 β, 尺度参数 η, 位置参数 γ
+  - 参数置信区间 (基于 Fisher 信息矩阵)
   - B10 / B50 / 特征寿命
   - 可靠性函数 R(t), 失效率 λ(t)
   - 概率图 (Weibull Probability Plot)
@@ -27,7 +29,7 @@ class WeibullResult:
     beta: float                # 形状参数
     eta: float                 # 尺度参数
     gamma: float               # 位置参数 (2P 时为 0)
-    method: str                # "2P-MLE" | "3P-MLE" | "rank-regression"
+    method: str                # "2P-MLE" | "3P-MLE" | "4P-MLE" | "rank-regression"
     loglik: float              # 对数似然值
     aic: float                 # AIC
     bic: float                 # BIC
@@ -42,6 +44,9 @@ class WeibullResult:
     # 图解数据
     probability_data: Dict[str, List[float]]  # {rank, prob, time} 用于概率图
     reliability_curve: Dict[str, List[float]] # {t, R, h} 用于 R(t)/h(t) 图
+    # 置信区间
+    confidence_intervals: Optional[Dict[str, Dict[str, float]]] = None
+    # {param_name: {"estimate": float, "ci_lower": float, "ci_upper": float, "std_err": float}}
 
 
 class WeibullAnalyzer:
@@ -53,6 +58,7 @@ class WeibullAnalyzer:
                 censored: Optional[list] = None,
                 fit_method: str = "mle",
                 three_parameter: bool = False,
+                four_parameter: bool = False,
                 confidence_level: float = 0.95) -> Dict[str, Any]:
         """主入口 — 对失效时间数据进行 Weibull 分析
 
@@ -60,7 +66,8 @@ class WeibullAnalyzer:
             failure_times: 失效时间 (或周期) 数组
             censored: 右删失指示数组 (1=失效, 0=删失)，默认全部为失效
             fit_method: "mle" | "rank-regression"
-            three_parameter: 是否尝试 3P Weibull (需要有足够数据)
+            three_parameter: 是否尝试 3P Weibull (gamma ≥ 0)
+            four_parameter: 是否尝试 4P Weibull (gamma 可为负值)
             confidence_level: 置信水平
 
         返回:
@@ -107,7 +114,17 @@ class WeibullAnalyzer:
         else:
             # 先尝试 2P MLE (稳健)
             result = self._fit_2p_mle(failure_only, cen, ft)
-            if three_parameter and len(failure_only) >= 10:
+            if four_parameter and len(failure_only) >= 10:
+                try:
+                    result_4p = self._fit_4p_mle(failure_only, cen, ft)
+                    if result_4p and result_4p.aic < result.aic:
+                        result = result_4p
+                    else:
+                        out["warnings"].append(
+                            "4P Weibull 拟合未显著改善 (AIC ≥ 2P)，采用 2P 结果")
+                except Exception as e:
+                    out["warnings"].append(f"4P 拟合失败: {e}，采用 2P 结果")
+            elif three_parameter and len(failure_only) >= 10:
                 try:
                     result_3p = self._fit_3p_mle(failure_only, cen, ft)
                     if result_3p and result_3p.aic < result.aic:
@@ -136,6 +153,11 @@ class WeibullAnalyzer:
             # 图解数据
             result.probability_data = self._probability_plot_data(failure_only, result)
             result.reliability_curve = self._reliability_curve_data(result)
+
+            # 置信区间 (仅 MLE 方法)
+            if fit_method == "mle" and result.method in ("2P-MLE", "3P-MLE", "4P-MLE"):
+                result.confidence_intervals = self._compute_confidence_intervals(
+                    result, failure_only, cen, ft, confidence_level)
 
         out["result"] = result
         return out
@@ -231,6 +253,61 @@ class WeibullAnalyzer:
         return WeibullResult(
             beta=round(beta, 6), eta=round(eta, 6),
             gamma=round(gamma, 6), method="3P-MLE",
+            loglik=loglik, aic=aic, bic=bic,
+            b10_life=0.0, b50_life=0.0,
+            characteristic_life=eta + gamma, mean_life=0.0,
+            ad_statistic=0.0, r_squared=0.0,
+            probability_data={}, reliability_curve={},
+        )
+
+    # ──────────────────────────────────────────────
+    # 4P Weibull MLE (gamma 可为负值)
+    # ──────────────────────────────────────────────
+    def _fit_4p_mle(self, failures: np.ndarray, censored: np.ndarray,
+                    all_times: np.ndarray) -> Optional[WeibullResult]:
+        """数值优化 4P Weibull — 以 3P 结果为初始值，gamma 允许负值
+
+        4P Weibull 扩展了 3P 的约束，允许 location 参数为负值，
+        从而覆盖更广的失效时间分布范围。
+        """
+        # 初始值: 从 3P 开始
+        p2 = sp_stats.weibull_min.fit(failures, floc=0)
+        beta0, _, eta0 = p2
+        gamma0 = np.min(failures) * 0.5
+
+        def neg_loglik(params):
+            beta, eta, gamma = params
+            if beta <= 0.1 or eta <= 0:
+                return 1e12
+            # 4P: gamma 可以为负值，只需保证 times - gamma > 0
+            if np.any(all_times - gamma <= 0):
+                return 1e12
+            return -self._weibull_loglik(beta, eta, gamma, all_times, censored)
+
+        result = minimize(
+            neg_loglik,
+            x0=[beta0, eta0, gamma0],
+            bounds=[(0.2, 20), (1e-6, None), (None, np.min(all_times) * 0.99)],
+            method="L-BFGS-B",
+        )
+
+        if not result.success:
+            return None
+
+        beta, eta, gamma = result.x
+        # 4P: 只需保证 times - gamma > 0
+        if np.any(all_times - gamma <= 0):
+            return None
+
+        loglik = -result.fun
+        n_params = 3
+        n_total = len(all_times)
+        aic = 2 * n_params - 2 * loglik
+        bic = n_params * np.log(n_total) - 2 * loglik
+
+        return WeibullResult(
+            beta=round(beta, 6), eta=round(eta, 6),
+            gamma=round(gamma, 6), method="4P-MLE",
             loglik=loglik, aic=aic, bic=bic,
             b10_life=0.0, b50_life=0.0,
             characteristic_life=eta + gamma, mean_life=0.0,
@@ -382,3 +459,76 @@ class WeibullAnalyzer:
             "R": R.tolist(),
             "h": h.tolist(),
         }
+
+    # ──────────────────────────────────────────────
+    # 参数置信区间 (Fisher 信息矩阵)
+    # ──────────────────────────────────────────────
+    def _compute_confidence_intervals(
+        self, result: WeibullResult, failures: np.ndarray,
+        censored: np.ndarray, all_times: np.ndarray,
+        confidence_level: float,
+    ) -> Dict[str, Dict[str, float]]:
+        """基于 Fisher 信息矩阵计算参数置信区间
+
+        通过数值 Hessian 估计参数的标准误差，然后使用正态近似
+        计算置信区间。
+        """
+        z_val = sp_stats.norm.ppf((1 + confidence_level) / 2)
+        n_params = 3 if result.method in ("3P-MLE", "4P-MLE") else 2
+        params = [result.beta, result.eta]
+        if n_params == 3:
+            params.append(result.gamma)
+
+        # 数值 Hessian (中心差分)
+        eps = 1e-5
+        n = len(params)
+        hessian = np.zeros((n, n))
+
+        def _nll(p):
+            b, e = p[0], p[1]
+            g = p[2] if n_params == 3 else 0.0
+            if b <= 0.1 or e <= 0:
+                return 1e12
+            if n_params == 3 and np.any(all_times - g <= 0):
+                return 1e12
+            return -self._weibull_loglik(b, e, g, all_times, censored)
+
+        f0 = _nll(params)
+        for i in range(n):
+            for j in range(n):
+                p_pp = params.copy()
+                p_pm = params.copy()
+                p_mp = params.copy()
+                p_mm = params.copy()
+                p_pp[i] += eps
+                p_pp[j] += eps
+                p_pm[i] += eps
+                p_pm[j] -= eps
+                p_mp[i] -= eps
+                p_mp[j] += eps
+                p_mm[i] -= eps
+                p_mm[j] -= eps
+                hessian[i][j] = (_nll(p_pp) - _nll(p_pm) - _nll(p_mp) + _nll(p_mm)) / (4 * eps * eps)
+
+        # 标准误差 = sqrt(diag(H^-1))
+        try:
+            cov = np.linalg.inv(hessian)
+            std_errors = np.sqrt(np.maximum(np.diag(cov), 0))
+        except np.linalg.LinAlgError:
+            return {}
+
+        param_names = ["beta", "eta"]
+        estimates = [result.beta, result.eta]
+        if n_params == 3:
+            param_names.append("gamma")
+            estimates.append(result.gamma)
+
+        ci = {}
+        for name, est, se in zip(param_names, estimates, std_errors):
+            ci[name] = {
+                "estimate": round(float(est), 6),
+                "std_err": round(float(se), 6),
+                "ci_lower": round(float(est - z_val * se), 6),
+                "ci_upper": round(float(est + z_val * se), 6),
+            }
+        return ci
