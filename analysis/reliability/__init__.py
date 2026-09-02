@@ -1,10 +1,12 @@
-"""可靠性工程分析 — Weibull 寿命分析 + MTBF/MTTR + ALT 加速寿命 + 生存分析
+"""可靠性工程分析 — Weibull 寿命分析 + MTBF/MTTR + ALT 加速寿命 + 生存分析 + RBD
 
 子模块:
   weibull  — Weibull 分布拟合 (2P/3P/4P MLE), 参数置信区间, B10/B50寿命, R(t), h(t), 概率图
-  mtbf     — MTBF/MTTR/可用度分析, 故障间隔统计
-  alt      — 加速寿命试验 (Arrhenius / 逆幂律)
+  mtbf     — MTBF/MTTR/可用度分析, 故障间隔统计, Crow-AMSAA 增长模型
+  alt      — 加速寿命试验 (Arrhenius / 逆幂律 / Eyring / 试验规划)
   survival — 生存分析 (Kaplan-Meier / Log-rank / Cox PH)
+  rbd      — 可靠性框图 (串联/并联/混合/k-of-n)
+  warranty — 保修分析
 """
 
 from analysis.reliability.alt import ALTEngine
