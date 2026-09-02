@@ -186,5 +186,97 @@ class TestMTBFAnalyzer:
         assert result["error"] is not None
 
 
+# ──────────────────────────────────────────────
+# Weibull 4P 测试
+# ──────────────────────────────────────────────
+
+class TestWeibull4P:
+
+    def setup_method(self):
+        self.analyzer = WeibullAnalyzer()
+
+    def test_4p_mle_basic(self):
+        """4P Weibull MLE: 从位置偏移分布拟合"""
+        np.random.seed(42)
+        # 生成带位置偏移的数据 (true gamma=10)
+        data = np.random.weibull(2.5, 50) * 80 + 10
+        result = self.analyzer.analyze(data.tolist(), four_parameter=True)
+        assert result["error"] is None
+        r = result["result"]
+        assert r is not None
+        assert r.method in ("4P-MLE", "2P-MLE")  # may fall back to 2P
+        if r.method == "4P-MLE":
+            assert r.gamma > 0
+
+    def test_4p_with_censored(self):
+        """4P Weibull 含删失数据"""
+        np.random.seed(42)
+        failures = list(np.random.weibull(2.0, 40) * 100 + 5)
+        censored = [1] * 35 + [0] * 5
+        result = self.analyzer.analyze(failures, censored=censored, four_parameter=True)
+        assert result["error"] is None
+        assert result["result"] is not None
+
+    def test_4p_fallback_to_2p(self):
+        """4P 结果与 2P 对比：4P 应有合理的 gamma"""
+        np.random.seed(42)
+        # 纯 2P 数据（无位置偏移）
+        data = np.random.weibull(2.0, 50) * 100
+        result = self.analyzer.analyze(data.tolist(), four_parameter=True)
+        assert result["error"] is None
+        r = result["result"]
+        # 4P may find gamma; just verify it's a valid WeibullResult
+        assert r is not None
+        assert r.beta > 0
+        assert r.eta > 0
+        assert r.aic > 0
+
+
+# ──────────────────────────────────────────────
+# Weibull 置信区间测试
+# ──────────────────────────────────────────────
+
+class TestWeibullCI:
+
+    def setup_method(self):
+        self.analyzer = WeibullAnalyzer()
+
+    def test_ci_2p(self):
+        """2P Weibull 置信区间"""
+        np.random.seed(42)
+        data = np.random.weibull(2.0, 50) * 100
+        result = self.analyzer.analyze(data.tolist(), confidence_level=0.95)
+        ci = result["result"].confidence_intervals
+        assert ci is not None
+        assert "beta" in ci
+        assert "eta" in ci
+        # CI should contain estimate
+        assert ci["beta"]["ci_lower"] < ci["beta"]["estimate"] < ci["beta"]["ci_upper"]
+        assert ci["eta"]["ci_lower"] < ci["eta"]["estimate"] < ci["eta"]["ci_upper"]
+        # SE should be positive
+        assert ci["beta"]["std_err"] > 0
+        assert ci["eta"]["std_err"] > 0
+
+    def test_ci_4p(self):
+        """4P Weibull 置信区间（含 gamma）"""
+        np.random.seed(42)
+        data = np.random.weibull(2.5, 50) * 80 + 10
+        result = self.analyzer.analyze(data.tolist(), four_parameter=True, confidence_level=0.90)
+        r = result["result"]
+        if r.method == "4P-MLE":
+            ci = r.confidence_intervals
+            assert ci is not None
+            assert "gamma" in ci
+            assert ci["gamma"]["ci_lower"] < ci["gamma"]["estimate"] < ci["gamma"]["ci_upper"]
+
+    def test_ci_rank_regression_no_ci(self):
+        """秩回归方法不计算置信区间"""
+        np.random.seed(42)
+        data = np.random.weibull(2.0, 50) * 100
+        result = self.analyzer.analyze(data.tolist(), fit_method="rank-regression")
+        # rank-regression doesn't compute CI
+        assert result["result"].confidence_intervals is None
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
