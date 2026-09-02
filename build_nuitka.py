@@ -22,7 +22,7 @@ ICON_PATH_LINUX = PROJECT_DIR / "assets" / "logo.png"
 VERSION_INFO = PROJECT_DIR / "version_info.txt"
 
 APP_NAME = "QA-Tool"
-APP_VERSION = "3.3.0"
+APP_VERSION = "3.4.0"
 
 # ── 构建输出目录 ──────────────────────────────────────────────
 BUILD_DIR = PROJECT_DIR / "build"
