@@ -28,11 +28,11 @@ class ALTEngine:
         """
         # W27 fix: 最小样本校验
         if len(stress_temp) < 3 or len(life) < 3:
-            return {"error": f"样本量不足（需要至少3个数据点，当前stress={len(stress_temp)}, life={len(life)}）"}
+            return {"analysis_type": "reliability.alt.arrhenius", "error": f"样本量不足（需要至少3个数据点，当前stress={len(stress_temp)}, life={len(life)}）"}
         if np.any(stress_temp <= 0):
-            return {"error": "stress_temp必须全部为正数（开尔文温度）"}
+            return {"analysis_type": "reliability.alt.arrhenius", "error": "stress_temp必须全部为正数（开尔文温度）"}
         if np.any(life <= 0):
-            return {"error": "life必须全部为正数"}
+            return {"analysis_type": "reliability.alt.arrhenius", "error": "life必须全部为正数"}
 
         # W28 fix: 统一温度单位约定 — stress_temp应为开尔文
         # 如果传入值明显是摄氏度（< 200），给出警告
@@ -86,6 +86,15 @@ class ALTEngine:
             life: 对应寿命
             use_stress: 正常使用应力
         """
+        if len(stress) < 3 or len(life) < 3:
+            return {"analysis_type": "reliability.alt.inverse_power_law", "error": f"样本量不足（需要至少3个数据点）"}
+        if np.any(stress <= 0):
+            return {"analysis_type": "reliability.alt.inverse_power_law", "error": "stress必须全部为正数"}
+        if np.any(life <= 0):
+            return {"analysis_type": "reliability.alt.inverse_power_law", "error": "life必须全部为正数"}
+        if use_stress <= 0:
+            return {"analysis_type": "reliability.alt.inverse_power_law", "error": "use_stress必须为正数"}
+
         # 拟合: ln(L) = ln(C) - n*ln(V)
         x = np.log(stress)
         y = np.log(life)
@@ -125,11 +134,13 @@ class ALTEngine:
             use_temp: 使用温度 (Celsius)
         """
         if len(stress_temp) < 3 or len(life) < 3:
-            return {"error": f"样本量不足（需要至少3个数据点）"}
+            return {"analysis_type": "reliability.alt.eyring", "error": f"样本量不足（需要至少3个数据点）"}
         if np.any(stress_temp <= 0):
-            return {"error": "stress_temp必须全部为正数（开尔文温度）"}
+            return {"analysis_type": "reliability.alt.eyring", "error": "stress_temp必须全部为正数（开尔文温度）"}
         if np.any(life <= 0):
-            return {"error": "life必须全部为正数"}
+            return {"analysis_type": "reliability.alt.eyring", "error": "life必须全部为正数"}
+        if use_temp <= -273.15:
+            return {"analysis_type": "reliability.alt.eyring", "error": "use_temp必须高于绝对零度"}
 
         T_use = use_temp + 273.15
 
@@ -195,11 +206,13 @@ def alt_trial_plan(
         试验规划结果
     """
     if len(stress_levels) < 2:
-        return {"error": "至少需要2个应力水平"}
+        return {"analysis_type": "reliability.alt.trial_plan", "error": "至少需要2个应力水平"}
     if n_per_level < 3:
-        return {"error": "每个应力水平至少3个样本"}
+        return {"analysis_type": "reliability.alt.trial_plan", "error": "每个应力水平至少3个样本"}
     if any(s <= 0 for s in stress_levels):
-        return {"error": "应力水平必须全部为正"}
+        return {"analysis_type": "reliability.alt.trial_plan", "error": "应力水平必须全部为正"}
+    if use_condition <= 0:
+        return {"analysis_type": "reliability.alt.trial_plan", "error": "use_condition必须为正"}
 
     n_levels = len(stress_levels)
     allocated = min(n_per_level, total_sample // n_levels)
