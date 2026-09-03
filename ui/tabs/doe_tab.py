@@ -4,7 +4,6 @@ DOE 实验设计分析页 — 含图表嵌入
 
 from typing import Dict, Any
 import pandas as pd
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
@@ -15,9 +14,6 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
-from analysis.doe import factorial, response_surface, box_behnken
-from analysis.doe import plackett_burman, definitive_screening, fractional, taguchi, mixture
-from output.chart_engine import create_pareto_chart
 from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_SECONDARY, BUTTON_TOGGLE, BUTTON_PRIMARY_STRETCH
@@ -250,6 +246,10 @@ class DOETab(BaseAnalysisTab):
             return None
 
     def run_analysis(self) -> Dict[str, Any]:
+        from analysis.doe import factorial, response_surface, box_behnken
+        from analysis.doe import plackett_burman, definitive_screening, fractional, taguchi, mixture
+        from output.chart_engine import create_pareto_chart
+
         method = self.method_combo.currentText()
         result = {}
 
@@ -381,6 +381,7 @@ class DOETab(BaseAnalysisTab):
             if labels and values:
                 fig = create_pareto_chart(labels, values, title="因子效应 Pareto 图")
                 self.current_figure = fig
+                from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
                 self.canvas = FigureCanvasQTAgg(fig)
                 self.chart_layout.addWidget(self.canvas)
                 self.canvas.draw()
