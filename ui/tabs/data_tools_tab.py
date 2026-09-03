@@ -16,7 +16,6 @@ class DataToolsTab(BaseAnalysisTab):
     def _setup_ui(self):
         tc=theme_colors(); layout=QVBoxLayout(self); layout.setContentsMargins(12,12,12,12)
         self.title_label=QLabel("数据工具"); self.title_label.setFont(FONT_18B); layout.addWidget(self.title_label)
-        # 模式切换
         mb=QHBoxLayout()
         self.btn_gen=QPushButton("随机生成"); self.btn_gen.setCheckable(True); self.btn_gen.setChecked(True); self.btn_gen.setStyleSheet(BUTTON_TOGGLE); self.btn_gen.clicked.connect(lambda:self._switch(0))
         self.btn_conv=QPushButton("格式转换"); self.btn_conv.setCheckable(True); self.btn_conv.setStyleSheet(BUTTON_TOGGLE); self.btn_conv.clicked.connect(lambda:self._switch(1))
@@ -49,7 +48,6 @@ class DataToolsTab(BaseAnalysisTab):
         self.gen_sigma.setVisible(l2!="")
         self.gen_mu.setVisible(l1!="")
 
-    # ── 生成器 ──
     def _gen_panel(self,tc):
         w=QWidget(); l=QFormLayout(w)
         self.gen_dist=QComboBox(); self.gen_dist.addItems(DataGenerator.DISTS); self.gen_dist.currentTextChanged.connect(self._on_dist_changed); l.addRow("分布:",self.gen_dist)
@@ -64,7 +62,6 @@ class DataToolsTab(BaseAnalysisTab):
         l.addRow("模板:",tmpl)
         self.btn_gen_run=QPushButton("生成数据"); self.btn_gen_run.setStyleSheet(BUTTON_PRIMARY_STRETCH); self.btn_gen_run.clicked.connect(self._do_gen)
         l.addRow(self.btn_gen_run)
-        # 导出
         self.btn_gen_export=QPushButton("导出Excel"); self.btn_gen_export.setStyleSheet(BUTTON_SECONDARY); self.btn_gen_export.clicked.connect(self._export_gen)
         l.addRow(self.btn_gen_export)
         return w
@@ -102,7 +99,6 @@ class DataToolsTab(BaseAnalysisTab):
         p,_=QFileDialog.getSaveFileName(self,"导出","generated.xlsx","Excel (*.xlsx)")
         if p: self._gen_df.to_excel(p,index=False); QMessageBox.information(self,"完成",f"已保存 {p}")
 
-    # ── 格式转换 ──
     def _conv_panel(self,tc):
         w=QWidget(); l=QFormLayout(w)
         self.conv_info=QLabel("拖入文件或点击选择, 自动检测格式并转换"); l.addRow(self.conv_info)
@@ -131,7 +127,6 @@ class DataToolsTab(BaseAnalysisTab):
                 self._show_df(df_melt)
             except Exception as e: QMessageBox.critical(self,"错误",str(e))
 
-    # ── 异常值检测 ──
     def _outlier_panel(self,tc):
         w=QWidget(); l=QFormLayout(w)
         self.out_method=QComboBox(); self.out_method.addItems(["IQR","Z-score","Grubbs"])
@@ -156,7 +151,7 @@ class DataToolsTab(BaseAnalysisTab):
         elif method=="Z-score":
             z=np.abs((s-s.mean())/s.std())
             outliers=z>3
-        else:  # Grubbs
+        else:
             from scipy import stats as sp_stats
             n=len(s)
             if n<3:

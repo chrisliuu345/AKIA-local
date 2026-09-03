@@ -14,9 +14,7 @@ from sqlalchemy.engine import Engine
 def sanitize_connection_error(err) -> str:
     """将异常消息中的数据库连接串密码打码，防止密码经日志/弹窗泄露。"""
     text = str(err)
-    # 匹配 scheme://user:password@host 形式
     text = re.sub(r"(://[^:/@\s]+:)[^@\s/]+(@)", r"\1******\2", text)
-    # 匹配 user:password@host 无 scheme 形式
     text = re.sub(r"([A-Za-z_][\w.-]*:)[^@\s/]+(@)", r"\1******\2", text)
     return text
 
@@ -44,8 +42,6 @@ def build_connection_string(config: dict) -> str:
     database = config.get("database", "")
     user = config.get("user", "")
     password = config.get("password", "")
-    # W06: quote(safe="") 编码为 %XX — SQLAlchemy 用 unquote 解析 userinfo,
-    # quote_plus 的 '+' 不会被还原为空格, 会导致含空格密码认证失败
     safe_user = quote(user, safe="")
     safe_password = quote(password, safe="")
     safe_database = quote(database, safe="")

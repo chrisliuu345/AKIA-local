@@ -40,7 +40,6 @@ class FMEATab(BaseAnalysisTab):
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
-        # 工具栏
         toolbar = QHBoxLayout()
 
         self.mode_combo = QComboBox()
@@ -86,12 +85,10 @@ class FMEATab(BaseAnalysisTab):
 
         layout.addLayout(toolbar)
 
-        # 风险统计
         self.stats_label = QLabel("")
         self.stats_label.setFont(QFont(get_ui_font(), 10))
         layout.addWidget(self.stats_label)
 
-        # FMEA 主表格
         self.table = QTableWidget()
         self.table.setColumnCount(len(FMEAItem.HEADERS))
         self.table.setHorizontalHeaderLabels(FMEAItem.HEADERS)
@@ -116,7 +113,6 @@ class FMEATab(BaseAnalysisTab):
             self._mode = new_mode
             self._new_analysis()
         else:
-            # 恢复 combo 到当前模式
             self.mode_combo.blockSignals(True)
             self.mode_combo.setCurrentIndex(0 if self._mode == "pfmea" else 1)
             self.mode_combo.blockSignals(False)
@@ -141,7 +137,6 @@ class FMEATab(BaseAnalysisTab):
 
     def _generate_cp(self):
         """将高风险 FMEA 条目生成控制计划行"""
-        # 统计高风险项
         high_risk = [item for item in self._items if item.rpn >= RPN_HIGH]
         if not high_risk:
             QMessageBox.information(self, "生成控制计划",
@@ -156,10 +151,8 @@ class FMEATab(BaseAnalysisTab):
         if reply != QMessageBox.Yes:
             return
 
-        # 生成 CP 行
         cp_rows = self._engine.generate_cp_rows(self._items, rpn_threshold=RPN_HIGH)
 
-        # 存储到 current_result 供外部读取
         self.current_result = {
             "analysis_type": "FMEA → CP",
             "params": {"rpn_threshold": RPN_HIGH},
@@ -167,12 +160,10 @@ class FMEATab(BaseAnalysisTab):
             "chart_data": {},
         }
 
-        # 通知主窗口切换到控制计划 Tab 并导入数据
         main_win = self.window()
         if hasattr(main_win, '_import_cp_from_fmea'):
             main_win._import_cp_from_fmea(cp_rows)
         else:
-            # 备用方案：直接通过 signal 通知
             self.analysis_completed.emit()
 
         QMessageBox.information(self, "生成完成",
@@ -194,7 +185,6 @@ class FMEATab(BaseAnalysisTab):
             return
         text = item.text().strip()
 
-        # 更新 FMEAItem 数据
         fmea = self._items[row]
         headers = FMEAItem.HEADERS
         if col == 0: fmea.function = text
@@ -211,12 +201,11 @@ class FMEATab(BaseAnalysisTab):
         elif col == 7:
             try: fmea.detection = max(1, min(10, int(text)))
             except ValueError: pass
-        elif col == 8: pass  # RPN 只读
+        elif col == 8: pass
         elif col == 9: fmea.recommended_action = text
         elif col == 10: fmea.responsible = text
         elif col == 11: fmea.action_status = text
 
-        # 自动计算 RPN 并更新列
         if col in (3, 5, 7):
             rpn = fmea.calc_rpn()
             self.table.blockSignals(True)
@@ -234,7 +223,7 @@ class FMEATab(BaseAnalysisTab):
             fmea.calc_rpn()
             for j, val in enumerate(fmea.to_row()):
                 item = QTableWidgetItem(val)
-                if j == 8:  # RPN 列只读
+                if j == 8:
                     item.setFlags(item.flags() & ~Qt.ItemIsEditable)
                     self._color_cell(item, fmea.risk_level)
                 self.table.setItem(i, j, item)

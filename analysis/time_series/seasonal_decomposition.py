@@ -42,7 +42,6 @@ def analyze(
             "error": f"数据点不足: {n}（最少需要 4 个）",
         }
 
-    # 自动检测周期
     if period is None:
         period = detect_period(clean)
         if period is None or period < 2 or period >= n // 2:
@@ -54,7 +53,6 @@ def analyze(
                     "error": f"无法自动检测季节周期（数据长度 {n} 不足）",
                 }
 
-    # 乘法模型要求所有值为正
     if model == "multiplicative" and clean.min() <= 0:
         return {
             "chart_type": "Seasonal Decomposition",
@@ -80,7 +78,6 @@ def analyze(
     seasonal = decomposition.seasonal
     residual = decomposition.resid
 
-    # 计算方差贡献
     total_var = float(np.nanvar(clean))
     trend_var = float(np.nanvar(trend)) if total_var > 0 else 0.0
     seasonal_var = float(np.nanvar(seasonal)) if total_var > 0 else 0.0

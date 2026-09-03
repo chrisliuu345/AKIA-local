@@ -33,7 +33,6 @@ def analyze(
     if len(columns) < 2:
         raise ValueError("Hotelling T² 需要至少 2 个变量")
 
-    # 提取数据
     df = data[columns].dropna()
     if len(df) < len(columns) + 1:
         raise ValueError(f"数据量不足: {len(df)}，需要至少 {len(columns) + 1}")
@@ -41,20 +40,15 @@ def analyze(
     X = df.values.astype(float)
     n, p = X.shape
 
-    # 计算均值向量和协方差矩阵
     mean_vec = np.mean(X, axis=0)
     cov_matrix = np.cov(X, rowvar=False)
 
-    # 处理奇异协方差矩阵
     if np.linalg.matrix_rank(cov_matrix) < p:
-        # 添加小扰动使矩阵可逆
         cov_matrix += np.eye(p) * 1e-10
 
     cov_inv = np.linalg.inv(cov_matrix)
 
-    # 计算 T² 统计量
     if subgroup_col is not None and subgroup_col in data.columns:
-        # 子组数据
         groups = data[subgroup_col].unique()
         t2_values = []
         for grp in groups:
@@ -69,15 +63,12 @@ def analyze(
         t2_values = np.array(t2_values)
         sample_sizes = [len(data[data[subgroup_col] == g].dropna()) for g in groups]
     else:
-        # 个体数据
         t2_values = np.array([_compute_t2(x, mean_vec, cov_inv, 1) for x in X])
         sample_sizes = [1] * n
 
-    # 计算控制限
     ucl = _compute_ucl(p, n, alpha, sample_sizes)
     cl = _compute_cl(p, n, sample_sizes)
 
-    # 检测违规点
     violations = []
     for i, t2 in enumerate(t2_values):
         if t2 > ucl[i] if isinstance(ucl, np.ndarray) else t2 > ucl:
@@ -88,7 +79,6 @@ def analyze(
                 "value": round(float(t2), 6),
             })
 
-    # 计算 Q 残差（用于检测异常方向）
     q_values = []
     for i, x in enumerate(X):
         deviation = x - mean_vec
@@ -123,10 +113,8 @@ def _compute_t2(x: np.ndarray, mean: np.ndarray, cov_inv: np.ndarray, n: int) ->
 
 def _compute_ucl(p: int, n: int, alpha: float, sample_sizes: Optional[List[int]] = None) -> float:
     """计算 UCL"""
-    # 使用 F 分布
     f_crit = stats.f.ppf(1 - alpha, p, n - p)
     if sample_sizes and len(sample_sizes) > 1:
-        # 子组数据：每个子组的 UCL 不同
         ucl_values = []
         for ni in sample_sizes:
             ucl = (p * (ni - 1) * (n - 1)) / (n * (n - p)) * f_crit
@@ -138,7 +126,6 @@ def _compute_ucl(p: int, n: int, alpha: float, sample_sizes: Optional[List[int]]
 
 def _compute_cl(p: int, n: int, sample_sizes: Optional[List[int]] = None) -> float:
     """计算中心线（期望值）"""
-    # E[T²] ≈ p * (n-1) / (n-p) * (n+1)/n
     return p * (n - 1) / (n - p) * (n + 1) / n
 
 
@@ -150,11 +137,9 @@ def _multivariate_normality_test(
     """多元正态性检验（基于 Mardia 偏度/峰度）"""
     n, p = X.shape
 
-    # Mardia 偏度
     centered = X - mean
     cov_inv = np.linalg.inv(cov + np.eye(p) * 1e-10)
 
-    # 计算偏度统计量
     g1 = 0
     for i in range(n):
         for j in range(n):
@@ -163,14 +148,12 @@ def _multivariate_normality_test(
             g1 += (xi.T @ cov_inv @ xj) ** 3
     g1 = g1 / (n ** 2)
 
-    # 计算峰度统计量
     g2 = 0
     for i in range(n):
         xi = centered[i]
         g2 += (xi.T @ cov_inv @ xi) ** 2
     g2 = g2 / n
 
-    # 近似检验
     skew_stat = n * g1 / 6
     kurt_stat = (g2 - p * (p + 2)) * np.sqrt(n / (8 * p * (p + 2)))
 

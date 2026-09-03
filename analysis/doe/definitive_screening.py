@@ -16,9 +16,6 @@ import pandas as pd
 from scipy import stats
 
 
-# ── DSD 设计矩阵（已验证列正交性）──
-# D = [C; -C; 0]，其中 C 满足 C^T C = (k-1)I
-# 每个矩阵 shape=(2k+1, k)，行顺序: C行, -C行, 中心行
 _DSD_DESIGNS: Dict[int, np.ndarray] = {
     4: np.array([
         [ 1,  1,  1,  1],
@@ -38,11 +35,9 @@ def _verify_design_orthogonality(D: np.ndarray) -> bool:
     """验证设计矩阵列正交性: D^T D = c*I"""
     k = D.shape[1]
     product = D.T @ D
-    # 检查是否为对角矩阵
     off_diag = product - np.diag(np.diag(product))
     if not np.all(off_diag == 0):
         return False
-    # 检查对角线是否全相等
     diag_vals = np.diag(product)
     return np.all(diag_vals == diag_vals[0])
 
@@ -105,15 +100,12 @@ def generate_design(
     design_matrix = _DSD_DESIGNS[k]
     n_runs = 2 * k + 1
 
-    # 构造 DataFrame
     data = {factors[i]: design_matrix[:, i] for i in range(k)}
     df = pd.DataFrame(data)
 
-    # Block 列
     block = ["Conference"] * k + ["Foldover"] * k + ["Center"]
     df["Block"] = block
 
-    # StdOrder 和 RunOrder
     df["StdOrder"] = list(range(1, n_runs + 1))
     rng = np.random.default_rng(random_seed)
     perm = rng.permutation(n_runs)
@@ -121,7 +113,6 @@ def generate_design(
     inv_perm[perm] = np.arange(n_runs) + 1
     df["RunOrder"] = inv_perm
 
-    # 额外中心点
     if center_points > 0:
         center_df = pd.DataFrame({f: [0] * center_points for f in factors})
         center_df["Block"] = ["Center"] * center_points
@@ -169,7 +160,6 @@ def analyze(
         - model_r_squared: 模型 R²
     """
     data = df[[response_col] + factor_cols].dropna()
-    # Validate all selected columns are numeric
     for col in [response_col] + factor_cols:
         coerced = pd.to_numeric(data[col], errors="coerce")
         n_nan = coerced.isna().sum()
@@ -184,7 +174,6 @@ def analyze(
     n = len(response)
     k = len(factor_cols)
 
-    # ── 主效应计算（向量化）──
     grand_mean = float(np.mean(response))
     high_mask = design > 0
     low_mask = design < 0
@@ -197,7 +186,6 @@ def analyze(
 
     effects = {f: round(float(effects_arr[i]), 6) for i, f in enumerate(factor_cols)}
 
-    # ── ANOVA（向量化）──
     ss_total = float(np.sum((response - grand_mean) ** 2))
     df_total = n - 1
 
@@ -209,7 +197,6 @@ def analyze(
     ss_error = max(ss_total - ss_model, 0.0)
     df_error = max(df_total - df_model, 1)
 
-    # F 值和 p 值（向量化）
     ms_arr = ss_arr.copy()
     if df_error > 0 and ss_error > 0:
         mse = ss_error / df_error
@@ -241,8 +228,6 @@ def analyze(
 
     r_squared = 1.0 - (ss_error / ss_total) if ss_total > 0 else 0.0
 
-    # ── 曲率检测 ──
-    # 比较中心行均值与设计行均值
     if "Block" in df.columns:
         center_mask = df["Block"].values == "Center"
         design_mask = df["Block"].values != "Center"

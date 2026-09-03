@@ -30,7 +30,6 @@ class PPAPTab(BaseAnalysisTab):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
 
-        # 零件信息
         info_row = QHBoxLayout()
         info_row.addWidget(QLabel("零件号:"))
         self.part_no = QLineEdit()
@@ -53,12 +52,10 @@ class PPAPTab(BaseAnalysisTab):
         info_row.addWidget(self.level_combo)
         layout.addLayout(info_row)
 
-        # 完成度
         self.pct_label = QLabel("完成度: 0%")
         self.pct_label.setStyleSheet("font-size: 16px; font-weight: bold; color: #4da6ff;")
         layout.addWidget(self.pct_label)
 
-        # 18项状态矩阵
         self.matrix = QTableWidget(18, 3)
         self.matrix.setHorizontalHeaderLabels(["#", "提交项目", "状态"])
         self.matrix.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
@@ -72,7 +69,6 @@ class PPAPTab(BaseAnalysisTab):
             self.matrix.setCellWidget(row, 2, cb)
         layout.addWidget(self.matrix)
 
-        # 尺寸报告
         dim_group = QGroupBox("关键尺寸报告")
         dim_layout = QVBoxLayout(dim_group)
         self.dim_table = QTableWidget(0, 6)
@@ -94,7 +90,6 @@ class PPAPTab(BaseAnalysisTab):
         dim_layout.addLayout(dim_btn)
         layout.addWidget(dim_group)
 
-        # PSW
         psw_group = QGroupBox("PSW 零件提交保证书")
         psw_layout = QVBoxLayout(psw_group)
         self.psw_text = QTextEdit()
@@ -102,7 +97,6 @@ class PPAPTab(BaseAnalysisTab):
         psw_layout.addWidget(self.psw_text)
         layout.addWidget(psw_group)
 
-        # 操作
         btn_row = QHBoxLayout()
         auto_btn = QPushButton("自动填充 (从分析结果)")
         auto_btn.setStyleSheet(BUTTON_PRIMARY_STRETCH)
@@ -129,19 +123,17 @@ class PPAPTab(BaseAnalysisTab):
     def _refresh_matrix(self):
         level = self.level_combo.currentData()
         required = self.report.required_items() if self.report.submission_level == level else set()
-        # update report level
         self.report.submission_level = level
         required = set(self.report.required_items())
         for row in range(18):
             n = row + 1
             item = self.matrix.item(row, 0)
             if item and n not in required:
-                item.setBackground(QTableWidgetItem().background())  # reset
+                item.setBackground(QTableWidgetItem().background())
                 for c in range(3):
                     self.matrix.item(row, c).setForeground(QTableWidgetItem().foreground())
             elif item and n in required:
-                # highlight required items
-                pass  # keep default style
+                pass
 
     def _on_status_change(self, row, status):
         """A2: 状态变更实时刷新完成度"""
@@ -176,7 +168,6 @@ class PPAPTab(BaseAnalysisTab):
         """A3: 使用引擎 completion_pct（按提交等级要求项目计算，非全部18项）"""
         level = self.level_combo.currentData() or 3
         self.report.submission_level = level
-        # 同步状态矩阵到引擎 items
         for r in range(18):
             status = self.matrix.cellWidget(r, 2).currentText()
             self.report.items[r].status = status
@@ -191,51 +182,46 @@ class PPAPTab(BaseAnalysisTab):
         """
         updated = []
 
-        # 扫描分析结果，填充 #8 (MSA) 和 #11 (初始能力)
         for idx, analysis in analyses.items():
             analysis_type = analysis.get("analysis_type", "")
             result = analysis.get("result", {})
 
-            # #8: MSA — Gage R&R 或 Type 1
             if "R&R" in analysis_type or "Type 1" in analysis_type or "MSA" in analysis_type:
                 pct_grr = result.get("percentages", {}).get("pct_grr", 0)
                 cap = result.get("capability", {})
                 is_capable = cap.get("is_capable", False) if cap else (pct_grr < 30)
 
                 status = "complete" if is_capable else "in_progress"
-                self.report.items[7].status = status  # PPAP #8 (index 7)
+                self.report.items[7].status = status
                 cb = self.matrix.cellWidget(7, 2)
                 if cb:
                     cb.setCurrentText(status)
                 updated.append(f"#8 MSA: {status}")
 
-            # #11: 初始能力 — Capability 分析
             elif "能力" in analysis_type or "Capability" in analysis_type:
                 cap = result.get("capability", {})
                 cpk = cap.get("cpk", 0)
-                cpk_a = CAPABILITY_GRADES["A"][0]  # 1.33
+                cpk_a = CAPABILITY_GRADES["A"][0]
                 is_capable = cpk >= cpk_a if cpk else False
 
                 status = "complete" if is_capable else "in_progress"
-                self.report.items[10].status = status  # PPAP #11 (index 10)
+                self.report.items[10].status = status
                 cb = self.matrix.cellWidget(10, 2)
                 if cb:
                     cb.setCurrentText(status)
                 updated.append(f"#11 能力: Cpk={cpk:.2f} → {status}")
 
-            # #4: DFMEA — FMEA 分析
             elif "FMEA" in analysis_type:
                 status = "complete"
-                self.report.items[3].status = status  # PPAP #4 (index 3)
+                self.report.items[3].status = status
                 cb = self.matrix.cellWidget(3, 2)
                 if cb:
                     cb.setCurrentText(status)
                 updated.append(f"#4 FMEA: {status}")
 
-            # #7: 控制计划
             elif "控制计划" in analysis_type or "Control Plan" in analysis_type:
                 status = "complete"
-                self.report.items[6].status = status  # PPAP #7 (index 6)
+                self.report.items[6].status = status
                 cb = self.matrix.cellWidget(6, 2)
                 if cb:
                     cb.setCurrentText(status)

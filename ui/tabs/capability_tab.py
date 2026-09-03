@@ -371,7 +371,6 @@ class CapabilityTab(BaseAnalysisTab):
 
         lines = [f"=== {analysis.get('analysis_type', '')} ===\n"]
 
-        # 分布拟合特殊处理
         if "distribution" in result and "params" in result:
             lines.append(f"分布: {result.get('distribution', '')}")
             lines.append(f"样本量: {result.get('sample_size', '')}")
@@ -461,7 +460,6 @@ class CapabilityTab(BaseAnalysisTab):
             err_label.setStyleSheet("color: #e74c3c; padding: 12px;")
             err_label.setWordWrap(True)
             self.chart_layout.addWidget(err_label)
-
 
 
     def _on_header_clicked(self, index: int):

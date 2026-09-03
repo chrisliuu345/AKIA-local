@@ -40,24 +40,18 @@ def one_sample_tost(
     std = float(np.std(clean, ddof=1))
     se = std / np.sqrt(n)
 
-    # TOST: 两个单侧 t 检验
-    # 检验1: H0: μ - target <= -margin vs H1: μ - target > -margin
     t_low = (mean - target_mean + margin) / se
-    # 检验2: H0: μ - target >= margin vs H1: μ - target < margin
     t_high = (mean - target_mean - margin) / se
 
     df = n - 1
-    p_low = 1 - stats.t.cdf(t_low, df)  # 右尾
-    p_high = stats.t.cdf(t_high, df)     # 左尾
+    p_low = 1 - stats.t.cdf(t_low, df)
+    p_high = stats.t.cdf(t_high, df)
 
-    # TOST 的 p 值是两个单侧 p 值的最大值
     p_tost = max(p_low, p_high)
 
-    # 差异的置信区间
     diff = mean - target_mean
     ci = stats.t.interval(1 - 2*alpha, df=df, loc=diff, scale=se)
 
-    # 判断是否等价
     is_equivalent = p_tost < alpha
 
     return {
@@ -116,14 +110,11 @@ def two_sample_tost(
     mean1, mean2 = float(np.mean(g1)), float(np.mean(g2))
     std1, std2 = float(np.std(g1, ddof=1)), float(np.std(g2, ddof=1))
 
-    # 计算合并标准误
     if equal_var:
-        # 池化方差
         sp2 = ((n1 - 1) * std1**2 + (n2 - 1) * std2**2) / (n1 + n2 - 2)
         se = np.sqrt(sp2 * (1/n1 + 1/n2))
         df = n1 + n2 - 2
     else:
-        # Welch-Satterthwaite
         se = np.sqrt(std1**2/n1 + std2**2/n2)
         df = (std1**2/n1 + std2**2/n2)**2 / (
             (std1**2/n1)**2/(n1-1) + (std2**2/n2)**2/(n2-1)
@@ -131,7 +122,6 @@ def two_sample_tost(
 
     diff = mean1 - mean2
 
-    # TOST: 两个单侧 t 检验
     t_low = (diff + margin) / se
     t_high = (diff - margin) / se
 
@@ -140,7 +130,6 @@ def two_sample_tost(
 
     p_tost = max(p_low, p_high)
 
-    # 差异的置信区间
     ci = stats.t.interval(1 - 2*alpha, df=df, loc=diff, scale=se)
 
     is_equivalent = p_tost < alpha

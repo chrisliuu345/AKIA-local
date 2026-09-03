@@ -16,24 +16,23 @@ from PySide6.QtCore import QObject, QTimer, QThread, Signal
 class BatchTask:
     """批量任务定义 — 复用 TemplateParser 的分析配置格式"""
     name: str
-    data_source: str = ""          # 文件路径
+    data_source: str = ""
     sheet_filter: List[str] = field(default_factory=list)
     analyses: List[Dict] = field(default_factory=list)
     output_path: str = ""
-    output_format: str = "docx"   # xlsx / docx / pdf
-    schedule: str = "once"        # "once" / "daily@HH:MM" / "hourly"
+    output_format: str = "docx"
+    schedule: str = "once"
     enabled: bool = True
 
-    # 运行时字段
     id: str = ""
     last_run: str = ""
-    last_status: str = ""   # "" / "success" / "failed"
+    last_status: str = ""
     last_error: str = ""
 
 
 class _WorkerThread(QThread):
     """后台执行线程"""
-    task_finished = Signal(str, bool, str)  # task_id, success, error_msg
+    task_finished = Signal(str, bool, str)
 
     def __init__(self, task: BatchTask, execute_fn: Callable):
         super().__init__()
@@ -53,7 +52,7 @@ class BatchScheduler(QObject):
 
     task_added = Signal(str)
     task_removed = Signal(str)
-    task_completed = Signal(str, bool, str)  # id, success, error
+    task_completed = Signal(str, bool, str)
     log_message = Signal(str)
 
     TASKS_FILE = os.path.join(os.path.expanduser("~"), ".qa_tool_batch", "tasks.json")
@@ -70,7 +69,6 @@ class BatchScheduler(QObject):
         self._execute_fn = execute_fn or self._default_execute
         self._load_tasks()
 
-    # ── 任务管理 ──────────────────────────────────────
     def add_task(self, task: BatchTask) -> str:
         task.id = task.id or uuid.uuid4().hex[:8]
         self.tasks[task.id] = task
@@ -90,7 +88,6 @@ class BatchScheduler(QObject):
     def get_tasks(self) -> List[BatchTask]:
         return list(self.tasks.values())
 
-    # ── 调度控制 ──────────────────────────────────────
     def start(self, interval_ms: int = 30000):
         """启动调度器，每 interval_ms 检查一次"""
         self._poll_interval_ms = interval_ms
@@ -105,7 +102,6 @@ class BatchScheduler(QObject):
         if task_id in self.tasks:
             self._execute_task(self.tasks[task_id])
 
-    # ── 内部 ──────────────────────────────────────────
     def _check_schedule(self):
         now = datetime.now()
         for task in self.tasks.values():
@@ -116,18 +112,17 @@ class BatchScheduler(QObject):
 
     def _should_run(self, task: BatchTask, now: datetime) -> bool:
         if task.schedule == "once":
-            return not task.last_run  # 仅运行一次
+            return not task.last_run
         if task.schedule == "hourly":
             if task.last_run:
                 last = datetime.fromisoformat(task.last_run)
                 return (now - last) >= timedelta(hours=1)
             return True
         if task.schedule.startswith("daily@"):
-            target_time = task.schedule[6:]  # "HH:MM"
+            target_time = task.schedule[6:]
             try:
                 h, m = map(int, target_time.split(":"))
                 target = now.replace(hour=h, minute=m, second=0, microsecond=0)
-                # 在目标时间 ±窗口内 (窗口至少 30s, 且 ≥2×轮询周期, 防抖动错过)
                 diff = abs((now - target).total_seconds())
                 if diff <= max(30, self._poll_interval_ms / 1000 * 2):
                     if task.last_run:
@@ -158,7 +153,6 @@ class BatchScheduler(QObject):
             if t.schedule == "once":
                 t.enabled = False
             self._save_tasks()
-        # 清理已完成的工作线程（防止 _workers 引用只增不减的泄漏）
         self._workers = [w for w in self._workers if w.task.id != task_id]
         status = "成功" if success else f"失败: {error}"
         self._log_msg(f"任务完成 [{task_id}]: {status}")
@@ -180,9 +174,8 @@ class BatchScheduler(QObject):
         self.log_message.emit(entry)
 
     def get_log(self) -> List[str]:
-        return self._log[-200:]  # 最近 200 条
+        return self._log[-200:]
 
-    # ── 持久化 ────────────────────────────────────────
     def _save_tasks(self):
         os.makedirs(os.path.dirname(self.TASKS_FILE), exist_ok=True)
         data = []

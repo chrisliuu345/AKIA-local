@@ -23,12 +23,10 @@ try:
 except ImportError:
     _HAS_MPL = False
 
-# 图表快照尺寸 (px)
 CHART_SNAPSHOT_W = 1000
 CHART_SNAPSHOT_H = 600
 CHART_DPI = 200
 
-# 卡片内边距
 CARD_PADDING = 16
 CARD_RADIUS = 10
 
@@ -65,7 +63,6 @@ class AnalysisCard(QFrame):
     def _setup_ui(self, rows: list[str], figure, status_color: str, timestamp: str):
         tc = theme_colors()
 
-        # 卡片整体样式
         self.setStyleSheet(
             f"AnalysisCard {{ background:{tc['bg_card']}; "
             f"border:1px solid {tc['border']}; border-radius:{CARD_RADIUS}px; }}"
@@ -77,7 +74,6 @@ class AnalysisCard(QFrame):
         outer.setContentsMargins(CARD_PADDING, CARD_PADDING, CARD_PADDING, CARD_PADDING)
         outer.setSpacing(8)
 
-        # ── 标题行: 分析类型 + 状态色点 + 时间戳 ──
         hdr = QHBoxLayout()
         hdr.setSpacing(6)
 
@@ -105,12 +101,10 @@ class AnalysisCard(QFrame):
 
         outer.addLayout(hdr)
 
-        # ── 指标行 (横排，自适应换行) ──
         if rows:
             metrics_widget = self._build_metrics_widget(rows, tc)
             outer.addWidget(metrics_widget)
 
-        # ── 图表快照区 (仅当有图表时显示) ──
         pm = figure_to_pixmap(figure) if figure is not None else None
         if pm is not None:
             chart_lbl = QLabel()

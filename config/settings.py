@@ -5,12 +5,10 @@ IE Quality Analyzer - 全局配置
 import json
 import os
 
-# ── 应用信息 ──────────────────────────────────────────
 APP_NAME = "QA-Tool"
 APP_VERSION = "3.4.0"
 ORGANIZATION = "QA-Tool"
 
-# ── 统计常量 ──────────────────────────────────────────
 NELSON_RULES = {
     1: "一点超出3σ控制限",
     2: "连续9点在中心线同一侧",
@@ -29,8 +27,6 @@ WECO_RULES_DESC = {
     4: "连续8点在中心线同侧",
 }
 
-# 控制图常数 (子组大小 n=2~25)
-# A2, D3, D4 用于 XBar-R; A3, B3, B4 用于 XBar-S; d2, c4 用于能力分析
 CONTROL_CHART_CONSTANTS = {
     2:  {"A2": 1.880, "D3": 0.000, "D4": 3.267, "A3": 2.659, "B3": 0.000, "B4": 3.267, "d2": 1.128, "c4": 0.7979},
     3:  {"A2": 1.023, "D3": 0.000, "D4": 2.574, "A3": 1.954, "B3": 0.000, "B4": 2.568, "d2": 1.693, "c4": 0.8862},
@@ -58,7 +54,6 @@ CONTROL_CHART_CONSTANTS = {
     25: {"A2": 0.153, "D3": 0.459, "D4": 1.541, "A3": 0.606, "B3": 0.565, "B4": 1.435, "d2": 3.931, "c4": 0.9896},
 }
 
-# ── 图表样式 ──────────────────────────────────────────
 CHART_COLORS = {
     "primary": "#1f77b4",
     "secondary": "#ff7f0e",
@@ -74,14 +69,12 @@ CHART_COLORS = {
 CHART_DPI = 120
 CHART_FIGSIZE = (10, 6)
 
-# ── 中文支持 ──────────────────────────────────────────
 from ui.font_config import get_ui_font
 FONT_FAMILY = [get_ui_font(), "Microsoft YaHei", "SimHei", "Noto Sans SC", "WenQuanYi Micro Hei", "sans-serif"]
 FONT_SIZE_TITLE = 14
 FONT_SIZE_LABEL = 11
 FONT_SIZE_TICK = 9
 
-# ── 过程能力分级 ──────────────────────────────────────
 CAPABILITY_GRADES = {
     "A+": (1.67, float("inf"), "特优"),
     "A":  (1.33, 1.67, "优"),
@@ -90,67 +83,57 @@ CAPABILITY_GRADES = {
     "D":  (0.00, 0.67, "差"),
 }
 
-# ── 文件配置 ──────────────────────────────────────────
 SUPPORTED_EXCEL_EXTENSIONS = (".xlsx", ".xls", ".xlsm")
 SUPPORTED_TEMPLATE_EXTENSIONS = (".xlsx", ".json")
 MAX_PREVIEW_ROWS = 100
-CHUNK_SIZE = 10000  # 大文件分块读取大小
+CHUNK_SIZE = 10000
 
-# ── MSA 判定标准 ──────────────────────────────────────
 MSA_NDC_THRESHOLD = 5
-MSA_GRR_ACCEPTABLE = 0.10   # %GRR < 10% 可接受
-MSA_GRR_MARGINAL = 0.30     # %GRR 10%~30% 条件接受
-MSA_GRR_UNACCEPTABLE = 0.30 # %GRR > 30% 不可接受
+MSA_GRR_ACCEPTABLE = 0.10
+MSA_GRR_MARGINAL = 0.30
+MSA_GRR_UNACCEPTABLE = 0.30
 
-# ── MSA d2* 因子表 (AIAG MSA Manual, d2* = 1/d2 for AV/PV) ──
-# AV 用 K2 倒数, PV 用 K3 倒数; n=2~25
-# 参考: AIAG MSA 4th Edition, Table 2
 MSA_D2_STAR = {
-    2:  1.41,   # K2=0.7086 → d2*=1.41
-    3:  1.91,   # K2=0.5231 → d2*=1.91
-    4:  2.24,   # K2=0.4467 → d2*=2.24
-    5:  2.48,   # K2=0.4030 → d2*=2.48
-    6:  2.67,   # K2=0.3746 → d2*=2.67
-    7:  2.83,   # K2=0.3534 → d2*=2.83
-    8:  2.96,   # K2=0.3375 → d2*=2.96
-    9:  3.08,   # K2=0.3249 → d2*=3.08
-    10: 3.18,   # K2=0.3146 → d2*=3.18
-    11: 3.27,   # K2=0.3060 → d2*=3.27
-    12: 3.35,   # K2=0.2987 → d2*=3.35
-    13: 3.42,   # K2=0.2924 → d2*=3.42
-    14: 3.49,   # K2=0.2868 → d2*=3.49
-    15: 3.55,   # K2=0.2820 → d2*=3.55
-    16: 3.61,   # K2=0.2776 → d2*=3.61
-    17: 3.66,   # K2=0.2738 → d2*=3.66
-    18: 3.71,   # K2=0.2703 → d2*=3.71
-    19: 3.76,   # K2=0.2671 → d2*=3.76
-    20: 3.80,   # K2=0.2643 → d2*=3.80
-    21: 3.84,   # K2=0.2618 → d2*=3.84
-    22: 3.88,   # K2=0.2594 → d2*=3.88
-    23: 3.92,   # K2=0.2573 → d2*=3.92
-    24: 3.95,   # K2=0.2553 → d2*=3.95
-    25: 3.99,   # K2=0.2535 → d2*=3.99
+    2:  1.41,
+    3:  1.91,
+    4:  2.24,
+    5:  2.48,
+    6:  2.67,
+    7:  2.83,
+    8:  2.96,
+    9:  3.08,
+    10: 3.18,
+    11: 3.27,
+    12: 3.35,
+    13: 3.42,
+    14: 3.49,
+    15: 3.55,
+    16: 3.61,
+    17: 3.66,
+    18: 3.71,
+    19: 3.76,
+    20: 3.80,
+    21: 3.84,
+    22: 3.88,
+    23: 3.92,
+    24: 3.95,
+    25: 3.99,
 }
 
-# ── OEE 分级阈值 ──────────────────────────────────────
 OEE_WORLD_CLASS = 0.85
 OEE_GOOD = 0.65
 OEE_FAIR = 0.40
 
-# ── FMEA RPN 阈值 ──────────────────────────────────────
-RPN_CRITICAL = 200   # RPN >= 200: 停线整改
-RPN_HIGH = 100       # RPN >= 100: 高风险，需生成控制计划
-RPN_MEDIUM = 50      # RPN >= 50: 中等风险
+RPN_CRITICAL = 200
+RPN_HIGH = 100
+RPN_MEDIUM = 50
 
-# ── 统计显著性 ──────────────────────────────────────────
 SIGNIFICANCE_LEVEL = 0.05
 
-# ── 根因分析权重 (SHAP三路融合) ────────────────────────
 ROOT_CAUSE_W_IMPORTANCE = 0.4
 ROOT_CAUSE_W_CORRELATION = 0.3
 ROOT_CAUSE_W_LINKAGE = 0.3
 
-# DOE fractional factorial constants
 FRACTIONAL_FRACTIONS = ["1/2", "1/4", "1/8"]
 FRACTIONAL_MAX_K = 15
 FRACTIONAL_MAX_P = 5
@@ -178,17 +161,14 @@ _MIN_ABERRATION_TABLE = {
     (8, 4): {"generators": ["AB", "AC", "AD", "AE"], "resolution": 3, "defining_relation": "I=ABD=ACE=BCF"},
 }
 
-# DOE mixture design constants
 MIXTURE_DESIGN_TYPES = ["simplex_lattice", "simplex_centroid", "extreme_vertices"]
 MIXTURE_MODELS = ["linear", "quadratic", "special_cubic"]
 MIXTURE_MAX_COMPONENTS = 10
 
 
-# ── 用户配置持久化 ────────────────────────────────────
 _USER_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "user_config.json")
 
 _user_overrides = {}
-
 
 
 def load_config() -> dict:
@@ -235,7 +215,6 @@ def get_effective(key: str, module_default):
     return _user_overrides.get(key, module_default)
 
 
-# ── ESP-32 硬件拓展安装门控 ────────────────────────────
 ESP32_DEVICE_TAB_INDEX = 35
 
 
@@ -251,7 +230,6 @@ def tab_allowed(idx: int) -> bool:
     return True
 
 
-# --- org constants ---
 DEPARTMENTS = ['质量部', '生产部', 'IE部', '研发部', '供应链', '其他']
 TEAMS = ['一组', '二组', '三组', '白班', '夜班', 'A班', 'B班', 'C班']
 

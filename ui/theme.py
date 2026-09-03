@@ -4,7 +4,6 @@ from PySide6.QtGui import QPalette, QColor, QFont
 from PySide6.QtWidgets import QApplication
 from ui.font_config import get_ui_font
 
-# ── 字体常量 (集中管理, 避免 160 处重复 QFont 声明) ──
 FONT_FAMILY = get_ui_font()
 
 def _f(size: int, bold: bool = False) -> QFont:
@@ -23,7 +22,6 @@ FONT_18B = _f(18, True);  FONT_36B = _f(36, True)
 
 
 def is_dark_theme(widget=None) -> bool:
-    # 当前为暗色单主题设计，恒返回 True；widget 参数预留，供未来多主题切换使用
     return True
 
 
@@ -69,7 +67,6 @@ def colors(widget=None):
     }
 
 
-# ── 按钮样式 — hover/pressed 通过 QSS 伪状态实现即时视觉反馈 ──
 BUTTON_PRIMARY = (
     "QPushButton { background-color: #1b5faa; color: #fff; border: none;"
     "border-radius: 8px; padding: 12px 24px; font-weight: bold; }"

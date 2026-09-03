@@ -39,7 +39,6 @@ def analyze(
 
     if usl is not None and lsl is not None:
         usl, lsl = float(usl), float(lsl)
-        # W23 fix: std=0时用None替代inf，避免json.dumps抛异常
         if std_within > 0:
             cp = (usl - lsl) / (6 * std_within)
             cpk = min((usl - mean) / (3 * std_within), (mean - lsl) / (3 * std_within))
@@ -51,14 +50,12 @@ def analyze(
         else:
             pp, ppk = None, None
 
-        # Cpm 田口能力指数
         cpm = None
         if target is not None:
             sigma_t = _estimate_sigma_t(clean, float(target))
             if sigma_t > 0:
                 cpm = (usl - lsl) / (6 * sigma_t)
             elif usl > lsl:
-                # σ_T=0 且有有效规格限时，Cpm 为无穷大
                 cpm = float("inf")
 
         if std_overall > 0:
@@ -108,7 +105,6 @@ def analyze(
         result["capability"] = {"usl": None, "lsl": None}
 
     if n <= 5000 and n >= 3:
-        # W22 fix: shapiro要求n≥3，n<3跳过
         normality_result = stats.shapiro(clean)
     else:
         normality_result = stats.kstest(clean, lambda x: stats.norm.cdf(x, loc=mean, scale=std_overall))

@@ -14,7 +14,6 @@ import subprocess
 import argparse
 from pathlib import Path
 
-# ── 项目基础路径 ──────────────────────────────────────────────
 PROJECT_DIR = Path(__file__).resolve().parent
 ENTRY_POINT = PROJECT_DIR / "main.py"
 ICON_PATH_WIN = PROJECT_DIR / "assets" / "logo.ico"
@@ -24,13 +23,11 @@ VERSION_INFO = PROJECT_DIR / "version_info.txt"
 APP_NAME = "QA-Tool"
 APP_VERSION = "3.4.0"
 
-# ── 构建输出目录 ──────────────────────────────────────────────
 BUILD_DIR = PROJECT_DIR / "build"
 DIST_DIR = PROJECT_DIR / "dist"
 NUITKA_BUILD_DIR = PROJECT_DIR / "build" / "nuitka_build"
 NUITKA_DIST_DIR = PROJECT_DIR / "build" / "nuitka_dist"
 
-# ── 需要包含的数据目录（相对于项目根） ───────────────────────
 DATA_DIRS = [
     ("config/knowledge", "config/knowledge"),
     ("config/templates", "config/templates"),
@@ -38,13 +35,11 @@ DATA_DIRS = [
     ("plugins", "plugins"),
 ]
 
-# ── 需要包含的单个数据文件（相对于项目根） ────────────────────
 DATA_FILES = [
     ("logo.png", "logo.png"),
     ("user_config.json", "user_config.json"),
 ]
 
-# ── 隐藏导入 ─────────────────────────────────────────────────
 HIDDEN_IMPORTS = [
     "matplotlib.backends.backend_qtagg",
     "seaborn",
@@ -59,7 +54,6 @@ HIDDEN_IMPORTS = [
     "core.integrity",
 ]
 
-# ── 排除的模块 ───────────────────────────────────────────────
 EXCLUDES = [
     "tkinter",
     "test",
@@ -87,12 +81,10 @@ def clean_old_dirs():
             print("[clean] 删除目录: " + str(d))
             shutil.rmtree(d, ignore_errors=True)
 
-    # 清理旧的 spec 文件
     for spec in PROJECT_DIR.glob("*.spec"):
         print("[clean] 删除文件: " + str(spec))
         spec.unlink(missing_ok=True)
 
-    # 清理 dist 目录中的旧文件
     if DIST_DIR.exists():
         for f in DIST_DIR.glob("QA-Tool*"):
             print("[clean] 删除文件: " + str(f))
@@ -116,7 +108,6 @@ def build_nuitka(mode):
     print("  平台: " + sys.platform)
     print("=" * 60 + "\n")
 
-    # ── 构造命令 ──────────────────────────────────────────────
     cmd = [
         sys.executable, "-m", "nuitka",
         "--standalone",
@@ -127,12 +118,9 @@ def build_nuitka(mode):
     if mode == "onefile":
         cmd.append("--onefile")
 
-    # 插件
     cmd.append("--enable-plugin=pyside6")
 
-    # ── 平台特定选项 ──────────────────────────────────────────
     if sys.platform == "win32":
-        # Windows 专属选项
         cmd.append("--windows-console-mode=disable")
         
         if ICON_PATH_WIN.exists():
@@ -148,49 +136,39 @@ def build_nuitka(mode):
         cmd.append("--windows-file-description=QA-Tool Quality Analysis Tool")
     
     elif sys.platform == "linux":
-        # Linux 专属选项
         if ICON_PATH_LINUX.exists():
             cmd.append("--linux-icon=" + str(ICON_PATH_LINUX))
     
     elif sys.platform == "darwin":
-        # macOS 专属选项
         if ICON_PATH_LINUX.exists():
             cmd.append("--macos-create-app-bundle")
             cmd.append("--macos-app-icon=" + str(ICON_PATH_LINUX))
 
-    # 强制包含所有数据目录
     for src_rel, dest_rel in DATA_DIRS:
         src_abs = str(PROJECT_DIR / src_rel)
         include_opt = "--include-data-dir=" + src_abs + "=" + dest_rel
         cmd.append(include_opt)
 
-    # 强制包含单个数据文件
     for src_rel, dest_rel in DATA_FILES:
         src_abs = str(PROJECT_DIR / src_rel)
         include_opt = "--include-data-file=" + src_abs + "=" + dest_rel
         cmd.append(include_opt)
 
-    # 隐藏导入
     for imp in HIDDEN_IMPORTS:
         cmd.append("--include-module=" + imp)
 
-    # 排除不需要的模块
     for excl in EXCLUDES:
         cmd.append("--nofollow-import-to=" + excl)
 
-    # 其他优化选项
     cmd.append("--assume-yes-for-downloads")
     cmd.append("--remove-output")
 
-    # 入口文件（必须最后）
     cmd.append(str(ENTRY_POINT))
 
-    # ── 打印完整命令 ─────────────────────────────────────────
     print("[cmd] 构建命令:")
     cmd_display = " \\\n  ".join(cmd)
     print("  " + cmd_display + "\n")
 
-    # ── 执行构建 ─────────────────────────────────────────────
     print("[build] 开始构建，请耐心等待...\n")
     result = subprocess.run(
         cmd,
@@ -199,18 +177,15 @@ def build_nuitka(mode):
         text=True,
     )
 
-    # ── 输出构建日志 ─────────────────────────────────────────
     if result.stdout:
         print(result.stdout)
     if result.stderr:
         print(result.stderr, file=sys.stderr)
 
-    # ── 检查结果 ─────────────────────────────────────────────
     if result.returncode != 0:
         print("\n[error] 构建失败! 返回码: " + str(result.returncode))
         sys.exit(result.returncode)
 
-    # ── 查找并报告输出文件 ───────────────────────────────────
     report_output(mode)
 
 
@@ -268,18 +243,15 @@ def main():
 
     args = parser.parse_args()
 
-    # ── 检查入口文件 ─────────────────────────────────────────
     if not ENTRY_POINT.exists():
         print("[error] 入口文件不存在: " + str(ENTRY_POINT))
         sys.exit(1)
 
-    # ── 检查图标文件 ─────────────────────────────────────────
     if sys.platform == "win32" and not ICON_PATH_WIN.exists():
         print("[warn] 图标文件不存在: " + str(ICON_PATH_WIN) + "，将不使用自定义图标")
     elif sys.platform == "linux" and not ICON_PATH_LINUX.exists():
         print("[warn] 图标文件不存在: " + str(ICON_PATH_LINUX) + "，将不使用自定义图标")
 
-    # ── 清理旧构建 ─────────────────────────────────────────
     print("[clean] 清理旧构建目录...")
     clean_old_dirs()
 
@@ -287,7 +259,6 @@ def main():
         print("[done] 清理完成")
         return
 
-    # ── 确定构建模式 ─────────────────────────────────────────
     if args.onefile and args.standalone:
         mode = "both"
     elif args.onefile:
@@ -301,7 +272,6 @@ def main():
         print("        python build_nuitka.py --onefile --standalone")
         sys.exit(1)
 
-    # ── 开始构建 ─────────────────────────────────────────────
     build_nuitka(mode)
 
 

@@ -10,7 +10,6 @@ from scipy import stats
 from scipy.optimize import minimize
 
 
-# Johnson 变换类型
 JOHNSON_TYPES = ["SU", "SB", "SL", "LN"]
 
 
@@ -43,7 +42,6 @@ def johnson_transform(
         }
 
     if method == "auto":
-        # 自动选择最佳变换类型
         result = _auto_select_transform(data)
     elif method in JOHNSON_TYPES:
         result = _fit_johnson(data, method)
@@ -107,12 +105,10 @@ def transform_value(
     x = value
 
     if johnson_type == "SU":
-        # SU: y = gamma + delta * arcsinh((x - xi) / lambda)
         z = (x - xi) / lam
         return gamma + delta * np.arcsinh(z)
 
     elif johnson_type == "SB":
-        # SB: y = gamma + delta * log((x - xi) / (xi + lambda - x))
         if lam <= 0:
             return float("inf")
         z = (x - xi) / lam
@@ -121,14 +117,12 @@ def transform_value(
         return gamma + delta * np.log(z / (1 - z))
 
     elif johnson_type == "SL":
-        # SL: y = gamma + delta * log(x - xi)
         z = x - xi
         if z <= 0:
             return float("-inf")
         return gamma + delta * np.log(z)
 
     elif johnson_type == "LN":
-        # LN: y = gamma + delta * log(x - xi)
         z = x - xi
         if z <= 0:
             return float("-inf")
@@ -137,8 +131,6 @@ def transform_value(
     else:
         raise ValueError(f"不支持的 Johnson 类型: {johnson_type}")
 
-
-# ── 内部函数：变换拟合 ──────────────────────────────
 
 def _auto_select_transform(data: np.ndarray) -> Dict[str, Any]:
     """自动选择最佳 Johnson 变换类型"""
@@ -149,11 +141,9 @@ def _auto_select_transform(data: np.ndarray) -> Dict[str, Any]:
         try:
             result = _fit_johnson(data, jtype)
             if "error" not in result:
-                # 使用 AD 统计量作为选择标准
                 transformed = result["transformed"]
                 _, ad_p = stats.normaltest(transformed)
-                # p 值越大表示越接近正态
-                score = -ad_p  # 最小化负 p 值（即最大化 p 值）
+                score = -ad_p
                 if score < best_score:
                     best_score = score
                     best_result = result
@@ -161,7 +151,6 @@ def _auto_select_transform(data: np.ndarray) -> Dict[str, Any]:
             continue
 
     if best_result is None:
-        # 如果所有变换都失败，使用 z-score 标准化
         std = np.std(data, ddof=1)
         if std <= 0:
             std = 1.0
@@ -178,23 +167,19 @@ def _auto_select_transform(data: np.ndarray) -> Dict[str, Any]:
 
 def _fit_johnson(data: np.ndarray, jtype: str) -> Dict[str, Any]:
     """拟合指定类型的 Johnson 变换"""
-    # 标准化数据到 [0, 1] 范围用于参数估计
     x_min, x_max = data.min(), data.max()
     x_range = x_max - x_min
     if x_range <= 0:
         x_range = 1.0
     x_std = (data - x_min) / x_range
 
-    # 使用矩估计初始参数
     try:
         params = _estimate_params_moment(data, jtype)
     except Exception:
         params = {"gamma": 0, "delta": 1, "xi": x_min, "lambda": x_range}
 
-    # 应用变换
     transformed = np.array([transform_value(x, params, jtype) for x in data])
 
-    # 检查变换结果
     finite_mask = np.isfinite(transformed)
     if finite_mask.sum() < len(data) * 0.9:
         return {
@@ -204,7 +189,6 @@ def _fit_johnson(data: np.ndarray, jtype: str) -> Dict[str, Any]:
             "error": f"变换后有限值比例过低 ({finite_mask.sum()}/{len(data)})",
         }
 
-    # 计算正态性检验
     finite_transformed = transformed[finite_mask]
     if len(finite_transformed) >= 8:
         _, p_value = stats.normaltest(finite_transformed)
@@ -227,11 +211,8 @@ def _estimate_params_moment(data: np.ndarray, jtype: str) -> Dict[str, float]:
     skew = stats.skew(data)
     kurt = stats.kurtosis(data)
 
-    # 基于偏度和峰度的简单矩估计
-    # 实际应用中应使用更精确的方法（如 L-moments）
 
     if jtype == "SU":
-        # SU 分布：偏度可以是任意值
         delta = max(1.0, np.sqrt(np.log(1 + (std/mean)**2))) if mean != 0 else 1.0
         gamma = skew * delta / 3 if abs(skew) < 10 else 0
         xi = mean - std * 0.5
@@ -239,7 +220,6 @@ def _estimate_params_moment(data: np.ndarray, jtype: str) -> Dict[str, float]:
         return {"gamma": gamma, "delta": delta, "xi": xi, "lambda": lam}
 
     elif jtype == "SB":
-        # SB 分布：有界分布
         xi = data.min() - abs(std) * 0.1
         lam = (data.max() - data.min()) * 1.2
         delta = max(1.0, 2.0 / (1 + abs(skew)))
@@ -247,7 +227,6 @@ def _estimate_params_moment(data: np.ndarray, jtype: str) -> Dict[str, float]:
         return {"gamma": gamma, "delta": delta, "xi": xi, "lambda": lam}
 
     elif jtype == "SL":
-        # SL 分布：左尾无界
         xi = data.min() - abs(std) * 0.1
         delta = max(1.0, np.sqrt(np.log(1 + (std/mean)**2))) if mean != 0 else 1.0
         gamma = -skew * delta / 3 if abs(skew) < 10 else 0
@@ -255,10 +234,8 @@ def _estimate_params_moment(data: np.ndarray, jtype: str) -> Dict[str, float]:
         return {"gamma": gamma, "delta": delta, "xi": xi, "lambda": lam}
 
     elif jtype == "LN":
-        # LN 类型：对数正态
         xi = 0.0
         lam = 1.0
-        # 使用对数变换参数
         log_data = np.log(data[data > 0])
         if len(log_data) > 0:
             delta = 1.0 / np.std(log_data, ddof=1) if np.std(log_data, ddof=1) > 0 else 1.0
@@ -271,8 +248,6 @@ def _estimate_params_moment(data: np.ndarray, jtype: str) -> Dict[str, float]:
     else:
         raise ValueError(f"不支持的 Johnson 类型: {jtype}")
 
-
-# ── 内部函数：逆变换 ──────────────────────────────
 
 def _inverse_su(transformed: np.ndarray, params: Dict[str, float]) -> np.ndarray:
     """SU 逆变换"""

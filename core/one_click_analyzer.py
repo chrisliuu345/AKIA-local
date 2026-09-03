@@ -27,7 +27,6 @@ class OneClickAnalyzer:
             self._progress_cb(msg, pct)
         _log.info(msg)
 
-    # ── 阶段1: 画像 + 推荐 ──
     def profile_and_recommend(self, raw_data: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
         """数据画像并生成推荐分析列表"""
         self._emit("分析数据画像...", 5)
@@ -36,7 +35,6 @@ class OneClickAnalyzer:
         recommendations = []
         sheets = profile.get("sheets", {})
 
-        # 收集所有列信息
         all_numeric = []
         all_datetime = []
         all_text = []
@@ -56,10 +54,8 @@ class OneClickAnalyzer:
                     col_info["sheet"] = sn
                     all_text.append(col_info)
 
-        # ── 推荐逻辑 ──
         self._emit("生成分析推荐...", 15)
 
-        # SPC: 有数值列+时间列
         if all_numeric and all_datetime:
             recommendations.append({
                 "type": "spc", "label": "SPC 控制图",
@@ -71,7 +67,6 @@ class OneClickAnalyzer:
                 "priority": "medium", "reason": f"有{len(all_numeric)}个数值列, 可进行过程能力评估",
             })
 
-        # 过程能力
         if all_numeric:
             recommendations.append({
                 "type": "capability", "label": "过程能力分析",
@@ -79,35 +74,30 @@ class OneClickAnalyzer:
                 "reason": f"{len(all_numeric)}个数值列适合 Cp/Cpk 评估",
             })
 
-        # MSA: 多个同类型测量列
         if len(all_numeric) >= 3:
             recommendations.append({
                 "type": "msa", "label": "测量系统分析 (MSA)",
                 "priority": "medium", "reason": "多列数值型数据，建议评估测量系统变差",
             })
 
-        # 假设检验: 有分组信息
         if all_text or all_numeric:
             recommendations.append({
                 "type": "hypothesis", "label": "假设检验",
                 "priority": "medium", "reason": "可进行组间差异显著性分析",
             })
 
-        # DOE: 多个因子列
         if len(all_numeric) >= 4:
             recommendations.append({
                 "type": "doe", "label": "实验设计 (DOE)",
                 "priority": "low", "reason": f"{len(all_numeric)}个因子可进行因子效应分析",
             })
 
-        # 回归
         if len(all_numeric) >= 2:
             recommendations.append({
                 "type": "regression", "label": "回归分析",
                 "priority": "medium", "reason": "可建立变量间定量关系模型",
             })
 
-        # 图表
         if all_numeric:
             recommendations.append({
                 "type": "chart", "label": "图表可视化",
@@ -125,7 +115,6 @@ class OneClickAnalyzer:
             },
         }
 
-    # ── 阶段2: 批量执行分析 ──
     def execute_analyses(self, raw_data: Dict[str, pd.DataFrame],
                          profile_result: Dict[str, Any],
                          selected: List[str]) -> List[Dict[str, Any]]:
@@ -133,9 +122,8 @@ class OneClickAnalyzer:
         results = []
         total = len(selected)
         base_pct = 30
-        pct_range = 55  # 30→85%
+        pct_range = 55
 
-        # 从画像结果中提取测量类列名（替代 select_dtypes，因数据以 str 加载）
         first_sheet = list(raw_data.values())[0] if raw_data else pd.DataFrame()
         num_cols = []
         sheets = profile_result.get("profile", {}).get("sheets", {})
@@ -143,7 +131,7 @@ class OneClickAnalyzer:
             for col in info.get("columns", []):
                 if col.get("category") == "measurement":
                     num_cols.append(col.get("name", ""))
-        num_cols = num_cols[:8]  # 最多8个
+        num_cols = num_cols[:8]
 
         for i, analysis_type in enumerate(selected):
             self._emit(f"执行: {analysis_type}...", base_pct + int(pct_range * i / max(total, 1)))
@@ -204,13 +192,11 @@ class OneClickAnalyzer:
             if atype == "msa" and len(num_cols) >= 2:
                 from analysis.msa.gage_rr import analyze_crossed
                 col = num_cols[0]
-                # 构造至少2个操作员的MSA数据
                 msa_df = df[[col]].copy()
                 msa_df["part"] = (df.index % max(5, min(10, len(df) // 5))).astype(str)
                 msa_df["operator"] = ["OP1" if i % 2 == 0 else "OP2" for i in range(len(msa_df))]
                 result = analyze_crossed(msa_df, col, "part", "operator")
                 pcts = result.get("percentages", {})
-                # W10 fix: 统一为0-1标度（与kpi_extractor一致）
                 grr_raw = pcts.get("grr_pct_tv")
                 grr_normalized = grr_raw / 100.0 if grr_raw is not None else None
                 return {
@@ -266,7 +252,6 @@ class OneClickAnalyzer:
 
         return None
 
-    # ── 阶段3: AI 合成 ──
     def synthesize(self, results: List[Dict], profile: Dict) -> str:
         """调用 LLM 生成分析结论（或使用知识库降级）"""
         summary_parts = []
@@ -298,7 +283,6 @@ class OneClickAnalyzer:
             except Exception:
                 pass
 
-        # 降级: 知识库 + 规则生成
         return self._fallback_synthesis(results, stats)
 
     def _fallback_synthesis(self, results: List[Dict], stats: Dict) -> str:
@@ -322,14 +306,13 @@ class OneClickAnalyzer:
                 elif label == "capability":
                     cpk = s.get("cpk")
                     if cpk:
-                        cpk_a = CAPABILITY_GRADES["A"][0]  # 1.33
-                        cpk_b = CAPABILITY_GRADES["B"][0]  # 1.00
+                        cpk_a = CAPABILITY_GRADES["A"][0]
+                        cpk_b = CAPABILITY_GRADES["B"][0]
                         level = f"充足(Cpk≥{cpk_a})" if cpk >= cpk_a else (f"尚可(Cpk≥{cpk_b})" if cpk >= cpk_b else f"不足(Cpk<{cpk_b})")
                         lines.append(f"- **过程能力**: Cpk={cpk:.2f}, 等级: {level}")
                 elif label == "msa":
                     grr = s.get("grr_pct")
                     if grr is not None:
-                        # W10 fix: 统一0-1标度（kpi_extractor归一化为0-1）
                         ok = f"可接受(<{MSA_GRR_ACCEPTABLE*100:.0f}%)" if grr < MSA_GRR_ACCEPTABLE else (f"条件接受({MSA_GRR_ACCEPTABLE*100:.0f}-{MSA_GRR_MARGINAL*100:.0f}%)" if grr < MSA_GRR_MARGINAL else f"不可接受(>{MSA_GRR_MARGINAL*100:.0f}%)")
                         lines.append(f"- **MSA 量具 R&R**: GRR={grr*100:.1f}%, {ok}")
                 elif label == "regression":
@@ -349,26 +332,21 @@ class OneClickAnalyzer:
 
         return "\n".join(lines)
 
-    # ── 一键执行(全流程) ──
     def run(self, raw_data: Dict[str, pd.DataFrame],
             selected: Optional[List[str]] = None) -> Dict[str, Any]:
         """一键执行全流程: 画像 → 推荐 → 执行 → 合成"""
         self._emit("开始一键分析...", 0)
 
-        # Phase 1
         plan = self.profile_and_recommend(raw_data)
         if selected is None:
-            # 默认选择 high priority 的推荐
             selected = [r["type"] for r in plan["recommendations"] if r.get("priority") == "high"]
             if not selected:
                 selected = [r["type"] for r in plan["recommendations"][:4]]
 
         self._emit(f"选定 {len(selected)} 项分析: {', '.join(selected)}", 25)
 
-        # Phase 2
         results = self.execute_analyses(raw_data, plan, selected)
 
-        # Phase 3
         self._emit("AI 撰写分析结论...", 90)
         conclusion = self.synthesize(results, plan.get("profile", {}))
 

@@ -88,7 +88,6 @@ class SummaryPanelTab(BaseAnalysisTab):
 
         self._clear_canvas()
         tc = theme_colors()
-        # plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]  # redundant, handled by chart_engine.setup_chinese_font()
         plt.rcParams["axes.unicode_minus"] = False
 
         n = len(val_cols)
@@ -101,7 +100,6 @@ class SummaryPanelTab(BaseAnalysisTab):
             vals = pd.to_numeric(self.df[col], errors="coerce").dropna().values
             if len(vals) < 3: continue
 
-            # 每列: 左hist + 右stats
             ax_hist = fig.add_subplot(rows, cols_per_row * 2,
                                       i // cols_per_row * cols_per_row * 2 + (i % cols_per_row) * 2 + 1)
             ax_stats = fig.add_subplot(rows, cols_per_row * 2,
@@ -110,20 +108,17 @@ class SummaryPanelTab(BaseAnalysisTab):
             ax_hist.set_facecolor(tc["bg_body"])
             ax_stats.set_facecolor(tc["bg_body"])
 
-            # Mini 直方图
             bins = min(25, max(5, int(np.sqrt(len(vals)))))
             ax_hist.hist(vals, bins=bins, color=tc["accent_bright"], alpha=0.75, edgecolor="white", linewidth=0.3)
             ax_hist.axvline(np.mean(vals), color="#ff6b6b", linestyle="--", linewidth=1)
             ax_hist.set_title(col, fontsize=9, fontweight="bold", color=tc["text_primary"])
             ax_hist.tick_params(colors=tc["text_muted"], labelsize=7)
 
-            # Sparkline (mini 折线图)
             ax_spark = ax_hist.inset_axes([0.78, 0.85, 0.20, 0.12])
             ax_spark.plot(np.arange(len(vals)), vals, linewidth=0.5, color=tc["accent_bright"])
             ax_spark.fill_between(np.arange(len(vals)), vals, alpha=0.15, color=tc["accent_bright"])
             ax_spark.axis("off")
 
-            # 右侧统计
             ax_stats.axis("off")
             stats = [
                 f"N = {len(vals)}",

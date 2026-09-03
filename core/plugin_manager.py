@@ -10,7 +10,7 @@ class IPlugin:
     """插件接口 — 第三方 Tab 扩展需实现此接口"""
     name: str = "Unnamed"
     version: str = "0.1"
-    category: str = "engineering"  # quality|ie|chart|engineering|sheet|sampling|report
+    category: str = "engineering"
     icon: str = "🔌"
     description: str = ""
 
@@ -61,7 +61,7 @@ class PluginManager:
     def get_sidebar_entries(self) -> List[tuple]:
         """返回 [(index, i18n_key), ...] 用于侧栏注册"""
         entries = []
-        base_idx = 100  # 插件使用 100+ 的 index
+        base_idx = 100
         for i, (name, p) in enumerate(self._plugins.items()):
             entries.append((base_idx + i, f"plugin_{name}"))
         return entries

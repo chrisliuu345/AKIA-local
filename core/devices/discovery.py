@@ -15,7 +15,7 @@ class DeviceInfo:
     description: str = ""
 
 
-DEVICE_LIMIT = 8  # 单次扫描最多探测的串口数，防止多串口机器长时间阻塞 UI (W87)
+DEVICE_LIMIT = 8
 
 
 def discover_devices(timeout: float = 0.5,
@@ -34,9 +34,6 @@ def discover_devices(timeout: float = 0.5,
     if len(ports) > DEVICE_LIMIT:
         logger.info("Discovery limited to %d of %d ports (W87)", DEVICE_LIMIT, len(ports))
         ports = ports[:DEVICE_LIMIT]
-    # Opening a serial port resets an attached ESP32 (auto-reset circuit); the
-    # board needs ~1-2s to boot and announces itself (HELLO) right after boot,
-    # so the read window must cover the boot stream.
     window = max(timeout, 4.0)
     for info in ports:
         if cancel_check is not None and cancel_check():
@@ -46,9 +43,6 @@ def discover_devices(timeout: float = 0.5,
         try:
             import serial
             with serial.Serial(port=port, baudrate=115200, timeout=0.2) as ser:
-                # ESP32 boards with an auto-reset circuit reboot on serial line
-                # transitions.  Pulse the board so it always boots normally
-                # (RTS=EN reset, DTR=GPIO0; mapping seen on the QA-Tool board).
                 try:
                     ser.setDTR(False)
                     ser.setRTS(True)

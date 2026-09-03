@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 
 LOG_FILE = os.path.join(os.path.expanduser("~"), ".qa_tool_audit.log")
-_MAX_LOG_SIZE = 5 * 1024 * 1024  # 5MB
+_MAX_LOG_SIZE = 5 * 1024 * 1024
 
 
 def _rotate_if_needed():

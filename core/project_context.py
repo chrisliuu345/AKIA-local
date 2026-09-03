@@ -13,22 +13,21 @@ from config.settings import RPN_HIGH
 @dataclass
 class QualityCharacteristic:
     """质量特性 — 五链贯通的核心数据单元"""
-    id: str = ""                     # 唯一标识 (如 "QC-001")
-    name: str = ""                   # 特性名称 (如 "轴径 φ10±0.02")
-    process: str = ""                # 工序名称
-    usl: Optional[float] = None      # 上规格限
-    lsl: Optional[float] = None      # 下规格限
-    target: Optional[float] = None   # 目标值
-    unit: str = ""                   # 单位
-    data_source: str = ""            # 数据源 (sheet_name:column)
-    spc_method: str = ""             # 推荐 SPC 方法 (XBar-R, I-MR, etc.)
-    notes: str = ""                  # 备注
+    id: str = ""
+    name: str = ""
+    process: str = ""
+    usl: Optional[float] = None
+    lsl: Optional[float] = None
+    target: Optional[float] = None
+    unit: str = ""
+    data_source: str = ""
+    spc_method: str = ""
+    notes: str = ""
 
-    # 关联 ID (用于五链追踪)
-    fmea_item_id: str = ""           # 关联 FMEA 条目
-    cp_row_id: str = ""              # 关联控制计划行
-    ppap_item_id: str = ""           # 关联 PPAP 条目
-    eight_d_id: str = ""             # 关联 8D 报告
+    fmea_item_id: str = ""
+    cp_row_id: str = ""
+    ppap_item_id: str = ""
+    eight_d_id: str = ""
 
     def to_dict(self) -> dict:
         return {
@@ -52,16 +51,13 @@ class ProjectContext:
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str = field(default_factory=lambda: datetime.now().isoformat())
 
-    # 质量特性列表
     characteristics: List[QualityCharacteristic] = field(default_factory=list)
 
-    # 工程数据 (FMEA / CP / PPAP / 8D)
-    fmea_items: List[dict] = field(default_factory=list)      # FMEAItem 序列化
-    control_plan_rows: List[dict] = field(default_factory=list)  # 控制计划行
-    ppap_report: Dict[str, Any] = field(default_factory=dict)    # PPAP 报告状态
-    eight_d_reports: List[dict] = field(default_factory=list)    # 8D 报告列表
+    fmea_items: List[dict] = field(default_factory=list)
+    control_plan_rows: List[dict] = field(default_factory=list)
+    ppap_report: Dict[str, Any] = field(default_factory=dict)
+    eight_d_reports: List[dict] = field(default_factory=list)
 
-    # 分析结果快照 (可选，用于跨 Tab 引用)
     analysis_snapshots: Dict[str, Dict[str, Any]] = field(default_factory=dict)
 
     def add_characteristic(self, qc: QualityCharacteristic):
@@ -121,7 +117,6 @@ class ProjectContext:
         """获取分析结果快照"""
         return self.analysis_snapshots.get(key)
 
-    # ── 五链查询 ──────────────────────────────────────
     def get_high_risk_fmea_items(self, threshold: int = RPN_HIGH) -> List[dict]:
         """获取高风险 FMEA 条目 (RPN >= threshold)"""
         return [item for item in self.fmea_items if item.get("rpn", 0) >= threshold]
@@ -134,7 +129,6 @@ class ProjectContext:
         """获取需要生成控制计划的 FMEA 条目 (高风险项)"""
         return self.get_high_risk_fmea_items()
 
-    # ── 序列化 ──────────────────────────────────────
     def to_dict(self) -> dict:
         return {
             "project_name": self.project_name,

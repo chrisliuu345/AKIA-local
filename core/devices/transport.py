@@ -98,7 +98,6 @@ class SerialTransport(Transport):
             time.sleep(0.3)
             self._serial.setRTS(False)
             time.sleep(0.2)
-            # W99: reset_input_buffer() 清除复位期间产生的乱码，已复验有效
             self._serial.reset_input_buffer()
         except Exception as e:
             raise TransportError(f"Reset board on {self._port} failed: {e}") from e
@@ -213,7 +212,6 @@ class TcpTransport(Transport):
                     break
                 data = self._sock.recv(4096)
                 if not data:
-                    # 对端关闭连接
                     if self.on_error:
                         self.on_error(TransportError("Connection closed by peer"))
                     break

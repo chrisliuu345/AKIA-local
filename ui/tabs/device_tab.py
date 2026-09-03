@@ -385,7 +385,6 @@ class DeviceTab(BaseAnalysisTab):
                 time.sleep(0.1)
 
     def _on_update_devices(self, found: list):
-        # W52: 恢复按钮状态（主线程安全）
         self.refresh_btn.setEnabled(True)
         self.refresh_btn.setText(i18n.tr("device.refresh"))
         for info in found:
@@ -487,7 +486,6 @@ class DeviceTab(BaseAnalysisTab):
                 self.update_devices.emit([])
 
         threading.Thread(target=_run, daemon=True).start()
-        # W52: 不在后台线程操作 QWidget；按钮恢复由 _on_update_devices 信号处理
 
     def _on_device_state_changed(self, device_id: str, state: DeviceState):
         self._rebuild_cards()

@@ -25,8 +25,6 @@ from core.kpi_extractor import extract_metrics
 from core.kpi_formula import evaluate, describe_variables, FormulaError
 from ui.font_config import get_ui_font
 
-# 指标显示名 (i18n 键) + 格式化器
-# 百分比类指标统一为 0-1 分数 (extractor 已归一化), format_pct 直接使用
 _METRIC_SPECS = {
     "cp":           ("dashboard.metric.cp",        format_cp),
     "cpk":          ("dashboard.metric.cpk",       format_cp),
@@ -61,7 +59,6 @@ _METRIC_SPECS = {
     "standard_time": ("dashboard.metric.std_time",  lambda v: f"{v:.2f}"),
     "bottleneck_count": ("dashboard.metric.bottleneck", lambda v: f"{v}"),
     "worker_utilization": ("dashboard.metric.utilization", format_pct),
-    # v3.0 新增: 公差区间 / SMED / 多工厂 / 时间研究
     "tolerance_lower":  ("dashboard.metric.tol_lower", lambda v: f"{v:.2f}"),
     "tolerance_upper":  ("dashboard.metric.tol_upper", lambda v: f"{v:.2f}"),
     "tolerance_width":  ("dashboard.metric.tol_width", lambda v: f"{v:.2f}"),
@@ -84,8 +81,8 @@ _STATUS_COLORS = {"na": "#6e7080", "good": "#27ae60", "warn": "#ffa726", "bad": 
 def _cpk_status(cpk):
     if cpk is None:
         return None
-    cpk_b = CAPABILITY_GRADES["B"][0]  # 1.00
-    cpk_a = CAPABILITY_GRADES["A"][0]  # 1.33
+    cpk_b = CAPABILITY_GRADES["B"][0]
+    cpk_a = CAPABILITY_GRADES["A"][0]
     if cpk < cpk_b:
         return "bad"
     if cpk < cpk_a:
@@ -121,7 +118,6 @@ class DashboardTab(BaseAnalysisTab):
         self._df_cache = None
         self._df_cache_key = None
         self._settings = QSettings("QA-Tool", "Dashboard")
-        # F1: 轮询兜底定时器
         self._timer = QTimer(self)
         self._timer.setInterval(_REFRESH_INTERVAL_MS)
         self._timer.timeout.connect(self._poll_refresh)
@@ -171,7 +167,6 @@ class DashboardTab(BaseAnalysisTab):
         hdr.addWidget(self.btn_export)
         layout.addLayout(hdr)
 
-        # 垂直滚动卡片容器
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
@@ -183,7 +178,6 @@ class DashboardTab(BaseAnalysisTab):
         scroll.setWidget(self.card_container)
         layout.addWidget(scroll, 1)
 
-    # ── F1: 刷新 ─────────────────────────────────────────
     @staticmethod
     def _sig(obj, depth: int = 0) -> str:
         """轻量内容签名 — O(1) 深度受限, 替代全量 str() (大数组场景避免 O(n))"""
@@ -232,20 +226,17 @@ class DashboardTab(BaseAnalysisTab):
         self._cards.append(empty)
 
     def refresh(self):
-        # 清除旧卡片
         for c in self._cards:
             if c.parent():
                 c.setParent(None)
                 c.deleteLater()
         self._cards.clear()
-        # 清空 layout (保留末尾 stretch)
         while self.card_layout.count():
             item = self.card_layout.takeAt(0)
             w = item.widget()
             if w:
                 w.setParent(None)
                 w.deleteLater()
-        # 空态早退也更新指纹, 避免每 5s 重复重建空标签
         self._last_fp = self._analyses_fingerprint()
 
         parent = self.window()
@@ -260,7 +251,6 @@ class DashboardTab(BaseAnalysisTab):
             self.card_layout.addStretch()
             return
 
-        # F2: 用户布局顺序 + 隐藏过滤
         order = self._settings.value("order", [])
         hidden_raw = self._settings.value("hidden", [])
         if not isinstance(order, (list, tuple)):
@@ -270,17 +260,14 @@ class DashboardTab(BaseAnalysisTab):
         rest = [k for k in sorted(metrics_map) if k not in ordered and k not in hidden]
         keys = ordered + rest
 
-        # 收集公式卡片
         from ui.dialogs.formula_dialog import FormulaDialog
         formulas = FormulaDialog.load_formulas()
         variables = describe_variables(parent.analyses, self._get_analysis_df())
 
-        # 收集 tab 实例映射 (用于获取图表)
         tabs = parent._get_tabs() if hasattr(parent, "_get_tabs") else {}
 
         card_idx = 0
 
-        # 先添加公式卡片
         for name, expr in formulas.items():
             card = self._make_formula_card(name, expr, variables)
             self.card_layout.insertWidget(card_idx, card)
@@ -288,12 +275,10 @@ class DashboardTab(BaseAnalysisTab):
             fade_in(card)
             card_idx += 1
 
-        # 再添加分析卡片 (带图表)
         for atype in keys:
             rows = self._collect_rows(metrics_map[atype])
             metrics = metrics_map[atype]
 
-            # 查找对应的 tab 实例和图表
             fig = None
             timestamp = ""
             for idx, entry in parent.analyses.items():
@@ -322,7 +307,6 @@ class DashboardTab(BaseAnalysisTab):
 
         self.card_layout.addStretch()
 
-    # ── 指标收集 ──────────────────────────────────────────
     @staticmethod
     def _collect_rows(metrics: dict):
         """收集可显示指标行"""
@@ -375,7 +359,6 @@ class DashboardTab(BaseAnalysisTab):
             return ts[11:16]
         return ts
 
-    # ── 大屏模式 ──────────────────────────────────────────
     def _open_display_mode(self):
         parent = self.window()
         if not parent or not hasattr(parent, "analyses") or not parent.analyses:
@@ -389,7 +372,6 @@ class DashboardTab(BaseAnalysisTab):
             self._display_window = DisplayModeWindow(parent)
             self._display_window.showFullScreen()
 
-    # ── 公式编辑器 ───────────────────────────────────────
     def _get_analysis_df(self):
         parent = self.window()
         if not parent or not hasattr(parent, "current_data"):
@@ -449,7 +431,6 @@ class DashboardTab(BaseAnalysisTab):
         l.addStretch()
         return frame
 
-    # ── 布局对话框 ───────────────────────────────────────
     def _open_layout_dialog(self):
         parent = self.window()
         items = []
@@ -463,7 +444,6 @@ class DashboardTab(BaseAnalysisTab):
         if dlg.exec() == dlg.Accepted:
             self.refresh()
 
-    # ── 批量导出 ─────────────────────────────────────────
     def _batch_export(self):
         parent = self.window()
         if not parent or not hasattr(parent, "analyses") or not parent.analyses:

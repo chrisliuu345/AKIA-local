@@ -23,7 +23,6 @@ def analyze(
 
     sigma = float(np.std(values, ddof=1)) if n > 1 else 1.0
 
-    # W29 fix: 常数列σ=0时返回稳定态，避免满屏伪违规
     if sigma == 0:
         return {
             "chart_type": "CUSUM",

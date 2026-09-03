@@ -56,7 +56,6 @@ def analyze(
     else:
         E = pd.Series(np.ones(n, dtype=int), index=T.index)
 
-    # Weibull 拟合 (2P)
     failures = T[E == 1].values
     if len(failures) < 3:
         return {"analysis_type": "reliability.warranty", "error": "失效事件不足（至少3个）"}
@@ -66,21 +65,16 @@ def analyze(
     beta = shape
     eta = scale
 
-    # 保修期内可靠性: R(t) = exp(-(t/eta)^beta)
     r_warranty = math.exp(-((warranty_period / eta) ** beta))
 
-    # 预期失效数
     expected_failures = total_units * (1 - r_warranty)
 
-    # 首次失效预测: F(t) = 0.01 → t = eta * (-ln(0.99))^(1/beta)
     first_failure_1pct = eta * (-math.log(0.99)) ** (1 / beta)
     first_failure_5pct = eta * (-math.log(0.95)) ** (1 / beta)
 
-    # 保修成本
     warranty_cost = expected_failures * cost_per_failure
     cost_per_unit = warranty_cost / total_units if total_units > 0 else 0
 
-    # 置信区间（基于二项分布）
     z = sp_stats.norm.ppf((1 + confidence_level) / 2)
     p_fail = 1 - r_warranty
     se_fail = math.sqrt(p_fail * (1 - p_fail) / n)

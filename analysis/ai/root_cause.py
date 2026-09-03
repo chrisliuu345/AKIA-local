@@ -18,10 +18,10 @@ import pandas as pd
 @dataclass
 class RootCause:
     column: str
-    score: float            # 综合得分 0-1
-    importance: float       # 特征重要性（归一化）
-    correlation: float      # max(|pearson|, |spearman|)
-    anomaly_linkage: int    # 异常点共现次数
+    score: float
+    importance: float
+    correlation: float
+    anomaly_linkage: int
     explanation: str = ""
 
 
@@ -53,9 +53,6 @@ class RootCauseAnalyzer:
         self.W_CORRELATION = w_correlation if w_correlation is not None else ROOT_CAUSE_W_CORRELATION
         self.W_LINKAGE = w_linkage if w_linkage is not None else ROOT_CAUSE_W_LINKAGE
 
-    # ──────────────────────────────────────────────
-    # 主入口
-    # ──────────────────────────────────────────────
     def analyze(self, df: pd.DataFrame, target_column: str,
                 violations: Optional[List[Dict]] = None,
                 subgroup_size: int = 1,
@@ -87,7 +84,6 @@ class RootCauseAnalyzer:
             out["error"] = f"目标列有效数据不足（{valid_y.sum()} 行，至少 {self.MIN_ROWS} 行）"
             return out
 
-        # ── 特征列筛选 ──
         feature_cols = []
         for c in df.columns:
             if c == target_column:
@@ -104,12 +100,10 @@ class RootCauseAnalyzer:
         yv = y[valid_y].astype(float)
         X = X.fillna(X.median(numeric_only=True)).fillna(0.0)
 
-        # 限流采样
         if len(X) > self.max_rows:
             idx = X.sample(self.max_rows, random_state=self.random_state).index.sort_values()
             X, yv = X.loc[idx], yv.loc[idx]
 
-        # ── 三路证据 ──
         importance, method = self._compute_feature_importance(X, yv)
         out["method"] = method
         correlation = self._compute_correlations(X, yv)
@@ -118,15 +112,11 @@ class RootCauseAnalyzer:
         out["n_violation_rows"] = len(violation_rows)
         linkage = self._compute_anomaly_linkage(df, feature_cols, violation_rows)
 
-        # ── 融合排序 ──
         causes = self._rank_causes(feature_cols, importance, correlation,
                                    linkage, len(violation_rows))
         out["causes"] = causes[:top_k]
         return out
 
-    # ──────────────────────────────────────────────
-    # 证据 1: 特征重要性 (RF + SHAP)
-    # ──────────────────────────────────────────────
     def _compute_feature_importance(self, X: pd.DataFrame, y: pd.Series):
         from sklearn.ensemble import RandomForestRegressor
 
@@ -151,9 +141,6 @@ class RootCauseAnalyzer:
                 pass
         return np.asarray(model.feature_importances_), "rf"
 
-    # ──────────────────────────────────────────────
-    # 证据 2: 相关性 (Pearson + Spearman 取大)
-    # ──────────────────────────────────────────────
     def _compute_correlations(self, X: pd.DataFrame, y: pd.Series) -> Dict[str, float]:
         from scipy import stats as sp_stats
 
@@ -177,9 +164,6 @@ class RootCauseAnalyzer:
                                   rs if np.isfinite(rs) else 0.0))
         return result
 
-    # ──────────────────────────────────────────────
-    # 证据 3: 异常联动 (异常行 |z|>2 共现)
-    # ──────────────────────────────────────────────
     @staticmethod
     def _violation_row_indices(violations: Optional[List[Dict]],
                                subgroup_size: int, n_rows: int) -> List[int]:
@@ -215,9 +199,6 @@ class RootCauseAnalyzer:
             linkage[c] = int((z.iloc[violation_rows].abs() > 2).sum())
         return linkage
 
-    # ──────────────────────────────────────────────
-    # 融合与解释
-    # ──────────────────────────────────────────────
     @staticmethod
     def _normalize(values: np.ndarray) -> np.ndarray:
         vmax = float(np.max(values)) if len(values) else 0.0

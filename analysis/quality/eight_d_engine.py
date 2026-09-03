@@ -9,14 +9,14 @@ from datetime import datetime
 class D1Step:
     """D1: 组建团队"""
     team_leader: str = ""
-    members: str = ""       # 逗号分隔
+    members: str = ""
     date_started: str = ""
 
 @dataclass
 class D2Step:
     """D2: 描述问题"""
     problem_statement: str = ""
-    what: str = ""          # 5W2H
+    what: str = ""
     where: str = ""
     when: str = ""
     who: str = ""
@@ -34,14 +34,14 @@ class D3Step:
 @dataclass
 class D4Step:
     """D4: 根因分析"""
-    fishbone_data: Optional[dict] = None   # 鱼骨图结构化数据
-    five_why: str = ""                     # 5Why 分析文本
-    root_cause: str = ""                   # 确认根因
+    fishbone_data: Optional[dict] = None
+    five_why: str = ""
+    root_cause: str = ""
 
 @dataclass
 class D5Step:
     """D5: 永久纠正措施 (PCA)"""
-    pca_items: List[dict] = field(default_factory=list)  # [{action, responsible, due_date, status}]
+    pca_items: List[dict] = field(default_factory=list)
     verification_method: str = ""
 
 @dataclass
@@ -55,7 +55,7 @@ class D6Step:
 class D7Step:
     """D7: 预防再发"""
     preventive_actions: str = ""
-    standards_updated: str = ""   # FMEA/CP/SOP 更新
+    standards_updated: str = ""
     training_completed: bool = False
 
 @dataclass
