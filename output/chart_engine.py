@@ -7,7 +7,6 @@ from typing import Dict, Any, List, Tuple
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
-import seaborn as sns
 from config.settings import (
     CHART_COLORS, CHART_DPI, CHART_FIGSIZE,
     FONT_SIZE_TITLE, FONT_SIZE_LABEL, FONT_SIZE_TICK,
@@ -48,7 +47,14 @@ def setup_chinese_font():
     plt.rcParams["axes.unicode_minus"] = False
 
 
-setup_chinese_font()
+_font_initialized = False
+
+
+def _ensure_font():
+    global _font_initialized
+    if not _font_initialized:
+        setup_chinese_font()
+        _font_initialized = True
 
 # ── 智能系统抽样 ──────────────────────────────────────
 # 图表渲染采用智能系统抽样（非随机抽样），原因：
@@ -127,6 +133,7 @@ def create_control_chart(
     title: str = "",
     figsize: Tuple[float, float] = CHART_FIGSIZE,
 ) -> Figure:
+    _ensure_font()
     chart_type = chart_data.get("chart_type", "SPC")
 
     # 动态图宽：超过 200 点后每 40 点加 1 英寸，上限 MAX_FIG_WIDTH
@@ -388,6 +395,7 @@ def create_capability_chart(
     original_data: np.ndarray,
     title: str = "",
 ) -> Figure:
+    _ensure_font()
     # W76 fix: 空数据时返回占位图
     if original_data is None or len(original_data) == 0:
         fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
@@ -443,6 +451,7 @@ def create_capability_chart(
 
 
 def create_pareto_chart(labels: List[str], values: List[float], title: str = "Pareto图") -> Figure:
+    _ensure_font()
     fig, ax1 = plt.subplots(figsize=(10, 5), dpi=_dpi())
 
     # W77 fix: 全零值时跳过百分比曲线
@@ -472,6 +481,7 @@ def create_pareto_chart(labels: List[str], values: List[float], title: str = "Pa
 
 
 def create_histogram(data: np.ndarray, title: str = "", bins: int = 0) -> Figure:
+    _ensure_font()
     fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
 
     if not bins:
@@ -505,6 +515,8 @@ def save_figure(fig: Figure, file_path: str) -> str:
 
 
 def create_correlation_heatmap(df, numeric_cols=None, title="相关矩阵热力图") -> Figure:
+    _ensure_font()
+    import seaborn as sns
     if numeric_cols is None:
         numeric_cols = df.select_dtypes(include="number").columns.tolist()
     else:
