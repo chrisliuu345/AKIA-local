@@ -51,19 +51,14 @@ class DOETab(BaseAnalysisTab):
 
         self.method_combo = QComboBox()
         self.method_combo.addItems([
-            "── 筛选设计 ──",
             "Plackett-Burman 筛选设计",
             "Definitive Screening 设计",
-            "── 因子设计 ──",
             "全因子 2^k 设计分析",
             "生成全因子 2^k 设计",
             "部分因子 2^(k-p) 设计",
-            "── 响应曲面 ──",
             "响应曲面分析 (CCD)",
             "Box-Behnken 设计",
-            "── 田口设计 ──",
             "田口正交阵列分析",
-            "── 混合设计 ──",
             "混合设计分析",
         ])
         config_layout.addRow("方法:", self.method_combo)
@@ -218,8 +213,6 @@ class DOETab(BaseAnalysisTab):
 
     def validate_params(self) -> tuple:
         method = self.method_combo.currentText()
-        if method.startswith("──"):
-            return False, "请从下拉菜单中选择一个有效的分析方法"
         if method == "生成全因子 2^k 设计":
             return True, ""
         if self.df is None:
@@ -259,10 +252,6 @@ class DOETab(BaseAnalysisTab):
     def run_analysis(self) -> Dict[str, Any]:
         method = self.method_combo.currentText()
         result = {}
-
-        # 跳过分隔行
-        if method.startswith("──"):
-            return None
 
         response = self.response_combo.currentText()
         numeric_cols = self.parsed_info.get("numeric_columns", [])
