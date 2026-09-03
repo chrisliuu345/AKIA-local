@@ -4,7 +4,6 @@
 
 from typing import Dict, Any
 import pandas as pd
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
@@ -15,7 +14,6 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
-from analysis.time_series import acf_pacf, seasonal_decomposition, exponential_smoothing, arima, forecasting
 from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_SECONDARY, BUTTON_TOGGLE, BUTTON_PRIMARY_STRETCH
 from ui.font_config import get_ui_font
@@ -256,6 +254,8 @@ class TimeSeriesTab(BaseAnalysisTab):
             self.result_text.setText(f"分析失败: {str(e)}")
 
     def run_analysis(self) -> Dict[str, Any]:
+        from analysis.time_series import acf_pacf, seasonal_decomposition, exponential_smoothing, arima, forecasting
+
         value_col = self.value_col_combo.currentText()
         data = self.df[value_col].dropna()
 
@@ -394,6 +394,7 @@ class TimeSeriesTab(BaseAnalysisTab):
             fig = generate_chart(chart_type_name, data_for_chart)
             self.current_figure = fig
             self._clear_canvas()
+            from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
             self.canvas = FigureCanvasQTAgg(fig)
             self.chart_layout.addWidget(self.canvas)
             self.canvas.draw()

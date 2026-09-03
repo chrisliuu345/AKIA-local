@@ -9,9 +9,37 @@
   warranty — 保修分析
 """
 
-from analysis.reliability.alt import ALTEngine
-from analysis.reliability.weibull import WeibullAnalyzer, WeibullResult
-from analysis.reliability.mtbf import MTBFAnalyzer, MTBFResult
-from analysis.reliability import survival
+_SUBMODULES = {
+    "weibull": ".weibull",
+    "mtbf": ".mtbf",
+    "alt": ".alt",
+    "survival": ".survival",
+    "rbd": ".rbd",
+    "warranty": ".warranty",
+}
 
-__all__ = ["WeibullAnalyzer", "MTBFAnalyzer", "ALTEngine", "WeibullResult", "MTBFResult", "survival"]
+# Class-level exports (lazy resolved from submodules)
+_CLASS_EXPORTS = {
+    "WeibullAnalyzer": (".weibull", "WeibullAnalyzer"),
+    "WeibullResult": (".weibull", "WeibullResult"),
+    "MTBFAnalyzer": (".mtbf", "MTBFAnalyzer"),
+    "MTBFResult": (".mtbf", "MTBFResult"),
+    "ALTEngine": (".alt", "ALTEngine"),
+}
+
+__all__ = list(_CLASS_EXPORTS.keys()) + list(_SUBMODULES.keys()) + ["survival"]
+
+
+def __getattr__(name):
+    import importlib
+    if name in _SUBMODULES:
+        mod = importlib.import_module(_SUBMODULES[name], __name__)
+        globals()[name] = mod
+        return mod
+    if name in _CLASS_EXPORTS:
+        mod_path, attr = _CLASS_EXPORTS[name]
+        mod = importlib.import_module(mod_path, __name__)
+        val = getattr(mod, attr)
+        globals()[name] = val
+        return val
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
