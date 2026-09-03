@@ -17,9 +17,6 @@ import pandas as pd
 
 from core.kpi_extractor import build_variable_namespace
 
-# ── 白名单 ──────────────────────────────────────────────
-# ast.walk 会遍历运算符节点 (ast.Add/ast.Div/ast.USub...) 与
-# 上下文节点 (ast.Load), 故将基类一并放行, 具体运算符按 _ALLOWED_*_OPS 收窄
 _ALLOWED_NODES = (ast.Expression, ast.BinOp, ast.UnaryOp, ast.Name, ast.Constant,
                   ast.operator, ast.unaryop, ast.expr_context)
 _ALLOWED_BIN_OPS = (ast.Add, ast.Sub, ast.Mult, ast.Div, ast.FloorDiv, ast.Mod, ast.Pow)
@@ -33,7 +30,6 @@ class FormulaError(Exception):
 MAX_EXPR_LEN = 500
 MAX_EVAL_DEPTH = 200
 
-# 解析缓存 — 避免 validate 与 evaluate 重复 ast.parse (W96)
 _MAX_PARSE_CACHE = 256
 _parse_cache: Dict[str, ast.Expression] = {}
 
@@ -74,7 +70,6 @@ def validate(expr: str) -> None:
             raise FormulaError(f"不支持的一元运算符: {type(node.op).__name__}")
         if isinstance(node, ast.Constant):
             v = node.value
-            # bool 是 int 子类, 需显式排除
             if isinstance(v, bool) or not isinstance(v, (int, float)):
                 raise FormulaError("只支持数值常量")
 
@@ -129,7 +124,6 @@ def evaluate(expr: str, variables: Dict[str, float]) -> float:
                         raise FormulaError("除数为零")
                     return left % right
                 if isinstance(node.op, ast.Pow):
-                    # 常量指数过大时拒绝, 防超长幂运算耗时 (指数可为变量/表达式, 不受限)
                     if isinstance(node.right, ast.Constant) and abs(node.right.value) >= 1e6:
                         raise FormulaError("指数过大")
                     return left ** right
@@ -143,7 +137,6 @@ def evaluate(expr: str, variables: Dict[str, float]) -> float:
         raise
     except (OverflowError, ZeroDivisionError, RecursionError) as e:
         raise FormulaError(f"数值错误: {e}") from e
-    # 结果契约: 必须是有限浮点数 (拒绝复数/inf/nan)
     if isinstance(result, complex) or not math.isfinite(result):
         raise FormulaError("结果无效 (复数或非有限值)")
     return result
@@ -181,7 +174,7 @@ def _column_stats(df: pd.DataFrame) -> Dict[str, float]:
         base = sanitize_name(str(col))
         seen[base] = seen.get(base, 0) + 1
         if seen[base] > 1:
-            base = f"{base}_{seen[base]}"  # 冲突列追加序号
+            base = f"{base}_{seen[base]}"
         stats[f"{base}_mean"] = float(valid.mean())
         stats[f"{base}_std"] = float(valid.std())
         stats[f"{base}_max"] = float(valid.max())

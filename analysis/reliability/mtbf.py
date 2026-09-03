@@ -28,11 +28,9 @@ class MTBFResult:
     mtbf: float
     mttr: float
     availability: float
-    failure_rate: float          # λ (每小时失效数)
-    # 趋势
-    laplace_stat: Optional[float]  # Laplace 趋势检验统计量
-    trend: str                     # "improving" | "degrading" | "stable"
-    # 置信区间 (指数分布假设)
+    failure_rate: float
+    laplace_stat: Optional[float]
+    trend: str
     mtbf_ci_low: float
     mtbf_ci_high: float
 
@@ -78,10 +76,8 @@ class MTBFAnalyzer:
 
         labels_v = labels if labels else [f"事件{i + 1}" for i in range(len(tbf))]
 
-        # ── 整体 ──
         out["overall"] = self._compute_group("全部", tbf, rt, confidence_level)
 
-        # ── 分组 ──
         if group_by and len(group_by) == len(time_between_failures):
             gb = np.asarray(group_by)[valid]
             for gname in sorted(set(gb)):
@@ -108,14 +104,12 @@ class MTBFAnalyzer:
         avail = mtbf / (mtbf + mttr) if (mtbf + mttr) > 0 else 0.0
         failure_rate = 1.0 / mtbf if mtbf > 0 else 0.0
 
-        # 指数分布置信区间
         alpha = 1 - cl
         chi2_low = sp_stats.chi2.ppf(alpha / 2, 2 * n)
         chi2_high = sp_stats.chi2.ppf(1 - alpha / 2, 2 * n)
         ci_low = 2 * total_uptime / chi2_high if chi2_high > 0 else 0.0
         ci_high = 2 * total_uptime / chi2_low if chi2_low > 0 else float("inf")
 
-        # Laplace 趋势检验
         laplace, trend = self._laplace_test(tbf)
 
         return MTBFResult(
@@ -147,13 +141,12 @@ class MTBFAnalyzer:
                 / (T * np.sqrt((n - 1) / 12)))
         stat = float(stat)
 
-        # 双侧 5% 临界值 ≈ 1.96
         if abs(stat) < 1.96:
             trend = "stable"
         elif stat > 0:
-            trend = "degrading"  # 失效事件偏后段/故障间隔变短 = 恶化
+            trend = "degrading"
         else:
-            trend = "improving"  # 失效事件偏前段/故障间隔变长 = 改善
+            trend = "improving"
 
         return round(stat, 4), trend
 
@@ -194,9 +187,6 @@ def crow_amsaa(
 
     T = total_time if total_time and total_time > times[-1] else float(times[-1])
 
-    # MLE 估计 β 和 α
-    # ln(λ(t)) = ln(β/α) + (β-1)·ln(t)
-    # 对数似然: L = n·ln(β/α) + (β-1)·Σln(ti) - T^β/α
     from scipy.optimize import minimize_scalar
 
     def neg_loglik(beta):
@@ -212,16 +202,12 @@ def crow_amsaa(
     beta = result.x
     alpha = T ** beta / n
 
-    # MTBF 在时间 T 的估计
     mtbf_at_T = alpha / (beta * T ** (beta - 1)) if beta > 0 else float("inf")
 
-    # MTBF 在时间 t=1 的估计（初始 MTBF）
     mtbf_initial = alpha / beta if beta > 0 else float("inf")
 
-    # 增长率
-    growth_rate = 1 - beta  # β < 1 → 正增长
+    growth_rate = 1 - beta
 
-    # 趋势判断
     if beta < 0.95:
         trend = "improving"
     elif beta > 1.05:
@@ -229,9 +215,7 @@ def crow_amsaa(
     else:
         trend = "stable"
 
-    # 置信区间 (基于 Fisher 信息)
     z = sp_stats.norm.ppf((1 + confidence_level) / 2)
-    # β 的标准误差近似
     se_beta = 1.0 / (math.sqrt(n) * abs(math.log(beta) + 1)) if beta > 0 else 1.0
     beta_ci_low = max(0.01, beta - z * se_beta)
     beta_ci_high = beta + z * se_beta

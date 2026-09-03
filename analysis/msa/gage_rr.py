@@ -37,22 +37,20 @@ def analyze_crossed(
     r_bar = _avg_range(data, measurement_col, part_col, operator_col)
     d2 = _cfg.CONTROL_CHART_CONSTANTS.get(r, {}).get("d2", 1.128 * (r ** 0.3))
 
-    ev = r_bar / d2  # repeatability (equipment variation)
+    ev = r_bar / d2
     ev_pct = ev
 
     r_op = float(op_means.max() - op_means.min())
-    # C15 fix: AV uses d2* (K2 inverse), not SPC d2
     d2_star_op = _cfg.MSA_D2_STAR.get(o, _cfg.CONTROL_CHART_CONSTANTS.get(o, {}).get("d2", 1.128))
-    av = np.sqrt(max((r_op / d2_star_op) ** 2 - ev ** 2 / (p * r), 0))  # reproducibility
+    av = np.sqrt(max((r_op / d2_star_op) ** 2 - ev ** 2 / (p * r), 0))
     av_pct = av
 
-    grr = np.sqrt(ev ** 2 + av ** 2)  # Gage R&R
+    grr = np.sqrt(ev ** 2 + av ** 2)
     r_part = float(part_means.max() - part_means.min())
-    # C15 fix: PV uses d2* (K3 inverse), not SPC d2
     d2_star_part = _cfg.MSA_D2_STAR.get(p, _cfg.CONTROL_CHART_CONSTANTS.get(p, {}).get("d2", 1.128))
-    pv = r_part / d2_star_part  # part variation
+    pv = r_part / d2_star_part
 
-    tv = np.sqrt(grr ** 2 + pv ** 2)  # total variation
+    tv = np.sqrt(grr ** 2 + pv ** 2)
 
     grr_pct_tv = (grr / tv * 100) if tv > 0 else 0
     grr_pct_tol = (grr / tolerance * 100) if tolerance else None

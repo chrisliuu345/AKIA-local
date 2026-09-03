@@ -78,7 +78,7 @@ class DataLoader:
                 pass
         return pd.read_excel(file_path, sheet_name=sheet_name, dtype=str, engine="openpyxl")
 
-    load_chunked = load_head  # DEPRECATED: 仅向后兼容，请使用 load_head
+    load_chunked = load_head
 
     def load_chunked_iter(self, file_path: str, sheet_name: str = "Sheet1",
                           chunk_size: int = CHUNK_SIZE):
@@ -92,7 +92,6 @@ class DataLoader:
             for chunk in pd.read_csv(file_path, chunksize=chunk_size, dtype=str):
                 yield chunk
         elif ext in (".xlsx", ".xlsm"):
-            # openpyxl read_only mode: 逐行迭代，累积到 chunk_size 后 yield
             from openpyxl import load_workbook
             wb = load_workbook(file_path, read_only=True, data_only=True)
             ws = wb[sheet_name] if sheet_name in wb.sheetnames else wb.active
@@ -109,7 +108,6 @@ class DataLoader:
                 yield pd.DataFrame(rows_buf)
             wb.close()
         elif ext == ".xls":
-            # .xls 不支持流式，一次性加载后分块返回
             df = self.load_chunked(file_path, sheet_name)
             for start in range(0, len(df), chunk_size):
                 yield df.iloc[start:start + chunk_size]

@@ -53,7 +53,6 @@ def _ensure_license_dir():
     pass
 
 
-# 模块级便捷函数
 def verify_license() -> Tuple[bool, LicenseStatus]:
     """验证许可证 — 始终返回有效"""
     return True, LicenseStatus.VALID

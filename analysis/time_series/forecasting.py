@@ -60,7 +60,6 @@ def compare_models(
             "error": "所有模型均拟合失败",
         }
 
-    # 按 AIC 排名（升序，越小越好）
     comparisons.sort(key=lambda x: x.get("aic") or float("inf"))
 
     best = comparisons[0]

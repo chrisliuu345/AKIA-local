@@ -62,7 +62,7 @@ def two_sample(
 
     lev_stat, lev_p = stats.levene(g1, g2)
     if equal_var is None:
-        equal_var = bool(lev_p >= 0.05)  # 方差齐 → pooled; 方差不齐 → Welch
+        equal_var = bool(lev_p >= 0.05)
 
     t_stat, p_value = stats.ttest_ind(g1, g2, equal_var=equal_var)
     if alternative == "greater":
@@ -94,7 +94,6 @@ def two_sample(
 
 
 def paired(before: pd.Series, after: pd.Series, alternative: str = "two-sided") -> Dict[str, Any]:
-    # W19 fix: 按索引对齐后dropna，避免NaN位置不一致导致配对错位
     paired_df = pd.DataFrame({"before": before, "after": after}).dropna()
     b = paired_df["before"].astype(float)
     a = paired_df["after"].astype(float)

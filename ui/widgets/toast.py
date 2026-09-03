@@ -23,7 +23,7 @@ _TOAST_COLORS = {
 class Toast(QFrame):
     """单条通知 — 自动滑入 + 淡出"""
 
-    _active_toasts: list = []  # 类变量跟踪所有活跃 toast
+    _active_toasts: list = []
 
     def __init__(self, parent, message: str, toast_type: str = "info",
                  duration: int = 3000):
@@ -42,7 +42,7 @@ class Toast(QFrame):
             f"border-radius: 6px;"
             f"}}"
         )
-        self.setMinimumHeight(40)  # v2.3.1: 换行后允许增高, 不再硬裁切
+        self.setMinimumHeight(40)
         self.setMinimumWidth(200)
         self.setMaximumWidth(480)
 

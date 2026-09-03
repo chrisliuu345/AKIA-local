@@ -12,18 +12,18 @@ from config.settings import RPN_CRITICAL, RPN_HIGH, RPN_MEDIUM
 @dataclass
 class FMEAItem:
     """单条 FMEA 记录"""
-    function: str = ""          # 功能/工序
-    failure_mode: str = ""      # 失效模式
-    effect: str = ""            # 失效后果
-    severity: int = 1           # 严重度 S (1-10)
-    cause: str = ""             # 失效原因
-    occurrence: int = 1         # 发生度 O (1-10)
-    control: str = ""           # 现行控制
-    detection: int = 1          # 检出度 D (1-10)
-    rpn: int = 0                # RPN = S×O×D (自动计算)
-    recommended_action: str = ""  # 建议措施
-    responsible: str = ""       # 责任人
-    action_status: str = ""     # 措施状态 (未开始/进行中/已完成)
+    function: str = ""
+    failure_mode: str = ""
+    effect: str = ""
+    severity: int = 1
+    cause: str = ""
+    occurrence: int = 1
+    control: str = ""
+    detection: int = 1
+    rpn: int = 0
+    recommended_action: str = ""
+    responsible: str = ""
+    action_status: str = ""
 
     def calc_rpn(self) -> int:
         self.rpn = self.severity * self.occurrence * self.detection
@@ -149,7 +149,6 @@ class FMEAEngine:
             if item.rpn < rpn_threshold:
                 continue
 
-            # 根据严重度决定抽样频率
             if item.severity >= 8:
                 frequency = "每件"
                 sample_size = "100%"
@@ -160,15 +159,12 @@ class FMEAEngine:
                 frequency = "每批"
                 sample_size = "10"
 
-            # 生成特性描述
             characteristic = f"{item.failure_mode} ({item.cause})" if item.cause else item.failure_mode
 
-            # 控制方法：现有控制 + 推荐措施
             control_method = item.control
             if item.recommended_action:
                 control_method = f"{item.control} → {item.recommended_action}"
 
-            # 反应计划：基于风险等级
             if item.rpn >= RPN_CRITICAL:
                 reaction = "停线+通知质量/工程"
             elif item.rpn >= RPN_HIGH:
@@ -177,15 +173,15 @@ class FMEAEngine:
                 reaction = "记录+跟踪"
 
             cp_row = [
-                f"OP{len(cp_rows)*10+10:02d}",  # 工序编号
-                item.function,                     # 工序名称
-                characteristic,                    # 特性
-                "",                                # 规格/公差 (需手动填写)
-                "",                                # 测量方法 (需手动填写)
-                sample_size,                       # 样本量
-                frequency,                         # 抽样频率
-                control_method,                    # 控制方法
-                reaction,                          # 反应计划
+                f"OP{len(cp_rows)*10+10:02d}",
+                item.function,
+                characteristic,
+                "",
+                "",
+                sample_size,
+                frequency,
+                control_method,
+                reaction,
             ]
             cp_rows.append(cp_row)
 

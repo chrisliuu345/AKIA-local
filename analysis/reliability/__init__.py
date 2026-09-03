@@ -18,7 +18,6 @@ _SUBMODULES = {
     "warranty": ".warranty",
 }
 
-# Class-level exports (lazy resolved from submodules)
 _CLASS_EXPORTS = {
     "WeibullAnalyzer": (".weibull", "WeibullAnalyzer"),
     "WeibullResult": (".weibull", "WeibullResult"),

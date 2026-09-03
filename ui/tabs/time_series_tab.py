@@ -54,7 +54,6 @@ class TimeSeriesTab(BaseAnalysisTab):
         self.value_col_combo = QComboBox()
         config_layout.addRow("数值列:", self.value_col_combo)
 
-        # 分析方法选择
         method_group = QGroupBox("分析方法")
         method_layout = QVBoxLayout(method_group)
         self.method_btn_group = QButtonGroup()
@@ -75,7 +74,6 @@ class TimeSeriesTab(BaseAnalysisTab):
         self.method_btns["acf_pacf"].setChecked(True)
         config_layout.addRow(method_group)
 
-        # 参数区
         params_group = QGroupBox("参数")
         params_layout = QFormLayout(params_group)
 
@@ -209,7 +207,6 @@ class TimeSeriesTab(BaseAnalysisTab):
         self.value_col_combo.clear()
         self.time_col_combo.addItems(cols)
         self.value_col_combo.addItems(cols)
-        # 尝试自动选择日期列和数值列
         for i, c in enumerate(cols):
             if pd.api.types.is_datetime64_any_dtype(df[c]):
                 self.time_col_combo.setCurrentIndex(i)
@@ -259,7 +256,6 @@ class TimeSeriesTab(BaseAnalysisTab):
         value_col = self.value_col_combo.currentText()
         data = self.df[value_col].dropna()
 
-        # 获取选中的方法
         for key, btn in self.method_btns.items():
             if btn.isChecked():
                 method = key
@@ -327,7 +323,6 @@ class TimeSeriesTab(BaseAnalysisTab):
             lines.append(f"  {k}: {v}")
         self.result_text.setText("\n".join(lines))
 
-        # 绘制图表
         self._render_chart(result)
 
     def _render_chart(self, result: Dict[str, Any]):
@@ -342,7 +337,6 @@ class TimeSeriesTab(BaseAnalysisTab):
             data_for_chart = result
             chart_type_name = "分解图"
         elif chart_type == "ARIMA":
-            # 主图：预测曲线
             historical = result.get("fitted_values", [])
             data_for_chart = {
                 "historical": historical,
@@ -351,9 +345,7 @@ class TimeSeriesTab(BaseAnalysisTab):
                 "confidence_upper": result.get("confidence_upper", []),
             }
             chart_type_name = "预测图"
-            # 渲染主图
             self._render_single_chart(chart_type_name, data_for_chart)
-            # 附加残差诊断图
             resid = result.get("residual_diagnostics", {})
             if resid:
                 self._render_single_chart("残差ACF/PACF图", {

@@ -63,7 +63,6 @@ class LPAEngine:
             left=Side(style="thin"), right=Side(style="thin"),
             top=Side(style="thin"), bottom=Side(style="thin"))
 
-        # 表头
         headers = ["工序", "类别", "检查项目", "检查方法"]
         for a in auditors: headers.append(f"{a}\n(OK/NG)")
         headers.append("备注")
@@ -73,7 +72,6 @@ class LPAEngine:
             cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
             cell.border = thin_border
 
-        # 数据行
         row = 2
         for proc in processes:
             for cat in categories:
@@ -90,12 +88,10 @@ class LPAEngine:
                     ws.cell(row=row, column=5 + len(auditors), value="").border = thin_border
                     row += 1
 
-        # 列宽
         widths = [12, 10, 40, 12] + [14] * len(auditors) + [20]
         for i, w in enumerate(widths, 1):
             ws.column_dimensions[get_column_letter(i)].width = w
 
-        # 条件格式: OK→绿, NG→红
         audit_start_col = 5; audit_end_col = 4 + len(auditors)
         from openpyxl.formatting.rule import CellIsRule
         ws.conditional_formatting.add(

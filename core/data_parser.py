@@ -19,14 +19,14 @@ class DataParser:
     ]
     INVALID_PATTERNS = re.compile(
         r"^(?:"
-        r"\*+\s*$|"          # ***
-        r"N/?A\s*$|"         # N/A or NA
-        r"[Nn][Oo][Nn][Ee]\s*$|"  # none/None
-        r"[Nn][Uu][Ll][Ll]\s*$|"  # null/Null
-        r"[-—/]+$|"          # --- or — or ///
-        r"[?？]+$|"           # ??? or ??
-        r"[#＃]+$|"            # ###
-        r"^\s*$|"             # empty/whitespace
+        r"\*+\s*$|"
+        r"N/?A\s*$|"
+        r"[Nn][Oo][Nn][Ee]\s*$|"
+        r"[Nn][Uu][Ll][Ll]\s*$|"
+        r"[-—/]+$|"
+        r"[?？]+$|"
+        r"[#＃]+$|"
+        r"^\s*$|"
         r"[Ee][Rr][Rr][Oo][Rr]|"
         r"[Ff][Aa][Ii][Ll][Ee][Dd]|"
         r"[Ee][Rr][Rr]"
@@ -159,7 +159,6 @@ class DataParser:
                 is_empty = not stripped or stripped.lower() in ("nan", "none", "", "null", "na")
                 if not is_empty:
                     non_empty += 1
-                    # \u5224\u65ad\u662f\u5426\u4e3a\u7eaf\u6570\u503c\uff08\u5141\u8bb8\u8d1f\u53f7\u548c\u5c0f\u6570\u70b9\uff09
                     try:
                         float(stripped)
                         numeric += 1
@@ -169,17 +168,14 @@ class DataParser:
             num_rate = numeric / max(non_empty, 1) if non_empty > 0 else 0.0
             rates.append((i, ne_rate, num_rate))
 
-        # \u89c4\u5219 1: \u9996\u884c\u5373\u6807\u51c6\u8868\u5934\uff08\u9ad8\u975e\u7a7a\u7387 + \u4f4e\u6570\u503c\u7387\uff09
         if rates[0][1] >= 0.7 and rates[0][2] <= 0.3:
             return 0
 
-        # \u89c4\u5219 2: \u626b\u63cf\u6570\u503c\u7387\u7a81\u53d8\uff08\u4f4e\u2192\u9ad8\u8df3\u8dc3\uff0c\u4f7f\u7528\u76f8\u5bf9\u6bd4\u503c\uff09
         best_row = 0
         best_jump = 0.0
         for k in range(len(rates) - 1):
             prev_num = rates[k][2]
             curr_num = rates[k + 1][2]
-            # \u76f8\u5bf9\u8df3\u53d8\uff1a\u5f53\u524d\u884c\u6570\u503c\u7387\u81f3\u5c11\u662f\u524d\u4e00\u884c\u7684 2 \u500d\uff0c\u4e14\u7edd\u5bf9\u503c\u22650.2
             if curr_num >= 0.2 and (prev_num == 0.0 or curr_num / max(prev_num, 0.001) >= 2.0):
                 jump = curr_num - prev_num
                 if jump > best_jump:
@@ -189,7 +185,6 @@ class DataParser:
         if best_jump > 0.1:
             return best_row
 
-        # \u89c4\u5219 3: \u515c\u5e95\u2014\u2014\u539f\u59cb\u542f\u53d1\u5f0f
         for i in range(min(10, len(df))):
             row = df.iloc[i].apply(lambda v: str(v) if v is not None else "")
             non_empty = sum(1 for v in row if v and v.strip().lower() not in ("nan", "none", ""))
@@ -205,10 +200,6 @@ class DataParser:
             df.columns = [str(c).strip() for c in df.iloc[0]]
             df = df.iloc[1:].reset_index(drop=True)
             return df
-        # header_row == 0 分两种情况:
-        # (a) header=None 读入: 列名为默认数字, 首行是表头文本 → 提取为列名
-        # (b) pandas 默认读入 (DataLoader): 列名已是表头, 首行是数据 → 保持原列名
-        #     (v2.4.1 修复: 此前重赋数据行为列名, 导致列名丢失)
         cols_are_default = all(
             str(c).isdigit() or str(c).startswith("Unnamed")
             for c in df.columns
@@ -292,8 +283,6 @@ class DataParser:
         return None
 
     def _identify_measurement_columns(self, df: pd.DataFrame) -> List[str]:
-        # v2.4.1: measurement 类型 (列名含"测量/长度/重量"等关键词) 与 numeric
-        # 同属测量列 — 此前只认 numeric, 导致 "测量值" 列被漏掉
         return [c for c, t in self.column_types.items()
                 if t in ("numeric", "measurement")]
 

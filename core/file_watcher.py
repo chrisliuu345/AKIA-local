@@ -16,7 +16,7 @@ from core.data_loader import DataLoader
 from analysis.spc.imr import analyze as imr_analyze
 from analysis.spc.xbar_r import analyze as xbar_r_analyze
 
-MIN_POINTS = 8          # 数值列参与监控的最低数据点数量
+MIN_POINTS = 8
 
 
 def _coerce_numeric(s: pd.Series) -> pd.Series:
@@ -76,7 +76,6 @@ class FileMonitor(threading.Thread):
         self._stop_event = threading.Event()
         self._last_state = None
 
-    # ── 文件状态 ─────────────────────────────────────────
     def _stat(self):
         try:
             st = os.stat(self.file_path)
@@ -84,7 +83,6 @@ class FileMonitor(threading.Thread):
         except (FileNotFoundError, OSError):
             return None
 
-    # ── 单次分析 ─────────────────────────────────────────
     def check_once(self) -> dict:
         """立即读取并分析一次，返回 payload（供首次显示与轮询共用）。"""
         payload = {
@@ -115,7 +113,6 @@ class FileMonitor(threading.Thread):
             if df.empty:
                 payload["error"] = "数据表为空"
                 return payload
-            # DataLoader 以 dtype=str 读取，此处尝试将可转换列转为数值
             df = df.apply(_coerce_numeric)
             column = self.column
             if column is None or column not in df.columns:
@@ -144,7 +141,6 @@ class FileMonitor(threading.Thread):
             payload["error"] = str(exc)
         return payload
 
-    # ── 线程循环 ─────────────────────────────────────────
     def run(self):
         self._last_state = self._stat()
         while not self._stop_event.wait(self.interval):
@@ -155,7 +151,6 @@ class FileMonitor(threading.Thread):
                     self.on_change(self.check_once())
                 continue
             if state != self._last_state:
-                # 稳定确认：再等一个周期，状态一致才处理
                 self._stop_event.wait(self.interval)
                 if self._stop_event.is_set():
                     break

@@ -64,7 +64,6 @@ def calculate_system_reliability(
     reliabilities = [c["reliability"] for c in components]
     names = [c.get("name", f"Component_{i}") for i, c in enumerate(components)]
 
-    # 校验结构参数
     if structure == "mixed" and parallel_groups is None:
         return {"analysis_type": "reliability.rbd", "error": "混合结构需要 parallel_groups 参数"}
     if structure == "k_out_of_n" and k_out_of_n is None:
@@ -74,8 +73,6 @@ def calculate_system_reliability(
 
     sys_r = _compute_system_r(reliabilities, structure, parallel_groups, k_val)
 
-    # 计算每个组件的贡献度（对系统可靠度的敏感度）
-    # 优化: series/parallel 使用解析导数，k_out_of_n 使用数值扰动
     contributions = []
     for i, r_i in enumerate(reliabilities):
         if structure == "series":
@@ -83,7 +80,6 @@ def calculate_system_reliability(
         elif structure == "parallel":
             sensitivity = (1 - sys_r) / (1 - r_i) if r_i < 1 - 1e-12 else 0.0
         else:
-            # mixed / k_out_of_n: 数值扰动
             perturbed = reliabilities.copy()
             perturbed[i] = min(1.0, r_i + 0.01)
             r_perturbed = _compute_system_r(perturbed, structure, parallel_groups, k_val)
@@ -94,10 +90,8 @@ def calculate_system_reliability(
             "sensitivity": round(float(sensitivity), 6),
         })
 
-    # 排序: 按敏感度降序（最薄弱环节排第一）
     contributions.sort(key=lambda x: x["sensitivity"], reverse=True)
 
-    # 识别最薄弱环节
     weakest = contributions[0] if contributions else None
 
     return {
@@ -149,17 +143,14 @@ def _k_out_of_n(reliabilities: List[float], k: int) -> float:
     if k > n:
         return 0.0
 
-    # dp[j] = P(恰好 j 个正常) 在处理前 i 个组件后
     dp = [0.0] * (n + 1)
     dp[0] = 1.0
 
     for ri in reliabilities:
-        # 从后往前更新，避免覆盖
         for j in range(n, 0, -1):
             dp[j] = dp[j] * (1 - ri) + dp[j - 1] * ri
         dp[0] = dp[0] * (1 - ri)
 
-    # P(≥k) = Σ_{j=k}^{n} dp[j]
     return sum(dp[k:])
 
 
@@ -188,21 +179,15 @@ def system_mtbf(
         if c["mtbf"] <= 0:
             return {"analysis_type": "reliability.rbd_mtbf", "error": f"组件 {i} 的 MTBF 必须为正"}
 
-    # 转换为失效率 λ = 1/MTBF
     lambdas = [1.0 / c["mtbf"] for c in components]
     names = [c.get("name", f"Component_{i}") for i, c in enumerate(components)]
 
     if structure == "series":
-        # 串联系统: λ_sys = Σλi, MTBF_sys = 1/Σλi
         total_lambda = sum(lambdas)
         sys_mtbf = 1.0 / total_lambda if total_lambda > 0 else float("inf")
     elif structure == "parallel":
-        # 并联系统: MTBF = Σ(1/λi) - Σ_{i<j}(1/(λi+λj)) + ... (近似)
-        # 精确: R(t) = 1 - ∏(1-e^(-λi*t)), MTBF = ∫R(t)dt
-        # 近似公式: MTBF ≈ Σ(1/λi) - Σ_{i<j}(1/(λi+λj)) + ...
         sys_mtbf = _parallel_mtbf(lambdas)
     elif structure == "mixed" and parallel_groups:
-        # 每组并联转为等效 λ，再串联
         equiv_lambdas = []
         for group in parallel_groups:
             group_lambdas = [lambdas[i] for i in group]
@@ -229,7 +214,6 @@ def system_mtbf(
 
 def _parallel_mtbf(lambdas: List[float]) -> float:
     """并联系统 MTBF (数值积分)"""
-    # R(t) = 1 - ∏(1-e^(-λi*t)), MTBF = ∫₀^∞ R(t) dt
     t_max = max(5.0 / min(lambdas), 100)
     n_points = 1000
     dt = t_max / n_points
@@ -240,7 +224,6 @@ def _parallel_mtbf(lambdas: List[float]) -> float:
         R *= (1 - np.exp(-lam * t))
     R = 1 - R
 
-    # Simpson 积分
     integral = dt / 3 * (R[0] + R[-1] + 4 * np.sum(R[1:-1:2]) + 2 * np.sum(R[2:-1:2]))
     return float(integral)
 

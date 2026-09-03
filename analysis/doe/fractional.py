@@ -55,7 +55,6 @@ def _get_generators(k: int, fraction: str,
         info = _MIN_ABERRATION_TABLE[key]
         return info["generators"], info
 
-    # Fallback: simple generators
     gens = []
     for i in range(p):
         gen_cols = list(range(min(i + 2, k_basic)))
@@ -74,7 +73,6 @@ def compute_defining_relation(generators: List[str]) -> List[str]:
 
     words = list(generators)
 
-    # Generate all pairwise products
     for i in range(len(generators)):
         for j in range(i + 1, len(generators)):
             set_i = set(generators[i].upper())
@@ -83,7 +81,6 @@ def compute_defining_relation(generators: List[str]) -> List[str]:
             if product:
                 words.append("".join(sorted(product)))
 
-    # Remove duplicates and sort by length
     words = sorted(set(words), key=lambda w: (len(w), w))
     return words
 
@@ -94,7 +91,7 @@ def compute_resolution(defining_relation: List[str]) -> int:
     Resolution = min word length in defining relation (excluding 'I').
     """
     if not defining_relation:
-        return 999  # Full factorial
+        return 999
     return min(len(w) for w in defining_relation)
 
 
@@ -107,23 +104,19 @@ def compute_alias_structure(factors: List[str],
     k = len(factors)
     effect_cols = {}
 
-    # Main effects
     for i, name in enumerate(factors):
         effect_cols[name] = design_matrix[:, i].tobytes()
 
-    # Two-factor interactions
     for i in range(k):
         for j in range(i + 1, k):
             name = factors[i] + "*" + factors[j]
             col = design_matrix[:, i] * design_matrix[:, j]
             effect_cols[name] = col.tobytes()
 
-    # Group by column pattern
     groups: Dict[bytes, List[str]] = {}
     for effect, col_hash in effect_cols.items():
         groups.setdefault(col_hash, []).append(effect)
 
-    # Return only groups with > 1 member (actual aliases)
     return {k: v for k, v in groups.items() if len(v) > 1}
 
 
@@ -170,39 +163,31 @@ def generate_design(
     if k_basic < 1:
         raise ValueError("Design not possible for this fraction")
 
-    # Generate base factorial
     base = _base_factorial(k_basic)
 
-    # Build full design matrix
     design = np.zeros((2 ** k_basic, k), dtype=int)
     design[:, :k_basic] = base
 
-    # Apply generators
     for i, gen_str in enumerate(gen_strs):
         col_indices = _parse_generator(gen_str)
         design[:, k_basic + i] = _apply_generator(base, col_indices)
 
-    # Compute metadata
     def_rel = compute_defining_relation(gen_strs)
     resolution = compute_resolution(def_rel)
 
-    # Build DataFrame
     data = {factors[i]: design[:, i] for i in range(k)}
     df = pd.DataFrame(data)
     df["StdOrder"] = list(range(1, 2 ** k_basic + 1))
 
-    # O(n) RunOrder via inverse permutation
     rng = np.random.default_rng(random_seed)
     perm = rng.permutation(2 ** k_basic)
     inv_perm = np.empty(2 ** k_basic, dtype=int)
     inv_perm[perm] = np.arange(2 ** k_basic) + 1
     df["RunOrder"] = inv_perm
 
-    # Metadata columns
     df["DefiningRelation"] = "I=" + "=".join(def_rel) if def_rel else "I"
     df["Resolution"] = resolution
 
-    # Center points
     if center_points > 0:
         center_df = pd.DataFrame({f: [0] * center_points for f in factors})
         center_df["StdOrder"] = [0] * center_points
@@ -228,7 +213,6 @@ def analyze(
     Computes main effects, ANOVA, alias structure, Pareto data.
     """
     data = df[[response_col] + factor_cols].dropna()
-    # Validate all selected columns are numeric
     for col in [response_col] + factor_cols:
         coerced = pd.to_numeric(data[col], errors="coerce")
         n_nan = coerced.isna().sum()
@@ -243,7 +227,6 @@ def analyze(
     n = len(response)
     k = len(factor_cols)
 
-    # Vectorized effect computation
     high_mask = design > 0
     low_mask = design < 0
     n_high = high_mask.sum(axis=0)
@@ -257,14 +240,12 @@ def analyze(
     ss_total = float(np.sum((response - grand_mean) ** 2))
     df_total = n - 1
 
-    # SS computation
     ss_arr = np.where(valid, n * (effects_arr / 2) ** 2, 0.0)
     ss_model = float(np.sum(ss_arr))
     ss_error = max(ss_total - ss_model, 0.0)
     df_model = int(np.sum(valid))
     df_error = max(df_total - df_model, 1)
 
-    # F/p computation
     ms_arr = ss_arr.copy()
     if df_error > 0 and ss_error > 0:
         f_arr = ms_arr / (ss_error / df_error)
@@ -296,7 +277,6 @@ def analyze(
 
     r_squared = 1.0 - (ss_error / ss_total) if ss_total > 0 else 0.0
 
-    # Alias structure
     alias_groups = compute_alias_structure(factor_cols, design)
 
     return {

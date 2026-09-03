@@ -18,9 +18,6 @@ from scipy import stats
 from config.settings import MIXTURE_MODELS, MIXTURE_MAX_COMPONENTS
 
 
-# ---------------------------------------------------------------------------
-# Design generation
-# ---------------------------------------------------------------------------
 def simplex_lattice(
     components: List[str],
     degree: int = 2,
@@ -154,12 +151,10 @@ def extreme_vertices(
     if not vertices:
         raise ValueError("No feasible vertices found for the given bounds")
 
-    # Add overall centroid
     centroid = tuple(round(np.mean([v[i] for v in vertices]), 10) for i in range(q))
     if sum(centroid) <= 1.0 + 1e-10:
         vertices.add(centroid)
 
-    # Add edge centroids (midpoints of vertex pairs)
     vertex_list = sorted(vertices)
     n_verts = len(vertex_list)
     for i in range(n_verts):
@@ -180,9 +175,6 @@ def extreme_vertices(
     return df
 
 
-# ---------------------------------------------------------------------------
-# Scheffé design matrix construction
-# ---------------------------------------------------------------------------
 def _build_scheffe_matrix(X: np.ndarray, model: str) -> np.ndarray:
     """Build Scheffé design matrix (no intercept).
 
@@ -198,7 +190,7 @@ def _build_scheffe_matrix(X: np.ndarray, model: str) -> np.ndarray:
     ndarray of shape (n, p) where p = number of model terms
     """
     q = X.shape[1]
-    cols = [X]  # linear terms
+    cols = [X]
 
     if model in ("quadratic", "special_cubic"):
         for i in range(q):
@@ -217,7 +209,7 @@ def _build_scheffe_matrix(X: np.ndarray, model: str) -> np.ndarray:
 def _model_term_names(components: List[str], model: str) -> List[str]:
     """Generate term names for Scheffé model."""
     q = len(components)
-    names = list(components)  # linear
+    names = list(components)
 
     if model in ("quadratic", "special_cubic"):
         for i in range(q):
@@ -233,9 +225,6 @@ def _model_term_names(components: List[str], model: str) -> List[str]:
     return names
 
 
-# ---------------------------------------------------------------------------
-# Analysis
-# ---------------------------------------------------------------------------
 def analyze(
     df: pd.DataFrame,
     response_col: str,
@@ -269,12 +258,10 @@ def analyze(
     if q < 2:
         raise ValueError("At least 2 components required")
 
-    # Validate model vs components
     if model == "special_cubic" and q < 3:
         raise ValueError("Special cubic model requires at least 3 components")
 
     data = df[component_cols + [response_col]].dropna()
-    # Validate all selected columns are numeric
     for col in component_cols + [response_col]:
         coerced = pd.to_numeric(data[col], errors="coerce")
         n_nan = coerced.isna().sum()
@@ -289,31 +276,25 @@ def analyze(
     y = data[response_col].values.astype(float)
     n = len(y)
 
-    # Build Scheffé design matrix
     X_scheffe = _build_scheffe_matrix(X_raw, model)
-    p = X_scheffe.shape[1]  # number of parameters
+    p = X_scheffe.shape[1]
 
     if n < p:
         raise ValueError("Insufficient observations: " + str(n) + " < " + str(p) + " parameters")
 
-    # Fit model (no intercept)
     coeffs, residuals, rank, sv = np.linalg.lstsq(X_scheffe, y, rcond=None)
     y_pred = X_scheffe @ coeffs
     residuals_arr = y - y_pred
 
-    # R² (corrected for mean)
     ss_res = float(np.sum(residuals_arr ** 2))
     ss_total = float(np.sum((y - np.mean(y)) ** 2))
     r_squared = 1.0 - ss_res / ss_total if ss_total > 0 else 0.0
 
-    # Adjusted R²
     r_squared_adj = 1.0 - (1.0 - r_squared) * (n - 1) / (n - p) if n > p else r_squared
 
-    # Term names and coefficients
     term_names = _model_term_names(component_cols, model)
     coefficients = dict(zip(term_names, [round(float(c), 6) for c in coeffs]))
 
-    # ANOVA decomposition
     ss_model = ss_total - ss_res
     df_model = p
     df_error = max(n - p, 1)
@@ -323,7 +304,6 @@ def analyze(
     f_model = ms_model / ms_error if ms_error > 1e-10 else 0.0
     p_model = 1.0 - stats.f.cdf(max(f_model, 0), df_model, df_error) if df_model > 0 and df_error > 0 else 1.0
 
-    # Individual term significance (t-tests)
     if df_error > 0 and ms_error > 0:
         try:
             se = np.sqrt(np.diag(np.linalg.inv(X_scheffe.T @ X_scheffe)) * ms_error)
@@ -337,7 +317,6 @@ def analyze(
 
     significant_terms = [term_names[i] for i in range(p) if p_vals[i] < alpha]
 
-    # Term-level ANOVA (sequential SS)
     term_ss = []
     term_df = []
     term_f = []

@@ -12,7 +12,6 @@ from PySide6.QtGui import QFont, QTextCursor
 from ui.theme import colors as theme_colors
 from ui.font_config import get_ui_font
 
-# ── 预设问题模板 ──
 PRESET_QUESTIONS = [
     ("SPC判异", "控制图出现超出控制限的点，可能的原因和改善措施？"),
     ("CPK解读", "CPK=0.8 代表什么水平？如何系统性地提升至1.33？"),
@@ -57,7 +56,6 @@ class LLMDialog(QDialog):
         self.resize(720, 600)
 
         from core.llm_client import LLMClient
-        # ── 从 QSettings 恢复上次模型选择 ──
         s = QSettings("QA-Tool", "LLM")
         saved_model = s.value("model", "")
         saved_provider = s.value("provider", "ollama")
@@ -69,7 +67,7 @@ class LLMDialog(QDialog):
                 pass
 
         self.worker = None
-        self._history: list = []  # [(role, text), ...]
+        self._history: list = []
         self._current_ai_msg = ""
 
         self._setup_ui()
@@ -92,7 +90,6 @@ class LLMDialog(QDialog):
         layout = QVBoxLayout(self)
         layout.setSpacing(6)
 
-        # ── 顶部标题栏 ──
         header = QHBoxLayout()
         title = QLabel("AI 分析助手")
         title.setFont(QFont(get_ui_font(), 16, QFont.Bold))
@@ -103,11 +100,9 @@ class LLMDialog(QDialog):
         header.addWidget(self.llm_status)
         header.addStretch()
 
-        # 模型选择
         self.model_combo = QComboBox()
         self.model_combo.setMaximumWidth(180)
         self._populate_models()
-        # 恢复上次选择
         s = QSettings("QA-Tool", "LLM")
         saved = s.value("model", "")
         if saved:
@@ -115,14 +110,12 @@ class LLMDialog(QDialog):
             if idx >= 0:
                 self.model_combo.setCurrentIndex(idx)
             else:
-                # 之前保存的模型不在列表中，添加为自定义
                 self.model_combo.addItem(saved)
                 self.model_combo.setCurrentText(saved)
         self.model_combo.currentTextChanged.connect(self._on_model_change)
         header.addWidget(QLabel("模型:"))
         header.addWidget(self.model_combo)
 
-        # 刷新模型列表按钮
         refresh_btn = QPushButton("⟳")
         refresh_btn.setFixedSize(24, 24)
         refresh_btn.setToolTip("刷新 Ollama 模型列表")
@@ -130,7 +123,6 @@ class LLMDialog(QDialog):
         refresh_btn.clicked.connect(self._refresh_models)
         header.addWidget(refresh_btn)
 
-        # 自定义模型输入
         self.custom_model_input = QLineEdit()
         self.custom_model_input.setMaximumWidth(140)
         self.custom_model_input.setPlaceholderText("自定义模型名...")
@@ -144,7 +136,6 @@ class LLMDialog(QDialog):
         self.provider_lbl.setStyleSheet(f"color: {tc['text_muted']};")
         header.addWidget(self.provider_lbl)
 
-        # 操作按钮: 重试 / 导出 / 清空
         retry_btn = QPushButton("重连")
         retry_btn.setFixedSize(40, 24)
         retry_btn.setToolTip("重新检测 Ollama/API 连接")
@@ -163,7 +154,6 @@ class LLMDialog(QDialog):
         header.addWidget(clear_btn)
         layout.addLayout(header)
 
-        # ── 预设问题模板 ──
         preset_widget = QWidget()
         preset_layout = QHBoxLayout(preset_widget)
         preset_layout.setContentsMargins(0, 0, 0, 0)
@@ -186,7 +176,6 @@ class LLMDialog(QDialog):
         preset_layout.addStretch()
         layout.addWidget(preset_widget)
 
-        # ── 知识库检索行 ──
         kb_row = QHBoxLayout()
         kb_row.setSpacing(6)
         self.kb_input = QLineEdit()
@@ -212,7 +201,6 @@ class LLMDialog(QDialog):
         kb_row.addWidget(kb_btn)
         layout.addLayout(kb_row)
 
-        # ── 对话显示区 ──
         self.chat_view = QTextEdit()
         self.chat_view.setReadOnly(True)
         self.chat_view.setFont(QFont(get_ui_font(), 11))
@@ -222,7 +210,6 @@ class LLMDialog(QDialog):
         )
         layout.addWidget(self.chat_view, 1)
 
-        # ── 输入行 ──
         input_row = QHBoxLayout()
         input_row.setSpacing(6)
         self.input_box = QLineEdit()
@@ -251,7 +238,6 @@ class LLMDialog(QDialog):
         input_row.addWidget(self.send_btn)
         layout.addLayout(input_row)
 
-        # ── 初始状态 ──
         self._update_status()
         if not self.llm.available:
             self.append_msg("system",
@@ -265,26 +251,22 @@ class LLMDialog(QDialog):
                 "AI 助手已就绪（124条知识库增强 + 8个预设场景模板）。\n"
                 "可以基于当前分析数据提问，或点击上方标签快速开始。")
 
-    # ── 预设问题 ──
     def _fill_preset(self, question: str):
         self.input_box.setText(question)
         self.input_box.setFocus()
 
-    # ── 模型配置持久化 ──
     def _provider_label(self) -> str:
         return "OpenAI" if self.llm.provider == "openai" else "Ollama"
 
     def _populate_models(self):
         """填充模型下拉框"""
         self.model_combo.clear()
-        # 动态获取 Ollama 模型
         if self.llm.provider == "ollama":
             models = self.llm.get_models()
             self.model_combo.addItems(models)
         else:
             from core.llm_client import OPENAI_MODELS
             self.model_combo.addItems(OPENAI_MODELS)
-        # 添加自定义选项
         self.model_combo.addItem("自定义...")
 
     def _refresh_models(self):
@@ -292,7 +274,7 @@ class LLMDialog(QDialog):
         self.llm.available = self.llm._check_available()
         if self.llm.provider == "ollama":
             self._populate_models()
-            count = self.model_combo.count() - 1  # 减去"自定义..."
+            count = self.model_combo.count() - 1
             self.append_msg("system", f"已刷新模型列表，找到 {count} 个模型")
         self._update_status()
 
@@ -301,10 +283,8 @@ class LLMDialog(QDialog):
         custom_name = self.custom_model_input.text().strip()
         if not custom_name:
             return
-        # 检查是否已在列表中
         idx = self.model_combo.findText(custom_name)
         if idx < 0:
-            # 添加到下拉框（在"自定义..."之前）
             self.model_combo.insertItem(self.model_combo.count() - 1, custom_name)
         self.model_combo.setCurrentText(custom_name)
         self.custom_model_input.setVisible(False)
@@ -332,7 +312,6 @@ class LLMDialog(QDialog):
             self.llm.set_model(model, "ollama")
         self.provider_lbl.setText(self._provider_label())
         self._update_status()
-        # 持久化
         s = QSettings("QA-Tool", "LLM")
         s.setValue("model", model)
         s.setValue("provider", self.llm.provider)
@@ -360,7 +339,6 @@ class LLMDialog(QDialog):
             f.write("\n".join(lines))
         self.append_msg("system", f"对话历史已导出到: {path}")
 
-    # ── 发送消息 ──
     def _send_message(self):
         if self.worker and self.worker.isRunning():
             self.append_msg("system", "AI 正在生成回复，请稍候...")
@@ -378,7 +356,6 @@ class LLMDialog(QDialog):
             self._offline_reply(text)
             return
 
-        # 显示"思考中..."指示器
         self.chat_view.append(
             "<p style='margin:4px 0' id='thinking'>"
             "<span style='color:#2ca02c; font-size:14px;'>&#9679;</span> "
@@ -388,7 +365,6 @@ class LLMDialog(QDialog):
             self.chat_view.verticalScrollBar().maximum()
         )
 
-        # ── 构建增强上下文 ──
         full_prompt = self._build_context_prompt(text)
 
         self.worker = LLMWorker(self.llm, full_prompt)
@@ -402,7 +378,6 @@ class LLMDialog(QDialog):
         """构建增强提示词：分析结果 + 数据画像 + 知识库 + 对话历史"""
         parts = []
 
-        # 1. 当前分析结果摘要
         parent = self.parent()
         if parent and hasattr(parent, 'analyses') and parent.analyses:
             from core.context_builder import ContextBuilder
@@ -410,10 +385,9 @@ class LLMDialog(QDialog):
             analysis_ctx = cb.build_prompt(parent.analyses, question)
             parts.append(analysis_ctx)
 
-        # 2. 数据画像摘要
         if parent and hasattr(parent, 'profile_result') and parent.profile_result:
             prof = parent.profile_result
-            keys = list(prof.keys())[:3]  # 最多3个sheet
+            keys = list(prof.keys())[:3]
             lines = ["数据画像:"]
             for k in keys:
                 v = prof[k]
@@ -422,7 +396,6 @@ class LLMDialog(QDialog):
                                 f"缺失{v.get('missing_pct','?')}%")
             parts.append("\n".join(lines))
 
-        # 3. 知识库检索
         from core.knowledge_base import get_knowledge_base
         kb = get_knowledge_base()
         if kb.available:
@@ -433,7 +406,6 @@ class LLMDialog(QDialog):
                     kb_lines.append(f"  [{h.category_label()}] {h.title}: {h.content[:300]}")
                 parts.append("\n".join(kb_lines))
 
-        # 4. 对话历史（最近6轮）
         if self._history:
             recent = self._history[-6:]
             hist_lines = ["对话历史:"]
@@ -441,16 +413,13 @@ class LLMDialog(QDialog):
                 hist_lines.append(f"  {role}: {msg[:200]}")
             parts.append("\n".join(hist_lines))
 
-        # 5. 用户问题
         parts.append(f"\n用户问题: {question}")
 
         return "\n\n".join(parts)
 
     def _on_token(self, token: str):
         self._current_ai_msg += token
-        # 流式刷新: 第一个token移除"思考中"，后续token更新内容
         if not hasattr(self, '_streaming_block_added') or not self._streaming_block_added:
-            # 移除"思考中..."指示器，显示实际内容
             cursor = self.chat_view.textCursor()
             cursor.movePosition(QTextCursor.End)
             cursor.movePosition(QTextCursor.StartOfBlock, QTextCursor.KeepAnchor)
@@ -463,7 +432,6 @@ class LLMDialog(QDialog):
             )
             self._streaming_block_added = True
         else:
-            # 后续 token：更新当前内容
             cursor = self.chat_view.textCursor()
             cursor.movePosition(QTextCursor.End)
             cursor.movePosition(QTextCursor.StartOfBlock, QTextCursor.KeepAnchor)
@@ -501,7 +469,6 @@ class LLMDialog(QDialog):
         self.send_btn.setEnabled(True)
         self.send_btn.setText("发送")
 
-    # ── 知识库检索 ──
     def _kb_search(self):
         query = self.kb_input.text().strip()
         if not query:
@@ -523,7 +490,6 @@ class LLMDialog(QDialog):
             lines.append(h.format_full())
         self.append_msg("system", "\n".join(lines))
 
-    # ── 消息输出 ──
     def append_msg(self, role: str, text: str):
         if role == "system":
             prefix, color = "系统", "#8e8ea0"
@@ -547,7 +513,6 @@ class LLMDialog(QDialog):
 
     def closeEvent(self, event):
         if self.worker and self.worker.isRunning():
-            # 先断开信号防止向已销毁控件发消息，再中断线程并掐断连接
             try:
                 self.worker.token_received.disconnect(self._on_token)
                 self.worker.finished.disconnect(self._on_finished)
@@ -555,7 +520,6 @@ class LLMDialog(QDialog):
                 pass
             self.worker.requestInterruption()
             self.llm.stop()
-            # W111: 非阻塞等待，避免 UI 冻结
             if not self.worker.wait(1500):
                 self.worker.terminate()
         super().closeEvent(event)

@@ -179,7 +179,6 @@ class WorkSamplingTab(BaseAnalysisTab):
         self._rebuild_obs_rows()
 
     def _build_status_checks(self):
-        # 清除旧按钮
         for btn in self._status_checks:
             self.status_check_layout.removeWidget(btn)
             btn.deleteLater()
@@ -192,7 +191,6 @@ class WorkSamplingTab(BaseAnalysisTab):
             btn.setCursor(Qt.PointingHandCursor)
             btn.setProperty("status_key", key)
             col = QColor(info["color"])
-            # 选中时纯色填充，未选中时暗底+细色框
             btn.setStyleSheet(
                 f"QPushButton {{"
                 f"background-color: {col.name()}; color: #fff;"

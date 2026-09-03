@@ -4,7 +4,6 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 from datetime import datetime
 
-# 18项提交要求 (AIAG PPAP 第4版)
 PPAP_ITEMS = [
     (1, "设计记录", "design_records"),
     (2, "工程变更文件", "engineering_changes"),
@@ -35,11 +34,11 @@ SUBMISSION_LEVELS = {
 }
 
 SUBMISSION_ITEMS = {
-    1: [18],                              # 仅PSW
-    2: [18, 15],                           # PSW+样品
-    3: [1,2,4,5,6,7,8,9,10,11,15,18],     # 完整
-    4: [18],                               # 自定义
-    5: list(range(1, 19)),                 # 全部
+    1: [18],
+    2: [18, 15],
+    3: [1,2,4,5,6,7,8,9,10,11,15,18],
+    4: [18],
+    5: list(range(1, 19)),
 }
 
 
@@ -48,7 +47,7 @@ class PPAPItem:
     number: int
     name: str
     key: str
-    status: str = "pending"     # pending | in_progress | complete | n_a
+    status: str = "pending"
     notes: str = ""
 
     STATUS_COLORS = {"pending": "#888", "in_progress": "#f1c40f", "complete": "#2ecc71", "n_a": "#555"}
