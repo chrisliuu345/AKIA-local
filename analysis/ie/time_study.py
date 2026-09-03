@@ -63,7 +63,6 @@ class TimeStudyEngine:
             bins = max(5, min(20, int(np.sqrt(n))))
         hist, edges = np.histogram(times, bins=bins)
 
-        # W85 fix: std=0时跳过正态性检验（常数数据无需检验）
         std_val = float(times.std(ddof=1)) if n > 1 else 0.0
         if n <= 5000 and std_val > 0:
             stat, p = stats.shapiro(times.values)

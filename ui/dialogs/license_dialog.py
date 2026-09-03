@@ -20,7 +20,6 @@ class LicenseDialog(QDialog):
     def _setup_ui(self):
         layout = QVBoxLayout(self)
 
-        # 应用名称和版本
         title = QLabel(f"{APP_NAME}")
         title.setStyleSheet("font-size: 24px; font-weight: bold; color: #1b5faa; padding: 8px;")
         title.setAlignment(Qt.AlignCenter)
@@ -31,12 +30,10 @@ class LicenseDialog(QDialog):
         version.setAlignment(Qt.AlignCenter)
         layout.addWidget(version)
 
-        # 分隔线
         line = QLabel()
         line.setStyleSheet("border-top: 1px solid #ddd; margin: 16px 0;")
         layout.addWidget(line)
 
-        # 版本信息
         info_text = f"""
 <b>功能特性:</b>
 • 35 个分析模块（SPC/能力/MSA/假设检验/DOE/IE工具）
@@ -57,14 +54,12 @@ class LicenseDialog(QDialog):
         info_label.setWordWrap(True)
         layout.addWidget(info_label)
 
-        # 机器ID（用于调试）
         machine_id = LicenseManager.get_machine_id()
         mid_label = QLabel(f"机器ID: {machine_id}")
         mid_label.setStyleSheet("color: #999; font-size: 10px; padding: 4px;")
         mid_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         layout.addWidget(mid_label)
 
-        # 关闭按钮
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
         close_btn = QPushButton("关闭")

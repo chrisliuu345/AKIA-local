@@ -41,7 +41,6 @@ class RootCauseDialog(QDialog):
         self._setup_ui()
         self._run_analysis()
 
-    # ────────────────────────── UI ──────────────────────────
     def _setup_ui(self):
         tc = theme_colors()
         self.setStyleSheet(f"background-color: {tc['bg_body']}; color: {tc['text_primary']};")
@@ -62,7 +61,6 @@ class RootCauseDialog(QDialog):
 
         splitter = QSplitter(Qt.Horizontal)
 
-        # 左: 根因排行榜
         left = QWidget()
         left_layout = QVBoxLayout(left)
         left_layout.setContentsMargins(0, 0, 0, 0)
@@ -92,7 +90,6 @@ class RootCauseDialog(QDialog):
         left_layout.addWidget(self.table)
         splitter.addWidget(left)
 
-        # 右: 图表区
         right = QWidget()
         right_layout = QVBoxLayout(right)
         right_layout.setContentsMargins(0, 0, 0, 0)
@@ -120,7 +117,6 @@ class RootCauseDialog(QDialog):
         btn_row.addWidget(close_btn)
         layout.addLayout(btn_row)
 
-    # ────────────────────── 分析与渲染 ──────────────────────
     def _run_analysis(self):
         tc = theme_colors()
         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -173,13 +169,11 @@ class RootCauseDialog(QDialog):
 
     def _render_charts(self, causes: List[RootCause]):
         tc = theme_colors()
-        # plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]  # redundant, handled by chart_engine.setup_chinese_font()
         plt.rcParams["axes.unicode_minus"] = False
 
         self.fig.clear()
         self.fig.set_facecolor(tc["bg_card"])
 
-        # ── 上图: 综合得分横向条形图 ──
         ax1 = self.fig.add_subplot(2, 1, 1)
         top = list(reversed(causes[:8]))
         names = [c.column for c in top]
@@ -193,7 +187,6 @@ class RootCauseDialog(QDialog):
         ax1.set_title("综合得分排行", color=tc["text_primary"], fontsize=11, pad=8)
         self._style_axis(ax1, tc)
 
-        # ── 下图: 相关性热力图 (目标 + Top6) ──
         ax2 = self.fig.add_subplot(2, 1, 2)
         cols = [self.target_column] + [c.column for c in causes[:6]]
         numeric = self.df[cols].apply(pd.to_numeric, errors="coerce")

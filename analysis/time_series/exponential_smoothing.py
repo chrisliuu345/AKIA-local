@@ -47,7 +47,6 @@ def analyze(
             "error": f"数据点不足: {n}（最少需要 4 个）",
         }
 
-    # 自动检测季节周期
     if method == "holt_winters" and seasonal != "none":
         if seasonal_periods is None:
             seasonal_periods = detect_period(clean)
@@ -60,7 +59,6 @@ def analyze(
                         "error": f"无法检测季节周期（数据长度 {n} 不足）",
                     }
 
-    # 构建模型参数
     trend_type = None
     use_seasonal = False
     seasonal_type = None
@@ -98,13 +96,10 @@ def analyze(
             "error": f"模型拟合失败: {str(e)}",
         }
 
-    # 拟合值
     fitted = fit.fittedvalues
 
-    # 预测
     forecast_result = fit.forecast(steps=forecast_steps)
 
-    # 置信区间（基于残差标准差）
     residuals = clean - fitted
     residual_std = float(np.std(residuals, ddof=1))
     z = sp_stats.norm.ppf((1 + confidence_level) / 2)
@@ -114,7 +109,6 @@ def analyze(
     conf_lower = (forecast_vals - conf_half).tolist()
     conf_upper = (forecast_vals + conf_half).tolist()
 
-    # AIC/BIC
     aic = float(fit.aic) if hasattr(fit, "aic") else None
     bic = float(fit.bic) if hasattr(fit, "bic") else None
 

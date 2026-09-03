@@ -12,7 +12,6 @@ def generate_design(factors: List[str], replicates: int = 1) -> pd.DataFrame:
     k = len(factors)
     n_runs = 2 ** k * replicates
 
-    # Vectorized factorial design generation
     idx = np.arange(2 ** k)
     design_matrix = 2 * ((idx[:, np.newaxis] >> np.arange(k)[::-1]) & 1).astype(int) - 1
     if replicates > 1:
@@ -32,7 +31,6 @@ def analyze_factorial(
 ) -> Dict[str, Any]:
     data = df
     data = data.dropna(subset=[response_col] + factor_cols)
-    # Validate all selected columns are numeric
     for col in [response_col] + factor_cols:
         coerced = pd.to_numeric(data[col], errors="coerce")
         n_nan = coerced.isna().sum()
@@ -44,10 +42,8 @@ def analyze_factorial(
             )
     response = data[response_col].astype(float).values
 
-    # Build design matrix from factor columns
     design = data[factor_cols].astype(float).values
 
-    # Vectorized effects computation (W35 fix: 支持非±1编码，按>0/<0分组)
     design_f = design
     high_mask = design_f > 0
     low_mask = design_f < 0
@@ -65,7 +61,6 @@ def analyze_factorial(
     ss_total = float(np.sum((response - grand_mean) ** 2))
     df_total = len(response) - 1
 
-    # Vectorized SS computation (W35 fix: 支持非±1编码)
     ss_arr = np.where(valid, n_high * (effects_arr / 2) ** 2 + n_low * (-effects_arr / 2) ** 2, 0.0)
     ss_factors = {factor: round(float(ss_arr[i]), 4) for i, factor in enumerate(factor_cols)}
     df_factors = {factor: 1 for factor in factor_cols}
@@ -76,8 +71,7 @@ def analyze_factorial(
     df_error = df_total - df_model
     ms_e = ss_error / df_error if df_error > 0 else 0
 
-    # Vectorized MS, F, p-value computation
-    ms_arr = ss_arr  # df=1 for each factor, so ms = ss
+    ms_arr = ss_arr
     f_arr = np.where(ms_e > 0, ms_arr / ms_e, 0.0)
     p_arr = 1 - stats.f.cdf(f_arr, 1, df_error)
 

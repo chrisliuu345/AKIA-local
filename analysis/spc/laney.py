@@ -57,7 +57,6 @@ def laney_p_prime(
     defects = np.asarray(defects, dtype=float)
     sample_sizes = np.asarray(sample_sizes, dtype=float)
 
-    # 校验
     if len(defects) != len(sample_sizes):
         raise ValueError("defects与sample_sizes长度不一致")
     if np.any(sample_sizes <= 0):
@@ -69,39 +68,28 @@ def laney_p_prime(
     if n < 2:
         raise ValueError(f"数据量不足: {n} (至少需要2个子组)")
 
-    # 计算比例
     p = defects / sample_sizes
 
-    # 总体比例
     p_bar = np.sum(defects) / np.sum(sample_sizes)
 
-    # 计算z分数 (标准化残差)
     p_hat = np.where(p_bar * (1 - p_bar) > 0,
                      p_bar * (1 - p_bar) / sample_sizes,
                      1e-10)
     z = (p - p_bar) / np.sqrt(p_hat)
 
-    # 计算移动波动率 σ_z
-    # σ_z = mean(|z_i - z_{i-1}|) / sqrt(2)
     sigma_z = np.mean(np.abs(np.diff(z))) / np.sqrt(2)
 
-    # 确保sigma_z至少为1（避免欠离散时控制限过窄）
     sigma_z = max(sigma_z, 1.0)
 
-    # 从alpha计算k因子（标准正态分布的临界值）
     k_factor = stats.norm.ppf(1 - alpha / 2)
 
-    # 计算控制限
-    # UCL/LCL = p_bar ± k * sigma_z * sqrt(p_bar * (1-p_bar) / n_i)
     se = np.sqrt(p_bar * (1 - p_bar) / sample_sizes)
     ucl = p_bar + k_factor * sigma_z * se
     lcl = p_bar - k_factor * sigma_z * se
-    lcl = np.maximum(lcl, 0)  # LCL不能为负
+    lcl = np.maximum(lcl, 0)
 
-    # 中心线
     cl = p_bar
 
-    # 检测违规点
     violations = (p > ucl) | (p < lcl)
 
     return {
@@ -144,7 +132,6 @@ def laney_u_prime(
     defects = np.asarray(defects, dtype=float)
     sample_sizes = np.asarray(sample_sizes, dtype=float)
 
-    # 校验
     if len(defects) != len(sample_sizes):
         raise ValueError("defects与sample_sizes长度不一致")
     if np.any(sample_sizes <= 0):
@@ -156,38 +143,28 @@ def laney_u_prime(
     if n < 2:
         raise ValueError(f"数据量不足: {n} (至少需要2个子组)")
 
-    # 计算单位缺陷数
     u = defects / sample_sizes
 
-    # 总体单位缺陷数
     u_bar = np.sum(defects) / np.sum(sample_sizes)
 
-    # 计算z分数 (标准化残差)
     u_hat = np.where(u_bar > 0,
                      u_bar / sample_sizes,
                      1e-10)
     z = (u - u_bar) / np.sqrt(u_hat)
 
-    # 计算移动波动率 σ_z
     sigma_z = np.mean(np.abs(np.diff(z))) / np.sqrt(2)
 
-    # 确保sigma_z至少为1
     sigma_z = max(sigma_z, 1.0)
 
-    # 从alpha计算k因子
     k_factor = stats.norm.ppf(1 - alpha / 2)
 
-    # 计算控制限
-    # UCL/LCL = u_bar ± k * sigma_z * sqrt(u_bar / n_i)
     se = np.sqrt(u_bar / sample_sizes)
     ucl = u_bar + k_factor * sigma_z * se
     lcl = u_bar - k_factor * sigma_z * se
     lcl = np.maximum(lcl, 0)
 
-    # 中心线
     cl = u_bar
 
-    # 检测违规点
     violations = (u > ucl) | (u < lcl)
 
     return {

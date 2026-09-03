@@ -34,7 +34,6 @@ class SMEDTab(BaseAnalysisTab):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
 
-        # — 顶部操作栏 —
         top = QHBoxLayout()
         top.addWidget(QLabel("SMED 快速换模分析"))
         top.addStretch()
@@ -48,7 +47,6 @@ class SMEDTab(BaseAnalysisTab):
         top.addWidget(self.del_btn)
         layout.addLayout(top)
 
-        # — 作业编辑表 —
         self.table = QTableWidget(0, 5)
         self.table.setHorizontalHeaderLabels(["作业名称", "类型", "改善前(s)", "改善后(s)", "转外部"])
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
@@ -56,19 +54,17 @@ class SMEDTab(BaseAnalysisTab):
             self.table.horizontalHeader().setSectionResizeMode(i, QHeaderView.ResizeToContents)
         layout.addWidget(self.table)
 
-        # — 预设模板 —
         preset_row = QHBoxLayout()
         preset_row.addWidget(QLabel("预设:"))
         presets = ["换模5S准备", "工具检查", "模具拆卸", "模具安装", "首件调试", "参数调整", "质量确认", "清理收尾"]
         for p in presets:
             btn = QPushButton(p)
-            btn.setFixedHeight(32)  # 足够容纳 9pt+ 中文, 避免垂直裁切
+            btn.setFixedHeight(32)
             btn.clicked.connect(lambda _, n=p: self._add_preset(n))
             preset_row.addWidget(btn)
         preset_row.addStretch()
         layout.addLayout(preset_row)
 
-        # — 分析按钮 —
         btn_row = QHBoxLayout()
         self.run_btn = QPushButton("生成 SMED 分析图")
         self.run_btn.setFont(FONT_12B)
@@ -83,12 +79,10 @@ class SMEDTab(BaseAnalysisTab):
         btn_row.addWidget(self.save_btn)
         layout.addLayout(btn_row)
 
-        # — 图表区 —
         self.canvas_widget = QWidget()
         self.canvas_layout = QVBoxLayout(self.canvas_widget)
         layout.addWidget(self.canvas_widget, 1)
 
-        # — 改善摘要 —
         self.summary_label = QLabel("")
         self.summary_label.setFont(QFont(get_ui_font(), 11))
         layout.addWidget(self.summary_label)
@@ -146,7 +140,6 @@ class SMEDTab(BaseAnalysisTab):
         result = self.run_analysis()
         if result:
             self.display_result(result)
-            # W59-W62: 标准化 current_result 三件套
             self.current_result = {
                 "analysis_type": result.get("analysis_type", "SMED"),
                 "params": {},
@@ -166,7 +159,6 @@ class SMEDTab(BaseAnalysisTab):
         fig, (ax_gantt, ax_compare) = plt.subplots(1, 2, figsize=(14, 7), dpi=100, gridspec_kw={'width_ratios': [1.5, 1]})
         fig.patch.set_facecolor('#181822')
 
-        # —— 甘特图 ——
         y = 0
         colors_map = {'internal': '#e74c3c', 'external': '#3498db'}
         labels, colors_list, starts, widths_after = [], [], [], []
@@ -182,7 +174,7 @@ class SMEDTab(BaseAnalysisTab):
             ws = widths_after[i] if t.improved_time > 0 else t.time_sec
             ax_gantt.text(ws / 2, i, f'{ws:.0f}s', ha='center', va='center', fontsize=8, color='white')
         ax_gantt.set_yticks(list(y_positions))
-        gantt_fs = 9 if len(all_tasks) <= 8 else 7  # 任务多时缩小字号防挤叠
+        gantt_fs = 9 if len(all_tasks) <= 8 else 7
         ax_gantt.set_yticklabels(labels, fontsize=gantt_fs)
         ax_gantt.set_xlabel("时间 (秒)", fontsize=10)
         ax_gantt.set_title("改善后时间分布", fontsize=12, fontweight='bold', color='#e1e2e6')
@@ -191,7 +183,6 @@ class SMEDTab(BaseAnalysisTab):
         ax_gantt.legend([plt.Rectangle((0,0),1,1,color='#e74c3c'), plt.Rectangle((0,0),1,1,color='#3498db')],
                         ['内部作业', '外部作业'], fontsize=8, loc='lower right')
 
-        # —— 改善前后对比柱状图 ——
         cats = ['内部作业', '外部作业', '总时间']
         before_vals = [result.total_internal_before, result.total_external_before, result.total_before]
         after_vals = [result.total_internal_after, result.total_external_after, result.total_after]
@@ -210,7 +201,7 @@ class SMEDTab(BaseAnalysisTab):
             ax_compare.text(x[i] - w/2, before_vals[i] + 5, f'{before_vals[i]:.0f}', ha='center', fontsize=8, color='#e1e2e6')
             ax_compare.text(x[i] + w/2, after_vals[i] + 5, f'{after_vals[i]:.0f}', ha='center', fontsize=8, color='#e1e2e6')
 
-        fig.tight_layout(rect=[0.18, 0, 1, 1])  # 左侧预留 y 轴标签宽度
+        fig.tight_layout(rect=[0.18, 0, 1, 1])
         self.current_figure = fig
         summary = (f"换模总时间: {result.total_before:.0f}s → {result.total_after:.0f}s "
                    f"(改善 {result.improvement_pct:.1f}%)\n"

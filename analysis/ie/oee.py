@@ -31,7 +31,6 @@ class OEEEngine:
             out["error"] = "无有效记录（需要 available_time > 0 的资源数据）"
             return out
 
-        # 分组
         if group_by == "group":
             buckets = self._bucketize(valid, key=lambda r: r.group or "(未分组)")
         elif group_by == "shift":
@@ -44,7 +43,6 @@ class OEEEngine:
         out["overall"] = self._metrics("全部", valid)
         return out
 
-    # ── 分组 ──
     @staticmethod
     def _bucketize(rows: List[Resource], key) -> List:
         buckets: Dict[str, List[Resource]] = {}
@@ -52,7 +50,6 @@ class OEEEngine:
             buckets.setdefault(key(r), []).append(r)
         return sorted(buckets.items(), key=lambda kv: kv[0])
 
-    # ── 核心指标 ──
     def _metrics(self, label: str, rows: List[Resource]) -> Dict[str, Any]:
         sum_avail = sum(r.available_time for r in rows)
         sum_down = sum(max(r.downtime, 0.0) for r in rows)
@@ -74,7 +71,6 @@ class OEEEngine:
         notes: List[str] = []
         a = sum_op / sum_avail
 
-        # 性能（需要理想节拍 + 产量 + 运行时间）
         perf_rows = [r for r in rows
                      if r.ideal_cycle_time > 0 and r.total_qty > 0]
         p: Optional[float] = None
@@ -90,7 +86,6 @@ class OEEEngine:
         else:
             notes.append("缺少理想节拍/产量，性能按 100% 计")
 
-        # 良品率
         q_rows = [r for r in rows if r.total_qty > 0]
         q: Optional[float] = None
         if q_rows and all(r.good_qty >= 0 for r in q_rows):
@@ -106,7 +101,6 @@ class OEEEngine:
         q_eff = q if q is not None else 1.0
         oee = a * p_eff * q_eff
 
-        # 损失分解（小时）
         speed_loss_h = max(sum_op - perf_time_h, 0.0) if perf_rows else 0.0
         quality_loss_h = 0.0
         if perf_rows and q is not None:

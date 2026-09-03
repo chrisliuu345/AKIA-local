@@ -26,7 +26,6 @@ class DataCleanWizard(QDialog):
         self.setStyleSheet(f"background-color: {tc['bg_body']};")
         root = QVBoxLayout(self); root.setSpacing(10)
 
-        # 标题 + 统计
         hdr = QHBoxLayout()
         self.title = QLabel("数据清洗向导"); self.title.setFont(QFont(get_ui_font(), 18, QFont.Bold))
         hdr.addWidget(self.title); hdr.addStretch()
@@ -35,14 +34,12 @@ class DataCleanWizard(QDialog):
         hdr.addWidget(self.summary)
         root.addLayout(hdr)
 
-        # 发现的问题
         self.issue_list = QLabel("正在扫描...")
         self.issue_list.setFont(QFont(get_ui_font(), 10))
         self.issue_list.setStyleSheet(f"color: {tc['text_secondary']}; padding: 4px 8px; background: {tc['bg_card']}; border-radius: 6px;")
         self.issue_list.setWordWrap(True)
         root.addWidget(self.issue_list)
 
-        # 对比表格
         splitter = QSplitter(Qt.Horizontal)
         left = QWidget(); ll = QVBoxLayout(left); ll.setContentsMargins(0,0,0,0)
         ll.addWidget(QLabel("原始数据")); self.before_table = self._make_table(); ll.addWidget(self.before_table)
@@ -51,7 +48,6 @@ class DataCleanWizard(QDialog):
         splitter.addWidget(left); splitter.addWidget(right)
         root.addWidget(splitter, 1)
 
-        # 按钮栏
         btns = QHBoxLayout()
         self.btn_rescan = QPushButton("重新扫描"); self.btn_rescan.setStyleSheet(BUTTON_SECONDARY)
         self.btn_rescan.clicked.connect(self._scan); btns.addWidget(self.btn_rescan)
@@ -86,25 +82,21 @@ class DataCleanWizard(QDialog):
             miss = s.isna().sum()
             if miss > 0:
                 self._issues.append({"type": "missing", "col": col, "count": int(miss), "pct": f"{miss/len(df)*100:.1f}%", "fix": "fill_median"})
-            # IQR 异常值
             q1, q3 = s.quantile(0.25), s.quantile(0.75)
             iqr = q3 - q1
             if iqr > 0:
                 outliers = ((s < q1 - 1.5 * iqr) | (s > q3 + 1.5 * iqr)).sum()
                 if outliers > 0:
                     self._issues.append({"type": "outlier", "col": col, "count": int(outliers), "pct": f"{outliers/len(df)*100:.1f}%", "fix": "clip_iqr"})
-            # Z-score 异常
             if s.std() > 0:
                 z_out = (np.abs((s - s.mean()) / s.std()) > 3).sum()
                 if z_out > 0 and z_out < len(s) * 0.1:
                     self._issues.append({"type": "zscore", "col": col, "count": int(z_out), "pct": f"{z_out/len(df)*100:.1f}%", "fix": "clip_3sigma"})
 
-        # 重复行
         dup = df.duplicated().sum()
         if dup > 0:
             self._issues.append({"type": "duplicate", "col": "—", "count": int(dup), "pct": f"{dup/len(df)*100:.1f}%", "fix": "drop_dup"})
 
-        # 常数检测
         for col in numeric:
             if df[col].nunique() == 1:
                 self._issues.append({"type": "constant", "col": col, "count": 1, "pct": "—", "fix": "warn_only"})

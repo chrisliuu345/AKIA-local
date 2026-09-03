@@ -21,9 +21,6 @@ TEXT_COLOR = QColor("#e1e2e6")
 MUTED_COLOR = QColor("#a0a3ae")
 
 
-# ──────────────────────────────────────────────
-# 带背景框的可拖动文本
-# ──────────────────────────────────────────────
 class _LabelNode(QGraphicsItem):
     """文字 + 半透明圆角背景框, 可拖动, 双击编辑"""
 
@@ -36,8 +33,8 @@ class _LabelNode(QGraphicsItem):
         self._color = color
         self._padding = 6
         self._radius = 6
-        self._on_moved = None        # callback()
-        self._on_edited = None       # callback(text)
+        self._on_moved = None
+        self._on_edited = None
 
         self.setFlag(QGraphicsItem.ItemIsMovable, True)
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
@@ -68,14 +65,12 @@ class _LabelNode(QGraphicsItem):
 
     def paint(self, painter, option, widget):
         r = self.boundingRect()
-        # 背景框
         path = QPainterPath()
         path.addRoundedRect(r, self._radius, self._radius)
         painter.fillPath(path, QBrush(QColor(30, 30, 42, 220)))
         pen = QPen(QColor(70, 70, 85), 1)
         painter.setPen(pen)
         painter.drawPath(path)
-        # 文字
         painter.setFont(self._font)
         painter.setPen(self._color)
         painter.drawText(r.adjusted(self._padding, 0, -self._padding, 0),
@@ -119,9 +114,6 @@ class _LabelNode(QGraphicsItem):
         return self.pos() + QPointF(self._w, self._h / 2)
 
 
-# ──────────────────────────────────────────────
-# 问题框 (鱼头)
-# ──────────────────────────────────────────────
 class _ProblemBox(QGraphicsRectItem):
     def __init__(self, x, y, text: str):
         w, h = 170, 38
@@ -136,23 +128,20 @@ class _ProblemBox(QGraphicsRectItem):
         self.label.setPos(x + 8, y - 14)
 
 
-# ──────────────────────────────────────────────
-# 子原因刺 (固定在分支上)
-# ──────────────────────────────────────────────
 class _CauseSpike:
     """通用原因刺: 锚点在父对象上 → 标签框, 支持 3 层嵌套"""
 
     def __init__(self, scene, parent, t: float, label: str, color: QColor,
                  level: int = 1):
         self.scene = scene
-        self.parent = parent    # _Branch 或 _CauseSpike
-        self.t = t              # 父对象上的位置比率 (0~1)
+        self.parent = parent
+        self.t = t
         self._color = color
         self._level = level
         self._side = 1
         self._children: list[_CauseSpike] = []
 
-        fs = max(8, 10 - level)  # 层级越深字号越小
+        fs = max(8, 10 - level)
         self.line = QGraphicsLineItem()
         self.line.setPen(QPen(color, max(1.0, 2.0 - level * 0.5)))
         scene.addItem(self.line)
@@ -179,11 +168,9 @@ class _CauseSpike:
             x2, y2 = bl.line().x2(), bl.line().y2()
             return (x1 + self.t * (x2 - x1), y1 + self.t * (y2 - y1))
         else:
-            # 父是 _CauseSpike: 锚点在父标签框边缘
             pl = self.parent.label
             pc = pl.center()
             bw, bh = pl.boundingRect().width(), pl.boundingRect().height()
-            # 从父标签中心向外的方向
             side = self._side
             return (pc.x() + side * bw * 0.5, pc.y())
 
@@ -209,7 +196,6 @@ class _CauseSpike:
         bh = self.label.boundingRect().height()
 
         if isinstance(self.parent, _Branch):
-            # 基于分支实际方向计算垂直偏移
             bl = self.parent.line
             dx = bl.line().x2() - bl.line().x1()
             dy = bl.line().y2() - bl.line().y1()
@@ -220,7 +206,6 @@ class _CauseSpike:
             else:
                 perp_x, perp_y = 0, 1
         else:
-            # 父是 _CauseSpike: 基于标签→锚点方向
             lc = self.parent.label.center()
             dx = lc.x() - ax
             dy = lc.y() - ay
@@ -260,9 +245,6 @@ class _CauseSpike:
         self.scene.removeItem(self.label)
 
 
-# ──────────────────────────────────────────────
-# 主分支 (大刺) — 从脊骨到可拖动标签
-# ──────────────────────────────────────────────
 class _Branch:
     """主分支: 线从脊骨接点→标签, 标签拖动时线+所有子原因联动"""
 
@@ -275,9 +257,8 @@ class _Branch:
         self._angle_up = angle_up
         self._causes: list[_CauseSpike] = []
 
-        # 初始端点 (标签初始位置)
         init_len = 190
-        rad = 0.55  # ~31°
+        rad = 0.55
         y_dir = -1 if angle_up else 1
         ex = bx - init_len * 0.82
         ey = by + y_dir * init_len * 0.52
@@ -313,9 +294,6 @@ class _Branch:
         self.scene.removeItem(self.label)
 
 
-# ──────────────────────────────────────────────
-# 主画布 (QGraphicsView)
-# ──────────────────────────────────────────────
 class FishboneCanvas(QGraphicsView):
     """交互式鱼骨图: 滚轮缩放 + 中键/右键拖拽平移"""
 
@@ -356,17 +334,14 @@ class FishboneCanvas(QGraphicsView):
 
         colors = M6_COLORS[:n] if n <= len(M6_COLORS) else M6_COLORS * 2
 
-        # 画布尺寸 (场景坐标, 大一些给足空间)
         w, h = 1200, 700
         self._scene.setSceneRect(-20, -20, w + 40, h + 40)
         cx, cy = w / 2, h / 2
 
-        # ── 脊骨 ──
         spine_x1, spine_x2 = cx - 380, cx + 260
         spine = QGraphicsLineItem(spine_x1, cy, spine_x2, cy)
         spine.setPen(QPen(MUTED_COLOR, 3))
         self._scene.addItem(spine)
-        # 箭头
         arrow = QPolygonF([
             QPointF(spine_x2, cy), QPointF(spine_x2 - 14, cy - 7),
             QPointF(spine_x2 - 14, cy + 7),
@@ -375,11 +350,9 @@ class FishboneCanvas(QGraphicsView):
         path.addPolygon(arrow)
         arr_item = self._scene.addPath(path, QPen(Qt.NoPen), QBrush(MUTED_COLOR))
 
-        # ── 问题框 ──
         pb = _ProblemBox(spine_x2 + 10, cy, problem)
         self._scene.addItem(pb)
 
-        # ── 分支: 均匀分布在脊骨上 ──
         branch_names = list(branches.keys())
         bx_spacing = (spine_x2 - 80 - spine_x1 - 60) / max(n - 1, 1) if n > 1 else 0
         bx_start = spine_x1 + 70
@@ -399,7 +372,6 @@ class FishboneCanvas(QGraphicsView):
                 spike = branch.add_cause(child.name, t, side)
                 self._causes.append(spike)
 
-                # 递归渲染孙/曾孙原因 (第 2-3 层)
                 self._render_children(spike, child, side)
 
         self.fitInView(self._scene.sceneRect().adjusted(-30, -30, 60, 60),

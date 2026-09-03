@@ -13,7 +13,6 @@ class SheetSplitter:
         paths = []
         for val, group in df.groupby(column):
             raw = str(val).replace("/", "_").replace("\\", "_")
-            # 超长值截断时追加哈希后缀, 防不同长值截断后同名覆盖
             suffix = "_" + hashlib.md5(raw.encode("utf-8")).hexdigest()[:6] if len(raw) > 50 else ""
             safe = raw[:50] + suffix
             path = os.path.join(output_dir, f"{safe}.xlsx")

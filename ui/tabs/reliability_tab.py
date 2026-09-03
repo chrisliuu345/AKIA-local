@@ -30,7 +30,7 @@ class ReliabilityTab(BaseAnalysisTab):
     def __init__(self, parent=None):
         self._weibull = WeibullAnalyzer()
         self._mtbf = MTBFAnalyzer()
-        self._mode = "weibull"  # "weibull" | "mtbf"
+        self._mode = "weibull"
         self._kpi_labels: Dict[str, QLabel] = {}
         super().__init__(parent)
         self._setup_ui()
@@ -51,13 +51,11 @@ class ReliabilityTab(BaseAnalysisTab):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
 
-        # ── 标题 ──
         self.title_label = QLabel(i18n.tr("reliability.title"))
         self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
-        # ── 模式切换 ──
         mode_layout = QHBoxLayout()
         self.btn_weibull = QPushButton(i18n.tr("reliability.weibull_mode"))
         self.btn_weibull.setCheckable(True)
@@ -77,18 +75,14 @@ class ReliabilityTab(BaseAnalysisTab):
         mode_layout.addStretch()
         layout.addLayout(mode_layout)
 
-        # ── 主体分屏 ──
         splitter = QSplitter(Qt.Vertical)
 
-        # ── 上半: 配置 + 结果表格 ──
         top = QWidget()
         top_layout = QHBoxLayout(top)
         top_layout.setContentsMargins(0, 0, 0, 0)
 
-        # 配置面板
         self.config_stack = QStackedWidget()
 
-        # Weibull 配置页
         weibull_config = QGroupBox("分析参数")
         w_config_layout = QFormLayout(weibull_config)
 
@@ -119,7 +113,6 @@ class ReliabilityTab(BaseAnalysisTab):
 
         self.config_stack.addWidget(weibull_config)
 
-        # MTBF 配置页
         mtbf_config = QGroupBox("分析参数")
         m_config_layout = QFormLayout(mtbf_config)
 
@@ -147,7 +140,6 @@ class ReliabilityTab(BaseAnalysisTab):
 
         top_layout.addWidget(self.config_stack)
 
-        # KPI 卡片区
         kpi_group = QGroupBox("关键指标")
         self.kpi_grid = QGridLayout(kpi_group)
         self.kpi_grid.setSpacing(8)
@@ -173,7 +165,6 @@ class ReliabilityTab(BaseAnalysisTab):
 
         top_layout.addWidget(kpi_group)
 
-        # 参数结果表格
         self.result_table = QTableWidget()
         self.result_table.setAlternatingRowColors(True)
         self.result_table.horizontalHeader().setStretchLastSection(True)
@@ -182,7 +173,6 @@ class ReliabilityTab(BaseAnalysisTab):
         top_layout.addWidget(self.result_table)
         splitter.addWidget(top)
 
-        # ── 下半: 图表 ──
         chart_wrapper = QScrollArea()
         chart_wrapper.setWidgetResizable(True)
         chart_wrapper.setFrameShape(QFrame.NoFrame)
@@ -219,9 +209,6 @@ class ReliabilityTab(BaseAnalysisTab):
             combo.setCurrentIndex(idx)
         combo.blockSignals(False)
 
-    # ──────────────────────────────────────────────
-    # Weibull 分析
-    # ──────────────────────────────────────────────
     def _run_weibull(self):
         if self.df is None or self.df.empty:
             return
@@ -230,7 +217,6 @@ class ReliabilityTab(BaseAnalysisTab):
             return
         times = pd.to_numeric(self.df[col], errors="coerce").dropna().tolist()
 
-        # 删失列
         cen_col = self.censored_combo.currentData()
         censored = None
         if cen_col is not None and cen_col in self.df.columns:
@@ -252,7 +238,6 @@ class ReliabilityTab(BaseAnalysisTab):
             return
 
         r = result["result"]
-        # W66: 3P Weibull 拟合可能产生 NaN 参数，提前检测
         import math
         if any(math.isnan(v) for v in (r.beta, r.eta) if isinstance(v, float)):
             self.result_table.setColumnCount(1)
@@ -260,13 +245,11 @@ class ReliabilityTab(BaseAnalysisTab):
             self.result_table.setRowCount(1)
             self.result_table.setItem(0, 0, QTableWidgetItem("拟合失败：参数为 NaN，请尝试其他拟合方法或检查数据"))
             return
-        # 更新 KPI
         self._kpi_labels["beta"].setText(f"β = {r.beta:.4f}")
         self._kpi_labels["eta"].setText(f"η = {r.eta:.1f}")
         self._kpi_labels["b10"].setText(f"B10 = {r.b10_life:.1f}")
         self._kpi_labels["b50"].setText(f"B50 = {r.b50_life:.1f}")
 
-        # 参数表格
         params = [
             ("形状参数 β", f"{r.beta:.4f}"),
             ("尺度参数 η", f"{r.eta:.2f}"),
@@ -290,7 +273,6 @@ class ReliabilityTab(BaseAnalysisTab):
         self.result_table.resizeColumnsToContents()
 
         self._draw_weibull_charts(r)
-        # v2.4: 补齐 current_result (此前只发信号, 结果进不了 MainWindow.analyses)
         self.current_result = {
             "analysis_type": "Weibull 寿命分析",
             "params": {},
@@ -305,14 +287,12 @@ class ReliabilityTab(BaseAnalysisTab):
     def _draw_weibull_charts(self, r):
         self._clear_canvas()
         tc = theme_colors()
-        # plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]  # redundant, handled by chart_engine.setup_chinese_font()
         plt.rcParams["axes.unicode_minus"] = False
 
         fig = Figure(figsize=(11, 5.5), dpi=100)
         fig.set_facecolor(tc["bg_card"])
         fig.subplots_adjust(left=0.07, right=0.97, top=0.92, bottom=0.10, wspace=0.30)
 
-        # ── 左: 概率图 ──
         ax1 = fig.add_subplot(1, 2, 1)
         pd_data = r.probability_data
         if pd_data["time"]:
@@ -320,7 +300,6 @@ class ReliabilityTab(BaseAnalysisTab):
                      color=tc["accent_bright"], markersize=5, alpha=0.8,
                      label="观测数据")
 
-            # 理论线
             t_range = np.linspace(min(pd_data["time"]) * 0.5,
                                   max(pd_data["time"]) * 1.2, 100)
             z = (t_range - r.gamma) / r.eta
@@ -335,7 +314,6 @@ class ReliabilityTab(BaseAnalysisTab):
         ax1.grid(True, alpha=0.3)
         ax1.set_facecolor(tc["bg_body"])
 
-        # ── 右: R(t) + h(t) ──
         ax2 = fig.add_subplot(1, 2, 2)
         rc = r.reliability_curve
         ax2.plot(rc["t"], rc["R"], "-", color=tc["accent_bright"],
@@ -362,9 +340,6 @@ class ReliabilityTab(BaseAnalysisTab):
         self.current_figure = fig
         self._add_chart_toolbar()
 
-    # ──────────────────────────────────────────────
-    # MTBF 分析
-    # ──────────────────────────────────────────────
     def _run_mtbf(self):
         if self.df is None or self.df.empty:
             return
@@ -373,13 +348,11 @@ class ReliabilityTab(BaseAnalysisTab):
             return
         tbf = pd.to_numeric(self.df[tbf_col], errors="coerce").dropna().tolist()
 
-        # 修复时间列
         rt_col = self.repair_combo.currentData()
         rt = None
         if rt_col is not None and rt_col in self.df.columns:
             rt = pd.to_numeric(self.df[rt_col], errors="coerce").fillna(0).tolist()
 
-        # 分组列
         grp_col = self.mtbf_group_combo.currentData()
         groups = None
         if grp_col is not None and grp_col in self.df.columns:
@@ -399,7 +372,6 @@ class ReliabilityTab(BaseAnalysisTab):
         self._kpi_labels["b10"].setText(f"A = {r.availability:.3f}")
         self._kpi_labels["b50"].setText(f"λ = {r.failure_rate:.4f}")
 
-        # 结果表格
         trend_map = {
             "improving": i18n.tr("reliability.trend_improving"),
             "degrading": i18n.tr("reliability.trend_degrading"),
@@ -424,7 +396,6 @@ class ReliabilityTab(BaseAnalysisTab):
         self.result_table.resizeColumnsToContents()
 
         self._draw_mtbf_chart(result)
-        # v2.4: 补齐 current_result (此前只发信号, 结果进不了 MainWindow.analyses)
         from dataclasses import asdict
         self.current_result = {
             "analysis_type": "MTBF / MTTR",
@@ -436,7 +407,6 @@ class ReliabilityTab(BaseAnalysisTab):
     def _draw_mtbf_chart(self, result: Dict[str, Any]):
         self._clear_canvas()
         tc = theme_colors()
-        # plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]  # redundant, handled by chart_engine.setup_chinese_font()
         plt.rcParams["axes.unicode_minus"] = False
 
         r = result["overall"]
@@ -447,7 +417,6 @@ class ReliabilityTab(BaseAnalysisTab):
             fig.set_facecolor(tc["bg_card"])
             fig.subplots_adjust(left=0.08, right=0.96, top=0.88, bottom=0.18, wspace=0.30)
 
-            # ── 左: MTBF 分组柱状图 ──
             ax1 = fig.add_subplot(1, 2, 1)
             labels = [g.label for g in groups]
             mtbf_vals = [g.mtbf for g in groups]
@@ -464,7 +433,6 @@ class ReliabilityTab(BaseAnalysisTab):
             ax1.grid(True, alpha=0.3, axis="y")
             ax1.set_facecolor(tc["bg_body"])
 
-            # ── 右: 可用度对比 ──
             ax2 = fig.add_subplot(1, 2, 2)
             avail_vals = [g.availability * 100 for g in groups]
             colors = [tc["accent_bright"] if v >= 99 else

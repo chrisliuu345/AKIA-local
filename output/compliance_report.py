@@ -69,7 +69,6 @@ class ComplianceReportGenerator:
     def generate(template_id: str, analyses: List[Dict],
                  output_path: str, charts: Dict[str, bytes] = None,
                  file_name: str = "") -> str:
-        # W43: load_template 异常时 fallback 到内置默认模板
         try:
             template = ComplianceReportGenerator.load_template(template_id)
         except (FileNotFoundError, ValueError) as e:

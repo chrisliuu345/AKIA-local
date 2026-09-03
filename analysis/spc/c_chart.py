@@ -14,7 +14,6 @@ def analyze(defects: pd.Series) -> Dict[str, Any]:
 
     c = defects.values.astype(float)
 
-    # W31 fix: 校验缺陷数非负
     if np.any(c < 0):
         raise ValueError("缺陷数必须为非负数，检测到负值")
 

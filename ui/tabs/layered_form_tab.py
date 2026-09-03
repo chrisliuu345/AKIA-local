@@ -27,7 +27,6 @@ class LayeredFormTab(BaseAnalysisTab):
         self.auditor_edit.setText("审核员A,审核员B")
         cl.addRow("审核员:",self.auditor_edit)
         layout.addWidget(cfg)
-        # 检查项选择
         cg=QGroupBox("检查项类别")
         cgl=QVBoxLayout(cg)
         self.checks={}
@@ -39,7 +38,6 @@ class LayeredFormTab(BaseAnalysisTab):
         self.btn=QPushButton("生成 LPA 检查表 (Excel)")
         self.btn.setStyleSheet(BUTTON_PRIMARY_STRETCH); self.btn.clicked.connect(self._run)
         layout.addWidget(self.btn)
-        # 预览
         self.preview=QTextEdit(); self.preview.setReadOnly(True); layout.addWidget(self.preview,1)
         self._show_preview()
     def _show_preview(self):

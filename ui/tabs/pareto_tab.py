@@ -24,7 +24,7 @@ from output.chart_engine import create_pareto_chart
 class ParetoTab(BaseAnalysisTab):
 
     def __init__(self, parent=None):
-        self._full_df: pd.DataFrame = None  # 保留完整数据用于钻取回溯
+        self._full_df: pd.DataFrame = None
         super().__init__(parent)
         self._setup_ui()
 
@@ -48,7 +48,6 @@ class ParetoTab(BaseAnalysisTab):
 
         splitter = QSplitter(Qt.Horizontal)
 
-        # ── 左侧: 配置 ──
         left = QWidget()
         left.setMaximumWidth(320)
         left_layout = QVBoxLayout(left)
@@ -94,7 +93,6 @@ class ParetoTab(BaseAnalysisTab):
 
         left_layout.addWidget(config_group)
 
-        # 数据表
         table_group = QGroupBox("详细数据")
         table_layout = QVBoxLayout(table_group)
         self.result_table = QTableWidget()
@@ -106,7 +104,6 @@ class ParetoTab(BaseAnalysisTab):
 
         splitter.addWidget(left)
 
-        # ── 右侧: 图表 ──
         chart_wrapper = QScrollArea()
         chart_wrapper.setWidgetResizable(True)
         chart_wrapper.setFrameShape(QFrame.NoFrame)
@@ -139,7 +136,6 @@ class ParetoTab(BaseAnalysisTab):
         if cat_col is None or val_col is None:
             return
 
-        # 聚合: 按分类列 groupby 求和
         df_work = self.df.copy()
         df_work[val_col] = pd.to_numeric(df_work[val_col], errors="coerce")
         grouped = df_work.groupby(cat_col)[val_col].sum().sort_values(ascending=False).dropna()
@@ -147,7 +143,6 @@ class ParetoTab(BaseAnalysisTab):
         if len(grouped) == 0:
             return
 
-        # Top-N + 其他
         top_n = self.top_n_spin.value()
         if len(grouped) > top_n:
             top = grouped.head(top_n)
@@ -178,13 +173,10 @@ class ParetoTab(BaseAnalysisTab):
     def _draw_chart(self, labels: list, values: list):
         self._clear_canvas()
         tc = theme_colors()
-        # plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]  # redundant, handled by chart_engine.setup_chinese_font()
         plt.rcParams["axes.unicode_minus"] = False
 
-        # 使用 chart_engine 的 create_pareto_chart 获得标准图表，再增强
         fig = create_pareto_chart(labels, values, title="帕累托图")
 
-        # 增强: 阈值线
         threshold = self.threshold_spin.value()
         if threshold > 0 and threshold < 100:
             ax = fig.axes[0]
@@ -208,7 +200,7 @@ class ParetoTab(BaseAnalysisTab):
             return
         cat_name = cat_item.text()
         if cat_name.startswith("其他"):
-            return  # 不钻取「其他」行
+            return
 
         if self._full_df is None:
             return
@@ -216,7 +208,6 @@ class ParetoTab(BaseAnalysisTab):
         if cat_col is None:
             return
 
-        # 过滤到该分类
         filtered = self._full_df[self._full_df[cat_col].astype(str) == cat_name]
         if len(filtered) > 0:
             self.df = filtered

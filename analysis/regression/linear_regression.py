@@ -14,7 +14,6 @@ def analyze(
     factor_cols: List[str],
 ) -> Dict[str, Any]:
     data = df.dropna(subset=[response_col] + factor_cols).copy()
-    # Validate all selected columns are numeric
     for col in [response_col] + factor_cols:
         coerced = pd.to_numeric(data[col], errors="coerce")
         n_nan = coerced.isna().sum()

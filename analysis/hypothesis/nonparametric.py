@@ -26,7 +26,6 @@ def wilcoxon_signed_rank(a: np.ndarray, b: np.ndarray = None,
                          alternative: str = "two-sided") -> Dict[str, Any]:
     """Wilcoxon 符号秩检验 (配对样本或单样本)"""
     if b is not None:
-        # W20 fix: 按索引对齐后过滤非有限值，避免位置截断错位
         min_len = min(len(a), len(b))
         valid_mask = np.isfinite(a[:min_len]) & np.isfinite(b[:min_len])
         clean_a = a[:min_len][valid_mask]
@@ -91,10 +90,8 @@ def mood_median_test(*groups: np.ndarray) -> Dict[str, Any]:
     if len(clean_groups) < 2:
         return {"error": f"有效组数不足 ({len(clean_groups)})，至少需要2组"}
 
-    # 使用scipy的median_test
     stat, p, medians, contingency = sp_stats.median_test(*clean_groups)
 
-    # medians可能是标量或数组
     overall_median = float(medians) if np.isscalar(medians) else float(medians[0])
 
     return {
@@ -133,16 +130,12 @@ def friedman_test(*groups: np.ndarray) -> Dict[str, Any]:
     if len(clean_groups) < 2:
         return {"error": f"有效组数不足 ({len(clean_groups)})，至少需要2个处理"}
 
-    # 检查所有组的样本量是否相同（完全区组设计要求）
     n_samples = [len(g) for g in clean_groups]
     if len(set(n_samples)) > 1:
         return {"error": f"完全区组设计要求所有处理的样本量相同，当前样本量: {n_samples}"}
 
-    # scipy的friedmanchisquare要求至少3个样本
-    # 对于2个处理，使用Wilcoxon符号秩检验作为替代
     if len(clean_groups) == 2:
         stat, p = sp_stats.wilcoxon(clean_groups[0], clean_groups[1])
-        # 计算秩均值
         data_matrix = np.column_stack(clean_groups)
         ranks = np.apply_along_axis(lambda row: sp_stats.rankdata(row), 1, data_matrix)
         mean_ranks = np.mean(ranks, axis=0)
@@ -159,11 +152,8 @@ def friedman_test(*groups: np.ndarray) -> Dict[str, Any]:
             "significant": p < 0.05,
         }
 
-    # 使用scipy的friedmanchisquare（需要3+样本）
     stat, p = sp_stats.friedmanchisquare(*clean_groups)
 
-    # 计算秩均值
-    # 将数据排列成矩阵，计算每行的秩
     data_matrix = np.column_stack(clean_groups)
     ranks = np.apply_along_axis(lambda row: sp_stats.rankdata(row), 1, data_matrix)
     mean_ranks = np.mean(ranks, axis=0)

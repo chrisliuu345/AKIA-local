@@ -180,7 +180,6 @@ class LineBalanceTab(BaseAnalysisTab):
         self._display_result(result)
         self.analysis_completed.emit()
 
-    # ── 结果展示 ──
     def _display_result(self, result: Dict[str, Any]):
         self._fill_table(result)
         self._draw_yamazumi(result)
@@ -224,7 +223,6 @@ class LineBalanceTab(BaseAnalysisTab):
     def _draw_yamazumi(self, result: Dict[str, Any]):
         self._clear_canvas()
         tc = theme_colors()
-        # plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]  # redundant, handled by chart_engine.setup_chinese_font()
         plt.rcParams["axes.unicode_minus"] = False
 
         takt = result["takt"]
@@ -235,7 +233,6 @@ class LineBalanceTab(BaseAnalysisTab):
         fig.set_facecolor(tc["bg_card"])
         fig.subplots_adjust(left=0.07, right=0.98, top=0.88, bottom=0.14, wspace=0.25)
 
-        # ── 左: 现状工序负荷 ──
         ax1 = fig.add_subplot(1, 2, 1)
         names = [p.process_name or p.process_id for p in procs]
         cts = [p.cycle_time for p in procs]
@@ -252,7 +249,6 @@ class LineBalanceTab(BaseAnalysisTab):
                    labelcolor=tc["text_primary"])
         self._style_axis(ax1, tc, rotate=25)
 
-        # ── 右: 平衡后山积图（工位堆叠）──
         ax2 = fig.add_subplot(1, 2, 2)
         palette = ["#1b5faa", "#217ca3", "#27ae60", "#9467bd", "#b85c38",
                    "#17becf", "#6b4c9a", "#4da6ff"]
