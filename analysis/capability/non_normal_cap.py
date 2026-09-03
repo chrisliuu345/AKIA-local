@@ -40,11 +40,9 @@ def analyze(
     if n < 5:
         raise ValueError(f"数据量不足: {n}")
 
-    # 百分位法单独处理
     if method == "percentile":
         return _analyze_percentile(clean, usl, lsl)
 
-    # W24 fix: 常数数据提前检测，boxcox无法处理
     if np.std(clean) == 0:
         result = {
             "chart_type": "Non-Normal Capability",
@@ -75,12 +73,11 @@ def analyze(
         else:
             transformed, lam = stats.boxcox(clean)
     elif method == "johnson":
-        # 使用真正的 Johnson 变换
         result_johnson = johnson_transform(clean, method="auto")
         transformed = result_johnson["transformed"]
         johnson_params = result_johnson.get("params", {})
         johnson_type = result_johnson.get("type")
-        lam = None  # Johnson 变换不使用 lambda
+        lam = None
     else:
         transformed, lam = _johnson_transform(clean)
 
@@ -117,7 +114,6 @@ def analyze(
                               johnson_params, johnson_type) if has_lsl else None
 
     if has_usl and has_lsl:
-        # W24 fix: std_t=0时用None替代inf，避免除零
         if std_t > 0:
             pp = (usl_t - lsl_t) / (6 * std_t)
             ppk = min((usl_t - mean_t) / (3 * std_t), (mean_t - lsl_t) / (3 * std_t))
@@ -178,22 +174,17 @@ def _analyze_percentile(
     mean = float(np.mean(data))
     std = float(np.std(data, ddof=1))
 
-    # 计算百分位数
     p50 = float(np.percentile(data, 50))
     p0135 = float(np.percentile(data, 0.135))
     p99865 = float(np.percentile(data, 99.865))
     q25 = float(np.percentile(data, 25))
     q75 = float(np.percentile(data, 75))
 
-    # 使用百分位数估计标准差
-    # 方法1: 基于正态分布百分位数
     sigma_percentile_1 = (p99865 - p0135) / 6
 
-    # 方法2: IQR法（更稳健）
     iqr = q75 - q25
     sigma_percentile_2 = iqr / 1.35
 
-    # 使用方法1（与Minitab兼容）
     sigma_percentile = sigma_percentile_1 if sigma_percentile_1 > 0 else sigma_percentile_2
 
     result = {
@@ -231,10 +222,7 @@ def _analyze_percentile(
             pp = (usl - lsl) / (6 * sigma_percentile)
             ppk = min((usl - p50) / (3 * sigma_percentile), (p50 - lsl) / (3 * sigma_percentile))
 
-            # 使用经验分布估计PPM
-            # 超出USL的比例
             p_above_usl = np.mean(data > usl)
-            # 低于LSL的比例
             p_below_lsl = np.mean(data < lsl)
             ppm = (p_above_usl + p_below_lsl) * 1e6
         else:
@@ -298,6 +286,5 @@ def _transform_value(value: float, method: str, lam: Optional[float],
     if lam == 0:
         return float(np.log(x))
     return float((x ** lam - 1) / lam)
-
 
 

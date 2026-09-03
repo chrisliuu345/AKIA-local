@@ -28,7 +28,7 @@ from core.formatting import format_cp
 class CapComparisonTab(BaseAnalysisTab):
 
     def __init__(self, parent=None):
-        self._specs: Dict[str, dict] = {}  # {col: {usl, lsl, target}}
+        self._specs: Dict[str, dict] = {}
         super().__init__(parent)
         self._setup_ui()
 
@@ -49,13 +49,11 @@ class CapComparisonTab(BaseAnalysisTab):
 
         splitter = QSplitter(Qt.Horizontal)
 
-        # ── 左侧配置 ──
         left = QWidget()
         left.setMaximumWidth(340)
         left_layout = QVBoxLayout(left)
         left_layout.setContentsMargins(0, 0, 4, 0)
 
-        # 列选择 (多选)
         col_group = QGroupBox("选择工序/特性列")
         col_layout = QVBoxLayout(col_group)
         self.col_list = QListWidget()
@@ -65,7 +63,6 @@ class CapComparisonTab(BaseAnalysisTab):
         col_layout.addWidget(self.col_list)
         left_layout.addWidget(col_group)
 
-        # 规格限
         spec_group = QGroupBox("规格限设置")
         spec_layout = QFormLayout(spec_group)
         self.usl_spin = QDoubleSpinBox()
@@ -95,7 +92,6 @@ class CapComparisonTab(BaseAnalysisTab):
         spec_layout.addRow(spec_btns)
         left_layout.addWidget(spec_group)
 
-        # 运行按钮
         self.btn_run = QPushButton("对比分析")
         self.btn_run.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.btn_run.setCursor(Qt.PointingHandCursor)
@@ -104,7 +100,6 @@ class CapComparisonTab(BaseAnalysisTab):
         self.btn_run.clicked.connect(self._run)
         left_layout.addWidget(self.btn_run)
 
-        # 结果表
         self.result_table = QTableWidget()
         self.result_table.setAlternatingRowColors(True)
         self.result_table.horizontalHeader().setStretchLastSection(True)
@@ -112,7 +107,6 @@ class CapComparisonTab(BaseAnalysisTab):
 
         splitter.addWidget(left)
 
-        # ── 右侧图表 ──
         chart_wrapper = QScrollArea()
         chart_wrapper.setWidgetResizable(True)
         chart_wrapper.setFrameShape(QFrame.NoFrame)
@@ -215,7 +209,6 @@ class CapComparisonTab(BaseAnalysisTab):
     def _draw_chart(self, results: list):
         self._clear_canvas()
         tc = theme_colors()
-        # plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]  # redundant, handled by chart_engine.setup_chinese_font()
         plt.rcParams["axes.unicode_minus"] = False
 
         n = len(results)
@@ -242,9 +235,8 @@ class CapComparisonTab(BaseAnalysisTab):
         bars4 = ax.bar(x + w/2 + w * 0.45, ppk_vals, w * 0.45, label="Ppk",
                        color="#ffa726", alpha=0.6, hatch="//")
 
-        # 阈值线
-        cpk_b = CAPABILITY_GRADES["B"][0]  # 1.00
-        cpk_a = CAPABILITY_GRADES["A"][0]  # 1.33
+        cpk_b = CAPABILITY_GRADES["B"][0]
+        cpk_a = CAPABILITY_GRADES["A"][0]
         ax.axhline(y=cpk_b, color="#6e7080", linestyle="--", linewidth=1, alpha=0.6)
         ax.axhline(y=cpk_a, color="#a0a3ae", linestyle=":", linewidth=1, alpha=0.5)
         ax.text(n - 0.5, cpk_b, f"Cp={cpk_b}", fontsize=7, color="#6e7080", va="bottom")

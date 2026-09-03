@@ -20,16 +20,14 @@ from ui.font_config import get_ui_font
 
 LOGO_PATH = os.path.join(os.path.dirname(__file__), "logo.png")
 
-# 颜色
-COLOR_UPPER = "#0d2847"   # 深蓝色
-COLOR_LOWER = "#4da6ff"   # 浅蓝色
-COLOR_BAR_BG = "#0a1e38"  # 进度条底色
-COLOR_BAR_FILL = "#ffffff" # 进度条填充色（白色）
+COLOR_UPPER = "#0d2847"
+COLOR_LOWER = "#4da6ff"
+COLOR_BAR_BG = "#0a1e38"
+COLOR_BAR_FILL = "#ffffff"
 
-# Splash 逻辑尺寸（不受 DPI 影响的固定显示比例）
 _SPLASH_LOGICAL_W = 300
 _SPLASH_LOGICAL_H = 200
-_SPLASH_SPLIT_RATIO = 0.81  # 深蓝区域占比
+_SPLASH_SPLIT_RATIO = 0.81
 
 
 def _get_screen_dpr():
@@ -47,7 +45,6 @@ def _get_screen_dpr():
 def _create_splash_canvas() -> QPixmap:
     """创建双色 splash 画布（自适应 DPI）"""
     dpr = _get_screen_dpr()
-    # 逻辑尺寸 × DPR = 实际像素，保证清晰且大小固定
     w = int(_SPLASH_LOGICAL_W * dpr)
     h = int(_SPLASH_LOGICAL_H * dpr)
     split_y = int(h * _SPLASH_SPLIT_RATIO)
@@ -64,12 +61,10 @@ def _create_splash_canvas() -> QPixmap:
     painter.setRenderHint(QPainter.SmoothPixmapTransform)
     painter.setRenderHint(QPainter.Antialiasing)
 
-    # 上方深蓝区域
     painter.setPen(Qt.NoPen)
     painter.setBrush(QColor(COLOR_UPPER))
     painter.drawRect(0, 0, w, split_y)
 
-    # Logo（高清缩放）
     if os.path.exists(LOGO_PATH):
         logo = QPixmap(LOGO_PATH)
         if not logo.isNull():
@@ -80,7 +75,6 @@ def _create_splash_canvas() -> QPixmap:
             y = (split_y - scaled.height()) // 2
             painter.drawPixmap(x, y, scaled)
 
-    # 下方文字区域：右对齐
     painter.setPen(QColor(COLOR_UPPER))
     font = QFont(get_ui_font(), -1, QFont.Bold)
     font.setPixelSize(font_size)
@@ -110,12 +104,10 @@ def _update_splash(splash: QSplashScreen, pct: int, base: QPixmap = None):
     bar_y = split_y - bar_h // 2
     fill_w = int(w * pct / 100)
 
-    # 进度条底色
     painter.setPen(Qt.NoPen)
     painter.setBrush(QColor(COLOR_BAR_BG))
     painter.drawRect(0, bar_y, w, bar_h)
 
-    # 进度填充
     if fill_w > 0:
         painter.setBrush(QColor(COLOR_BAR_FILL))
         painter.drawRect(0, bar_y, fill_w, bar_h)
@@ -124,7 +116,6 @@ def _update_splash(splash: QSplashScreen, pct: int, base: QPixmap = None):
     splash.setPixmap(pm)
 
 
-# 保存原始画布
 _splash_base: QPixmap = None
 
 
@@ -140,11 +131,9 @@ def main():
     app.setFont(font)
     app.setStyle("Fusion")
 
-    # ── 全局暗色调色板 (必须在所有 widget 之前) ──
     from ui.theme import apply_dark_palette
     apply_dark_palette()
 
-    # ── 全局暗色 QSS 样式 (跨平台暗色保障) ──
     app.setStyleSheet("""
         QWidget { background-color: #181822; color: #e1e2e6; }
         QMainWindow { background-color: #181822; }
@@ -195,7 +184,6 @@ def main():
         QProgressBar::chunk { background-color: #1b5faa; border-radius: 3px; }
     """)
 
-    # ── Splash 启动画面（双色设计）──
     global _splash_base
     _splash_base = _create_splash_canvas()
     splash = QSplashScreen(_splash_base)
@@ -203,7 +191,6 @@ def main():
     splash.raise_()
     app.processEvents()
 
-    # ── 后台预热：在 splash 显示期间预加载重依赖 ──
     import threading
     def _warmup():
         import scipy.stats  # noqa: F401
@@ -211,20 +198,17 @@ def main():
         import seaborn      # noqa: F401
     threading.Thread(target=_warmup, daemon=True).start()
 
-    # ── 精细化加载 (12 步, 仅更新进度条) ──
     steps = [5, 10, 20, 28, 35, 42, 48, 55, 62, 70, 78, 85, 92, 97, 100]
 
     for pct in steps:
         _update_splash(splash, pct)
         app.processEvents()
 
-        # 在特定阶段执行实际初始化
         if pct == 28:
             from ui.main_window import MainWindow
         elif pct == 70:
             window = MainWindow(splash=splash)
 
-    # ── 关闭 Splash，显示主窗口 ──
     splash.close()
     window.show()
     app.processEvents()

@@ -16,31 +16,24 @@ import pandas as pd
 from scipy import stats
 
 
-# ---------------------------------------------------------------------------
-# Standard orthogonal arrays (level encoding: 1-indexed)
-# ---------------------------------------------------------------------------
 _ARRAYS: Dict[str, dict] = {}
 
 
 def _init_arrays():
     """Initialize all standard Taguchi orthogonal arrays."""
-    # L4(2^3): 4 runs, 3 two-level factors
     _ARRAYS["L4"] = {"n": 4, "cols": 3, "levels": [2, 2, 2], "design": [
         [1,1,1],[1,2,2],[2,1,2],[2,2,1]]}
 
-    # L8(2^7): 8 runs, 7 two-level factors
     _ARRAYS["L8"] = {"n": 8, "cols": 7, "levels": [2]*7, "design": [
         [1,1,1,1,1,1,1],[1,1,1,2,2,2,2],[1,2,2,1,1,2,2],
         [1,2,2,2,2,1,1],[2,1,2,1,2,1,2],[2,1,2,2,1,2,1],
         [2,2,1,1,2,2,1],[2,2,1,2,1,1,2]]}
 
-    # L9(3^4): 9 runs, 4 three-level factors
     _ARRAYS["L9"] = {"n": 9, "cols": 4, "levels": [3, 3, 3, 3], "design": [
         [1,1,1,1],[1,2,2,2],[1,3,3,3],
         [2,1,2,3],[2,2,3,1],[2,3,1,2],
         [3,1,3,2],[3,2,1,3],[3,3,2,1]]}
 
-    # L12(2^11): 12 runs, 11 two-level factors (Plackett-Burman)
     _ARRAYS["L12"] = {"n": 12, "cols": 11, "levels": [2]*11, "design": [
         [1,1,2,1,1,1,2,2,2,1,2],
         [2,1,1,2,1,1,1,2,2,2,1],
@@ -55,7 +48,6 @@ def _init_arrays():
         [1,2,1,1,1,2,2,2,1,2,1],
         [2,2,2,2,2,2,2,2,2,2,2]]}
 
-    # L16(2^15): 16 runs, 15 two-level factors
     _ARRAYS["L16"] = {"n": 16, "cols": 15, "levels": [2]*15, "design": [
         [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
         [1,1,1,1,1,1,1,2,2,2,2,2,2,2,2],
@@ -74,7 +66,6 @@ def _init_arrays():
         [2,2,1,2,1,1,2,1,2,2,1,2,1,1,2],
         [2,2,1,2,1,1,2,2,1,1,2,1,2,2,1]]}
 
-    # L18(2^1 x 3^7): 18 runs, 1 two-level + 7 three-level factors
     _ARRAYS["L18"] = {"n": 18, "cols": 8, "levels": [2, 3, 3, 3, 3, 3, 3, 3], "design": [
         [1,1,1,1,1,1,1,1],
         [1,1,2,2,2,2,2,2],
@@ -95,20 +86,13 @@ def _init_arrays():
         [2,3,2,1,3,1,2,3],
         [2,3,3,2,1,2,3,1]]}
 
-    # L27(3^13): 27 runs, 13 three-level factors — complex construction, not included
-    # Use L9 for small designs, or L18 for mixed levels
 
-    # L36(2^11 x 3^12): 36 runs, 11 two-level + 12 three-level factors
-    # Complex construction; use L18 or L27 instead
     _ARRAYS["L36"] = {"n": 36, "cols": 23, "levels": [2]*11 + [3]*12,
         "design": None}
 
 _init_arrays()
 
 
-# ---------------------------------------------------------------------------
-# Design generation
-# ---------------------------------------------------------------------------
 def _select_array(num_factors: int, factor_levels: List[int]) -> str:
     """Select smallest suitable orthogonal array."""
     all_2 = all(l == 2 for l in factor_levels)
@@ -169,7 +153,6 @@ def generate_design(
     if len(factor_levels) != k:
         raise ValueError("factor_levels length must equal number of factors")
 
-    # Select or validate array
     if array is None:
         array = _select_array(k, factor_levels)
     if array not in _ARRAYS:
@@ -179,32 +162,26 @@ def generate_design(
     if arr_info["cols"] < k:
         raise ValueError(array + " has " + str(arr_info["cols"]) + " columns, but " + str(k) + " factors given")
 
-    # Build design matrix from array
     design = np.array(arr_info["design"], dtype=int)[:, :k]
     n_runs = arr_info["n"]
 
-    # Build DataFrame
     data = {factors[i]: design[:, i] for i in range(k)}
     df = pd.DataFrame(data)
 
-    # RunOrder
     rng = np.random.default_rng(random_seed)
     perm = rng.permutation(n_runs) + 1
     df["RunOrder"] = perm
     df["StdOrder"] = range(1, n_runs + 1)
     df["Array"] = array
 
-    # Noise factors (crossed array)
     if noise_factors and noise_levels:
         n_noise = len(noise_factors)
         n_noise_levels = max(noise_levels) if noise_levels else 2
-        # Generate noise array
         if n_noise_levels == 2:
             noise_arr = _build_plackett_burman(max(4, 2 ** int(np.ceil(np.log2(n_noise + 1)))))
             noise_arr = ((noise_arr + 1) // 2 + 1).astype(int)
         else:
             noise_arr = _ARRAYS["L9"]["design"][:, :n_noise] if n_noise <= 4 else np.ones((n_noise_levels ** n_noise, n_noise), dtype=int)
-        # Cross each control run with noise runs
         noise_df = pd.DataFrame(noise_arr[:, :n_noise], columns=[nf + "_Noise" for nf in noise_factors])
         expanded = pd.merge(
             df.assign(_key=0),
@@ -216,9 +193,6 @@ def generate_design(
     return df
 
 
-# ---------------------------------------------------------------------------
-# S/N ratio computation
-# ---------------------------------------------------------------------------
 def compute_sn_ratio(values: np.ndarray, sn_type: str = "larger_is_better") -> float:
     """Compute signal-to-noise ratio.
 
@@ -234,7 +208,7 @@ def compute_sn_ratio(values: np.ndarray, sn_type: str = "larger_is_better") -> f
     float : S/N ratio in dB (always maximized)
     """
     v = np.asarray(values, dtype=float)
-    v = v[v > 0]  # require positive values for log
+    v = v[v > 0]
 
     if len(v) == 0:
         return -np.inf
@@ -242,17 +216,14 @@ def compute_sn_ratio(values: np.ndarray, sn_type: str = "larger_is_better") -> f
     n = len(v)
 
     if sn_type == "larger_is_better":
-        # S/N = -10 * log10( mean(1/y^2) )
         msd = np.mean(1.0 / (v ** 2))
         return -10.0 * np.log10(msd)
 
     elif sn_type == "smaller_is_better":
-        # S/N = -10 * log10( mean(y^2) )
         msd = np.mean(v ** 2)
         return -10.0 * np.log10(msd)
 
     elif sn_type == "nominal_is_best":
-        # S/N = 10 * log10( y_bar^2 / s^2 )
         y_bar = np.mean(v)
         if n > 1:
             s2 = np.var(v, ddof=1)
@@ -263,7 +234,6 @@ def compute_sn_ratio(values: np.ndarray, sn_type: str = "larger_is_better") -> f
         return float("inf") if y_bar != 0 else 0.0
 
     elif sn_type == "nominal_is_best_ii":
-        # S/N = -10 * log10( s^2 )
         if n > 1:
             s2 = np.var(v, ddof=1)
         else:
@@ -276,9 +246,6 @@ def compute_sn_ratio(values: np.ndarray, sn_type: str = "larger_is_better") -> f
         raise ValueError("Unknown sn_type: " + sn_type)
 
 
-# ---------------------------------------------------------------------------
-# Response table (level averages)
-# ---------------------------------------------------------------------------
 def response_table(
     design_df: pd.DataFrame,
     sn_ratios: np.ndarray,
@@ -306,7 +273,6 @@ def response_table(
             "best_level": best_level,
         }
 
-    # Rank by delta
     ranked = sorted(result.items(), key=lambda x: x[1]["delta"], reverse=True)
     for rank, (factor, data) in enumerate(ranked, 1):
         result[factor]["rank"] = rank
@@ -314,9 +280,6 @@ def response_table(
     return result
 
 
-# ---------------------------------------------------------------------------
-# ANOVA on S/N ratios
-# ---------------------------------------------------------------------------
 def _anova_on_sn(
     design_df: pd.DataFrame,
     sn_ratios: np.ndarray,
@@ -345,16 +308,13 @@ def _anova_on_sn(
         ss_list.append(round(ss_f, 6))
         df_list.append(df_f)
 
-    # Pooling: merge smallest SS into error
     ss_model = sum(ss_list)
     ss_error = max(ss_total - ss_model, 0.0)
     df_model = sum(df_list)
     df_error = max(N - 1 - df_model, 1)
 
-    # Identify significant factors via contribution ratio
     contributions = [s / ss_total * 100 if ss_total > 0 else 0.0 for s in ss_list]
 
-    # Recompute F and p
     ms_error = ss_error / df_error if df_error > 0 else 1e-10
     f_values = []
     p_values = []
@@ -378,9 +338,6 @@ def _anova_on_sn(
     }
 
 
-# ---------------------------------------------------------------------------
-# Optimal combination & prediction
-# ---------------------------------------------------------------------------
 def _optimal_combination(resp_table: Dict) -> Dict[str, Dict]:
     """Select best level for each factor (highest S/N average)."""
     optimal = {}
@@ -402,9 +359,6 @@ def _predicted_sn(resp_table: Dict, grand_mean_sn: float) -> float:
     return round(prediction, 6)
 
 
-# ---------------------------------------------------------------------------
-# Main analysis function
-# ---------------------------------------------------------------------------
 def analyze(
     df: pd.DataFrame,
     response_col: str,
@@ -429,7 +383,6 @@ def analyze(
     dict with response_table, anova, optimal, predicted_sn, contribution_pct
     """
     data = df[factor_cols + [response_col]].dropna()
-    # Validate response column is numeric
     coerced = pd.to_numeric(data[response_col], errors="coerce")
     n_nan = coerced.isna().sum()
     if n_nan > 0:
@@ -441,20 +394,15 @@ def analyze(
     response = data[response_col].values.astype(float)
     design = data[factor_cols]
 
-    # Compute S/N ratios (one per run)
     sn_ratios = np.array([compute_sn_ratio(np.array([r]), sn_type) for r in response])
     grand_mean_sn = float(np.mean(sn_ratios))
 
-    # Response table
     resp_tab = response_table(design, sn_ratios, factor_cols)
 
-    # ANOVA on S/N ratios
     anova = _anova_on_sn(design, sn_ratios, factor_cols)
 
-    # Optimal combination
     optimal = _optimal_combination(resp_tab)
 
-    # Predicted S/N
     pred_sn = _predicted_sn(resp_tab, grand_mean_sn)
 
     return {

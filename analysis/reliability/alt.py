@@ -26,7 +26,6 @@ class ALTEngine:
             activation_energy: 激活能 (eV), 默认 0.7 (保留参数, 实际由回归拟合)
         返回: AF, 外推寿命, 拟合参数, R²
         """
-        # W27 fix: 最小样本校验
         if len(stress_temp) < 3 or len(life) < 3:
             return {"analysis_type": "reliability.alt.arrhenius", "error": f"样本量不足（需要至少3个数据点，当前stress={len(stress_temp)}, life={len(life)}）"}
         if np.any(stress_temp <= 0):
@@ -34,30 +33,24 @@ class ALTEngine:
         if np.any(life <= 0):
             return {"analysis_type": "reliability.alt.arrhenius", "error": "life必须全部为正数"}
 
-        # W28 fix: 统一温度单位约定 — stress_temp应为开尔文
-        # 如果传入值明显是摄氏度（< 200），给出警告
         if np.any(stress_temp < 200):
             import warnings
             warnings.warn("stress_temp值较小(<200)，请确认是否已转换为开尔文温度(K)。"
                          "如果传入的是摄氏度，请先转换：T_K = T_C + 273.15", UserWarning)
 
         T_use = use_temp + 273.15
-        k = 8.617333262145e-5  # Boltzmann (eV/K)
+        k = 8.617333262145e-5
 
-        # 拟合: ln(L) = ln(A) + Ea/(k*T)
         x = 1.0 / (k * stress_temp)
         y = np.log(life)
 
-        # 最小二乘法
         slope, intercept, r, p, std_err = sp_stats.linregress(x, y)
         Ea_fitted = slope
         A_fitted = np.exp(intercept)
 
-        # 加速因子
         af = np.exp(Ea_fitted / k * (1.0 / T_use - 1.0 / np.mean(stress_temp)))
         life_pred = A_fitted * np.exp(Ea_fitted / (k * T_use))
 
-        # 置信区间
         y_pred = slope * x + intercept
         residuals = y - y_pred
         se = np.sqrt(np.sum(residuals ** 2) / (len(x) - 2))
@@ -95,7 +88,6 @@ class ALTEngine:
         if use_stress <= 0:
             return {"analysis_type": "reliability.alt.inverse_power_law", "error": "use_stress必须为正数"}
 
-        # 拟合: ln(L) = ln(C) - n*ln(V)
         x = np.log(stress)
         y = np.log(life)
 
@@ -144,7 +136,6 @@ class ALTEngine:
 
         T_use = use_temp + 273.15
 
-        # 拟合: ln(L*T) = ln(A) + B/T
         x = 1.0 / stress_temp
         y = np.log(life * stress_temp)
 
@@ -152,14 +143,11 @@ class ALTEngine:
         B_fitted = slope
         A_fitted = np.exp(intercept)
 
-        # 寿命预测
         life_pred = (A_fitted / T_use) * math.exp(B_fitted / T_use)
 
-        # 加速因子
         life_stress = (A_fitted / np.mean(stress_temp)) * math.exp(B_fitted / np.mean(stress_temp))
         af = life_pred / life_stress if life_stress > 0 else float("inf")
 
-        # 置信区间
         y_pred = slope * x + intercept
         residuals = y - y_pred
         se = np.sqrt(np.sum(residuals ** 2) / (len(x) - 2))
@@ -218,7 +206,6 @@ def alt_trial_plan(
     allocated = min(n_per_level, total_sample // n_levels)
     actual_total = allocated * n_levels
 
-    # 估算试验时间（基于目标寿命和应力比）
     if model == "arrhenius":
         k = 8.617333262145e-5
         avg_af = np.mean([math.exp(0.7 / k * (1.0 / s - 1.0 / use_condition)) for s in stress_levels])
@@ -229,7 +216,6 @@ def alt_trial_plan(
     else:
         estimated_test_time = None
 
-    # Z 值
     z = sp_stats.norm.ppf((1 + confidence_level) / 2)
 
     return {

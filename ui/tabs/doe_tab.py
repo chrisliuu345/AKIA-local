@@ -24,7 +24,7 @@ class DOETab(BaseAnalysisTab):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._original_df = None  # 备份原始数据，防止生成设计覆盖
+        self._original_df = None
         self._setup_ui()
 
     def _setup_ui(self):
@@ -391,10 +391,6 @@ class DOETab(BaseAnalysisTab):
             err_label.setStyleSheet("color: #e74c3c; padding: 12px;")
             err_label.setWordWrap(True)
             self.chart_layout.addWidget(err_label)
-
-
-
-
 
 
     def _on_header_clicked(self, index: int):

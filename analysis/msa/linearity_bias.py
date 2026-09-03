@@ -51,7 +51,7 @@ def analyze_linearity(
         raise ValueError(f"数据量不足: 需要至少 5 点")
 
     x = data[reference_col].values
-    y = data[measurement_col].values - x  # bias
+    y = data[measurement_col].values - x
 
     slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
 

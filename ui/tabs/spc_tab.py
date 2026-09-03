@@ -93,7 +93,6 @@ class SPCTab(BaseAnalysisTab):
         ls_layout.addWidget(self.lsl_spin)
         config_layout.addRow(self.row_lsl)
 
-        # W42: 规格限启用开关 — 默认关闭，避免 0.0 被误当作有效规格
         self.spec_check = QCheckBox("启用规格限 (USL/LSL)")
         self.spec_check.setToolTip("勾选后在控制图上显示规格限；未勾选时 USL/LSL 值不参与分析")
         self.spec_check.stateChanged.connect(self._on_spec_toggled)
@@ -251,7 +250,6 @@ class SPCTab(BaseAnalysisTab):
 
         self.result_stack = QStackedWidget()
 
-        # 图表滚动容器 — 大图可水平滚动
         self.chart_scroll = QScrollArea()
         self.chart_scroll.setWidgetResizable(True)
         self.chart_scroll.setFrameShape(QFrame.NoFrame)
@@ -295,7 +293,6 @@ class SPCTab(BaseAnalysisTab):
         self.parsed_info = parsed_info
         self.col_combo.clear()
         self.col_combo.addItems(list(df.columns))
-        # Hotelling T² 多变量列选择器
         self.hotelling_cols_list.clear()
         for col in df.columns:
             item = QListWidgetItem(col)
@@ -338,7 +335,6 @@ class SPCTab(BaseAnalysisTab):
             return False, "请先导入数据文件"
         chart_type = self.chart_type_combo.currentText()
         
-        # Hotelling T² 使用多变量列选择器
         if chart_type == "Hotelling T²":
             selected_cols = self._get_hotelling_columns()
             if len(selected_cols) < 2:
@@ -437,7 +433,6 @@ class SPCTab(BaseAnalysisTab):
             "result": result,
             "chart_data": result,
         }
-        # W42: 规格限 — 仅在启用时传入，避免默认 0.0 被误用
         if self.spec_check.isChecked():
             result["usl"] = self.usl_spin.value()
             result["lsl"] = self.lsl_spin.value()
@@ -551,7 +546,6 @@ class SPCTab(BaseAnalysisTab):
         self._switch_result_view(0)
 
     def _extract_violations(self, result: Dict[str, Any]) -> list:
-        # Hotelling T² 格式
         t2_chart = result.get("t2_chart", {})
         if t2_chart and t2_chart.get("violations"):
             return t2_chart["violations"]
@@ -561,7 +555,6 @@ class SPCTab(BaseAnalysisTab):
             chart = result.get(key)
             if isinstance(chart, dict) and chart.get("violations"):
                 return chart["violations"]
-        # Laney P'/U' 格式: {"n_violations": N, "violation_indices": [...]}
         for key in ("laney_p_chart", "laney_u_chart"):
             chart = result.get(key)
             if isinstance(chart, dict):

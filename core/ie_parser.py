@@ -112,7 +112,6 @@ class IEDataParser:
             column_map = self.map_columns(list(df.columns), obj_type)
 
         objects = []
-        # 向量化：一次 to_dict 替代逐行 iterrows
         rows = df[list(column_map.keys())].fillna("").to_dict("records")
         for row_dict_raw in rows:
             row_dict: Dict[str, Any] = {}
@@ -155,7 +154,6 @@ class IEDataParser:
         if n == 0:
             return None, 0.0
 
-        # 维度 1: 关键词匹配 (0.4)
         best_keyword_score = 0.0
         best_keyword_field = None
         for cls_name, cls in OBJECT_CLASSES.items():
@@ -173,10 +171,8 @@ class IEDataParser:
                         best_keyword_score = score
                         best_keyword_field = field_name
 
-        # 维度 2: 数据类型分析 (0.3)
         numeric = pd.to_numeric(sample_values, errors="coerce")
         numeric_ratio = numeric.notna().sum() / n
-        # 疑似日期
         date_ratio = 0.0
         try:
             parsed = pd.to_datetime(sample_values, errors="coerce")
@@ -185,20 +181,18 @@ class IEDataParser:
             pass
 
         if numeric_ratio >= 0.9:
-            dtype_score = 0.3  # 明确数值
+            dtype_score = 0.3
         elif numeric_ratio >= 0.5:
-            dtype_score = 0.15  # 混合
+            dtype_score = 0.15
         elif date_ratio >= 0.5:
-            dtype_score = 0.1  # 日期
+            dtype_score = 0.1
         else:
-            dtype_score = 0.05  # 文本
+            dtype_score = 0.05
 
-        # 维度 3: 值域分布 (0.3)
         if numeric_ratio >= 0.9:
             vals = numeric.dropna()
             unique_ratio = vals.nunique() / len(vals)
             has_neg = (vals < 0).any()
-            # 低基数 + 无负数 → 可能是 ID/编码
             if unique_ratio < 0.1 and not has_neg:
                 dist_score = 0.1
             else:

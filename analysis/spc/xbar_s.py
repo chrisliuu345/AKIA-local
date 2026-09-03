@@ -21,11 +21,9 @@ def analyze(data: pd.Series, subgroup_size: int = 5) -> Dict[str, Any]:
     xbar = subgroups.mean(axis=1)
     s = subgroups.std(ddof=1, axis=1)
 
-    # W33 fix: 剔除零标准差子组并告警，而非用魔法数污染s̄
     zero_s_mask = s == 0
     if zero_s_mask.any():
         zero_count = int(zero_s_mask.sum())
-        # 剔除零标准差子组
         valid_mask = ~zero_s_mask
         if valid_mask.sum() < 2:
             raise ValueError(f"有效子组不足：{zero_count}个子组标准差为0，剩余有效子组<2")

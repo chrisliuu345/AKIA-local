@@ -52,7 +52,6 @@ class LLMClient:
                     data = json.loads(resp.read().decode())
                     models = data.get("models", [])
                     if models:
-                        # 按名称排序，过滤掉 engine 内部模型
                         names = sorted([m["name"] for m in models])
                         return names
                     return list(OLLAMA_MODELS)

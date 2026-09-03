@@ -142,14 +142,12 @@ def decrypt_secret(stored: str) -> str:
             if sys.platform == "win32":
                 return _decrypt_dpapi(raw).decode("utf-8")
             else:
-                # 旧版 dpapi 数据在非 Windows 平台无法解密
                 logger.warning("Cannot decrypt dpapi data on non-Windows platform")
                 return ""
         elif stored.startswith(_PREFIX_KEYRING):
             raw = base64.b64decode(stored[len(_PREFIX_KEYRING):])
             return _decrypt_keyring_fernet(raw).decode("utf-8")
         else:
-            # 旧版无前缀 base64（兼容）
             return base64.b64decode(stored).decode("utf-8")
     except Exception as e:
         logger.warning(f"Decryption failed: {e}")

@@ -44,7 +44,6 @@ def analyze_response_surface(
     factor_cols: List[str],
 ) -> Dict[str, Any]:
     data = df.dropna(subset=[response_col] + factor_cols)
-    # Validate all selected columns are numeric
     for col in [response_col] + factor_cols:
         coerced = pd.to_numeric(data[col], errors="coerce")
         n_nan = coerced.isna().sum()
@@ -62,10 +61,8 @@ def analyze_response_surface(
     n = len(data)
 
     X_list = [np.ones(n), design]
-    # Quadratic terms
     for i in range(k):
         X_list.append(design[:, i] ** 2)
-    # Interaction terms
     for i in range(k):
         for j in range(i + 1, k):
             X_list.append(design[:, i] * design[:, j])

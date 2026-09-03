@@ -34,7 +34,6 @@ _PLUGIN_TAB_START = max(INDEX_MAP.keys()) + 1
 from ui.theme import colors as theme_colors
 from ui.font_config import get_ui_font
 from ui.widgets.elided_label import ElidedLabel
-# Tab 类按需通过 _lazy_load_tab() + importlib 加载，无需顶层导入
 from ui.welcome_page import WelcomePage
 from ui.dialogs.import_dialog import ImportDialog
 from ui.dialogs.settings_dialog import SettingsDialog
@@ -86,7 +85,6 @@ class MainWindow(QMainWindow):
 
         _step(73, "构建界面布局...")
         self._setup_ui()
-        # 保留所有 QMenu 的 Python 强引用，防止 PySide6 GC 提前释放 C++ QMenu
         self._menu_refs: list = []
 
         _step(76, "初始化菜单栏...")
@@ -102,7 +100,6 @@ class MainWindow(QMainWindow):
         self._restore_window_state()
         self.setAcceptDrops(True)
 
-        # 插件发现与注册 — 从 _PLUGIN_TAB_START 开始
         self._pm = PluginManager()
         self._pm.discover()
         self._plugin_tabs = {}
@@ -160,19 +157,16 @@ class MainWindow(QMainWindow):
         vdivider.setMaximumWidth(1)
 
         self.stack = QStackedWidget()
-        self._tab_cache = {}  # 懒加载缓存: idx → tab实例
+        self._tab_cache = {}
 
-        # 首页始终立即加载 (轻量)
         self.welcome_page = WelcomePage()
-        self.stack.addWidget(self.welcome_page)  # 0
+        self.stack.addWidget(self.welcome_page)
 
-        # 内置 Tab 占位符 (1..max)，首次切换时懒加载
-        for idx in range(1, _PLUGIN_TAB_START):  # v2.5: indices 1-35 (含设备监控)
+        for idx in range(1, _PLUGIN_TAB_START):
             placeholder = QWidget()
             placeholder.setObjectName(f"placeholder_{idx}")
             self.stack.addWidget(placeholder)
 
-        # 插件 Tab (动态) — 起始索引在 __init__ 末尾统一设为 _PLUGIN_TAB_START
         self._plugin_tab_start = _PLUGIN_TAB_START
 
         layout.addWidget(self.expand_strip)
@@ -247,7 +241,6 @@ class MainWindow(QMainWindow):
             pass
 
         file_menu.addSeparator()
-        # .qap 项目文件
         save_project_action = QAction("💾 " + i18n.tr("menu.save_project"), self)
         save_project_action.setShortcut("Ctrl+Shift+S")
         save_project_action.triggered.connect(self._on_save_project)
@@ -263,12 +256,10 @@ class MainWindow(QMainWindow):
         load_shared_action.triggered.connect(self._on_load_shared)
         file_menu.addAction(load_shared_action)
 
-        # 最近项目
         recent = ProjectManager.recent_projects()
         if recent:
             self.recent_menu = _pin(file_menu.addMenu("📋 " + i18n.tr("menu.recent")))
             self._rebuild_recent_menu(recent)
-            # A5: 欢迎页填充 (转换 dict → tuple)
             recent_items = [(r["name"], r["path"]) for r in recent]
             self.welcome_page.set_recent_projects(recent_items)
 
@@ -298,16 +289,13 @@ class MainWindow(QMainWindow):
         )
         view_menu.addAction(self.toggle_sidebar_action)
 
-        # ── 分析 — 全Tab分类子菜单 (v2.3.1: 全部走 i18n) ──
         analysis_menu = _pin(menubar.addMenu(i18n.tr("menu.analysis")))
-        # 质量分析
         quality_sub = _pin(analysis_menu.addMenu(i18n.tr("sidebar.quality_tools")))
         for idx, key in [(1, "sidebar.spc"), (2, "sidebar.capability"), (3, "sidebar.msa"),
                          (4, "sidebar.hypothesis"), (5, "sidebar.doe"), (6, "sidebar.regression")]:
             a = QAction(i18n.tr(key), self)
             a.triggered.connect(lambda _, i=idx: self._switch_tab(i))
             quality_sub.addAction(a)
-        # IE 工具
         ie_sub = _pin(analysis_menu.addMenu(i18n.tr("sidebar.ie_tools")))
         for idx, key in [(7, "sidebar.time_study"), (8, "sidebar.work_sampling"),
                          (9, "sidebar.line_balance"), (10, "sidebar.oee"),
@@ -316,14 +304,12 @@ class MainWindow(QMainWindow):
             a = QAction(i18n.tr(key), self)
             a.triggered.connect(lambda _, i=idx: self._switch_tab(i))
             ie_sub.addAction(a)
-        # 图表工具
         chart_sub = _pin(analysis_menu.addMenu(i18n.tr("sidebar.chart_tools")))
         for idx, key in [(12, "sidebar.chart_tab"), (18, "sidebar.cap_comparison"),
                          (19, "sidebar.trend"), (20, "sidebar.summary_panel")]:
             a = QAction(i18n.tr(key), self)
             a.triggered.connect(lambda _, i=idx: self._switch_tab(i))
             chart_sub.addAction(a)
-        # 工程工具
         eng_sub = _pin(analysis_menu.addMenu(i18n.tr("sidebar.engineering_tools")))
         for idx, key in [(13, "sidebar.reliability"), (14, "sidebar.fishbone"),
                          (15, "sidebar.pareto"), (16, "sidebar.fmea"),
@@ -331,7 +317,6 @@ class MainWindow(QMainWindow):
             a = QAction(i18n.tr(key), self)
             a.triggered.connect(lambda _, i=idx: self._switch_tab(i))
             eng_sub.addAction(a)
-        # 工作表/抽样/数据
         sheet_sub = _pin(analysis_menu.addMenu(i18n.tr("sidebar.sheet_tools")))
         for idx, key in [(23, "sidebar.sheet_merge"), (24, "sidebar.sheet_split"),
                          (25, "sidebar.layered_form")]:
@@ -351,7 +336,6 @@ class MainWindow(QMainWindow):
         run_all.triggered.connect(self._on_run_all_analyses)
         analysis_menu.addAction(run_all)
 
-        # ── AI — 从工具菜单拆出 ──
         ai_menu = _pin(menubar.addMenu(i18n.tr("menu.ai")))
         ai_chat = QAction(i18n.tr("sidebar.llm"), self)
         ai_chat.triggered.connect(self._on_llm_assist)
@@ -367,7 +351,6 @@ class MainWindow(QMainWindow):
         html_act.triggered.connect(self._on_html_export)
         ai_menu.addAction(html_act)
 
-        # ── 工具 — 精简后 ──
         tools_menu = _pin(menubar.addMenu(i18n.tr("menu.tools")))
         settings_act = QAction(i18n.tr("menu.settings"), self, triggered=self._on_settings)
         tools_menu.addAction(settings_act)
@@ -447,7 +430,6 @@ class MainWindow(QMainWindow):
         self.statusBar().setStyleSheet(
             "QStatusBar { min-height: 24px; background: #13131c; } QStatusBar::item { border: none; }"
         )
-        # 长消息自动省略号, tooltip 显示全文 (v2.3.1)
         self.status_label = ElidedLabel(i18n.tr("status.ready"))
         self.statusBar().addWidget(self.status_label, 1)
         self.data_label = ElidedLabel("")
@@ -466,19 +448,15 @@ class MainWindow(QMainWindow):
         self.welcome_page.new_analysis_clicked.connect(lambda: self._switch_tab(1))
         self.welcome_page.diagnose_clicked.connect(self._on_diagnose)
         self.welcome_page.open_project_clicked.connect(self._on_load_project)
-        # Tab 导出/分析信号由 _lazy_load_tab() 在首次创建时动态连接
 
     def _switch_tab(self, index: int):
         if 0 <= index < self.stack.count():
-            # 懒加载: 首次访问时按需创建
             if index > 0:
                 self._lazy_load_tab(index)
             target = self.stack.widget(index)
             if not target:
                 return
-            # 淡入动画 (200ms)
             from PySide6.QtWidgets import QGraphicsOpacityEffect
-            # C2: 停止旧动画并清理残留 effect
             if hasattr(self, '_tab_anim_widget') and self._tab_anim_widget:
                 self._tab_anim_widget.setGraphicsEffect(None)
             if hasattr(self, '_tab_anim') and self._tab_anim:
@@ -486,7 +464,7 @@ class MainWindow(QMainWindow):
             effect = QGraphicsOpacityEffect()
             effect.setOpacity(0.0)
             target.setGraphicsEffect(effect)
-            self._tab_anim_widget = target  # 记录 widget 待下次清理
+            self._tab_anim_widget = target
             self.stack.setCurrentIndex(index)
             self.sidebar.set_active(index)
 
@@ -499,10 +477,9 @@ class MainWindow(QMainWindow):
             def cleanup(tgt=target):
                 tgt.setGraphicsEffect(None)
             anim.finished.connect(cleanup)
-            self._tab_anim = anim  # 防止被 GC
+            self._tab_anim = anim
             anim.start()
 
-            # v2.4 F1: 切到 Dashboard (27) 时刷新 (指纹去重)
             if index == 27 and hasattr(self, '_tab_cache'):
                 tab = self._tab_cache.get(27)
                 if tab is not None and hasattr(tab, 'refresh_if_changed'):
@@ -510,7 +487,6 @@ class MainWindow(QMainWindow):
 
     def _import_cp_from_fmea(self, cp_rows: list):
         """从 FMEA 导入控制计划行"""
-        # 控制计划 Tab 在 _tab_registry 中的索引
         from ui._tab_registry import TAB_REGISTRY
         cp_idx = None
         for idx, entry in enumerate(TAB_REGISTRY):
@@ -520,30 +496,25 @@ class MainWindow(QMainWindow):
         if cp_idx is None:
             return
 
-        # 懒加载控制计划 Tab
         self._lazy_load_tab(cp_idx)
         cp_tab = self._tab_cache.get(cp_idx)
         if cp_tab is None:
             return
 
-        # 导入数据
         if hasattr(cp_tab, '_rows'):
             cp_tab._rows.extend(cp_rows)
             cp_tab._rebuild_table()
 
-        # 切换到控制计划 Tab
         self._switch_tab(cp_idx)
 
     def _import_spc_from_cp(self, spc_items: list):
         """从控制计划导入 SPC 监控清单"""
         self._spc_monitoring_list = spc_items
 
-        # 注入到 SPC Tab
         spc_tab = self._tab_cache.get(1)
         if spc_tab and hasattr(spc_tab, 'import_from_cp'):
             spc_tab.import_from_cp(spc_items)
 
-        # 切换到 SPC Tab
         self._switch_tab(1)
 
     def _on_import_quality(self):
@@ -582,8 +553,6 @@ class MainWindow(QMainWindow):
                     df = getattr(tab, 'df', None)
                     if df is None or len(df) == 0:
                         continue
-                    # A8: 用 pd.to_numeric 替代 select_dtypes (数据以 str 加载)
-                    # 使用 iloc 按位置访问避免重复列名返回 DataFrame 导致 TypeError
                     num_cols = []
                     for i, c in enumerate(df.columns):
                         try:
@@ -735,10 +704,8 @@ class MainWindow(QMainWindow):
         """将导入的 Sheet 分配到各分析 Tab。
         worksheet_mode=True: 分配到除 IE 工具(7-11,21-22)外的所有 Tab。
         worksheet_mode=False: 分配到所有 Tab（含 IE）。"""
-        # IE 专用索引 (工时研究/工作抽样/线平衡/OEE/VSM/人机/标准作业)
         IE_INDICES = {7, 8, 9, 10, 11, 21, 22}
 
-        # Sheet → Tab 自动匹配关键词 (sheet名含这些关键词则优先分配到对应Tab)
         sheet_map = {
             1:  ["spc", "控制图", "control chart"],
             2:  ["能力", "capability", "cpk", "ppk"],
@@ -763,9 +730,7 @@ class MainWindow(QMainWindow):
             28: ["data_tools", "数据工具", "生成", "转换"],
         }
 
-        # 1) 将所有 Sheet 填入各 Tab 的 sheet_combo / set_raw_data
-        #    遍历 sheet_map 中所有索引，按需懒加载 Tab
-        all_indices = set(sheet_map.keys()) | {16, 17}  # 补充 FMEA(16)/控制计划(17)
+        all_indices = set(sheet_map.keys()) | {16, 17}
         for idx in all_indices:
             if worksheet_mode and idx in IE_INDICES:
                 continue
@@ -773,7 +738,6 @@ class MainWindow(QMainWindow):
             if tab and hasattr(tab, 'set_raw_data'):
                 tab.set_raw_data(raw_data, self.data_parser)
 
-        # 2) 按关键词自动匹配 Sheet 到对应 Tab
         assigned = set()
         for tab_idx, keywords in sheet_map.items():
             if worksheet_mode and tab_idx in IE_INDICES:
@@ -1024,7 +988,6 @@ class MainWindow(QMainWindow):
         failed = 0
 
         for i, (idx, tab) in enumerate(tabs.items()):
-            # W49: 每个 Tab 让出事件循环，防止 UI 完全冻结
             QApplication.processEvents()
             if not _tab_is_runnable(tab):
                 continue
@@ -1056,7 +1019,6 @@ class MainWindow(QMainWindow):
         if idx in self._tab_cache:
             return self._tab_cache[idx]
 
-        # 插件 Tab (index >= 100)
         if idx >= self._plugin_tab_start:
             if idx in self._plugin_tabs:
                 p = self._plugin_tabs[idx]
@@ -1072,7 +1034,6 @@ class MainWindow(QMainWindow):
                 return tab
             return None
 
-        # 内置 Tab
         from ui._tab_registry import INDEX_MAP
         entry = INDEX_MAP.get(idx)
         if not entry or not tab_allowed(idx):
@@ -1092,7 +1053,6 @@ class MainWindow(QMainWindow):
             return None
 
         self._tab_cache[idx] = tab
-        # 替换占位符（先同步移除再插入，防止 insertWidget 导致索引错位）
         old = self.stack.widget(idx)
         if old:
             self.stack.removeWidget(old)
@@ -1100,7 +1060,6 @@ class MainWindow(QMainWindow):
         if old and old.objectName().startswith("placeholder"):
             old.deleteLater()
 
-        # 连接信号
         self._connect_tab_signals(idx, tab)
         return tab
 
@@ -1110,8 +1069,7 @@ class MainWindow(QMainWindow):
             tab.export_clicked.connect(lambda tid=idx: self._on_export_single(tid, "docx"))
         if hasattr(tab, 'analysis_completed'):
             tab.analysis_completed.connect(lambda tid=idx: self._on_analysis_finished(tid))
-        # 注入 project_context 到五链相关 Tab
-        _CONTEXT_TABS = {1, 16, 17, 30, 32}  # SPC, FMEA, CP, 8D, PPAP
+        _CONTEXT_TABS = {1, 16, 17, 30, 32}
         if idx in _CONTEXT_TABS and hasattr(tab, 'set_project_context'):
             tab.set_project_context(self.project_context)
 
@@ -1119,7 +1077,7 @@ class MainWindow(QMainWindow):
         """获取 Tab 字典。force_load=False 仅返回已缓存的(懒加载友好)；force_load=True 全量加载"""
         result = {}
         if force_load:
-            idx_range = list(range(1, _PLUGIN_TAB_START))  # v2.5: 35 tabs
+            idx_range = list(range(1, _PLUGIN_TAB_START))
         else:
             idx_range = sorted(self._tab_cache.keys())
         for idx in idx_range:
@@ -1282,14 +1240,12 @@ class MainWindow(QMainWindow):
         self._route_sheets_to_tabs(raw_data)
         self.analyses = project["analyses"]
 
-        # 恢复 project_context
         ctx_dict = project.get("project_context")
         if ctx_dict:
             from core.project_context import ProjectContext as PC
             self.project_context = PC.from_dict(ctx_dict)
         else:
             self.project_context = ProjectContext()
-        # 重新注入到已加载的 Tab
         _CONTEXT_TABS = {1, 16, 17, 30, 32}
         for idx in _CONTEXT_TABS:
             tab = self._tab_cache.get(idx)
@@ -1348,7 +1304,6 @@ class MainWindow(QMainWindow):
 
     def _on_load_recent(self, path: str):
         if os.path.exists(path):
-            # 直接使用已知路径加载（不弹文件对话框）
             try:
                 self.status_label.setText("正在加载项目...")
                 project = ProjectManager.load_project(path)
@@ -1421,7 +1376,6 @@ class MainWindow(QMainWindow):
                 if params:
                     self.session_manager.current_session["tab_params"][str(idx)] = params
 
-            # v2.4 修复 (遗留 #3): 内存分析结果快照写入会话
             self.session_manager.set_analyses(self.analyses)
 
             path = self.session_manager.save(file_path)
@@ -1485,7 +1439,6 @@ class MainWindow(QMainWindow):
                     if subgroup is not None and hasattr(tab, 'subgroup_spin'):
                         tab.subgroup_spin.setValue(int(subgroup))
 
-                # v2.4 修复 (遗留 #3): 恢复分析结果快照 + 刷新 Dashboard
                 self.analyses = self.session_manager.get_analyses()
                 self._notify_dashboard()
                 count = len(self.analyses)
@@ -1536,7 +1489,6 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "提示", "请先导入数据文件")
             return
         raw = self.current_data.get("raw_data", {})
-        # 取第一个 sheet
         first_key = next(iter(raw.keys()), None)
         if first_key is None:
             return
@@ -1741,7 +1693,6 @@ class MainWindow(QMainWindow):
         msg_box.setStandardButtons(QMessageBox.Ok)
         msg_box.exec()
 
-    # ── 拖拽导入 ──
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasUrls():
             for url in event.mimeData().urls():

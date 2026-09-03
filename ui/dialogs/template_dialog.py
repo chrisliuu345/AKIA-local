@@ -25,7 +25,6 @@ class TemplateDialog(QDialog):
         layout = QVBoxLayout(self)
         layout.setSpacing(8)
 
-        # 顶部选择
         top = QHBoxLayout()
         top.addWidget(QLabel("模板:"))
         self.template_combo = QComboBox()
@@ -39,13 +38,11 @@ class TemplateDialog(QDialog):
         top.addWidget(preview_btn)
         layout.addLayout(top)
 
-        # 预览区
         self.preview = QTextEdit()
         self.preview.setReadOnly(True)
         self.preview.setFont(QFont(get_ui_font(), 10))
         layout.addWidget(self.preview, 1)
 
-        # 导出按钮
         btn_row = QHBoxLayout()
         btn_row.addStretch()
         export_html = QPushButton("导出 HTML")

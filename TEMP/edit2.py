@@ -1,7 +1,6 @@
 with open('analysis/doe/definitive_screening.py', 'r', encoding='utf-8') as f:
     content = f.read()
 
-# Build the old block (lines 178-234 area)
 old3 = """    # \u2500\u2500 \u4e3b\u6548\u5e94\u8ba1\u7b97 \u2500\u2500
     grand_mean = float(np.mean(response))
     effects = {}

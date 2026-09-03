@@ -31,14 +31,11 @@ class StdWorkComboTab(BaseAnalysisTab):
         self.btn_run=QPushButton("生成组合票"); self.btn_run.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.btn_run.setCursor(Qt.PointingHandCursor); self.btn_run.clicked.connect(self._run)
         tb.addWidget(self.btn_run); layout.addLayout(tb)
-        # 统计
         self.stats_lbl=QLabel(""); self.stats_lbl.setFont(FONT_10)
         self.stats_lbl.setStyleSheet(f"color: {tc['text_secondary']}; padding: 2px 0;")
         layout.addWidget(self.stats_lbl)
-        # 可编辑表格
         self.table=QTableWidget(); self.table.setAlternatingRowColors(True); self.table.cellChanged.connect(self._on_cell_edit)
         self._resize_table(); layout.addWidget(self.table)
-        # 图表
         cw=QScrollArea(); cw.setWidgetResizable(True); cw.setFrameShape(QFrame.NoFrame)
         self.chart_container=QWidget(); self.chart_layout=QVBoxLayout(self.chart_container); self.chart_layout.setContentsMargins(0,0,0,0)
         cw.setWidget(self.chart_container); layout.addWidget(cw,1)
@@ -84,9 +81,7 @@ class StdWorkComboTab(BaseAnalysisTab):
         total_walk=sum(r[3] for r in rows); total=total_man+total_auto+total_walk
         slack=max(0,takt-total)
         self.stats_lbl.setText(f"手动: {total_man}s | 自动: {total_auto}s | 步行: {total_walk}s | 合计: {total}s | 余力: {slack}s ({(1-total/takt)*100:.0f}%)")
-        # 图表
         self._clear_canvas(); tc=theme_colors()
-        # plt.rcParams["font.sans-serif"]=["Microsoft YaHei"]  # redundant, handled by chart_engine.setup_chinese_font()
         plt.rcParams["axes.unicode_minus"]=False
         fig=Figure(figsize=(10,max(4.5,n*0.9)),dpi=100); fig.set_facecolor(tc["bg_card"])
         ax=fig.add_subplot(111); ax.set_facecolor(tc["bg_body"])

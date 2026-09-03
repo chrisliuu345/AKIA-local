@@ -127,7 +127,6 @@ class ControlPlanTab(BaseAnalysisTab):
 
     def _generate_spc_list(self):
         """从控制计划生成 SPC 监控清单"""
-        # 找出包含控制图的行
         spc_items = []
         for row in self._rows:
             control_method = row[7] if len(row) > 7 else ""
@@ -147,7 +146,6 @@ class ControlPlanTab(BaseAnalysisTab):
                                     "请在控制方法列中填写如'XBar-R控制图'等SPC方法。")
             return
 
-        # 构建 SPC 监控清单文本
         lines = ["=== SPC 监控清单 ===\n"]
         for i, item in enumerate(spc_items, 1):
             lines.append(f"{i}. {item['process']} - {item['characteristic']}")
@@ -156,7 +154,6 @@ class ControlPlanTab(BaseAnalysisTab):
             lines.append(f"   样本: {item['sample_size']}, 频率: {item['frequency']}")
             lines.append("")
 
-        # 存储结果
         self.current_result = {
             "analysis_type": "CP → SPC",
             "params": {},
@@ -164,7 +161,6 @@ class ControlPlanTab(BaseAnalysisTab):
             "chart_data": {},
         }
 
-        # 通知主窗口
         main_win = self.window()
         if hasattr(main_win, '_import_spc_from_cp'):
             main_win._import_spc_from_cp(spc_items)

@@ -37,9 +37,8 @@ class EightDTab(BaseAnalysisTab):
         body = QHBoxLayout(self)
         body.setContentsMargins(0, 0, 0, 0)
 
-        # 左侧步骤导航
         left = QWidget()
-        left.setFixedWidth(170)  # v2.3.1: 160 对 "导出 Markdown" 零余量, 加 10px
+        left.setFixedWidth(170)
         left.setStyleSheet("background: #1c1c26; border-right: 1px solid #3a3a48;")
         ll = QVBoxLayout(left)
         ll.setContentsMargins(8, 12, 8, 12)
@@ -69,7 +68,6 @@ class EightDTab(BaseAnalysisTab):
         ll.addStretch()
         body.addWidget(left)
 
-        # 右侧编辑区
         right = QWidget()
         rl = QVBoxLayout(right)
         rl.setContentsMargins(12, 12, 12, 12)
@@ -139,13 +137,11 @@ class EightDTab(BaseAnalysisTab):
             t.setMaximumHeight(80)
             add("d4_5why", t)
             lay.addWidget(t)
-            # A1: 嵌入鱼骨图 (6M 骨架, 可拖拽/缩放/双击编辑)
             lay.addWidget(QLabel("鱼骨图 (拖拽标签, 滚轮缩放, 双击编辑):"))
             from ui.widgets.fishbone_canvas import FishboneCanvas
             from analysis.quality.fishbone import CauseNode
             canvas = FishboneCanvas()
             canvas.setMinimumHeight(220)
-            # render_fishbone 需要 {分支名: CauseNode(children=[...])} 结构
             branches_6m = {}
             defaults = [
                 ("人员", ["培训不足", "疲劳"]),
@@ -218,7 +214,6 @@ class EightDTab(BaseAnalysisTab):
         """
         from analysis.quality.fishbone import CauseNode
 
-        # 按 6M 分类映射（简化版，根据关键词匹配）
         six_m_mapping = {
             "人员": ["培训", "技能", "经验", "疲劳", "操作", "人员"],
             "机器": ["设备", "机器", "精度", "维护", "保养", "磨损"],
@@ -228,14 +223,12 @@ class EightDTab(BaseAnalysisTab):
             "环境": ["温度", "湿度", "振动", "清洁", "环境"],
         }
 
-        # 收集 FMEA 中的原因
         causes_by_category = {cat: [] for cat in six_m_mapping}
         for item in fmea_items:
             cause = item.get("cause", "") if isinstance(item, dict) else getattr(item, "cause", "")
             if not cause:
                 continue
 
-            # 匹配到对应的 6M 分类
             matched = False
             for category, keywords in six_m_mapping.items():
                 if any(kw in cause for kw in keywords):
@@ -243,21 +236,17 @@ class EightDTab(BaseAnalysisTab):
                     matched = True
                     break
             if not matched:
-                # 默认归入"方法"
                 causes_by_category["方法"].append(cause)
 
-        # 构建鱼骨图分支
         branches_6m = {}
         for category, causes in causes_by_category.items():
             root = CauseNode(name=category)
-            # 去重
             unique_causes = list(dict.fromkeys(causes))
-            for cause in unique_causes[:5]:  # 每个分支最多5个原因
+            for cause in unique_causes[:5]:
                 root.children.append(CauseNode(name=cause, level=1))
-            if root.children:  # 只添加有原因的分支
+            if root.children:
                 branches_6m[category] = root
 
-        # 更新鱼骨图
         canvas = self._w.get("d4_fishbone")
         if canvas and branches_6m:
             problem = self._w.get("d4_root", QLineEdit()).text() or ""
@@ -286,7 +275,7 @@ class EightDTab(BaseAnalysisTab):
             "has_update": bool(standards),
             "standards_updated": standards,
             "preventive_actions": preventive,
-            "review_needed": bool(standards),  # 有标准更新就需要复审
+            "review_needed": bool(standards),
         }
 
     def _check_review(self):
@@ -363,7 +352,6 @@ class EightDTab(BaseAnalysisTab):
                 code = f"D{i}"
                 step = getattr(self.report, f"d{i}")
                 story.append(Paragraph(f"{code}: {EightDReport.STEP_LABELS[code]}", styles["Heading2"]))
-                # W71: HTML 转义用户输入，防止 <>& 等破坏 reportlab Paragraph
                 from xml.sax.saxutils import escape as _html_escape
                 raw = str(step.__dict__).replace("{", "").replace("}", "").replace("'", "")
                 content = _html_escape(raw)

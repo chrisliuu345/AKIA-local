@@ -22,11 +22,10 @@ class BatchDialog(QDialog):
         self._refresh_task_list()
         self._connect_signals()
 
-        # 日志轮询
         self._log_timer = QTimer(self)
         self._log_timer.timeout.connect(self._refresh_log)
         self._log_timer.start(2000)
-        self._displayed_log_lines: set = set()  # W110: 增量追踪已显示行
+        self._displayed_log_lines: set = set()
 
     def _setup_ui(self):
         tc = theme_colors()
@@ -36,7 +35,6 @@ class BatchDialog(QDialog):
 
         splitter = QSplitter(Qt.Horizontal)
 
-        # ── 左侧: 任务列表 ──
         left = QWidget()
         left_layout = QVBoxLayout(left)
         left_layout.setContentsMargins(6, 6, 6, 6)
@@ -63,7 +61,6 @@ class BatchDialog(QDialog):
 
         splitter.addWidget(left)
 
-        # ── 右侧: 编辑 + 日志 ──
         right = QWidget()
         right_layout = QVBoxLayout(right)
         right_layout.setContentsMargins(6, 6, 6, 6)
@@ -188,7 +185,6 @@ class BatchDialog(QDialog):
             schedule=schedule_map.get(self.schedule_combo.currentIndex(), "once"),
             enabled=self.enabled_check.isChecked(),
         )
-        # 从模板解析器加载分析配置（如果有）
         row = self.task_list.currentRow()
         if row >= 0:
             item = self.task_list.item(row)
@@ -228,7 +224,6 @@ class BatchDialog(QDialog):
         self.log_view.append(msg)
 
     def _refresh_log(self):
-        # W110: O(1) 增量追加，替代 O(n²) 全量比对
         for entry in self.scheduler.get_log():
             if entry not in self._displayed_log_lines:
                 self._displayed_log_lines.add(entry)

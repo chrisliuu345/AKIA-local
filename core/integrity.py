@@ -14,7 +14,6 @@ CRITICAL_FILES = [
     "main.py",
 ]
 
-# 基线哈希存储路径
 _BASELINE_PATH = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     ".integrity_baseline.json"
@@ -51,7 +50,6 @@ def compute_all_hashes(base_dir: str = None) -> dict:
 def save_baseline(base_dir: str = None) -> bool:
     """保存当前哈希作为基线（开发者用）"""
     hashes = compute_all_hashes(base_dir)
-    # 过滤掉 None 值
     valid = {k: v for k, v in hashes.items() if v is not None}
     try:
         with open(_BASELINE_PATH, 'w', encoding='utf-8') as f:
@@ -88,7 +86,6 @@ def verify_integrity(base_dir: str = None) -> Tuple[bool, List[str]]:
         if file_hash is None:
             issues.append(f"Critical file missing: {file_path}")
         elif file_path in baseline:
-            # 基线存在时比对哈希
             if baseline[file_path] != file_hash:
                 issues.append(f"File tampered: {file_path}")
 

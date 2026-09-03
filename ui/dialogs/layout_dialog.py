@@ -32,7 +32,6 @@ class LayoutDialog(QDialog):
         if not isinstance(saved_order, (list, tuple)):
             saved_order = []
         hidden = set(hidden_raw) if isinstance(hidden_raw, (list, tuple)) else set()
-        # 已有顺序优先, 新出现的分析类型排在末尾
         ordered = [it for it in saved_order if it in self._items]
         rest = [it for it in self._items if it not in ordered]
         for it in ordered + rest:
@@ -42,7 +41,6 @@ class LayoutDialog(QDialog):
             self.list.addItem(item)
         layout.addWidget(self.list, 1)
 
-        # 排序按钮
         btn_row = QHBoxLayout()
         up_btn = QPushButton("↑ " + i18n.tr("dashboard.layout_up"))
         up_btn.setStyleSheet(BUTTON_SECONDARY)
@@ -81,7 +79,6 @@ class LayoutDialog(QDialog):
         self.list.setCurrentRow(row + 1)
 
     def _reset(self):
-        # 全部显示, 按字母/字典序恢复
         texts = sorted(self.list.item(i).text() for i in range(self.list.count()))
         self.list.clear()
         for t in texts:
@@ -92,7 +89,7 @@ class LayoutDialog(QDialog):
 
     def _save_and_accept(self):
         if self.list.count() == 0:
-            self.accept()  # 空列表不写盘, 防止覆盖已保存布局
+            self.accept()
             return
         order = []
         hidden = []

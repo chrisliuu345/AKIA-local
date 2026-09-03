@@ -8,21 +8,16 @@ output_path = "公司仪器测试数据.xlsx"
 
 writer = pd.ExcelWriter(output_path, engine="xlsxwriter")
 
-# ═══════════════════════════════════════════════
-# Sheet 1: SPC 控制图数据 (XBar-R / I-MR)
-# ═══════════════════════════════════════════════
 subgroup_size = 5
 num_subgroups = 50
 n_total = subgroup_size * num_subgroups
 
 dates = [datetime(2026, 1, 1) + timedelta(hours=i * 2) for i in range(num_subgroups)]
 
-# 过程均值10.00, 组内sigma=0.15, 组间sigma=0.05
 within_noise = np.random.normal(0, 0.15, n_total)
 between_shift = np.repeat(np.random.normal(0, 0.05, num_subgroups), subgroup_size)
 measurements = 10.00 + within_noise + between_shift
 
-# 在第30组加入异常偏移
 measurements[29 * subgroup_size:(29 * subgroup_size + subgroup_size)] += 0.35
 
 df_spc = pd.DataFrame({
@@ -35,12 +30,8 @@ df_spc = pd.DataFrame({
 })
 df_spc.to_excel(writer, sheet_name="SPC控制图数据", index=False)
 
-# ═══════════════════════════════════════════════
-# Sheet 2: 过程能力分析数据
-# ═══════════════════════════════════════════════
 n_cap = 300
 cap_data = np.random.normal(10.00, 0.20, n_cap)
-# 前段加一些偏移使得Cpk略低
 cap_data[:60] += 0.18
 
 df_cap = pd.DataFrame({
@@ -61,11 +52,8 @@ df_cap = pd.DataFrame({
 })
 df_cap.to_excel(writer, sheet_name="过程能力分析", index=False)
 
-# ═══════════════════════════════════════════════
-# Sheet 3: MSA 量具R&R 数据
-# ═══════════════════════════════════════════════
-parts = np.repeat(range(1, 11), 6)  # 10个零件
-operators = np.tile(np.repeat(["张三", "李四", "王五"], 2), 10)  # 3个操作员 x 2次重复
+parts = np.repeat(range(1, 11), 6)
+operators = np.tile(np.repeat(["张三", "李四", "王五"], 2), 10)
 repeats = np.tile([1, 2], 30)
 
 true_values = {i: 10.0 + (i - 1) * 0.02 for i in range(1, 11)}
@@ -84,9 +72,6 @@ df_msa = pd.DataFrame({
 })
 df_msa.to_excel(writer, sheet_name="MSA量具R&R", index=False)
 
-# ═══════════════════════════════════════════════
-# Sheet 4: DOE 因子实验数据 (2^3 全因子 + 3中心点)
-# ═══════════════════════════════════════════════
 doe_design = pd.DataFrame({
     "StdOrder": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
     "RunOrder":  [5, 2, 8, 1, 10, 3, 7, 11, 6, 4, 9],
@@ -96,7 +81,6 @@ doe_design = pd.DataFrame({
     "Block":     [1]*8 + [2]*3,
 })
 
-# 响应 = 50 + 8*温度 + 5*压力 + 2*速度 + 3*温度*压力 + noise
 response_doe = (
     50.0
     + 8.0 * doe_design["温度_C"]
@@ -109,9 +93,6 @@ doe_design["成品率_%"] = np.round(response_doe, 2)
 df_doe = doe_design
 df_doe.to_excel(writer, sheet_name="DOE因子实验", index=False)
 
-# ═══════════════════════════════════════════════
-# Sheet 5: 假设检验数据 (双样本/ANOVA)
-# ═══════════════════════════════════════════════
 n_hyp = 80
 
 df_hyp = pd.DataFrame({
@@ -124,9 +105,6 @@ df_hyp = pd.DataFrame({
 })
 df_hyp.to_excel(writer, sheet_name="假设检验数据", index=False)
 
-# ═══════════════════════════════════════════════
-# Sheet 6: 分析要求 (模板参考)
-# ═══════════════════════════════════════════════
 df_req = pd.DataFrame({
     "参数": [
         "analysis_type", "data_sheet", "measurement_column",
@@ -151,12 +129,8 @@ df_req = pd.DataFrame({
 })
 df_req.to_excel(writer, sheet_name="分析要求模板", index=False)
 
-# ═══════════════════════════════════════════════
-# Sheet 7: 大批量过程数据 (模拟真实产线长时间采集)
-# ═══════════════════════════════════════════════
 n_large = 2000
 
-# 多个特征维度
 large_data = {
     "采集时间": [datetime(2026, 6, 1, 8, 0) + timedelta(seconds=i * 45) for i in range(n_large)],
     "工位编号": np.random.choice([f"WS-{i:02d}" for i in range(1, 13)], n_large),
@@ -182,7 +156,6 @@ df_large.to_excel(writer, sheet_name="大批量过程数据", index=False)
 
 writer.close()
 
-# ── 打印摘要 ──
 xl = pd.ExcelFile(output_path, engine="openpyxl")
 total_rows = 0
 for name in xl.sheet_names:

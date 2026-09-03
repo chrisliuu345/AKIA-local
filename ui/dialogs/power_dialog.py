@@ -35,12 +35,10 @@ class PowerDialog(QDialog):
         layout = QVBoxLayout(self)
         layout.setSpacing(10)
 
-        # ── 标题 ──
         title = QLabel("Power & Sample Size 分析")
         title.setFont(QFont(get_ui_font(), 16, QFont.Bold))
         layout.addWidget(title)
 
-        # ── 检验类型选择 ──
         type_group = QGroupBox("检验类型")
         type_layout = QFormLayout(type_group)
 
@@ -52,12 +50,10 @@ class PowerDialog(QDialog):
 
         layout.addWidget(type_group)
 
-        # ── 参数配置（动态切换）──
         self.params_stack = QStackedWidget()
         self._setup_param_panels()
         layout.addWidget(self.params_stack)
 
-        # ── 操作按钮 ──
         btn_layout = QHBoxLayout()
 
         self.calc_sample_btn = QPushButton("计算样本量")
@@ -77,7 +73,6 @@ class PowerDialog(QDialog):
 
         layout.addLayout(btn_layout)
 
-        # ── 结果显示 ──
         result_group = QGroupBox("结果")
         result_layout = QVBoxLayout(result_group)
 
@@ -89,7 +84,6 @@ class PowerDialog(QDialog):
 
         layout.addWidget(result_group)
 
-        # ── 关闭按钮 ──
         close_layout = QHBoxLayout()
         close_layout.addStretch()
         close_btn = QPushButton("关闭")
@@ -97,36 +91,28 @@ class PowerDialog(QDialog):
         close_layout.addWidget(close_btn)
         layout.addLayout(close_layout)
 
-        # 初始化
         self._on_type_changed(0)
 
     def _setup_param_panels(self):
         """创建各检验类型的参数面板"""
-        # 0: 单样本 t
         self.panel_1sample_t = self._create_1sample_t_panel()
         self.params_stack.addWidget(self.panel_1sample_t)
 
-        # 1: 双样本 t
         self.panel_2sample_t = self._create_2sample_t_panel()
         self.params_stack.addWidget(self.panel_2sample_t)
 
-        # 2: 配对 t
         self.panel_paired_t = self._create_paired_t_panel()
         self.params_stack.addWidget(self.panel_paired_t)
 
-        # 3: 单比例
         self.panel_1prop = self._create_1prop_panel()
         self.params_stack.addWidget(self.panel_1prop)
 
-        # 4: 双比例
         self.panel_2prop = self._create_2prop_panel()
         self.params_stack.addWidget(self.panel_2prop)
 
-        # 5: 单方差
         self.panel_1var = self._create_1var_panel()
         self.params_stack.addWidget(self.panel_1var)
 
-        # 6: 单因素 ANOVA
         self.panel_anova = self._create_anova_panel()
         self.params_stack.addWidget(self.panel_anova)
 
@@ -732,7 +718,6 @@ class PowerDialog(QDialog):
             ax.legend()
             fig.tight_layout()
 
-            # 显示图表
             canvas = FigureCanvasQTAgg(fig)
             dlg = QDialog(self)
             dlg.setWindowTitle("OC 曲线")

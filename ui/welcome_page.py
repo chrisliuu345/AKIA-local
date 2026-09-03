@@ -26,7 +26,7 @@ class WelcomePage(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._recent_items: list = []  # [(name, path), ...]
+        self._recent_items: list = []
         self._setup_ui()
 
     def set_recent_projects(self, items: list):
@@ -73,7 +73,6 @@ class WelcomePage(QWidget):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
-        # v2.3.1: 最小窗口(1040)下卡片行不出现水平滚动条
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
         scroll.viewport().setAutoFillBackground(False)
@@ -85,7 +84,6 @@ class WelcomePage(QWidget):
         body_layout.setContentsMargins(24, 28, 24, 20)
         body_layout.setSpacing(16)
 
-        # ── 快速入口卡片 ──
         cards_widget = QWidget()
         cards_widget.setStyleSheet("background: transparent;")
         cards_layout = QHBoxLayout(cards_widget)
@@ -108,7 +106,6 @@ class WelcomePage(QWidget):
         cards_layout.addStretch()
         body_layout.addWidget(cards_widget)
 
-        # ── 最近项目 ──
         recent_header = QLabel("最近项目")
         recent_header.setFont(QFont(get_ui_font(), 11, QFont.Bold))
         recent_header.setStyleSheet(
@@ -146,7 +143,7 @@ class WelcomePage(QWidget):
         tc = theme_colors()
         card = QFrame()
         card.setCursor(Qt.PointingHandCursor)
-        card.setMinimumWidth(140)  # v2.3.1: 5卡并排最小 796px, 适配 1040 最小窗口
+        card.setMinimumWidth(140)
         card.setMaximumWidth(180)
         card.setMinimumHeight(100)
         card.setStyleSheet(
@@ -221,7 +218,6 @@ class WelcomePage(QWidget):
                     f"color: {tc['text_primary']}; background: transparent; border: none;")
                 row_layout.addWidget(name_lbl, 1)
 
-                # v2.3.1: 长路径自动省略号, tooltip 显示完整路径
                 path_lbl = ElidedLabel(path)
                 path_lbl.setFont(QFont(get_ui_font(), 8))
                 path_lbl.setMaximumWidth(360)

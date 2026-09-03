@@ -224,7 +224,6 @@ class MSATab(BaseAnalysisTab):
                     return False, "请选择操作员列（可右键点击表格列标题设为操作员列）"
         except KeyError as e:
             return False, f"列选择错误：{e} 在当前数据表中不存在，请点击表格列标题重新选择"
-        # Type 1 量具研究校验
         if "Type 1" in method:
             if reference == 0.0:
                 return False, "Type 1 量具研究需要设置参考值（真值）"
@@ -327,7 +326,6 @@ class MSATab(BaseAnalysisTab):
             pv = result.get('p_value', '')
             pv_str = format_pvalue(pv) if isinstance(pv, (int, float)) else str(pv)
             lines.append(f"  p值: {pv_str}")
-        # Type 1 量具研究结果
         cap = result.get("capability", {})
         if cap:
             lines.append(f"\n【Type 1 能力指标】")
@@ -364,10 +362,6 @@ class MSATab(BaseAnalysisTab):
             err_label.setStyleSheet("color: #e74c3c; padding: 12px;")
             err_label.setWordWrap(True)
             self.chart_layout.addWidget(err_label)
-
-
-
-
 
 
     def _on_header_clicked(self, index: int):

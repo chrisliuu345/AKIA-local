@@ -26,33 +26,28 @@ from scipy.optimize import minimize
 @dataclass
 class WeibullResult:
     """Weibull 拟合结果"""
-    beta: float                # 形状参数
-    eta: float                 # 尺度参数
-    gamma: float               # 位置参数 (2P 时为 0)
-    method: str                # "2P-MLE" | "3P-MLE" | "4P-MLE" | "rank-regression"
-    loglik: float              # 对数似然值
-    aic: float                 # AIC
-    bic: float                 # BIC
-    # 可靠性指标
-    b10_life: float            # B10 寿命 (10% 失效)
-    b50_life: float            # B50 寿命 / 中位寿命
-    characteristic_life: float # 特征寿命 = η + γ
-    mean_life: float           # 期望寿命
-    # 拟合优度
-    ad_statistic: float        # Anderson-Darling 统计量
-    r_squared: float           # 概率图 R²
-    # 图解数据
-    probability_data: Dict[str, List[float]]  # {rank, prob, time} 用于概率图
-    reliability_curve: Dict[str, List[float]] # {t, R, h} 用于 R(t)/h(t) 图
-    # 置信区间
+    beta: float
+    eta: float
+    gamma: float
+    method: str
+    loglik: float
+    aic: float
+    bic: float
+    b10_life: float
+    b50_life: float
+    characteristic_life: float
+    mean_life: float
+    ad_statistic: float
+    r_squared: float
+    probability_data: Dict[str, List[float]]
+    reliability_curve: Dict[str, List[float]]
     confidence_intervals: Optional[Dict[str, Dict[str, float]]] = None
-    # {param_name: {"estimate": float, "ci_lower": float, "ci_upper": float, "std_err": float}}
 
 
 class WeibullAnalyzer:
     """Weibull 寿命分布分析器 — 支持完整/右删失数据"""
 
-    MIN_POINTS = 5  # 最少数据点数
+    MIN_POINTS = 5
 
     def analyze(self, failure_times: list,
                 censored: Optional[list] = None,
@@ -77,7 +72,6 @@ class WeibullAnalyzer:
             "result": None, "warnings": [], "error": None,
         }
 
-        # ── 数据清洗 ──
         ft = np.asarray(failure_times, dtype=float)
         valid = np.isfinite(ft) & (ft > 0)
         if valid.sum() < self.MIN_POINTS:
@@ -86,7 +80,6 @@ class WeibullAnalyzer:
 
         ft = ft[valid]
         if censored is not None:
-            # W37 fix: 校验censored长度与failure_times匹配
             cen_raw = np.asarray(censored, dtype=int)
             if len(cen_raw) != len(failure_times):
                 out["error"] = f"删失指示数组长度({len(cen_raw)})与失效时间数组长度({len(failure_times)})不匹配"
@@ -102,17 +95,14 @@ class WeibullAnalyzer:
             out["error"] = "失效事件不足（至少需要 3 个失效点）"
             return out
 
-        # W26 fix: 全部失效时间相等时拟合退化，提前检测
         if np.std(failure_only) == 0:
             out["warnings"].append("所有失效时间相同，Weibull拟合可能退化（β→0, η→极小值）")
 
-        # ── 拟合 ──
         result: Optional[WeibullResult] = None
 
         if fit_method == "rank-regression":
             result = self._fit_rank_regression(ft, cen)
         else:
-            # 先尝试 2P MLE (稳健)
             result = self._fit_2p_mle(failure_only, cen, ft)
             if four_parameter and len(failure_only) >= 10:
                 try:
@@ -135,7 +125,6 @@ class WeibullAnalyzer:
                 except Exception as e:
                     out["warnings"].append(f"3P 拟合失败: {e}，采用 2P 结果")
 
-        # ── 可靠性指标 ──
         if result:
             result.b10_life = self._b_life(result, 0.10)
             result.b50_life = self._b_life(result, 0.50)
@@ -146,15 +135,12 @@ class WeibullAnalyzer:
             else:
                 result.mean_life = float("inf")
 
-            # 拟合优度
             result.ad_statistic = self._anderson_darling(failure_only, result)
             result.r_squared = self._prob_plot_r2(failure_only, result)
 
-            # 图解数据
             result.probability_data = self._probability_plot_data(failure_only, result)
             result.reliability_curve = self._reliability_curve_data(result)
 
-            # 置信区间 (仅 MLE 方法)
             if fit_method == "mle" and result.method in ("2P-MLE", "3P-MLE", "4P-MLE"):
                 result.confidence_intervals = self._compute_confidence_intervals(
                     result, failure_only, cen, ft, confidence_level)
@@ -162,9 +148,6 @@ class WeibullAnalyzer:
         out["result"] = result
         return out
 
-    # ──────────────────────────────────────────────
-    # 2P Weibull MLE (γ=0)
-    # ──────────────────────────────────────────────
     def _fit_2p_mle(self, failures: np.ndarray, censored: np.ndarray,
                     all_times: np.ndarray) -> WeibullResult:
         """MLE 拟合 2P Weibull (γ=0) — 最大化含删失的完整似然
@@ -172,7 +155,6 @@ class WeibullAnalyzer:
         以 scipy 仅失效拟合结果为初值，再用 L-BFGS-B 优化含删失负对数似然，
         使右删失数据参与参数估计（修复: 旧实现删失仅进 loglik 不参与拟合）。
         """
-        # 初值: 仅失效数据的 scipy MLE
         p2 = sp_stats.weibull_min.fit(failures, floc=0)
         beta0, _, eta0 = p2
 
@@ -193,7 +175,6 @@ class WeibullAnalyzer:
             beta, eta = result.x
             loglik = -result.fun
         else:
-            # 优化失败时回退 scipy 直接拟合结果
             beta, eta = float(beta0), float(eta0)
             loglik = self._weibull_loglik(beta, eta, 0.0, all_times, censored)
 
@@ -213,13 +194,9 @@ class WeibullAnalyzer:
             probability_data={}, reliability_curve={},
         )
 
-    # ──────────────────────────────────────────────
-    # 3P Weibull MLE (自由 γ)
-    # ──────────────────────────────────────────────
     def _fit_3p_mle(self, failures: np.ndarray, censored: np.ndarray,
                     all_times: np.ndarray) -> Optional[WeibullResult]:
         """数值优化 3P Weibull — 以 2P 结果为初始值"""
-        # 初始值
         p2 = sp_stats.weibull_min.fit(failures, floc=0)
         beta0, _, eta0 = p2
         gamma0 = np.min(failures) * 0.5
@@ -260,9 +237,6 @@ class WeibullAnalyzer:
             probability_data={}, reliability_curve={},
         )
 
-    # ──────────────────────────────────────────────
-    # 4P Weibull MLE (gamma 可为负值)
-    # ──────────────────────────────────────────────
     def _fit_4p_mle(self, failures: np.ndarray, censored: np.ndarray,
                     all_times: np.ndarray) -> Optional[WeibullResult]:
         """数值优化 4P Weibull — 以 2P 结果为初始值，gamma 允许负值
@@ -270,7 +244,6 @@ class WeibullAnalyzer:
         4P Weibull 扩展了 3P 的约束，允许 location 参数为负值，
         从而覆盖更广的失效时间分布范围。
         """
-        # 初始值: 从 3P 开始
         p2 = sp_stats.weibull_min.fit(failures, floc=0)
         beta0, _, eta0 = p2
         gamma0 = np.min(failures) * 0.5
@@ -279,7 +252,6 @@ class WeibullAnalyzer:
             beta, eta, gamma = params
             if beta <= 0.1 or eta <= 0:
                 return 1e12
-            # 4P: gamma 可以为负值，只需保证 times - gamma > 0
             if np.any(all_times - gamma <= 0):
                 return 1e12
             return -self._weibull_loglik(beta, eta, gamma, all_times, censored)
@@ -295,7 +267,6 @@ class WeibullAnalyzer:
             return None
 
         beta, eta, gamma = result.x
-        # 4P: 只需保证 times - gamma > 0
         if np.any(all_times - gamma <= 0):
             return None
 
@@ -315,25 +286,19 @@ class WeibullAnalyzer:
             probability_data={}, reliability_curve={},
         )
 
-    # ──────────────────────────────────────────────
-    # 秩回归 (Rank Regression / 中位秩)
-    # ──────────────────────────────────────────────
     def _fit_rank_regression(self, all_times: np.ndarray,
                             censored: np.ndarray) -> WeibullResult:
         """中位秩 + 最小二乘 Weibull 拟合"""
-        # 仅用失效点做秩回归
         failures = all_times[censored == 1]
         n = len(all_times)
         sorted_f = np.sort(failures)
         k = len(sorted_f)
 
         ranks = np.arange(1, k + 1)
-        # Benard 中位秩近似
         F_i = (ranks - 0.3) / (n + 0.4)
         y = np.log(-np.log(1 - F_i))
         x = np.log(sorted_f)
 
-        # 最小二乘: y = β·x - β·ln(η)
         slope, intercept, r, _, _ = sp_stats.linregress(x, y)
         beta = max(slope, 0.2)
         eta = np.exp(-intercept / beta)
@@ -353,9 +318,6 @@ class WeibullAnalyzer:
             probability_data={}, reliability_curve={},
         )
 
-    # ──────────────────────────────────────────────
-    # 对数似然函数 (含右删失)
-    # ──────────────────────────────────────────────
     @staticmethod
     def _weibull_loglik(beta: float, eta: float, gamma: float,
                         times: np.ndarray, censored: np.ndarray) -> float:
@@ -368,9 +330,6 @@ class WeibullAnalyzer:
         ll = np.sum(censored * log_pdf + (1 - censored) * log_sf)
         return float(ll)
 
-    # ──────────────────────────────────────────────
-    # 可靠性指标
-    # ──────────────────────────────────────────────
     @staticmethod
     def _b_life(result: WeibullResult, p: float) -> float:
         """Bx 寿命: P(T ≤ t) = p 对应的时间"""
@@ -392,9 +351,6 @@ class WeibullAnalyzer:
         z = (t - result.gamma) / result.eta
         return float((result.beta / result.eta) * (z ** (result.beta - 1)))
 
-    # ──────────────────────────────────────────────
-    # 拟合优度
-    # ──────────────────────────────────────────────
     @staticmethod
     def _anderson_darling(failures: np.ndarray, result: WeibullResult) -> float:
         """Anderson-Darling 统计量"""
@@ -428,9 +384,6 @@ class WeibullAnalyzer:
             return 1.0
         return float(max(1 - ss_res / ss_tot, 0.0))
 
-    # ──────────────────────────────────────────────
-    # 图解数据
-    # ──────────────────────────────────────────────
     @staticmethod
     def _probability_plot_data(failures: np.ndarray,
                                result: WeibullResult) -> Dict[str, List[float]]:
@@ -460,9 +413,6 @@ class WeibullAnalyzer:
             "h": h.tolist(),
         }
 
-    # ──────────────────────────────────────────────
-    # 参数置信区间 (Fisher 信息矩阵)
-    # ──────────────────────────────────────────────
     def _compute_confidence_intervals(
         self, result: WeibullResult, failures: np.ndarray,
         censored: np.ndarray, all_times: np.ndarray,
@@ -479,7 +429,6 @@ class WeibullAnalyzer:
         if n_params == 3:
             params.append(result.gamma)
 
-        # 数值 Hessian (中心差分)
         eps = 1e-5
         n = len(params)
         hessian = np.zeros((n, n))
@@ -495,7 +444,7 @@ class WeibullAnalyzer:
 
         f0 = _nll(params)
         for i in range(n):
-            for j in range(i, n):  # 仅上三角，利用对称性
+            for j in range(i, n):
                 p_pp = params.copy()
                 p_pm = params.copy()
                 p_mp = params.copy()
@@ -510,9 +459,8 @@ class WeibullAnalyzer:
                 p_mm[j] -= eps
                 hessian[i][j] = (_nll(p_pp) - _nll(p_pm) - _nll(p_mp) + _nll(p_mm)) / (4 * eps * eps)
                 if i != j:
-                    hessian[j][i] = hessian[i][j]  # 对称镜像
+                    hessian[j][i] = hessian[i][j]
 
-        # 标准误差 = sqrt(diag(H^-1))
         try:
             cov = np.linalg.inv(hessian)
             std_errors = np.sqrt(np.maximum(np.diag(cov), 0))

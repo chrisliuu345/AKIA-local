@@ -19,17 +19,13 @@ from ui.font_config import get_ui_font
 class BaseAnalysisTab(QWidget):
     export_clicked = Signal()
     analysis_completed = Signal()
-    import_data_requested = Signal()  # 空状态中"导入数据"按钮信号
+    import_data_requested = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.df: pd.DataFrame = None
         self.parsed_info: Dict[str, Any] = {}
         self.current_result: Dict[str, Any] = {}
-        # W59-W62: 标准三件套契约 — 所有 Tab 的 current_result 必须包含以下键
-        # analysis_type: str  分析类型名称
-        # params: Dict         分析参数
-        # result: Dict         引擎返回结果
         self.current_figure = None
         self.canvas = None
         self._raw_data = {}
@@ -44,7 +40,6 @@ class BaseAnalysisTab(QWidget):
             if w:
                 w.setParent(None)
         import matplotlib.pyplot as plt
-        # W48: 仅关闭当前 figure，避免批量分析时误关其他 Tab 的图表
         if self.current_figure is not None:
             try:
                 plt.close(self.current_figure)
@@ -80,11 +75,9 @@ class BaseAnalysisTab(QWidget):
     def set_raw_data(self, raw_data, data_parser):
         self._raw_data = raw_data
         self._data_parser = data_parser
-        # 没有 sheet_combo 的 Tab (如 Reliability/Pareto): 直接将第一个 Sheet 数据传入
         if not hasattr(self, 'sheet_combo') or self.sheet_combo is None:
             if raw_data and hasattr(self, 'set_data'):
                 first_sheet = next(iter(raw_data.values()))
-                # 通过 data_parser 解析（如果有）
                 if data_parser:
                     cleaned_df, info = data_parser.prepare(first_sheet)
                 else:
@@ -137,7 +130,6 @@ class BaseAnalysisTab(QWidget):
             self._chart_toolbar.setMaximumHeight(32)
             self._chart_toolbar.setStyleSheet("QToolBar { border: none; spacing: 2px; }")
             self.chart_layout.addWidget(self._chart_toolbar)
-            # 结果区首次渲染时平滑展开
             self._animate_chart_container()
         self._setup_chart_menu()
 
@@ -172,7 +164,6 @@ class BaseAnalysisTab(QWidget):
             img = QImage.fromData(buf.read())
             QApplication.clipboard().setImage(img)
 
-    # ── 空状态引导 ─────────────────────────────────────────
     def _setup_empty_state(self, icon: str = "", message: str = ""):
         """创建空状态遮罩层 — 鼠标事件穿透, 不遮挡下方分析面板"""
         tc = theme_colors()
@@ -201,7 +192,6 @@ class BaseAnalysisTab(QWidget):
         msg_lbl.setStyleSheet(f"color: {tc['text_secondary']}; background: transparent;")
         layout.addWidget(msg_lbl)
 
-        # 按钮需单独恢复鼠标事件
         btn = QPushButton("导入数据")
         btn.setAttribute(Qt.WA_TransparentForMouseEvents, False)
         btn.setFont(QFont(get_ui_font(), 11, QFont.Bold))
@@ -219,10 +209,9 @@ class BaseAnalysisTab(QWidget):
 
     def showEvent(self, event):
         super().showEvent(event)
-        # 首次显示时检查：无数据则展示空状态
         if (not hasattr(self, '_empty_overlay') or self._empty_overlay is None) \
            and self.df is None:
-            pass  # 子类应在 _setup_ui 末尾调用 _setup_empty_state()
+            pass
 
     def _hide_empty_state(self):
         """隐藏空状态遮罩"""
@@ -238,14 +227,12 @@ class BaseAnalysisTab(QWidget):
         super().resizeEvent(event)
         self._resize_empty_overlay()
 
-    # ── 结果区展开动画 ─────────────────────────────────────
     def _animate_chart_container(self):
         """图表容器平滑展开动画 — 首次渲染时从 0 展开到实际高度"""
         if not hasattr(self, 'chart_container'):
             return
         container = self.chart_container
         current = container.height()
-        # 如果已有内容(二次渲染)，跳过动画
         if current > 80:
             return
         target = max(container.sizeHint().height(), 400)

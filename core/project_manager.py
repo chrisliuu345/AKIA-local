@@ -19,7 +19,6 @@ RECENT_MAX = 8
 class ProjectManager:
     """QA-Tool 项目文件 (.qap) 管理器"""
 
-    # ── 保存 ──────────────────────────────────────────
     @staticmethod
     def save_project(path: str, raw_data: Dict[str, pd.DataFrame],
                      analyses: Dict[int, Dict[str, Any]],
@@ -46,16 +45,13 @@ class ProjectManager:
         }
 
         with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as zf:
-            # manifest
             zf.writestr("manifest.json", json.dumps(manifest, indent=2, ensure_ascii=False))
 
-            # data — 每个 sheet 存为 CSV
             for sname, df in raw_data.items():
                 buf = io.StringIO()
                 df.to_csv(buf, index=False)
                 zf.writestr(f"data/{_safe_name(sname)}.csv", buf.getvalue())
 
-            # analyses
             analyses_serializable = {}
             for idx, a in analyses.items():
                 analyses_serializable[str(idx)] = {
@@ -66,23 +62,19 @@ class ProjectManager:
             zf.writestr("analyses.json",
                         json.dumps(analyses_serializable, indent=2, ensure_ascii=False, default=str))
 
-            # project context (FMEA/CP/PPAP/8D + 质量特性)
             if project_context:
                 zf.writestr("context.json",
                             json.dumps(_sanitize_for_json(project_context), indent=2, ensure_ascii=False, default=str))
 
-            # charts
             for label, png_data in chart_bytes.items():
                 zf.writestr(f"charts/{_safe_name(label)}.png", png_data)
 
-            # annotations
             if annotations:
                 zf.writestr("annotations.txt", annotations)
 
         ProjectManager.add_recent(path, os.path.basename(path))
         return path
 
-    # ── 加载 ──────────────────────────────────────────
     @staticmethod
     def load_project(path: str) -> Dict[str, Any]:
         """从 .qap 加载项目，返回完整上下文字典。
@@ -111,7 +103,7 @@ class ProjectManager:
                 if name == "manifest.json":
                     manifest = json.loads(zf.read(name).decode("utf-8"))
                 elif name.startswith("data/") and name.endswith(".csv"):
-                    sname = name[5:-4]  # strip "data/" and ".csv"
+                    sname = name[5:-4]
                     df = pd.read_csv(io.BytesIO(zf.read(name)))
                     raw_data[sname] = df
                 elif name == "analyses.json":
@@ -121,7 +113,7 @@ class ProjectManager:
                 elif name == "context.json":
                     project_context = json.loads(zf.read(name).decode("utf-8"))
                 elif name.startswith("charts/") and name.endswith(".png"):
-                    label = name[7:-4]  # strip "charts/" and ".png"
+                    label = name[7:-4]
                     chart_bytes[label] = zf.read(name)
                 elif name == "annotations.txt":
                     annotations = zf.read(name).decode("utf-8")
@@ -136,7 +128,6 @@ class ProjectManager:
             "project_context": project_context,
         }
 
-    # ── 只读元信息 ────────────────────────────────────
     @staticmethod
     def get_project_info(path: str) -> Dict[str, Any]:
         """仅读取 manifest，不解压全部内容"""
@@ -147,7 +138,6 @@ class ProjectManager:
                 return json.loads(zf.read("manifest.json").decode("utf-8"))
         return {}
 
-    # ── 最近项目 ──────────────────────────────────────
     @staticmethod
     def recent_projects() -> List[Dict[str, str]]:
         settings = QSettings("QA-Tool", "RecentProjects")
@@ -167,7 +157,6 @@ class ProjectManager:
         settings.setValue("list", json.dumps(recent, ensure_ascii=False))
 
 
-# ── 辅助 ──────────────────────────────────────────────
 def _safe_name(name: str) -> str:
     return name.replace("/", "_").replace("\\", "_").replace(":", "_")
 
@@ -192,7 +181,6 @@ def _sanitize_for_json(obj: Any) -> Any:
     return obj
 
 
-# ── 共享项目 (Phase 8.4 基础协同) ────────────────────
 SHARED_DIR = os.path.join(os.path.expanduser("~"), ".qa_tool_shared")
 PUBLIC_DEPT = "公共"
 
@@ -206,11 +194,9 @@ class SharedProjectManager:
                     department: str, annotations: str = "",
                     project_context: Optional[Dict[str, Any]] = None) -> str:
         """保存项目到共享目录"""
-        # 统一路径分隔符（Windows 反斜杠 → Linux 正斜杠）
         dept_norm = (department or PUBLIC_DEPT).replace("\\", "/")
         safe_dept = os.path.basename(dept_norm)
         dept_dir = os.path.join(SHARED_DIR, safe_dept)
-        # W08: realpath 解析符号链接, 防止 symlink 逃逸共享目录
         real_dept_dir = os.path.realpath(dept_dir)
         real_shared_dir = os.path.realpath(SHARED_DIR)
         if not real_dept_dir.startswith(real_shared_dir + os.sep):
@@ -232,7 +218,6 @@ class SharedProjectManager:
             dept_path = os.path.join(SHARED_DIR, dept_name)
             if not os.path.isdir(dept_path):
                 continue
-            # 权限过滤
             if role == "admin":
                 pass
             elif department and dept_name not in (department, PUBLIC_DEPT):

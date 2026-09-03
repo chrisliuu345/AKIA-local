@@ -31,14 +31,12 @@ class FormulaDialog(QDialog):
         self._setup_ui()
         self._load_formulas()
 
-    # ── UI ───────────────────────────────────────────────
     def _setup_ui(self):
         tc = theme_colors()
         splitter = QSplitter(Qt.Horizontal)
         layout = QVBoxLayout(self)
         layout.addWidget(splitter)
 
-        # 左侧: 已保存公式
         left = QVBoxLayout()
         left.addWidget(QLabel(i18n.tr("formula.saved_list")))
         self.formula_list = QListWidget()
@@ -55,7 +53,6 @@ class FormulaDialog(QDialog):
         left_widget = _wrap_layout(left)
         splitter.addWidget(left_widget)
 
-        # 右侧: 编辑区
         right = QVBoxLayout()
         right.setSpacing(8)
 
@@ -74,25 +71,21 @@ class FormulaDialog(QDialog):
         expr_row.addWidget(self.expr_edit, 1)
         right.addLayout(expr_row)
 
-        # 实时预览
         self.preview_label = QLabel(i18n.tr("formula.preview") + " —")
         self.preview_label.setStyleSheet(
             f"color: {tc['accent_bright']}; font-weight: bold; padding: 4px 0;")
         right.addWidget(self.preview_label)
 
-        # 变量列表 (双击插入)
         right.addWidget(QLabel(i18n.tr("formula.variables")))
         self.var_list = QListWidget()
         self.var_list.setMaximumHeight(160)
         self.var_list.itemDoubleClicked.connect(self._insert_variable)
         right.addWidget(self.var_list)
 
-        # 状态反馈 (内联, 不弹模态框)
         self.status_label = QLabel("")
         self.status_label.setStyleSheet(f"color: {tc['accent_bright']};")
         right.addWidget(self.status_label)
 
-        # 操作按钮
         btn_row = QHBoxLayout()
         btn_row.addStretch()
         save_btn = QPushButton(i18n.tr("formula.save"))
@@ -110,7 +103,6 @@ class FormulaDialog(QDialog):
 
         self._refresh_variables()
 
-    # ── 变量 ─────────────────────────────────────────────
     def _refresh_variables(self):
         self.var_list.clear()
         variables = describe_variables(self._analyses, self._df)
@@ -129,7 +121,6 @@ class FormulaDialog(QDialog):
             return
         self.expr_edit.insert(name)
 
-    # ── 预览 ─────────────────────────────────────────────
     def _update_preview(self):
         expr = self.expr_edit.text().strip()
         if not expr:
@@ -142,7 +133,6 @@ class FormulaDialog(QDialog):
         except FormulaError as e:
             self.preview_label.setText(f"⚠ {e}")
 
-    # ── 持久化 ───────────────────────────────────────────
     def _load_formulas(self):
         self.formula_list.clear()
         formulas = self._settings.value("formulas", {})
@@ -157,12 +147,11 @@ class FormulaDialog(QDialog):
             return
         name = item.data(Qt.UserRole)
         formulas = self._settings.value("formulas", {})
-        if not isinstance(formulas, dict):  # QSettings 损坏数据防御
+        if not isinstance(formulas, dict):
             return
         self._editing_name = name
         self.name_edit.setText(name)
         self.expr_edit.setText(str(formulas.get(name, "")))
-        # textChanged 已触发 _update_preview, 无需重复调用
 
     def _new_formula(self):
         self._editing_name = None
@@ -190,12 +179,10 @@ class FormulaDialog(QDialog):
         if not isinstance(formulas, dict):
             formulas = {}
         old_name = getattr(self, "_editing_name", None)
-        # 与其他已有公式重名: 先拒绝, 防静默覆盖 (重命名到已有名称也拦截)
         if name in formulas and name != old_name:
             QMessageBox.warning(self, i18n.tr("formula.title"),
                                 i18n.tr("formula.duplicate_name"))
             return
-        # 重命名保存: 删除旧键, 避免产生重复条目
         if old_name and old_name != name and old_name in formulas:
             del formulas[old_name]
             self._editing_name = None

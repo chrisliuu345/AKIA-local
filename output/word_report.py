@@ -99,7 +99,6 @@ class WordReport(BaseReportEngine):
                 doc.add_heading(i18n.tr("report.charts"), level=2)
                 chart_data = charts[atype]
                 chart_buf = BytesIO(chart_data) if isinstance(chart_data, bytes) else chart_data
-                # W80: 限制图片宽度不超过 A4 有效宽度(6.0 英寸)，按比例缩放
                 max_w = 6.0
                 w = min(CHART_FIGSIZE[0], max_w)
                 h = w * CHART_FIGSIZE[1] / CHART_FIGSIZE[0]
@@ -250,7 +249,7 @@ class WordReport(BaseReportEngine):
         effects = result.get("effects", result.get("main_effects", {}))
 
         p = doc.add_paragraph(i18n.tr("report.factor_effects_colon"))
-        p.add_run("\n")  # Add newline after label
+        p.add_run("\n")
         run = p.add_run(
             ", ".join(f"{k}={v}" for k, v in list(effects.items())[:10])
         )

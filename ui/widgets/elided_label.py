@@ -28,7 +28,6 @@ class ElidedLabel(QLabel):
     def _update_elided(self):
         fm = QFontMetrics(self.font())
         self._elided = fm.elidedText(self._full_text, Qt.ElideRight, max(self.width() - 2, 10))
-        # 避免 setText → paintEvent 无限递归: 仅在文本变化时更新
         if self.text() != self._elided:
             super().setText(self._elided)
 
@@ -37,7 +36,6 @@ class ElidedLabel(QLabel):
         super().resizeEvent(event)
 
     def paintEvent(self, event):
-        # 确保最新宽度下的省略文本
         fm = QFontMetrics(self.font())
         elided = fm.elidedText(self._full_text, Qt.ElideRight, max(self.width() - 2, 10))
         if self.text() != elided:

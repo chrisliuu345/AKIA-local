@@ -185,7 +185,6 @@ class VSMTab(BaseAnalysisTab):
         self._display_result(result)
         self.analysis_completed.emit()
 
-    # ── 结果展示 ──
     def _display_result(self, result: Dict[str, Any]):
         self._fill_table(result)
         self._draw_vsm(result)
@@ -223,7 +222,6 @@ class VSMTab(BaseAnalysisTab):
     def _draw_vsm(self, result: Dict[str, Any]):
         self._clear_canvas()
         tc = theme_colors()
-        # plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]  # redundant, handled by chart_engine.setup_chinese_font()
         plt.rcParams["axes.unicode_minus"] = False
 
         steps = result["steps"]
@@ -237,7 +235,6 @@ class VSMTab(BaseAnalysisTab):
         ax.set_ylim(0, 100)
         ax.axis("off")
 
-        # ── 汇总框 ──
         summary_text = (
             f"Lead Time: {s['lead_time_days']:.2f} 天\n"
             f"ΣVA: {s['total_va_sec']:.0f} s   增值比: {s['va_ratio']:.2%}\n"
@@ -248,7 +245,6 @@ class VSMTab(BaseAnalysisTab):
                 bbox=dict(boxstyle="round,pad=0.5", facecolor=tc["bg_body"],
                           edgecolor=tc["accent"], linewidth=1.2))
 
-        # ── 工序框 ──
         x0, x1 = 6, 84
         box_w = min(13.0, (x1 - x0) / n - 1.5)
         gap = ((x1 - x0) - n * box_w) / max(n - 1, 1) if n > 1 else 0
@@ -275,14 +271,12 @@ class VSMTab(BaseAnalysisTab):
                     ha="center", va="center", fontsize=7.5,
                     color=tc["text_secondary"])
 
-            # 箭头到下一工序
             if i < n - 1:
                 ax.annotate("", xy=(x + box_w + gap, y_box + box_h / 2),
                             xytext=(x + box_w, y_box + box_h / 2),
                             arrowprops=dict(arrowstyle="->",
                                             color=tc["text_secondary"], lw=1.2))
 
-            # 库存三角（工序之后）
             if st["inv_qty"] > 0 and i < n - 1:
                 tri_cx = x + box_w + gap / 2
                 tri_y = y_box + 1
@@ -296,7 +290,6 @@ class VSMTab(BaseAnalysisTab):
                 ax.text(tri_cx, tri_y - 7.2, f"{st['inv_days']:.2f}天",
                         ha="center", va="center", fontsize=7, color="#e67e22")
 
-        # ── 时间阶梯线 ──
         y_lad = 26
         x_cur = x0
         ladder_end = x1
@@ -306,14 +299,12 @@ class VSMTab(BaseAnalysisTab):
         nva_scale = nva_avail / nva_total if nva_total > 0 else 0
 
         for st in steps:
-            # VA 凸起（增值时间，秒）
             ax.plot([x_cur, x_cur, x_cur + va_w, x_cur + va_w],
                     [y_lad, y_lad + 5, y_lad + 5, y_lad],
                     color="#27ae60", linewidth=1.8)
             ax.text(x_cur + va_w / 2, y_lad + 7, f"{st['ct']:.0f}s",
                     ha="center", fontsize=7.5, color="#27ae60")
             x_cur += va_w
-            # NVA 段（库存等待，天）
             if st["inv_days"] > 0 and nva_scale > 0:
                 w = st["inv_days"] * nva_scale
                 ax.plot([x_cur, x_cur + w], [y_lad, y_lad],
@@ -328,7 +319,6 @@ class VSMTab(BaseAnalysisTab):
                 f"ΣVA {s['total_va_sec']:.0f}s\nLT {s['lead_time_days']:.2f}天",
                 va="center", fontsize=8.5, color=tc["text_primary"], fontweight="bold")
 
-        # 图例
         ax.plot([x0, x0 + 4], [8, 8], color="#27ae60", linewidth=1.8)
         ax.text(x0 + 5, 8, "增值时间 (VA, 秒)", fontsize=8, va="center",
                 color=tc["text_secondary"])

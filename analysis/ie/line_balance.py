@@ -43,7 +43,6 @@ class LineBalanceEngine:
             "bottleneck_name": bottleneck.process_name,
         }
 
-        # 目标节拍：默认 = 瓶颈 CT（不劣于现状的理论最优工位数）
         takt_time = float(takt) if takt and takt > 0 else bottleneck.cycle_time
         out["takt"] = round(takt_time, 3)
 
@@ -64,7 +63,6 @@ class LineBalanceEngine:
         }
         return out
 
-    # ── LPT + 前置约束分配 ──
     @staticmethod
     def _balance_lpt(processes: List[Process], takt: float) -> List[Dict[str, Any]]:
         by_id = {p.process_id: p for p in processes}
@@ -72,7 +70,6 @@ class LineBalanceEngine:
         assigned: set = set()
         stations: List[Dict[str, Any]] = []
 
-        # 最大迭代次数保护：工序数 × 2，防止前置引用异常导致死循环
         max_iterations = len(processes) * 2
         iteration = 0
 
@@ -88,7 +85,6 @@ class LineBalanceEngine:
         while remaining:
             iteration += 1
             if iteration > max_iterations:
-                # 兜底：将所有未分配工序强制各成一个工位
                 for pid in sorted(remaining):
                     p = by_id[pid]
                     stations.append({
@@ -117,7 +113,6 @@ class LineBalanceEngine:
                 assigned.add(pick.process_id)
 
             if not members:
-                # 单个工序 CT 超过节拍（或前置循环）→ 强制独立成站，防死循环
                 cands = ready(remaining) or [by_id[sorted(remaining)[0]]]
                 pick = cands[0]
                 members.append(pick)

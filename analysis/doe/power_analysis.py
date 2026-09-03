@@ -18,9 +18,6 @@ import numpy as np
 from scipy import stats
 
 
-# ---------------------------------------------------------------------------
-# Helper: z quantile (wrapper)
-# ---------------------------------------------------------------------------
 def _z(p: float) -> float:
     """Standard normal quantile (inverse CDF)."""
     return stats.norm.ppf(p)
@@ -30,10 +27,6 @@ def _t_quantile(p: float, df: int) -> float:
     """Student's t quantile."""
     return stats.t.ppf(p, df)
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# 1-Sample t Test
-# ══════════════════════════════════════════════════════════════════════════════
 
 def power_one_sample_t(
     n: int,
@@ -63,12 +56,8 @@ def power_one_sample_t(
 
     df = n - 1
     se = sigma / math.sqrt(n)
-    # Non-centrality parameter
     ncp = delta / se
-    # Critical t value (two-sided)
     t_crit = _t_quantile(1 - alpha / 2, df)
-    # Power = P(|T| > t_crit | H1) where T ~ ncp_t(df, ncp)
-    # = 1 - P(-t_crit < T < t_crit)
     power = 1 - (stats.nct.cdf(t_crit, df, ncp) - stats.nct.cdf(-t_crit, df, ncp))
     return float(max(0.0, min(1.0, power)))
 
@@ -86,17 +75,14 @@ def sample_size_one_sample_t(
     if delta == 0 or sigma <= 0:
         return 0
 
-    # Initial estimate from z-approximation
     n_est = math.ceil(((sigma / delta) * (_z(1 - alpha / 2) + _z(power))) ** 2)
     n_est = max(n_est, 3)
 
-    # Iterative refinement
     for n in range(max(3, n_est - 10), n_est + 50):
         pwr = power_one_sample_t(n, delta, sigma, alpha)
         if pwr >= power:
             return n
 
-    # Fallback: binary search upward
     lo, hi = max(3, n_est - 10), n_est + 100
     while lo < hi:
         mid = (lo + hi) // 2
@@ -106,10 +92,6 @@ def sample_size_one_sample_t(
             lo = mid + 1
     return lo
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# 2-Sample t Test
-# ══════════════════════════════════════════════════════════════════════════════
 
 def power_two_sample_t(
     n1: int,
@@ -166,7 +148,6 @@ def sample_size_two_sample_t(
     if delta == 0 or sigma <= 0:
         return 0
 
-    # z-approximation
     n1_est = math.ceil(((sigma / delta) * (_z(1 - alpha / 2) + _z(power))) ** 2 * (1 + 1 / ratio))
     n1_est = max(n1_est, 3)
 
@@ -186,10 +167,6 @@ def sample_size_two_sample_t(
             lo = mid + 1
     return lo
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# Paired t Test (equivalent to 1-sample t on differences)
-# ══════════════════════════════════════════════════════════════════════════════
 
 def power_paired_t(
     n: int,
@@ -223,10 +200,6 @@ def sample_size_paired_t(
     return sample_size_one_sample_t(delta, sigma_d, power, alpha)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 1-Proportion Test
-# ══════════════════════════════════════════════════════════════════════════════
-
 def power_one_proportion(
     n: int,
     p1: float,
@@ -256,7 +229,6 @@ def power_one_proportion(
         return 0.0
 
     z_crit = _z(1 - alpha / 2)
-    # Power using normal approximation
     z_power = (abs(p1 - p0) - z_crit * se0) / se1
     power = _norm_cdf(z_power)
     return float(max(0.0, min(1.0, power)))
@@ -292,10 +264,6 @@ def sample_size_one_proportion(
 
     return n_est
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# 2-Proportions Test
-# ══════════════════════════════════════════════════════════════════════════════
 
 def power_two_proportions(
     n1: int,
@@ -365,10 +333,6 @@ def sample_size_two_proportions(
     return n1_est
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 1-Variance Test
-# ══════════════════════════════════════════════════════════════════════════════
-
 def power_one_variance(
     n: int,
     sigma: float,
@@ -393,10 +357,8 @@ def power_one_variance(
 
     df = n - 1
     ratio = (sigma / sigma0) ** 2
-    # Critical chi-square values
     chi2_lower = stats.chi2.ppf(alpha / 2, df)
     chi2_upper = stats.chi2.ppf(1 - alpha / 2, df)
-    # Power = P(X² < chi2_lower or X² > chi2_upper) where X² ~ ratio * chi²(df)
     power_lower = stats.chi2.cdf(chi2_lower / ratio, df)
     power_upper = 1 - stats.chi2.cdf(chi2_upper / ratio, df)
     power = power_lower + power_upper
@@ -415,7 +377,6 @@ def sample_size_one_variance(
 
     ratio = (sigma / sigma0) ** 2
 
-    # Approximate from chi-square distribution
     df_est = max(3, int(2 * (_z(1 - alpha / 2) + _z(power)) ** 2 / (1 - 1 / ratio) ** 2))
     df_est = max(df_est, 3)
 
@@ -434,10 +395,6 @@ def sample_size_one_variance(
             lo = mid + 1
     return lo
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# One-Way ANOVA
-# ══════════════════════════════════════════════════════════════════════════════
 
 def power_one_way_anova(
     n_groups: int,
@@ -471,13 +428,10 @@ def power_one_way_anova(
     df1 = k - 1
     df2 = N - k
 
-    # Non-centrality parameter: λ = n * Σ(τᵢ²) / σ² = n * k * f²
     lam = n * k * f_squared
 
-    # Critical F value
     f_crit = stats.f.ppf(1 - alpha, df1, df2)
 
-    # Power = 1 - F_cdf(f_crit | df1, df2, λ)
     power = 1 - stats.ncf.cdf(f_crit, df1, df2, lam)
     return float(max(0.0, min(1.0, power)))
 
@@ -510,12 +464,10 @@ def sample_size_one_way_anova(
     if n_groups < 2 or f_squared <= 0:
         return 0
 
-    # Approximate using Lange & Ryman method
     k = n_groups
     df1 = k - 1
     z_alpha = _z(1 - alpha / 2)
     z_beta = _z(power)
-    # Initial estimate
     lam_est = (z_alpha + z_beta) ** 2 / f_squared
     n_est = max(2, math.ceil(lam_est / k + (k - 1) / 2))
 
@@ -533,10 +485,6 @@ def sample_size_one_way_anova(
             lo = mid + 1
     return lo
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# OC Curve Data
-# ══════════════════════════════════════════════════════════════════════════════
 
 def oc_curve(
     test_type: str,
@@ -592,10 +540,6 @@ def oc_curve(
     return {"n_values": n_values, "power_values": power_values}
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# Effect Size Conversions
-# ══════════════════════════════════════════════════════════════════════════════
-
 def cohens_d(delta: float, sigma: float) -> float:
     """Cohen's d effect size for means."""
     return abs(delta) / sigma if sigma > 0 else 0.0
@@ -614,10 +558,6 @@ def eta2_from_f_squared(f2: float) -> float:
         return 0.0
     return f2 / (1 + f2)
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# Generic API
-# ══════════════════════════════════════════════════════════════════════════════
 
 POWER_FUNCTIONS = {
     "1_sample_t": power_one_sample_t,

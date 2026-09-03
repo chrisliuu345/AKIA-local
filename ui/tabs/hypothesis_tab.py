@@ -90,7 +90,6 @@ class HypothesisTab(BaseAnalysisTab):
         self.margin_spin.setSingleStep(0.1)
         config_layout.addRow("等效边界 (δ):", self.margin_spin)
 
-        # 双比例检验输入
         self.prop_success1_spin = QSpinBox()
         self.prop_success1_spin.setRange(0, 1000000)
         self.prop_success1_spin.setValue(10)
@@ -288,7 +287,6 @@ class HypothesisTab(BaseAnalysisTab):
                 return False, f"数据列1 '{col1}' 有效数据不足（仅{len(d1)}行）"
         except KeyError as e:
             return False, f"列选择错误：{e} 在当前数据表中不存在，请点击表格列标题重新选择"
-        # 双比例检验校验
         if method == "双比例检验":
             s1, n1 = self.prop_success1_spin.value(), self.prop_n1_spin.value()
             s2, n2 = self.prop_success2_spin.value(), self.prop_n2_spin.value()
@@ -296,7 +294,6 @@ class HypothesisTab(BaseAnalysisTab):
                 return False, f"样本1 成功数({s1}) 不能超过总数({n1})"
             if s2 > n2:
                 return False, f"样本2 成功数({s2}) 不能超过总数({n2})"
-        # χ² 独立性检验校验 — 需要分类列
         if method == "χ²独立性检验":
             if not col2:
                 return False, "χ²独立性检验需要选择第二个分类列"
@@ -393,7 +390,6 @@ class HypothesisTab(BaseAnalysisTab):
             result = equivalence.two_sample_tost(g1, g2, self.margin_spin.value())
         elif method == "χ²拟合优度检验":
             raw = self.df[col1].dropna()
-            # 如果是连续数据，先做 value_counts 转换为频数
             if raw.dtype in ("float64", "float32") and raw.nunique() > 20:
                 data = raw.value_counts().sort_index()
             else:
@@ -427,7 +423,6 @@ class HypothesisTab(BaseAnalysisTab):
         p_str = format_pvalue(p_val) if isinstance(p_val, (int, float)) else str(p_val)
         lines.append(f"P值: {p_str}")
 
-        # TOST 等价检验特殊处理
         if "is_equivalent" in result:
             lines.append(f"等价性: {'是 (等价)' if result.get('is_equivalent') else '否 (不等价)'}")
             lines.append(f"等效边界 (δ): {result.get('margin', '')}")
@@ -441,7 +436,6 @@ class HypothesisTab(BaseAnalysisTab):
                 g2 = result["group2"]
                 lines.append(f"\n【组1】n={g1['sample_size']}, mean={g1['mean']}, std={g1['std_dev']}")
                 lines.append(f"【组2】n={g2['sample_size']}, mean={g2['mean']}, std={g2['std_dev']}")
-        # χ² 拟合优度特殊处理
         elif "chi2_statistic" in result and "contingency_table" not in result:
             lines.append(f"χ²统计量: {result.get('chi2_statistic', '')}")
             lines.append(f"自由度: {result.get('df', '')}")
@@ -454,7 +448,6 @@ class HypothesisTab(BaseAnalysisTab):
                 lines.append(f"\n【观测 vs 期望】")
                 for i, (o, e) in enumerate(zip(obs, exp)):
                     lines.append(f"  类别{i+1}: 观测={o}, 期望={e:.2f}")
-        # χ² 独立性特殊处理
         elif "contingency_table" in result:
             lines.append(f"χ²统计量: {result.get('chi2_statistic', '')}")
             lines.append(f"自由度: {result.get('df', '')}")
@@ -468,7 +461,6 @@ class HypothesisTab(BaseAnalysisTab):
                 lines.append(f"  {'':>10} " + " ".join(f"{c:>8}" for c in col_labels))
                 for i, row in enumerate(table):
                     lines.append(f"  {row_labels[i]:>10} " + " ".join(f"{v:>8}" for v in row))
-        # 双比例检验特殊处理
         elif "group1" in result and "proportion" in result.get("group1", {}):
             g1 = result["group1"]
             g2 = result["group2"]
@@ -528,10 +520,6 @@ class HypothesisTab(BaseAnalysisTab):
             err_label.setStyleSheet("color: #e74c3c; padding: 12px;")
             err_label.setWordWrap(True)
             self.chart_layout.addWidget(err_label)
-
-
-
-
 
 
     def _on_header_clicked(self, index: int):

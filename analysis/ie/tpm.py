@@ -8,17 +8,17 @@ from typing import List
 class TPMRecord:
     """单条设备运行记录"""
     date: str = ""
-    operating_time: float = 0.0      # 实际运行时间 (h)
-    planned_downtime: float = 0.0    # 计划停机 (h)
-    breakdown_time: float = 0.0      # 故障停机 (h)
-    setup_time: float = 0.0          # 换模调整 (h)
-    idle_time: float = 0.0           # 空转小停机 (h)
-    reduced_speed_loss: float = 0.0  # 速度降低损失 (h)
-    defect_loss: float = 0.0         # 不良返工 (h)
-    startup_loss: float = 0.0        # 启动损失 (h)
-    total_output: int = 0            # 总产出
-    good_output: int = 0             # 良品数
-    breakdown_count: int = 0         # 故障次数
+    operating_time: float = 0.0
+    planned_downtime: float = 0.0
+    breakdown_time: float = 0.0
+    setup_time: float = 0.0
+    idle_time: float = 0.0
+    reduced_speed_loss: float = 0.0
+    defect_loss: float = 0.0
+    startup_loss: float = 0.0
+    total_output: int = 0
+    good_output: int = 0
+    breakdown_count: int = 0
 
     @property
     def planned_production_time(self) -> float:

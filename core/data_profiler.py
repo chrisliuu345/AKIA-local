@@ -137,13 +137,13 @@ class DataProfiler:
         numeric = [c for c in cols if c["category"] == "measurement"]
         identifiers = [c for c in cols if c["category"] == "identifier"]
 
-        if tab_idx == 1:  # SPC
+        if tab_idx == 1:
             if len(numeric) >= 3:
                 return ("highly_recommended", 0.95)
             elif len(numeric) >= 1:
                 return ("recommended", 0.80)
             return ("optional", 0.40)
-        elif tab_idx == 2:  # Capability
+        elif tab_idx == 2:
             best = max(numeric, key=lambda c: c.get("normality_pvalue") or 0) if numeric else None
             has_spec = rec["params"].get("usl") is not None or rec["params"].get("lsl") is not None
             if best and has_spec:
@@ -151,15 +151,15 @@ class DataProfiler:
             elif best:
                 return ("recommended", 0.70)
             return ("optional", 0.30)
-        elif tab_idx == 3:  # MSA
+        elif tab_idx == 3:
             if len(identifiers) >= 2 and len(numeric) >= 1:
                 return ("recommended", 0.75)
             return ("optional", 0.35)
-        elif tab_idx == 4:  # Hypothesis
+        elif tab_idx == 4:
             if len(numeric) >= 2:
                 return ("recommended", 0.70)
             return ("optional", 0.30)
-        elif tab_idx in (5, 6):  # DOE / Regression
+        elif tab_idx in (5, 6):
             if len(numeric) >= 3:
                 return ("recommended", 0.65)
             return ("optional", 0.25)
@@ -172,14 +172,11 @@ class DataProfiler:
         if not numeric:
             return {"completeness": 0, "normality": 0, "stability": 0, "resolution": 0}
 
-        # 完整性: 1 - 平均缺失率
         completeness = 1.0 - np.mean([c["missing_pct"] / 100 for c in numeric])
 
-        # 正态性: 正态分布的测量列比例
         normal_count = sum(1 for c in numeric if c.get("distribution") == "normal")
         normality = normal_count / max(len(numeric), 1)
 
-        # 稳定性: 基于变异系数 CV（平均 CV < 0.3 → 稳定）
         cvs = []
         for c in numeric:
             mean_val = c.get("mean")
@@ -188,12 +185,10 @@ class DataProfiler:
                 cvs.append(min(abs(std_val / mean_val), 1.0))
         stability = 1.0 - np.mean(cvs) if cvs else 0.5
 
-        # 分辨力: 基于异常点比例（异常点适中 → 分辨力好）
         outlier_ratios = []
         for c in numeric:
             actual = c.get("outlier_count")
             if actual is not None and c.get("missing_pct", 0) < 50:
-                # 假设通过 missing_pct 推断大致行数
                 outlier_ratios.append(min(actual / 100, 1.0))
         resolution = 1.0 - np.mean(outlier_ratios) if outlier_ratios else 0.5
 
@@ -299,7 +294,6 @@ class DataProfiler:
             rec6["confidence"] = {"grade": grade6, "percentage": conf6}
             recs.append(rec6)
 
-        # ── IE 工具推荐 (tab 7-11) ──
         text_cols = [c for c in cols if c["category"] in ("text", "identifier")]
         col_names_lower = [c["name"].lower() for c in cols]
 
@@ -338,7 +332,6 @@ class DataProfiler:
             rec["confidence"] = {"grade": "recommended", "percentage": 0.60}
             recs.append(rec)
 
-        # ── 图表工具推荐 (tab 12, 18-20) ──
         if len(numeric) >= 2:
             rec = {"tab_index": 12, "tab_name": "通用图表", "method": "散点图/箱线图", "icon": "CHT",
                    "reason": f"{len(numeric)} 个数值列, 推荐使用通用图表生成器进行可视化探索",
@@ -368,7 +361,6 @@ class DataProfiler:
             rec["confidence"] = {"grade": "recommended", "percentage": 0.75}
             recs.append(rec)
 
-        # ── 工程工具推荐 (tab 13, 16) ──
         if any(kw in " ".join(col_names_lower) for kw in ["失效", "故障", "寿命", "fail", "life", "time"]):
             rec = {"tab_index": 13, "tab_name": "可靠性分析", "method": "Weibull/MTBF", "icon": "REL",
                    "reason": "检测到失效/时间相关列, 推荐进行 Weibull 寿命分析或 MTBF 计算",
@@ -393,11 +385,9 @@ class DataProfiler:
                 issues.append(f"{sheet_name}: '{c['name']}' 缺失率 {c['missing_pct']}% 偏高")
             if c.get("outlier_count", 0) and c["outlier_count"] > 10:
                 issues.append(f"{sheet_name}: '{c['name']}' 检测到 {c['outlier_count']} 个 IQR 异常点")
-        # 常数检测
         for c in cols:
             if c["category"] == "measurement" and c.get("std", 0) == 0:
                 issues.append(f"{sheet_name}: '{c['name']}' 为常数列, 无分析价值")
-        # 高相关冗余 — 用 Pearson 相关系数 (W91)，替代原来的偏度差值误判
         numeric = [c for c in cols if c["category"] == "measurement" and c.get("std", 0) > 0]
         if len(numeric) >= 2:
             correlated_pairs = []
@@ -409,7 +399,6 @@ class DataProfiler:
                         corr = df[valid].corr()
                         for i in range(len(valid)):
                             for j in range(i + 1, len(valid)):
-                                # W90 fix: iloc兜底，处理NaN/空值
                                 try:
                                     v = corr.iloc[i, j]
                                 except (IndexError, KeyError):
@@ -437,11 +426,9 @@ def _clean_col_name(col) -> str:
     s = str(col).strip()
     if not s:
         return s
-    # "Unnamed: N" / "Unnamed_N" 模式
     m = re.match(r"unnamed[:\s_-]*(\d+)", s, re.IGNORECASE)
     if m:
         return f"列 {int(m.group(1)) + 1}"
-    # pandas 默认无表头时列名为 0,1,2... → 列1,列2...
     try:
         n = int(s)
         return f"列 {n + 1}"

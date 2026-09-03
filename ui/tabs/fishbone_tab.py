@@ -44,7 +44,6 @@ class FishboneTab(BaseAnalysisTab):
             f"QSplitter::handle {{ background: {tc['border']}; }}"
         )
 
-        # ── 左侧编辑面板 ──
         left = QWidget()
         left.setMinimumWidth(260)
         left.setMaximumWidth(360)
@@ -72,7 +71,6 @@ class FishboneTab(BaseAnalysisTab):
 
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(4)
-        # 按钮分两行: 上2 + 下2
         btn_row1 = QHBoxLayout(); btn_row2 = QHBoxLayout()
         btn_row1.setSpacing(4); btn_row2.setSpacing(4)
         tree_btn_layout = QVBoxLayout()
@@ -115,7 +113,6 @@ class FishboneTab(BaseAnalysisTab):
         left_layout.addWidget(tree_group)
         splitter.addWidget(left)
 
-        # ── 右侧交互式画布 ──
         self.canvas = FishboneCanvas()
         splitter.addWidget(self.canvas)
 
@@ -211,7 +208,6 @@ class FishboneTab(BaseAnalysisTab):
         self.canvas.render_fishbone(self._branches, self._problem)
         self.analysis_completed.emit()
 
-    # ── 树导航辅助 ──
     @staticmethod
     def _is_branch(item):
         data = item.data(0, Qt.UserRole)

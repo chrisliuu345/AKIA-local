@@ -11,7 +11,6 @@ from PySide6.QtWidgets import QGraphicsOpacityEffect
 
 from config.settings import get_setting
 
-# 进行中的交叉淡入动画: id(stack) -> [animation, ...] (防 GC + 支持快速切换打断)
 _ACTIVE = {}
 
 

@@ -17,7 +17,6 @@ class SheetMergeTab(BaseAnalysisTab):
         layout=QVBoxLayout(self); layout.setContentsMargins(12,12,12,12)
         self.title_label=QLabel("工作表合并"); self.title_label.setFont(QFont(get_ui_font(), 18,QFont.Bold))
         layout.addWidget(self.title_label); layout.addSpacing(4)
-        # 文件选择
         fg=QGroupBox("选择文件")
         fl=QVBoxLayout(fg)
         self.file_list=QTextEdit(); self.file_list.setReadOnly(True); self.file_list.setMaximumHeight(80)
@@ -27,7 +26,6 @@ class SheetMergeTab(BaseAnalysisTab):
         btn_clr=QPushButton("清空"); btn_clr.setStyleSheet(BUTTON_SECONDARY); btn_clr.clicked.connect(lambda:(self._files.clear(),self.file_list.clear()))
         fb.addWidget(btn_add); fb.addWidget(btn_clr); fb.addStretch()
         fl.addLayout(fb); layout.addWidget(fg)
-        # 模式+运行
         cfg=QGroupBox("合并选项")
         cl=QFormLayout(cfg)
         self.mode=QComboBox(); self.mode.addItems(["纵向追加","按关键列JOIN","批量文件夹"])
@@ -36,7 +34,6 @@ class SheetMergeTab(BaseAnalysisTab):
         cl.addRow("关键列:",self.key_edit)
         self.btn=QPushButton("执行合并"); self.btn.setStyleSheet(BUTTON_PRIMARY_STRETCH); self.btn.clicked.connect(self._run)
         cl.addRow(self.btn); layout.addWidget(cfg)
-        # 预览
         self.preview=QTableWidget(); self.preview.setAlternatingRowColors(True); layout.addWidget(self.preview)
     def _add_files(self):
         fs,_=QFileDialog.getOpenFileNames(self,"选择文件","","Excel/CSV (*.xlsx *.xls *.xlsm *.csv)")

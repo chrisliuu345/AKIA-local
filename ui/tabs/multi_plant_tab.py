@@ -34,7 +34,6 @@ class MultiPlantTab(BaseAnalysisTab):
         self._plants = []
         self._setup_ui()
 
-    # ── UI ───────────────────────────────────────────────
     def _setup_ui(self):
         tc = theme_colors()
         layout = QVBoxLayout(self)
@@ -46,7 +45,6 @@ class MultiPlantTab(BaseAnalysisTab):
         title.setStyleSheet(f"color: {tc['text_primary']}; background: transparent;")
         layout.addWidget(title)
 
-        # 文件列表区
         list_row = QHBoxLayout()
         self.file_list = QListWidget()
         self.file_list.setSelectionMode(QListWidget.SingleSelection)
@@ -70,7 +68,6 @@ class MultiPlantTab(BaseAnalysisTab):
         list_row.addLayout(btn_col)
         layout.addLayout(list_row, 1)
 
-        # 运行行
         ctrl = QHBoxLayout()
         self.run_btn = QPushButton(i18n.tr("multi_plant.run"))
         self.run_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
@@ -86,7 +83,6 @@ class MultiPlantTab(BaseAnalysisTab):
         ctrl.addStretch()
         layout.addLayout(ctrl)
 
-        # 汇总表
         self.table = QTableWidget(0, 6)
         self.table.setHorizontalHeaderLabels([
             i18n.tr("multi_plant.col_plant"),
@@ -103,7 +99,6 @@ class MultiPlantTab(BaseAnalysisTab):
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         layout.addWidget(self.table, 1)
 
-        # 图表区
         self.chart_layout = QVBoxLayout()
         self.chart_layout.setSpacing(0)
         layout.addLayout(self.chart_layout, 1)
@@ -122,7 +117,6 @@ class MultiPlantTab(BaseAnalysisTab):
         self.canvas = None
         self.current_figure = None
 
-    # ── 交互 ─────────────────────────────────────────────
     def _on_add(self):
         paths, _ = QFileDialog.getOpenFileNames(
             self, i18n.tr("multi_plant.choose_files"), "",
@@ -143,7 +137,6 @@ class MultiPlantTab(BaseAnalysisTab):
         self.file_list.clear()
         self._plants = []
 
-    # ── 分析 ─────────────────────────────────────────────
     def _on_run(self):
         tc = theme_colors()
         if not self._plants:

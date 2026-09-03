@@ -48,17 +48,14 @@ def kaplan_meier(
     kmf = KaplanMeierFitter()
     kmf.fit(T, event_observed=E, label=label or "All")
 
-    # 提取数据
     sf = kmf.survival_function_
     timeline = sf.index.tolist()
     sf_values = sf.iloc[:, 0].tolist()
 
-    # 置信区间
     ci = kmf.confidence_interval_survival_function_
     ci_lower = ci.iloc[:, 0].tolist() if ci is not None else []
     ci_upper = ci.iloc[:, 1].tolist() if ci is not None else []
 
-    # 事件表
     et = kmf.event_table
     event_table = {
         "at_risk": et["at_risk"].tolist(),
@@ -67,7 +64,6 @@ def kaplan_meier(
         "entrance": et["entrance"].tolist(),
     }
 
-    # 中位生存时间
     median_survival = float(kmf.median_survival_time_) if np.isfinite(kmf.median_survival_time_) else None
 
     return {
@@ -113,7 +109,6 @@ def kaplan_meier_compare(
     E_B = event_observed_B.loc[T_B.index].astype(int)
     kmf_b.fit(T_B, event_observed=E_B, label=label_B)
 
-    # Log-rank 检验
     lr = _logrank_test(T_A, T_B, event_observed_A=E_A, event_observed_B=E_B)
 
     def _extract(kmf, name):
@@ -231,7 +226,6 @@ def cox_regression(
             "error": f"Cox 回归拟合失败: {str(e)}",
         }
 
-    # 提取系数
     coefficients = {}
     for var in cph.params_.index:
         coef = float(cph.params_[var])
@@ -249,7 +243,6 @@ def cox_regression(
             "ci_upper": round(ci_high, 6),
         }
 
-    # 基线生存
     bs = cph.baseline_survival_
     baseline_survival = {
         "timeline": bs.index.tolist(),

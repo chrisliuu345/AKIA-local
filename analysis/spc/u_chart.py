@@ -18,12 +18,10 @@ def analyze(defects: pd.Series, unit_sizes: pd.Series) -> Dict[str, Any]:
     u = c / u_sizes
     u_bar = c.sum() / u_sizes.sum()
 
-    # 向量化 UCL/LCL 计算
     se = np.sqrt(u_bar / u_sizes)
     ucl_vals = u_bar + 3 * se
     lcl_vals = np.maximum(u_bar - 3 * se, 0)
 
-    # 向量化违规检测
     violations_mask = (u > ucl_vals) | (u < lcl_vals)
     violations_idx = np.where(violations_mask)[0]
 

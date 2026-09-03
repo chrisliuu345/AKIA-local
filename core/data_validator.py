@@ -112,7 +112,6 @@ class DataValidator:
             data_min = float(data.min())
             data_max = float(data.max())
 
-            # 近常数数据跳过偏度/峰度 (避免 catastrophic cancellation 警告)
             is_constant = std < 1e-12 or std / (abs(mean) + 1e-9) < 1e-8
             if is_constant:
                 skew_val, kurtosis_val = 0.0, 0.0
@@ -125,7 +124,6 @@ class DataValidator:
 
             statistic, p_value = stats.shapiro(data) if len(data) <= 5000 else (None, None)
             if len(data) > 5000 and not is_constant and std > 0:
-                # W92 fix: std=0时跳过kstest避免除零
                 statistic, p_value = stats.kstest(data, lambda x: stats.norm.cdf(x, loc=mean, scale=std))
 
             self.stats[col] = {
@@ -156,7 +154,6 @@ class DataValidator:
             method = "Shapiro-Wilk"
         else:
             m_s, s_s = clean.mean(), clean.std()
-            # W92 fix: std=0时跳过kstest
             if s_s > 0:
                 stat, p = stats.kstest(clean, lambda x: stats.norm.cdf(x, loc=m_s, scale=s_s))
                 method = "Kolmogorov-Smirnov"

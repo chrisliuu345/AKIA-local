@@ -24,7 +24,6 @@ def analyze(
 
     groups = df.groupby(subgroup_col)[measurement_col]
     subgroup_means = groups.mean()
-    # W25 fix: 单观测子组std(ddof=1)为NaN，剔除n=1子组
     subgroup_counts = groups.count()
     valid_subgroups = subgroup_counts[subgroup_counts >= 2]
     if len(valid_subgroups) < 2:
@@ -85,6 +84,5 @@ def _estimate_between_sigma(means: pd.Series, within_std: float, counts: pd.Seri
     variance_between = max((ms_between - within_std ** 2) / (grand_n / k), 0)
 
     return float(np.sqrt(variance_between))
-
 
 

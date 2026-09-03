@@ -51,7 +51,6 @@ def analyze(
             "error": f"数据点不足: {n}（最少需要 10 个）",
         }
 
-    # 自动选阶或手动指定
     candidates = []
     if order is None and auto_select:
         best_order, candidates = _auto_select(clean, max_p, max_d, max_q)
@@ -70,7 +69,6 @@ def analyze(
             "error": "未指定 order 且 auto_select=False",
         }
 
-    # 拟合最终模型
     try:
         model = ARIMA(clean, order=best_order)
         fit = model.fit()
@@ -81,15 +79,12 @@ def analyze(
             "error": f"ARIMA{best_order} 拟合失败: {str(e)}",
         }
 
-    # 拟合值
     fitted = fit.fittedvalues
 
-    # 预测
     forecast_result = fit.get_forecast(steps=forecast_steps)
     forecast_vals = forecast_result.predicted_mean
     conf_int = forecast_result.conf_int(alpha=1 - confidence_level)
 
-    # 残差诊断
     residuals = clean - fitted
     resid_clean = residuals.dropna()
 
@@ -100,14 +95,12 @@ def analyze(
     lb_pval = float(lb_test["lb_pvalue"].iloc[0])
     dw = float(durbin_watson(resid_clean))
 
-    # 残差 ACF/PACF
     from statsmodels.tsa.stattools import acf as _acf, pacf as _pacf
     resid_lags = min(20, len(resid_clean) // 2 - 1)
     resid_lags = max(1, resid_lags)
     resid_acf = _acf(resid_clean, nlags=resid_lags, fft=True)
     resid_pacf = _pacf(resid_clean, nlags=resid_lags, method="yw")
 
-    # 残差 Q-Q 数据（理论分位数 vs 样本分位数）
     from scipy import stats as sp_stats
     sorted_resid = np.sort(resid_clean.values)
     n_resid = len(sorted_resid)

@@ -244,7 +244,6 @@ def extract_metrics(analyses: Dict[int, Dict]) -> Dict[str, Dict[str, Any]]:
             continue
 
         metrics: Dict[str, Any] = {}
-        # 结构探测 — 各引擎有互斥的顶层特征键
         if "capability" in r:
             metrics.update(_extract_capability(r))
         if any(k.endswith("_chart") and isinstance(v, dict) for k, v in r.items()) \
@@ -262,28 +261,20 @@ def extract_metrics(analyses: Dict[int, Dict]) -> Dict[str, Dict[str, Any]]:
             metrics.update(_extract_reliability(r))
         if "beta" in r and "eta" in r:
             metrics.update(_extract_weibull(r))
-        # 公差区间
         if "lower" in r and "upper" in r and "width" in r:
             metrics.update(_extract_tolerance(r))
-        # SMED
         if "improvement_pct" in r:
             metrics.update(_extract_smed(r))
-        # Work Sampling
         if isinstance(r.get("utilization"), dict):
             metrics.update(_extract_work_sampling(r))
-        # 多工厂对比
         if "best_cpk" in r or "worst_cpk" in r:
             metrics.update(_extract_multi_plant(r))
-        # DOE (model_r_squared 兼容)
         if "model_r_squared" in r:
             metrics.update(_extract_doe(r))
-        # 时间研究 (standard_time 在 results[] 内)
         if isinstance(r.get("results"), list):
             metrics.update(_extract_time_study(r))
-        # 正态性检验 (tests 子字典)
         if isinstance(r.get("tests"), dict):
             metrics.update(_extract_normality(r))
-        # 兜底: IE 类通用指标
         metrics.update({k: v for k, v in _extract_ie_default(r).items()
                         if k not in metrics})
 

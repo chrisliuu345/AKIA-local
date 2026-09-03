@@ -71,7 +71,6 @@ class TemplateParser:
                 key_col = df.columns[0]
                 value_col = df.columns[1]
                 params = {}
-                # 向量化：批量处理替代逐行 iterrows
                 keys = df[key_col].fillna("").astype(str).str.strip()
                 vals = df[value_col].fillna("").astype(str).str.strip()
                 for k, v in zip(keys, vals):

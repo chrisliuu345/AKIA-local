@@ -11,7 +11,6 @@ import pandas as pd
 from scipy import stats
 
 
-# 支持的分布列表
 SUPPORTED_DISTRIBUTIONS = ["normal", "lognormal", "exponential", "gamma", "weibull"]
 
 
@@ -38,7 +37,6 @@ def fit_distribution(
     if distribution not in SUPPORTED_DISTRIBUTIONS:
         raise ValueError(f"不支持的分布: {distribution}")
 
-    # 根据分布类型进行 MLE 拟合
     if distribution == "normal":
         result = _fit_normal(clean)
     elif distribution == "lognormal":
@@ -84,7 +82,6 @@ def goodness_of_fit(
     if tests is None:
         tests = ["ad", "ks", "chi2"]
 
-    # 先拟合分布
     fit_result = fit_distribution(clean, distribution)
     params = fit_result.get("params", {})
 
@@ -94,24 +91,20 @@ def goodness_of_fit(
         "tests": {},
     }
 
-    # 获取分布对象
     dist = _get_scipy_dist(distribution, params)
 
     if dist is None:
         results["error"] = "无法获取分布对象"
         return results
 
-    # Anderson-Darling 检验
     if "ad" in tests:
         ad_result = _anderson_darling_test(clean, dist)
         results["tests"]["anderson_darling"] = ad_result
 
-    # Kolmogorov-Smirnov 检验
     if "ks" in tests:
         ks_result = _kolmogorov_smirnov_test(clean, dist)
         results["tests"]["kolmogorov_smirnov"] = ks_result
 
-    # Chi-Square 检验
     if "chi2" in tests:
         chi2_result = _chi_square_test(clean, dist)
         results["tests"]["chi_square"] = chi2_result
@@ -144,7 +137,6 @@ def compare_distributions(
             fit_result = fit_distribution(clean, dist_name)
             gof_result = goodness_of_fit(clean, dist_name, tests=["ad", "ks"])
 
-            # 计算 AIC/BIC
             n = len(clean)
             log_likelihood = _compute_log_likelihood(clean, dist_name, fit_result.get("params", {}))
             k = len(fit_result.get("params", {}))
@@ -166,7 +158,6 @@ def compare_distributions(
                 "error": str(e),
             })
 
-    # 按 AIC 排序（越小越好）
     valid_comparisons = [c for c in comparisons if "aic" in c]
     valid_comparisons.sort(key=lambda x: x["aic"])
 
@@ -176,8 +167,6 @@ def compare_distributions(
         "best_fit": valid_comparisons[0] if valid_comparisons else None,
     }
 
-
-# ── 内部函数：分布拟合 ──────────────────────────────
 
 def _fit_normal(data: np.ndarray) -> Dict[str, Any]:
     """正态分布拟合"""
@@ -190,9 +179,7 @@ def _fit_normal(data: np.ndarray) -> Dict[str, Any]:
 
 def _fit_lognormal(data: np.ndarray) -> Dict[str, Any]:
     """对数正态分布拟合"""
-    # 对数正态分布要求数据 > 0
     if np.any(data <= 0):
-        # 添加偏移
         shift = abs(np.min(data)) + 0.001
         data = data + shift
     else:
@@ -212,7 +199,6 @@ def _fit_lognormal(data: np.ndarray) -> Dict[str, Any]:
 
 def _fit_exponential(data: np.ndarray) -> Dict[str, Any]:
     """指数分布拟合"""
-    # 指数分布要求数据 >= 0
     if np.any(data < 0):
         shift = abs(np.min(data))
         data = data + shift
@@ -232,7 +218,6 @@ def _fit_exponential(data: np.ndarray) -> Dict[str, Any]:
 
 def _fit_gamma(data: np.ndarray) -> Dict[str, Any]:
     """Gamma 分布拟合"""
-    # Gamma 分布要求数据 > 0
     if np.any(data <= 0):
         shift = abs(np.min(data)) + 0.001
         data = data + shift
@@ -253,7 +238,6 @@ def _fit_gamma(data: np.ndarray) -> Dict[str, Any]:
 
 def _fit_weibull(data: np.ndarray) -> Dict[str, Any]:
     """Weibull 分布拟合"""
-    # Weibull 分布要求数据 > 0
     if np.any(data <= 0):
         shift = abs(np.min(data)) + 0.001
         data = data + shift
@@ -271,8 +255,6 @@ def _fit_weibull(data: np.ndarray) -> Dict[str, Any]:
         "param_names": ["c", "loc", "scale", "shift"],
     }
 
-
-# ── 内部函数：拟合优度检验 ──────────────────────────
 
 def _get_scipy_dist(distribution: str, params: Dict[str, float]):
     """获取 scipy 分布对象"""
@@ -303,8 +285,6 @@ def _get_scipy_dist(distribution: str, params: Dict[str, float]):
 
 def _anderson_darling_test(data: np.ndarray, dist) -> Dict[str, Any]:
     """Anderson-Darling 检验"""
-    # 使用 scipy 的 Anderson-Darling 检验（仅支持 normal, exponential, logistic）
-    # 对于其他分布，使用自定义实现
     try:
         result = stats.anderson(data, dist="norm")
         return {
@@ -313,14 +293,12 @@ def _anderson_darling_test(data: np.ndarray, dist) -> Dict[str, Any]:
                 f"{level}%": round(float(cv), 4)
                 for level, cv in zip([15, 10, 5, 2.5, 1], result.critical_values)
             },
-            "is_normal": result.statistic < result.critical_values[2],  # 5% 水平
+            "is_normal": result.statistic < result.critical_values[2],
         }
     except Exception:
-        # 自定义 AD 统计量计算
         sorted_data = np.sort(data)
         n = len(sorted_data)
         cdf_values = dist.cdf(sorted_data)
-        # 避免 0 和 1
         cdf_values = np.clip(cdf_values, 1e-10, 1 - 1e-10)
         i = np.arange(1, n + 1)
         ad = -n - np.mean((2 * i - 1) * (np.log(cdf_values) + np.log(1 - cdf_values[::-1])))
@@ -349,9 +327,7 @@ def _chi_square_test(data: np.ndarray, dist, bins: int = 10) -> Dict[str, Any]:
     expected = dist.cdf(bin_edges[1:]) - dist.cdf(bin_edges[:-1])
     expected = expected * n
 
-    # 合并期望频数 < 5 的区间
     while np.any(expected < 5) and len(expected) > 2:
-        # 合并最小的相邻区间
         min_idx = np.argmin(expected)
         if min_idx == 0:
             observed = np.array([observed[0] + observed[1]] + list(observed[2:]))
@@ -367,7 +343,6 @@ def _chi_square_test(data: np.ndarray, dist, bins: int = 10) -> Dict[str, Any]:
                 observed = np.array(list(observed[:min_idx]) + [observed[min_idx] + observed[min_idx+1]] + list(observed[min_idx+2:]))
                 expected = np.array(list(expected[:min_idx]) + [expected[min_idx] + expected[min_idx+1]] + list(expected[min_idx+2:]))
 
-    # 计算卡方统计量
     expected_safe = np.where(expected == 0, 1e-10, expected)
     chi2 = np.sum((observed - expected) ** 2 / expected_safe)
     df = len(observed) - 1
@@ -383,8 +358,6 @@ def _chi_square_test(data: np.ndarray, dist, bins: int = 10) -> Dict[str, Any]:
     }
 
 
-# ── 内部函数：对数似然计算 ──────────────────────────
-
 def _compute_log_likelihood(data: np.ndarray, distribution: str, params: Dict[str, float]) -> float:
     """计算对数似然值"""
     dist = _get_scipy_dist(distribution, params)
@@ -393,7 +366,6 @@ def _compute_log_likelihood(data: np.ndarray, distribution: str, params: Dict[st
 
     try:
         log_pdf = dist.logpdf(data)
-        # 处理 -inf 和 nan
         log_pdf = np.where(np.isfinite(log_pdf), log_pdf, -1e10)
         return float(np.sum(log_pdf))
     except Exception:
