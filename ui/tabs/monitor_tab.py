@@ -41,7 +41,6 @@ class MonitorTab(BaseAnalysisTab):
         self._setup_ui()
         self.update_received.connect(self._on_update)
 
-    # ── UI ───────────────────────────────────────────────
     def _setup_ui(self):
         tc = theme_colors()
         layout = QVBoxLayout(self)
@@ -53,7 +52,6 @@ class MonitorTab(BaseAnalysisTab):
         title.setStyleSheet(f"color: {tc['text_primary']}; background: transparent;")
         layout.addWidget(title)
 
-        # 配置区
         cfg = QGroupBox(i18n.tr("monitor.config"))
         cfg.setStyleSheet(
             f"QGroupBox {{ color: {tc['text_secondary']}; border: 1px solid #3a3a3a;"
@@ -88,7 +86,6 @@ class MonitorTab(BaseAnalysisTab):
 
         layout.addWidget(cfg)
 
-        # 控制行
         ctrl = QHBoxLayout()
         self.toggle_btn = QPushButton(i18n.tr("monitor.start"))
         self.toggle_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
@@ -104,14 +101,12 @@ class MonitorTab(BaseAnalysisTab):
         ctrl.addStretch()
         layout.addLayout(ctrl)
 
-        # 告警横幅 (状态跳变时显示，红色=判异中 / 绿色=已解除)
         self.alert_banner = QLabel("")
         self.alert_banner.setAlignment(Qt.AlignCenter)
         self.alert_banner.setMinimumHeight(30)
         self.alert_banner.hide()
         layout.addWidget(self.alert_banner)
 
-        # 告警日志面板
         log_group = QGroupBox(i18n.tr("alert.title"))
         log_group.setStyleSheet(
             f"QGroupBox {{ color: {tc['text_secondary']}; border: 1px solid #3a3a3a;"
@@ -126,7 +121,6 @@ class MonitorTab(BaseAnalysisTab):
         log_layout.addWidget(self.alert_log_view)
         layout.addWidget(log_group)
 
-        # 图表区
         self.chart_layout = QVBoxLayout()
         self.chart_layout.setSpacing(0)
         layout.addLayout(self.chart_layout, 1)
@@ -145,7 +139,6 @@ class MonitorTab(BaseAnalysisTab):
         self.canvas = None
         self.current_figure = None
 
-    # ── 交互 ─────────────────────────────────────────────
     def _on_browse(self):
         path, _ = QFileDialog.getOpenFileName(
             self, i18n.tr("monitor.choose_file"), "",
@@ -191,7 +184,6 @@ class MonitorTab(BaseAnalysisTab):
         self.status_label.setText(i18n.tr("monitor.status_stopped"))
         self.status_label.setStyleSheet("color: #6e7080;")
 
-    # ── 结果推送 (工作线程 → UI 线程) ─────────────────────
     def _on_update(self, payload: dict):
         tc = theme_colors()
         error = payload.get("error")
@@ -232,7 +224,6 @@ class MonitorTab(BaseAnalysisTab):
 
         self._check_alerts(viol, os.path.basename(payload["file_path"]))
 
-    # ── 告警 (E3) ────────────────────────────────────────
     def _check_alerts(self, violations: int, file_name: str):
         min_v = AlertRules.min_violations()
         effective = violations if violations >= min_v else 0

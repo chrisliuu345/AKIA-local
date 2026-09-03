@@ -15,7 +15,6 @@ def analyze(
 ) -> Dict[str, Any]:
     data = df
     data = data.dropna(subset=[response_col] + factor_cols)
-    # Validate all selected columns are numeric
     for col in [response_col] + factor_cols:
         coerced = pd.to_numeric(data[col], errors="coerce")
         n_nan = coerced.isna().sum()
@@ -62,7 +61,6 @@ def analyze(
     y_pred = response - residuals
     r_squared = 1 - np.sum(residuals ** 2) / np.sum((response - grand_mean) ** 2) if np.sum((response - grand_mean) ** 2) > 0 else 0
 
-    # W36 fix: shapiro要求n≥3，N<3跳过
     if len(residuals) >= 3:
         sw_stat, sw_p = stats.shapiro(residuals) if len(residuals) <= 5000 else (0, 0)
     else:

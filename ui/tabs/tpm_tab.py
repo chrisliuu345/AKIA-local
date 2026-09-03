@@ -26,7 +26,6 @@ class TPMTab(BaseAnalysisTab):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
 
-        # KPI 卡
         kpi_row = QHBoxLayout()
         self.kpi_labels = {}
         for key, label in [("mtbf", "MTBF (h)"), ("mttr", "MTTR (h)"), ("oee", "OEE %"), ("records", "记录数")]:
@@ -41,9 +40,7 @@ class TPMTab(BaseAnalysisTab):
             kpi_row.addWidget(card)
         layout.addLayout(kpi_row)
 
-        # 数据表
         self.table = QTableWidget(0, 10)
-        # 表头精简为 4 字保证最小窗口不截断, 单位 h 放入 tooltip
         self.table.setHorizontalHeaderLabels(
             ["日期", "运行", "计划停", "故障停", "换模", "空转",
              "速度损", "不良", "启动损", "产量/良品"]
@@ -61,7 +58,6 @@ class TPMTab(BaseAnalysisTab):
                 item.setToolTip(tip)
         layout.addWidget(self.table)
 
-        # 按钮行
         btn_row = QHBoxLayout()
         add_btn = QPushButton("+ 添加记录")
         add_btn.setStyleSheet(BUTTON_PRIMARY_STRETCH)
@@ -74,12 +70,10 @@ class TPMTab(BaseAnalysisTab):
         btn_row.addWidget(run_btn)
         layout.addLayout(btn_row)
 
-        # 图表区
         self.canvas_widget = QWidget()
         self.canvas_layout = QVBoxLayout(self.canvas_widget)
         layout.addWidget(self.canvas_widget, 1)
 
-        # 维护日历
         cal_row = QHBoxLayout()
         self.calendar = QCalendarWidget()
         self.calendar.setMaximumWidth(300)
@@ -144,7 +138,6 @@ class TPMTab(BaseAnalysisTab):
                 continue
         result = self.engine.analyze()
         self._display(result)
-        # v2.4: 与其他 Tab 统一的 current_result 包装 (analysis_type/params/result)
         self.current_result = {
             "analysis_type": "TPM 全面维护",
             "params": {},
@@ -153,17 +146,14 @@ class TPMTab(BaseAnalysisTab):
         self.analysis_completed.emit()
 
     def _display(self, result):
-        # KPI
         self.kpi_labels["mtbf"].setText(f"{result.avg_mtbf:.1f}")
         self.kpi_labels["mttr"].setText(f"{result.avg_mttr:.1f}")
         self.kpi_labels["oee"].setText(f"{result.avg_oee * 100:.0f}")
         self.kpi_labels["records"].setText(str(result.record_count))
 
-        # 图表
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5), dpi=100)
         fig.patch.set_facecolor('#181822')
 
-        # Pareto
         losses = result.six_losses
         items = sorted(losses.items(), key=lambda x: x[1], reverse=True)
         names = [i[0] for i in items]
@@ -180,7 +170,6 @@ class TPMTab(BaseAnalysisTab):
         ax2_twin.set_ylabel("累计 %", color='#e1e2e6')
         ax2_twin.set_ylim(0, 105)
 
-        # MTBF trend
         if len(result.records) > 1:
             dates = [r.date for r in result.records]
             oees = [r.oee * 100 for r in result.records]

@@ -17,7 +17,6 @@ from config.settings import (
     get_effective,
 )
 
-# ── 暗色主题 ──
 _DARK_AXES = {
     "axes.facecolor": "#262632",
     "axes.edgecolor": "#3a3a48",
@@ -54,8 +53,6 @@ def _get_palette(palette_name: str = "专业蓝") -> List[str]:
     return _CHART_PALETTES.get(palette_name, _CHART_PALETTES["专业蓝"])
 
 
-# ── 图表类型定义 ──
-
 CHART_TYPES = [
     "直方图", "箱线图", "散点图", "帕累托图", "概率图", "矩阵图",
     "残差图", "主效应图", "交互效应图", "等值线图", "3D曲面图", "时间序列图",
@@ -81,8 +78,6 @@ CHART_CONFIGS = OrderedDict([
 ])
 
 
-# ── 统计摘要 ──
-
 def _build_summary(data: pd.DataFrame, columns: List[str]) -> str:
     lines = []
     for col in columns:
@@ -98,8 +93,6 @@ def _build_summary(data: pd.DataFrame, columns: List[str]) -> str:
                      f"Max={series.max():.4f}")
     return "\n".join(lines)
 
-
-# ── 6 种 D1 图表 ──
 
 def _build_histogram(data: dict, options: dict) -> Figure:
     df = data.get("df")
@@ -241,8 +234,6 @@ def _build_matrix(data: dict, options: dict) -> Figure:
     return fig
 
 
-# ── 6 种 D2 图表 ──
-
 def _build_residual(data: dict, options: dict) -> Figure:
     df = data.get("df")
     cols = data.get("columns", [])
@@ -369,7 +360,6 @@ def _build_contour(data: dict, options: dict) -> Figure:
         ax.text(0.5, 0.5, "数据点不足", ha="center", va="center", fontsize=14)
         return fig
 
-    # W79 fix: 去除重复坐标避免griddata QhullError
     coords = np.column_stack([x.values, y.values])
     _, unique_idx = np.unique(coords, axis=0, return_index=True)
     x_u, y_u, z_u = x.values[unique_idx], y.values[unique_idx], z.values[unique_idx]
@@ -381,7 +371,7 @@ def _build_contour(data: dict, options: dict) -> Figure:
     try:
         Z = griddata((x_u, y_u), z_u, (X, Y), method="cubic")
     except Exception:
-        Z = griddata((x_u, y_u), z_u, (X, Y), method="linear")  # 降级到linear
+        Z = griddata((x_u, y_u), z_u, (X, Y), method="linear")
     contour = ax.contourf(X, Y, Z, levels=20, cmap="RdYlBu_r")
     fig.colorbar(contour, ax=ax, label=resp)
     ax.scatter(x, y, c="black", s=20, alpha=0.5, edgecolors="white")
@@ -410,7 +400,6 @@ def _build_surface_3d(data: dict, options: dict) -> Figure:
         ax.text(0.5, 0.5, "数据点不足", ha="center", va="center", fontsize=14)
         return fig
 
-    # W79 fix: 去除重复坐标避免griddata QhullError
     coords = np.column_stack([x.values, y.values])
     _, unique_idx = np.unique(coords, axis=0, return_index=True)
     x_u, y_u, z_u = x.values[unique_idx], y.values[unique_idx], z.values[unique_idx]
@@ -423,7 +412,7 @@ def _build_surface_3d(data: dict, options: dict) -> Figure:
     try:
         Z = griddata((x_u, y_u), z_u, (X, Y), method="cubic")
     except Exception:
-        Z = griddata((x_u, y_u), z_u, (X, Y), method="linear")  # 降级到linear
+        Z = griddata((x_u, y_u), z_u, (X, Y), method="linear")
     surf = ax.plot_surface(X, Y, Z, cmap="RdYlBu_r", alpha=0.8, linewidth=0, antialiased=True)
     fig.colorbar(surf, ax=ax, shrink=0.5, aspect=10, label=resp)
     ax.scatter(x, y, z, c="black", s=30, alpha=0.6)
@@ -465,8 +454,6 @@ def _build_time_series(data: dict, options: dict) -> Figure:
     fig.tight_layout()
     return fig
 
-
-# ── 3 种新图表 (气泡/雷达/瀑布) ──
 
 def _build_bubble(data: dict, options: dict) -> Figure:
     df = data.get("df")
@@ -569,13 +556,10 @@ def _build_waterfall(data: dict, options: dict) -> Figure:
     bottom = 0.0
     for i, (lbl, v) in enumerate(zip(labels, vals)):
         color = palette[0] if v >= 0 else palette[2] if len(palette) > 2 else "#e74c3c"
-        # C16 fix: all bars start from accumulated bottom
         bar = ax.bar(i, v, bottom=bottom, color=color, alpha=0.8,
                      edgecolor="white", linewidth=0.5)
-        # 连接线从前一根柱子顶部到当前柱子底部
         if i > 0:
             ax.plot([i - 1, i], [bottom, bottom], linewidth=0.8, color="#6e7080")
-        # C16 fix: accumulate bottom for all bars including first
         bottom += v
 
     ax.set_xticks(range(len(labels)))
@@ -588,28 +572,23 @@ def _build_waterfall(data: dict, options: dict) -> Figure:
     return fig
 
 
-# ── 主题应用 ──
-
 def _apply_figure_palette(fig: Figure, palette_name: str):
     """后置应用调色板到图表元素 (对 histogram/pareto/probplot/matrix 生效)"""
     palette = _get_palette(palette_name)
     for ax in fig.get_axes():
-        # 直方图/帕累托 bars
         for container in ax.containers:
             for patch in container.patches:
                 patch.set_facecolor(palette[0])
                 patch.set_alpha(0.75)
-        # 概率图散点线
         for line in ax.get_lines():
             if line.get_marker() != 'None' and len(ax.get_lines()) > 1:
                 line.set_markerfacecolor(palette[0])
                 line.set_markeredgecolor(palette[1])
             elif len(ax.get_lines()) == 1 or line.get_linestyle() != '--':
                 line.set_color(palette[0])
-        # 饼图 wedges (如果有)
         for patch in ax.patches:
             if hasattr(patch, 'set_facecolor') and not hasattr(patch, 'get_height'):
-                pass  # 不处理非bar patches
+                pass
 
 
 def _apply_figure_theme(fig: Figure, options: dict):
@@ -878,7 +857,6 @@ def _build_rbd(data: dict, options: dict) -> Figure:
     ax.set_ylim(-1, 2)
     ax.axis("off")
 
-    # 绘制每个组件框
     for i, comp in enumerate(components):
         r = comp.get("reliability", 0)
         name = comp.get("name", f"C{i+1}")
@@ -890,12 +868,10 @@ def _build_rbd(data: dict, options: dict) -> Figure:
         ax.text(i + 0.5, 1.0, name, ha="center", va="center", fontsize=10, color="#e1e2e6")
         ax.text(i + 0.5, 0.6, f"R={r:.3f}", ha="center", va="center", fontsize=9, color="#a0a3ae")
 
-        # 连接线
         if i < len(components) - 1:
             ax.annotate("", xy=(i + 1.1, 0.8), xytext=(i + 0.9, 0.8),
                         arrowprops=dict(arrowstyle="->", color="#e1e2e6", lw=1.5))
 
-    # 系统可靠度标签
     ax.text(0.5, -0.3, f"结构: {structure}  |  系统 R = {sys_r:.4f}",
             transform=ax.transAxes, fontsize=11, color="#e1e2e6",
             bbox=dict(boxstyle="round,pad=0.3", facecolor="#262632", edgecolor="#3a3a48"))
@@ -915,7 +891,6 @@ def _build_warranty_cost(data: dict, options: dict) -> Figure:
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4), dpi=_dpi())
 
-    # 左图: 可靠性 vs 失效率饼图
     sizes = [r_warranty, failure_prob]
     labels = [f"可靠\n{r_warranty:.1%}", f"失效\n{failure_prob:.1%}"]
     colors = ["#27ae60", "#e74c3c"]
@@ -923,8 +898,7 @@ def _build_warranty_cost(data: dict, options: dict) -> Figure:
             textprops={"fontsize": 11, "color": "#e1e2e6"})
     ax1.set_title("保修期末状态", fontsize=FONT_SIZE_TITLE)
 
-    # 右图: 成本分解
-    cost_ok = total_units * r_warranty * 0  # 无保修成本
+    cost_ok = total_units * r_warranty * 0
     cost_fail = warranty_cost
     bars = ax2.bar(["可靠产品", "失效产品"], [0, cost_fail], color=["#27ae60", "#e74c3c"], alpha=0.7)
     ax2.set_ylabel("成本", fontsize=FONT_SIZE_LABEL)
@@ -935,8 +909,6 @@ def _build_warranty_cost(data: dict, options: dict) -> Figure:
     fig.tight_layout()
     return fig
 
-
-# ── 统一入口 ──
 
 BUILDERS = {
     "直方图": _build_histogram,

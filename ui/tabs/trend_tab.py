@@ -49,7 +49,6 @@ class TrendTab(BaseAnalysisTab):
         left_layout = QVBoxLayout(left)
         left_layout.setContentsMargins(0, 0, 4, 0)
 
-        # 日期列
         cfg = QGroupBox("配置")
         cfg_layout = QFormLayout(cfg)
         self.date_combo = QComboBox(); self.date_combo.setMinimumWidth(140)
@@ -127,7 +126,6 @@ class TrendTab(BaseAnalysisTab):
 
         self._clear_canvas()
         tc = theme_colors()
-        # plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]  # redundant, handled by chart_engine.setup_chinese_font()
         plt.rcParams["axes.unicode_minus"] = False
 
         MAX_POINTS = 1000
@@ -137,7 +135,6 @@ class TrendTab(BaseAnalysisTab):
         ax = fig.add_subplot(111)
         ax.set_facecolor(tc["bg_body"])
 
-        # 统计摘要
         stats_rows = []
         sampled_note = ""
         for j, vcol in enumerate(val_cols):
@@ -168,14 +165,12 @@ class TrendTab(BaseAnalysisTab):
             if self.cb_fill.isChecked():
                 ax.fill_between(d_plot, v_plot, alpha=0.06, color=color)
 
-            # 移动平均
             ma_w = self.ma_spin.value()
             if ma_w > 1 and len(v) >= ma_w:
                 ma = np.convolve(v, np.ones(ma_w)/ma_w, mode="valid")
                 md = d[ma_w - 1:]
                 ax.plot(md, ma, "--", color=color, linewidth=1.2, alpha=0.6)
 
-            # 异常点
             anom = []
             if self.cb_anomaly.isChecked() and len(v) > 5:
                 z = np.abs((v - np.mean(v)) / (np.std(v) + 1e-9))
@@ -185,7 +180,6 @@ class TrendTab(BaseAnalysisTab):
                                marker="o", edgecolors="white", linewidth=1,
                                zorder=5, label="_")
 
-            # 统计
             stats_rows.append([
                 vcol, f"{len(v)}", f"{np.mean(v):.3f}", f"{np.std(v):.3f}",
                 f"{np.min(v):.3f}", f"{np.max(v):.3f}",
@@ -205,7 +199,6 @@ class TrendTab(BaseAnalysisTab):
         self.canvas = canvas; self.current_figure = fig
         self._add_chart_toolbar()
 
-        # 统计表
         hdrs = ["列", "N", "均值", "Std", "Min", "Max", "异常点"]
         self.result_table.setColumnCount(len(hdrs))
         self.result_table.setHorizontalHeaderLabels(hdrs)

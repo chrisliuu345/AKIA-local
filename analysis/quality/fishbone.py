@@ -16,17 +16,16 @@ class CauseNode:
     """鱼骨图节点 — 可递归嵌套子原因"""
     name: str
     children: List["CauseNode"] = field(default_factory=list)
-    level: int = 0  # 0=主分支, 1=子原因, 2=孙原因
+    level: int = 0
 
 
-# 默认 6M 配色
 M6_COLORS = [
-    "#4da6ff",  # 人 - 蓝
-    "#ff6b6b",  # 机 - 红
-    "#51cf66",  # 料 - 绿
-    "#ffa726",  # 法 - 橙
-    "#cc5de8",  # 环 - 紫
-    "#20c997",  # 测 - 青
+    "#4da6ff",
+    "#ff6b6b",
+    "#51cf66",
+    "#ffa726",
+    "#cc5de8",
+    "#20c997",
 ]
 
 M6_DEFAULTS = {
@@ -81,9 +80,6 @@ class FishboneEngine:
             return 1 + sum(_count(c) for c in node.children)
         return sum(_count(root) for root in branches.values()) - len(branches)
 
-    # ──────────────────────────────────────────────
-    # matplotlib 渲染
-    # ──────────────────────────────────────────────
     @staticmethod
     def render(branches: Dict[str, CauseNode],
                problem: str = "质量问题",
@@ -93,7 +89,6 @@ class FishboneEngine:
         import matplotlib.pyplot as plt
         from matplotlib.figure import Figure
 
-        # plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]  # redundant, handled by chart_engine.setup_chinese_font()
         plt.rcParams["axes.unicode_minus"] = False
 
         fig = Figure(figsize=figsize, dpi=dpi)
@@ -113,7 +108,6 @@ class FishboneEngine:
 
         colors = M6_COLORS[:n] if n <= len(M6_COLORS) else M6_COLORS * ((n // len(M6_COLORS)) + 1)
 
-        # ── 主脊骨 ──
         ax.annotate("", xy=(8.5, 0), xytext=(-6, 0),
                      arrowprops=dict(arrowstyle="->", color="#e1e2e6",
                                      lw=3, connectionstyle="arc3,rad=0"))
@@ -122,11 +116,9 @@ class FishboneEngine:
                 bbox=dict(boxstyle="round,pad=0.5", facecolor="#363648",
                           edgecolor="#4da6ff", linewidth=1.5))
 
-        # ── 分支位置 (上下交错) ──
         spine_angles = np.linspace(15, 55, max(n, 1))
         for i, (bname, root) in enumerate(branches.items()):
             color = colors[i]
-            # 上/下半区交错
             if i % 2 == 0:
                 angle = spine_angles[i // 2] if i // 2 < len(spine_angles) else 30
                 y_dir = 1
@@ -135,32 +127,27 @@ class FishboneEngine:
                 y_dir = -1
 
             rad_angle = np.radians(angle)
-            bx = (i - n / 2 + 0.5) * 1.8  # 分支在脊骨上的 x 位置
+            bx = (i - n / 2 + 0.5) * 1.8
             branch_len = 5.5
             ex = bx + branch_len * np.cos(rad_angle)
             ey = y_dir * branch_len * np.sin(rad_angle)
 
-            # 主分支线
             ax.annotate("", xy=(ex, ey), xytext=(bx, 0),
                          arrowprops=dict(arrowstyle="->", color=color, lw=2.5))
 
-            # 分支标签
             ax.text(ex + 0.3, ey + 0.2 * y_dir, bname, fontsize=11,
                     fontweight="bold", color=color, ha="left", va="center")
 
-            # 子原因刺 (沿分支线排列)
             sub_count = len(root.children)
             for j, child in enumerate(root.children):
                 t = (j + 1) / (sub_count + 1)
                 sx = bx + t * (ex - bx)
                 sy = t * ey
-                # 小刺 (垂直于分支)
                 perp_angle = rad_angle + np.pi / 2
                 spike_len = 0.9
                 spike_dx = spike_len * np.cos(perp_angle)
                 spike_dy = spike_len * np.sin(perp_angle)
 
-                # 上下交替小刺
                 if j % 2 == 0:
                     ax.annotate("", xy=(sx + spike_dx, sy + spike_dy),
                                 xytext=(sx, sy),
@@ -179,7 +166,6 @@ class FishboneEngine:
                 ax.text(tx, ty, child.name, fontsize=8, color="#d0d2d8",
                         ha=ha, va="center", alpha=0.9)
 
-                # 三级原因 (child.children)
                 for k, grandchild in enumerate(child.children):
                     t2_x = tx - 0.15
                     t2_y = ty + (0.35 if k % 2 == 0 else -0.35) * (k // 2 + 1)
@@ -190,7 +176,6 @@ class FishboneEngine:
 
 
 if __name__ == "__main__":
-    # 快速自测
     engine = FishboneEngine()
     branches = engine.create_default("焊接不良")
     fig = engine.render(branches, "焊接不良")

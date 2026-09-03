@@ -40,13 +40,10 @@ def analyze(
     if n < 5:
         raise ValueError(f"数据量不足: 需要至少 5 个观测值，当前 {n}")
 
-    # 基本统计量
     mean = float(np.mean(clean))
     std = float(np.std(clean, ddof=1))
 
-    # 处理规格限
     if tolerance is not None and usl is None and lsl is None:
-        # 从公差范围推导规格限（以参考值为中心）
         usl = reference + tolerance / 2
         lsl = reference - tolerance / 2
 
@@ -60,7 +57,6 @@ def analyze(
         },
     }
 
-    # 计算 Cg 和 Cgk
     if usl is not None and lsl is not None:
         usl, lsl = float(usl), float(lsl)
         tolerance_val = usl - lsl
@@ -73,7 +69,6 @@ def analyze(
             cg = float("inf")
             cgk = float("inf")
 
-        # 计算偏倚
         bias = mean - reference
         bias_pct = (abs(bias) / (tolerance_val / 2) * 100) if tolerance_val > 0 else 0
 
@@ -88,7 +83,6 @@ def analyze(
             "is_capable": (cg == float("inf") or cg >= 1.33) and (cgk == float("inf") or cgk >= 1.33),
         }
 
-    # 偏倚 t 检验
     if bias_test:
         bias_values = clean - reference
         mean_bias = float(np.mean(bias_values))
@@ -112,7 +106,6 @@ def analyze(
             "interpretation": "偏倚显著" if p_value < 0.05 else "偏倚不显著",
         }
 
-    # 整体判定
     if "capability" in result:
         result["acceptance"] = _type1_acceptance(
             result["capability"].get("cg"),
@@ -125,7 +118,6 @@ def analyze(
 
 def _type1_acceptance(cg, cgk, bias_significant: bool) -> Dict[str, Any]:
     """Type 1 量具研究判定"""
-    # 处理 inf 情况
     cg_ok = cg == "inf" or (isinstance(cg, (int, float)) and cg >= 1.33)
     cgk_ok = cgk == "inf" or (isinstance(cgk, (int, float)) and cgk >= 1.33)
 

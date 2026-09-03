@@ -160,16 +160,13 @@ class ChartTab(BaseAnalysisTab):
         self.cb_3d.setVisible(chart_type == "3D曲面图")
 
     def _rebuild_config_panel(self, chart_type: str):
-        # 销毁 config_panel 的所有旧子控件（比 takeRow 更可靠地清空 QFormLayout）
         self.cb_show_regression = None
         self._col_widgets.clear()
         panel = self.config_panel
-        # 找到所有直接子控件并删除
         children = panel.findChildren(QWidget, options=Qt.FindDirectChildrenOnly)
         for child in children:
             child.setParent(None)
             child.deleteLater()
-        # 清空布局中的所有项
         while self.config_form_layout.count() > 0:
             item = self.config_form_layout.takeAt(0)
             if item:
@@ -178,7 +175,6 @@ class ChartTab(BaseAnalysisTab):
                     w.setParent(None)
                     w.deleteLater()
 
-        # 散点图回归线开关
         if chart_type == "散点图":
             from PySide6.QtWidgets import QCheckBox
             self.cb_show_regression = QCheckBox("显示回归线")
@@ -252,7 +248,6 @@ class ChartTab(BaseAnalysisTab):
         chart_type = self.chart_type_combo.currentText()
         params = self._collect_params()
 
-        # 收集所有已选列
         selected_cols = [c for c in params.get("columns", []) if c]
         for multi_list in params.get("multi_columns", {}).values():
             selected_cols.extend(c for c in multi_list if c)
@@ -268,7 +263,6 @@ class ChartTab(BaseAnalysisTab):
                 if not vals:
                     return False, f"请选择: {label}"
 
-        # 预检已选列是否有有效数值内容（避免选择全文本列时只显示"数据点不足"）
         for col in selected_cols:
             if col not in self.df.columns:
                 continue

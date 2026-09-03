@@ -89,7 +89,6 @@ class DeviceRegistry:
                     with open(_CONFIG_PATH, "r", encoding="utf-8") as f:
                         cfg = json.load(f)
                 cfg["devices"] = devices_data
-                # 原子写：先写临时文件再 os.replace，避免多实例并发读改写丢数据 (W89)
                 dir_name = os.path.dirname(_CONFIG_PATH) or "."
                 os.makedirs(dir_name, exist_ok=True)
                 fd, tmp_path = tempfile.mkstemp(dir=dir_name, suffix=".tmp")

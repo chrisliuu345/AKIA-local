@@ -111,7 +111,6 @@ class ReportTemplateEngine:
         ctx.setdefault("version", APP_VERSION)
         ctx.setdefault("timestamp", datetime.now().strftime("%Y-%m-%d %H:%M"))
         ctx.setdefault("date", datetime.now().strftime("%Y-%m-%d"))
-        # 对所有可能缺失的占位符填空值，防止 safe_substitute 保留字面 $xxx
         placeholders = ["product", "department", "auditor", "period", "title_info",
                         "ppap_info", "kpi_cards", "summary_table", "capability_table",
                         "spc_violations", "msa_summary", "audit_table", "nc_list",

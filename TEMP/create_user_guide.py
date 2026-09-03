@@ -10,7 +10,6 @@ import os
 def set_run_font(run, font_name='Microsoft YaHei', font_size=None):
     """设置 run 的中文字体"""
     run.font.name = font_name
-    # 设置东亚字体
     r = run._element
     rPr = r.get_or_add_rPr()
     rFonts = rPr.find(qn('w:rFonts'))
@@ -35,13 +34,11 @@ def add_screenshot(doc, image_path, caption, width=Inches(5.5)):
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         run = p.add_run()
         run.add_picture(image_path, width=width)
-        # 添加图注
         caption_p = doc.add_paragraph(caption)
         caption_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         caption_p.style = doc.styles['Intense Quote']
         set_paragraph_font(caption_p)
     else:
-        # 如果图片不存在，添加占位符
         p = doc.add_paragraph(f'【截图：{caption}】')
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p.style = doc.styles['Intense Quote']
@@ -51,21 +48,17 @@ def add_screenshot(doc, image_path, caption, width=Inches(5.5)):
 def create_user_guide():
     doc = Document()
     
-    # 设置默认字体
     style = doc.styles['Normal']
     font = style.font
     font.name = 'Microsoft YaHei'
     font.size = Pt(11)
-    # 设置东亚字体
     style.element.rPr.rFonts.set(qn('w:eastAsia'), 'Microsoft YaHei')
     
-    # 设置标题样式
     for i in range(1, 4):
         heading_style = doc.styles[f'Heading {i}']
         heading_style.font.name = 'Microsoft YaHei'
         heading_style.element.rPr.rFonts.set(qn('w:eastAsia'), 'Microsoft YaHei')
     
-    # 标题
     title = doc.add_heading('QA-Tool 使用指南', 0)
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     set_paragraph_font(title)
@@ -73,7 +66,6 @@ def create_user_guide():
     doc.add_paragraph('版本：v2.6.5')
     doc.add_paragraph('')
     
-    # 目录
     doc.add_heading('目录', level=1)
     toc_items = [
         '1. 产品简介',
@@ -89,7 +81,6 @@ def create_user_guide():
     
     doc.add_page_break()
     
-    # 1. 产品简介
     doc.add_heading('1. 产品简介', level=1)
     p = doc.add_paragraph(
         'QA-Tool 是一款面向质量工程（QE）与工业工程（IE）的专业分析工具，'
@@ -123,7 +114,6 @@ def create_user_guide():
     
     doc.add_page_break()
     
-    # 2. 安装与启动
     doc.add_heading('2. 安装与启动', level=1)
     
     doc.add_heading('方式一：安装器安装（推荐）', level=2)
@@ -156,7 +146,6 @@ def create_user_guide():
     
     doc.add_page_break()
     
-    # 3. 界面概览
     doc.add_heading('3. 界面概览', level=1)
     p = doc.add_paragraph(
         'QA-Tool 采用侧边栏 + 主面板布局，左侧为功能导航，右侧为分析区域。'
@@ -178,7 +167,6 @@ def create_user_guide():
     
     doc.add_page_break()
     
-    # 4. 快速入门
     doc.add_heading('4. 快速入门', level=1)
     
     doc.add_heading('示例：SPC 控制图分析', level=2)
@@ -214,7 +202,6 @@ def create_user_guide():
     
     doc.add_page_break()
     
-    # 5. 功能模块
     doc.add_heading('5. 功能模块', level=1)
     
     doc.add_heading('5.1 质量分析', level=2)
@@ -252,7 +239,6 @@ def create_user_guide():
     
     doc.add_page_break()
     
-    # 6. 常见问题
     doc.add_heading('6. 常见问题', level=1)
     
     faqs = [
@@ -271,7 +257,6 @@ def create_user_guide():
     
     doc.add_page_break()
     
-    # 联系方式
     doc.add_heading('技术支持', level=1)
     p = doc.add_paragraph('如有问题，请联系技术支持团队。')
     set_paragraph_font(p)
@@ -279,7 +264,6 @@ def create_user_guide():
     p = doc.add_paragraph('© 2026 QA-Tool. All rights reserved.')
     set_paragraph_font(p)
     
-    # 保存文档
     doc.save('D:/projects/QA-Tool/使用指南.docx')
     print('使用指南已创建：D:/projects/QA-Tool/使用指南.docx')
 

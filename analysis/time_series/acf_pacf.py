@@ -165,14 +165,12 @@ def analyze(
     acf_result = compute_acf(clean, lags)
     pacf_result = compute_pacf(clean, lags)
 
-    # Ljung-Box 检验
     lb_lags = ljung_box_lags or min(10, n // 5)
     lb_lags = max(1, min(lb_lags, n // 2 - 1))
     lb_test = acorr_ljungbox(clean, lags=[lb_lags], return_df=True)
     lb_stat = float(lb_test["lb_stat"].iloc[0])
     lb_pval = float(lb_test["lb_pvalue"].iloc[0])
 
-    # Durbin-Watson 统计量（基于残差的自相关）
     dw = float(durbin_watson(clean.values))
 
     return {

@@ -24,7 +24,6 @@ class WorkerMachineTab(BaseAnalysisTab):
     def _setup_ui(self):
         tc=theme_colors(); layout=QVBoxLayout(self); layout.setContentsMargins(12,12,12,12)
         self.title_label = QLabel("人机配合分析"); self.title_label.setFont(FONT_18B); layout.addWidget(self.title_label)
-        # 工具栏
         tb=QHBoxLayout(); tb.addWidget(QLabel("预设:"))
         self.preset=QComboBox(); self.preset.addItems(["自定义"]+list(PRESETS.keys())); self.preset.currentTextChanged.connect(self._on_preset)
         tb.addWidget(self.preset); tb.addSpacing(12)
@@ -35,14 +34,11 @@ class WorkerMachineTab(BaseAnalysisTab):
         self.btn_run=QPushButton("生成时间线"); self.btn_run.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.btn_run.setCursor(Qt.PointingHandCursor); self.btn_run.clicked.connect(self._run)
         tb.addWidget(self.btn_run); layout.addLayout(tb)
-        # 统计行
         self.stats_lbl=QLabel(""); self.stats_lbl.setFont(FONT_10)
         self.stats_lbl.setStyleSheet(f"color: {tc['text_secondary']}; padding: 2px 0;")
         layout.addWidget(self.stats_lbl)
-        # 可编辑表格
         self.table=QTableWidget(); self.table.setAlternatingRowColors(True); self.table.cellChanged.connect(self._on_cell_edit)
         self._resize_table(); layout.addWidget(self.table)
-        # 图表
         cw=QScrollArea(); cw.setWidgetResizable(True); cw.setFrameShape(QFrame.NoFrame)
         self.chart_container=QWidget(); self.chart_layout=QVBoxLayout(self.chart_container); self.chart_layout.setContentsMargins(0,0,0,0)
         cw.setWidget(self.chart_container); layout.addWidget(cw,1)
@@ -85,14 +81,11 @@ class WorkerMachineTab(BaseAnalysisTab):
             try: walk=int(walk_text.text()) if walk_text and walk_text.text() else 0
             except (ValueError, TypeError, AttributeError): walk=0
             rows.append((name.text() if name else f"OP{i+1}",w,m,walk))
-        # 统计
         total_work=sum(r[1] for r in rows); total_machine=sum(r[2] for r in rows)
         total_walk=sum(r[3] for r in rows); cycle=max(takt,total_work+total_machine+total_walk)
         util_worker=total_work/cycle*100; util_machine=total_machine/cycle*100
         self.stats_lbl.setText(f"总人工作业: {total_work}s | 总机器: {total_machine}s | 步行: {total_walk}s | 人工利用率: {util_worker:.0f}% | 机器利用率: {util_machine:.0f}%")
-        # 图表
         self._clear_canvas(); tc=theme_colors()
-        # plt.rcParams["font.sans-serif"]=["Microsoft YaHei"]  # redundant, handled by chart_engine.setup_chinese_font()
         plt.rcParams["axes.unicode_minus"]=False
         fig=Figure(figsize=(12,max(4,n*1.2)),dpi=100); fig.set_facecolor(tc["bg_card"])
         ax=fig.add_subplot(111); ax.set_facecolor(tc["bg_body"])

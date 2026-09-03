@@ -25,22 +25,17 @@ def analyze(
     mean = float(np.mean(values))
     sigma = float(np.std(values, ddof=1)) if n > 1 else 1.0
 
-    # 向量化 EWMA 计算（使用 scipy.signal.lfilter）
-    # EWMA 是一阶 IIR 滤波器：y[i] = lam * x[i] + (1-lam) * y[i-1]
     b = np.array([lam])
     a = np.array([1, -(1 - lam)])
     ewma = lfilter(b, a, values)
-    # 初值用 μ0（均值），符合 Montgomery/Minitab 标准
     ewma[0] = mean
 
-    # 向量化 UCL/LCL 计算
     indices = np.arange(1, n + 1)
     factors = np.sqrt((lam / (2 - lam)) * (1 - (1 - lam) ** (2 * indices)))
     sigma_ewma = sigma * factors
     ucl = mean + L * sigma_ewma
     lcl = mean - L * sigma_ewma
 
-    # 向量化违规检测
     viol_mask_plus = ewma > ucl
     viol_mask_minus = ewma < lcl
     idx_plus = np.where(viol_mask_plus)[0]

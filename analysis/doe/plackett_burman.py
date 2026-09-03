@@ -13,15 +13,11 @@ import pandas as pd
 from scipy import stats
 
 
-# ── Plackett-Burman 第一行模式 (Plackett & Burman 1946, Table) ──
-# N=4,8,12: 循环移位法（Cyclic shift）
-# N=16: Sylvester 构造（Kronecker 积），取前 15 列
 _BASE_ROWS: Dict[int, List[int]] = {
     4:  [-1, 1, -1],
     8:  [1, 1, 1, -1, 1, -1, -1],
     12: [1, 1, -1, 1, 1, 1, -1, -1, -1, 1, -1],
 }
-# N=16 不使用循环移位，改用 Sylvester 构造
 
 
 def _hadamard_from_base(base_row: List[int]) -> np.ndarray:
@@ -36,15 +32,12 @@ def _hadamard_from_base(base_row: List[int]) -> np.ndarray:
     -------
     np.ndarray : shape (N, N-1)，每列为一个因子的编码水平
     """
-    n = len(base_row) + 1  # 总试验次数
+    n = len(base_row) + 1
     h = np.zeros((n, n - 1), dtype=int)
-    # 第一行
     h[0, :] = base_row
-    # 向量化循环移位生成后续行
     indices = np.arange(n - 1)
     shifts = np.arange(1, n - 1)[:, np.newaxis]
     h[1:-1, :] = np.asarray(base_row)[(indices - shifts) % (n - 1)]
-    # 最后一行全 -1（Plackett-Burman 规则）
     h[n - 1, :] = -1
     return h
 
@@ -69,8 +62,6 @@ def _sylvester_hadamard(k: int) -> np.ndarray:
         h = np.kron(h, _H2)
     return h
 
-
-# ── 公开 API ──
 
 def generate_design(
     factors: List[str],
@@ -108,10 +99,8 @@ def generate_design(
     if k < 2:
         raise ValueError("至少需要 2 个因子")
 
-    # 支持的试验次数
     supported = [4, 8, 12, 16]
 
-    # 自动选择试验次数
     if n_runs is None:
         for candidate in supported:
             if candidate - 1 >= k:
@@ -129,31 +118,25 @@ def generate_design(
             f"(最多 {n_runs - 1} 个因子)"
         )
 
-    # 构造 Hadamard 矩阵
     if n_runs == 16:
-        # N=16: Sylvester 构造（Kronecker 积），取前 15 列
-        h_full = _sylvester_hadamard(4)  # 16×16
+        h_full = _sylvester_hadamard(4)
         design = h_full[:, :k].copy()
     else:
-        # N=4,8,12: 循环移位法
         base = _BASE_ROWS[n_runs]
         h = _hadamard_from_base(base)
         design = h[:, :k].copy()
 
-    # 构造 DataFrame
     data = {factors[i]: design[:, i] for i in range(k)}
     df = pd.DataFrame(data)
     df["StdOrder"] = list(range(1, n_runs + 1))
     df["RunOrder"] = np.random.permutation(n_runs) + 1
 
-    # 中心点
     if center_points > 0:
         center_df = pd.DataFrame({f: [0.0] * center_points for f in factors})
         center_df["StdOrder"] = [0] * center_points
         center_df["RunOrder"] = list(range(n_runs + 1, n_runs + 1 + center_points))
         df = pd.concat([df, center_df], ignore_index=True)
 
-    # 区组
     if block:
         df[block] = ["Design"] * n_runs + (["Center"] * center_points if center_points > 0 else [])
 
@@ -197,7 +180,6 @@ def analyze(
         - model_r_squared: 模型 R²
     """
     data = df[[response_col] + factor_cols].dropna()
-    # Validate all selected columns are numeric
     for col in [response_col] + factor_cols:
         coerced = pd.to_numeric(data[col], errors="coerce")
         n_nan = coerced.isna().sum()
@@ -212,10 +194,8 @@ def analyze(
     n = len(response)
     k = len(factor_cols)
 
-    # ── 主效应计算 ──
     grand_mean = float(np.mean(response))
 
-    # Vectorized effect computation
     design_f = design
     high_mask = design_f > 0
     low_mask = design_f < 0
@@ -226,11 +206,9 @@ def analyze(
     valid = (n_high > 0) & (n_low > 0)
     effects_arr = np.where(valid, sum_high / n_high - sum_low / n_low, 0.0)
 
-    # ── ANOVA ──
     ss_total = float(np.sum((response - grand_mean) ** 2))
     df_total = n - 1
 
-    # SS computation (vectorized)
     ss_arr = np.where(valid, n * (effects_arr / 2) ** 2, 0.0)
     ss_model = float(np.sum(ss_arr))
     ss_effects = {factor_cols[i]: round(float(ss_arr[i]), 6) for i in range(k)}
@@ -238,7 +216,6 @@ def analyze(
     ss_error = max(ss_total - ss_model, 0.0)
     df_error = max(df_total - k, 1)
 
-    # F/p computation (vectorized)
     ms_arr = ss_arr.copy()
     if df_error > 0 and ss_error > 0:
         f_arr = ms_arr / (ss_error / df_error)
@@ -255,10 +232,8 @@ def analyze(
     p_values = {factor_cols[i]: round(float(p_arr[i]), 6) for i in range(k)}
     ms_effects = {factor_cols[i]: round(float(ms_arr[i]), 6) for i in range(k)}
 
-    # 显著因子
     significant = [f for f in factor_cols if p_values.get(f, 1.0) < alpha]
 
-    # Pareto 数据
     pareto_data = sorted(
         [{"factor": f, "effect": abs(effects[f]), "f_value": f_values[f], "p_value": p_values[f]}
          for f in factor_cols],
@@ -266,7 +241,6 @@ def analyze(
         reverse=True,
     )
 
-    # 模型 R²
     r_squared = 1.0 - (ss_error / ss_total) if ss_total > 0 else 0.0
 
     return {

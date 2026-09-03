@@ -89,7 +89,7 @@ CATEGORIES = [
     },
     {
         "key": "sidebar.plugins",
-        "items": [],  # 由 MainWindow 动态填充
+        "items": [],
     },
     {
         "key": "sidebar.engineering_tools",
@@ -105,7 +105,6 @@ CATEGORIES = [
     },
 ]
 
-# Maintain backward-compatible flat list
 NAV_ITEMS = [HOME_ITEM]
 for cat in CATEGORIES:
     NAV_ITEMS.extend(cat["items"])
@@ -121,7 +120,7 @@ class CategoryGroup(QWidget):
                  parent_sidebar=None, initially_expanded: bool = True):
         super().__init__(parent_sidebar)
         self.title_key = title_key
-        self.items = items  # [(index, i18n_key), ...]
+        self.items = items
         self.parent_sidebar = parent_sidebar
         self._expanded = initially_expanded
         self.sub_buttons: dict = {}
@@ -140,7 +139,6 @@ class CategoryGroup(QWidget):
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.setSpacing(0)
 
-        # 分类头按钮 — 内含 固定宽度箭头 + 标题 布局，消除箭头变向时文字跳动
         self.header_btn = QPushButton()
         self.header_btn.setFixedHeight(40)
         self.header_btn.setCursor(Qt.PointingHandCursor)
@@ -198,7 +196,6 @@ class CategoryGroup(QWidget):
         self.container_layout.addStretch()
         self._layout.addWidget(self.container)
 
-        # 测量 container 内容高度 — 仅在初始化时计算一次
         self._collapsed_height = 0
         self._expanded_height = self.container.sizeHint().height()
         self._header_height = 40
@@ -234,7 +231,6 @@ class CategoryGroup(QWidget):
             self_target = self._header_height
             container_target = 0
 
-        # 同步动画: CategoryGroup 自身高度 + container 可见区高度
         self_anim = QPropertyAnimation(self, b"maximumHeight")
         self_anim.setDuration(200)
         self_anim.setStartValue(self.maximumHeight())
@@ -297,9 +293,7 @@ class CategoryGroup(QWidget):
     def refresh_styles(self):
         tc = theme_colors(self)
         self._update_header_text()
-        # 更新标题文字（语言切换时）
         self._title_label.setText(i18n.tr(self.title_key))
-        # 箭头和标题颜色跟随主题
         self._arrow_label.setStyleSheet(
             f"color: {tc['text_secondary']}; background: transparent; font-size: 11px;")
         self._title_label.setStyleSheet(
@@ -335,7 +329,6 @@ class Sidebar(QWidget):
         layout.setContentsMargins(12, 18, 12, 14)
         layout.setSpacing(6)
 
-        # Brand
         self.brand_label = QLabel(i18n.tr("sidebar.brand"))
         self.brand_label.setFont(QFont(get_ui_font(), 14))
         self.brand_label.setAlignment(Qt.AlignCenter)
@@ -350,7 +343,6 @@ class Sidebar(QWidget):
 
         layout.addSpacing(8)
 
-        # Home button (always visible, independent)
         self.home_btn = QPushButton()
         self.home_btn.setFont(QFont(get_ui_font(), 12))
         self.home_btn.setMinimumHeight(46)
@@ -362,7 +354,6 @@ class Sidebar(QWidget):
         self.nav_buttons[0] = self.home_btn
         layout.addWidget(self.home_btn)
 
-        # Category groups — each has its own border-top, no floating separators
         first = True
         for cat_def in CATEGORIES:
             group = CategoryGroup(
@@ -374,7 +365,6 @@ class Sidebar(QWidget):
             self.categories.append(group)
             layout.addWidget(group)
 
-            # Copy sub-buttons into nav_buttons
             for idx, btn in group.sub_buttons.items():
                 self.nav_buttons[idx] = btn
 
@@ -382,7 +372,6 @@ class Sidebar(QWidget):
                 layout.addSpacing(0)
             first = False
 
-        # Action buttons — 智能诊断 + AI 助手
         layout.addSpacing(6)
 
         self.diagnose_btn = QPushButton()
@@ -409,7 +398,6 @@ class Sidebar(QWidget):
 
         layout.addSpacing(8)
 
-        # History
         history_header = QHBoxLayout()
         hl = QLabel(i18n.tr("sidebar.history"))
         hl.setFont(QFont(get_ui_font(), 10, QFont.Bold))
@@ -468,7 +456,6 @@ class Sidebar(QWidget):
         hover_bg = tc["bg_hover"]
         active_bg = tc["bg_active"]
 
-        # Home button
         is_home = (index == 0)
         self.home_btn.setChecked(is_home)
         if is_home:
@@ -491,7 +478,6 @@ class Sidebar(QWidget):
                 f"}}"
             )
 
-        # Category sub-buttons
         for group in self.categories:
             group.set_active(index)
 
@@ -535,7 +521,6 @@ class Sidebar(QWidget):
         self.history_widgets.clear()
 
         tc = theme_colors(self)
-        # 侧栏宽210 - 左右margin各12 - 行内margin = 可用宽度
         max_row_width = 210 - 24 - 10
 
         for entry in self.history_data:
@@ -560,7 +545,6 @@ class Sidebar(QWidget):
             time_lbl.setStyleSheet(f"color: {tc['text_muted']};")
             rlayout.addWidget(time_lbl)
 
-            # v2.3.1: ElidedLabel 自动省略, 不再预截断, tooltip 保留全文
             type_lbl = ElidedLabel(entry["type"])
             type_lbl.setFont(QFont(get_ui_font(), 9))
             type_lbl.setStyleSheet(f"color: {tc['text_primary']};")
@@ -595,7 +579,6 @@ class Sidebar(QWidget):
         hover_bg = tc["bg_hover"]
         active_bg = tc["bg_active"]
 
-        # Category headers — 字号由内部 QLabel 管理，此处仅控制按钮背景
         for group in self.categories:
             group.header_btn.setStyleSheet(
                 f"QPushButton {{"
@@ -607,10 +590,8 @@ class Sidebar(QWidget):
                 f"background-color: {hover_bg};"
                 f"}}"
             )
-            # 同步子标签样式
             group.refresh_styles()
 
-        # Action buttons
         for btn in self.action_buttons:
             btn.setStyleSheet(
                 f"QPushButton {{"

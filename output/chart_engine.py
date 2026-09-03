@@ -25,7 +25,6 @@ def setup_chinese_font():
     fm._load_fontmanager(try_read_cache=False)
     available = {f.name for f in fm.fontManager.ttflist}
 
-    # 使用 font_config 获取平台感知字体
     platform_font = get_ui_font()
     preferred = [
         platform_font, "Microsoft YaHei", "SimHei", "Noto Sans SC",
@@ -56,17 +55,8 @@ def _ensure_font():
         setup_chinese_font()
         _font_initialized = True
 
-# ── 智能系统抽样 ──────────────────────────────────────
-# 图表渲染采用智能系统抽样（非随机抽样），原因：
-#   图宽固定 10-30 英寸 ≈ 1200-3600 px，marker 4-5px
-#   超过 300 个数据点 marker 开始重叠，超过 600 点完全不可辨
-# 策略:
-#   1. 等距系统抽样保证时间趋势完整可见（非随机）
-#   2. 所有判异点（Nelson规则/超控制限）强制保留
-#   3. 分析计算始终用全量数据，仅在渲染层抽样
-#   4. 图表副标题显示抽样提示文字
 MAX_VISIBLE_POINTS = 300
-MAX_FIG_WIDTH = 30  # 英寸
+MAX_FIG_WIDTH = 30
 
 
 def _smart_thin(data: list, violations: list,
@@ -80,21 +70,18 @@ def _smart_thin(data: list, violations: list,
     if n <= max_points:
         return data, list(range(1, n + 1)), False, ""
 
-    # 收集违规点 0-based 索引
     violation_indices = set()
     for v in (violations or []):
         pt = v.get("point", 0) - 1
         if 0 <= pt < n:
             violation_indices.add(pt)
 
-    # 等距系统抽样
     step = n / max_points
     sampled = []
     for i in range(max_points):
         idx = int(i * step)
         sampled.append(idx)
 
-    # 判异点强制插入（替换最近采样位）
     for vi in sorted(violation_indices):
         if vi not in sampled:
             closest = min(range(len(sampled)),
@@ -121,7 +108,6 @@ def _get_max_data_length(chart_data: Dict[str, Any]) -> int:
             arr = d.get("data", d.get("raw_data", d.get("cusum_plus", [])))
             if isinstance(arr, list):
                 max_n = max(max_n, len(arr))
-    # fallback: direct data key
     d = chart_data.get("data", [])
     if isinstance(d, list) and not isinstance(d, dict):
         max_n = max(max_n, len(d))
@@ -136,7 +122,6 @@ def create_control_chart(
     _ensure_font()
     chart_type = chart_data.get("chart_type", "SPC")
 
-    # 动态图宽：超过 200 点后每 40 点加 1 英寸，上限 MAX_FIG_WIDTH
     n_points = _get_max_data_length(chart_data)
     if n_points > 200:
         extra = min((n_points - 200) / 40, MAX_FIG_WIDTH - CHART_FIGSIZE[0])
@@ -190,7 +175,6 @@ def _plot_xbar_chart(ax: plt.Axes, chart_data: Dict[str, Any],
     ax.axhline(y=lcl, color=CHART_COLORS["ucl_lcl"], linestyle="--",
                linewidth=1.2, label=f"LCL={lcl:.4f}")
 
-    # 判异点使用原始坐标（1-based point 直接对应 x 轴序号）
     for v in violations:
         pt = v.get("point", 0)
         if 1 <= pt <= n_raw:
@@ -277,7 +261,6 @@ def _plot_simple_control_chart(ax: plt.Axes, chart_data: Dict[str, Any],
     ax.axhline(y=cl, color=CHART_COLORS["center_line"], linestyle="-",
                linewidth=1.5, label=f"CL={cl:.4f}")
 
-    # UCL/LCL 同样抽样
     if ucl_vals_raw and was_thinned:
         idxs = [x - 1 for x in x_labels]
         ucl_thin = [ucl_vals_raw[i] for i in idxs]
@@ -396,7 +379,6 @@ def create_capability_chart(
     title: str = "",
 ) -> Figure:
     _ensure_font()
-    # W76 fix: 空数据时返回占位图
     if original_data is None or len(original_data) == 0:
         fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "无数据", ha="center", va="center", fontsize=14)
@@ -454,7 +436,6 @@ def create_pareto_chart(labels: List[str], values: List[float], title: str = "Pa
     _ensure_font()
     fig, ax1 = plt.subplots(figsize=(10, 5), dpi=_dpi())
 
-    # W77 fix: 全零值时跳过百分比曲线
     total = sum(values)
 
     sorted_indices = np.argsort(values)[::-1]
@@ -504,7 +485,7 @@ def figure_to_bytes(fig: Figure, fmt: str = "png") -> io.BytesIO:
     buf = io.BytesIO()
     fig.savefig(buf, format=fmt, dpi=_dpi(), bbox_inches="tight")
     buf.seek(0)
-    plt.close(fig)  # W78 fix: 释放matplotlib资源，防止figure泄漏
+    plt.close(fig)
     return buf
 
 

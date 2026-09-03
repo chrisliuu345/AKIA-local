@@ -66,7 +66,6 @@ class OEETab(BaseAnalysisTab):
 
         top_layout.addWidget(config_group)
 
-        # KPI 卡片（2×2 网格独立成组，避免被表单挤压）
         kpi_group = QGroupBox("实时指标")
         kpi_grid = QGridLayout(kpi_group)
         kpi_grid.setSpacing(8)
@@ -209,7 +208,6 @@ class OEETab(BaseAnalysisTab):
         self._display_result(result)
         self.analysis_completed.emit()
 
-    # ── 结果展示 ──
     def _display_result(self, result: Dict[str, Any]):
         ov = result["overall"]
         self._update_kpis(ov)
@@ -263,7 +261,6 @@ class OEETab(BaseAnalysisTab):
     def _draw_charts(self, result: Dict[str, Any]):
         self._clear_canvas()
         tc = theme_colors()
-        # plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]  # redundant, handled by chart_engine.setup_chinese_font()
         plt.rcParams["axes.unicode_minus"] = False
 
         fig = Figure(figsize=(11, 4.8), dpi=100)
@@ -273,7 +270,6 @@ class OEETab(BaseAnalysisTab):
         buckets = result["buckets"]
         labels = [b["label"] for b in buckets]
 
-        # ── 左: 分组柱状图 ──
         ax1 = fig.add_subplot(1, 2, 1)
         metrics = [("availability", "A", "#1b5faa"),
                    ("performance", "P", "#217ca3"),
@@ -301,7 +297,6 @@ class OEETab(BaseAnalysisTab):
                    edgecolor=tc["border"], labelcolor=tc["text_primary"])
         self._style_axis(ax1, tc)
 
-        # ── 右: 时间损失瀑布 ──
         ax2 = fig.add_subplot(1, 2, 2)
         ov = result["overall"]
         losses = ov["losses"]
@@ -313,7 +308,6 @@ class OEETab(BaseAnalysisTab):
         value = losses["有效产出时间(h)"] if ov["has_performance"] else max(
             planned - down - speed - qual, 0.0)
 
-        # 瀑布: planned → -down → -speed → -qual → value
         starts = [0, planned - down, planned - down - speed,
                   planned - down - speed - qual, 0]
         heights = [planned, down, speed, qual, value]
@@ -322,7 +316,6 @@ class OEETab(BaseAnalysisTab):
             ax2.bar(stages[i], h, bottom=s, color=c, width=0.58)
             ax2.text(stages[i], s + h + planned * 0.015, f"{h:.2f}h",
                      ha="center", fontsize=8, color=tc["text_primary"])
-        # 连接线
         level = planned
         for i, h in enumerate(heights[1:4], 1):
             level -= h

@@ -19,7 +19,6 @@ class SamplingTab(BaseAnalysisTab):
     def _setup_ui(self):
         tc=theme_colors(); layout=QVBoxLayout(self); layout.setContentsMargins(12,12,12,12)
         self.title_label=QLabel("抽样检验"); self.title_label.setFont(FONT_18B); layout.addWidget(self.title_label)
-        # 模式切换
         mb=QHBoxLayout()
         self.btn_aql=QPushButton("AQL 查表"); self.btn_aql.setCheckable(True); self.btn_aql.setChecked(True); self.btn_aql.setStyleSheet(BUTTON_TOGGLE); self.btn_aql.clicked.connect(lambda:self._switch(0))
         self.btn_rand=QPushButton("随机抽样"); self.btn_rand.setCheckable(True); self.btn_rand.setStyleSheet(BUTTON_TOGGLE); self.btn_rand.clicked.connect(lambda:self._switch(1))
@@ -35,13 +34,11 @@ class SamplingTab(BaseAnalysisTab):
         self.stack.addWidget(self._measurement_panel(tc))
         self.stack.addWidget(self._czero_panel(tc))
         layout.addWidget(self.stack)
-        # 结果表
         self.result=QTableWidget(); self.result.setAlternatingRowColors(True); layout.addWidget(self.result,1)
     def _switch(self,i):
         for b,j in [(self.btn_aql,0),(self.btn_rand,1),(self.btn_seq,2),(self.btn_measure,3),(self.btn_czero,4)]: b.setChecked(j==i)
         self.stack.setCurrentIndex(i)
 
-    # ── AQL 面板 ──
     def _aql_panel(self,tc):
         w=QWidget(); l=QFormLayout(w)
         self.aql_lot=QSpinBox(); self.aql_lot.setRange(1,9999999); self.aql_lot.setValue(1000)
@@ -59,7 +56,6 @@ class SamplingTab(BaseAnalysisTab):
             self.result.setItem(0,j,QTableWidgetItem(v))
         self.result.resizeColumnsToContents()
 
-    # ── 随机抽样面板 ──
     def _random_panel(self,tc):
         w=QWidget(); l=QFormLayout(w)
         self.rand_col=QComboBox(); l.addRow("分层列(可选):",self.rand_col)
@@ -97,7 +93,6 @@ class SamplingTab(BaseAnalysisTab):
             for j,c in enumerate(df.columns): self.result.setItem(i,j,QTableWidgetItem(str(df.iloc[i,j])))
         self.result.resizeColumnsToContents()
 
-    # ── 序贯面板 ──
     def _sequential_panel(self,tc):
         w=QWidget(); l=QFormLayout(w)
         self.seq_ac=QSpinBox(); self.seq_ac.setRange(0,99); self.seq_ac.setValue(2)
@@ -111,7 +106,6 @@ class SamplingTab(BaseAnalysisTab):
 
     def _do_seq(self):
         ac=self.seq_ac.value(); re=self.seq_re.value(); n=self.seq_n.value()
-        # 模拟缺陷: 缺陷率 ~10%
         results=np.random.choice([0,1],size=n,p=[0.9,0.1]).tolist()
         dec,d,ins=SamplingEngine.sequential_decision(results,ac,re)
         self.result.setColumnCount(4); self.result.setHorizontalHeaderLabels(["判定","缺陷数","检查数","Ac/Re"])
@@ -123,7 +117,6 @@ class SamplingTab(BaseAnalysisTab):
             self.result.setItem(0,j,item)
         self.result.resizeColumnsToContents()
 
-    # ── 计量型抽样面板 ──
     def _measurement_panel(self,tc):
         w=QWidget(); l=QFormLayout(w)
         self.measure_lot=QSpinBox(); self.measure_lot.setRange(1,9999999); self.measure_lot.setValue(1000)
@@ -172,7 +165,6 @@ class SamplingTab(BaseAnalysisTab):
             self.result.setItem(0,j+1,QTableWidgetItem(v))
         self.result.resizeColumnsToContents()
 
-    # ── C=0 抽样面板 ──
     def _czero_panel(self,tc):
         w=QWidget(); l=QFormLayout(w)
         self.czero_lot=QSpinBox(); self.czero_lot.setRange(1,9999999); self.czero_lot.setValue(1000)

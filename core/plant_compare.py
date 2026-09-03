@@ -72,7 +72,6 @@ def summarize_plant(
             return out
         out["sheet"] = sheet
 
-        # 智能解析: 表头/列类型/规格限
         parser = DataParser()
         info = parser.analyze(df)
         measurement_cols = info.get("measurement_columns", [])
@@ -99,9 +98,6 @@ def summarize_plant(
         spec = specs.get(col, {})
         usl = spec.get("usl")
         lsl = spec.get("lsl")
-        # 规格限也可能以独立 USL/LSL 列形式存在 (parser 按规格列名作键)。
-        # 仅当某侧规格来源唯一时合并；多组规格列(如多个特性的 USL/LSL)无法
-        # 判断归属时跳过 Cpk 计算, 不猜测取列。
         if usl is None:
             usl_values = {s.get("usl") for s in specs.values() if s.get("usl") is not None}
             if len(usl_values) == 1:

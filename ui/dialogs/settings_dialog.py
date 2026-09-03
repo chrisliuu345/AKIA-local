@@ -74,7 +74,6 @@ class SettingsDialog(QDialog):
 
         tabs.addTab(msa_tab, "MSA")
 
-        # ── 告警标签页 (E3) ──
         alert_tab = QWidget()
         alert_layout = QFormLayout(alert_tab)
 

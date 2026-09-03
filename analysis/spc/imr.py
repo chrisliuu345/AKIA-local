@@ -21,14 +21,14 @@ def analyze(data: pd.Series) -> Dict[str, Any]:
     x_bar = np.nanmean(values)
     mr_bar = np.nanmean(mr[1:])
 
-    d2 = 1.128  # n=2 for moving range
+    d2 = 1.128
     sigma_hat = mr_bar / d2
 
     i_ucl = x_bar + 3 * sigma_hat
     i_lcl = x_bar - 3 * sigma_hat
     i_cl = x_bar
 
-    mr_ucl = 3.267 * mr_bar  # D4 for n=2
+    mr_ucl = 3.267 * mr_bar
     mr_lcl = 0.0
     mr_cl = mr_bar
 

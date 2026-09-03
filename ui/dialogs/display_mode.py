@@ -25,7 +25,7 @@ from ui.theme import FONT_36B, FONT_18B, FONT_14B, FONT_12
 from ui.widgets.animate import fade_in, count_up, cross_fade
 from ui.widgets.elided_label import ElidedLabel
 
-BG_BIG_SCREEN = "#0c0c12"      # 大屏底色 (比主界面更深, 高对比)
+BG_BIG_SCREEN = "#0c0c12"
 BG_KPI_CARD = "#161620"
 ACCENT = "#4da6ff"
 ACCENT_WARN = "#ffa726"
@@ -33,7 +33,7 @@ TEXT_DIM = "#6e7080"
 
 CAROUSEL_INTERVAL_MS = 8000
 CLOCK_INTERVAL_MS = 1000
-CHART_DPI = 150           # 大屏图表渲染分辨率
+CHART_DPI = 150
 
 
 class ZoomPixmapView(QGraphicsView):
@@ -98,8 +98,8 @@ class DisplayModeWindow(QWidget):
     def __init__(self, main_window):
         super().__init__(None, Qt.Window)
         self._main = main_window
-        self._charts = []          # [(label, QPixmap)]
-        self._figures = []         # [(label, Figure)] 大屏渲染时按视口比例重设尺寸
+        self._charts = []
+        self._figures = []
         self._chart_idx = 0
         self._setup_ui()
         self._resize_timer = QTimer(self)
@@ -115,13 +115,11 @@ class DisplayModeWindow(QWidget):
             f"QPushButton:hover {{ color: #fff; border-color: {ACCENT}; }}"
         )
 
-    # ── UI ───────────────────────────────────────────────
     def _setup_ui(self):
         root = QVBoxLayout(self)
         root.setContentsMargins(28, 18, 28, 18)
         root.setSpacing(14)
 
-        # 顶部信息条: 标题 + 时钟 + 数据摘要
         top = QHBoxLayout()
         title = QLabel("QA-Tool · " + i18n.tr("display.title"))
         title.setFont(FONT_18B)
@@ -142,13 +140,11 @@ class DisplayModeWindow(QWidget):
         top.addWidget(self.clock_label)
         root.addLayout(top)
 
-        # 分隔线
         divider = QFrame()
         divider.setFixedHeight(1)
         divider.setStyleSheet(f"background: #262633; border: none;")
         root.addWidget(divider)
 
-        # 中部: 左 KPI 区 + 右图表轮播
         body = QHBoxLayout()
         body.setSpacing(20)
 
@@ -166,7 +162,6 @@ class DisplayModeWindow(QWidget):
         )
         chart_wrap.addWidget(self.chart_stack, 1)
 
-        # 轮播控制行: 上一个 + 圆点 + 下一个
         ctrl = QHBoxLayout()
         prev_btn = QPushButton("◀ " + i18n.tr("display.prev"))
         prev_btn.clicked.connect(lambda: self._step_chart(-1))
@@ -185,16 +180,13 @@ class DisplayModeWindow(QWidget):
 
         root.addLayout(body, 1)
 
-        # 底部提示行
         hint = QLabel(i18n.tr("display.hint"))
         hint.setFont(FONT_12)
         hint.setAlignment(Qt.AlignCenter)
         hint.setStyleSheet(f"color: {TEXT_DIM}; background: transparent;")
         root.addWidget(hint)
 
-    # ── 数据加载 ─────────────────────────────────────────
     def _load_data(self):
-        # 数据文件摘要
         data = getattr(self._main, "current_data", {}) or {}
         fpath = data.get("file_path", "")
         if fpath:
@@ -203,16 +195,13 @@ class DisplayModeWindow(QWidget):
         else:
             self.data_summary.setText("")
 
-        # KPI 大数字
         analyses = getattr(self._main, "analyses", {}) or {}
         metrics_map = extract_metrics(analyses)
         self._build_kpi_tiles(metrics_map, analyses)
 
-        # 图表轮播
         self._build_charts()
 
     def _build_kpi_tiles(self, metrics_map: dict, analyses: dict):
-        # 清空旧 KPI (保留 stretch)
         while self.kpi_layout.count() > 1:
             item = self.kpi_layout.takeAt(0)
             w = item.widget()
@@ -220,7 +209,6 @@ class DisplayModeWindow(QWidget):
                 w.setParent(None)
                 w.deleteLater()
 
-        # 汇总指标
         oee_vals = [m["oee"] for m in metrics_map.values() if m.get("oee") is not None]
         cpk_vals = [m["cpk"] for m in metrics_map.values() if m.get("cpk") is not None]
         viol_sum = sum(m.get("violations", 0) or 0 for m in metrics_map.values())
@@ -231,8 +219,8 @@ class DisplayModeWindow(QWidget):
                                max(oee_vals) * 100, lambda v: f"{v:.1f}%", ACCENT)
         if cpk_vals:
             best = max(cpk_vals)
-            cpk_a = CAPABILITY_GRADES["A"][0]  # 1.33
-            cpk_b = CAPABILITY_GRADES["B"][0]  # 1.00
+            cpk_a = CAPABILITY_GRADES["A"][0]
+            cpk_b = CAPABILITY_GRADES["B"][0]
             color = "#27ae60" if best >= cpk_a else (ACCENT_WARN if best >= cpk_b else "#e74c3c")
             self._add_kpi_tile(i18n.tr("display.kpi_cpk"), best, lambda v: f"{v:.3f}", color)
         if grr_vals:
@@ -244,7 +232,6 @@ class DisplayModeWindow(QWidget):
                                lambda v: f"{int(v)}",
                                "#27ae60" if viol_sum < 10 else "#e74c3c")
 
-        # 自定义公式值 (前 3 个可求值的)
         from ui.dialogs.formula_dialog import FormulaDialog
         from core.kpi_formula import evaluate, describe_variables, FormulaError
         formulas = FormulaDialog.load_formulas()
@@ -282,7 +269,6 @@ class DisplayModeWindow(QWidget):
         fade_in(tile)
 
     def _build_charts(self):
-        # 收集各 Tab 的 current_figure, 按图表区比例重设尺寸后渲染
         self._figures.clear()
         tabs = getattr(self._main, "_get_tabs", lambda: {})()
         analyses = getattr(self._main, "analyses", {}) or {}
@@ -322,7 +308,6 @@ class DisplayModeWindow(QWidget):
         return None
 
     def _render_all(self):
-        # 按当前图表区视口尺寸重渲染全部图表 (首次加载 / resize 防抖后)
         self._charts.clear()
         target_w, target_h = self._target_chart_size()
         for atype, fig in self._figures:
@@ -350,7 +335,6 @@ class DisplayModeWindow(QWidget):
             self._chart_idx = 0
         self._update_carousel()
 
-    # ── 轮播 ─────────────────────────────────────────────
     def _step_chart(self, delta: int):
         if not self._charts:
             return
@@ -386,7 +370,6 @@ class DisplayModeWindow(QWidget):
         now = datetime.now()
         self.clock_label.setText(now.strftime("%Y-%m-%d  %H:%M:%S  %A"))
 
-    # ── 事件 ─────────────────────────────────────────────
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self._resize_timer.start()

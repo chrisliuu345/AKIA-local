@@ -47,7 +47,6 @@ class OneClickDialog(QDialog):
         self.resize(680, 560)
 
         self._setup_ui()
-        # 初始化: 从数据画像提取推荐
         self._init_recommendations()
 
     def _setup_ui(self):
@@ -55,7 +54,6 @@ class OneClickDialog(QDialog):
         layout = QVBoxLayout(self)
         layout.setSpacing(8)
 
-        # ── 标题 ──
         title = QLabel("一键智能分析")
         title.setFont(QFont(get_ui_font(), 16, QFont.Bold))
         layout.addWidget(title)
@@ -65,7 +63,6 @@ class OneClickDialog(QDialog):
         desc.setStyleSheet(f"color: {tc['text_muted']};")
         layout.addWidget(desc)
 
-        # ── 步骤1: 数据概况 ──
         info_card = QFrame()
         info_card.setStyleSheet(
             f"QFrame {{ background: {tc['bg_card']}; border: 1px solid {tc['border_light']}; "
@@ -84,7 +81,6 @@ class OneClickDialog(QDialog):
         info_layout.addWidget(self.info_label)
         layout.addWidget(info_card)
 
-        # ── 步骤2: 分析范围选择 ──
         select_label = QLabel("选择分析范围（推荐项已勾选）:")
         select_label.setFont(QFont(get_ui_font(), 11, QFont.Bold))
         layout.addWidget(select_label)
@@ -99,7 +95,6 @@ class OneClickDialog(QDialog):
         scroll.setWidget(self.check_widget)
         layout.addWidget(scroll)
 
-        # ── 进度条 + 日志 ──
         self.progress = QProgressBar()
         self.progress.setMaximum(100)
         self.progress.setValue(0)
@@ -121,7 +116,6 @@ class OneClickDialog(QDialog):
         )
         layout.addWidget(self.log_view)
 
-        # ── 报告预览 ──
         self.report_view = QTextEdit()
         self.report_view.setReadOnly(True)
         self.report_view.setFont(QFont(get_ui_font(), 10))
@@ -132,7 +126,6 @@ class OneClickDialog(QDialog):
         self.report_view.setVisible(False)
         layout.addWidget(self.report_view, 1)
 
-        # ── 操作按钮 ──
         btn_row = QHBoxLayout()
         btn_row.setSpacing(8)
         btn_row.addStretch()
@@ -252,7 +245,6 @@ class OneClickDialog(QDialog):
         self.run_btn.setText("开始分析")
         self.progress.setValue(100)
 
-        # 显示报告
         conclusion = result.get("conclusion", "无内容")
         success = result.get("success_count", 0)
         total = result.get("total_count", 0)

@@ -37,7 +37,6 @@ def tolerance_interval_normal(
     if not 0 < proportion < 1:
         raise ValueError("proportion必须在0-1之间")
 
-    # 样本统计量
     x_bar = np.mean(clean)
     s = np.std(clean, ddof=1)
 
@@ -58,29 +57,19 @@ def tolerance_interval_normal(
             "error": "标准差为0，公差区间退化为点",
         }
 
-    # 计算k因子
-    # 使用scipy的非中心t分布
     alpha = 1 - confidence
     p = proportion
 
     if method == "two-sided":
-        # 双侧公差区间
-        # k = t_{α/2, n-1} * sqrt((n-1) * p / χ²_{1-α, n-1})
-        # 简化公式：使用统计常数表
         df = n - 1
 
-        # 使用更精确的近似：Johnson (1963)
-        # 对于双侧区间，使用非中心t分布
         z_p = stats.norm.ppf((1 + p) / 2)
         z_alpha = stats.norm.ppf(1 - alpha / 2)
 
-        # 近似k因子 (Howe's approximation)
         k = _k_factor_two_sided(n, p, alpha)
     else:
-        # 单侧公差区间
         k = _k_factor_one_sided(n, p, alpha)
 
-    # 公差区间
     lower = x_bar - k * s
     upper = x_bar + k * s
 
@@ -132,24 +121,17 @@ def tolerance_interval_nonparam(
     if not 0 < proportion < 1:
         raise ValueError("proportion必须在0-1之间")
 
-    # 排序数据
     sorted_data = np.sort(clean)
 
-    # 计算需要的顺序统计量位置
-    # 对于非参数公差区间，需要选择合适的顺序统计量
     alpha = 1 - confidence
     p = proportion
 
     if method == "two-sided":
-        # 双侧：选择第r个和第s个顺序统计量
-        # 使得P(X_(r) ≤ μ_p ≤ X_(s)) ≥ 1-α
-        # 使用精确二项分布计算
         r, s = _find_order_statistics_two_sided(n, p, alpha)
 
-        lower = sorted_data[r - 1]  # Python索引从0开始
+        lower = sorted_data[r - 1]
         upper = sorted_data[s - 1]
     else:
-        # 单侧：选择第r个顺序统计量
         r = _find_order_statistics_one_sided(n, p, alpha)
         if r == 0:
             lower = sorted_data[0]
@@ -182,18 +164,12 @@ def _k_factor_two_sided(n: int, p: float, alpha: float) -> float:
     z_p = stats.norm.ppf((1 + p) / 2)
     z_alpha = stats.norm.ppf(1 - alpha / 2)
 
-    # Howe's approximation (1969)
-    # k ≈ sqrt((n-1) * (1 + 1/n) * z_{α/2}² / χ²_{α, n-1}) * z_{p}
-    # 简化为：
     chi2 = stats.chi2.ppf(1 - alpha, df)
     k = np.sqrt((1 + 1/n) * z_alpha**2 / chi2 * df) * z_p / z_alpha
 
-    # 更精确的近似
-    # 使用非中心t分布
     ncp = z_p * np.sqrt(n)
     k_approx = stats.nct.ppf(1 - alpha/2, df, ncp) / np.sqrt(n)
 
-    # 取两者平均作为折中
     return (k + k_approx) / 2
 
 
@@ -203,11 +179,9 @@ def _k_factor_one_sided(n: int, p: float, alpha: float) -> float:
     z_p = stats.norm.ppf(p)
     z_alpha = stats.norm.ppf(1 - alpha)
 
-    # 单侧k因子
     chi2 = stats.chi2.ppf(1 - alpha, df)
     k = np.sqrt((1 + 1/n) * z_alpha**2 / chi2 * df) * z_p / z_alpha
 
-    # 非中心t分布近似
     ncp = z_p * np.sqrt(n)
     k_approx = stats.nct.ppf(1 - alpha, df, ncp) / np.sqrt(n)
 
@@ -222,15 +196,12 @@ def _find_order_statistics_two_sided(n: int, p: float, alpha: float) -> Tuple[in
 
     使用累积二项分布CDF优化，复杂度从O(n³)降至O(n²)。
     """
-    # P(至少p比例在[X_(r), X_(s)]内) = sum_{j=r}^{s-1} C(n,j) p^j (1-p)^(n-j)
-    # 使用CDF: sum_{j=r}^{s-1} pmf(j) = CDF(s-1) - CDF(r-1)
 
     best_r, best_s = 1, n
     min_width = n
 
     for r in range(1, n):
         for s in range(r + 1, n + 1):
-            # 使用CDF计算概率: P(r ≤ j ≤ s-1) = CDF(s-1) - CDF(r-1)
             prob = stats.binom.cdf(s - 1, n, p) - stats.binom.cdf(r - 1, n, p)
 
             if prob >= 1 - alpha and (s - r) < min_width:
@@ -248,14 +219,11 @@ def _find_order_statistics_one_sided(n: int, p: float, alpha: float) -> int:
 
     使用累积二项分布CDF优化，复杂度从O(n²)降至O(n)。
     """
-    # P(j ≥ r) = 1 - P(j ≤ r-1) = 1 - CDF(r-1)
-    # 使用CDF: sum_{j=r}^{n} pmf(j) = 1 - CDF(r-1)
 
     for r in range(1, n + 1):
-        # P(j ≥ r) = 1 - CDF(r-1)
         prob = 1 - stats.binom.cdf(r - 1, n, p)
 
         if prob >= 1 - alpha:
             return r
 
-    return 1  # 默认返回1
+    return 1

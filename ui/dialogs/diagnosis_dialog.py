@@ -37,7 +37,6 @@ class DiagnosisDialog(QDialog):
         self.setStyleSheet(f"background-color: {tc['bg_body']};")
         root = QVBoxLayout(self); root.setSpacing(10)
 
-        # 标题行
         title_row = QHBoxLayout()
         title = QLabel("数据智能诊断")
         title.setFont(QFont(get_ui_font(), 20, QFont.Bold))
@@ -64,7 +63,6 @@ class DiagnosisDialog(QDialog):
         title_row.addWidget(btn_all)
         root.addLayout(title_row)
 
-        # 全局摘要
         gs = self.profile.get("global_summary", {})
         overview = QLabel(
             f"工作表 {gs.get('total_sheets',0)} 个 · "
@@ -74,7 +72,6 @@ class DiagnosisDialog(QDialog):
         overview.setStyleSheet(f"color: {tc['text_secondary']}; padding: 2px 0;")
         root.addWidget(overview)
 
-        # ── 健康仪表 ──
         all_health = []
         for s in self.profile.get("sheets", {}).values():
             h = s.get("health", {})
@@ -90,7 +87,6 @@ class DiagnosisDialog(QDialog):
                 gauge_row.addWidget(self._make_gauge(label, v, tc), 1)
             root.addLayout(gauge_row)
 
-        # ── 滚动内容 ──
         scroll = QScrollArea(); scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
         content = QWidget()
@@ -152,7 +148,6 @@ class DiagnosisDialog(QDialog):
             f"border-radius: 10px; padding: 14px; }}")
         layout = QVBoxLayout(card); layout.setSpacing(8)
 
-        # Header
         hdr = QHBoxLayout()
         hl = QLabel(f" {sn}")
         hl.setFont(QFont(get_ui_font(), 13, QFont.Bold))
@@ -164,7 +159,6 @@ class DiagnosisDialog(QDialog):
         hdr.addStretch()
         layout.addLayout(hdr)
 
-        # 列表格
         cols = sheet.get("columns", [])
         if cols:
             grid = QGridLayout(); grid.setSpacing(3)
@@ -199,7 +193,6 @@ class DiagnosisDialog(QDialog):
                     grid.addWidget(lbl, i, j)
             layout.addLayout(grid)
 
-        # 推荐 — 按置信度分组
         recs = sheet.get("recommendations", [])
         if recs:
             high_recs = [r for r in recs if r["confidence"]["grade"] == "highly_recommended"]
@@ -218,7 +211,6 @@ class DiagnosisDialog(QDialog):
                 for rec in group_recs[:5]:
                     layout.addLayout(self._make_rec_row(rec, tc))
 
-        # 问题
         issues = sheet.get("issues", [])
         if issues:
             layout.addSpacing(4)
@@ -232,7 +224,6 @@ class DiagnosisDialog(QDialog):
     def _make_rec_row(self, rec: dict, tc: dict) -> QHBoxLayout:
         row = QHBoxLayout(); row.setSpacing(8)
 
-        # 图标
         icon_text = rec["icon"][:3]
         icon = QLabel(icon_text)
         icon.setFont(QFont(get_ui_font(), 10, QFont.Bold))
@@ -243,7 +234,6 @@ class DiagnosisDialog(QDialog):
             f"color: white; background: {icolor}; border-radius: 8px; font-size: 10px;")
         row.addWidget(icon)
 
-        # 中间文字
         text_col = QVBoxLayout(); text_col.setSpacing(2)
         title = QLabel(f"{rec['tab_name']} · {rec['method']}")
         title.setFont(QFont(get_ui_font(), 11, QFont.Bold))
@@ -254,7 +244,6 @@ class DiagnosisDialog(QDialog):
         reason.setStyleSheet(f"color: {tc['text_muted']};")
         text_col.addWidget(reason)
 
-        # 置信度条
         conf = rec.get("confidence", {})
         pct = conf.get("percentage", 0.5)
         cbar = QProgressBar()
@@ -299,4 +288,3 @@ class DiagnosisDialog(QDialog):
             for rec in sheet.get("recommendations", []):
                 if rec["confidence"]["grade"] in ("highly_recommended", "recommended"):
                     self.apply_clicked.emit(rec)
-                    # A6: 不 return，遍历全部高/中置信度推荐

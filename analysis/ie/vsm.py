@@ -15,7 +15,7 @@ from core.data_objects import MaterialFlow, Process
 
 
 class VSMEngine:
-    WORKDAY_SECONDS = 28800.0  # 8h
+    WORKDAY_SECONDS = 28800.0
 
     def analyze(self, processes: List[Process],
                 flows: List[MaterialFlow],
@@ -38,12 +38,10 @@ class VSMEngine:
             out["error"] = "无有效工序（需要 CT>0 的工序表数据）"
             return out
 
-        # ── 排序：物流链拓扑 → 输入顺序兜底 ──
         ordered, order_note = self._order_processes(valid, flows)
         if order_note:
             out["warnings"].append(order_note)
 
-        # ── 工序间库存（flows 按 from→to 匹配）──
         inv_map: Dict[str, float] = {}
         for f in flows:
             if f.quantity and f.quantity > 0:
@@ -97,7 +95,6 @@ class VSMEngine:
                 f"工序 {', '.join(out['summary']['over_takt'])} CT 超过节拍 ({takt:.1f}s)，将成为瓶颈")
         return out
 
-    # ── 拓扑排序 ──
     @staticmethod
     def _order_processes(processes: List[Process],
                          flows: List[MaterialFlow]):
@@ -117,7 +114,6 @@ class VSMEngine:
             return processes, "未检测到有效物流关系，按工序表顺序展示"
 
         starts = [pid for pid in by_id if pid not in targets]
-        # 优先从有出链的工序起步，保持链条完整在前；孤立工序按输入顺序殿后
         starts.sort(key=lambda pid: 0 if pid in links else 1)
         ordered_ids: List[str] = []
         visited: set = set()
@@ -135,7 +131,6 @@ class VSMEngine:
             note = f"{len(leftover)} 个工序不在物流链中，已追加到末尾"
         return [by_id[pid] for pid in ordered_ids], note
 
-    # ── 库存查找（兼容 ID / 名称写法）──
     @staticmethod
     def _find_inventory(inv_map: Dict[str, float], cur: Process,
                         nxt: Process, flows: List[MaterialFlow]) -> float:

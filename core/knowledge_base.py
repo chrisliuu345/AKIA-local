@@ -130,23 +130,18 @@ class KnowledgeBase:
 
         q_text = query.strip().lower()
 
-        # ── TF-IDF 语义相似度 ──
         q = self.vectorizer.transform([q_text])
         sims = cosine_similarity(q, self.matrix).ravel()
 
-        # ── 关键词精确匹配加分 ──
         kw_boost = np.zeros(len(self.entries))
         title_boost = np.zeros(len(self.entries))
         for i, entry in enumerate(self.entries):
-            # 关键词匹配
             kw_matches = sum(1 for kw in entry.keywords if kw.lower() in q_text or q_text in kw.lower())
             if kw_matches > 0:
                 kw_boost[i] = min(kw_matches * 0.15, 0.3)
-            # 标题匹配
             if any(term in entry.title.lower() for term in q_text.split()):
                 title_boost[i] = 0.2
 
-        # ── 融合: TF-IDF(0.5) + 关键词(0.3) + 标题(0.2) ──
         combined = sims * 0.5 + kw_boost + title_boost
 
         order = combined.argsort()[::-1]

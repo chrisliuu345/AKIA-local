@@ -46,10 +46,8 @@ def chi_square_gof(
             raise ValueError("概率之和必须为 1")
         exp = probs * total
     else:
-        # 默认均匀分布
         exp = np.full(n, total / n)
 
-    # 避免除零
     exp_safe = np.where(exp == 0, 1e-10, exp)
     chi2 = np.sum((obs - exp) ** 2 / exp_safe)
     df = n - 1
@@ -91,11 +89,9 @@ def chi_square_independence(
     if df.empty:
         raise ValueError("无有效数据")
 
-    # 构建列联表
     contingency = pd.crosstab(df[col1], df[col2])
     chi2, p_value, dof, expected = stats.chi2_contingency(contingency)
 
-    # 计算效应量（Cramér's V）
     n = contingency.sum().sum()
     min_dim = min(contingency.shape) - 1
     cramers_v = np.sqrt(chi2 / (n * min_dim)) if min_dim > 0 and n > 0 else 0
@@ -145,27 +141,22 @@ def two_proportion_test(
     p1 = successes1 / n1
     p2 = successes2 / n2
 
-    # 合并比例
     p_pool = (successes1 + successes2) / (n1 + n2)
 
-    # 标准误
     se = np.sqrt(p_pool * (1 - p_pool) * (1/n1 + 1/n2))
 
-    # Z 检验
     if se > 0:
         z_stat = (p1 - p2) / se
     else:
         z_stat = 0.0
 
-    # P 值
     if alternative == "two-sided":
         p_value = 2 * (1 - stats.norm.cdf(abs(z_stat)))
     elif alternative == "greater":
         p_value = 1 - stats.norm.cdf(z_stat)
-    else:  # less
+    else:
         p_value = stats.norm.cdf(z_stat)
 
-    # 差异的置信区间（Wald 方法）
     se_diff = np.sqrt(p1*(1-p1)/n1 + p2*(1-p2)/n2)
     ci = (p1 - p2 - 1.96 * se_diff, p1 - p2 + 1.96 * se_diff)
 
