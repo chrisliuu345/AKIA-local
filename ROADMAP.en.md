@@ -2,7 +2,7 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> Current: v2.7.0 Statistical Engine Deepening (engines fully delivered, UI wrap-up in progress) | Tests: 537+ pytest · 35 Tabs + Plugins | Updated: 2026-08-24
+> Current: v3.4.0 Reliability & Survival Analysis (delivered) | Tests: 944+ pytest · 37 Tabs | Updated: 2026-09-01
 
 ---
 
@@ -11,25 +11,22 @@
 > **Strategic Repositioning (2026-08-24)**: positioning shifted from enterprise multi-company platform to **personal subscription quality engineering tool** (Minitab-like), with differentiation core in real-time factory data integration + IE engineering tools + five-chain workflow + BYOK AI Agent (QAM Harness). See [Core Competitive Positioning](#core-competitive-positioning-2026-08-rework).
 
 ```
-v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ✅ ──→ v2.7.0 ✅ ──→ v2.8.0 ──→ v2.9.0 ──→ v3.0.0 ──→ v3.1.0 ──→ v3.2.0 ──→ v3.3.0 ──→ v3.4.0 ──→ v3.5.0 ──→ v3.6.0 ──→ v3.7.0 ──→ v3.8.0 ──→ v3.9.0 ──→ v4.0.0
+v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ✅ ──→ v2.7.0 ✅ ──→ v2.8.0 ✅ ──→ v2.9.0 ✅ ──→ v3.0.0 ✅ ──→ v3.1.0 ✅ ──→ v3.2.0 ✅ ──→ v3.3.0 ✅ ──→ v3.4.0 ✅ ──→ v3.5.0 ──→ v3.6.0 ──→ v3.7.0 ──→ v3.8.0 ──→ v3.9.0 ──→ v4.0.0
 ```
 
 | Stage | Version | Theme |
 |-------|---------|-------|
-| Done | v2.0 ~ v2.7.0 | Release → Code+AI → Eng Tools → Reports → Live Monitoring → UX+Anim → HW Expansion → ESP32 Deploy → Security → RBAC+Auth → Stats Hardening → UI Robustness → Defect Cleanup → Stats Engine Deepening |
-| TBD | v2.8.0 | Workflow integration (differentiation core) + P1 UI wrap-up + Info batches #2/#3 |
-| TBD | v2.9.0 | Integration deepening & report pipeline |
-| TBD | v3.0.0 | Stabilization milestone + Info wrap-up + PyInstaller release |
-| TBD | v3.1.0 | DOE & Power Analysis |
-| TBD | v3.2.0 | Time Series & Forecasting |
-| TBD | v3.3.0 | Reliability & Survival Analysis |
-| TBD | v3.4.0 | MSA & Capability Deepening |
-| TBD | v3.5.0 | Graph Builder Enhancement & Interactive Experience |
-| TBD | v3.6.0 | Real-Time SPC Cloud Dashboard & Data Connectors |
-| TBD | v3.7.0 | QAM Harness (BYOK AI Agent Platform) |
-| TBD | v3.8.0 | Video Time Study |
-| TBD | v3.9.0 | Predictive Analytics & Machine Learning |
-| TBD | v4.0.0 | TBD (defined based on v3.x progress & market feedback) |
+| Done | v2.0 ~ v3.1.0 | Release → Code+AI → Eng Tools → Reports → Live Monitoring → UX+Anim → HW Expansion → ESP32 Deploy → Security → RBAC+Auth → Stats Hardening → UI Robustness → Defect Cleanup → Stats Engine Deepening → Workflow Integration → Security Restructure → Stabilization → DOE & Power Analysis |
+| Done | v3.2.0 | **Linux Port + Dual-System Distribution** (Debian/Ubuntu) |
+| Done | v3.3.0 | **Time Series & Forecasting** (ARIMA / Exponential Smoothing / Seasonal Decomposition / Model Comparison) |
+| Done | v3.4.0 | **Reliability & Survival Analysis** (Weibull 2P/3P/4P + CI / KM + Cox / ALT / RBD / Crow-AMSAA / Warranty) |
+| TBD | v3.5.0 | MSA & Capability Deepening |
+| TBD | v3.6.0 | Graph Builder Enhancement & Interactive Experience |
+| TBD | v3.7.0 | Real-Time SPC Cloud Dashboard & Data Connectors |
+| TBD | v3.8.0 | QAM Harness (BYOK AI Agent Platform) |
+| TBD | v3.9.0 | Video Time Study |
+| TBD | v4.0.0 | Predictive Analytics & Machine Learning |
+| TBD | v4.1.0 | TBD (defined based on v3.x progress) |
 
 ---
 
