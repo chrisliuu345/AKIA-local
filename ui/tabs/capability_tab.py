@@ -5,7 +5,6 @@
 from typing import Dict, Any
 import pandas as pd
 import numpy as np
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
@@ -16,9 +15,6 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
-from analysis.capability import normal_cap, non_normal_cap, between_within_cap, tolerance_interval
-from analysis.distribution import fitting
-from output.chart_engine import create_capability_chart
 from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_SECONDARY, BUTTON_TOGGLE, BUTTON_PRIMARY_STRETCH
@@ -303,6 +299,10 @@ class CapabilityTab(BaseAnalysisTab):
             return None
 
     def run_analysis(self) -> Dict[str, Any]:
+        from analysis.capability import normal_cap, non_normal_cap, between_within_cap, tolerance_interval
+        from analysis.distribution import fitting
+        from output.chart_engine import create_capability_chart
+
         col = self.col_combo.currentText()
         method = self.method_combo.currentText()
         usl = self.usl_spin.value()
@@ -451,6 +451,7 @@ class CapabilityTab(BaseAnalysisTab):
         try:
             fig = create_capability_chart(result, raw_data, title="过程能力分析")
             self.current_figure = fig
+            from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
             self.canvas = FigureCanvasQTAgg(fig)
             self.chart_layout.addWidget(self.canvas)
             self.canvas.draw()

@@ -5,7 +5,6 @@ MSA 测量系统分析页 — 含图表嵌入
 from typing import Dict, Any
 import pandas as pd
 import numpy as np
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
@@ -16,8 +15,6 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
-from analysis.msa import gage_rr, linearity_bias, attribute_agree, type1_study
-from output.chart_engine import create_histogram
 from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_SECONDARY, BUTTON_TOGGLE, BUTTON_PRIMARY_STRETCH
@@ -256,6 +253,9 @@ class MSATab(BaseAnalysisTab):
             return None
 
     def run_analysis(self) -> Dict[str, Any]:
+        from analysis.msa import gage_rr, linearity_bias, attribute_agree, type1_study
+        from output.chart_engine import create_histogram
+
         method = self.method_combo.currentText()
         measure = self.measure_col.currentText()
         part = self.part_col.currentText()
@@ -354,6 +354,7 @@ class MSATab(BaseAnalysisTab):
         try:
             fig = create_histogram(raw_data, title="测量数据分布")
             self.current_figure = fig
+            from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
             self.canvas = FigureCanvasQTAgg(fig)
             self.chart_layout.addWidget(self.canvas)
             self.canvas.draw()

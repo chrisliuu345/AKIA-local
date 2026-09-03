@@ -10,7 +10,6 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Signal, Qt, QPropertyAnimation, QEasingCurve
 from PySide6.QtGui import QImage, QFont
-from matplotlib.backends.backend_qtagg import NavigationToolbar2QT
 
 from core.i18n import i18n
 from ui.theme import colors as theme_colors
@@ -133,6 +132,7 @@ class BaseAnalysisTab(QWidget):
 
     def _add_chart_toolbar(self):
         if not hasattr(self, '_chart_toolbar'):
+            from matplotlib.backends.backend_qtagg import NavigationToolbar2QT
             self._chart_toolbar = NavigationToolbar2QT(self.canvas, self.chart_container)
             self._chart_toolbar.setMaximumHeight(32)
             self._chart_toolbar.setStyleSheet("QToolBar { border: none; spacing: 2px; }")

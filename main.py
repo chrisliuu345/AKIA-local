@@ -203,6 +203,14 @@ def main():
     splash.raise_()
     app.processEvents()
 
+    # ── 后台预热：在 splash 显示期间预加载重依赖 ──
+    import threading
+    def _warmup():
+        import scipy.stats  # noqa: F401
+        import statsmodels  # noqa: F401
+        import seaborn      # noqa: F401
+    threading.Thread(target=_warmup, daemon=True).start()
+
     # ── 精细化加载 (12 步, 仅更新进度条) ──
     steps = [5, 10, 20, 28, 35, 42, 48, 55, 62, 70, 78, 85, 92, 97, 100]
 
