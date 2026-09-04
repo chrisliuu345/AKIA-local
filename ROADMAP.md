@@ -23,8 +23,8 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 | 待开发 | v3.5.0 | MSA 与能力深化 |
 | 待开发 | v3.6.0 | Graph Builder 增强与交互体验 |
 | 待开发 | v3.7.0 | 实时 SPC 云看板与数据连接器 |
-| 待开发 | v3.8.0 | QAM Harness（BYOK AI Agent 平台） |
-| 待开发 | v3.9.0 | 视频时间研究 |
+| 待开发 | v3.8.0 | Industrial AI Agent（AI + Vision 融合平台） |
+| 已合并 | v3.9.0 | 已合并至 v3.8.0（视频时间研究 → Vision AI 能力） |
 | 待开发 | v4.0.0 | 预测分析与机器学习 |
 | 待开发 | v4.1.0 | 待定（根据 v3.x 进展定义） |
 
@@ -658,41 +658,92 @@ sudo apt install fonts-noto-cjk
 
 ---
 
-## v3.8.0 — QAM Harness（BYOK AI Agent 平台）（待开发）
+## v3.8.0 — Industrial AI Agent（AI + Vision 融合平台）（待开发）
 
-> 主题：打造工程分析专业化 AI Agent 平台，用户自带 API Key，主动建议型分析。
+> 主题：打造工业级 AI Agent 平台，融合 LLM 智能分析 + 视觉动作识别，用户自带 API Key，主动建议型分析。
+> v3.9.0 视频时间研究已合并至本版本，Vision AI 作为 Agent 核心能力之一。
+
+### 架构设计
+
+```
+QA-Tool v3.8.0 Industrial AI Agent
+    |
+    ├── Core Agent Layer
+    │   ├── LLM Client (Ollama/OpenAI/DeepSeek)  [已有]
+    │   ├── Knowledge Base (TF-IDF RAG)           [已有]
+    │   ├── Conversation Manager (多轮对话)
+    │   └── Tool Registry (工具注册)
+    |
+    ├── Vision Capabilities
+    │   ├── Camera Input (USB/IP/RTSP/MJPEG)
+    │   ├── Frame Processor (OpenCV)
+    │   ├── Pose Estimation (MediaPipe)
+    │   └── Action Classifier (工作/空闲/走动/搬运)
+    |
+    ├── Analysis Tools (Agent 可调用)
+    │   ├── Quality Analysis (SPC/Capability/MSA)
+    │   ├── Time Study (手动+视觉)
+    │   ├── IE Tools (OEE/SMED/TPM)
+    │   └── Root Cause (SHAP) [已有]
+    |
+    └── Output Layer
+        ├── Natural Language Response
+        ├── Chart Generation
+        └── Report Export
+```
 
 ### 核心内容
-- **BYOK 架构**：用户在设置面板配置自有 API Key（OpenAI / Anthropic / Google / DeepSeek / Z.ai / KIMI）· Key 加密存储（跨平台密钥库）· 连通性测试
-- **主动建议型 Agent**：数据画像 → 自动推荐分析方法（如检测到偏态建议 Box-Cox）· 分析结果自动工程解读（结论/原因假设/建议动作）· 异常根因智能推荐
-- **知识库 RAG**：内置质量工程知识库（IE/质量工程/精益生产方法论）· 用户可扩展 · TF-IDF 检索（后续升级向量检索）
-- **多轮对话**：对话式分析引导 · 追问/澄清/深入 · 上下文保持（同一分析会话）
-- **数据隐私**：首次 cloud API 调用隐私弹窗（明确告知数据发送至供应商）· 用户确认后持久化
-- **统计结果人话解释**：P 值/Cp/Cpk 等指标自动口语化解读 · 非统计人员可读
+
+**Phase 1: Agent Core (Day 1-2)**
+- `core/agent/engine.py` — Agent 主循环（LLM 调用 + 工具调度）
+- `core/agent/tools.py` — 工具注册与调度框架
+- `core/agent/conversation.py` — 多轮对话管理 + 上下文保持
+- `ui/dialogs/agent_dialog.py` — Agent 对话 UI
+
+**Phase 2: Vision Infrastructure (Day 3-4)**
+- `analysis/vision/camera.py` — 相机输入抽象（USB/IP/RTSP/MJPEG）
+- `analysis/vision/processor.py` — 帧处理流水线
+- `analysis/vision/pose.py` — MediaPipe 姿态估计（33 关键点）
+- `analysis/vision/action.py` — 动作分类（工作/空闲/走动/搬运）
+
+**Phase 3: Integration (Day 5-6)**
+- Agent 调用 Vision 能力（视频时间研究）
+- Agent 调用 Quality/IE 工具
+- 自然语言响应生成（统计结果口语化解读）
+
+**Phase 4: Testing & Polish (Day 7)**
+- E2E 测试：Agent 对话 → 工具调用 → 结果返回
+- 性能优化：帧处理延迟 < 100ms
+- 文档更新
+
+### BYOK 架构
+- 用户在设置面板配置自有 API Key（OpenAI / Anthropic / Google / DeepSeek / Z.ai / KIMI）
+- Key 加密存储（跨平台密钥库）
+- 连通性测试
+
+### 知识库 RAG
+- 内置质量工程知识库（IE/质量工程/精益生产方法论）
+- 用户可扩展
+- TF-IDF 检索（后续升级向量检索）
+
+### 数据隐私
+- 首次 cloud API 调用隐私弹窗（明确告知数据发送至供应商）
+- 用户确认后持久化
 
 ### 验收标准
 - 6 家供应商 API Key 配置 + 连通性测试全流程
+- Agent 对话：自然语言问答 → 工具调用 → 结果返回
+- Vision AI：摄像头预览帧率 ≥ 15 FPS，动作分类准确率 ≥ 85%
 - 主动建议准确率人工评审（工程师评分 ≥ 3.5/5）
 - 数据隐私弹窗拦截率 100%
+- 统计结果人话解释（P 值/Cp/Cpk 自动口语化解读）
 
 ---
 
-## v3.9.0 — 视频时间研究（待开发）
+## v3.9.0 — 已合并至 v3.8.0
 
-> 主题：引入基于视觉的动作分析与时间研究，独立 Tab 36。
-
-### 核心内容
-- **摄像头输入层**：USB/IP 摄像头统一抽象（OpenCV）· RTSP/HTTP/MJPEG 流支持 · 分辨率选择 · 实时预览
-- **姿态估计**：MediaPipe Pose（33 关键点）· 帧级推理 · 置信度阈值可调
-- **动作分类**：基于关键点角度/位移的 4 类判定（工作/空闲/走动/搬运）· 规则可配置
-- **周期检测**：基于动作状态切换自动分割周期 · 周期时间实时计算 · 异常周期标记
-- **分析引擎**：复用 `analysis/ie/time_study.py` · 周期时间异常值剔除 · 正态拟合 · 标准工时计算
-- **Tab 36 上线**：摄像头选择/预览/标定/采集/分析/导出全流程 · UI 引导
-
-### 验收标准
-- 摄像头预览帧率 ≥ 15 FPS
-- 手动标记延迟 < 100ms
-- 视频分析全流程 E2E 测试通过
+> ⚠️ 本版本已合并至 v3.8.0 Industrial AI Agent。
+> 视频时间研究（Vision AI）作为 Agent 核心能力之一，在 v3.8.0 Phase 2 中实现。
 
 ---
 
@@ -716,15 +767,11 @@ sudo apt install fonts-noto-cjk
 
 ---
 
-## v4.0.0 — 待定
-
-> 主题：根据 v3.x 实际进展和市场反馈再定义。
-> 方向候选：视频时间研究深化 · 数字孪生布局仿真 · 供应链质量协作 · 更多硬件集成
-
 ## 版本历史
 
 | 日期 | 版本 | 内容 |
 |------|---------|---------|
+| 09-04 | v3.8.0-planning | 架构调整：v3.8.0 + v3.9.0 合并为 Industrial AI Agent（AI + Vision 融合平台）；v3.9.0 视频时间研究作为 Agent Vision 能力在 v3.8.0 Phase 2 实现 |
 | 09-04 | v3.4.0 | 可靠性与生存分析完成：Weibull 2P/3P/4P + CI + KM + Cox + ALT + RBD + Crow-AMSAA + 保修分析 + 72个可靠性测试 |
 | 09-01 | v3.3.0 | 时间序列与预测完成：ARIMA自动选阶 + 指数平滑 + 季节分解 + 预测 + E2E测试 |
 | 09-01 | v3.2.0 | Linux移植完成：跨平台字体系统 + keyring凭证存储 + AppImage打包 + 双系统发行 |
@@ -761,9 +808,10 @@ sudo apt install fonts-noto-cjk
 
 > **注**：v2.6.5 ~ v3.0.0 重规划期**不新增 Tab**（聚焦现有功能深化），35 Tab + 插件结构保持不变。
 > v3.0.0 后新增能力优先以现有 Tab 内的入口/模式呈现，确需新增 Tab 的由对应版本规划单独定义。
+> v3.8.0 Industrial AI Agent 以对话式交互为主，不新增独立 Tab。
 
 ```
-v2.0 (28)     v2.1 (28)     v2.2 (32)       v2.4 (34)     v2.5/2.6 (35)   v3.0.0 (35)      v3.8.0 (36)
+v2.0 (28)     v2.1 (28)     v2.2 (32)       v2.4 (34)     v2.5/2.6 (35)   v3.0.0 (35)      v3.8.0 (35+Agent)
  Home (0)       Same           Same             Same           Same             Same                Same
  Quality (1-6)  Same           Same             Same           Same             Same                Same
  IE (7-11,21-22) Same          +SMED(29)+TPM(31)  Same         Same             Same                Same
@@ -776,6 +824,6 @@ v2.0 (28)     v2.1 (28)     v2.2 (32)       v2.4 (34)     v2.5/2.6 (35)   v3.0.0
  —               —             —                Live Monitor (33) Same             Same                Same
  —               —             —                Multi-Plant (34)   Same             Same                Same
  —               —             —                —                 Device (35)      Same                Same
- —               —             —                —                 —                Video Time Study (36)
- Plugins (dynamic) Same        Same             Same             Same             Same                Same
+ Plugins (dynamic) Same        Same             Same           Same             Same                Same
+ —               —             —                —                 —                Agent Dialog (new)
 ```
