@@ -2,7 +2,7 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> Current: v3.4.0 Reliability & Survival Analysis (delivered) | Tests: 944+ pytest · 37 Tabs | Updated: 2026-09-01
+> Current: v3.4.0 Reliability & Survival Analysis (delivered) | Tests: 907+ pytest · 37 Tabs | Updated: 2026-09-04
 
 ---
 
@@ -441,7 +441,7 @@ python build_nuitka.py --onefile      # single executable
 
 ---
 
-## v3.2.0 — Time Series & Forecasting (TBD)
+## v3.2.0 ✅ Completed — Time Series & Forecasting
 
 > Theme: complete full time-series analysis capability, supporting trend forecasting and seasonal decomposition.
 
@@ -459,7 +459,7 @@ python build_nuitka.py --onefile      # single executable
 
 ---
 
-## v3.3.0 — Reliability & Survival Analysis (TBD)
+## v3.3.0 ✅ Completed — Reliability & Survival Analysis
 
 > Theme: complete the full reliability engineering chain, benchmarked against Minitab Reliability module.
 
@@ -478,7 +478,7 @@ python build_nuitka.py --onefile      # single executable
 
 ---
 
-## v3.4.0 — MSA & Capability Deepening (TBD)
+## v3.4.0 ✅ Completed — MSA & Capability Deepening
 
 > Theme: deepen measurement-system analysis and process capability to Minitab-level advanced features.
 
@@ -605,6 +605,9 @@ python build_nuitka.py --onefile      # single executable
 
 | Date | Version | Content |
 |------|---------|---------|
+| 09-04 | v3.4.0 | Reliability & Survival Analysis completed: Weibull 2P/3P/4P + CI + KM + Cox + ALT + RBD + Crow-AMSAA + Warranty Analysis + 72 reliability tests |
+| 09-01 | v3.3.0 | Time Series & Forecasting completed: ARIMA auto-ordering + Exponential Smoothing + Seasonal Decomposition + Forecasting + E2E tests |
+| 09-01 | v3.2.0 | Linux Port completed: cross-platform font system + keyring credential storage + AppImage packaging + dual-system release |
 | 08-24 | v3.x-planning | Strategic repositioning: shifted from enterprise multi-company platform to personal subscription quality engineering tool (Minitab-like); deleted old v3.1~v3.6 (enterprise RBAC/cross-platform/HA/security compliance/two-tier governance); re-designed v3.1~v4.0 roadmap (DOE→time series→reliability→MSA→Graph Builder→real-time SPC→QAM Harness→video study→predictive analytics); core competitiveness pillars reduced from 6 to 5 (workflow integration / real-time factory / IE tool suite / QAM Harness / Chinese localization) |
 | 08-24 | v3.x-AI-arch | AI architecture decision: pillar 4 redefined from "local LLM" to "AI assistant (cloud API + local model tiered)"; v3.1.0 adds AI API management panel (6-provider GUI config + data privacy prompt); v3.2.0 server adds AI proxy forwarding; v4.0.0 local LLM positioned as enterprise-exclusive |
 | 08-23 | v2.7.0 | Completed: P1 phase (7 core features + 4 performance optimizations) + P2 phase (6 items) + Code quality review (9 fixes) + UI integration (4 Tabs: SPC/capability/hypothesis/sampling) · 537+ tests |
