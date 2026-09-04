@@ -23,9 +23,9 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 | TBD | v3.5.0 | MSA & Capability Deepening |
 | TBD | v3.6.0 | Graph Builder Enhancement & Interactive Experience |
 | TBD | v3.7.0 | Real-Time SPC Cloud Dashboard & Data Connectors |
-| TBD | v3.8.0 | QAM Harness (BYOK AI Agent Platform) |
-| TBD | v3.9.0 | Video Time Study |
-| TBD | v4.0.0 | Predictive Analytics & Machine Learning |
+| TBD | v3.7.0 | Industrial AI Agent (AI + Vision Integration) |
+| Merged | v3.8.0 | Merged into v3.7.0 (Video Time Study → Vision AI capability) |
+| TBD | v3.9.0 | Predictive Analytics & Machine Learning |
 | TBD | v4.1.0 | TBD (defined based on v3.x progress) |
 
 ---
@@ -536,41 +536,92 @@ python build_nuitka.py --onefile      # single executable
 
 ---
 
-## v3.7.0 — QAM Harness (BYOK AI Agent Platform) (TBD)
+## v3.7.0 — Industrial AI Agent (AI + Vision Integration) (TBD)
 
-> Theme: build a professional engineering-analysis AI Agent platform, BYOK model, proactive-suggestion type.
+> Theme: build an industrial-grade AI Agent platform, integrating LLM intelligent analysis + vision motion recognition, BYOK model, proactive-suggestion type.
+> v3.8.0 Video Time Study has been merged into this version, Vision AI as one of Agent's core capabilities.
+
+### Architecture Design
+
+```
+QA-Tool v3.7.0 Industrial AI Agent
+    |
+    ├── Core Agent Layer
+    │   ├── LLM Client (Ollama/OpenAI/DeepSeek)  [existing]
+    │   ├── Knowledge Base (TF-IDF RAG)           [existing]
+    │   ├── Conversation Manager (multi-turn)
+    │   └── Tool Registry
+    |
+    ├── Vision Capabilities
+    │   ├── Camera Input (USB/IP/RTSP/MJPEG)
+    │   ├── Frame Processor (OpenCV)
+    │   ├── Pose Estimation (MediaPipe)
+    │   └── Action Classifier (working/idle/walking/carrying)
+    |
+    ├── Analysis Tools (Agent-callable)
+    │   ├── Quality Analysis (SPC/Capability/MSA)
+    │   ├── Time Study (manual+vision)
+    │   ├── IE Tools (OEE/SMED/TPM)
+    │   └── Root Cause (SHAP) [existing]
+    |
+    └── Output Layer
+        ├── Natural Language Response
+        ├── Chart Generation
+        └── Report Export
+```
 
 ### Core Content
-- **BYOK architecture**: users configure their own API keys in settings (OpenAI / Anthropic / Google / DeepSeek / Z.ai / KIMI) · encrypted key storage (cross-platform secret store) · connectivity test
-- **Proactive-suggestion Agent**: data profiling → automatic analysis-method recommendation (e.g., skewed data suggests Box-Cox) · automatic engineering interpretation of results (conclusion / cause hypotheses / recommended actions) · anomaly root-cause recommendation
-- **Knowledge-base RAG**: built-in quality engineering knowledge base (IE/quality engineering/lean methodology) · user-extensible · TF-IDF retrieval (upgradeable to vector search)
-- **Multi-turn conversation**: conversational analysis guidance · follow-up / clarification / deep-dive · context persistence (same analysis session)
-- **Data privacy**: first cloud API call triggers privacy dialog (explicitly states data sent to provider) · user confirmation persisted
-- **Stats-in-plain-English**: automatic口语化 interpretation of P-values / Cp / Cpk / etc. · non-statistician readable
+
+**Phase 1: Agent Core (Day 1-2)**
+- `core/agent/engine.py` — Agent main loop (LLM invocation + tool dispatch)
+- `core/agent/tools.py` — Tool registration and dispatch framework
+- `core/agent/conversation.py` — Multi-turn conversation management + context persistence
+- `ui/dialogs/agent_dialog.py` — Agent conversation UI
+
+**Phase 2: Vision Infrastructure (Day 3-4)**
+- `analysis/vision/camera.py` — Camera input abstraction (USB/IP/RTSP/MJPEG)
+- `analysis/vision/processor.py` — Frame processing pipeline
+- `analysis/vision/pose.py` — MediaPipe pose estimation (33 landmarks)
+- `analysis/vision/action.py` — Action classification (working/idle/walking/carrying)
+
+**Phase 3: Integration (Day 5-6)**
+- Agent invokes Vision capabilities (video time study)
+- Agent invokes Quality/IE tools
+- Natural language response generation (stats-in-plain-English)
+
+**Phase 4: Testing & Polish (Day 7)**
+- E2E test: Agent conversation → tool invocation → result return
+- Performance optimization: frame processing latency < 100ms
+- Documentation update
+
+### BYOK Architecture
+- Users configure their own API keys in settings (OpenAI / Anthropic / Google / DeepSeek / Z.ai / KIMI)
+- Encrypted key storage (cross-platform secret store)
+- Connectivity test
+
+### Knowledge-base RAG
+- Built-in quality engineering knowledge base (IE/quality engineering/lean methodology)
+- User-extensible
+- TF-IDF retrieval (upgradeable to vector search)
+
+### Data Privacy
+- First cloud API call triggers privacy dialog (explicitly states data sent to provider)
+- User confirmation persisted
 
 ### Acceptance Criteria
 - 6-provider API key configuration + connectivity test full flow
+- Agent conversation: natural language Q&A → tool invocation → result return
+- Vision AI: camera preview ≥ 15 FPS, action classification accuracy ≥ 85%
 - Proactive suggestion accuracy human review (engineer rating ≥ 3.5/5)
-- Data privacy dialog block rate 100% until acknowledged
+- Data privacy dialog block rate 100%
+- Stats-in-plain-English (P-values / Cp / Cpk auto-interpretation)
 
 ---
 
-## v3.8.0 — Video Time Study (TBD)
+## v3.8.0 — Merged into v3.7.0
 
-> Theme: introduce vision-based motion analysis and time study, independent Tab 36.
-
-### Core Content
-- **Camera input layer**: USB/IP camera unified abstraction (OpenCV) · RTSP/HTTP/MJPEG stream support · resolution selection · real-time preview
-- **Pose estimation**: MediaPipe Pose (33 landmarks) · frame-level inference · configurable confidence threshold
-- **Action classification**: 4-class detection based on landmark angles/displacement (working/idle/walking/carrying) · configurable rules
-- **Cycle detection**: automatic cycle segmentation based on action state transitions · real-time cycle-time calculation · anomaly cycle flagging
-- **Analysis engine**: reusing `analysis/ie/time_study.py` · outlier removal · normal fitting · standard-time calculation
-- **Tab 36 launch**: camera selection/preview/calibration/recording/analysis/export end-to-end flow · UI guidance
-
-### Acceptance Criteria
-- Camera preview ≥ 15 FPS
-- Manual marking latency < 100ms
-- Video analysis end-to-end test passes
+> ⚠️ This version has been merged into v3.7.0 Industrial AI Agent.
+> Video Time Study (Vision AI) is implemented as Agent core capability in v3.7.0 Phase 2.
 
 ---
 
@@ -605,6 +656,7 @@ python build_nuitka.py --onefile      # single executable
 
 | Date | Version | Content |
 |------|---------|---------|
+| 09-04 | v3.7.0-planning | Architecture adjustment: v3.7.0 + v3.8.0 merged into Industrial AI Agent (AI + Vision Integration); v3.8.0 Video Time Study as Agent Vision capability implemented in v3.7.0 Phase 2 |
 | 09-04 | v3.4.0 | Reliability & Survival Analysis completed: Weibull 2P/3P/4P + CI + KM + Cox + ALT + RBD + Crow-AMSAA + Warranty Analysis + 72 reliability tests |
 | 09-01 | v3.3.0 | Time Series & Forecasting completed: ARIMA auto-ordering + Exponential Smoothing + Seasonal Decomposition + Forecasting + E2E tests |
 | 09-01 | v3.2.0 | Linux Port completed: cross-platform font system + keyring credential storage + AppImage packaging + dual-system release |
@@ -638,9 +690,10 @@ python build_nuitka.py --onefile      # single executable
 
 > **Note**: no new Tabs during the v2.6.5 ~ v3.0.0 rework period (focus on deepening existing features); the 35-Tab + plugin structure stays unchanged.
 > v3.0.0+ new capabilities are preferentially added as entries/modes inside existing Tabs; genuinely new Tabs are defined explicitly in their own version plan.
+> v3.7.0 Industrial AI Agent uses conversation-based interaction, no new independent Tab.
 
 ```
-v2.0 (28)     v2.1 (28)     v2.2 (32)       v2.4 (34)     v2.5/2.6 (35)   v3.0.0 (35)      v3.8.0 (36)
+v2.0 (28)     v2.1 (28)     v2.2 (32)       v2.4 (34)     v2.5/2.6 (35)   v3.0.0 (35)      v3.7.0 (35+Agent)
  Home (0)       Same           Same             Same           Same             Same                Same
  Quality (1-6)  Same           Same             Same           Same             Same                Same
  IE (7-11,21-22) Same          +SMED(29)+TPM(31)  Same         Same             Same                Same
@@ -653,6 +706,6 @@ v2.0 (28)     v2.1 (28)     v2.2 (32)       v2.4 (34)     v2.5/2.6 (35)   v3.0.0
  —               —             —                Live Monitor (33) Same             Same                Same
  —               —             —                Multi-Plant (34)   Same             Same                Same
  —               —             —                —                 Device (35)      Same                Same
- —               —             —                —                 —                Video Time Study (36)
- Plugins (dynamic) Same        Same             Same             Same             Same                Same
+ Plugins (dynamic) Same        Same             Same           Same             Same                Same
+ —               —             —                —                 —                Agent Dialog (new)
 ```
