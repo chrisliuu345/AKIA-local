@@ -2,7 +2,7 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> 当前: v3.4.0 可靠性与生存分析（已交付）| 测试: 944+ pytest · 37 个 Tab | 更新: 2026-09-01
+> 当前: v3.4.0 可靠性与生存分析（已交付）| 测试: 907+ pytest · 37 个 Tab | 更新: 2026-09-04
 
 ---
 
@@ -456,7 +456,7 @@ python build_nuitka.py --onefile
 
 ---
 
-## v3.2.0 — Linux 移植 + 双系统发行（待开发）
+## v3.2.0 ✅ 已完成 — Linux 移植 + 双系统发行
 
 > 主题：跨平台移植 — 支持 Linux（Debian/Ubuntu 系），实现 Windows/Linux 双系统发行。
 > 目标发行版：Debian 13 / elementary OS 8.1 / Ubuntu 22.04+
@@ -563,7 +563,7 @@ sudo apt install fonts-noto-cjk
 
 ---
 
-## v3.3.0 — 时间序列与预测（待开发）
+## v3.3.0 ✅ 已完成 — 时间序列与预测
 
 > 主题：补齐全时间序列分析能力，支持趋势预测与季节性分解。
 
@@ -581,7 +581,7 @@ sudo apt install fonts-noto-cjk
 
 ---
 
-## v3.4.0 — 可靠性与生存分析（待开发）
+## v3.4.0 ✅ 已完成 — 可靠性与生存分析
 
 > 主题：补齐可靠性工程全链路，对标 Minitab Reliability 模块。
 
@@ -725,6 +725,9 @@ sudo apt install fonts-noto-cjk
 
 | 日期 | 版本 | 内容 |
 |------|---------|---------|
+| 09-04 | v3.4.0 | 可靠性与生存分析完成：Weibull 2P/3P/4P + CI + KM + Cox + ALT + RBD + Crow-AMSAA + 保修分析 + 72个可靠性测试 |
+| 09-01 | v3.3.0 | 时间序列与预测完成：ARIMA自动选阶 + 指数平滑 + 季节分解 + 预测 + E2E测试 |
+| 09-01 | v3.2.0 | Linux移植完成：跨平台字体系统 + keyring凭证存储 + AppImage打包 + 双系统发行 |
 | 08-28 | v3.1.0 | DOE与功效分析完成：筛选设计(PB/DSD) + 部分因子 + 田口 + 混合设计 + Power & Sample Size引擎 + 独立对话框 + E2E测试 |
 | 08-28 | v3.2.0-planning | Linux移植规划：跨平台字体系统 + keyring凭证存储 + AppImage打包 + 双系统发行 |
 | 08-24 | v3.x-planning | 战略重定位：从企业级多公司平台调整为个人订阅级质量工程工具（类 Minitab）；删除 v3.1~v3.6 旧规划（企业RBAC/跨平台/高可用/安全合规/双层治理）；重新设计 v3.1~v4.0 路线（DOE→时间序列→可靠性→MSA→Graph Builder→实时SPC→QAM Harness→视频研究→预测分析）；核心竞争力支柱从6个精简为5个（工作流贯通/实时工厂集成/IE工具套件/QAM Harness/中文本土化） |
