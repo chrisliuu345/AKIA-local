@@ -14,7 +14,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_NAME="QA-Tool"
-APP_VERSION="3.3.0"
+APP_VERSION=$(python -c "import sys; sys.path.insert(0, '${SCRIPT_DIR}'); from config.settings import APP_VERSION; print(APP_VERSION)")
 BUILD_DIR="${SCRIPT_DIR}/build"
 APPDIR_DIR="${BUILD_DIR}/AppDir"
 
