@@ -47,7 +47,7 @@ class MSATab(BaseAnalysisTab):
         config_layout = QFormLayout(config_group)
 
         self.method_combo = QComboBox()
-        self.method_combo.addItems(["量具R&R (交叉)", "量具R&R (嵌套)", "偏倚分析", "线性分析", "属性一致性分析", "Type 1 量具研究"])
+        self.method_combo.addItems(["量具R&R (交叉)", "量具R&R (嵌套)", "EMP 方法", "偏倚分析", "线性分析", "属性一致性分析", "Type 1 量具研究"])
         config_layout.addRow("分析方法:", self.method_combo)
 
         self.measure_col = QComboBox()
@@ -252,7 +252,7 @@ class MSATab(BaseAnalysisTab):
             return None
 
     def run_analysis(self) -> Dict[str, Any]:
-        from analysis.msa import gage_rr, linearity_bias, attribute_agree, type1_study
+        from analysis.msa import gage_rr, linearity_bias, attribute_agree, type1_study, emp
         from output.chart_engine import create_histogram
 
         method = self.method_combo.currentText()
@@ -267,6 +267,8 @@ class MSATab(BaseAnalysisTab):
             result = gage_rr.analyze_crossed(self.df, measure, part, operator, tolerance)
         elif "R&R" in method and "嵌套" in method:
             result = gage_rr.analyze_nested(self.df, measure, part, operator, tolerance)
+        elif "EMP" in method:
+            result = emp.analyze_crossed(self.df, measure, part, operator, tolerance)
         elif "偏倚" in method:
             data = pd.to_numeric(self.df[measure], errors="coerce").dropna()
             result = linearity_bias.analyze_bias(data, reference)
@@ -321,6 +323,26 @@ class MSATab(BaseAnalysisTab):
             lines.append(f"\n  Kappa: {result.get('kappa', '')}")
             lines.append(f"  {result.get('kappa_interpretation', '')}")
             lines.append(f"  一致率: {result.get('agreement_rate', '')}%")
+            if "effective_kappa" in result:
+                lines.append(f"  有效 Kappa: {result.get('effective_kappa', '')}")
+        if "discrimination_grade" in result:
+            dg = result.get("discrimination_grade", {})
+            lines.append(f"\n【分辨力分级】")
+            lines.append(f"  等级: {dg.get('grade', '')} 级 ({dg.get('level', '')})")
+            lines.append(f"  {dg.get('description', '')}")
+        if "wheeler_criteria" in result:
+            lines.append(f"\n【Wheeler 判异准则】")
+            for c in result.get("wheeler_criteria", []):
+                status = "✓" if c.get("status") == "pass" else "✗"
+                lines.append(f"  {status} {c.get('name', '')}: {c.get('detail', '')}")
+        if "uncertainty" in result:
+            unc = result.get("uncertainty", {})
+            lines.append(f"\n【不确定度预算 (GUM)】")
+            lines.append(f"  合成不确定度: {unc.get('combined_uncertainty', '')}")
+            lines.append(f"  扩展不确定度 (k={unc.get('coverage_factor', '')}): {unc.get('expanded_uncertainty', '')}")
+            if unc.get("tolerance_ratio") is not None:
+                lines.append(f"  公差比: {unc.get('tolerance_ratio', '')}")
+            lines.append(f"  {unc.get('interpretation', '')}")
         if "mean_bias" in result:
             lines.append(f"\n  平均偏倚: {result.get('mean_bias', '')}")
             pv = result.get('p_value', '')
