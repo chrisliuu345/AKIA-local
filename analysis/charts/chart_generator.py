@@ -11,6 +11,7 @@ from scipy import stats as sp_stats
 from scipy.interpolate import griddata
 from output.chart_engine import (
     create_histogram, create_pareto_chart, create_correlation_heatmap,
+    _ensure_font,
 )
 from config.settings import (
     CHART_DPI, FONT_SIZE_TITLE, FONT_SIZE_LABEL, FONT_SIZE_TICK,
@@ -941,6 +942,7 @@ BUILDERS = {
 
 
 def generate_chart(chart_type: str, data: dict, options: dict = None) -> Figure:
+    _ensure_font()
     if options is None:
         options = {}
     _apply_dark_theme(options.get("dark_mode", True))
