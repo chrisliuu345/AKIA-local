@@ -290,14 +290,14 @@ def _wheeler_criteria(
             "name": "可重复性",
             "description": "测量系统必须可重复",
             "status": "pass" if (ev / tv < 0.3 if tv > 0 else False) else "fail",
-            "detail": f"EV/TV = {ev/tv*100:.1f}%" + (" < 30%" if (ev/tv < 0.3 if tv > 0 else False) else " ≥ 30%"),
+            "detail": f"EV/TV = {ev/tv*100:.1f}%" if tv > 0 else "EV/TV = N/A" + (" < 30%" if (ev / tv < 0.3 if tv > 0 else False) else " ≥ 30%"),
         },
         {
             "id": 4,
             "name": "可再现性",
             "description": "测量系统必须可再现",
             "status": "pass" if (av / tv < 0.3 if tv > 0 else False) else "fail",
-            "detail": f"AV/TV = {av/tv*100:.1f}%" + (" < 30%" if (av/tv < 0.3 if tv > 0 else False) else " ≥ 30%"),
+            "detail": f"AV/TV = {av/tv*100:.1f}%" if tv > 0 else "AV/TV = N/A" + (" < 30%" if (av / tv < 0.3 if tv > 0 else False) else " ≥ 30%"),
         },
         {
             "id": 5,
