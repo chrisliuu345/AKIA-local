@@ -2,7 +2,7 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> Current: v3.4.0 Reliability & Survival Analysis (delivered) | Tests: 907+ pytest · 37 Tabs | Updated: 2026-09-04
+> Current: v3.5.0 MSA & Capability Deepening (delivered) | Tests: 1000+ pytest · 37 Tabs | Updated: 2026-09-05
 
 ---
 
@@ -11,7 +11,7 @@
 > **Strategic Repositioning (2026-08-24)**: positioning shifted from enterprise multi-company platform to **personal subscription quality engineering tool** (Minitab-like), with differentiation core in real-time factory data integration + IE engineering tools + five-chain workflow + BYOK AI Agent (QAM Harness). See [Core Competitive Positioning](#core-competitive-positioning-2026-08-rework).
 
 ```
-v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ✅ ──→ v2.7.0 ✅ ──→ v2.8.0 ✅ ──→ v2.9.0 ✅ ──→ v3.0.0 ✅ ──→ v3.1.0 ✅ ──→ v3.2.0 ✅ ──→ v3.3.0 ✅ ──→ v3.4.0 ✅ ──→ v3.5.0 ──→ v3.6.0 ──→ v3.7.0 ──→ v3.8.0 ──→ v3.9.0 ──→ v4.0.0
+v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ✅ ──→ v2.7.0 ✅ ──→ v2.8.0 ✅ ──→ v2.9.0 ✅ ──→ v3.0.0 ✅ ──→ v3.1.0 ✅ ──→ v3.2.0 ✅ ──→ v3.3.0 ✅ ──→ v3.4.0 ✅ ──→ v3.5.0 ✅ ──→ v3.6.0 ──→ v3.7.0 ──→ v3.8.0 ──→ v4.0.0
 ```
 
 | Stage | Version | Theme |
@@ -20,7 +20,7 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 | Done | v3.2.0 | **Linux Port + Dual-System Distribution** (Debian/Ubuntu) |
 | Done | v3.3.0 | **Time Series & Forecasting** (ARIMA / Exponential Smoothing / Seasonal Decomposition / Model Comparison) |
 | Done | v3.4.0 | **Reliability & Survival Analysis** (Weibull 2P/3P/4P + CI / KM + Cox / ALT / RBD / Crow-AMSAA / Warranty) |
-| TBD | v3.5.0 | MSA & Capability Deepening |
+| Done | v3.5.0 | **MSA & Capability Deepening** (Attribute Agreement Enhancement / EMP Method / Gage R&R Enhancement / Capability Sixpack / Auto Capability / Edgeworth Approximation) |
 | TBD | v3.6.0 | Graph Builder Enhancement & Interactive Experience |
 | TBD | v3.7.0 | Real-Time SPC Cloud Dashboard & Data Connectors |
 | TBD | v3.7.0 | Industrial AI Agent (AI + Vision Integration) |
@@ -656,6 +656,7 @@ QA-Tool v3.7.0 Industrial AI Agent
 
 | Date | Version | Content |
 |------|---------|---------|
+| 09-05 | v3.5.0 | MSA & Capability Deepening completed: Attribute Agreement Enhancement (Fleiss's Kappa + Effective Kappa + Bias Matrix) + EMP Method Gauge Study + Gage R&R Enhancement (Variance Component Chart + Interaction Chart + Uncertainty Budget) + Capability Sixpack + Auto Capability Analysis + Edgeworth Approximation + 100+ tests |
 | 09-04 | v3.7.0-planning | Architecture adjustment: v3.7.0 + v3.8.0 merged into Industrial AI Agent (AI + Vision Integration); v3.8.0 Video Time Study as Agent Vision capability implemented in v3.7.0 Phase 2 |
 | 09-04 | v3.4.0 | Reliability & Survival Analysis completed: Weibull 2P/3P/4P + CI + KM + Cox + ALT + RBD + Crow-AMSAA + Warranty Analysis + 72 reliability tests |
 | 09-01 | v3.3.0 | Time Series & Forecasting completed: ARIMA auto-ordering + Exponential Smoothing + Seasonal Decomposition + Forecasting + E2E tests |
