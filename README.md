@@ -1,6 +1,6 @@
 # QA-Tool
 
-> 个人订阅级质量工程桌面工具（类 Minitab），融合 SPC + MSA + DOE + IE + 可靠性 + AI 智能分析
+> 个人订阅级AI桌面工业分析平台，融合 SPC + MSA + DOE + IE + 可靠性 + AI 分析
 
 [中文](README.md) | [English](README.en.md)
 
