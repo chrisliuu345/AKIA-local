@@ -10,6 +10,9 @@ os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
 import matplotlib
 matplotlib.use("QtAgg")
 
+from output.chart_engine import _ensure_font
+_ensure_font()
+
 from PySide6.QtWidgets import QApplication, QMessageBox, QSplashScreen
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QPixmap, QPainter, QColor, QIcon
