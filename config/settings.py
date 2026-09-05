@@ -6,7 +6,7 @@ import json
 import os
 
 APP_NAME = "QA-Tool"
-APP_VERSION = "3.4.0"
+APP_VERSION = "3.5.0"
 ORGANIZATION = "QA-Tool"
 
 NELSON_RULES = {
