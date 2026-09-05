@@ -1,4 +1,4 @@
-"""过程能力分析 — Cp/Cpk/Pp/Ppk/Cpm · 正态与非正态 · Johnson变换 · 公差区间 · Sixpack"""
+"""过程能力分析 — Cp/Cpk/Pp/Ppk/Cpm · 正态与非正态 · Johnson变换 · 公差区间 · Sixpack · 自动能力"""
 
 _SUBMODULES = {
     "normal_cap": ".normal_cap",
@@ -7,6 +7,8 @@ _SUBMODULES = {
     "tolerance_interval": ".tolerance_interval",
     "johnson_transform": ".johnson_transform",
     "sixpack": ".sixpack",
+    "auto_cap": ".auto_cap",
+    "edgeworth": ".edgeworth",
 }
 
 __all__ = list(_SUBMODULES.keys()) + ["get_capability_grade"]
