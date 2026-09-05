@@ -1,8 +1,13 @@
 """
 量具R&R分析 — 交叉(Crossed)和嵌套(Nested)
+
+增强功能:
+- 方差分量图数据
+- 交互效应图数据
+- 不确定度预算 (GUM 方法)
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import numpy as np
 import pandas as pd
 from config import settings as _cfg
@@ -38,12 +43,10 @@ def analyze_crossed(
     d2 = _cfg.CONTROL_CHART_CONSTANTS.get(r, {}).get("d2", 1.128 * (r ** 0.3))
 
     ev = r_bar / d2
-    ev_pct = ev
 
     r_op = float(op_means.max() - op_means.min())
     d2_star_op = _cfg.MSA_D2_STAR.get(o, _cfg.CONTROL_CHART_CONSTANTS.get(o, {}).get("d2", 1.128))
     av = np.sqrt(max((r_op / d2_star_op) ** 2 - ev ** 2 / (p * r), 0))
-    av_pct = av
 
     grr = np.sqrt(ev ** 2 + av ** 2)
     r_part = float(part_means.max() - part_means.min())
@@ -58,6 +61,10 @@ def analyze_crossed(
     ev_pct = (ev / tv * 100) if tv > 0 else 0
     av_pct = (av / tv * 100) if tv > 0 else 0
     pv_pct = (pv / tv * 100) if tv > 0 else 0
+
+    variance_chart = _variance_component_data(ev, av, pv, grr, tv)
+    interaction_chart = _interaction_chart_data(data, measurement_col, part_col, operator_col)
+    uncertainty = _uncertainty_budget(ev, av, pv, grr, tv, p, o, r, tolerance)
 
     return {
         "chart_type": "Gage R&R (Crossed)",
@@ -83,6 +90,9 @@ def analyze_crossed(
             "overall_mean": round(overall_mean, 6),
             "r_bar": round(float(r_bar), 6),
         },
+        "variance_chart": variance_chart,
+        "interaction_chart": interaction_chart,
+        "uncertainty": uncertainty,
     }
 
 
@@ -140,6 +150,135 @@ def _avg_range(df: pd.DataFrame, measurement_col: str, part_col: str, operator_c
         if len(group) >= 2:
             ranges.append(group[measurement_col].max() - group[measurement_col].min())
     return float(np.mean(ranges)) if ranges else 0.0
+
+
+def _variance_component_data(
+    ev: float, av: float, pv: float, grr: float, tv: float
+) -> Dict[str, Any]:
+    """
+    方差分量图数据
+
+    用于绘制 EV/AV/PV/GRR 的条形图
+    """
+    components = [
+        {"name": "EV (重复性)", "value": round(float(ev ** 2), 6), "pct": round(float(ev ** 2 / tv ** 2 * 100), 2) if tv > 0 else 0},
+        {"name": "AV (再现性)", "value": round(float(av ** 2), 6), "pct": round(float(av ** 2 / tv ** 2 * 100), 2) if tv > 0 else 0},
+        {"name": "GRR (量具R&R)", "value": round(float(grr ** 2), 6), "pct": round(float(grr ** 2 / tv ** 2 * 100), 2) if tv > 0 else 0},
+        {"name": "PV (零件间)", "value": round(float(pv ** 2), 6), "pct": round(float(pv ** 2 / tv ** 2 * 100), 2) if tv > 0 else 0},
+        {"name": "TV (总变异)", "value": round(float(tv ** 2), 6), "pct": 100.0},
+    ]
+
+    return {
+        "components": components,
+        "standard_deviation": [
+            {"name": "EV", "value": round(float(ev), 6)},
+            {"name": "AV", "value": round(float(av), 6)},
+            {"name": "GRR", "value": round(float(grr), 6)},
+            {"name": "PV", "value": round(float(pv), 6)},
+            {"name": "TV", "value": round(float(tv), 6)},
+        ],
+    }
+
+
+def _interaction_chart_data(
+    df: pd.DataFrame,
+    measurement_col: str,
+    part_col: str,
+    operator_col: str,
+) -> Dict[str, Any]:
+    """
+    交互效应图数据
+
+    绘制零件×操作员的均值连线图
+    """
+    pivot = df.pivot_table(
+        values=measurement_col,
+        index=part_col,
+        columns=operator_col,
+        aggfunc="mean",
+    )
+
+    operators = pivot.columns.tolist()
+    parts = pivot.index.tolist()
+
+    series = []
+    for op in operators:
+        op_means = pivot[op].values
+        series.append({
+            "name": str(op),
+            "data": [round(float(x), 4) for x in op_means],
+        })
+
+    overall_means = pivot.mean(axis=1).values
+
+    return {
+        "categories": parts,
+        "series": series,
+        "overall_means": [round(float(x), 4) for x in overall_means],
+    }
+
+
+def _uncertainty_budget(
+    ev: float,
+    av: float,
+    pv: float,
+    grr: float,
+    tv: float,
+    p: int,
+    o: int,
+    r: int,
+    tolerance: Optional[float],
+) -> Dict[str, Any]:
+    """
+    不确定度预算 (GUM 方法)
+
+    基于 Gage R&R 结果计算测量不确定度
+    """
+    u_repeatability = ev / np.sqrt(2)
+    u_reproducibility = av / np.sqrt(2)
+    u_grr = grr / np.sqrt(2)
+
+    u_combined = np.sqrt(u_repeatability ** 2 + u_reproducibility ** 2)
+
+    k = 2
+    u_expanded = k * u_combined
+
+    if tolerance is not None:
+        t_ratio = u_expanded / (tolerance / 2) if tolerance > 0 else 0
+    else:
+        t_ratio = None
+
+    return {
+        "standard_uncertainty": {
+            "repeatability": round(float(u_repeatability), 6),
+            "reproducibility": round(float(u_reproducibility), 6),
+            "gage_rr": round(float(u_grr), 6),
+        },
+        "combined_uncertainty": round(float(u_combined), 6),
+        "coverage_factor": k,
+        "expanded_uncertainty": round(float(u_expanded), 6),
+        "tolerance_ratio": round(float(t_ratio), 4) if t_ratio is not None else None,
+        "interpretation": _uncertainty_interpretation(u_expanded, tolerance),
+    }
+
+
+def _uncertainty_interpretation(u_expanded: float, tolerance: Optional[float]) -> str:
+    """不确定度解释"""
+    if tolerance is None:
+        return "未提供公差，无法判断不确定度是否可接受"
+
+    t_ratio = u_expanded / (tolerance / 2) if tolerance > 0 else 0
+
+    if t_ratio < 0.1:
+        return "不确定度极小，测量系统非常适合"
+    elif t_ratio < 0.3:
+        return "不确定度较小，测量系统适合"
+    elif t_ratio < 0.5:
+        return "不确定度适中，测量系统可接受"
+    elif t_ratio < 1.0:
+        return "不确定度较大，测量系统边缘"
+    else:
+        return "不确定度过大，测量系统不可接受"
 
 
 def _grr_acceptance(grr_pct: float, ndc: int) -> Dict[str, Any]:
