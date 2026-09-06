@@ -521,6 +521,7 @@ python build_nuitka.py --onefile      # single executable
 - **Table builder**: drag-and-drop descriptive statistics table · interactive cross-tabs · grouped statistical summaries
 - **One-click export**: Excel (.xlsx) · PowerPoint (.pptx) · Word (.docx) · high-resolution PNG/SVG
 - **Faceting**: grouping variable → multi-chart grid layout · row/column/facet-wrap faceting
+- **Help center (added 2026-09-06)**: user guide migrated from docx to offline HTML (`config/help/guide.html`, opens in browser, commercial help-page layout: fixed sidebar nav + FAQ accordion + print styles; stale content revised to current facts) ✅ · **Full menu redesign**: emoji prefixes removed, misfiled actions relocated (report template→Tools, HTML export→File>Export, template help→Help, duplicate KB search removed), view menu gains Display Mode F11 entry, Help gains User Guide (F1) ✅
 
 ### Acceptance Criteria
 - Chart gallery load time < 200ms
@@ -685,6 +686,7 @@ QA-Tool v3.7.0 Industrial AI Agent
 
 | Date | Version | Content |
 |------|---------|---------|
+| 09-06 | v3.6.0 (addendum) | Help center added: user guide migrated from docx to offline HTML (browser-open, commercial help layout, content revised to current facts) + full menubar redesign (emoji removed, AI/Tools/Help regrouping, F1 guide, F11 display-mode entry) |
 | 09-06 | v3.6.1 | Full code-quality audit & fixes: 7 latent crash paths (taguchi noise arrays, report templates builtin scope, sampling_engine typing imports, anti_debug local import shadowing, tpm/msa/doe undefined names) + loop-closure bindings + exception chaining + 171 unused imports cleaned + TEMP dir untracked + 72-file serial regression all green |
 | 09-06 | v3.6.0 (code) | Graph Builder completed: chart option editor (live params / persistent options) + pie·pareto real-time interaction + heatmap/scatter-matrix + faceting small multiples + PPTX/hi-res PNG/SVG export + thumbnail chart gallery + render-pipeline hardening (canvas swap / hidden toolbar / scroll stability) + integration test suite. Pending manual acceptance before release |
 | 09-05 | v3.5.0 | MSA & Capability Deepening completed: Attribute Agreement Enhancement (Fleiss's Kappa + Effective Kappa + Bias Matrix) + EMP Method Gauge Study + Gage R&R Enhancement (Variance Component Chart + Interaction Chart + Uncertainty Budget) + Capability Sixpack + Auto Capability Analysis + Edgeworth Approximation + 100+ tests |
