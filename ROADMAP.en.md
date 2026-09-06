@@ -2,7 +2,7 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> Current: v3.5.0 MSA & Capability Deepening (delivered) | Tests: 1000+ pytest · 37 Tabs | Updated: 2026-09-05
+> Current: v3.5.0 released · v3.6.0 Graph Builder code complete (pending manual acceptance) · v3.6.1 full quality pass done | Tests: 1000+ pytest · 37 Tabs | Updated: 2026-09-06
 
 ---
 
@@ -11,7 +11,7 @@
 > **Strategic Repositioning (2026-08-24)**: positioning shifted from enterprise multi-company platform to **personal subscription quality engineering tool** (Minitab-like), with differentiation core in real-time factory data integration + IE engineering tools + five-chain workflow + BYOK AI Agent (QAM Harness). See [Core Competitive Positioning](#core-competitive-positioning-2026-08-rework).
 
 ```
-v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ✅ ──→ v2.7.0 ✅ ──→ v2.8.0 ✅ ──→ v2.9.0 ✅ ──→ v3.0.0 ✅ ──→ v3.1.0 ✅ ──→ v3.2.0 ✅ ──→ v3.3.0 ✅ ──→ v3.4.0 ✅ ──→ v3.5.0 ✅ ──→ v3.6.0 ──→ v3.7.0 ──→ v3.8.0 ──→ v4.0.0
+v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ✅ ──→ v2.7.0 ✅ ──→ v2.8.0 ✅ ──→ v2.9.0 ✅ ──→ v3.0.0 ✅ ──→ v3.1.0 ✅ ──→ v3.2.0 ✅ ──→ v3.3.0 ✅ ──→ v3.4.0 ✅ ──→ v3.5.0 ✅ ──→ v3.6.0 ⏳(pending acceptance) ──→ v3.6.1 ✅ ──→ v3.7.0 ──→ v3.8.0 ──→ v4.0.0
 ```
 
 | Stage | Version | Theme |
@@ -21,10 +21,11 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 | Done | v3.3.0 | **Time Series & Forecasting** (ARIMA / Exponential Smoothing / Seasonal Decomposition / Model Comparison) |
 | Done | v3.4.0 | **Reliability & Survival Analysis** (Weibull 2P/3P/4P + CI / KM + Cox / ALT / RBD / Crow-AMSAA / Warranty) |
 | Done | v3.5.0 | **MSA & Capability Deepening** (Attribute Agreement Enhancement / EMP Method / Gage R&R Enhancement / Capability Sixpack / Auto Capability / Edgeworth Approximation) |
-| TBD | v3.6.0 | Graph Builder Enhancement & Interactive Experience |
+| Done | v3.6.0 (code complete) | **Graph Builder Enhancement & Interactive Experience** (chart editor architecture / pie·pareto real-time interaction / heatmap·scatter matrix / small multiples faceting / PPT·PNG·SVG export + thumbnail gallery / integration tests) — pending manual acceptance |
+| Done | v3.6.1 | **Full code-quality audit** (7 latent crash fixes / hazard cleanup / full-repo ruff scan / 72-file regression) |
 | TBD | v3.7.0 | Real-Time SPC Cloud Dashboard & Data Connectors |
-| TBD | v3.7.0 | Industrial AI Agent (AI + Vision Integration) |
-| Merged | v3.8.0 | Merged into v3.7.0 (Video Time Study → Vision AI capability) |
+| TBD | v3.8.0 | Industrial AI Agent (AI + Vision Integration) |
+| Merged | v3.9.0 | Merged into v3.8.0 (Video Time Study → Vision AI capability) |
 | TBD | v3.9.0 | Predictive Analytics & Machine Learning |
 | TBD | v4.1.0 | TBD (defined based on v3.x progress) |
 
@@ -421,7 +422,7 @@ python build_nuitka.py --onefile      # single executable
 
 ---
 
-## v3.1.0 — DOE & Power Analysis (TBD)
+## v3.1.0 ✅ Completed — DOE & Power Analysis
 
 > Theme: complete the full experimental-design chain, benchmarked against Minitab DOE module.
 > Position: first release of the v3.x continuous-small-release sequence, focused on a single statistical domain.
@@ -441,7 +442,19 @@ python build_nuitka.py --onefile      # single executable
 
 ---
 
-## v3.2.0 ✅ Completed — Time Series & Forecasting
+## v3.2.0 ✅ Completed — Linux Port + Dual-System Distribution
+
+> Theme: cross-platform port — Linux (Debian/Ubuntu family) support, Windows/Linux dual release.
+> Target distros: Debian 13 / elementary OS 8.1 / Ubuntu 22.04+ | From v3.2.0 the license system was dropped; only code-level encryption retained.
+
+### Key Deliverables
+- Cross-platform font system (CJK-safe), keyring credential storage on Linux
+- AppImage + .deb packaging for Debian/Ubuntu; Windows Inno Setup installer kept in sync
+- Runtime/library path handling for both platforms (Nuitka + PyInstaller paths)
+
+---
+
+## v3.3.0 ✅ Completed — Time Series & Forecasting
 
 > Theme: complete full time-series analysis capability, supporting trend forecasting and seasonal decomposition.
 
@@ -459,7 +472,7 @@ python build_nuitka.py --onefile      # single executable
 
 ---
 
-## v3.3.0 ✅ Completed — Reliability & Survival Analysis
+## v3.4.0 ✅ Completed — Reliability & Survival Analysis
 
 > Theme: complete the full reliability engineering chain, benchmarked against Minitab Reliability module.
 
@@ -478,7 +491,7 @@ python build_nuitka.py --onefile      # single executable
 
 ---
 
-## v3.4.0 ✅ Completed — MSA & Capability Deepening
+## v3.5.0 ✅ Completed — MSA & Capability Deepening
 
 > Theme: deepen measurement-system analysis and process capability to Minitab-level advanced features.
 
@@ -497,7 +510,7 @@ python build_nuitka.py --onefile      # single executable
 
 ---
 
-## v3.5.0 — Graph Builder Enhancement & Interactive Experience (TBD)
+## v3.6.0 — Graph Builder Enhancement & Interactive Experience (P1–P6 complete · pending manual acceptance)
 
 > Theme: upgrade the existing chart tool to Minitab Graph Builder-level interactive experience.
 
@@ -516,7 +529,23 @@ python build_nuitka.py --onefile      # single executable
 
 ---
 
-## v3.6.0 — Real-Time SPC Cloud Dashboard & Data Connectors (TBD)
+## v3.6.1 — Full Code-Quality Audit & Static-Defect Fixes (Completed)
+
+> Triggered by the multi-round regressions on the v3.6.0 chart-render pipeline: full-repo ruff (F/E/B) + semantic review + serial full regression over 72 test files.
+
+### Fix List
+- 7 latent crash paths: taguchi noise inner arrays (missing PB builder + list slice on plain lists), report-template builtins scoped wrong, sampling_engine typing imports, anti_debug local import shadowing (Windows path), tpm/msa/doe undefined-name paths
+- Loop-closure bindings (auto_cap / data_validator), exception chaining (secret_store / sql_loader), dead assignments removed (mixture / gage_rr / factorial / johnson / power / regression / icons / fishbone / analysis_card)
+- 171 unused imports / f-strings auto-cleaned; explicit `__all__` on analysis.ie / analysis.quality
+- TEMP scripts untracked + stray Windows-path junk file removed
+- Full regression green: 72 pytest files (serial) + script-style integration assertions (~1300 cases)
+
+### Carried Over (style debt, no runtime impact — scheduled as v3.7.0 prerequisites)
+- 63 unused assignments (F841), ~570 one-line multi-statements (E701/E702), 20 late module-level imports (E402), ruff into dev/CI workflow
+
+---
+
+## v3.7.0 — Real-Time SPC Cloud Dashboard & Data Connectors (TBD)
 
 > Theme: upgrade ESP32/MaixCAM device framework to Minitab Real-Time SPC-level real-time monitoring capability.
 
@@ -536,7 +565,7 @@ python build_nuitka.py --onefile      # single executable
 
 ---
 
-## v3.7.0 — Industrial AI Agent (AI + Vision Integration) (TBD)
+## v3.8.0 — Industrial AI Agent (AI + Vision Integration) (TBD)
 
 > Theme: build an industrial-grade AI Agent platform, integrating LLM intelligent analysis + vision motion recognition, BYOK model, proactive-suggestion type.
 > v3.8.0 Video Time Study has been merged into this version, Vision AI as one of Agent's core capabilities.
@@ -618,7 +647,7 @@ QA-Tool v3.7.0 Industrial AI Agent
 
 ---
 
-## v3.8.0 — Merged into v3.7.0
+## v3.9.0 — Merged into v3.8.0
 
 > ⚠️ This version has been merged into v3.7.0 Industrial AI Agent.
 > Video Time Study (Vision AI) is implemented as Agent core capability in v3.7.0 Phase 2.
@@ -656,6 +685,8 @@ QA-Tool v3.7.0 Industrial AI Agent
 
 | Date | Version | Content |
 |------|---------|---------|
+| 09-06 | v3.6.1 | Full code-quality audit & fixes: 7 latent crash paths (taguchi noise arrays, report templates builtin scope, sampling_engine typing imports, anti_debug local import shadowing, tpm/msa/doe undefined names) + loop-closure bindings + exception chaining + 171 unused imports cleaned + TEMP dir untracked + 72-file serial regression all green |
+| 09-06 | v3.6.0 (code) | Graph Builder completed: chart option editor (live params / persistent options) + pie·pareto real-time interaction + heatmap/scatter-matrix + faceting small multiples + PPTX/hi-res PNG/SVG export + thumbnail chart gallery + render-pipeline hardening (canvas swap / hidden toolbar / scroll stability) + integration test suite. Pending manual acceptance before release |
 | 09-05 | v3.5.0 | MSA & Capability Deepening completed: Attribute Agreement Enhancement (Fleiss's Kappa + Effective Kappa + Bias Matrix) + EMP Method Gauge Study + Gage R&R Enhancement (Variance Component Chart + Interaction Chart + Uncertainty Budget) + Capability Sixpack + Auto Capability Analysis + Edgeworth Approximation + 100+ tests |
 | 09-04 | v3.7.0-planning | Architecture adjustment: v3.7.0 + v3.8.0 merged into Industrial AI Agent (AI + Vision Integration); v3.8.0 Video Time Study as Agent Vision capability implemented in v3.7.0 Phase 2 |
 | 09-04 | v3.4.0 | Reliability & Survival Analysis completed: Weibull 2P/3P/4P + CI + KM + Cox + ALT + RBD + Crow-AMSAA + Warranty Analysis + 72 reliability tests |
