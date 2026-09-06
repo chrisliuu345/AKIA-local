@@ -628,5 +628,6 @@
   "device.add_network_title": "添加网络设备",
   "device.add_network_prompt": "设备地址 (host:port)",
   "device.add_network_invalid": "地址格式无效，应为 host:port（如 192.168.50.46:9000）",
-  "device.add_network_fail": "未能连接或识别该地址的设备，请确认设备已开机且服务已启动"
+  "device.add_network_fail": "未能连接或识别该地址的设备，请确认设备已开机且服务已启动",
+  "menu.export_pptx": "导出全部图表为 PowerPoint"
 }

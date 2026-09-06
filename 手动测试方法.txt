@@ -1,0 +1,175 @@
+QA-Tool v3.5.0 MSA与能力深化 — 手动测试方法
+============================================
+
+测试环境要求:
+- Python 3.14.4
+- PySide6
+- QT_QPA_PLATFORM=offscreen (Linux)
+
+启动命令:
+  source .venv/bin/activate
+  python main.py
+
+============================================
+Phase 1: 属性一致性增强
+============================================
+
+测试文件: analysis/msa/attribute_agree.py
+测试用例: tests/test_attribute_agree.py
+
+手动测试步骤:
+
+1. 基本2评注者分析
+   - 准备数据: 10行, 包含 result 和 standard 两列
+   - 调用: analyze(df, "result", "standard")
+   - 验证: 返回 kappa, kappa_interpretation, effective_kappa
+
+2. 带评注者的分析
+   - 准备数据: 20行, 包含 result, standard, operator 三列
+   - 调用: analyze(df, "result", "standard", operator_col="operator")
+   - 验证: 返回 operator_agreements, method="cohen"
+
+3. 3+评注者使用 Fleiss's Kappa
+   - 准备数据: 12行, 3个评注者, 4个零件
+   - 调用: analyze(df, "result", "standard", operator_col="operator", method="auto")
+   - 验证: method="fleiss", 0 <= kappa <= 1
+
+4. 偏差矩阵
+   - 准备数据: 10行, 包含 operator 列
+   - 验证: bias_matrix.matrix 包含每个评注者×类别的计数
+
+5. 有效 Kappa
+   - 验证: effective_kappa = kappa / kappa_max
+   - 验证: kappa_max 在 [0, 1] 范围内
+
+运行测试:
+  python -m pytest tests/test_attribute_agree.py -v
+
+============================================
+Phase 2: EMP 方法量具研究
+============================================
+
+测试文件: analysis/msa/emp.py
+测试用例: tests/test_emp.py
+
+手动测试步骤:
+
+1. EMP Crossed 基本分析
+   - 准备数据: 10零件 × 3操作员 × 3重复 = 90行
+   - 调用: analyze_crossed(df, "measurement", "part", "operator")
+   - 验证: 返回 variance_components, percentages, ndc, discrimination_grade
+
+2. 带公差的 EMP 分析
+   - 准备数据: 8零件 × 2操作员 × 3重复 = 48行
+   - 调用: analyze_crossed(..., tolerance=2.0)
+   - 验证: percentages.grr_pct_tol 存在
+
+3. 分辨力分级
+   - ndc < 2 → Grade 1 (unacceptable)
+   - ndc = 2-3 → Grade 2 (marginal)
+   - ndc = 4-5 → Grade 3 (acceptable)
+   - ndc >= 6 → Grade 4 (excellent)
+
+4. Wheeler 判异准则
+   - 验证: 返回8条准则
+   - 每条准则包含 id, name, description, status, detail
+
+5. 交互效应
+   - 验证: interaction.data 包含每个操作员的均值和交互效应
+
+运行测试:
+  python -m pytest tests/test_emp.py -v
+
+============================================
+Phase 3: Gage R&R 增强
+============================================
+
+测试文件: analysis/msa/gage_rr.py
+测试用例: tests/test_gage_rr_enhanced.py
+
+手动测试步骤:
+
+1. 方差分量图数据
+   - 准备数据: 8零件 × 3操作员 × 3重复 = 72行
+   - 调用: analyze_crossed(df, "measurement", "part", "operator")
+   - 验证: variance_chart.components 包含5个分量
+   - 验证: variance_chart.standard_deviation 包含5个标准差
+
+2. 交互效应图数据
+   - 验证: interaction_chart.categories 包含零件列表
+   - 验证: interaction_chart.series 包含每个操作员的数据
+   - 验证: interaction_chart.overall_means 包含总体均值
+
+3. 不确定度预算
+   - 准备数据: 带 tolerance 参数
+   - 验证: uncertainty.standard_uncertainty 包含3个分量
+   - 验证: uncertainty.combined_uncertainty > 0
+   - 验证: uncertainty.coverage_factor = 2
+   - 验证: uncertainty.expanded_uncertainty = 2 × combined
+   - 验证: uncertainty.tolerance_ratio = expanded / (tolerance/2)
+
+4. 不确定度解释
+   - ratio < 0.1 → "不确定度极小"
+   - ratio < 0.3 → "不确定度较小"
+   - ratio < 0.5 → "不确定度适中"
+   - ratio < 1.0 → "不确定度较大"
+   - ratio >= 1.0 → "不确定度过大"
+
+运行测试:
+  python -m pytest tests/test_gage_rr_enhanced.py -v
+
+============================================
+UI 集成测试 (Phase 6)
+============================================
+
+测试文件: ui/tabs/msa_tab.py
+
+手动测试步骤:
+
+1. 启动应用
+   python main.py
+
+2. 进入 MSA Tab
+
+3. 测试 EMP 方法
+   - 选择分析方法: "EMP 方法"
+   - 选择测量列、零件列、操作员列
+   - 点击"分析"
+   - 验证: 显示分辨力分级、Wheeler准则、方差分量图
+
+4. 测试 Gage R&R 增强
+   - 选择分析方法: "量具R&R (交叉)"
+   - 输入公差值
+   - 点击"分析"
+   - 验证: 显示方差分量图、交互效应图、不确定度预算
+
+5. 测试属性一致性增强
+   - 选择分析方法: "属性一致性分析"
+   - 选择评注结果列、标准列、评注者列
+   - 点击"分析"
+   - 验证: 显示 Cohen's/Fleiss's Kappa、有效Kappa、偏差矩阵
+
+============================================
+回归测试
+============================================
+
+运行所有 MSA 相关测试:
+  python -m pytest tests/test_attribute_agree.py tests/test_emp.py tests/test_gage_rr_enhanced.py tests/test_type1.py -v
+
+运行所有 Capability 相关测试:
+  python -m pytest tests/test_johnson.py tests/test_tolerance_interval.py -v
+
+运行全量测试 (逐文件):
+  for f in tests/test_*.py; do python -m pytest "$f" -q --tb=line; done
+
+============================================
+已知问题
+============================================
+
+1. PySide6 + scipy 并发初始化可能导致死锁
+   - 解决方案: 逐文件运行测试, 不要 pytest tests/
+
+2. 中文字体在某些系统可能显示为方块
+   - 解决方案: 安装 fonts-noto-cjk
+
+3. Matplotlib 图表在无头环境需要设置 QT_QPA_PLATFORM=offscreen

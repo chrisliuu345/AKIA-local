@@ -1,6 +1,5 @@
 """test_project_context.py — QualityCharacteristic + ProjectContext 单元测试"""
 
-import pytest
 from core.project_context import QualityCharacteristic, ProjectContext
 
 

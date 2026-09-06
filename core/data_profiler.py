@@ -286,7 +286,7 @@ class DataProfiler:
                 "tab_index": 6,
                 "tab_name": "回归分析",
                 "method": "线性回归",
-                "reason": f"数值变量间可能存在相关关系，建议回归建模",
+                "reason": "数值变量间可能存在相关关系，建议回归建模",
                 "params": {"response": numeric[0]["name"], "factor1": numeric[1]["name"]},
                 "icon": "REG",
             }
@@ -341,7 +341,7 @@ class DataProfiler:
 
         if len(numeric) >= 3 and (usl_col or lsl_col):
             rec = {"tab_index": 18, "tab_name": "工序能力对比", "method": "多工序Cp/Cpk对比", "icon": "CPC",
-                   "reason": f"多数值列且检测到规格限, 推荐工序能力对比图",
+                   "reason": "多数值列且检测到规格限, 推荐工序能力对比图",
                    "params": {"column": numeric[0]["name"]}}
             rec["confidence"] = {"grade": "highly_recommended", "percentage": 0.85}
             recs.append(rec)

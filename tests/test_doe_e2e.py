@@ -3,9 +3,7 @@ DOE 全流程 E2E 测试
 
 验证各设计类型的完整工作流：设计生成 → 数据填充 → 分析 → 结果验证
 """
-import pytest
 import numpy as np
-import pandas as pd
 from analysis.doe import (
     plackett_burman, definitive_screening, fractional,
     taguchi, mixture, factorial, response_surface, box_behnken,

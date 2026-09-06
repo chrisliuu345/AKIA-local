@@ -8,11 +8,11 @@
 - Edgeworth 近似能力指数
 """
 
-from typing import Dict, Any, Optional, List, Tuple
+from typing import Dict, Any, Optional, List
+import warnings
 import numpy as np
 import pandas as pd
 from scipy import stats
-from scipy.optimize import minimize
 
 
 DISTRIBUTIONS = {
@@ -117,7 +117,7 @@ def _fit_all_distributions(data: np.ndarray) -> List[Dict[str, Any]]:
 
             ks_stat, ks_p = stats.kstest(
                 data if dist_name == "normal" else positive_data,
-                lambda x: scipy_dist.cdf(x, *params)
+                lambda x, d=scipy_dist, p=params: d.cdf(x, *p)
             )
 
             results.append({
@@ -170,7 +170,9 @@ def _select_transform(data: np.ndarray) -> Dict[str, Any]:
 
     if skewness > 0.5:
         try:
-            transformed, lmbda = stats.boxcox(data[data > 0])
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                transformed, lmbda = stats.boxcox(data[data > 0])
             return {
                 "method": "boxcox",
                 "transformed": transformed,
@@ -184,7 +186,9 @@ def _select_transform(data: np.ndarray) -> Dict[str, Any]:
     if skewness < -0.5:
         try:
             flipped = data.max() - data + 1
-            transformed, lmbda = stats.boxcox(flipped[flipped > 0])
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                transformed, lmbda = stats.boxcox(flipped[flipped > 0])
             return {
                 "method": "boxcox_inverse",
                 "transformed": transformed,

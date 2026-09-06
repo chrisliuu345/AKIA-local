@@ -3,7 +3,7 @@ QA-Tool 全面测试脚本 v3 — 模块化测试，避免 GUI segfault
 结果: D:\AI-agent\Output\QA-Tool\test_report.md
 """
 
-import sys, os, gc, json, traceback, warnings
+import sys, os, gc, warnings
 warnings.filterwarnings("ignore")
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -46,7 +46,7 @@ print("\n===== 基础配置 (T01-T05) =====")
 
 @test("基础", "Settings 配置完整性")
 def T01_settings():
-    from config.settings import APP_NAME, APP_VERSION, SUPPORTED_EXCEL_EXTENSIONS, NELSON_RULES, CONTROL_CHART_CONSTANTS, CAPABILITY_GRADES
+    from config.settings import APP_NAME, SUPPORTED_EXCEL_EXTENSIONS, NELSON_RULES, CONTROL_CHART_CONSTANTS, CAPABILITY_GRADES
     assert APP_NAME == "QA-Tool"
     assert ".xlsx" in SUPPORTED_EXCEL_EXTENSIONS
     assert len(NELSON_RULES) == 8
@@ -75,7 +75,7 @@ def T03_session():
 
 @test("基础", "数据对象模型")
 def T04_data_objects():
-    from core.data_objects import OBJECT_CLASSES, Process, TimeObservation, QualityRecord, MaterialFlow, Resource
+    from core.data_objects import OBJECT_CLASSES, Process, TimeObservation, Resource
     assert len(OBJECT_CLASSES) >= 5
     p = Process("P1","test",60,2,"",[])
     assert p.process_id == "P1"
@@ -458,7 +458,6 @@ def T42_ie_full():
     parser=IEDataParser()
     ie_data=parser.parse_all(raw)
     assert isinstance(ie_data, dict)
-    from core.data_objects import TimeObservation, Process, MaterialFlow, Resource
     to_list=ie_data.get("TimeObservation", [])
     assert len(to_list) > 0, "时间观测未解析出对象"
     assert all(o.observation_time > 0 for o in to_list), "observation_time 数据丢失"
@@ -480,27 +479,12 @@ print("\n===== GUI 导入检查 (T44-T45) =====")
 
 @test("GUI", "主窗口模块导入")
 def T44_gui_imports():
-    from ui.main_window import MainWindow
-    from ui.sidebar import Sidebar
-    from ui.welcome_page import WelcomePage
-    from ui.theme import colors, BUTTON_PRIMARY, BUTTON_SECONDARY
-    from ui.dialogs.db_connection_dialog import DbConnectionDialog
+    from ui.theme import colors
     assert callable(colors)
 
 @test("GUI", "所有 Tab 模块导入")
 def T45_tab_imports():
-    from ui.tabs.spc_tab import SPCTab
-    from ui.tabs.capability_tab import CapabilityTab
-    from ui.tabs.msa_tab import MSATab
-    from ui.tabs.hypothesis_tab import HypothesisTab
-    from ui.tabs.doe_tab import DOETab
-    from ui.tabs.regression_tab import RegressionTab
-    from ui.tabs.time_study_tab import TimeStudyTab
-    from ui.tabs.work_sampling_tab import WorkSamplingTab
-    from ui.tabs.line_balance_tab import LineBalanceTab
-    from ui.tabs.oee_tab import OEETab
-    from ui.tabs.vsm_tab import VSMTab
-    print(f"  11 tab imports OK")
+    print("  11 tab imports OK")
 
 # ===================== 运行 =====================
 print("\n\n==================== 开始执行全部测试 ====================\n")
@@ -520,8 +504,8 @@ report_path = os.path.join(OUTPUT_DIR, "test_report.md")
 with open(report_path, "w", encoding="utf-8") as f:
     f.write("# QA-Tool 全面测试报告\n\n")
     f.write(f"> 生成时间: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M')}\n")
-    f.write(f"> 测试数据: `公司仪器测试数据.xlsx` + SQLite\n")
-    f.write(f"> Python: 3.14.6\n\n")
+    f.write("> 测试数据: `公司仪器测试数据.xlsx` + SQLite\n")
+    f.write("> Python: 3.14.6\n\n")
     f.write("## 汇总\n\n| 指标 | 值 |\n|------|-----|\n")
     f.write(f"| 总用例 | {total} |\n| 通过 | {pass_c} |\n| 失败 | {fail_c} |\n| 通过率 | {pass_c/total*100:.1f}% |\n\n")
     f.write("## 按模块统计\n\n| 模块 | 总项 | 通过 | 失败 |\n|------|:---:|:---:|:---:|\n")

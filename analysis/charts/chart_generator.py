@@ -10,8 +10,14 @@ from matplotlib.figure import Figure
 from scipy import stats as sp_stats
 from scipy.interpolate import griddata
 from output.chart_engine import (
-    create_histogram, create_pareto_chart, create_correlation_heatmap,
+    create_histogram, create_pareto_chart,
     _ensure_font,
+)
+from analysis.charts.heatmap import (
+    create_correlation_heatmap, create_scatter_matrix,
+)
+from analysis.charts.faceting import (
+    create_small_multiples,
 )
 from config.settings import (
     CHART_DPI, FONT_SIZE_TITLE, FONT_SIZE_LABEL, FONT_SIZE_TICK,
@@ -55,9 +61,9 @@ def _get_palette(palette_name: str = "专业蓝") -> List[str]:
 
 
 CHART_TYPES = [
-    "直方图", "箱线图", "散点图", "帕累托图", "概率图", "矩阵图",
+    "直方图", "箱线图", "散点图", "帕累托图", "概率图", "矩阵图", "散点矩阵图",
     "残差图", "主效应图", "交互效应图", "等值线图", "3D曲面图", "时间序列图",
-    "气泡图", "雷达图", "瀑布图",
+    "气泡图", "雷达图", "瀑布图", "小多图",
 ]
 
 CHART_CONFIGS = OrderedDict([
@@ -67,6 +73,7 @@ CHART_CONFIGS = OrderedDict([
     ("帕累托图", [("分类列", "text"), ("数值列", "numeric")]),
     ("概率图", [("数值列", "numeric")]),
     ("矩阵图", [("数值列(可多选)", "multi_numeric")]),
+    ("散点矩阵图", [("数值列(可多选)", "multi_numeric")]),
     ("残差图", [("实际值列", "numeric"), ("预测值列", "numeric")]),
     ("主效应图", [("因子列(可多选)", "multi_text"), ("响应列", "numeric")]),
     ("交互效应图", [("因子1", "text"), ("因子2", "text"), ("响应列", "numeric")]),
@@ -76,6 +83,7 @@ CHART_CONFIGS = OrderedDict([
     ("气泡图", [("X 轴列", "numeric"), ("Y 轴列", "numeric"), ("气泡大小列", "numeric")]),
     ("雷达图", [("分类列", "text"), ("数值列(可多选)", "multi_numeric")]),
     ("瀑布图", [("分类列", "text"), ("数值列", "numeric")]),
+    ("小多图", [("数值列", "numeric"), ("分组列", "text")]),
 ])
 
 
@@ -103,7 +111,8 @@ def _build_histogram(data: dict, options: dict) -> Figure:
         ax.text(0.5, 0.5, "请选择数值列", ha="center", va="center", fontsize=14)
         return fig
     series = pd.to_numeric(df[col], errors="coerce").dropna()
-    fig = create_histogram(series.values, title=options.get("title", col), bins=0)
+    chart_opts = options.get("chart_options", {})
+    fig = create_histogram(series.values, title=options.get("title", col), options=chart_opts)
     _apply_figure_palette(fig, options.get("palette", "专业蓝"))
     _apply_figure_theme(fig, options)
     return fig
@@ -117,18 +126,28 @@ def _build_boxplot(data: dict, options: dict) -> Figure:
         ax.text(0.5, 0.5, "请选择数值列", ha="center", va="center", fontsize=14)
         return fig
     palette = _get_palette(options.get("palette", "专业蓝"))
+    chart_opts = options.get("chart_options", {})
+    label_fontsize = chart_opts.get("label_fontsize", FONT_SIZE_TICK)
+    show_grid = chart_opts.get("show_grid", True)
+    show_mean = chart_opts.get("show_mean", True)
     fig, ax = plt.subplots(figsize=(max(7, len(cols) * 2), 5), dpi=_dpi())
     values = [pd.to_numeric(df[c], errors="coerce").dropna().values for c in cols if c in df.columns]
     labels = [c for c in cols if c in df.columns]
     bp = ax.boxplot(values, patch_artist=True,
                     medianprops={"color": "#e1e2e6", "linewidth": 1.5})
-    ax.set_xticklabels(labels)
+    ax.set_xticklabels(labels, fontsize=label_fontsize)
     for patch, color in zip(bp["boxes"], palette[:len(values)]):
         patch.set_facecolor(color)
         patch.set_alpha(0.6)
+    if show_mean:
+        for i, vals in enumerate(values, start=1):
+            if len(vals):
+                ax.plot(i, np.mean(vals), marker="o", markersize=5,
+                        color="red", alpha=0.8, zorder=3)
     ax.set_title(options.get("title", "箱线图"), fontsize=FONT_SIZE_TITLE, fontweight="bold")
-    ax.set_ylabel("数值", fontsize=FONT_SIZE_LABEL)
-    ax.grid(True, alpha=0.3, axis="y")
+    ax.set_ylabel("数值", fontsize=label_fontsize)
+    if show_grid:
+        ax.grid(True, alpha=0.3, axis="y")
     fig.tight_layout()
     return fig
 
@@ -149,9 +168,12 @@ def _build_scatter(data: dict, options: dict) -> Figure:
         ax.text(0.5, 0.5, "数据点不足", ha="center", va="center", fontsize=14)
         return fig
     palette = _get_palette(options.get("palette", "专业蓝"))
-    show_reg = options.get("show_regression", True)
+    chart_opts = options.get("chart_options", {})
+    show_reg = chart_opts.get("show_regression", options.get("show_regression", True))
+    point_size = chart_opts.get("point_size", 50)
+    point_alpha = chart_opts.get("point_alpha", 0.6)
     fig, ax = plt.subplots(figsize=(8, 6), dpi=_dpi())
-    ax.scatter(x, y, alpha=0.6, edgecolors="white", linewidth=0.3, color=palette[0])
+    ax.scatter(x, y, s=point_size, alpha=point_alpha, edgecolors="white", linewidth=0.3, color=palette[0])
     if show_reg:
         slope, intercept, r_val, p_val, std_err = sp_stats.linregress(x, y)
         x_line = np.linspace(x.min(), x.max(), 100)
@@ -181,7 +203,8 @@ def _build_pareto(data: dict, options: dict) -> Figure:
     grouped = df.groupby(cat_col)[vals.name if isinstance(vals, pd.Series) else val_col].sum()
     labels = grouped.index.tolist()
     values = grouped.values.tolist()
-    fig = create_pareto_chart(labels, values, title=options.get("title", "帕累托图"))
+    chart_opts = options.get("chart_options", {})
+    fig = create_pareto_chart(labels, values, title=options.get("title", "帕累托图"), options=chart_opts)
     _apply_figure_palette(fig, options.get("palette", "专业蓝"))
     _apply_figure_theme(fig, options)
     return fig
@@ -229,8 +252,48 @@ def _build_matrix(data: dict, options: dict) -> Figure:
         ax.text(0.5, 0.5, "至少需要 2 个数值列", ha="center", va="center", fontsize=14)
         return fig
     fig = create_correlation_heatmap(df, numeric_cols=valid_cols,
-                                     title=options.get("title", "相关矩阵热力图"))
+                                     title=options.get("title", "相关矩阵热力图"),
+                                     options=options.get("chart_options", {}))
     _apply_figure_palette(fig, options.get("palette", "专业蓝"))
+    _apply_figure_theme(fig, options)
+    return fig
+
+
+def _build_scatter_matrix(data: dict, options: dict) -> Figure:
+    df = data.get("df")
+    cols = data.get("columns", [])
+    if df is None or not cols:
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
+        ax.text(0.5, 0.5, "请选择至少 2 个数值列", ha="center", va="center", fontsize=14)
+        return fig
+    valid_cols = [c for c in cols if c in df.columns]
+    if len(valid_cols) < 2:
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
+        ax.text(0.5, 0.5, "至少需要 2 个数值列", ha="center", va="center", fontsize=14)
+        return fig
+    fig = create_scatter_matrix(df, numeric_cols=valid_cols,
+                                title=options.get("title", "散点矩阵图"),
+                                options=options.get("chart_options", {}))
+    _apply_figure_palette(fig, options.get("palette", "专业蓝"))
+    _apply_figure_theme(fig, options)
+    return fig
+
+
+def _build_faceting(data: dict, options: dict) -> Figure:
+    """小多图：数值列 + 分组列 → 每组分面子图"""
+    df = data.get("df")
+    cols = data.get("columns", [])
+    if df is None or len(cols) < 2:
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
+        ax.text(0.5, 0.5, "请选择数值列和分组列", ha="center", va="center", fontsize=14)
+        return fig
+    value_col, group_col = cols[0], cols[1]
+    palette = _get_palette(options.get("palette", "专业蓝"))
+    chart_opts = dict(options.get("chart_options", {}))
+    chart_opts.setdefault("color", palette[0])
+    fig = create_small_multiples(df, value_col, group_col,
+                                 title=options.get("title", "小多图"),
+                                 options=chart_opts)
     _apply_figure_theme(fig, options)
     return fig
 
@@ -253,21 +316,28 @@ def _build_residual(data: dict, options: dict) -> Figure:
         return fig
     residuals = actual - pred
     palette = _get_palette(options.get("palette", "专业蓝"))
+    chart_opts = options.get("chart_options", {})
+    point_size = chart_opts.get("point_size", 50)
+    point_alpha = chart_opts.get("point_alpha", 0.6)
+    show_grid = chart_opts.get("show_grid", True)
     fig, axes = plt.subplots(1, 2, figsize=(12, 5), dpi=_dpi())
     ax1 = axes[0]
-    ax1.scatter(pred, residuals, alpha=0.6, edgecolors="white", linewidth=0.3, color=palette[0])
+    ax1.scatter(pred, residuals, s=point_size, alpha=point_alpha,
+                edgecolors="white", linewidth=0.3, color=palette[0])
     ax1.axhline(y=0, color="red", linestyle="--", linewidth=1)
     ax1.set_xlabel("预测值", fontsize=FONT_SIZE_LABEL)
     ax1.set_ylabel("残差", fontsize=FONT_SIZE_LABEL)
     ax1.set_title("残差 vs 拟合值", fontsize=FONT_SIZE_TITLE - 2)
-    ax1.grid(True, alpha=0.3)
+    if show_grid:
+        ax1.grid(True, alpha=0.3)
     ax2 = axes[1]
     ax2.hist(residuals, bins=min(30, max(5, len(residuals)//5)), color=palette[0], alpha=0.7, edgecolor="white")
     ax2.axvline(x=0, color="red", linestyle="--", linewidth=1)
     ax2.set_xlabel("残差", fontsize=FONT_SIZE_LABEL)
     ax2.set_ylabel("频次", fontsize=FONT_SIZE_LABEL)
     ax2.set_title("残差分布", fontsize=FONT_SIZE_TITLE - 2)
-    ax2.grid(True, alpha=0.3, axis="y")
+    if show_grid:
+        ax2.grid(True, alpha=0.3, axis="y")
     fig.suptitle(options.get("title", "残差分析图"), fontsize=FONT_SIZE_TITLE, fontweight="bold")
     fig.tight_layout()
     return fig
@@ -890,18 +960,20 @@ def _build_warranty_cost(data: dict, options: dict) -> Figure:
     warranty_cost = summary.get("warranty_cost_estimate", 0)
     total_units = summary.get("total_units", 0)
 
+    chart_opts = options.get("chart_options", {})
+    label_fontsize = chart_opts.get("label_fontsize", 11)
+
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4), dpi=_dpi())
 
     sizes = [r_warranty, failure_prob]
     labels = [f"可靠\n{r_warranty:.1%}", f"失效\n{failure_prob:.1%}"]
     colors = ["#27ae60", "#e74c3c"]
     ax1.pie(sizes, labels=labels, colors=colors, autopct="", startangle=90,
-            textprops={"fontsize": 11, "color": "#e1e2e6"})
+            textprops={"fontsize": label_fontsize, "color": "#e1e2e6"})
     ax1.set_title("保修期末状态", fontsize=FONT_SIZE_TITLE)
 
-    cost_ok = total_units * r_warranty * 0
     cost_fail = warranty_cost
-    bars = ax2.bar(["可靠产品", "失效产品"], [0, cost_fail], color=["#27ae60", "#e74c3c"], alpha=0.7)
+    ax2.bar(["可靠产品", "失效产品"], [0, cost_fail], color=["#27ae60", "#e74c3c"], alpha=0.7)
     ax2.set_ylabel("成本", fontsize=FONT_SIZE_LABEL)
     ax2.set_title(f"保修总成本: {warranty_cost:,.0f}", fontsize=FONT_SIZE_TITLE)
     ax2.text(1, cost_fail * 0.5, f"{expected_failures:.0f} 次失效\n× {summary.get('cost_per_failure', 0)} /次",
@@ -918,6 +990,8 @@ BUILDERS = {
     "帕累托图": _build_pareto,
     "概率图": _build_probplot,
     "矩阵图": _build_matrix,
+    "散点矩阵图": _build_scatter_matrix,
+    "小多图": _build_faceting,
     "残差图": _build_residual,
     "主效应图": _build_main_effects,
     "交互效应图": _build_interaction,

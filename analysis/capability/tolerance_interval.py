@@ -2,7 +2,7 @@
 
 import numpy as np
 from scipy import stats
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any, Tuple
 
 
 def tolerance_interval_normal(

@@ -57,7 +57,6 @@ def _check_parent_process() -> List[str]:
                         break
         else:
             try:
-                import subprocess
                 result = subprocess.run(
                     ['ps', '-p', str(ppid), '-o', 'comm='],
                     capture_output=True, text=True, timeout=5

@@ -7,7 +7,6 @@ build_nuitka.py — QA-Tool Nuitka 构建脚本（跨平台）
     python build_nuitka.py --onefile --standalone  # 两者都构建
 """
 
-import os
 import sys
 import shutil
 import subprocess
@@ -21,7 +20,7 @@ ICON_PATH_LINUX = PROJECT_DIR / "assets" / "logo.png"
 VERSION_INFO = PROJECT_DIR / "version_info.txt"
 
 APP_NAME = "QA-Tool"
-APP_VERSION = "3.4.0"
+APP_VERSION = "3.5.0"
 
 BUILD_DIR = PROJECT_DIR / "build"
 DIST_DIR = PROJECT_DIR / "dist"
@@ -125,9 +124,6 @@ def build_nuitka(mode):
         
         if ICON_PATH_WIN.exists():
             cmd.append("--windows-icon-from-ico=" + str(ICON_PATH_WIN))
-        
-        if VERSION_INFO.exists():
-            cmd.append("--windows-version-info=" + str(VERSION_INFO))
         
         cmd.append("--windows-company-name=QA-Tool")
         cmd.append("--windows-product-name=QA-Tool")

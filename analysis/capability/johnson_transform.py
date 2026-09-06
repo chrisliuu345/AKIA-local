@@ -4,10 +4,9 @@ Johnson 变换 — SU/SB/SL/LN 四类变换
 参考: Johnson (1949) "Systems of Frequency Curves"
 """
 
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any
 import numpy as np
 from scipy import stats
-from scipy.optimize import minimize
 
 
 JOHNSON_TYPES = ["SU", "SB", "SL", "LN"]
@@ -209,7 +208,6 @@ def _estimate_params_moment(data: np.ndarray, jtype: str) -> Dict[str, float]:
     mean = np.mean(data)
     std = np.std(data, ddof=1)
     skew = stats.skew(data)
-    kurt = stats.kurtosis(data)
 
 
     if jtype == "SU":
