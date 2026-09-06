@@ -13,8 +13,8 @@ from PySide6.QtWidgets import (
     QPushButton, QApplication, QFrame,
     QScrollArea,
 )
-from PySide6.QtCore import Qt, QSettings, QPropertyAnimation, QEasingCurve
-from PySide6.QtGui import QAction, QIcon, QFont, QPixmap, QDragEnterEvent, QDropEvent
+from PySide6.QtCore import Qt, QSettings, QPropertyAnimation, QEasingCurve, QUrl
+from PySide6.QtGui import QAction, QIcon, QFont, QPixmap, QDragEnterEvent, QDropEvent, QDesktopServices
 
 from config.settings import APP_NAME, APP_VERSION, CHART_FIGSIZE, tab_allowed
 from core.data_loader import DataLoader
@@ -195,40 +195,75 @@ class MainWindow(QMainWindow):
 
         file_menu = _pin(menubar.addMenu(i18n.tr("menu.file")))
 
-        import_quality_action = QAction("📂 " + i18n.tr("sidebar.import_quality"), self)
+        import_quality_action = QAction(i18n.tr("sidebar.import_quality"), self)
         import_quality_action.setShortcut("Ctrl+O")
         import_quality_action.triggered.connect(self._on_import_quality)
         file_menu.addAction(import_quality_action)
 
-        import_ie_action = QAction("🏭 " + i18n.tr("sidebar.import_ie"), self)
+        import_ie_action = QAction(i18n.tr("sidebar.import_ie"), self)
         import_ie_action.triggered.connect(self._on_import_ie)
         file_menu.addAction(import_ie_action)
 
-        import_db_action = QAction("🗄️ " + i18n.tr("sidebar.import_db"), self)
+        import_db_action = QAction(i18n.tr("sidebar.import_db"), self)
         import_db_action.triggered.connect(self._on_import_db)
         file_menu.addAction(import_db_action)
 
         file_menu.addSeparator()
 
-        template_action = QAction("📋 " + i18n.tr("menu.import_template"), self)
+        template_action = QAction(i18n.tr("menu.import_template"), self)
         template_action.triggered.connect(self._on_import_template)
         file_menu.addAction(template_action)
 
         file_menu.addSeparator()
 
+        recent = ProjectManager.recent_projects()
+        if recent:
+            self.recent_menu = _pin(file_menu.addMenu(i18n.tr("menu.recent")))
+            self._rebuild_recent_menu(recent)
+            recent_items = [(r["name"], r["path"]) for r in recent]
+            self.welcome_page.set_recent_projects(recent_items)
+
+        save_session = QAction(i18n.tr("menu.save_session"), self)
+        save_session.setShortcut("Ctrl+S")
+        save_session.triggered.connect(self._on_save_session)
+        file_menu.addAction(save_session)
+        load_session = QAction(i18n.tr("menu.load_session"), self)
+        load_session.triggered.connect(self._on_load_session)
+        file_menu.addAction(load_session)
+
+        save_project_action = QAction(i18n.tr("menu.save_project"), self)
+        save_project_action.setShortcut("Ctrl+Shift+S")
+        save_project_action.triggered.connect(self._on_save_project)
+        file_menu.addAction(save_project_action)
+        open_project_action = QAction(i18n.tr("menu.open_project"), self)
+        open_project_action.setShortcut("Ctrl+Shift+O")
+        open_project_action.triggered.connect(self._on_load_project)
+        file_menu.addAction(open_project_action)
+        save_shared_action = QAction(i18n.tr("menu.save_shared"), self)
+        save_shared_action.triggered.connect(self._on_save_shared)
+        file_menu.addAction(save_shared_action)
+        load_shared_action = QAction(i18n.tr("menu.load_shared"), self)
+        load_shared_action.triggered.connect(self._on_load_shared)
+        file_menu.addAction(load_shared_action)
+
+        file_menu.addSeparator()
+
         export_menu = _pin(file_menu.addMenu(i18n.tr("menu.export")))
-        export_xlsx = QAction("📊 " + i18n.tr("menu.export_xlsx"), self)
+        export_xlsx = QAction(i18n.tr("menu.export_xlsx"), self)
         export_xlsx.triggered.connect(lambda: self._on_export_all("xlsx"))
         export_menu.addAction(export_xlsx)
-        export_docx = QAction("📝 " + i18n.tr("menu.export_docx"), self)
+        export_docx = QAction(i18n.tr("menu.export_docx"), self)
         export_docx.triggered.connect(lambda: self._on_export_all("docx"))
         export_menu.addAction(export_docx)
-        export_pdf = QAction("📄 " + i18n.tr("menu.export_pdf"), self)
+        export_pdf = QAction(i18n.tr("menu.export_pdf"), self)
         export_pdf.triggered.connect(lambda: self._on_export_all("pdf"))
         export_menu.addAction(export_pdf)
-        export_pptx = QAction("📽 " + i18n.tr("menu.export_pptx"), self)
+        export_pptx = QAction(i18n.tr("menu.export_pptx"), self)
         export_pptx.triggered.connect(lambda: self._on_export_all("pptx"))
         export_menu.addAction(export_pptx)
+        export_html = QAction(i18n.tr("menu.html_export"), self)
+        export_html.triggered.connect(self._on_html_export)
+        export_menu.addAction(export_html)
 
         try:
             from output.compliance_report import ComplianceReportGenerator
@@ -244,40 +279,8 @@ class MainWindow(QMainWindow):
             pass
 
         file_menu.addSeparator()
-        save_project_action = QAction("💾 " + i18n.tr("menu.save_project"), self)
-        save_project_action.setShortcut("Ctrl+Shift+S")
-        save_project_action.triggered.connect(self._on_save_project)
-        file_menu.addAction(save_project_action)
-        open_project_action = QAction("📂 " + i18n.tr("menu.open_project"), self)
-        open_project_action.setShortcut("Ctrl+Shift+O")
-        open_project_action.triggered.connect(self._on_load_project)
-        file_menu.addAction(open_project_action)
-        save_shared_action = QAction("📤 " + i18n.tr("menu.save_shared"), self)
-        save_shared_action.triggered.connect(self._on_save_shared)
-        file_menu.addAction(save_shared_action)
-        load_shared_action = QAction("📥 " + i18n.tr("menu.load_shared"), self)
-        load_shared_action.triggered.connect(self._on_load_shared)
-        file_menu.addAction(load_shared_action)
 
-        recent = ProjectManager.recent_projects()
-        if recent:
-            self.recent_menu = _pin(file_menu.addMenu("📋 " + i18n.tr("menu.recent")))
-            self._rebuild_recent_menu(recent)
-            recent_items = [(r["name"], r["path"]) for r in recent]
-            self.welcome_page.set_recent_projects(recent_items)
-
-        file_menu.addSeparator()
-
-        save_session = QAction("💾 " + i18n.tr("menu.save_session"), self)
-        save_session.setShortcut("Ctrl+S")
-        save_session.triggered.connect(self._on_save_session)
-        file_menu.addAction(save_session)
-        load_session = QAction("📂 " + i18n.tr("menu.load_session"), self)
-        load_session.triggered.connect(self._on_load_session)
-        file_menu.addAction(load_session)
-
-        file_menu.addSeparator()
-        exit_action = QAction("🚪 " + i18n.tr("menu.exit"), self)
+        exit_action = QAction(i18n.tr("menu.exit"), self)
         exit_action.setShortcut("Ctrl+Q")
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
@@ -291,6 +294,10 @@ class MainWindow(QMainWindow):
             lambda checked: self._toggle_sidebar(not checked)
         )
         view_menu.addAction(self.toggle_sidebar_action)
+        display_mode_action = QAction(i18n.tr("menu.display_mode"), self)
+        display_mode_action.setShortcut("F11")
+        display_mode_action.triggered.connect(self._open_display_mode)
+        view_menu.addAction(display_mode_action)
 
         analysis_menu = _pin(menubar.addMenu(i18n.tr("menu.analysis")))
         quality_sub = _pin(analysis_menu.addMenu(i18n.tr("sidebar.quality_tools")))
@@ -346,13 +353,6 @@ class MainWindow(QMainWindow):
         one_click = QAction(i18n.tr("menu.one_click"), self)
         one_click.triggered.connect(self._on_one_click_analysis)
         ai_menu.addAction(one_click)
-        ai_menu.addSeparator()
-        template_act = QAction(i18n.tr("menu.template"), self)
-        template_act.triggered.connect(self._on_template_dialog)
-        ai_menu.addAction(template_act)
-        html_act = QAction(i18n.tr("menu.html_export"), self)
-        html_act.triggered.connect(self._on_html_export)
-        ai_menu.addAction(html_act)
 
         tools_menu = _pin(menubar.addMenu(i18n.tr("menu.tools")))
         settings_act = QAction(i18n.tr("menu.settings"), self, triggered=self._on_settings)
@@ -364,16 +364,21 @@ class MainWindow(QMainWindow):
         tools_menu.addAction(clean_act)
         clean_wiz_act = QAction(i18n.tr("menu.data_clean_wizard"), self, triggered=self._on_data_clean_wizard)
         tools_menu.addAction(clean_wiz_act)
-        tools_menu.addAction(QAction(i18n.tr("sidebar.template_help_tip"), self,
-                                     triggered=self._on_template_help))
-        tools_menu.addSeparator()
         tools_menu.addAction(QAction(i18n.tr("sidebar.diagnose"), self,
                                      triggered=self._on_diagnose))
-        kb_action = QAction(i18n.tr("menu.kb_search"), self)
-        kb_action.triggered.connect(self._on_llm_assist)
-        tools_menu.addAction(kb_action)
+        tools_menu.addSeparator()
+        template_act = QAction(i18n.tr("menu.template"), self)
+        template_act.triggered.connect(self._on_template_dialog)
+        tools_menu.addAction(template_act)
 
         help_menu = _pin(menubar.addMenu(i18n.tr("menu.help")))
+        guide_action = QAction(i18n.tr("menu.guide"), self)
+        guide_action.setShortcut("F1")
+        guide_action.triggered.connect(self._on_open_guide)
+        help_menu.addAction(guide_action)
+        help_menu.addAction(QAction(i18n.tr("sidebar.template_help_tip"), self,
+                                    triggered=self._on_template_help))
+        help_menu.addSeparator()
         about_action = QAction(i18n.tr("menu.about"), self)
         about_action.triggered.connect(self._on_about)
         help_menu.addAction(about_action)
@@ -698,6 +703,16 @@ class MainWindow(QMainWindow):
         from ui.dialogs.template_help_dialog import TemplateHelpDialog
         dlg = TemplateHelpDialog(self)
         dlg.exec()
+
+    def _on_open_guide(self):
+        """在系统默认浏览器中打开使用指南 (config/help/guide.html)"""
+        guide = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                             "config", "help", "guide.html")
+        if os.path.exists(guide):
+            QDesktopServices.openUrl(QUrl.fromLocalFile(guide))
+        else:
+            QMessageBox.warning(self, i18n.tr("menu.guide"),
+                                "未找到使用指南文件:\nconfig/help/guide.html")
 
     def _on_import_data(self):
         """兼容旧调用 — 默认质量导入"""
