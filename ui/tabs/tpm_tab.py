@@ -182,7 +182,6 @@ class TPMTab(BaseAnalysisTab):
             ax2.legend(fontsize=8)
 
         fig.tight_layout()
-        import matplotlib.pyplot as plt
         for i in reversed(range(self.canvas_layout.count())):
             w = self.canvas_layout.itemAt(i).widget()
             if w:

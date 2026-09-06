@@ -1,10 +1,8 @@
 """Gage R&R 增强功能测试"""
-import pytest
 import numpy as np
 import pandas as pd
 from analysis.msa.gage_rr import (
     analyze_crossed,
-    analyze_nested,
     _variance_component_data,
     _interaction_chart_data,
     _uncertainty_budget,

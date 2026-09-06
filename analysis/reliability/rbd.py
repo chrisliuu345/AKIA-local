@@ -8,7 +8,6 @@
   k_out_of_n — k/n 表决系统 (至少 k 个正常则系统正常)
 """
 
-import math
 import numpy as np
 from typing import Any, Dict, List, Optional
 

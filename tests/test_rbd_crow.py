@@ -1,7 +1,6 @@
 """可靠性框图 (RBD) + Crow-AMSAA 单元测试"""
 
 import numpy as np
-import pandas as pd
 import pytest
 
 from analysis.reliability.rbd import (

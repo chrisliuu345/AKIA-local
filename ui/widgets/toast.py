@@ -50,7 +50,7 @@ class Toast(QFrame):
         layout.setContentsMargins(16, 6, 16, 6)
         label = QLabel(message)
         label.setFont(QFont(get_ui_font(), 10))
-        label.setStyleSheet(f"color: #e1e2e6; background: transparent;")
+        label.setStyleSheet("color: #e1e2e6; background: transparent;")
         label.setWordWrap(True)
         layout.addWidget(label)
 

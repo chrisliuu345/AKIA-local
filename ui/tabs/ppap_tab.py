@@ -231,7 +231,7 @@ class PPAPTab(BaseAnalysisTab):
 
         if updated:
             QMessageBox.information(self, "PPAP 自动填充",
-                                    f"已更新以下项目:\n" + "\n".join(updated))
+                                    "已更新以下项目:\n" + "\n".join(updated))
         else:
             QMessageBox.information(self, "PPAP 自动填充",
                                     "未找到可填充的分析结果。\n"

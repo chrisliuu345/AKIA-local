@@ -119,7 +119,6 @@ def analyze_nested(
     tv = grand_std
     pv = np.sqrt(max(tv ** 2 - ev ** 2, 0))
 
-    grr = ev
     grr_pct = (ev / tv * 100) if tv > 0 else 0
     ndc = int(1.41 * (pv / ev)) if ev > 0 else 0
 

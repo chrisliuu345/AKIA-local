@@ -12,6 +12,7 @@ from PySide6.QtCore import Qt, QTimer
 
 from core.batch_scheduler import BatchTask, BatchScheduler
 from ui.theme import colors as theme_colors, BUTTON_SECONDARY, BUTTON_TOGGLE
+from ui.font_config import get_mono_font
 
 
 class BatchDialog(QDialog):
@@ -105,7 +106,7 @@ class BatchDialog(QDialog):
         self.log_view.setMaximumHeight(200)
         self.log_view.setStyleSheet(
             f"QTextEdit {{ background: {tc['bg_card']}; color: {tc['text_primary']};"
-            f"border: 1px solid {tc['border_light']}; font-family: Consolas; font-size: 11px; }}"
+            f"border: 1px solid {tc['border_light']}; font-family: {get_mono_font()}; font-size: 11px; }}"
         )
         right_layout.addWidget(self.log_view)
 

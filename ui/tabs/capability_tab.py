@@ -20,6 +20,7 @@ from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_SECONDARY, BUTTON_TOGGLE, BUTTON_PRIMARY_STRETCH
 from ui.font_config import get_ui_font
 from core.formatting import format_pvalue
+from output.chart_engine import create_capability_chart
 
 
 class CapabilityTab(BaseAnalysisTab):
@@ -301,7 +302,6 @@ class CapabilityTab(BaseAnalysisTab):
     def run_analysis(self) -> Dict[str, Any]:
         from analysis.capability import normal_cap, non_normal_cap, between_within_cap, tolerance_interval
         from analysis.distribution import fitting
-        from output.chart_engine import create_capability_chart
 
         col = self.col_combo.currentText()
         method = self.method_combo.currentText()
@@ -376,17 +376,17 @@ class CapabilityTab(BaseAnalysisTab):
             lines.append(f"样本量: {result.get('sample_size', '')}")
             params = result.get("params", {})
             if params:
-                lines.append(f"\n【参数估计】")
+                lines.append("\n【参数估计】")
                 for k, v in params.items():
                     lines.append(f"  {k}: {v}")
             data_stats = result.get("data_stats", {})
             if data_stats:
-                lines.append(f"\n【数据统计】")
+                lines.append("\n【数据统计】")
                 for k, v in data_stats.items():
                     lines.append(f"  {k}: {v}")
             tests = result.get("tests", {})
             if tests:
-                lines.append(f"\n【拟合优度检验】")
+                lines.append("\n【拟合优度检验】")
                 for test_name, test_result in tests.items():
                     if isinstance(test_result, dict):
                         stat = test_result.get("statistic", "")
@@ -401,13 +401,13 @@ class CapabilityTab(BaseAnalysisTab):
                 lines.append(f"  {k}: {v}")
 
             if normality:
-                lines.append(f"\n【正态性检验】")
+                lines.append("\n【正态性检验】")
                 pv = normality.get('p_value', '')
                 pv_str = format_pvalue(pv) if isinstance(pv, (int, float)) else str(pv)
                 lines.append(f"  p值: {pv_str}, 正态: {normality.get('is_normal', '')}")
 
             if cap:
-                lines.append(f"\n【过程能力指标】")
+                lines.append("\n【过程能力指标】")
                 for k, v in cap.items():
                     lines.append(f"  {k}: {v}")
                 grade = cap.get("grade", "")
@@ -446,16 +446,13 @@ class CapabilityTab(BaseAnalysisTab):
         self._switch_result_view(0)
 
     def _render_chart(self, result: Dict, raw_data: np.ndarray):
-        self._clear_canvas()
         try:
-            fig = create_capability_chart(result, raw_data, title="过程能力分析")
-            self.current_figure = fig
-            from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-            self.canvas = FigureCanvasQTAgg(fig)
-            self.chart_layout.addWidget(self.canvas)
-            self.canvas.draw()
+            fig = create_capability_chart(result, raw_data, title="过程能力分析", options=self._chart_options)
+            self._render_figure(fig)
             self._add_chart_toolbar()
+            self.set_chart_type("能力图")
         except Exception as e:
+            self._clear_canvas()
             err_label = QLabel(f"图表渲染失败: {e}")
             err_label.setStyleSheet("color: #e74c3c; padding: 12px;")
             err_label.setWordWrap(True)

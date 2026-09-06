@@ -20,6 +20,7 @@ from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_SECONDARY, BUTTON_TOGGLE, BUTTON_PRIMARY_STRETCH
 from ui.font_config import get_ui_font
 from core.formatting import format_pvalue
+from output.chart_engine import create_histogram
 
 
 class HypothesisTab(BaseAnalysisTab):
@@ -327,7 +328,6 @@ class HypothesisTab(BaseAnalysisTab):
 
     def run_analysis(self) -> Dict[str, Any]:
         from analysis.hypothesis import t_tests, anova, normality, variance_tests, nonparametric, equivalence, proportion
-        from output.chart_engine import create_histogram
 
         method = self.test_combo.currentText()
         col1 = self.col1_combo.currentText()
@@ -445,7 +445,7 @@ class HypothesisTab(BaseAnalysisTab):
             obs = result.get("observed", [])
             exp = result.get("expected", [])
             if obs and exp:
-                lines.append(f"\n【观测 vs 期望】")
+                lines.append("\n【观测 vs 期望】")
                 for i, (o, e) in enumerate(zip(obs, exp)):
                     lines.append(f"  类别{i+1}: 观测={o}, 期望={e:.2f}")
         elif "contingency_table" in result:
@@ -457,7 +457,7 @@ class HypothesisTab(BaseAnalysisTab):
             row_labels = result.get("row_labels", [])
             col_labels = result.get("col_labels", [])
             if table and row_labels and col_labels:
-                lines.append(f"\n【列联表】")
+                lines.append("\n【列联表】")
                 lines.append(f"  {'':>10} " + " ".join(f"{c:>8}" for c in col_labels))
                 for i, row in enumerate(table):
                     lines.append(f"  {row_labels[i]:>10} " + " ".join(f"{v:>8}" for v in row))
@@ -487,16 +487,16 @@ class HypothesisTab(BaseAnalysisTab):
         if "f_statistic" in result:
             lines.append(f"F统计量: {result.get('f_statistic', '')}")
         if "anova_table" in result:
-            lines.append(f"\n【ANOVA表】")
+            lines.append("\n【ANOVA表】")
             lines.append(str(result["anova_table"]))
         if "tests" in result:
-            lines.append(f"\n【检验详情】")
+            lines.append("\n【检验详情】")
             for test_name, test_result in result["tests"].items():
                 pv = test_result.get('p_value', '')
                 pv_str = format_pvalue(pv) if isinstance(pv, (int, float)) else str(pv)
                 lines.append(f"  {test_name}: p={pv_str}")
         if "level_stats" in result:
-            lines.append(f"\n【各组统计】")
+            lines.append("\n【各组统计】")
             for ls in result["level_stats"]:
                 lines.append(f"  {ls['level']}: n={ls['n']}, mean={ls['mean']}, std={ls['std']}")
 
@@ -506,16 +506,13 @@ class HypothesisTab(BaseAnalysisTab):
         self.result_text.update()
 
     def _render_chart(self, raw_data: np.ndarray):
-        self._clear_canvas()
         try:
-            fig = create_histogram(raw_data, title="数据分布")
-            self.current_figure = fig
-            from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-            self.canvas = FigureCanvasQTAgg(fig)
-            self.chart_layout.addWidget(self.canvas)
-            self.canvas.draw()
+            fig = create_histogram(raw_data, title="数据分布", options=self._chart_options)
+            self._render_figure(fig)
             self._add_chart_toolbar()
+            self.set_chart_type("直方图")
         except Exception as e:
+            self._clear_canvas()
             err_label = QLabel(f"图表渲染失败: {e}")
             err_label.setStyleSheet("color: #e74c3c; padding: 12px;")
             err_label.setWordWrap(True)

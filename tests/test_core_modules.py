@@ -3,11 +3,11 @@ import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pytest, tempfile, pandas as pd, numpy as np
 
-from core.formatting import format_pvalue, format_cp, format_pct, format_stat, format_ci
+from core.formatting import format_pvalue, format_cp, format_pct, format_ci
 from core.fmea_engine import FMEAItem, FMEAEngine
 from core.sheet_merger import SheetMerger
 from core.sheet_splitter import SheetSplitter
-from core.layered_form import LPAEngine, LPA_TEMPLATES
+from core.layered_form import LPAEngine
 from core.data_profiler import DataProfiler, _clean_col_name
 
 

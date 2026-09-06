@@ -1,6 +1,6 @@
 """BaseAnalysisTab — 所有分析 Tab 的共享基类"""
 
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from io import BytesIO
 import pandas as pd
 
@@ -8,10 +8,9 @@ from PySide6.QtWidgets import (
     QWidget, QFileDialog, QTableWidgetItem, QMenu, QApplication,
     QVBoxLayout, QLabel, QPushButton, QFrame,
 )
-from PySide6.QtCore import Signal, Qt, QPropertyAnimation, QEasingCurve
+from PySide6.QtCore import Signal, Qt, QTimer
 from PySide6.QtGui import QImage, QFont
 
-from core.i18n import i18n
 from ui.theme import colors as theme_colors
 from ui.font_config import get_ui_font
 
@@ -31,6 +30,9 @@ class BaseAnalysisTab(QWidget):
         self._raw_data = {}
         self._data_parser = None
         self._empty_overlay: QWidget = None
+        self._current_chart_type: Optional[str] = None
+        self._chart_options: Dict[str, Any] = {}
+        self._chart_editor_panel = None
 
     def _clear_canvas(self):
         """清空图表区域并释放 matplotlib 资源"""
@@ -47,6 +49,48 @@ class BaseAnalysisTab(QWidget):
                 pass
         self.canvas = None
         self.current_figure = None
+        self._chart_toolbar = None
+
+    def _render_figure(self, fig):
+        """渲染图表 — 仅替换 canvas 一行，编辑面板/工具栏行保持原位，页面滚动稳定。
+        每次渲染使用全新 canvas（QtAgg 不支持跨 figure 复用同一 canvas，否则残留像素乱码）"""
+        old = self.current_figure
+        self.current_figure = fig
+
+        # 1) 作废旧 canvas（若在布局中则仅移除自身，不动其它行）
+        if self.canvas is not None:
+            idx = self.chart_layout.indexOf(self.canvas)
+            if idx >= 0:
+                item = self.chart_layout.takeAt(idx)
+                w = item.widget()
+                if w is not None:
+                    w.hide()
+                    w.setParent(None)
+                    w.deleteLater()
+            if self._chart_toolbar is not None:
+                try:
+                    self._chart_toolbar.hide()
+                except Exception:
+                    pass
+                self._chart_toolbar = None
+
+        # 2) 新 canvas 置于第一行
+        from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+        self.canvas = FigureCanvasQTAgg(fig)
+        self.chart_layout.insertWidget(0, self.canvas)
+
+        # 3) 绑定菜单 + 工具栏(隐藏)/面板挂载 + 高度同步
+        self._setup_chart_menu()
+        self._add_chart_toolbar()
+        self.canvas.draw()
+
+        # 4) 释放旧图（先绘制新图再关闭，避免引用旧 figure 的绘制路径）
+        if old is not None and old is not fig:
+            import matplotlib.pyplot as plt
+            try:
+                plt.close(old)
+            except Exception:
+                pass
 
     def _switch_result_view(self, idx: int):
         self.btn_view_chart.setChecked(idx == 0)
@@ -54,17 +98,31 @@ class BaseAnalysisTab(QWidget):
         self.result_stack.setCurrentIndex(idx)
 
     def _on_save_png(self):
+        self._on_save_figure("PNG 图片 (*.png)", "png", dpi=None)
+
+    def _on_save_hires_png(self):
+        self._on_save_figure("PNG 高清 300 DPI (*.png)", "png", dpi=300)
+
+    def _on_save_svg(self):
+        self._on_save_figure("SVG 矢量图 (*.svg)", "svg", dpi=None)
+
+    def _on_save_figure(self, file_filter: str, fmt: str, dpi: int = None):
+        """将当前图表导出为文件 — 与显示尺寸解耦（保存后还原画布）"""
         if not hasattr(self, 'current_figure') or self.current_figure is None:
             return
         path, _ = QFileDialog.getSaveFileName(
-            self, i18n.tr("spc.save_png"), "chart.png", "PNG (*.png)"
+            self, "导出图表", f"chart.{fmt}", file_filter
         )
         if path:
             from config.settings import CHART_DPI, CHART_FIGSIZE
             fig = self.current_figure
+            original_size = fig.get_size_inches()
             fig.set_size_inches(*CHART_FIGSIZE)
-            fig.savefig(path, dpi=CHART_DPI, bbox_inches="tight")
-            self.canvas.draw()
+            try:
+                fig.savefig(path, dpi=dpi or CHART_DPI, bbox_inches="tight")
+            finally:
+                fig.set_size_inches(*original_size)
+                self.canvas.draw()
 
     def set_data(self, df: pd.DataFrame = None, parsed_info: Dict[str, Any] = None):
         """设置分析数据（子类可重写以填充列选择器）"""
@@ -124,23 +182,67 @@ class BaseAnalysisTab(QWidget):
                 self.data_table.setItem(i, j, item)
 
     def _add_chart_toolbar(self):
-        if not hasattr(self, '_chart_toolbar'):
+        """确保工具栏对象存在（保持隐藏，不占用布局空间 — 界面不需要该行操作栏），
+        同时挂载编辑面板并同步页面高度"""
+        if not hasattr(self, '_chart_toolbar') or self._chart_toolbar is None:
             from matplotlib.backends.backend_qtagg import NavigationToolbar2QT
             self._chart_toolbar = NavigationToolbar2QT(self.canvas, self.chart_container)
             self._chart_toolbar.setMaximumHeight(32)
             self._chart_toolbar.setStyleSheet("QToolBar { border: none; spacing: 2px; }")
-            self.chart_layout.addWidget(self._chart_toolbar)
-            self._animate_chart_container()
-        self._setup_chart_menu()
+            self._chart_toolbar.setVisible(False)  # 工具栏不进布局、不显示
+        if not hasattr(self, '_chart_editor_panel') or self._chart_editor_panel is None:
+            from ui.widgets.chart_editor import ChartEditorPanel
+            self._chart_editor_panel = ChartEditorPanel()
+            self._chart_editor_panel.options_changed.connect(self._on_chart_options_changed)
+        if self.chart_layout.indexOf(self._chart_editor_panel) < 0:
+            self.chart_layout.addWidget(self._chart_editor_panel)
+        self._pin_canvas_natural_height()
+        self.chart_layout.setContentsMargins(0, 4, 0, 4)
+        self._animate_chart_container()
+        self._sync_chart_page_height()
+
+    def _pin_canvas_natural_height(self):
+        """画布最小高跟随图片自然像素高 — 防止编辑面板挤压图表；每帧先复位再设精确值，
+        图表高度变化时不会残留旧下限（页面滚动范围保持精确）"""
+        if self.canvas is None or self.current_figure is None:
+            return
+        try:
+            self.canvas.setMinimumHeight(0)
+            h_in = self.current_figure.get_size_inches()[1]
+            dpi = self.current_figure.get_dpi()
+            natural = int(h_in * dpi)
+            if natural > 200:
+                self.canvas.setMinimumHeight(natural)
+        except Exception:
+            pass
+
+    def _sync_chart_page_height(self):
+        """将图表页自然高度同步到结果容器 — 让内容增高由页面滚动承接。
+
+        显式累加布局各子行的最小高度：Qt 布局对刚替换(remove+insert)的 canvas
+        存在 minimumSizeHint 缓存问题（新 canvas 的显式最小高被忽略，容器被压小、
+        画布溢出），因此不依赖 minimumSizeHint 缓存。
+        """
+        if not hasattr(self, 'chart_container'):
+            return
+        h = 8  # 布局上下边距 (0,4,0,4)
+        for i in range(self.chart_layout.count()):
+            item = self.chart_layout.itemAt(i)
+            w = item.widget() if item else None
+            if w is None:
+                continue
+            h += max(w.minimumHeight(), w.minimumSizeHint().height())
+        if h < 300:
+            h = 300
+        self.chart_container.setMinimumHeight(h)
+        stack = getattr(self, 'result_stack', None)
+        if stack is not None:
+            stack.setMinimumHeight(h)
 
     def _setup_chart_menu(self):
         if self.canvas is None:
             return
         self.canvas.setContextMenuPolicy(Qt.CustomContextMenu)
-        try:
-            self.canvas.customContextMenuRequested.disconnect()
-        except (TypeError, RuntimeError):
-            pass
         self.canvas.customContextMenuRequested.connect(self._on_chart_context_menu)
 
     def _on_chart_context_menu(self, pos):
@@ -148,6 +250,8 @@ class BaseAnalysisTab(QWidget):
         popout = menu.addAction("在独立窗口中查看")
         menu.addSeparator()
         save_png = menu.addAction("保存为 PNG")
+        save_hires = menu.addAction("保存为高清 PNG (300 DPI)")
+        save_svg = menu.addAction("保存为 SVG 矢量图")
         copy_img = menu.addAction("复制到剪贴板")
 
         action = menu.exec(self.canvas.mapToGlobal(pos))
@@ -157,6 +261,10 @@ class BaseAnalysisTab(QWidget):
             viewer.exec()
         elif action == save_png:
             self._on_save_png()
+        elif action == save_hires:
+            self._on_save_hires_png()
+        elif action == save_svg:
+            self._on_save_svg()
         elif action == copy_img:
             buf = BytesIO()
             self.current_figure.savefig(buf, format='png', dpi=150, bbox_inches='tight')
@@ -228,18 +336,59 @@ class BaseAnalysisTab(QWidget):
         self._resize_empty_overlay()
 
     def _animate_chart_container(self):
-        """图表容器平滑展开动画 — 首次渲染时从 0 展开到实际高度"""
+        """确保容器高度不被限制 — 内容自然增高，由页面级滚动承载超长内容"""
         if not hasattr(self, 'chart_container'):
             return
-        container = self.chart_container
-        current = container.height()
-        if current > 80:
+        self.chart_container.setMaximumHeight(16777215)
+
+    def _setup_chart_editor(self):
+        """初始化图表编辑面板"""
+        if self._chart_editor_panel is not None:
             return
-        target = max(container.sizeHint().height(), 400)
-        container.setMaximumHeight(10)
-        anim = QPropertyAnimation(container, b"maximumHeight")
-        anim.setDuration(300)
-        anim.setStartValue(10)
-        anim.setEndValue(target)
-        anim.setEasingCurve(QEasingCurve.OutCubic)
-        anim.start()
+        from ui.widgets.chart_editor import ChartEditorPanel
+        self._chart_editor_panel = ChartEditorPanel()
+        self._chart_editor_panel.options_changed.connect(self._on_chart_options_changed)
+
+    def set_chart_type(self, chart_type: str):
+        """设置当前图表类型，更新编辑面板"""
+        if chart_type == self._current_chart_type:
+            return
+        self._current_chart_type = chart_type
+        if self._chart_editor_panel:
+            self._chart_editor_panel.set_chart_type(chart_type)
+            self._chart_options = self._chart_editor_panel.get_options()
+            # 面板控件重建后 min 尺寸已变 → 立即重算页面高度，避免滚动范围滞后一帧
+            self._sync_chart_page_height()
+
+    def _on_chart_options_changed(self, options: Dict[str, Any]):
+        """图表选项变更回调 — 防抖合并后重新生成当前图表"""
+        self._chart_options = options.copy()
+        try:
+            self._refresh_timer.start()
+        except AttributeError:
+            self._refresh_timer = QTimer(self)
+            self._refresh_timer.setSingleShot(True)
+            self._refresh_timer.setInterval(150)
+            self._refresh_timer.timeout.connect(self._refresh_chart_with_options)
+            self._refresh_timer.start()
+
+    def _refresh_chart_with_options(self):
+        """用当前选项重新生成图表 — 重新运行分析并显示"""
+        if not hasattr(self, 'run_analysis') or not hasattr(self, 'display_result'):
+            return
+        try:
+            analysis = self.run_analysis()
+            if analysis:
+                self.display_result(analysis)
+        except Exception as e:
+            print(f"图表重绘失败: {e}")
+
+    def get_chart_options(self) -> Dict[str, Any]:
+        """获取当前图表选项"""
+        return self._chart_options.copy()
+
+    def set_chart_options(self, options: Dict[str, Any]):
+        """设置图表选项"""
+        self._chart_options = options.copy()
+        if self._chart_editor_panel:
+            self._chart_editor_panel.set_options(options)

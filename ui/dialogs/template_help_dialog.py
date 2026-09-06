@@ -101,7 +101,6 @@ class TemplateHelpDialog(QDialog):
         help_label = QLabel(_get_help_text())
         help_label.setWordWrap(True)
         help_label.setTextFormat(Qt.RichText)
-        from PySide6.QtWidgets import QScrollArea
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QScrollArea.NoFrame)

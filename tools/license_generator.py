@@ -5,9 +5,8 @@ import json
 import os
 import sys
 import base64
-import hashlib
 import argparse
-from datetime import datetime, timedelta
+from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -97,7 +96,7 @@ def generate_key_pair(output_dir: str):
 
     print(f"私钥已保存: {private_key_path}")
     print(f"公钥 (Base64): {public_b64}")
-    print(f"请将公钥更新到 core/license_keys.py 的 LICENSE_PUBLIC_KEY_B64")
+    print("请将公钥更新到 core/license_keys.py 的 LICENSE_PUBLIC_KEY_B64")
 
     return private_key_path, public_b64
 

@@ -11,7 +11,7 @@ from typing import Dict, Any, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 from scipy import stats
-from config.settings import _MIN_ABERRATION_TABLE, RESOLUTION_DESCRIPTIONS
+from config.settings import _MIN_ABERRATION_TABLE
 
 
 def _base_factorial(k: int) -> np.ndarray:

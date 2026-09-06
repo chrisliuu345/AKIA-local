@@ -4,9 +4,8 @@
 保留接口以保持向后兼容，但所有方法变为空操作。
 """
 
-import os
 from enum import Enum
-from typing import Optional, Tuple
+from typing import Tuple
 
 
 class LicenseStatus(Enum):

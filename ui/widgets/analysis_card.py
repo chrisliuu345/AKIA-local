@@ -11,14 +11,13 @@ from PySide6.QtWidgets import (
     QFrame, QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy,
 )
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont, QPixmap
+from PySide6.QtGui import QPixmap
 
-from ui.theme import colors as theme_colors, FONT_11B, FONT_10, FONT_9
+from ui.theme import colors as theme_colors, FONT_11B, FONT_9
 from ui.widgets.flow_layout import FlowLayout
 
 try:
     import matplotlib.pyplot as _plt
-    from matplotlib.figure import Figure as MplFigure
     _HAS_MPL = True
 except ImportError:
     _HAS_MPL = False

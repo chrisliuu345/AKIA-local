@@ -1,7 +1,5 @@
 """C=0 抽样方案测试"""
 
-import numpy as np
-import pytest
 from core.sampling_engine import SamplingEngine
 
 

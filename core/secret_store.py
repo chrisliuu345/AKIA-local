@@ -81,7 +81,7 @@ def _encrypt_keyring_fernet(data: bytes) -> bytes:
     try:
         import keyring
     except ImportError:
-        raise RuntimeError("keyring package required on Linux/macOS")
+        raise RuntimeError("keyring package required on Linux/macOS") from None
 
     SERVICE_NAME = "qa-tool"
     KEY_NAME = "master-key"
@@ -101,7 +101,7 @@ def _decrypt_keyring_fernet(data: bytes) -> bytes:
     try:
         import keyring
     except ImportError:
-        raise RuntimeError("keyring package required on Linux/macOS")
+        raise RuntimeError("keyring package required on Linux/macOS") from None
 
     from cryptography.fernet import Fernet
 

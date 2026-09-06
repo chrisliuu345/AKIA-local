@@ -59,6 +59,7 @@ class ProjectContext:
     eight_d_reports: List[dict] = field(default_factory=list)
 
     analysis_snapshots: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    chart_options: Dict[str, Dict[str, Any]] = field(default_factory=dict)
 
     def add_characteristic(self, qc: QualityCharacteristic):
         """添加质量特性"""
@@ -117,6 +118,15 @@ class ProjectContext:
         """获取分析结果快照"""
         return self.analysis_snapshots.get(key)
 
+    def set_chart_options(self, chart_id: str, options: Dict[str, Any]):
+        """设置图表编辑参数"""
+        self.chart_options[chart_id] = options
+        self.updated_at = datetime.now().isoformat()
+
+    def get_chart_options(self, chart_id: str) -> Optional[Dict[str, Any]]:
+        """获取图表编辑参数"""
+        return self.chart_options.get(chart_id)
+
     def get_high_risk_fmea_items(self, threshold: int = RPN_HIGH) -> List[dict]:
         """获取高风险 FMEA 条目 (RPN >= threshold)"""
         return [item for item in self.fmea_items if item.get("rpn", 0) >= threshold]
@@ -140,6 +150,7 @@ class ProjectContext:
             "ppap_report": self.ppap_report,
             "eight_d_reports": self.eight_d_reports,
             "analysis_snapshots": self.analysis_snapshots,
+            "chart_options": self.chart_options,
         }
 
     @classmethod
@@ -155,4 +166,5 @@ class ProjectContext:
             ppap_report=d.get("ppap_report", {}),
             eight_d_reports=d.get("eight_d_reports", []),
             analysis_snapshots=d.get("analysis_snapshots", {}),
+            chart_options=d.get("chart_options", {}),
         )

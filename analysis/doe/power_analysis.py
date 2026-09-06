@@ -12,7 +12,7 @@ Supports:
     - 1-Variance
     - One-Way ANOVA
 """
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, Tuple
 import math
 import numpy as np
 from scipy import stats
@@ -465,7 +465,6 @@ def sample_size_one_way_anova(
         return 0
 
     k = n_groups
-    df1 = k - 1
     z_alpha = _z(1 - alpha / 2)
     z_beta = _z(power)
     lam_est = (z_alpha + z_beta) ** 2 / f_squared

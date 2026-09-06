@@ -9,7 +9,6 @@ from PySide6.QtWidgets import (
 
 from config.settings import (
     FONT_FAMILY, CHART_DPI, MSA_GRR_ACCEPTABLE, MSA_NDC_THRESHOLD, get_setting,
-    DEPARTMENTS, TEAMS,
 )
 from ui.theme import colors as theme_colors
 

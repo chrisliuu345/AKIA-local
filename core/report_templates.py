@@ -25,8 +25,12 @@ def _get_font_family() -> str:
     return get_ui_font()
 
 
+_BUILTIN_TEMPLATES: Dict[str, str] = {}
+
+
 def _ensure_templates():
     """确保模板目录和文件存在"""
+    global _BUILTIN_TEMPLATES
     TEMPLATE_DIR.mkdir(parents=True, exist_ok=True)
     font_family = _get_font_family()
     

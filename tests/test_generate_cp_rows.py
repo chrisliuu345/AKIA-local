@@ -1,8 +1,6 @@
 """test_generate_cp_rows.py — FMEA → CP 行生成测试"""
 
-import pytest
 from core.fmea_engine import FMEAItem, FMEAEngine
-from config.settings import RPN_HIGH, RPN_CRITICAL
 
 
 def _make_item(**kwargs):

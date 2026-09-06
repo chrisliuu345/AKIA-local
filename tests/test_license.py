@@ -1,7 +1,6 @@
 """
 License 系统单元测试 — v3.2.0+ 空操作实现
 """
-import pytest
 from core.license import LicenseManager, LicenseStatus, verify_license
 
 

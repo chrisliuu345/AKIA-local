@@ -183,7 +183,7 @@ class DiagnosisDialog(QDialog):
                     if j == 1 and c["category"] == "measurement":
                         lbl.setStyleSheet(f"color: {tc['accent_bright']}; font-weight: bold; padding: 1px 4px;")
                     if c["missing_pct"] > 10:
-                        lbl.setStyleSheet(f"color: #e74c3c; padding: 1px 4px;")
+                        lbl.setStyleSheet("color: #e74c3c; padding: 1px 4px;")
                     if j == 5:
                         dist = c.get("distribution", "-")
                         if dist == "normal":

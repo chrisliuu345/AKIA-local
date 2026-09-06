@@ -3,10 +3,9 @@
 验证 FMEA → CP → SPC → PPAP → 8D 数据链路完整性。
 """
 
-import pytest
 from core.fmea_engine import FMEAItem, FMEAEngine
 from core.project_context import ProjectContext, QualityCharacteristic
-from config.settings import RPN_HIGH, RPN_CRITICAL
+from config.settings import RPN_HIGH
 
 
 def _make_fmea_items():

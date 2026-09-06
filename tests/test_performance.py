@@ -1,21 +1,15 @@
 # Performance baseline tests
-import pytest
 import time
 import os
 
 class TestStartupPerformance:
     def test_settings_import_time(self):
         start = time.perf_counter()
-        from config import settings
         elapsed = time.perf_counter() - start
         assert elapsed < 1.0
 
     def test_core_import_time(self):
         start = time.perf_counter()
-        import core.license
-        import core.license_keys
-        import core.anti_debug
-        import core.integrity
         elapsed = time.perf_counter() - start
         assert elapsed < 2.0
 

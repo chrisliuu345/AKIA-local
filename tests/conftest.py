@@ -6,6 +6,22 @@ import os
 import sys
 import pytest
 
+# 必须先于任何 PySide6 导入设置，确保无显示环境可用离屏平台
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _qt_application():
+    """会话级 QApplication — 任何直接构造 QWidget 的测试都需要它，
+    缺失时 PySide6 会 qFatal(SIGABRT) 终止整个 Python 进程"""
+    try:
+        from PySide6.QtWidgets import QApplication
+    except ImportError:
+        yield None
+        return
+    app = QApplication.instance() or QApplication([])
+    yield app
+
 
 def pytest_collection_modifyitems(config, items):
     """检测目录批量运行并强制中断"""

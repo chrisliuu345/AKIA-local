@@ -26,7 +26,6 @@ the 128MB board; do NOT import maix.nn in this server.
 import json
 import socket
 import threading
-import time
 
 HOST = "0.0.0.0"
 PORT = 9000

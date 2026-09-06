@@ -100,7 +100,7 @@ class SqlLoader:
                     else:
                         raise ValueError(f"表 '{name}' 反射失败")
                 except Exception as e:
-                    raise RuntimeError(f"读取表 '{name}' 失败: {sanitize_connection_error(e)}")
+                    raise RuntimeError(f"读取表 '{name}' 失败: {sanitize_connection_error(e)}") from e
         self.tables = result
         self._extract_metadata()
         return result
@@ -123,7 +123,7 @@ class SqlLoader:
             try:
                 return pd.read_sql_table(table_name, self.engine).head(rows)
             except Exception as e:
-                raise RuntimeError(f"预览表 '{table_name}' 失败: {sanitize_connection_error(e)}")
+                raise RuntimeError(f"预览表 '{table_name}' 失败: {sanitize_connection_error(e)}") from e
 
     def get_table_names_like(self, pattern: str) -> List[str]:
         all_tables = self.get_table_names()

@@ -6,8 +6,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import numpy as np
 import pytest
 
-from analysis.reliability.weibull import WeibullAnalyzer, WeibullResult
-from analysis.reliability.mtbf import MTBFAnalyzer, MTBFResult
+from analysis.reliability.weibull import WeibullAnalyzer
+from analysis.reliability.mtbf import MTBFAnalyzer
 
 np.random.seed(42)
 
