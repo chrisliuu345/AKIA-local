@@ -170,7 +170,7 @@
   "menu.ai": "AI",
   "menu.one_click": "一键智能分析报告",
   "menu.template": "报告模板",
-  "menu.html_export": "导出 HTML 报告",
+  "menu.html_export": "HTML 报告(&H)",
   "menu.batch": "批量调度",
   "menu.user_mgmt": "用户管理",
   "menu.data_clean_wizard": "数据清洗向导",
@@ -629,5 +629,7 @@
   "device.add_network_prompt": "设备地址 (host:port)",
   "device.add_network_invalid": "地址格式无效，应为 host:port（如 192.168.50.46:9000）",
   "device.add_network_fail": "未能连接或识别该地址的设备，请确认设备已开机且服务已启动",
-  "menu.export_pptx": "导出全部图表为 PowerPoint"
+  "menu.export_pptx": "导出全部图表为 PowerPoint",
+  "menu.guide": "使用指南(&G)",
+  "menu.display_mode": "显示模式(&M)"
 }
