@@ -8,7 +8,7 @@
 
 import math
 import numpy as np
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from scipy import stats as sp_stats
 
 
@@ -80,7 +80,7 @@ class ALTEngine:
             use_stress: 正常使用应力
         """
         if len(stress) < 3 or len(life) < 3:
-            return {"analysis_type": "reliability.alt.inverse_power_law", "error": f"样本量不足（需要至少3个数据点）"}
+            return {"analysis_type": "reliability.alt.inverse_power_law", "error": "样本量不足（需要至少3个数据点）"}
         if np.any(stress <= 0):
             return {"analysis_type": "reliability.alt.inverse_power_law", "error": "stress必须全部为正数"}
         if np.any(life <= 0):
@@ -126,7 +126,7 @@ class ALTEngine:
             use_temp: 使用温度 (Celsius)
         """
         if len(stress_temp) < 3 or len(life) < 3:
-            return {"analysis_type": "reliability.alt.eyring", "error": f"样本量不足（需要至少3个数据点）"}
+            return {"analysis_type": "reliability.alt.eyring", "error": "样本量不足（需要至少3个数据点）"}
         if np.any(stress_temp <= 0):
             return {"analysis_type": "reliability.alt.eyring", "error": "stress_temp必须全部为正数（开尔文温度）"}
         if np.any(life <= 0):

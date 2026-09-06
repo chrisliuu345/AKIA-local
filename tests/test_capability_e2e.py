@@ -1,5 +1,4 @@
 """Capability E2E 测试 — 过程能力分析全流程"""
-import pytest
 import numpy as np
 import pandas as pd
 

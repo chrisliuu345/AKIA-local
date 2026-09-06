@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_PRIMARY_STRETCH
 from ui.theme import colors as theme_colors
-from ui.font_config import get_ui_font
+from ui.font_config import get_ui_font, get_mono_font
 
 
 class SummaryPanelTab(BaseAnalysisTab):
@@ -132,7 +132,7 @@ class SummaryPanelTab(BaseAnalysisTab):
             ]
             for j, s in enumerate(stats):
                 ax_stats.text(0.05, 0.92 - j * 0.11, s, transform=ax_stats.transAxes,
-                              fontsize=7.5, fontfamily="Consolas", color=tc["text_secondary"])
+                              fontsize=7.5, fontfamily=get_mono_font(), color=tc["text_secondary"])
 
         fig.suptitle("统计摘要面板", fontsize=14, fontweight="bold", color=tc["text_primary"], y=0.98)
         fig.subplots_adjust(left=0.04, right=0.97, top=0.93, bottom=0.04, wspace=0.25, hspace=0.4)

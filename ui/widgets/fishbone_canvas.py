@@ -348,12 +348,11 @@ class FishboneCanvas(QGraphicsView):
         ])
         path = QPainterPath()
         path.addPolygon(arrow)
-        arr_item = self._scene.addPath(path, QPen(Qt.NoPen), QBrush(MUTED_COLOR))
+        self._scene.addPath(path, QPen(Qt.NoPen), QBrush(MUTED_COLOR))
 
         pb = _ProblemBox(spine_x2 + 10, cy, problem)
         self._scene.addItem(pb)
 
-        branch_names = list(branches.keys())
         bx_spacing = (spine_x2 - 80 - spine_x1 - 60) / max(n - 1, 1) if n > 1 else 0
         bx_start = spine_x1 + 70
 

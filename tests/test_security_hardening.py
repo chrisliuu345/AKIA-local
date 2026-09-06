@@ -2,8 +2,6 @@
 
 import os
 import sys
-import base64
-import logging
 import pytest
 from unittest.mock import MagicMock, patch
 

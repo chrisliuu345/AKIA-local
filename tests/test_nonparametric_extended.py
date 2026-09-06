@@ -1,7 +1,6 @@
 """扩展非参数检验测试 — Mood中位数检验 + Friedman检验"""
 
 import numpy as np
-import pytest
 from analysis.hypothesis.nonparametric import mood_median_test, friedman_test
 
 

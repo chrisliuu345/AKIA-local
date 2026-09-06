@@ -4,13 +4,12 @@ SPC 控制图分析页 — 含图表嵌入
 
 from typing import Dict, Any
 import pandas as pd
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QSpinBox, QDoubleSpinBox, QGroupBox, QFormLayout,
     QTableWidget, QTableWidgetItem, QTextEdit, QSplitter, QHeaderView,
-    QFrame, QStackedWidget, QScrollArea, QCheckBox, QMessageBox, QListWidget, QListWidgetItem,
+    QFrame, QStackedWidget, QCheckBox, QMessageBox, QListWidget, QListWidgetItem,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
@@ -250,17 +249,11 @@ class SPCTab(BaseAnalysisTab):
 
         self.result_stack = QStackedWidget()
 
-        self.chart_scroll = QScrollArea()
-        self.chart_scroll.setWidgetResizable(True)
-        self.chart_scroll.setFrameShape(QFrame.NoFrame)
-        self.chart_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        self.chart_scroll.setMinimumHeight(300)
-
         self.chart_container = QWidget()
         self.chart_layout = QVBoxLayout(self.chart_container)
         self.chart_layout.setContentsMargins(0, 0, 0, 0)
-        self.chart_scroll.setWidget(self.chart_container)
-        self.result_stack.addWidget(self.chart_scroll)
+        self.chart_container.setMinimumHeight(300)
+        self.result_stack.addWidget(self.chart_container)
 
         self.data_container = QWidget()
         data_layout = QVBoxLayout(self.data_container)
@@ -468,7 +461,7 @@ class SPCTab(BaseAnalysisTab):
 
         if chart_type == "Hotelling T²":
             t2_chart = result.get("t2_chart", {})
-            lines.append(f"\n【T² 控制图】")
+            lines.append("\n【T² 控制图】")
             lines.append(f"  变量数: {result.get('num_variables', '')}")
             lines.append(f"  样本数: {result.get('num_samples', '')}")
             lines.append(f"  CL: {t2_chart.get('cl', '')}")
@@ -480,7 +473,7 @@ class SPCTab(BaseAnalysisTab):
                     lines.append(f"  点{v.get('point', '')}: {v.get('desc', '')}")
             hotelling_test = result.get("hotelling_test", {})
             if hotelling_test:
-                lines.append(f"\n【多元正态性检验】")
+                lines.append("\n【多元正态性检验】")
                 lines.append(f"  偏度统计量: {hotelling_test.get('skewness_statistic', '')}")
                 lines.append(f"  峰度统计量: {hotelling_test.get('kurtosis_statistic', '')}")
                 lines.append(f"  结论: {hotelling_test.get('interpretation', '')}")
@@ -587,17 +580,15 @@ class SPCTab(BaseAnalysisTab):
             QMessageBox.warning(self, "根因分析", f"分析失败: {e}")
 
     def _render_chart(self, result: Dict, chart_type: str):
-        self._clear_canvas()
         try:
             chart_data = result if result else {"chart_type": chart_type, "data": [], "cl": 0}
             chart_data.setdefault("chart_type", chart_type)
-            fig = create_control_chart(chart_data, title=f"{chart_type} 控制图")
-            self.current_figure = fig
-            self.canvas = FigureCanvasQTAgg(fig)
-            self.chart_layout.addWidget(self.canvas)
-            self.canvas.draw()
+            fig = create_control_chart(chart_data, title=f"{chart_type} 控制图", options=self._chart_options)
+            self._render_figure(fig)
             self._add_chart_toolbar()
+            self.set_chart_type(chart_type)
         except Exception as e:
+            self._clear_canvas()
             err_label = QLabel(f"图表渲染失败: {e}")
             err_label.setStyleSheet("color: #e74c3c; padding: 12px;")
             err_label.setWordWrap(True)

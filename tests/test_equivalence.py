@@ -1,6 +1,5 @@
 """TOST 等价检验测试"""
 import pytest
-import numpy as np
 import pandas as pd
 from analysis.hypothesis.equivalence import one_sample_tost, two_sample_tost
 

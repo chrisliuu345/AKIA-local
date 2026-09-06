@@ -226,6 +226,9 @@ class MainWindow(QMainWindow):
         export_pdf = QAction("📄 " + i18n.tr("menu.export_pdf"), self)
         export_pdf.triggered.connect(lambda: self._on_export_all("pdf"))
         export_menu.addAction(export_pdf)
+        export_pptx = QAction("📽 " + i18n.tr("menu.export_pptx"), self)
+        export_pptx.triggered.connect(lambda: self._on_export_all("pptx"))
+        export_menu.addAction(export_pptx)
 
         try:
             from output.compliance_report import ComplianceReportGenerator
@@ -1110,7 +1113,8 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, i18n.tr("msg.no_results"), i18n.tr("msg.run_first"))
             return
 
-        filters = {"xlsx": "Excel (*.xlsx)", "docx": "Word (*.docx)", "pdf": "PDF (*.pdf)"}
+        filters = {"xlsx": "Excel (*.xlsx)", "docx": "Word (*.docx)",
+                "pdf": "PDF (*.pdf)", "pptx": "PowerPoint (*.pptx)"}
         file_path, _ = QFileDialog.getSaveFileName(
             self, "导出报告", f"分析报告.{fmt}", filters.get(fmt, "")
         )
@@ -1129,6 +1133,10 @@ class MainWindow(QMainWindow):
                     charts = self._collect_charts([idx])
                     from output.pdf_report import generate_pdf_report
                     generate_pdf_report([result], file_path, charts=charts)
+                elif fmt == "pptx":
+                    charts = self._collect_charts([idx])
+                    from output.pptx_report import PptxReport
+                    PptxReport().generate([result], file_path, charts=charts)
                 self.status_label.setText(f"{i18n.tr('status.exported')}{file_path}")
                 audit("export", "user",
                       f"单Tab导出 {fmt} {os.path.basename(file_path)}")
@@ -1141,7 +1149,8 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, i18n.tr("msg.no_results"), i18n.tr("msg.run_first"))
             return
 
-        filters = {"xlsx": "Excel (*.xlsx)", "docx": "Word (*.docx)", "pdf": "PDF (*.pdf)"}
+        filters = {"xlsx": "Excel (*.xlsx)", "docx": "Word (*.docx)",
+                "pdf": "PDF (*.pdf)", "pptx": "PowerPoint (*.pptx)"}
         file_path, _ = QFileDialog.getSaveFileName(
             self, "汇总导出", f"Quality_Report.{fmt}", filters.get(fmt, "")
         )
@@ -1157,6 +1166,10 @@ class MainWindow(QMainWindow):
                     charts = self._collect_charts(list(self.analyses.keys()))
                     from output.word_report import WordReport
                     WordReport().generate(analyses_list, file_path, charts=charts)
+                elif fmt == "pptx":
+                    charts = self._collect_charts(list(self.analyses.keys()))
+                    from output.pptx_report import PptxReport
+                    PptxReport().generate(analyses_list, file_path, charts=charts)
                 elif fmt == "pdf":
                     charts = self._collect_charts(list(self.analyses.keys()))
                     from output.pdf_report import generate_pdf_report

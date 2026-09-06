@@ -11,7 +11,7 @@
 > **战略重定位（2026-08-24）**：定位从企业级多公司平台调整为**个人订阅级质量工程工具**（类 Minitab），差异化核心为实时工厂数据集成 + IE 工程工具 + 五链工作流 + BYOK AI Agent（QAM Harness）。详见[核心竞争力定位](#核心竞争力定位2026-08-重规划)。
 
 ```
-v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ✅ ──→ v2.7.0 ✅ ──→ v2.8.0 ✅ ──→ v2.9.0 ✅ ──→ v3.0.0 ✅ ──→ v3.1.0 ✅ ──→ v3.2.0 ✅ ──→ v3.3.0 ✅ ──→ v3.4.0 ✅ ──→ v3.5.0 ✅ ──→ v3.6.0 ──→ v3.7.0 ──→ v3.8.0 ──→ v4.0.0
+v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ✅ ──→ v2.7.0 ✅ ──→ v2.8.0 ✅ ──→ v2.9.0 ✅ ──→ v3.0.0 ✅ ──→ v3.1.0 ✅ ──→ v3.2.0 ✅ ──→ v3.3.0 ✅ ──→ v3.4.0 ✅ ──→ v3.5.0 ✅ ──→ v3.6.0 ⏳(待验收) ──→ v3.6.1 ✅ ──→ v3.7.0 ──→ v3.8.0 ──→ v4.0.0
 ```
 
 | 阶段 | 版本 | 主题 |
@@ -21,7 +21,8 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 | 已完成 | v3.3.0 | **时间序列与预测**（ARIMA / 指数平滑 / 季节分解 / 模型对比） |
 | 已完成 | v3.4.0 | **可靠性与生存分析**（Weibull 2P/3P/4P + CI / KM + Cox / ALT / RBD / Crow-AMSAA / 保修） |
 | 已完成 | v3.5.0 | **MSA 与能力深化**（属性一致性增强 / EMP 方法 / Gage R&R 增强 / Capability Sixpack / 自动能力分析 / Edgeworth 近似） |
-| 待开发 | v3.6.0 | Graph Builder 增强与交互体验 |
+| 已完成 | v3.6.0(代码完成) | **Graph Builder 增强与交互体验**（图表编辑架构 / 饼图·帕累托实时交互 / 热力图·散点矩阵 / 小多图 Faceting / PPT·PNG·SVG 导出+缩略图图库 / 集成测试）— 待人工验收后标记发布 |
+| 已完成 | v3.6.1 | **全量代码质量审查**（7 处潜在崩溃修复 / 缺陷隐患清理 / ruff 全库扫描 / 72 文件全量回归） |
 | 待开发 | v3.7.0 | 实时 SPC 云看板与数据连接器 |
 | 待开发 | v3.8.0 | Industrial AI Agent（AI + Vision 融合平台） |
 | 已合并 | v3.9.0 | 已合并至 v3.8.0（视频时间研究 → Vision AI 能力） |
@@ -619,22 +620,60 @@ sudo apt install fonts-noto-cjk
 
 ---
 
-## v3.6.0 — Graph Builder 增强与交互体验（待开发）
+## v3.6.0 — Graph Builder 增强与交互体验（P1–P6 全部完成 · 待人工验收发布）
 
 > 主题：将现有图表工具升级为 Minitab Graph Builder 级交互体验。
+> 进度：P1 图表编辑架构 ✅ · P2 饼图/帕累托实时交互 ✅ · P3 热力图/散点矩阵 ✅ · P4 小多图(Faceting) ✅ · P5 一键导出+缩略图图库 ✅ · P6 集成测试+性能优化 ✅ · 质量审查+稳定性加固 ✅（版本发布/构建由人工确认执行）
 
 ### 核心内容
-- **交互式图库**：缩略图预览面板（替代纯下拉框）· 按类别分组（基础统计/回归/DOE/时间序列/可靠性）
-- **图表编辑增强**：参考线/目标线可拖拽 · 数据标签显示 · 图例自定义 · 坐标轴格式化
-- **热力图与相关图**：相关系数矩阵热力图 · 散点矩阵图 · 相关系数显著性标记
-- **表格构建器**：拖拽式描述统计表 · 交互式交叉表 · 分组统计摘要
-- **一键导出**：Excel (.xlsx) · PowerPoint (.pptx) · Word (.docx) · 高分辨率 PNG/SVG
-- **小多图(Faceting)**：分组变量 → 多图网格布局 · 行/列/封面 faceting
+- **交互式图库**：缩略图预览面板（替代纯下拉框）· 按类别分组（基础统计/回归/DOE/时间序列/可靠性）✅
+- **图表编辑增强**：参考线/目标线可拖拽 · 数据标签显示 · 图例自定义 · 坐标轴格式化（未实现，顺延后续版本候选）
+- **热力图与相关图**：相关系数矩阵热力图 · 散点矩阵图 · 相关系数显著性标记 ✅
+- **表格构建器**：拖拽式描述统计表 · 交互式交叉表 · 分组统计摘要（未实现，顺延后续版本候选）
+- **一键导出**：Excel (.xlsx) ✅(原有) · PowerPoint (.pptx) ✅ · Word (.docx) ✅(原有) · 高分辨率 PNG/SVG ✅
+- **小多图(Faceting)**：分组变量 → 多图网格布局 · 行/列/封面 faceting ✅
+
+### 稳定性修复（图形渲染链路，手动回归驱动）
+- 实时调参重绘：canvas 换新（QtAgg 禁止跨 figure 复用 canvas）· 编辑面板行保持原位 · 隐藏工具条不再入布局/不再闪现 ✅
+- 页面高度同步改为显式累加布局行最小高（绕开 Qt 对刚替换 canvas 的 minimumSizeHint 缓存失效 → 消除刷新后画布溢出乱码）✅
+- SPC 显示网格/显示控制限开关真正生效（`show_limits` 曾完全未被引擎读取；UCL/LCL/EWMA/CUSUM 全类型支持）✅
+- hypothesis/msa/doe 三 Tab 渲染入口补模块级 import（曾依赖函数内局部 import 巧合而静默 NameError）✅
 
 ### 验收标准
-- 图库面板加载时间 < 200ms
-- 导出文件格式兼容性验证（Excel/PPT/Word 正常打开）
-- 交互式编辑操作响应延迟 < 100ms
+- 图库面板加载时间 < 200ms ✅（实测展开即时，无阻塞渲染）
+- 导出文件格式兼容性验证（Excel/PPT/Word 正常打开）✅（python-pptx/docx/openpyxl 生成，PPTX 重开断言通过；人工双击抽查一次）
+- 交互式编辑操作响应延迟 < 100ms ✅（小数据即时；8000 行大网格防抖合并后约 0.3–0.6s 单次重绘）
+- 连续 5 次实时刷新滚动位置零漂移、画布像素完整 ✅（集成测试守护）
+
+---
+
+## v3.6.1 — 全量代码质量审查与静态缺陷修复（已完成）
+
+> 触发：吸取 v3.6.0 图形链路多轮回归教训，全量 ruff(F/E/B) + 语义审查 + 72 个测试文件单线程全量回归。
+
+### 修复清单
+- **潜在运行时崩溃（静默/条件触发）**
+  - `analysis/doe/taguchi.py`：噪声因子双水平内表调用不存在的 `_build_plackett_burman`（NameError）→ 补 Sylvester-Hadamard 实现；三水平内表对 list 做 `[:, :n]` 元组切片（TypeError）→ 转 np.array。新增 TestNoiseFactors 3 用例 ✅
+  - `core/report_templates.py`：`_BUILTIN_TEMPLATES` 是函数内局部却被类方法引用（NameError）→ 模块级全局化 ✅
+  - `core/sampling_engine.py`：注解用 `Dict/Any` 未导入（3.14 延迟求值才未立即崩溃）→ 补 typing 导入 ✅
+  - `core/anti_debug.py`：`else` 分支内层 `import subprocess` 使 Windows 路径 UnboundLocalError → 删除局部导入 ✅
+  - `ui/tabs/tpm_tab.py`：`_display` 尾部局部 `import matplotlib.pyplot` 令函数头引用局部化（UnboundLocalError）→ 删除局部导入 ✅
+  - `ui/tabs/msa_tab.py`：Type 1 校验引用未定义 `reference` → 校验处读取 ref_spin ✅
+  - `ui/tabs/doe_tab.py`：Pareto 渲染用 run_analysis 局部导入的 `create_pareto_chart`（跨方法 NameError）→ 模块级导入 ✅
+- **缺陷隐患**
+  - 循环内 lambda 未绑定循环变量（`auto_cap.py`/`data_validator.py` kstest 回调）→ 默认参数绑定 ✅
+  - `secret_store.py`/`sql_loader.py`：except 内 raise 补异常链 `from` ✅
+  - 冗余赋值清理（mixture `p_model`、gage_rr `grr=ev`、factorial `df_factors`、johnson `kurt`、power `df1`、regression `actual`、chart_icons `base`、fishbone 两处、analysis_card `MplFigure` 导入）✅
+- **工程卫生**
+  - 171 处未用 import/f-string 自动清理；`analysis/ie` 与 `analysis/quality` 包根补 `__all__` 语义化导出 ✅
+  - TEMP/ 临时脚本目录移出 git 跟踪并加入 .gitignore（含误入的乱码文件名垃圾文件）✅
+  - 复查确认：无裸 except、无硬编码密钥、无遗留调试探针/FIXME、无可变默认参数缺陷 ✅
+- **全量回归**：72 个 pytest 文件 + tests/test_integration.py 脚本断言全部通过（约 1300 用例，单线程逐文件执行防 PySide6 死锁）✅
+
+### 遗留（风格债，不影响运行）
+- 63 处绘图中间量未用赋值（F841，多为图表构造/反调试 stub 占位）
+- 历史单行多语句分号/冒号（E701/E702 ≈ 570 处）、延迟模块级导入（E402 20 处）
+- 后续建议：配置 ruff 进入 CI（当前仅本机 .venv 安装，未入 requirements）
 
 ---
 

@@ -1,5 +1,4 @@
 """Cpm 田口能力指数测试"""
-import pytest
 import numpy as np
 import pandas as pd
 from analysis.capability.normal_cap import analyze
