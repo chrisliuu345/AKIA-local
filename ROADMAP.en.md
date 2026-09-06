@@ -2,7 +2,7 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> Current: v3.5.0 released · v3.6.0 Graph Builder code complete (pending manual acceptance) · v3.6.1 full quality pass done | Tests: 1000+ pytest · 37 Tabs | Updated: 2026-09-06
+> Current: v3.6.0 Graph Builder + help center (code acceptance passed ✅ 2026-09-06 · release packaging pending) | Tests: 1300+ pytest · 37 Tabs | Updated: 2026-09-06
 
 ---
 
@@ -11,7 +11,7 @@
 > **Strategic Repositioning (2026-08-24)**: positioning shifted from enterprise multi-company platform to **personal subscription quality engineering tool** (Minitab-like), with differentiation core in real-time factory data integration + IE engineering tools + five-chain workflow + BYOK AI Agent (QAM Harness). See [Core Competitive Positioning](#core-competitive-positioning-2026-08-rework).
 
 ```
-v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ✅ ──→ v2.7.0 ✅ ──→ v2.8.0 ✅ ──→ v2.9.0 ✅ ──→ v3.0.0 ✅ ──→ v3.1.0 ✅ ──→ v3.2.0 ✅ ──→ v3.3.0 ✅ ──→ v3.4.0 ✅ ──→ v3.5.0 ✅ ──→ v3.6.0 ⏳(pending acceptance) ──→ v3.6.1 ✅ ──→ v3.7.0 ──→ v3.8.0 ──→ v4.0.0
+v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ✅ ──→ v2.7.0 ✅ ──→ v2.8.0 ✅ ──→ v2.9.0 ✅ ──→ v3.0.0 ✅ ──→ v3.1.0 ✅ ──→ v3.2.0 ✅ ──→ v3.3.0 ✅ ──→ v3.4.0 ✅ ──→ v3.5.0 ✅ ──→ v3.6.0 ✅ ──→ v3.6.1 ✅(folded into 3.6.0) ──→ v3.7.0 ──→ v3.8.0 ──→ v4.0.0
 ```
 
 | Stage | Version | Theme |
@@ -21,7 +21,7 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 | Done | v3.3.0 | **Time Series & Forecasting** (ARIMA / Exponential Smoothing / Seasonal Decomposition / Model Comparison) |
 | Done | v3.4.0 | **Reliability & Survival Analysis** (Weibull 2P/3P/4P + CI / KM + Cox / ALT / RBD / Crow-AMSAA / Warranty) |
 | Done | v3.5.0 | **MSA & Capability Deepening** (Attribute Agreement Enhancement / EMP Method / Gage R&R Enhancement / Capability Sixpack / Auto Capability / Edgeworth Approximation) |
-| Done | v3.6.0 (code complete) | **Graph Builder Enhancement & Interactive Experience** (chart editor architecture / pie·pareto real-time interaction / heatmap·scatter matrix / small multiples faceting / PPT·PNG·SVG export + thumbnail gallery / integration tests) — pending manual acceptance |
+| Done ✅ | v3.6.0 | **Graph Builder Enhancement & Interactive Experience** (chart editor architecture / pie·pareto real-time interaction / heatmap·scatter matrix / small multiples faceting / PPT·PNG·SVG export + thumbnail gallery / help center + menu redesign / integration tests) — code acceptance passed 2026-09-06, release packaging pending |
 | Done | v3.6.1 | **Full code-quality audit** (7 latent crash fixes / hazard cleanup / full-repo ruff scan / 72-file regression) |
 | TBD | v3.7.0 | Real-Time SPC Cloud Dashboard & Data Connectors |
 | TBD | v3.8.0 | Industrial AI Agent (AI + Vision Integration) |
@@ -510,7 +510,7 @@ python build_nuitka.py --onefile      # single executable
 
 ---
 
-## v3.6.0 — Graph Builder Enhancement & Interactive Experience (P1–P6 complete · pending manual acceptance)
+## v3.6.0 ✅ Completed — Graph Builder Enhancement & Interactive Experience (code acceptance passed 2026-09-06 · release packaging pending)
 
 > Theme: upgrade the existing chart tool to Minitab Graph Builder-level interactive experience.
 
@@ -530,7 +530,7 @@ python build_nuitka.py --onefile      # single executable
 
 ---
 
-## v3.6.1 — Full Code-Quality Audit & Static-Defect Fixes (Completed)
+## v3.6.1 — Full Code-Quality Audit & Static-Defect Fixes (Completed · folded into the v3.6.0 release, no separate release)
 
 > Triggered by the multi-round regressions on the v3.6.0 chart-render pipeline: full-repo ruff (F/E/B) + semantic review + serial full regression over 72 test files.
 
@@ -687,6 +687,7 @@ QA-Tool v3.7.0 Industrial AI Agent
 | Date | Version | Content |
 |------|---------|---------|
 | 09-06 | v3.6.0 (addendum) | Help center added: user guide migrated from docx to offline HTML (browser-open, commercial help layout, content revised to current facts) + full menubar redesign (emoji removed, AI/Tools/Help regrouping, F1 guide, F11 display-mode entry) |
+| 09-06 | v3.6.0 | Graph Builder completed & code-accepted: chart editor architecture / real-time interaction / heatmap·scatter matrix / faceting / export enhancements / help center (guide.html) + full menubar redesign; full quality pass folded in (7 latent crash fixes + ruff cleanup); 73 test files all green; version unified to 3.6.0; release packaging pending |
 | 09-06 | v3.6.1 | Full code-quality audit & fixes: 7 latent crash paths (taguchi noise arrays, report templates builtin scope, sampling_engine typing imports, anti_debug local import shadowing, tpm/msa/doe undefined names) + loop-closure bindings + exception chaining + 171 unused imports cleaned + TEMP dir untracked + 72-file serial regression all green |
 | 09-06 | v3.6.0 (code) | Graph Builder completed: chart option editor (live params / persistent options) + pie·pareto real-time interaction + heatmap/scatter-matrix + faceting small multiples + PPTX/hi-res PNG/SVG export + thumbnail chart gallery + render-pipeline hardening (canvas swap / hidden toolbar / scroll stability) + integration test suite. Pending manual acceptance before release |
 | 09-05 | v3.5.0 | MSA & Capability Deepening completed: Attribute Agreement Enhancement (Fleiss's Kappa + Effective Kappa + Bias Matrix) + EMP Method Gauge Study + Gage R&R Enhancement (Variance Component Chart + Interaction Chart + Uncertainty Budget) + Capability Sixpack + Auto Capability Analysis + Edgeworth Approximation + 100+ tests |
