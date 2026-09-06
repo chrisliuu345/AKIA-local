@@ -20,7 +20,7 @@ ICON_PATH_LINUX = PROJECT_DIR / "assets" / "logo.png"
 VERSION_INFO = PROJECT_DIR / "version_info.txt"
 
 APP_NAME = "QA-Tool"
-APP_VERSION = "3.5.0"
+APP_VERSION = "3.6.0"
 
 BUILD_DIR = PROJECT_DIR / "build"
 DIST_DIR = PROJECT_DIR / "dist"

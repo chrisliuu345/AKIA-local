@@ -31,6 +31,21 @@ def test_build_scripts_package_help_dir():
     assert '("config/help", "config/help")' in src
 
 
+def test_version_numbers_correspond():
+    """版本号对应: app/构建/安装器/帮助页 四处版本必须一致"""
+    from config.settings import APP_VERSION
+    assert APP_VERSION == "3.6.0"
+
+    build = (ROOT / "build_nuitka.py").read_text(encoding="utf-8")
+    assert f'APP_VERSION = "{APP_VERSION}"' in build
+
+    iss = (ROOT / "packaging" / "QA-Tool-installer.iss").read_text(encoding="utf-8")
+    assert f'MyAppVersion "{APP_VERSION}"' in iss
+
+    guide = GUIDE.read_text(encoding="utf-8")
+    assert f"v{APP_VERSION}" in guide, "帮助页版本标签与应用版本不一致"
+
+
 def test_help_menu_guide_action_and_browser_open(monkeypatch):
     from PySide6.QtGui import QDesktopServices
 
