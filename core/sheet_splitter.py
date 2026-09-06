@@ -48,7 +48,7 @@ class SheetSplitter:
         match = df[mask]; rest = df[~mask]
         op_safe = operator.replace("<", "lt").replace(">", "gt").replace("=", "eq")
         p1 = os.path.join(output_dir, f"match_{condition_col}_{op_safe}_{threshold}.xlsx")
-        p2 = os.path.join(output_dir, f"rest.xlsx")
+        p2 = os.path.join(output_dir, "rest.xlsx")
         match.to_excel(p1, index=False); rest.to_excel(p2, index=False)
         return [p1, p2]
 

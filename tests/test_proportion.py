@@ -1,6 +1,5 @@
 """卡方检验与比例检验测试"""
 import pytest
-import numpy as np
 import pandas as pd
 from analysis.hypothesis.proportion import (
     chi_square_gof,

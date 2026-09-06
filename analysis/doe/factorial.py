@@ -63,7 +63,6 @@ def analyze_factorial(
 
     ss_arr = np.where(valid, n_high * (effects_arr / 2) ** 2 + n_low * (-effects_arr / 2) ** 2, 0.0)
     ss_factors = {factor: round(float(ss_arr[i]), 4) for i, factor in enumerate(factor_cols)}
-    df_factors = {factor: 1 for factor in factor_cols}
     ss_model = float(np.sum(ss_arr))
     df_model = int(valid.sum())
 

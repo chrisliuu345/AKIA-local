@@ -327,7 +327,6 @@ class TimeSeriesTab(BaseAnalysisTab):
 
     def _render_chart(self, result: Dict[str, Any]):
         chart_type = result.get("chart_type", "")
-        from analysis.charts.chart_generator import generate_chart
 
         data_for_chart = {}
         if chart_type == "ACF/PACF":
@@ -384,13 +383,9 @@ class TimeSeriesTab(BaseAnalysisTab):
         from analysis.charts.chart_generator import generate_chart
         try:
             fig = generate_chart(chart_type_name, data_for_chart)
-            self.current_figure = fig
-            self._clear_canvas()
-            from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-            self.canvas = FigureCanvasQTAgg(fig)
-            self.chart_layout.addWidget(self.canvas)
-            self.canvas.draw()
+            self._render_figure(fig)
+            self._add_chart_toolbar()
+            self.set_chart_type(chart_type_name)
             self._switch_result_view(0)
-            self._animate_chart_container()
         except Exception as e:
             self.result_text.append(f"\n图表渲染失败: {str(e)}")

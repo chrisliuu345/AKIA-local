@@ -9,8 +9,7 @@ References:
 Supports: L4, L8, L9, L12, L16, L18, L27, L36 arrays
 S/N ratios: larger-is-better, smaller-is-better, nominal-is-best (I/II)
 """
-from typing import Dict, Any, List, Optional, Tuple, Union
-import math
+from typing import Dict, Any, List, Optional
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -115,6 +114,25 @@ def _select_array(num_factors: int, factor_levels: List[int]) -> str:
         raise ValueError("Cannot accommodate mixed levels: " + str(n2) + "x2 + " + str(n3) + "x3")
 
 
+def _hadamard_sylvester(n: int) -> np.ndarray:
+    """递归构造 n×n Sylvester-Hadamard (±1) 矩阵；n 必须为 2 的幂。"""
+    if n == 1:
+        return np.array([[1]], dtype=int)
+    h = _hadamard_sylvester(n // 2)
+    top = np.concatenate([h, h], axis=1)
+    bottom = np.concatenate([h, -h], axis=1)
+    return np.concatenate([top, bottom], axis=0)
+
+
+def _build_plackett_burman(n: int) -> np.ndarray:
+    """两水平 (±1) 正交阵列：Hadamard 去掉首列(全1) → n×(n-1) 子阵。
+
+    供内噪因子双水平实验使用；n 为 2 的幂（调用方传入
+    max(4, 2**ceil(log2(k+1)))），保证 n-1 ≥ 噪声因子数。
+    """
+    return _hadamard_sylvester(n)[:, 1:]
+
+
 def generate_design(
     factors: List[str],
     factor_levels: Optional[List[int]] = None,
@@ -181,7 +199,7 @@ def generate_design(
             noise_arr = _build_plackett_burman(max(4, 2 ** int(np.ceil(np.log2(n_noise + 1)))))
             noise_arr = ((noise_arr + 1) // 2 + 1).astype(int)
         else:
-            noise_arr = _ARRAYS["L9"]["design"][:, :n_noise] if n_noise <= 4 else np.ones((n_noise_levels ** n_noise, n_noise), dtype=int)
+            noise_arr = np.array(_ARRAYS["L9"]["design"])[:, :n_noise] if n_noise <= 4 else np.ones((n_noise_levels ** n_noise, n_noise), dtype=int)
         noise_df = pd.DataFrame(noise_arr[:, :n_noise], columns=[nf + "_Noise" for nf in noise_factors])
         expanded = pd.merge(
             df.assign(_key=0),

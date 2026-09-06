@@ -6,8 +6,6 @@ Power & Sample Size Analysis 单元测试
     Cohen J (1988). Statistical Power Analysis for the Behavioral Sciences.
 """
 import pytest
-import math
-import numpy as np
 from analysis.doe.power_analysis import (
     power_one_sample_t, sample_size_one_sample_t,
     power_two_sample_t, sample_size_two_sample_t,

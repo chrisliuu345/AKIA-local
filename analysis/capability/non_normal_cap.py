@@ -3,15 +3,14 @@
 """
 
 from typing import Dict, Any, Optional
+import warnings
 import numpy as np
 import pandas as pd
 from scipy import stats
 from analysis.capability._utils import get_capability_grade
 from analysis.capability.johnson_transform import (
     johnson_transform,
-    inverse_transform,
     transform_value as johnson_transform_value,
-    JOHNSON_TYPES,
 )
 
 
@@ -67,11 +66,13 @@ def analyze(
     johnson_type = None
     
     if method == "box_cox":
-        if np.any(clean <= 0):
-            shift = abs(clean.min()) + 0.001
-            transformed, lam = stats.boxcox(clean + shift)
-        else:
-            transformed, lam = stats.boxcox(clean)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            if np.any(clean <= 0):
+                shift = abs(clean.min()) + 0.001
+                transformed, lam = stats.boxcox(clean + shift)
+            else:
+                transformed, lam = stats.boxcox(clean)
     elif method == "johnson":
         result_johnson = johnson_transform(clean, method="auto")
         transformed = result_johnson["transformed"]

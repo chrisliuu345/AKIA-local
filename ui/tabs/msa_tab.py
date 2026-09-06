@@ -20,6 +20,7 @@ from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_SECONDARY, BUTTON_TOGGLE, BUTTON_PRIMARY_STRETCH
 from ui.font_config import get_ui_font
 from core.formatting import format_pvalue
+from output.chart_engine import create_histogram
 
 
 class MSATab(BaseAnalysisTab):
@@ -225,6 +226,7 @@ class MSATab(BaseAnalysisTab):
         except KeyError as e:
             return False, f"列选择错误：{e} 在当前数据表中不存在，请点击表格列标题重新选择"
         if "Type 1" in method:
+            reference = self.ref_spin.value()
             if reference == 0.0:
                 return False, "Type 1 量具研究需要设置参考值（真值）"
             data = pd.to_numeric(self.df[measure], errors="coerce").dropna()
@@ -253,7 +255,6 @@ class MSATab(BaseAnalysisTab):
 
     def run_analysis(self) -> Dict[str, Any]:
         from analysis.msa import gage_rr, linearity_bias, attribute_agree, type1_study, emp
-        from output.chart_engine import create_histogram
 
         method = self.method_combo.currentText()
         measure = self.measure_col.currentText()
@@ -317,7 +318,7 @@ class MSATab(BaseAnalysisTab):
             lines.append(f"\n  NDC: {ndc}")
         acceptance = result.get("acceptance", {})
         if acceptance:
-            lines.append(f"\n【判定】")
+            lines.append("\n【判定】")
             lines.append(f"  {acceptance.get('message', '')} ({acceptance.get('level', '')})")
         if "kappa" in result:
             lines.append(f"\n  Kappa: {result.get('kappa', '')}")
@@ -327,17 +328,17 @@ class MSATab(BaseAnalysisTab):
                 lines.append(f"  有效 Kappa: {result.get('effective_kappa', '')}")
         if "discrimination_grade" in result:
             dg = result.get("discrimination_grade", {})
-            lines.append(f"\n【分辨力分级】")
+            lines.append("\n【分辨力分级】")
             lines.append(f"  等级: {dg.get('grade', '')} 级 ({dg.get('level', '')})")
             lines.append(f"  {dg.get('description', '')}")
         if "wheeler_criteria" in result:
-            lines.append(f"\n【Wheeler 判异准则】")
+            lines.append("\n【Wheeler 判异准则】")
             for c in result.get("wheeler_criteria", []):
                 status = "✓" if c.get("status") == "pass" else "✗"
                 lines.append(f"  {status} {c.get('name', '')}: {c.get('detail', '')}")
         if "uncertainty" in result:
             unc = result.get("uncertainty", {})
-            lines.append(f"\n【不确定度预算 (GUM)】")
+            lines.append("\n【不确定度预算 (GUM)】")
             lines.append(f"  合成不确定度: {unc.get('combined_uncertainty', '')}")
             lines.append(f"  扩展不确定度 (k={unc.get('coverage_factor', '')}): {unc.get('expanded_uncertainty', '')}")
             if unc.get("tolerance_ratio") is not None:
@@ -350,14 +351,14 @@ class MSATab(BaseAnalysisTab):
             lines.append(f"  p值: {pv_str}")
         cap = result.get("capability", {})
         if cap:
-            lines.append(f"\n【Type 1 能力指标】")
+            lines.append("\n【Type 1 能力指标】")
             lines.append(f"  Cg: {cap.get('cg', '')}")
             lines.append(f"  Cgk: {cap.get('cgk', '')}")
             lines.append(f"  偏倚: {cap.get('bias', '')} ({cap.get('bias_pct', '')}%)")
             lines.append(f"  可接受: {'是' if cap.get('is_capable') else '否'}")
         bias_test = result.get("bias_test", {})
         if bias_test:
-            lines.append(f"\n【偏倚 t 检验】")
+            lines.append("\n【偏倚 t 检验】")
             lines.append(f"  平均偏倚: {bias_test.get('mean_bias', '')}")
             pv = bias_test.get('p_value', '')
             pv_str = format_pvalue(pv) if isinstance(pv, (int, float)) else str(pv)
@@ -370,16 +371,13 @@ class MSATab(BaseAnalysisTab):
         self.result_text.update()
 
     def _render_chart(self, raw_data: np.ndarray):
-        self._clear_canvas()
         try:
-            fig = create_histogram(raw_data, title="测量数据分布")
-            self.current_figure = fig
-            from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-            self.canvas = FigureCanvasQTAgg(fig)
-            self.chart_layout.addWidget(self.canvas)
-            self.canvas.draw()
+            fig = create_histogram(raw_data, title="测量数据分布", options=self._chart_options)
+            self._render_figure(fig)
             self._add_chart_toolbar()
+            self.set_chart_type("直方图")
         except Exception as e:
+            self._clear_canvas()
             err_label = QLabel(f"图表渲染失败: {e}")
             err_label.setStyleSheet("color: #e74c3c; padding: 12px;")
             err_label.setWordWrap(True)

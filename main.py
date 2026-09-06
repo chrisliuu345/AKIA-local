@@ -10,6 +10,9 @@ os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
 import matplotlib
 matplotlib.use("QtAgg")
 
+import warnings
+warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*invalid value encountered.*")
+
 from output.chart_engine import _ensure_font
 _ensure_font()
 

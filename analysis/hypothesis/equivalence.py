@@ -4,7 +4,7 @@
 TOST (Two One-Sided Tests) 用于证明两个均值之间的差异在临床上不重要。
 """
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 import numpy as np
 import pandas as pd
 from scipy import stats

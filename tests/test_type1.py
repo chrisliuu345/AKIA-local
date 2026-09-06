@@ -1,6 +1,5 @@
 """Type 1 量具研究测试"""
 import pytest
-import numpy as np
 import pandas as pd
 from analysis.msa.type1_study import analyze
 

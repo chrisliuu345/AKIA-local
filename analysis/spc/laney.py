@@ -1,8 +1,7 @@
 """Laney P'/U' 控制图 — 修正过度离散/欠离散计数数据"""
 
 import numpy as np
-import pandas as pd
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any
 from scipy import stats
 
 

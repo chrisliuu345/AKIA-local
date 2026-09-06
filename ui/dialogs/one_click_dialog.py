@@ -9,7 +9,7 @@ from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtGui import QFont
 
 from ui.theme import colors as theme_colors
-from ui.font_config import get_ui_font
+from ui.font_config import get_ui_font, get_mono_font
 
 from core.one_click_analyzer import OneClickAnalyzer
 from core.llm_client import LLMClient
@@ -108,7 +108,7 @@ class OneClickDialog(QDialog):
 
         self.log_view = QTextEdit()
         self.log_view.setReadOnly(True)
-        self.log_view.setFont(QFont("Consolas", 9))
+        self.log_view.setFont(QFont(get_mono_font(), 9))
         self.log_view.setMaximumHeight(100)
         self.log_view.setStyleSheet(
             f"QTextEdit {{ background: {tc['bg_card']}; border: 1px solid {tc['border_light']}; "

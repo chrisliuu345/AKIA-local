@@ -9,7 +9,6 @@ Plackett-Burman 筛选设计单元测试
 """
 import pytest
 import numpy as np
-import pandas as pd
 from analysis.doe.plackett_burman import generate_design, analyze, _hadamard_from_base
 
 

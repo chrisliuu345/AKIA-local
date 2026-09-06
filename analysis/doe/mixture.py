@@ -302,7 +302,6 @@ def analyze(
     ms_error = ss_res / df_error if df_error > 0 else 1e-10
 
     f_model = ms_model / ms_error if ms_error > 1e-10 else 0.0
-    p_model = 1.0 - stats.f.cdf(max(f_model, 0), df_model, df_error) if df_model > 0 and df_error > 0 else 1.0
 
     if df_error > 0 and ms_error > 0:
         try:

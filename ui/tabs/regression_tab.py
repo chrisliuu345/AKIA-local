@@ -4,7 +4,6 @@
 
 from typing import Dict, Any
 import pandas as pd
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
@@ -272,13 +271,11 @@ class RegressionTab(BaseAnalysisTab):
         self._switch_result_view(0)
 
     def _render_chart(self, result: Dict):
-        self._clear_canvas()
         try:
             import matplotlib.pyplot as plt
             from config.settings import CHART_DPI
             fitted = result.get("fitted_values", [])
             residuals = result.get("residuals", [])
-            actual = result.get("actual_values", [])
             fig, axes = plt.subplots(2, 1, figsize=(10, 8), dpi=CHART_DPI)
             axes[0].scatter(fitted, residuals, alpha=0.6, edgecolors="k", linewidth=0.3, color="#1b5faa")
             axes[0].axhline(y=0, color="red", linestyle="--", linewidth=1)
@@ -291,12 +288,11 @@ class RegressionTab(BaseAnalysisTab):
                 scs.probplot(residuals, dist="norm", plot=axes[1])
                 axes[1].set_title("残差 Q-Q 图", fontsize=12, fontweight="bold")
                 axes[1].grid(True, alpha=0.3)
-            self.current_figure = fig
-            self.canvas = FigureCanvasQTAgg(fig)
-            self.chart_layout.addWidget(self.canvas)
-            self.canvas.draw()
+            self._render_figure(fig)
             self._add_chart_toolbar()
+            self.set_chart_type("残差图")
         except Exception as e:
+            self._clear_canvas()
             err_label = QLabel(f"{i18n.tr('reg.chart_failed')}{e}")
             err_label.setStyleSheet("color: #e74c3c; padding: 12px;")
             err_label.setWordWrap(True)
@@ -314,16 +310,13 @@ class RegressionTab(BaseAnalysisTab):
     def _on_show_correlation(self):
         if self.df is None:
             return
-        self._clear_canvas()
         try:
             from output.chart_engine import create_correlation_heatmap
             fig = create_correlation_heatmap(self.df)
-            self.current_figure = fig
-            self.canvas = FigureCanvasQTAgg(fig)
-            self.chart_layout.addWidget(self.canvas)
-            self.canvas.draw()
+            self._render_figure(fig)
             self._add_chart_toolbar()
         except Exception as e:
+            self._clear_canvas()
             err_label = QLabel(f"{i18n.tr('reg.chart_failed')}{e}")
             err_label.setStyleSheet("color: #e74c3c; padding: 12px;")
             err_label.setWordWrap(True)

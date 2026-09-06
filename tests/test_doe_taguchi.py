@@ -322,3 +322,32 @@ class TestAnalyze:
         result = analyze(df, "Response", ["A", "B", "C", "D"])
         assert len(result["response_table"]) == 4
         assert result["observations"] == 9
+
+
+class TestNoiseFactors:
+    """内外表(噪声因子)扩展 — 回归: 曾缺 _build_plackett_burman 与 L9 list 切片"""
+
+    def test_noise_2level_uses_hadamard_inner_array(self):
+        df = generate_design(["A", "B", "C", "D", "E", "F"],
+                             noise_factors=["N1", "N2"], noise_levels=[2, 2],
+                             random_seed=1)
+        assert {"N1_Noise", "N2_Noise"} <= set(df.columns)
+        assert df["N1_Noise"].isin([1, 2]).all()
+        # 每主试验行配对的内表行数 = 2^2
+        n_main = len(df) // 4
+        assert len(df) == n_main * 4
+
+    def test_noise_3level_uses_L9_inner_array(self):
+        df = generate_design(["A", "B"],
+                             noise_factors=["N1", "N2", "N3"],
+                             noise_levels=[3, 3, 3], random_seed=2)
+        assert len(df) == 36  # 主阵 4 行(2^2?) × L9 9 行
+        for c in ("N1_Noise", "N2_Noise", "N3_Noise"):
+            assert df[c].isin([1, 2, 3]).all()
+        assert set(df["N1_Noise"].unique()) == {1, 2, 3}
+
+    def test_noise_inner_array_columns_orthogonal(self):
+        from analysis.doe.taguchi import _build_plackett_burman
+        a = _build_plackett_burman(8)
+        assert a.shape == (8, 7)
+        assert np.allclose(a.T @ a, np.eye(7) * 8)
