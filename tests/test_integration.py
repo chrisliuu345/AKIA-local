@@ -11,7 +11,6 @@ from analysis.capability import normal_cap
 from analysis.hypothesis import t_tests, normality
 from analysis.msa import gage_rr
 from analysis.doe import factorial as fact
-from core.data_loader import DataLoader
 from core.data_parser import DataParser
 from core.data_validator import DataValidator
 from core.template_parser import TemplateParser

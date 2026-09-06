@@ -13,7 +13,7 @@ from core.i18n import i18n
 from config.settings import APP_VERSION, tab_allowed
 from ui.theme import colors as theme_colors
 from ui.widgets.elided_label import ElidedLabel
-from ui.font_config import get_ui_font
+from ui.font_config import get_ui_font, get_mono_font
 
 
 HOME_ITEM = (0, "sidebar.home")
@@ -540,7 +540,7 @@ class Sidebar(QWidget):
             rlayout.setSpacing(4)
 
             time_lbl = QLabel(entry["time"])
-            time_lbl.setFont(QFont("Consolas", 8))
+            time_lbl.setFont(QFont(get_mono_font(), 8))
             time_lbl.setFixedWidth(36)
             time_lbl.setStyleSheet(f"color: {tc['text_muted']};")
             rlayout.addWidget(time_lbl)

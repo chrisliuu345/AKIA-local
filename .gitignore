@@ -17,3 +17,4 @@ HANDOVER.md
 TEMP/dev_private_key.pem
 TEMP/*.pem
 .integrity_baseline.json
+TEMP/

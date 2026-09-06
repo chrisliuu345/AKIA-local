@@ -34,7 +34,7 @@ class LicenseDialog(QDialog):
         line.setStyleSheet("border-top: 1px solid #ddd; margin: 16px 0;")
         layout.addWidget(line)
 
-        info_text = f"""
+        info_text = """
 <b>功能特性:</b>
 • 35 个分析模块（SPC/能力/MSA/假设检验/DOE/IE工具）
 • AI 智能洞察（Ollama/OpenAI API）

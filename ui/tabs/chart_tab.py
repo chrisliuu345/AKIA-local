@@ -4,7 +4,6 @@
 
 from typing import Dict, Any
 import pandas as pd
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
@@ -54,10 +53,16 @@ class ChartTab(BaseAnalysisTab):
         self.sheet_combo.currentTextChanged.connect(self._on_sheet_changed)
         config_form_layout.addRow(i18n.tr("chart_tab.sheet"), self.sheet_combo)
 
+        # 类型选择：隐藏下拉（保留状态/信号链） + 图库网格（点击切换）
         self.chart_type_combo = QComboBox()
         self.chart_type_combo.addItems(CHART_TYPES)
         self.chart_type_combo.currentTextChanged.connect(self._on_chart_type_changed)
-        config_form_layout.addRow(i18n.tr("chart_tab.chart_type"), self.chart_type_combo)
+
+        from ui.widgets.chart_gallery import ChartGallery
+        self.chart_gallery = ChartGallery(CHART_TYPES)
+        self.chart_gallery.type_chosen.connect(self._on_gallery_type_chosen)
+        self.chart_type_combo.currentTextChanged.connect(self.chart_gallery.set_current)
+        config_form_layout.addRow(self.chart_gallery)
 
         self.config_panel = QWidget()
         self.config_form_layout = QFormLayout(self.config_panel)
@@ -159,6 +164,10 @@ class ChartTab(BaseAnalysisTab):
         self._rebuild_config_panel(chart_type)
         self.cb_3d.setVisible(chart_type == "3D曲面图")
 
+    def _on_gallery_type_chosen(self, chart_type: str):
+        if chart_type != self.chart_type_combo.currentText():
+            self.chart_type_combo.setCurrentText(chart_type)
+
     def _rebuild_config_panel(self, chart_type: str):
         self.cb_show_regression = None
         self._col_widgets.clear()
@@ -246,34 +255,42 @@ class ChartTab(BaseAnalysisTab):
         if self.df is None:
             return False, "请先导入数据文件"
         chart_type = self.chart_type_combo.currentText()
-        params = self._collect_params()
-
-        selected_cols = [c for c in params.get("columns", []) if c]
-        for multi_list in params.get("multi_columns", {}).values():
-            selected_cols.extend(c for c in multi_list if c)
 
         configs = CHART_CONFIGS.get(chart_type, [])
         for (label, col_type), w in zip(configs, self._col_widgets):
             if col_type.startswith("multi_"):
-                sel = params.get("multi_columns", {}).get(col_type, [])
+                sel = []
+                for i in range(w.count()):
+                    item = w.item(i)
+                    if item.checkState() == Qt.Checked:
+                        sel.append(item.text())
                 if not sel:
                     return False, f"请选择: {label}"
+                for col in sel:
+                    err = self._column_error(col)
+                    if err:
+                        return False, err
             else:
-                vals = [c for c in params["columns"] if c]
-                if not vals:
+                col = w.currentText()
+                if not col:
                     return False, f"请选择: {label}"
-
-        for col in selected_cols:
-            if col not in self.df.columns:
-                continue
-            try:
-                n = pd.to_numeric(self.df[col], errors="coerce").dropna()
-            except Exception:
-                continue
-            if len(n) == 0:
-                return False, f"列「{col}」不含数值数据（全为文本/空值），无法用于图表分析。\n请改用其他列，或检查数据格式。"
-
+                if col_type == "numeric":
+                    err = self._column_error(col)
+                    if err:
+                        return False, err
         return True, ""
+
+    def _column_error(self, col: str) -> str:
+        """数值列必须含可数值化数据；返回错误文案，None 表示可用"""
+        if self.df is None or col not in self.df.columns:
+            return None
+        try:
+            n = pd.to_numeric(self.df[col], errors="coerce").dropna()
+        except Exception:
+            n = pd.Series(dtype=float)
+        if len(n) == 0:
+            return f"列「{col}」不含数值数据（全为文本/空值），无法用于图表分析。\n请改用其他列，或检查数据格式。"
+        return None
 
     def run_analysis(self) -> Dict[str, Any]:
         chart_type = self.chart_type_combo.currentText()
@@ -297,10 +314,16 @@ class ChartTab(BaseAnalysisTab):
         }
         if self.cb_show_regression is not None and self.cb_show_regression.isVisible():
             options["show_regression"] = self.cb_show_regression.isChecked()
+        options["chart_options"] = self._chart_options.copy()
 
         fig = generate_chart(chart_type, data, options)
 
-        summary = _build_summary(self.df, all_cols) if all_cols else ""
+        if chart_type == "小多图" and len(all_cols) >= 2:
+            from analysis.charts.faceting import faceting_summary_lines
+            lines = faceting_summary_lines(self.df, all_cols[0], all_cols[1])
+            summary = "\n".join(lines)
+        else:
+            summary = _build_summary(self.df, all_cols) if all_cols else ""
 
         self.current_result = {
             "analysis_type": f"Chart: {chart_type}",
@@ -317,17 +340,15 @@ class ChartTab(BaseAnalysisTab):
         summary = analysis.get("summary", "")
         chart_type = analysis.get("chart_type", "")
 
-        self._render_chart(fig)
+        self._render_chart(fig, chart_type)
         self.result_text.setPlainText(summary)
         self._switch_result_view(0)
 
-    def _render_chart(self, fig):
-        self._clear_canvas()
-        self.current_figure = fig
-        self.canvas = FigureCanvasQTAgg(fig)
-        self.chart_layout.addWidget(self.canvas)
-        self.canvas.draw()
+    def _render_chart(self, fig, chart_type: str = ""):
+        self._render_figure(fig)
         self._add_chart_toolbar()
+        if chart_type:
+            self.set_chart_type(chart_type)
 
     def run_and_display(self) -> Dict[str, Any]:
         ok, msg = self.validate_params()

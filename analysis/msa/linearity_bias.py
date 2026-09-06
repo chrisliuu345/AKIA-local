@@ -48,7 +48,7 @@ def analyze_linearity(
     data = data.dropna(subset=[measurement_col, reference_col])
 
     if len(data) < 5:
-        raise ValueError(f"数据量不足: 需要至少 5 点")
+        raise ValueError("数据量不足: 需要至少 5 点")
 
     x = data[reference_col].values
     y = data[measurement_col].values - x

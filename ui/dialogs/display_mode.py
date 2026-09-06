@@ -136,13 +136,13 @@ class DisplayModeWindow(QWidget):
 
         self.clock_label = QLabel("")
         self.clock_label.setFont(FONT_14B)
-        self.clock_label.setStyleSheet(f"color: #e1e2e6; background: transparent;")
+        self.clock_label.setStyleSheet("color: #e1e2e6; background: transparent;")
         top.addWidget(self.clock_label)
         root.addLayout(top)
 
         divider = QFrame()
         divider.setFixedHeight(1)
-        divider.setStyleSheet(f"background: #262633; border: none;")
+        divider.setStyleSheet("background: #262633; border: none;")
         root.addWidget(divider)
 
         body = QHBoxLayout()

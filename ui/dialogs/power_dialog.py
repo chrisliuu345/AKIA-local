@@ -6,14 +6,13 @@ import math
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QFormLayout, QComboBox,
     QDoubleSpinBox, QSpinBox, QPushButton, QLabel, QGroupBox,
-    QStackedWidget, QWidget, QTextEdit, QFrame,
+    QStackedWidget, QWidget, QTextEdit,
 )
-from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
 from analysis.doe.power_analysis import (
     compute_power, compute_sample_size, oc_curve,
-    TEST_TYPE_LABELS, power_one_way_anova_delta,
+    TEST_TYPE_LABELS,
 )
 from ui.theme import colors as theme_colors, BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY
 from ui.font_config import get_ui_font

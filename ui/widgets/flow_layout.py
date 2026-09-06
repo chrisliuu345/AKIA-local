@@ -4,7 +4,7 @@
 用于 Dashboard 卡片指标行，防止文字截断。
 """
 
-from PySide6.QtWidgets import QLayout, QSizePolicy
+from PySide6.QtWidgets import QLayout
 from PySide6.QtCore import Qt, QPoint, QSize, QRect
 
 

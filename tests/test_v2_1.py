@@ -1,6 +1,5 @@
 """v2.1 新增测试 — 架构 + Bug 回归 + 边界条件"""
 import pytest
-import sys
 import os
 import numpy as np
 import pandas as pd
@@ -16,7 +15,7 @@ def test_tab_registry_all_indices_unique():
 
 def test_tab_registry_covers_all_slots():
     """TAB_REGISTRY 覆盖 1-28 所有索引"""
-    from ui._tab_registry import TAB_REGISTRY, INDEX_MAP
+    from ui._tab_registry import TAB_REGISTRY
     indices = set(entry[0] for entry in TAB_REGISTRY)
     expected = set(range(1, 29))
     missing = expected - indices

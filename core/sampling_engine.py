@@ -1,8 +1,7 @@
 """抽样检验引擎 — GB/T 2828.1 AQL + GB/T 6378 计量型 + C=0 抽样 + 随机/分层/系统抽样 + 序贯"""
 
 import numpy as np, pandas as pd
-from typing import List, Tuple, Optional
-from scipy import stats
+from typing import List, Tuple, Optional, Dict, Any
 
 
 _LOT_CODE = [

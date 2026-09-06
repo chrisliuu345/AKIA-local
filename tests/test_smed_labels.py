@@ -1,7 +1,6 @@
 """SMED 甘特图标签截断辅助函数单元测试"""
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import pytest
 
 from ui.tabs.smed_tab import truncate_label
 

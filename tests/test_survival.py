@@ -2,7 +2,6 @@
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from analysis.reliability.survival import (
     kaplan_meier, kaplan_meier_compare, logrank_test, cox_regression,

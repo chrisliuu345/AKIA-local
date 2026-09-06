@@ -18,6 +18,7 @@ from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_SECONDARY, BUTTON_TOGGLE, BUTTON_PRIMARY_STRETCH
 from ui.font_config import get_ui_font
+from output.chart_engine import create_pareto_chart
 
 
 class DOETab(BaseAnalysisTab):
@@ -248,7 +249,6 @@ class DOETab(BaseAnalysisTab):
     def run_analysis(self) -> Dict[str, Any]:
         from analysis.doe import factorial, response_surface, box_behnken
         from analysis.doe import plackett_burman, definitive_screening, fractional, taguchi, mixture
-        from output.chart_engine import create_pareto_chart
 
         method = self.method_combo.currentText()
         result = {}
@@ -328,19 +328,19 @@ class DOETab(BaseAnalysisTab):
 
             effects = result.get("effects", result.get("main_effects", {}))
             if effects:
-                lines.append(f"\n【因子效应】")
+                lines.append("\n【因子效应】")
                 for k, v in effects.items():
                     lines.append(f"  {k}: {v}")
             interaction = result.get("interaction_effects", {})
             if interaction:
-                lines.append(f"\n【交互效应】")
+                lines.append("\n【交互效应】")
                 for k, v in interaction.items():
                     lines.append(f"  {k}: {v}")
 
             pareto = result.get("pareto", result.get("pareto_data", []))
             if pareto:
                 self._render_pareto(pareto)
-                lines.append(f"\n【Pareto排序】")
+                lines.append("\n【Pareto排序】")
                 for item in pareto[:10]:
                     lines.append(f"  {item.get('term', '')}: {item.get('effect', '')}")
             else:
@@ -348,7 +348,7 @@ class DOETab(BaseAnalysisTab):
 
             anova_table = result.get("anova", {})
             if anova_table:
-                lines.append(f"\n【ANOVA】")
+                lines.append("\n【ANOVA】")
                 sources = anova_table.get("source", [])
                 p_vals = anova_table.get("p_value", [])
                 for s, p in zip(sources, p_vals):
@@ -357,7 +357,7 @@ class DOETab(BaseAnalysisTab):
 
             coeffs = result.get("coefficients", {})
             if coeffs:
-                lines.append(f"\n【回归系数】")
+                lines.append("\n【回归系数】")
                 for k, v in list(coeffs.items())[:15]:
                     lines.append(f"  {k}: {v}")
 

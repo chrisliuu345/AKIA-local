@@ -12,7 +12,7 @@ Capability Sixpack — 六合图
 参考: Minitab Quality Tools > Capability Analysis > Sixpack
 """
 
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 import numpy as np
 import pandas as pd
 from scipy import stats

@@ -1,7 +1,6 @@
 """计量型抽样检验测试"""
 
 import numpy as np
-import pytest
 from core.sampling_engine import SamplingEngine
 
 
