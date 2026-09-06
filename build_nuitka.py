@@ -30,6 +30,7 @@ NUITKA_DIST_DIR = PROJECT_DIR / "build" / "nuitka_dist"
 DATA_DIRS = [
     ("config/knowledge", "config/knowledge"),
     ("config/templates", "config/templates"),
+    ("config/help", "config/help"),
     ("locales", "locales"),
     ("plugins", "plugins"),
 ]
