@@ -5,6 +5,7 @@
 from typing import Dict, Any, List
 
 from PySide6.QtWidgets import (
+    QFrame,
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QDoubleSpinBox, QGroupBox, QFormLayout,
     QTableWidget, QTableWidgetItem, QSplitter, QHeaderView,
@@ -47,10 +48,12 @@ class VSMTab(BaseAnalysisTab):
 
         top = QWidget()
         top_layout = QHBoxLayout(top)
+        top_layout.setSpacing(10)
         top_layout.setContentsMargins(0, 0, 0, 0)
 
         config_group = QGroupBox("分析参数")
         config_layout = QFormLayout(config_group)
+        config_layout.setContentsMargins(10, 10, 10, 10)
 
         self.demand_spin = QDoubleSpinBox()
         self.demand_spin.setRange(1, 1e7)
@@ -68,6 +71,13 @@ class VSMTab(BaseAnalysisTab):
         config_layout.addRow(self.btn_analyze)
 
         top_layout.addWidget(config_group)
+
+
+        separator = QFrame()
+        separator.setFrameShape(QFrame.VLine)
+        separator.setStyleSheet("")
+        separator.setMaximumWidth(1)
+        top_layout.addWidget(separator)
 
         preview_group = QGroupBox("数据预览")
         preview_layout = QVBoxLayout(preview_group)

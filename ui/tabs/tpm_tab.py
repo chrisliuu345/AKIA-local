@@ -10,7 +10,7 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 import numpy as np
 
 from ui.tabs.base_tab import BaseAnalysisTab
-from ui.theme import BUTTON_PRIMARY_STRETCH
+from ui.theme import BUTTON_PRIMARY_STRETCH, FONT_18B
 from analysis.ie.tpm import TPMEngine
 
 
@@ -25,6 +25,10 @@ class TPMTab(BaseAnalysisTab):
     def _setup_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
+
+        title = QLabel("TPM 全面生产维护")
+        title.setFont(FONT_18B)
+        layout.addWidget(title)
 
         kpi_row = QHBoxLayout()
         self.kpi_labels = {}

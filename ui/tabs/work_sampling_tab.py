@@ -6,6 +6,7 @@ from collections import OrderedDict
 from typing import Dict, Any, List
 
 from PySide6.QtWidgets import (
+    QFrame,
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QGroupBox, QFormLayout,
     QTableWidget, QTableWidgetItem, QSplitter, QHeaderView,
@@ -56,10 +57,12 @@ class WorkSamplingTab(BaseAnalysisTab):
 
         top = QWidget()
         top_layout = QHBoxLayout(top)
+        top_layout.setSpacing(10)
         top_layout.setContentsMargins(0, 0, 0, 0)
 
         config_group = QGroupBox("分析参数")
         config_layout = QFormLayout(config_group)
+        config_layout.setContentsMargins(10, 10, 10, 10)
 
         self.confidence_combo = QComboBox()
         self.confidence_combo.addItems(["90%", "95%", "99%"])
@@ -93,6 +96,13 @@ class WorkSamplingTab(BaseAnalysisTab):
         config_layout.addRow(self.btn_analyze)
 
         top_layout.addWidget(config_group)
+
+
+        separator = QFrame()
+        separator.setFrameShape(QFrame.VLine)
+        separator.setStyleSheet("")
+        separator.setMaximumWidth(1)
+        top_layout.addWidget(separator)
 
         obs_group = QGroupBox("观测记录")
         obs_layout = QVBoxLayout(obs_group)

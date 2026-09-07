@@ -42,10 +42,12 @@ class MSATab(BaseAnalysisTab):
 
         top = QWidget()
         top_layout = QHBoxLayout(top)
+        top_layout.setSpacing(10)
         top_layout.setContentsMargins(0, 0, 0, 0)
 
         config_group = QGroupBox("分析配置")
         config_layout = QFormLayout(config_group)
+        config_layout.setContentsMargins(10, 10, 10, 10)
 
         self.method_combo = QComboBox()
         self.method_combo.addItems(["量具R&R (交叉)", "量具R&R (嵌套)", "EMP 方法", "偏倚分析", "线性分析", "属性一致性分析", "Type 1 量具研究"])

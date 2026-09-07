@@ -42,10 +42,12 @@ class CapabilityTab(BaseAnalysisTab):
 
         top = QWidget()
         top_layout = QHBoxLayout(top)
+        top_layout.setSpacing(10)
         top_layout.setContentsMargins(0, 0, 0, 0)
 
         config_group = QGroupBox("分析配置")
         config_layout = QFormLayout(config_group)
+        config_layout.setContentsMargins(10, 10, 10, 10)
 
         self.method_combo = QComboBox()
         self.method_combo.addItems(["正态过程能力", "非正态 (Box-Cox)", "非正态 (Johnson)", "非正态 (百分位法)", "组间/组内能力", "公差区间 (正态)", "公差区间 (非参数)", "分布拟合"])

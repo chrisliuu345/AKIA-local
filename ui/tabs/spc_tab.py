@@ -45,10 +45,12 @@ class SPCTab(BaseAnalysisTab):
 
         top = QWidget()
         top_layout = QHBoxLayout(top)
+        top_layout.setSpacing(10)
         top_layout.setContentsMargins(0, 0, 0, 0)
 
         config_group = QGroupBox(i18n.tr("spc.config"))
         config_layout = QFormLayout(config_group)
+        config_layout.setContentsMargins(10, 10, 10, 10)
 
         self.chart_type_combo = QComboBox()
         self.chart_type_combo.addItems(["XBar-R", "XBar-S", "I-MR", "P Chart", "NP Chart", "C Chart", "U Chart", "CUSUM", "EWMA", "Laney P'", "Laney U'", "Hotelling T²"])
