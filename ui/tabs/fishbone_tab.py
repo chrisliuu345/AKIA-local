@@ -3,9 +3,19 @@
 from typing import Dict
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QGroupBox, QFormLayout, QLineEdit, QTreeWidget, QTreeWidgetItem,
-    QSplitter, QInputDialog, QMessageBox,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QGroupBox,
+    QFormLayout,
+    QLineEdit,
+    QTreeWidget,
+    QTreeWidgetItem,
+    QSplitter,
+    QInputDialog,
+    QMessageBox,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
@@ -19,7 +29,6 @@ from analysis.quality.fishbone import FishboneEngine
 
 
 class FishboneTab(BaseAnalysisTab):
-
     def __init__(self, parent=None):
         self._engine = FishboneEngine()
         self._branches: Dict = {}
@@ -40,9 +49,7 @@ class FishboneTab(BaseAnalysisTab):
 
         splitter = QSplitter(Qt.Horizontal)
         splitter.setHandleWidth(4)
-        splitter.setStyleSheet(
-            f"QSplitter::handle {{ background: {tc['border']}; }}"
-        )
+        splitter.setStyleSheet(f"QSplitter::handle {{ background: {tc['border']}; }}")
 
         left = QWidget()
         left.setMinimumWidth(260)
@@ -66,13 +73,16 @@ class FishboneTab(BaseAnalysisTab):
         self.tree.setAlternatingRowColors(True)
         self.tree.setStyleSheet(
             f"QTreeWidget {{ background: {tc['bg_card']}; "
-            f"border: 1px solid {tc['border']}; border-radius: 4px; }}")
+            f"border: 1px solid {tc['border']}; border-radius: 4px; }}"
+        )
         tree_layout.addWidget(self.tree)
 
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(4)
-        btn_row1 = QHBoxLayout(); btn_row2 = QHBoxLayout()
-        btn_row1.setSpacing(4); btn_row2.setSpacing(4)
+        btn_row1 = QHBoxLayout()
+        btn_row2 = QHBoxLayout()
+        btn_row1.setSpacing(4)
+        btn_row2.setSpacing(4)
         tree_btn_layout = QVBoxLayout()
         tree_btn_layout.setSpacing(4)
         tree_btn_layout.addLayout(btn_row1)
@@ -154,12 +164,14 @@ class FishboneTab(BaseAnalysisTab):
     @staticmethod
     def _count_children(node) -> int:
         return len(node.children) + sum(
-            FishboneTab._count_children(c) for c in node.children)
+            FishboneTab._count_children(c) for c in node.children
+        )
 
     def _add_branch(self):
         name, ok = QInputDialog.getText(self, "添加分支", "分支名称:")
         if ok and name.strip():
             from analysis.quality.fishbone import CauseNode
+
             self._branches[name.strip()] = CauseNode(name=name.strip(), level=0)
             self._rebuild_tree()
             self._render()
@@ -176,9 +188,11 @@ class FishboneTab(BaseAnalysisTab):
                 target = self._find_node_by_path(selected, bname)
                 if target:
                     from analysis.quality.fishbone import CauseNode
+
                     new_level = target.level + 1 if not self._is_branch(selected) else 1
-                    target.children.append(CauseNode(
-                        name=name.strip(), level=min(new_level, 2)))
+                    target.children.append(
+                        CauseNode(name=name.strip(), level=min(new_level, 2))
+                    )
             self._rebuild_tree()
             self._render()
 
@@ -199,8 +213,8 @@ class FishboneTab(BaseAnalysisTab):
                 parent_node = self._find_node_by_path(parent_item, bname)
                 if parent_node:
                     parent_node.children = [
-                        c for c in parent_node.children
-                        if c.name != selected.text(0)]
+                        c for c in parent_node.children if c.name != selected.text(0)
+                    ]
         self._rebuild_tree()
         self._render()
 
@@ -220,8 +234,10 @@ class FishboneTab(BaseAnalysisTab):
             QMessageBox.information(self, "提示", "请先绘制鱼骨图")
             return
         from PySide6.QtWidgets import QFileDialog
+
         path, _ = QFileDialog.getSaveFileName(
-            self, "导出鱼骨图", "fishbone.png", "PNG 图片 (*.png)")
+            self, "导出鱼骨图", "fishbone.png", "PNG 图片 (*.png)"
+        )
         if path and not self.canvas.export_png(path):
             QMessageBox.warning(self, "导出失败", "图片保存失败，请重试")
 

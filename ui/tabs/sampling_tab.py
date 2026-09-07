@@ -2,202 +2,433 @@
 
 import numpy as np
 from PySide6.QtWidgets import (
-    QWidget,QVBoxLayout,QHBoxLayout,QLabel,QPushButton,QFormLayout,QComboBox,QSpinBox,QDoubleSpinBox,QTableWidget,
-    QTableWidgetItem,QStackedWidget,QMessageBox,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QFormLayout,
+    QComboBox,
+    QSpinBox,
+    QDoubleSpinBox,
+    QTableWidget,
+    QTableWidgetItem,
+    QStackedWidget,
+    QMessageBox,
 )
 from PySide6.QtGui import QColor
 from ui.tabs.base_tab import BaseAnalysisTab
-from ui.theme import BUTTON_PRIMARY_STRETCH,BUTTON_TOGGLE,FONT_18B
+from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_TOGGLE, FONT_18B
 from ui.theme import colors as theme_colors
 from core.sampling_engine import SamplingEngine
 
+
 class SamplingTab(BaseAnalysisTab):
-    def __init__(self,p=None): super().__init__(p); self._setup_ui()
-    def set_data(self,df,info=None):
-        BaseAnalysisTab.set_data(self,df,info)
-        if df is not None: self._populate()
+    def __init__(self, p=None):
+        super().__init__(p)
+        self._setup_ui()
+
+    def set_data(self, df, info=None):
+        BaseAnalysisTab.set_data(self, df, info)
+        if df is not None:
+            self._populate()
+
     def _setup_ui(self):
-        tc=theme_colors(); layout=QVBoxLayout(self); layout.setContentsMargins(12,12,12,12)
-        self.title_label=QLabel("抽样检验"); self.title_label.setFont(FONT_18B); layout.addWidget(self.title_label)
-        mb=QHBoxLayout()
-        self.btn_aql=QPushButton("AQL 查表"); self.btn_aql.setCheckable(True); self.btn_aql.setChecked(True); self.btn_aql.setStyleSheet(BUTTON_TOGGLE); self.btn_aql.clicked.connect(lambda:self._switch(0))
-        self.btn_rand=QPushButton("随机抽样"); self.btn_rand.setCheckable(True); self.btn_rand.setStyleSheet(BUTTON_TOGGLE); self.btn_rand.clicked.connect(lambda:self._switch(1))
-        self.btn_seq=QPushButton("序贯检验"); self.btn_seq.setCheckable(True); self.btn_seq.setStyleSheet(BUTTON_TOGGLE); self.btn_seq.clicked.connect(lambda:self._switch(2))
-        self.btn_measure=QPushButton("计量型抽样"); self.btn_measure.setCheckable(True); self.btn_measure.setStyleSheet(BUTTON_TOGGLE); self.btn_measure.clicked.connect(lambda:self._switch(3))
-        self.btn_czero=QPushButton("C=0 抽样"); self.btn_czero.setCheckable(True); self.btn_czero.setStyleSheet(BUTTON_TOGGLE); self.btn_czero.clicked.connect(lambda:self._switch(4))
-        mb.addWidget(self.btn_aql); mb.addWidget(self.btn_rand); mb.addWidget(self.btn_seq); mb.addWidget(self.btn_measure); mb.addWidget(self.btn_czero); mb.addStretch()
+        tc = theme_colors()
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(12, 12, 12, 12)
+        self.title_label = QLabel("抽样检验")
+        self.title_label.setFont(FONT_18B)
+        layout.addWidget(self.title_label)
+        mb = QHBoxLayout()
+        self.btn_aql = QPushButton("AQL 查表")
+        self.btn_aql.setCheckable(True)
+        self.btn_aql.setChecked(True)
+        self.btn_aql.setStyleSheet(BUTTON_TOGGLE)
+        self.btn_aql.clicked.connect(lambda: self._switch(0))
+        self.btn_rand = QPushButton("随机抽样")
+        self.btn_rand.setCheckable(True)
+        self.btn_rand.setStyleSheet(BUTTON_TOGGLE)
+        self.btn_rand.clicked.connect(lambda: self._switch(1))
+        self.btn_seq = QPushButton("序贯检验")
+        self.btn_seq.setCheckable(True)
+        self.btn_seq.setStyleSheet(BUTTON_TOGGLE)
+        self.btn_seq.clicked.connect(lambda: self._switch(2))
+        self.btn_measure = QPushButton("计量型抽样")
+        self.btn_measure.setCheckable(True)
+        self.btn_measure.setStyleSheet(BUTTON_TOGGLE)
+        self.btn_measure.clicked.connect(lambda: self._switch(3))
+        self.btn_czero = QPushButton("C=0 抽样")
+        self.btn_czero.setCheckable(True)
+        self.btn_czero.setStyleSheet(BUTTON_TOGGLE)
+        self.btn_czero.clicked.connect(lambda: self._switch(4))
+        mb.addWidget(self.btn_aql)
+        mb.addWidget(self.btn_rand)
+        mb.addWidget(self.btn_seq)
+        mb.addWidget(self.btn_measure)
+        mb.addWidget(self.btn_czero)
+        mb.addStretch()
         layout.addLayout(mb)
-        self.stack=QStackedWidget()
+        self.stack = QStackedWidget()
         self.stack.addWidget(self._aql_panel(tc))
         self.stack.addWidget(self._random_panel(tc))
         self.stack.addWidget(self._sequential_panel(tc))
         self.stack.addWidget(self._measurement_panel(tc))
         self.stack.addWidget(self._czero_panel(tc))
         layout.addWidget(self.stack)
-        self.result=QTableWidget(); self.result.setAlternatingRowColors(True); layout.addWidget(self.result,1)
-    def _switch(self,i):
-        for b,j in [(self.btn_aql,0),(self.btn_rand,1),(self.btn_seq,2),(self.btn_measure,3),(self.btn_czero,4)]: b.setChecked(j==i)
+        self.result = QTableWidget()
+        self.result.setAlternatingRowColors(True)
+        layout.addWidget(self.result, 1)
+
+    def _switch(self, i):
+        for b, j in [
+            (self.btn_aql, 0),
+            (self.btn_rand, 1),
+            (self.btn_seq, 2),
+            (self.btn_measure, 3),
+            (self.btn_czero, 4),
+        ]:
+            b.setChecked(j == i)
         self.stack.setCurrentIndex(i)
 
-    def _aql_panel(self,tc):
-        w=QWidget(); l=QFormLayout(w)
-        self.aql_lot=QSpinBox(); self.aql_lot.setRange(1,9999999); self.aql_lot.setValue(1000)
-        l.addRow("批量:",self.aql_lot)
-        self.aql_val=QComboBox(); self.aql_val.addItems(["0.01","0.015","0.025","0.04","0.065","0.10","0.15","0.25","0.40","0.65","1.0","1.5","2.5","4.0","6.5","10","15","25","40","65","100"])
-        self.aql_val.setCurrentText("1.0"); l.addRow("AQL:",self.aql_val)
-        self.btn_lookup=QPushButton("查表"); self.btn_lookup.setStyleSheet(BUTTON_PRIMARY_STRETCH); self.btn_lookup.clicked.connect(self._do_aql)
-        l.addRow(self.btn_lookup); return w
+    def _aql_panel(self, tc):
+        w = QWidget()
+        l = QFormLayout(w)
+        self.aql_lot = QSpinBox()
+        self.aql_lot.setRange(1, 9999999)
+        self.aql_lot.setValue(1000)
+        l.addRow("批量:", self.aql_lot)
+        self.aql_val = QComboBox()
+        self.aql_val.addItems(
+            [
+                "0.01",
+                "0.015",
+                "0.025",
+                "0.04",
+                "0.065",
+                "0.10",
+                "0.15",
+                "0.25",
+                "0.40",
+                "0.65",
+                "1.0",
+                "1.5",
+                "2.5",
+                "4.0",
+                "6.5",
+                "10",
+                "15",
+                "25",
+                "40",
+                "65",
+                "100",
+            ]
+        )
+        self.aql_val.setCurrentText("1.0")
+        l.addRow("AQL:", self.aql_val)
+        self.btn_lookup = QPushButton("查表")
+        self.btn_lookup.setStyleSheet(BUTTON_PRIMARY_STRETCH)
+        self.btn_lookup.clicked.connect(self._do_aql)
+        l.addRow(self.btn_lookup)
+        return w
 
     def _do_aql(self):
-        r=SamplingEngine.aql_lookup(self.aql_lot.value(),float(self.aql_val.currentText()))
-        self.result.setColumnCount(6); self.result.setHorizontalHeaderLabels(["字码","样本量","Ac","Re","AQL","批量"])
+        r = SamplingEngine.aql_lookup(
+            self.aql_lot.value(), float(self.aql_val.currentText())
+        )
+        self.result.setColumnCount(6)
+        self.result.setHorizontalHeaderLabels(
+            ["字码", "样本量", "Ac", "Re", "AQL", "批量"]
+        )
         self.result.setRowCount(1)
-        for j,v in enumerate([r["code"],str(r["sample_size"]),str(r["accept"]),str(r["reject"]),str(r["aql_actual"]),str(r["lot_size"])]):
-            self.result.setItem(0,j,QTableWidgetItem(v))
+        for j, v in enumerate(
+            [
+                r["code"],
+                str(r["sample_size"]),
+                str(r["accept"]),
+                str(r["reject"]),
+                str(r["aql_actual"]),
+                str(r["lot_size"]),
+            ]
+        ):
+            self.result.setItem(0, j, QTableWidgetItem(v))
         self.result.resizeColumnsToContents()
 
-    def _random_panel(self,tc):
-        w=QWidget(); l=QFormLayout(w)
-        self.rand_col=QComboBox(); l.addRow("分层列(可选):",self.rand_col)
-        self.rand_n=QSpinBox(); self.rand_n.setRange(1,99999); self.rand_n.setValue(10)
-        l.addRow("抽样数量:",self.rand_n)
-        self.rand_mode=QComboBox(); self.rand_mode.addItems(["随机","分层","系统"])
-        l.addRow("方式:",self.rand_mode)
-        self.btn_sample=QPushButton("执行抽样"); self.btn_sample.setStyleSheet(BUTTON_PRIMARY_STRETCH); self.btn_sample.clicked.connect(self._do_sample)
-        l.addRow(self.btn_sample); return w
+    def _random_panel(self, tc):
+        w = QWidget()
+        l = QFormLayout(w)
+        self.rand_col = QComboBox()
+        l.addRow("分层列(可选):", self.rand_col)
+        self.rand_n = QSpinBox()
+        self.rand_n.setRange(1, 99999)
+        self.rand_n.setValue(10)
+        l.addRow("抽样数量:", self.rand_n)
+        self.rand_mode = QComboBox()
+        self.rand_mode.addItems(["随机", "分层", "系统"])
+        l.addRow("方式:", self.rand_mode)
+        self.btn_sample = QPushButton("执行抽样")
+        self.btn_sample.setStyleSheet(BUTTON_PRIMARY_STRETCH)
+        self.btn_sample.clicked.connect(self._do_sample)
+        l.addRow(self.btn_sample)
+        return w
+
     def _populate(self):
-        if self.df is None: return
-        self.rand_col.clear(); self.rand_col.addItem("(无)")
-        for c in self.df.columns: self.rand_col.addItem(str(c))
-        if hasattr(self, 'measure_col'):
-            self.measure_col.clear(); self.measure_col.addItem("(无)")
-            for c in self.df.columns: self.measure_col.addItem(str(c))
-        if hasattr(self, 'czero_col'):
-            self.czero_col.clear(); self.czero_col.addItem("(无)")
-            for c in self.df.columns: self.czero_col.addItem(str(c))
+        if self.df is None:
+            return
+        self.rand_col.clear()
+        self.rand_col.addItem("(无)")
+        for c in self.df.columns:
+            self.rand_col.addItem(str(c))
+        if hasattr(self, "measure_col"):
+            self.measure_col.clear()
+            self.measure_col.addItem("(无)")
+            for c in self.df.columns:
+                self.measure_col.addItem(str(c))
+        if hasattr(self, "czero_col"):
+            self.czero_col.clear()
+            self.czero_col.addItem("(无)")
+            for c in self.df.columns:
+                self.czero_col.addItem(str(c))
+
     def _do_sample(self):
-        if self.df is None: QMessageBox.information(self,"提示","请先导入数据"); return
-        n=self.rand_n.value(); m=self.rand_mode.currentText()
-        col=self.rand_col.currentText()
-        if m=="分层" and col!="(无)":
-            df=SamplingEngine.stratified_sample(self.df,col,n)
-        elif m=="系统":
-            df=SamplingEngine.systematic_sample(self.df,n)
+        if self.df is None:
+            QMessageBox.information(self, "提示", "请先导入数据")
+            return
+        n = self.rand_n.value()
+        m = self.rand_mode.currentText()
+        col = self.rand_col.currentText()
+        if m == "分层" and col != "(无)":
+            df = SamplingEngine.stratified_sample(self.df, col, n)
+        elif m == "系统":
+            df = SamplingEngine.systematic_sample(self.df, n)
         else:
-            df=SamplingEngine.random_sample(self.df,n)
+            df = SamplingEngine.random_sample(self.df, n)
         self._show_df(df)
-    def _show_df(self,df):
-        self.result.setColumnCount(len(df.columns)); self.result.setHorizontalHeaderLabels(list(df.columns))
-        m=min(100,len(df)); self.result.setRowCount(m)
+
+    def _show_df(self, df):
+        self.result.setColumnCount(len(df.columns))
+        self.result.setHorizontalHeaderLabels(list(df.columns))
+        m = min(100, len(df))
+        self.result.setRowCount(m)
         for i in range(m):
-            for j,c in enumerate(df.columns): self.result.setItem(i,j,QTableWidgetItem(str(df.iloc[i,j])))
+            for j, _c in enumerate(df.columns):
+                self.result.setItem(i, j, QTableWidgetItem(str(df.iloc[i, j])))
         self.result.resizeColumnsToContents()
 
-    def _sequential_panel(self,tc):
-        w=QWidget(); l=QFormLayout(w)
-        self.seq_ac=QSpinBox(); self.seq_ac.setRange(0,99); self.seq_ac.setValue(2)
-        l.addRow("Ac(接收):",self.seq_ac)
-        self.seq_re=QSpinBox(); self.seq_re.setRange(1,99); self.seq_re.setValue(5)
-        l.addRow("Re(拒收):",self.seq_re)
-        self.seq_n=QSpinBox(); self.seq_n.setRange(1,9999); self.seq_n.setValue(20)
-        l.addRow("模拟样本数:",self.seq_n)
-        self.btn_seq_run=QPushButton("模拟序贯判定"); self.btn_seq_run.setStyleSheet(BUTTON_PRIMARY_STRETCH); self.btn_seq_run.clicked.connect(self._do_seq)
-        l.addRow(self.btn_seq_run); return w
+    def _sequential_panel(self, tc):
+        w = QWidget()
+        l = QFormLayout(w)
+        self.seq_ac = QSpinBox()
+        self.seq_ac.setRange(0, 99)
+        self.seq_ac.setValue(2)
+        l.addRow("Ac(接收):", self.seq_ac)
+        self.seq_re = QSpinBox()
+        self.seq_re.setRange(1, 99)
+        self.seq_re.setValue(5)
+        l.addRow("Re(拒收):", self.seq_re)
+        self.seq_n = QSpinBox()
+        self.seq_n.setRange(1, 9999)
+        self.seq_n.setValue(20)
+        l.addRow("模拟样本数:", self.seq_n)
+        self.btn_seq_run = QPushButton("模拟序贯判定")
+        self.btn_seq_run.setStyleSheet(BUTTON_PRIMARY_STRETCH)
+        self.btn_seq_run.clicked.connect(self._do_seq)
+        l.addRow(self.btn_seq_run)
+        return w
 
     def _do_seq(self):
-        ac=self.seq_ac.value(); re=self.seq_re.value(); n=self.seq_n.value()
-        results=np.random.choice([0,1],size=n,p=[0.9,0.1]).tolist()
-        dec,d,ins=SamplingEngine.sequential_decision(results,ac,re)
-        self.result.setColumnCount(4); self.result.setHorizontalHeaderLabels(["判定","缺陷数","检查数","Ac/Re"])
+        ac = self.seq_ac.value()
+        re = self.seq_re.value()
+        n = self.seq_n.value()
+        results = np.random.choice([0, 1], size=n, p=[0.9, 0.1]).tolist()
+        dec, d, ins = SamplingEngine.sequential_decision(results, ac, re)
+        self.result.setColumnCount(4)
+        self.result.setHorizontalHeaderLabels(["判定", "缺陷数", "检查数", "Ac/Re"])
         self.result.setRowCount(1)
-        for j,v in enumerate([dec,str(d),str(ins),f"{ac}/{re}"]):
-            item=QTableWidgetItem(v)
-            if dec=="accept": item.setForeground(QColor("#27ae60"))
-            elif dec=="reject": item.setForeground(QColor("#e74c3c"))
-            self.result.setItem(0,j,item)
+        for j, v in enumerate([dec, str(d), str(ins), f"{ac}/{re}"]):
+            item = QTableWidgetItem(v)
+            if dec == "accept":
+                item.setForeground(QColor("#27ae60"))
+            elif dec == "reject":
+                item.setForeground(QColor("#e74c3c"))
+            self.result.setItem(0, j, item)
         self.result.resizeColumnsToContents()
 
-    def _measurement_panel(self,tc):
-        w=QWidget(); l=QFormLayout(w)
-        self.measure_lot=QSpinBox(); self.measure_lot.setRange(1,9999999); self.measure_lot.setValue(1000)
-        l.addRow("批量:",self.measure_lot)
-        self.measure_aql=QComboBox(); self.measure_aql.addItems(["0.10","0.15","0.25","0.40","0.65","1.0","1.5","2.5","4.0","6.5"])
-        self.measure_aql.setCurrentText("1.0"); l.addRow("AQL:",self.measure_aql)
-        self.measure_usl=QDoubleSpinBox(); self.measure_usl.setRange(-1e9,1e9); self.measure_usl.setDecimals(4); self.measure_usl.setValue(10.0)
-        l.addRow("USL:",self.measure_usl)
-        self.measure_lsl=QDoubleSpinBox(); self.measure_lsl.setRange(-1e9,1e9); self.measure_lsl.setDecimals(4); self.measure_lsl.setValue(0.0)
-        l.addRow("LSL:",self.measure_lsl)
-        self.measure_level=QComboBox(); self.measure_level.addItems(["I","II","III"])
-        self.measure_level.setCurrentText("II"); l.addRow("检验水平:",self.measure_level)
-        self.measure_col=QComboBox(); l.addRow("数据列(判定用):",self.measure_col)
-        self.btn_measure_lookup=QPushButton("查表"); self.btn_measure_lookup.setStyleSheet(BUTTON_PRIMARY_STRETCH); self.btn_measure_lookup.clicked.connect(self._do_measure_lookup)
+    def _measurement_panel(self, tc):
+        w = QWidget()
+        l = QFormLayout(w)
+        self.measure_lot = QSpinBox()
+        self.measure_lot.setRange(1, 9999999)
+        self.measure_lot.setValue(1000)
+        l.addRow("批量:", self.measure_lot)
+        self.measure_aql = QComboBox()
+        self.measure_aql.addItems(
+            ["0.10", "0.15", "0.25", "0.40", "0.65", "1.0", "1.5", "2.5", "4.0", "6.5"]
+        )
+        self.measure_aql.setCurrentText("1.0")
+        l.addRow("AQL:", self.measure_aql)
+        self.measure_usl = QDoubleSpinBox()
+        self.measure_usl.setRange(-1e9, 1e9)
+        self.measure_usl.setDecimals(4)
+        self.measure_usl.setValue(10.0)
+        l.addRow("USL:", self.measure_usl)
+        self.measure_lsl = QDoubleSpinBox()
+        self.measure_lsl.setRange(-1e9, 1e9)
+        self.measure_lsl.setDecimals(4)
+        self.measure_lsl.setValue(0.0)
+        l.addRow("LSL:", self.measure_lsl)
+        self.measure_level = QComboBox()
+        self.measure_level.addItems(["I", "II", "III"])
+        self.measure_level.setCurrentText("II")
+        l.addRow("检验水平:", self.measure_level)
+        self.measure_col = QComboBox()
+        l.addRow("数据列(判定用):", self.measure_col)
+        self.btn_measure_lookup = QPushButton("查表")
+        self.btn_measure_lookup.setStyleSheet(BUTTON_PRIMARY_STRETCH)
+        self.btn_measure_lookup.clicked.connect(self._do_measure_lookup)
         l.addRow(self.btn_measure_lookup)
-        self.btn_measure_decide=QPushButton("执行判定"); self.btn_measure_decide.setStyleSheet(BUTTON_PRIMARY_STRETCH); self.btn_measure_decide.clicked.connect(self._do_measure_decide)
+        self.btn_measure_decide = QPushButton("执行判定")
+        self.btn_measure_decide.setStyleSheet(BUTTON_PRIMARY_STRETCH)
+        self.btn_measure_decide.clicked.connect(self._do_measure_decide)
         l.addRow(self.btn_measure_decide)
         return w
 
     def _do_measure_lookup(self):
-        r=SamplingEngine.measurement_sampling(
-            self.measure_lot.value(), float(self.measure_aql.currentText()),
-            self.measure_usl.value(), self.measure_lsl.value(),
-            level=self.measure_level.currentText()
+        r = SamplingEngine.measurement_sampling(
+            self.measure_lot.value(),
+            float(self.measure_aql.currentText()),
+            self.measure_usl.value(),
+            self.measure_lsl.value(),
+            level=self.measure_level.currentText(),
         )
-        self.result.setColumnCount(7); self.result.setHorizontalHeaderLabels(["字码","样本量","k因子","AQL","USL","LSL","sigma"])
+        self.result.setColumnCount(7)
+        self.result.setHorizontalHeaderLabels(
+            ["字码", "样本量", "k因子", "AQL", "USL", "LSL", "sigma"]
+        )
         self.result.setRowCount(1)
-        for j,v in enumerate([r.get("code",""),str(r.get("sample_size","")),str(r.get("k_factor","")),str(r.get("aql_actual","")),str(r.get("usl","")),str(r.get("lsl","")),str(r.get("sigma_used",""))]):
-            self.result.setItem(0,j,QTableWidgetItem(v))
+        for j, v in enumerate(
+            [
+                r.get("code", ""),
+                str(r.get("sample_size", "")),
+                str(r.get("k_factor", "")),
+                str(r.get("aql_actual", "")),
+                str(r.get("usl", "")),
+                str(r.get("lsl", "")),
+                str(r.get("sigma_used", "")),
+            ]
+        ):
+            self.result.setItem(0, j, QTableWidgetItem(v))
         self.result.resizeColumnsToContents()
 
     def _do_measure_decide(self):
-        if self.df is None: QMessageBox.information(self,"提示","请先导入数据"); return
-        col=self.measure_col.currentText()
-        if col=="(无)" or not col: QMessageBox.information(self,"提示","请选择数据列"); return
-        data=self.df[col].dropna().values
-        r=SamplingEngine.measurement_sampling(self.measure_lot.value(),float(self.measure_aql.currentText()),self.measure_usl.value(),self.measure_lsl.value(),level=self.measure_level.currentText())
-        dec=SamplingEngine.measurement_decision(data,r["k_factor"],self.measure_usl.value(),self.measure_lsl.value())
-        self.result.setColumnCount(5); self.result.setHorizontalHeaderLabels(["判定","样本量","均值","标准差","k因子"])
+        if self.df is None:
+            QMessageBox.information(self, "提示", "请先导入数据")
+            return
+        col = self.measure_col.currentText()
+        if col == "(无)" or not col:
+            QMessageBox.information(self, "提示", "请选择数据列")
+            return
+        data = self.df[col].dropna().values
+        r = SamplingEngine.measurement_sampling(
+            self.measure_lot.value(),
+            float(self.measure_aql.currentText()),
+            self.measure_usl.value(),
+            self.measure_lsl.value(),
+            level=self.measure_level.currentText(),
+        )
+        dec = SamplingEngine.measurement_decision(
+            data, r["k_factor"], self.measure_usl.value(), self.measure_lsl.value()
+        )
+        self.result.setColumnCount(5)
+        self.result.setHorizontalHeaderLabels(
+            ["判定", "样本量", "均值", "标准差", "k因子"]
+        )
         self.result.setRowCount(1)
-        item=QTableWidgetItem(dec["decision"])
-        if dec["decision"]=="accept": item.setForeground(QColor("#27ae60"))
-        else: item.setForeground(QColor("#e74c3c"))
-        self.result.setItem(0,0,item)
-        for j,v in enumerate([str(dec.get("sample_size","")),str(dec.get("x_bar","")),str(dec.get("s","")),str(dec.get("k_factor",""))]):
-            self.result.setItem(0,j+1,QTableWidgetItem(v))
+        item = QTableWidgetItem(dec["decision"])
+        if dec["decision"] == "accept":
+            item.setForeground(QColor("#27ae60"))
+        else:
+            item.setForeground(QColor("#e74c3c"))
+        self.result.setItem(0, 0, item)
+        for j, v in enumerate(
+            [
+                str(dec.get("sample_size", "")),
+                str(dec.get("x_bar", "")),
+                str(dec.get("s", "")),
+                str(dec.get("k_factor", "")),
+            ]
+        ):
+            self.result.setItem(0, j + 1, QTableWidgetItem(v))
         self.result.resizeColumnsToContents()
 
-    def _czero_panel(self,tc):
-        w=QWidget(); l=QFormLayout(w)
-        self.czero_lot=QSpinBox(); self.czero_lot.setRange(1,9999999); self.czero_lot.setValue(1000)
-        l.addRow("批量:",self.czero_lot)
-        self.czero_aql=QDoubleSpinBox(); self.czero_aql.setRange(0.01,100); self.czero_aql.setValue(0.10); self.czero_aql.setDecimals(2)
-        l.addRow("AQL:",self.czero_aql)
-        self.czero_col=QComboBox(); l.addRow("数据列(判定用):",self.czero_col)
-        self.btn_czero_lookup=QPushButton("查表"); self.btn_czero_lookup.setStyleSheet(BUTTON_PRIMARY_STRETCH); self.btn_czero_lookup.clicked.connect(self._do_czero_lookup)
+    def _czero_panel(self, tc):
+        w = QWidget()
+        l = QFormLayout(w)
+        self.czero_lot = QSpinBox()
+        self.czero_lot.setRange(1, 9999999)
+        self.czero_lot.setValue(1000)
+        l.addRow("批量:", self.czero_lot)
+        self.czero_aql = QDoubleSpinBox()
+        self.czero_aql.setRange(0.01, 100)
+        self.czero_aql.setValue(0.10)
+        self.czero_aql.setDecimals(2)
+        l.addRow("AQL:", self.czero_aql)
+        self.czero_col = QComboBox()
+        l.addRow("数据列(判定用):", self.czero_col)
+        self.btn_czero_lookup = QPushButton("查表")
+        self.btn_czero_lookup.setStyleSheet(BUTTON_PRIMARY_STRETCH)
+        self.btn_czero_lookup.clicked.connect(self._do_czero_lookup)
         l.addRow(self.btn_czero_lookup)
-        self.btn_czero_decide=QPushButton("执行判定"); self.btn_czero_decide.setStyleSheet(BUTTON_PRIMARY_STRETCH); self.btn_czero_decide.clicked.connect(self._do_czero_decide)
+        self.btn_czero_decide = QPushButton("执行判定")
+        self.btn_czero_decide.setStyleSheet(BUTTON_PRIMARY_STRETCH)
+        self.btn_czero_decide.clicked.connect(self._do_czero_decide)
         l.addRow(self.btn_czero_decide)
         return w
 
     def _do_czero_lookup(self):
-        r=SamplingEngine.c_zero_sampling(self.czero_lot.value(),self.czero_aql.value())
-        self.result.setColumnCount(5); self.result.setHorizontalHeaderLabels(["批量","样本量","Ac","Re","AQL"])
+        r = SamplingEngine.c_zero_sampling(
+            self.czero_lot.value(), self.czero_aql.value()
+        )
+        self.result.setColumnCount(5)
+        self.result.setHorizontalHeaderLabels(["批量", "样本量", "Ac", "Re", "AQL"])
         self.result.setRowCount(1)
-        for j,v in enumerate([str(r.get("lot_size","")),str(r.get("sample_size","")),str(r.get("accept_number","")),str(r.get("reject_number","")),str(r.get("aql_actual",""))]):
-            self.result.setItem(0,j,QTableWidgetItem(v))
+        for j, v in enumerate(
+            [
+                str(r.get("lot_size", "")),
+                str(r.get("sample_size", "")),
+                str(r.get("accept_number", "")),
+                str(r.get("reject_number", "")),
+                str(r.get("aql_actual", "")),
+            ]
+        ):
+            self.result.setItem(0, j, QTableWidgetItem(v))
         self.result.resizeColumnsToContents()
 
     def _do_czero_decide(self):
-        if self.df is None: QMessageBox.information(self,"提示","请先导入数据"); return
-        col=self.czero_col.currentText()
-        if col=="(无)" or not col: QMessageBox.information(self,"提示","请选择数据列"); return
-        data=self.df[col].dropna().values.astype(int).tolist()
-        dec=SamplingEngine.c_zero_decision(data)
-        self.result.setColumnCount(4); self.result.setHorizontalHeaderLabels(["判定","缺陷数","检验数","缺陷率%"])
+        if self.df is None:
+            QMessageBox.information(self, "提示", "请先导入数据")
+            return
+        col = self.czero_col.currentText()
+        if col == "(无)" or not col:
+            QMessageBox.information(self, "提示", "请选择数据列")
+            return
+        data = self.df[col].dropna().values.astype(int).tolist()
+        dec = SamplingEngine.c_zero_decision(data)
+        self.result.setColumnCount(4)
+        self.result.setHorizontalHeaderLabels(["判定", "缺陷数", "检验数", "缺陷率%"])
         self.result.setRowCount(1)
-        item=QTableWidgetItem(dec["decision"])
-        if dec["decision"]=="accept": item.setForeground(QColor("#27ae60"))
-        else: item.setForeground(QColor("#e74c3c"))
-        self.result.setItem(0,0,item)
-        for j,v in enumerate([str(dec.get("defects","")),str(dec.get("sample_size","")),str(dec.get("defect_rate",""))]):
-            self.result.setItem(0,j+1,QTableWidgetItem(v))
+        item = QTableWidgetItem(dec["decision"])
+        if dec["decision"] == "accept":
+            item.setForeground(QColor("#27ae60"))
+        else:
+            item.setForeground(QColor("#e74c3c"))
+        self.result.setItem(0, 0, item)
+        for j, v in enumerate(
+            [
+                str(dec.get("defects", "")),
+                str(dec.get("sample_size", "")),
+                str(dec.get("defect_rate", "")),
+            ]
+        ):
+            self.result.setItem(0, j + 1, QTableWidgetItem(v))
         self.result.resizeColumnsToContents()

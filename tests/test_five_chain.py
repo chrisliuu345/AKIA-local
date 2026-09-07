@@ -95,7 +95,7 @@ class TestChainCapabilityToPpap:
         }
         # 模拟 PPAP 自动填充逻辑
         ppap_items = [None] * 18
-        for idx, analysis in analyses.items():
+        for _idx, analysis in analyses.items():
             analysis_type = analysis.get("analysis_type", "")
             result = analysis.get("result", {})
             if "Capability" in analysis_type:
@@ -116,7 +116,7 @@ class TestChainCapabilityToPpap:
             }
         }
         ppap_items = [None] * 18
-        for idx, analysis in analyses.items():
+        for _idx, analysis in analyses.items():
             analysis_type = analysis.get("analysis_type", "")
             result = analysis.get("result", {})
             if "R&R" in analysis_type:
@@ -164,7 +164,6 @@ class TestChain8dToFmea:
     def test_standards_update_triggers_review(self):
         """D7 标准更新触发复审"""
         d7_std = "GB/T 19001-2016 已更新"
-        d7_prev = "更新 FMEA 和控制计划"
         review_needed = bool(d7_std)
         assert review_needed is True
 

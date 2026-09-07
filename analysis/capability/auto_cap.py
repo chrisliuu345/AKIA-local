@@ -217,7 +217,7 @@ def _calculate_capability(
     best_dist: Dict[str, Any],
 ) -> Dict[str, Any]:
     """计算能力指数"""
-    n = len(data)
+    len(data)
     mean = float(np.mean(data))
     std = float(np.std(data, ddof=1))
 

@@ -52,7 +52,7 @@ def analyze_crossed(
     repeats = data.groupby([part_col, operator_col]).size()
     r = int(repeats.mode().iloc[0])
 
-    overall_mean = float(data[measurement_col].mean())
+    float(data[measurement_col].mean())
 
     part_means = data.groupby(part_col)[measurement_col].mean()
     op_means = data.groupby(operator_col)[measurement_col].mean()
@@ -152,7 +152,7 @@ def analyze_nested(
     repeats = data.groupby([part_col, operator_col]).size()
     r = int(repeats.mode().iloc[0])
 
-    overall_mean = float(data[measurement_col].mean())
+    float(data[measurement_col].mean())
 
     part_means = data.groupby(part_col)[measurement_col].mean()
     op_means = data.groupby(operator_col)[measurement_col].mean()

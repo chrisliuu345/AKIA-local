@@ -25,7 +25,7 @@ class TestAntiDebugPerformance:
     def test_anti_debug_total_time(self):
         from core.anti_debug import run_anti_debug_checks
         start = time.perf_counter()
-        issues = run_anti_debug_checks()
+        run_anti_debug_checks()
         elapsed = time.perf_counter() - start
         assert elapsed < 2.0
 

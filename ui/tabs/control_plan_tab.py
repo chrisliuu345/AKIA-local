@@ -33,7 +33,7 @@ class ControlPlanTab(BaseAnalysisTab):
         self._project_context = ctx
 
     def _setup_ui(self):
-        tc = theme_colors()
+        theme_colors()
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
 

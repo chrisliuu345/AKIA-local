@@ -196,7 +196,7 @@ class ChartEditorPanel(QWidget):
         row.addWidget(label)
 
         btn_group = QButtonGroup(self)
-        for i, option_text in enumerate(opt.options):
+        for _i, option_text in enumerate(opt.options):
             rb = QRadioButton(option_text)
             rb.setFont(QFont(get_ui_font(), 10))
             rb.setStyleSheet("""

@@ -17,7 +17,7 @@ class TestMSACrossedGRR:
         for i in range(n_parts):
             part_true = 100 + i * 2
             for j in range(n_operators):
-                for k in range(n_replicates):
+                for _k in range(n_replicates):
                     measurement = part_true + np.random.normal(0, 0.5)
                     rows.append({
                         "part": f"P{i+1}",
@@ -62,7 +62,7 @@ class TestMSAEMPMethod:
         for i in range(n_parts):
             part_true = 100 + i * 2
             for j in range(n_operators):
-                for k in range(n_replicates):
+                for _k in range(n_replicates):
                     measurement = part_true + np.random.normal(0, 0.5)
                     rows.append({
                         "part": f"P{i+1}",

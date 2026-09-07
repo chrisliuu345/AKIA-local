@@ -170,7 +170,7 @@ def _fit_johnson(data: np.ndarray, jtype: str) -> Dict[str, Any]:
     x_range = x_max - x_min
     if x_range <= 0:
         x_range = 1.0
-    x_std = (data - x_min) / x_range
+    (data - x_min) / x_range
 
     try:
         params = _estimate_params_moment(data, jtype)
@@ -204,7 +204,7 @@ def _fit_johnson(data: np.ndarray, jtype: str) -> Dict[str, Any]:
 
 def _estimate_params_moment(data: np.ndarray, jtype: str) -> Dict[str, float]:
     """使用矩估计法估计 Johnson 参数"""
-    n = len(data)
+    len(data)
     mean = np.mean(data)
     std = np.std(data, ddof=1)
     skew = stats.skew(data)

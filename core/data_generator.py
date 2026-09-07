@@ -40,7 +40,7 @@ class DataGenerator:
         true_vals = np.random.normal(10, part_var, n_parts)
         for op in range(n_operators):
             for p in range(n_parts):
-                for r in range(n_reps):
+                for _r in range(n_reps):
                     measured = true_vals[p] + np.random.normal(0, measure_var)
                     rows.append([f"操作员{op+1}", f"零件{p+1}", round(measured, 4)])
         return pd.DataFrame(rows, columns=["操作员", "零件", "测量值"])

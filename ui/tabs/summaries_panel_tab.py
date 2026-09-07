@@ -5,8 +5,15 @@ import pandas as pd
 from typing import Dict, Any
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QScrollArea, QFrame, QListWidget, QAbstractItemView,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QScrollArea,
+    QFrame,
+    QListWidget,
+    QAbstractItemView,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
@@ -21,7 +28,6 @@ from ui.font_config import get_ui_font, get_mono_font
 
 
 class SummaryPanelTab(BaseAnalysisTab):
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self._setup_ui()
@@ -32,7 +38,7 @@ class SummaryPanelTab(BaseAnalysisTab):
             self._populate_list()
 
     def _setup_ui(self):
-        tc = theme_colors()
+        theme_colors()
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
 
@@ -57,7 +63,8 @@ class SummaryPanelTab(BaseAnalysisTab):
         toolbar.addWidget(self.btn_run)
         layout.addLayout(toolbar)
 
-        chart_wrapper = QScrollArea(); chart_wrapper.setWidgetResizable(True)
+        chart_wrapper = QScrollArea()
+        chart_wrapper.setWidgetResizable(True)
         chart_wrapper.setFrameShape(QFrame.NoFrame)
         self.chart_container = QWidget()
         self.chart_layout = QVBoxLayout(self.chart_container)
@@ -66,7 +73,8 @@ class SummaryPanelTab(BaseAnalysisTab):
         layout.addWidget(chart_wrapper, 1)
 
     def _populate_list(self):
-        if self.df is None: return
+        if self.df is None:
+            return
         self.val_list.clear()
         for c in self.df.columns:
             try:
@@ -79,12 +87,17 @@ class SummaryPanelTab(BaseAnalysisTab):
     def _run(self):
         if self.df is None or self.df.empty:
             from PySide6.QtWidgets import QMessageBox
+
             QMessageBox.information(self, "提示", "请先导入数据文件")
             return
         val_cols = [i.text() for i in self.val_list.selectedItems()]
         if not val_cols:
-            val_cols = [self.val_list.item(i).text() for i in range(min(6, self.val_list.count()))]
-        if not val_cols: return
+            val_cols = [
+                self.val_list.item(i).text()
+                for i in range(min(6, self.val_list.count()))
+            ]
+        if not val_cols:
+            return
 
         self._clear_canvas()
         tc = theme_colors()
@@ -98,25 +111,45 @@ class SummaryPanelTab(BaseAnalysisTab):
 
         for i, col in enumerate(val_cols):
             vals = pd.to_numeric(self.df[col], errors="coerce").dropna().values
-            if len(vals) < 3: continue
+            if len(vals) < 3:
+                continue
 
-            ax_hist = fig.add_subplot(rows, cols_per_row * 2,
-                                      i // cols_per_row * cols_per_row * 2 + (i % cols_per_row) * 2 + 1)
-            ax_stats = fig.add_subplot(rows, cols_per_row * 2,
-                                       i // cols_per_row * cols_per_row * 2 + (i % cols_per_row) * 2 + 2)
+            ax_hist = fig.add_subplot(
+                rows,
+                cols_per_row * 2,
+                i // cols_per_row * cols_per_row * 2 + (i % cols_per_row) * 2 + 1,
+            )
+            ax_stats = fig.add_subplot(
+                rows,
+                cols_per_row * 2,
+                i // cols_per_row * cols_per_row * 2 + (i % cols_per_row) * 2 + 2,
+            )
 
             ax_hist.set_facecolor(tc["bg_body"])
             ax_stats.set_facecolor(tc["bg_body"])
 
             bins = min(25, max(5, int(np.sqrt(len(vals)))))
-            ax_hist.hist(vals, bins=bins, color=tc["accent_bright"], alpha=0.75, edgecolor="white", linewidth=0.3)
+            ax_hist.hist(
+                vals,
+                bins=bins,
+                color=tc["accent_bright"],
+                alpha=0.75,
+                edgecolor="white",
+                linewidth=0.3,
+            )
             ax_hist.axvline(np.mean(vals), color="#ff6b6b", linestyle="--", linewidth=1)
-            ax_hist.set_title(col, fontsize=9, fontweight="bold", color=tc["text_primary"])
+            ax_hist.set_title(
+                col, fontsize=9, fontweight="bold", color=tc["text_primary"]
+            )
             ax_hist.tick_params(colors=tc["text_muted"], labelsize=7)
 
             ax_spark = ax_hist.inset_axes([0.78, 0.85, 0.20, 0.12])
-            ax_spark.plot(np.arange(len(vals)), vals, linewidth=0.5, color=tc["accent_bright"])
-            ax_spark.fill_between(np.arange(len(vals)), vals, alpha=0.15, color=tc["accent_bright"])
+            ax_spark.plot(
+                np.arange(len(vals)), vals, linewidth=0.5, color=tc["accent_bright"]
+            )
+            ax_spark.fill_between(
+                np.arange(len(vals)), vals, alpha=0.15, color=tc["accent_bright"]
+            )
             ax_spark.axis("off")
 
             ax_stats.axis("off")
@@ -131,14 +164,30 @@ class SummaryPanelTab(BaseAnalysisTab):
                 f"Max = {np.max(vals):.3f}",
             ]
             for j, s in enumerate(stats):
-                ax_stats.text(0.05, 0.92 - j * 0.11, s, transform=ax_stats.transAxes,
-                              fontsize=7.5, fontfamily=get_mono_font(), color=tc["text_secondary"])
+                ax_stats.text(
+                    0.05,
+                    0.92 - j * 0.11,
+                    s,
+                    transform=ax_stats.transAxes,
+                    fontsize=7.5,
+                    fontfamily=get_mono_font(),
+                    color=tc["text_secondary"],
+                )
 
-        fig.suptitle("统计摘要面板", fontsize=14, fontweight="bold", color=tc["text_primary"], y=0.98)
-        fig.subplots_adjust(left=0.04, right=0.97, top=0.93, bottom=0.04, wspace=0.25, hspace=0.4)
+        fig.suptitle(
+            "统计摘要面板",
+            fontsize=14,
+            fontweight="bold",
+            color=tc["text_primary"],
+            y=0.98,
+        )
+        fig.subplots_adjust(
+            left=0.04, right=0.97, top=0.93, bottom=0.04, wspace=0.25, hspace=0.4
+        )
 
         canvas = FigureCanvasQTAgg(fig)
         self.chart_layout.addWidget(canvas)
-        self.canvas = canvas; self.current_figure = fig
+        self.canvas = canvas
+        self.current_figure = fig
         self._add_chart_toolbar()
         self.analysis_completed.emit()

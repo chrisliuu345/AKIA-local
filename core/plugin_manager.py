@@ -6,8 +6,10 @@ from PySide6.QtWidgets import QWidget
 
 _log = logging.getLogger("QA-Tool.Plugin")
 
+
 class IPlugin:
     """插件接口 — 第三方 Tab 扩展需实现此接口"""
+
     name: str = "Unnamed"
     version: str = "0.1"
     category: str = "engineering"
@@ -36,12 +38,15 @@ class PluginManager:
         return self._plugins
 
     def discover(self, plugin_dir: str = None):
-        if self._loaded: return
+        if self._loaded:
+            return
         if plugin_dir is None:
             plugin_dir = os.path.join(os.path.dirname(__file__), "..", "plugins")
-        if not os.path.isdir(plugin_dir): return
+        if not os.path.isdir(plugin_dir):
+            return
         for fname in sorted(os.listdir(plugin_dir)):
-            if fname.startswith("_") or not fname.endswith(".py"): continue
+            if fname.startswith("_") or not fname.endswith(".py"):
+                continue
             path = os.path.join(plugin_dir, fname)
             name = fname[:-3]
             try:
@@ -62,7 +67,7 @@ class PluginManager:
         """返回 [(index, i18n_key), ...] 用于侧栏注册"""
         entries = []
         base_idx = 100
-        for i, (name, p) in enumerate(self._plugins.items()):
+        for i, (name, _p) in enumerate(self._plugins.items()):
             entries.append((base_idx + i, f"plugin_{name}"))
         return entries
 

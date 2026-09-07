@@ -5,6 +5,8 @@ IE Quality Analyzer - 全局配置
 import json
 import os
 
+from ui.font_config import get_ui_font
+
 APP_NAME = "QA-Tool"
 APP_VERSION = "3.6.0"
 ORGANIZATION = "QA-Tool"
@@ -69,7 +71,6 @@ CHART_COLORS = {
 CHART_DPI = 120
 CHART_FIGSIZE = (10, 6)
 
-from ui.font_config import get_ui_font
 FONT_FAMILY = [get_ui_font(), "Microsoft YaHei", "SimHei", "Noto Sans SC", "WenQuanYi Micro Hei", "sans-serif"]
 FONT_SIZE_TITLE = 14
 FONT_SIZE_LABEL = 11

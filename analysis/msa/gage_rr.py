@@ -145,7 +145,7 @@ def analyze_nested(
 
 def _avg_range(df: pd.DataFrame, measurement_col: str, part_col: str, operator_col: str) -> float:
     ranges = []
-    for (part, op), group in df.groupby([part_col, operator_col]):
+    for (_part, _op), group in df.groupby([part_col, operator_col]):
         if len(group) >= 2:
             ranges.append(group[measurement_col].max() - group[measurement_col].min())
     return float(np.mean(ranges)) if ranges else 0.0
