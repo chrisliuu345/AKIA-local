@@ -35,7 +35,7 @@ class ChartTab(BaseAnalysisTab):
         self._setup_ui()
 
     def _setup_ui(self):
-        tc = theme_colors(self)
+        theme_colors(self)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
 
@@ -257,7 +257,7 @@ class ChartTab(BaseAnalysisTab):
         chart_type = self.chart_type_combo.currentText()
 
         configs = CHART_CONFIGS.get(chart_type, [])
-        for (label, col_type), w in zip(configs, self._col_widgets):
+        for (label, col_type), w in zip(configs, self._col_widgets, strict=True):
             if col_type.startswith("multi_"):
                 sel = []
                 for i in range(w.count()):

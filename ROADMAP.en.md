@@ -80,9 +80,11 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 - New in `config/settings.py`: `tab_allowed(idx)` / `esp32_extension_enabled()`
 
 ### Packaging & Release Pipeline
-- Branding: `assets/logo.ico` (7 sizes) + `version_info.txt` (2.6.0, Chinese description)
+> ⚙️ 2026-09-07: build chain switched from Nuitka back to **PyInstaller (onedir)** (`build_pyinstaller.py`); Inno/AppImage/.deb packaging kept, consuming `build/<name>.dist` output; `build_nuitka.py` and the nuitka dependency removed.
+- Branding: `assets/logo.ico` (7 sizes) + `version_info.txt` (Windows version resource, reused via PyInstaller --version-file)
 - PyInstaller **onedir**: QA-Tool.exe (38MB) + `_internal/` (454MB total), GUI subsystem (no console)
 - **Inno Setup installer** (135MB): Chinese UI, admin install to Program Files, "ESP-32 硬件拓展" component page (writes the install-time switch), desktop/start-menu shortcuts, uninstall support
+- Linux: `build_appimage.sh` → AppImage; `build_deb.sh` → .deb (version injected from APP_VERSION)
 - Tests: 278 (+3 monitoring stop/resume + 5 config gating + bilingual docs)
 
 ---
@@ -541,12 +543,17 @@ python build_nuitka.py --onefile      # single executable
 - TEMP scripts untracked + stray Windows-path junk file removed
 - Full regression green: 72 pytest files (serial) + script-style integration assertions (~1300 cases)
 
-### Carried Over (style debt, no runtime impact — scheduled as v3.7.0 prerequisites)
-- 63 unused assignments (F841), ~570 one-line multi-statements (E701/E702), 20 late module-level imports (E402), ruff into dev/CI workflow
+### Carried Over (style debt, no runtime impact — ✅ all cleared 2026-09-07, see v3.7.0 prerequisites below)
+- 65 unused assignments (F841) / 568 one-line multi-statements (E701/E702) / 20 late imports (E402) / 72 B-class issues — all fixed
+- ruff added to dev-requirements + ruff.toml + ci.yml gate (repo-wide zero warnings)
 
 ---
 
 ## v3.7.0 — Real-Time SPC Cloud Dashboard & Data Connectors (TBD)
+
+### Prerequisites ✅ (cleared 2026-09-07)
+- F841 ×65, E701/E702 ×568 (ruff format), E402 ×20, B007×38 / B905×31 / B028×2 / B008×1 — zero remaining
+- ruff gate live: ruff.toml (F,E9,B,E701,E702,E402) + dev-requirements + ci.yml; full regression passed (73 test files serial + script integration)
 
 > Theme: upgrade ESP32/MaixCAM device framework to Minitab Real-Time SPC-level real-time monitoring capability.
 
@@ -687,6 +694,7 @@ QA-Tool v3.7.0 Industrial AI Agent
 | Date | Version | Content |
 |------|---------|---------|
 | 09-06 | v3.6.0 (addendum) | Help center added: user guide migrated from docx to offline HTML (browser-open, commercial help layout, content revised to current facts) + full menubar redesign (emoji removed, AI/Tools/Help regrouping, F1 guide, F11 display-mode entry) |
+| 09-07 | v3.7.0-prereq | Style debt fully cleared (F841 ×65 / E701·E702 ×568 / E402 ×20 / B-class ×72); ruff gate live via ruff.toml + dev-requirements + ci.yml; build chain switched Nuitka → PyInstaller (onedir), Inno/AppImage/.deb kept; 73 test files green |
 | 09-06 | v3.6.0 | Graph Builder completed & code-accepted: chart editor architecture / real-time interaction / heatmap·scatter matrix / faceting / export enhancements / help center (guide.html) + full menubar redesign; full quality pass folded in (7 latent crash fixes + ruff cleanup); 73 test files all green; version unified to 3.6.0; release packaging pending |
 | 09-06 | v3.6.1 | Full code-quality audit & fixes: 7 latent crash paths (taguchi noise arrays, report templates builtin scope, sampling_engine typing imports, anti_debug local import shadowing, tpm/msa/doe undefined names) + loop-closure bindings + exception chaining + 171 unused imports cleaned + TEMP dir untracked + 72-file serial regression all green |
 | 09-06 | v3.6.0 (code) | Graph Builder completed: chart option editor (live params / persistent options) + pie·pareto real-time interaction + heatmap/scatter-matrix + faceting small multiples + PPTX/hi-res PNG/SVG export + thumbnail chart gallery + render-pipeline hardening (canvas swap / hidden toolbar / scroll stability) + integration test suite. Pending manual acceptance before release |

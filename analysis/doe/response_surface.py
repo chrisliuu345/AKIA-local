@@ -87,7 +87,7 @@ def analyze_response_surface(
             coef_labels.append(f"{factor_cols[i]}*{factor_cols[j]}")
 
     coefficients = {}
-    for label, coef in zip(coef_labels, coeffs):
+    for label, coef in zip(coef_labels, coeffs, strict=True):
         coefficients[label] = round(float(coef), 6)
 
     return {

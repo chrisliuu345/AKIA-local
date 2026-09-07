@@ -161,7 +161,7 @@ def _auto_select(
 ) -> Tuple[Optional[Tuple[int, int, int]], List[Dict]]:
     """内部网格搜索"""
     candidates = []
-    n = len(data)
+    len(data)
 
     for d in range(max_d + 1):
         for p in range(max_p + 1):

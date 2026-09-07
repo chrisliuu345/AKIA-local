@@ -151,7 +151,7 @@ class TestExtremeVertices:
         upper = [0.8, 0.7, 0.6]
         df = extreme_vertices(["A", "B", "C"],
                               lower_bounds=lower, upper_bounds=upper)
-        for col, l, u in zip(["A", "B", "C"], lower, upper):
+        for col, l, u in zip(["A", "B", "C"], lower, upper, strict=True):
             assert (df[col] >= l - 1e-6).all()
             assert (df[col] <= u + 1e-6).all()
 

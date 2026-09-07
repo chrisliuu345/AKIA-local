@@ -305,7 +305,7 @@ def _percent_defective_data(
     std: float,
 ) -> Dict[str, Any]:
     """不合格品率数据"""
-    n = len(data)
+    len(data)
 
     if usl is None and lsl is None:
         return {"ppm_total": 0, "pct_total": 0}

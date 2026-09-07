@@ -291,7 +291,7 @@ def _anderson_darling_test(data: np.ndarray, dist) -> Dict[str, Any]:
             "statistic": round(float(result.statistic), 4),
             "critical_values": {
                 f"{level}%": round(float(cv), 4)
-                for level, cv in zip([15, 10, 5, 2.5, 1], result.critical_values)
+                for level, cv in zip([15, 10, 5, 2.5, 1], result.critical_values, strict=True)
             },
             "is_normal": result.statistic < result.critical_values[2],
         }

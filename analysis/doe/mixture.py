@@ -125,7 +125,7 @@ def extreme_vertices(
         raise ValueError("At least 2 components required")
     if len(lower_bounds) != q or len(upper_bounds) != q:
         raise ValueError("Bounds length must equal number of components")
-    if any(lo > hi for lo, hi in zip(lower_bounds, upper_bounds)):
+    if any(lo > hi for lo, hi in zip(lower_bounds, upper_bounds, strict=True)):
         raise ValueError("Lower bounds must be <= upper bounds")
     if sum(lower_bounds) > 1.0 + 1e-10:
         raise ValueError("Sum of lower bounds must be <= 1")
@@ -293,7 +293,7 @@ def analyze(
     r_squared_adj = 1.0 - (1.0 - r_squared) * (n - 1) / (n - p) if n > p else r_squared
 
     term_names = _model_term_names(component_cols, model)
-    coefficients = dict(zip(term_names, [round(float(c), 6) for c in coeffs]))
+    coefficients = dict(zip(term_names, [round(float(c), 6) for c in coeffs], strict=True))
 
     ss_model = ss_total - ss_res
     df_model = p
@@ -301,7 +301,7 @@ def analyze(
     ms_model = ss_model / df_model if df_model > 0 else 0.0
     ms_error = ss_res / df_error if df_error > 0 else 1e-10
 
-    f_model = ms_model / ms_error if ms_error > 1e-10 else 0.0
+    ms_model / ms_error if ms_error > 1e-10 else 0.0
 
     if df_error > 0 and ms_error > 0:
         try:

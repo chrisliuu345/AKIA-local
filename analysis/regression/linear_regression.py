@@ -32,7 +32,7 @@ def analyze(
         coeffs, residuals, rank, sv = np.linalg.lstsq(X, y, rcond=None)
     except np.linalg.LinAlgError:
         coeffs = np.linalg.pinv(X) @ y
-        residuals = y - X @ coeffs
+        y - X @ coeffs
 
     y_pred = X @ coeffs
     residuals_arr = y - y_pred

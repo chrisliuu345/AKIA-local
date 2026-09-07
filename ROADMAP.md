@@ -2,7 +2,7 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> 当前: v3.6.0 Graph Builder 与帮助中心（代码验收通过 ✅ 2026-09-06，发布打包待执行）| 测试: 1300+ pytest · 37 个 Tab | 更新: 2026-09-06
+> 当前: v3.6.0 Graph Builder 与帮助中心（代码验收通过 ✅ 2026-09-06 · 构建链切 PyInstaller+Inno 2026-09-07）| 测试: 1300+ pytest · 37 个 Tab | 更新: 2026-09-07
 
 ---
 
@@ -21,7 +21,7 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 | 已完成 | v3.3.0 | **时间序列与预测**（ARIMA / 指数平滑 / 季节分解 / 模型对比） |
 | 已完成 | v3.4.0 | **可靠性与生存分析**（Weibull 2P/3P/4P + CI / KM + Cox / ALT / RBD / Crow-AMSAA / 保修） |
 | 已完成 | v3.5.0 | **MSA 与能力深化**（属性一致性增强 / EMP 方法 / Gage R&R 增强 / Capability Sixpack / 自动能力分析 / Edgeworth 近似） |
-| 已完成 ✅ | v3.6.0 | **Graph Builder 增强与交互体验**（图表编辑架构 / 饼图·帕累托实时交互 / 热力图·散点矩阵 / 小多图 Faceting / PPT·PNG·SVG 导出+缩略图图库 / 帮助中心+菜单重构 / 集成测试）— 2026-09-06 代码验收通过，发布打包待执行 |
+| 已完成 ✅ | v3.6.0 | **Graph Builder 增强与交互体验**（图表编辑架构 / 饼图·帕累托实时交互 / 热力图·散点矩阵 / 小多图 Faceting / PPT·PNG·SVG 导出+缩略图图库 / 帮助中心+菜单重构 / 集成测试）— 2026-09-06 代码验收通过；构建链 2026-09-07 切 PyInstaller+Inno |
 | 已完成 | v3.6.1 | **全量代码质量审查**（7 处潜在崩溃修复 / 缺陷隐患清理 / ruff 全库扫描 / 72 文件全量回归） |
 | 待开发 | v3.7.0 | 实时 SPC 云看板与数据连接器 |
 | 待开发 | v3.8.0 | Industrial AI Agent（AI + Vision 融合平台） |
@@ -80,9 +80,11 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 - 新增 `config/settings.py`：`tab_allowed(idx)` / `esp32_extension_enabled()`
 
 ### 打包发布体系
-- 品牌资源：`assets/logo.ico`（7 尺寸）+ `version_info.txt`（2.6.0, 中文描述）
+> ⚙️ 2026-09-07 更新：构建链由 Nuitka 切换回 **PyInstaller (onedir)**（`build_pyinstaller.py`），Inno/AppImage/.deb 打包保留并复用 `build/<name>.dist` 产物；`build_nuitka.py` 与 nuitka 依赖已移除。
+- 品牌资源：`assets/logo.ico`（7 尺寸）+ `version_info.txt`（Windows 版本资源，PyInstaller --version-file 复用）
 - PyInstaller **onedir**：QA-Tool.exe（38MB）+ `_internal/`（454MB 总量），GUI 无控制台
 - **Inno Setup 安装器**（135MB）：中文界面、管理员安装到 Program Files、组件页"ESP-32 硬件拓展"勾选框（决定安装期开关写入）、桌面/开始菜单快捷方式、卸载支持
+- Linux：`build_appimage.sh` → AppImage；`build_deb.sh` → .deb（版本号从 APP_VERSION 动态注入）
 - 测试: 278（+3 设备监控启停 + 5 配置门控 + 双语文档）
 
 ---
@@ -620,10 +622,10 @@ sudo apt install fonts-noto-cjk
 
 ---
 
-## v3.6.0 ✅ 已完成 — Graph Builder 增强与交互体验（代码验收通过 2026-09-06 · 发布打包待执行）
+## v3.6.0 ✅ 已完成 — Graph Builder 增强与交互体验（代码验收通过 2026-09-06 · 构建链切 PyInstaller+Inno 2026-09-07）
 
 > 主题：将现有图表工具升级为 Minitab Graph Builder 级交互体验。
-> 进度：P1 图表编辑架构 ✅ · P2 饼图/帕累托实时交互 ✅ · P3 热力图/散点矩阵 ✅ · P4 小多图(Faceting) ✅ · P5 一键导出+缩略图图库 ✅ · P6 集成测试+性能优化 ✅ · 质量审查+稳定性加固 ✅ · 帮助中心+菜单重构 ✅（2026-09-06 代码验收通过；发布打包不在本次范围，待后续执行）
+> 进度：P1 图表编辑架构 ✅ · P2 饼图/帕累托实时交互 ✅ · P3 热力图/散点矩阵 ✅ · P4 小多图(Faceting) ✅ · P5 一键导出+缩略图图库 ✅ · P6 集成测试+性能优化 ✅ · 质量审查+稳定性加固 ✅ · 帮助中心+菜单重构 ✅（2026-09-06 代码验收通过；发布打包另行执行）
 
 ### 核心内容
 - **交互式图库**：缩略图预览面板（替代纯下拉框）· 按类别分组（基础统计/回归/DOE/时间序列/可靠性）✅
@@ -671,21 +673,21 @@ sudo apt install fonts-noto-cjk
   - 复查确认：无裸 except、无硬编码密钥、无遗留调试探针/FIXME、无可变默认参数缺陷 ✅
 - **全量回归**：72 个 pytest 文件 + tests/test_integration.py 脚本断言全部通过（约 1300 用例，单线程逐文件执行防 PySide6 死锁）✅
 
-### 遗留（风格债，不影响运行 — 已排入 v3.7.0 开发前清理，见下方【v3.7.0 前置】）
-- 63 处绘图中间量未用赋值（F841，多为图表构造/反调试 stub 占位）
-- 历史单行多语句分号/冒号（E701/E702 ≈ 570 处）、延迟模块级导入（E402 20 处）
-- 建议：配置 ruff 进入开发流程（当前仅本机 .venv 安装，未入 requirements）
+### 遗留（风格债，不影响运行 — ✅ 已于 2026-09-07 全部清零，见下方【v3.7.0 前置】）
+- F841 65 处 / E701·E702 568 处 / E402 20 处 / B 类 72 处 — 全部清理完毕
+- ruff 已入 dev-requirements + ruff.toml + ci.yml 门禁（全库零告警）
 
 ---
 
 ## v3.7.0 — 实时 SPC 云看板与数据连接器（待开发）
 
-### 【v3.7.0 前置】开发前必须先清零的遗留清单（v3.6.1 遗留转入）
-- [ ] F841 未用赋值 63 处逐项清理并复核（绘图中间量删除 / 反调试 stub 决定去留）
-- [ ] E701/E702 单行多语句（≈570 处）批量规范化
-- [ ] E402 延迟模块级导入 20 处整改（函数级延迟导入 → 模块顶部或显式意图注释）
-- [ ] ruff 引入 CI/开发流程：全库 `ruff check . --select F,E9,B` 须零告警（或把规则集写进 pyproject/ruff.toml）
-- [ ] 清理后全量回归（72 测试文件单线程）并更新 ROADMAP
+### 【v3.7.0 前置】开发前必须先清零的遗留清单 ✅（2026-09-07 全部完成）
+- [x] F841 未用赋值清理并复核（65 处：绘图中间量删绑定留调用 / anti_debug decoy 保留调用副作用）
+- [x] E701/E702 单行多语句（568 处 / 23 文件）经 `ruff format` 批量规范化
+- [x] E402 延迟模块级导入 20 处整改（可移顶移顶；main.py 导入链重构后无需 noqa）
+- [x] ruff 引入开发流程：`ruff.toml`（F,E9,B,E701,E702,E402）+ dev-requirements + ci.yml 门禁，全库零告警
+- [x] B 类清零：B007×38 / B905×31（29 处 strict=True + 2 处外部数据 strict=False）/ B028×2 / B008×1
+- [x] 清理后全量回归通过（73 测试文件单线程 + tests/test_integration.py 脚本断言，零失败）
 
 > 主题：将 ESP32/MaixCAM 设备框架升级为 Minitab Real-Time SPC 级实时监控能力。
 
@@ -818,7 +820,8 @@ QA-Tool v3.8.0 Industrial AI Agent
 
 | 日期 | 版本 | 内容 |
 |------|---------|---------|
-| 09-06 | v3.6.0 | Graph Builder 增强与交互体验完成并通过代码验收：图表编辑架构/实时交互/热力图·散点矩阵/小多图 Faceting/导出增强/帮助中心(guide.html)+菜单重构；全量质量审查并入（7 处潜在崩溃修复+ruff 清理）；73 个测试文件全绿；版本号统一 3.6.0；发布打包待执行 |
+| 09-07 | v3.7.0-前置 | 风格债全量清零（F841 65 / E701·E702 568 / E402 20 / B 类 72）；ruff 入 ruff.toml+dev-requirements+CI 门禁零告警；构建链 Nuitka → PyInstaller(onedir)（build_pyinstaller.py），Inno/AppImage/.deb 保留；73 测试文件全绿 |
+| 09-06 | v3.6.0 | Graph Builder 增强与交互体验完成并通过代码验收：图表编辑架构/实时交互/热力图·散点矩阵/小多图 Faceting/导出增强/帮助中心(guide.html)+菜单重构；全量质量审查并入（7 处潜在崩溃修复+ruff 清理）；73 个测试文件全绿；版本号统一 3.6.0；发布打包另行执行 |
 | 09-05 | v3.5.0 | MSA与能力深化完成：属性一致性增强(Fleiss's Kappa + 有效Kappa + 偏差矩阵) + EMP方法量具研究 + Gage R&R增强(方差分量图 + 交互效应图 + 不确定度预算) + Capability Sixpack + 自动能力分析 + Edgeworth近似 + 100+ 测试 |
 | 09-04 | v3.8.0-planning | 架构调整：v3.8.0 + v3.9.0 合并为 Industrial AI Agent（AI + Vision 融合平台）；v3.9.0 视频时间研究作为 Agent Vision 能力在 v3.8.0 Phase 2 实现 |
 | 09-04 | v3.4.0 | 可靠性与生存分析完成：Weibull 2P/3P/4P + CI + KM + Cox + ALT + RBD + Crow-AMSAA + 保修分析 + 72个可靠性测试 |

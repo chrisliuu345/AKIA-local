@@ -60,7 +60,7 @@ class PPAPTab(BaseAnalysisTab):
         self.matrix.setHorizontalHeaderLabels(["#", "提交项目", "状态"])
         self.matrix.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
         self.matrix.verticalHeader().setVisible(False)
-        for row, (n, name, key) in enumerate(PPAP_ITEMS):
+        for row, (n, name, _key) in enumerate(PPAP_ITEMS):
             self.matrix.setItem(row, 0, QTableWidgetItem(str(n)))
             self.matrix.setItem(row, 1, QTableWidgetItem(name))
             cb = QComboBox()
@@ -182,7 +182,7 @@ class PPAPTab(BaseAnalysisTab):
         """
         updated = []
 
-        for idx, analysis in analyses.items():
+        for _idx, analysis in analyses.items():
             analysis_type = analysis.get("analysis_type", "")
             result = analysis.get("result", {})
 
