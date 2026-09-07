@@ -1,9 +1,16 @@
 """FMEA 工作表 Tab — DFMEA/PFMEA 交互编辑 + RPN 自动计算 + 风险着色"""
 
 from PySide6.QtWidgets import (
-    QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QTableWidget, QTableWidgetItem, QHeaderView,
-    QComboBox, QMessageBox, QFileDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QTableWidget,
+    QTableWidgetItem,
+    QHeaderView,
+    QComboBox,
+    QMessageBox,
+    QFileDialog,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QColor
@@ -17,7 +24,6 @@ from config.settings import RPN_HIGH
 
 
 class FMEATab(BaseAnalysisTab):
-
     def __init__(self, parent=None):
         self._engine = FMEAEngine()
         self._items: list = []
@@ -31,7 +37,7 @@ class FMEATab(BaseAnalysisTab):
         self._project_context = ctx
 
     def _setup_ui(self):
-        tc = theme_colors()
+        theme_colors()
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
 
@@ -107,8 +113,11 @@ class FMEATab(BaseAnalysisTab):
         new_mode = "dfmea" if idx == 1 else "pfmea"
         if new_mode == self._mode:
             return
-        reply = QMessageBox.question(self, "切换模式",
-                                     f"切换到{self.mode_combo.currentText()}模式? 当前数据将丢失。")
+        reply = QMessageBox.question(
+            self,
+            "切换模式",
+            f"切换到{self.mode_combo.currentText()}模式? 当前数据将丢失。",
+        )
         if reply == QMessageBox.Yes:
             self._mode = new_mode
             self._new_analysis()
@@ -118,7 +127,7 @@ class FMEATab(BaseAnalysisTab):
             self.mode_combo.blockSignals(False)
 
     def _add_row(self):
-        item = FMEAItem(function=f"新增功能{len(self._items)+1}")
+        item = FMEAItem(function=f"新增功能{len(self._items) + 1}")
         self._items.append(item)
         self._rebuild_table()
 
@@ -139,14 +148,18 @@ class FMEATab(BaseAnalysisTab):
         """将高风险 FMEA 条目生成控制计划行"""
         high_risk = [item for item in self._items if item.rpn >= RPN_HIGH]
         if not high_risk:
-            QMessageBox.information(self, "生成控制计划",
-                                    f"没有高风险项(RPN≥{RPN_HIGH})，无需生成控制计划。")
+            QMessageBox.information(
+                self,
+                "生成控制计划",
+                f"没有高风险项(RPN≥{RPN_HIGH})，无需生成控制计划。",
+            )
             return
 
         reply = QMessageBox.question(
-            self, "生成控制计划",
+            self,
+            "生成控制计划",
             f"将 {len(high_risk)} 个高风险项(RPN≥{RPN_HIGH})生成控制计划行？\n"
-            f"将自动切换到控制计划 Tab 并导入数据。"
+            f"将自动切换到控制计划 Tab 并导入数据。",
         )
         if reply != QMessageBox.Yes:
             return
@@ -161,16 +174,21 @@ class FMEATab(BaseAnalysisTab):
         }
 
         main_win = self.window()
-        if hasattr(main_win, '_import_cp_from_fmea'):
+        if hasattr(main_win, "_import_cp_from_fmea"):
             main_win._import_cp_from_fmea(cp_rows)
         else:
             self.analysis_completed.emit()
 
-        QMessageBox.information(self, "生成完成",
-                                f"已生成 {len(cp_rows)} 行控制计划，请切换到控制计划 Tab 查看。")
+        QMessageBox.information(
+            self,
+            "生成完成",
+            f"已生成 {len(cp_rows)} 行控制计划，请切换到控制计划 Tab 查看。",
+        )
 
     def _export(self):
-        path, _ = QFileDialog.getSaveFileName(self, "导出FMEA", "FMEA.xlsx", "Excel (*.xlsx)")
+        path, _ = QFileDialog.getSaveFileName(
+            self, "导出FMEA", "FMEA.xlsx", "Excel (*.xlsx)"
+        )
         if path:
             df = self._engine.to_dataframe(self._items)
             df.to_excel(path, index=False)
@@ -186,25 +204,39 @@ class FMEATab(BaseAnalysisTab):
         text = item.text().strip()
 
         fmea = self._items[row]
-        headers = FMEAItem.HEADERS
-        if col == 0: fmea.function = text
-        elif col == 1: fmea.failure_mode = text
-        elif col == 2: fmea.effect = text
+        if col == 0:
+            fmea.function = text
+        elif col == 1:
+            fmea.failure_mode = text
+        elif col == 2:
+            fmea.effect = text
         elif col == 3:
-            try: fmea.severity = max(1, min(10, int(text)))
-            except ValueError: pass
-        elif col == 4: fmea.cause = text
+            try:
+                fmea.severity = max(1, min(10, int(text)))
+            except ValueError:
+                pass
+        elif col == 4:
+            fmea.cause = text
         elif col == 5:
-            try: fmea.occurrence = max(1, min(10, int(text)))
-            except ValueError: pass
-        elif col == 6: fmea.control = text
+            try:
+                fmea.occurrence = max(1, min(10, int(text)))
+            except ValueError:
+                pass
+        elif col == 6:
+            fmea.control = text
         elif col == 7:
-            try: fmea.detection = max(1, min(10, int(text)))
-            except ValueError: pass
-        elif col == 8: pass
-        elif col == 9: fmea.recommended_action = text
-        elif col == 10: fmea.responsible = text
-        elif col == 11: fmea.action_status = text
+            try:
+                fmea.detection = max(1, min(10, int(text)))
+            except ValueError:
+                pass
+        elif col == 8:
+            pass
+        elif col == 9:
+            fmea.recommended_action = text
+        elif col == 10:
+            fmea.responsible = text
+        elif col == 11:
+            fmea.action_status = text
 
         if col in (3, 5, 7):
             rpn = fmea.calc_rpn()

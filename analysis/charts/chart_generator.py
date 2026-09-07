@@ -136,7 +136,7 @@ def _build_boxplot(data: dict, options: dict) -> Figure:
     bp = ax.boxplot(values, patch_artist=True,
                     medianprops={"color": "#e1e2e6", "linewidth": 1.5})
     ax.set_xticklabels(labels, fontsize=label_fontsize)
-    for patch, color in zip(bp["boxes"], palette[:len(values)]):
+    for patch, color in zip(bp["boxes"], palette[:len(values)], strict=True):
         patch.set_facecolor(color)
         patch.set_alpha(0.6)
     if show_mean:
@@ -369,7 +369,7 @@ def _build_main_effects(data: dict, options: dict) -> Figure:
         axes = [axes]
     response = pd.to_numeric(df[response_col], errors="coerce")
     overall_mean = response.mean()
-    for ax, factor in zip(axes, factor_cols):
+    for ax, factor in zip(axes, factor_cols, strict=True):
         means = df.groupby(factor)[response.name].mean().sort_index()
         ax.plot(range(len(means)), means.values, "o-", color=palette[0], linewidth=2, markersize=8)
         ax.axhline(y=overall_mean, color="red", linestyle="--", linewidth=0.8, label="整体均值")
@@ -546,7 +546,7 @@ def _build_bubble(data: dict, options: dict) -> Figure:
     palette = _get_palette(options.get("palette", "专业蓝"))
     fig, ax = plt.subplots(figsize=(9, 6), dpi=_dpi())
     sizes = (s - s.min()) / (s.max() - s.min() + 0.001) * 400 + 20
-    scatter = ax.scatter(x, y, s=sizes, alpha=0.55, c=palette[0],
+    ax.scatter(x, y, s=sizes, alpha=0.55, c=palette[0],
                          edgecolors="white", linewidth=0.5)
     ax.set_xlabel(x_col, fontsize=FONT_SIZE_LABEL)
     ax.set_ylabel(y_col, fontsize=FONT_SIZE_LABEL)
@@ -625,9 +625,9 @@ def _build_waterfall(data: dict, options: dict) -> Figure:
     fig, ax = plt.subplots(figsize=(max(10, len(vals) * 1.2), 5), dpi=_dpi())
 
     bottom = 0.0
-    for i, (lbl, v) in enumerate(zip(labels, vals)):
+    for i, (_lbl, v) in enumerate(zip(labels, vals, strict=True)):
         color = palette[0] if v >= 0 else palette[2] if len(palette) > 2 else "#e74c3c"
-        bar = ax.bar(i, v, bottom=bottom, color=color, alpha=0.8,
+        ax.bar(i, v, bottom=bottom, color=color, alpha=0.8,
                      edgecolor="white", linewidth=0.5)
         if i > 0:
             ax.plot([i - 1, i], [bottom, bottom], linewidth=0.8, color="#6e7080")
@@ -958,7 +958,7 @@ def _build_warranty_cost(data: dict, options: dict) -> Figure:
     failure_prob = summary.get("failure_probability", 0)
     expected_failures = summary.get("expected_failures", 0)
     warranty_cost = summary.get("warranty_cost_estimate", 0)
-    total_units = summary.get("total_units", 0)
+    summary.get("total_units", 0)
 
     chart_opts = options.get("chart_options", {})
     label_fontsize = chart_opts.get("label_fontsize", 11)

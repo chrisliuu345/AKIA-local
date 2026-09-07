@@ -27,16 +27,16 @@ def test_guide_html_exists_with_sections_and_faq():
 
 
 def test_build_scripts_package_help_dir():
-    src = (ROOT / "build_nuitka.py").read_text(encoding="utf-8")
+    src = (ROOT / "build_pyinstaller.py").read_text(encoding="utf-8")
     assert '("config/help", "config/help")' in src
 
 
 def test_version_numbers_correspond():
-    """版本号对应: app/构建/安装器/帮助页 四处版本必须一致"""
+    """版本号对应: app/构建脚本/安装器/帮助页 版本一致"""
     from config.settings import APP_VERSION
     assert APP_VERSION == "3.6.0"
 
-    build = (ROOT / "build_nuitka.py").read_text(encoding="utf-8")
+    build = (ROOT / "build_pyinstaller.py").read_text(encoding="utf-8")
     assert f'APP_VERSION = "{APP_VERSION}"' in build
 
     iss = (ROOT / "packaging" / "QA-Tool-installer.iss").read_text(encoding="utf-8")

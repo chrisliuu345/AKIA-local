@@ -1,0 +1,7 @@
+# ruff 配置 — QA-Tool lint 门禁
+# 规则集: F(含 F841 未用变量) + E9 语法 + B 常见陷阱 + 遗留单行风格 E701/E702/E402
+# 全库门禁: ruff check . 须零告警 (CI 与本地开发共用)
+
+[lint]
+select = ["F", "E9", "B", "E701", "E702", "E402"]
+exclude = [".venv", "build", "dist"]

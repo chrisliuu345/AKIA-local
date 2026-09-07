@@ -37,7 +37,7 @@ class ParetoTab(BaseAnalysisTab):
             self._populate_combo(self.val_combo, cols)
 
     def _setup_ui(self):
-        tc = theme_colors()
+        theme_colors()
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
 
@@ -161,7 +161,7 @@ class ParetoTab(BaseAnalysisTab):
         self.result_table.setColumnCount(4)
         self.result_table.setHorizontalHeaderLabels(["分类", "数值", "占比(%)", "累计(%)"])
         self.result_table.setRowCount(len(labels))
-        for i, (lbl, val) in enumerate(zip(labels, values)):
+        for i, (lbl, val) in enumerate(zip(labels, values, strict=True)):
             pct = val / total * 100 if total > 0 else 0
             cum += pct
             self.result_table.setItem(i, 0, QTableWidgetItem(str(lbl)))

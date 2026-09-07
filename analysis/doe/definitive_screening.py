@@ -33,7 +33,7 @@ _DSD_DESIGNS: Dict[int, np.ndarray] = {
 
 def _verify_design_orthogonality(D: np.ndarray) -> bool:
     """验证设计矩阵列正交性: D^T D = c*I"""
-    k = D.shape[1]
+    D.shape[1]
     product = D.T @ D
     off_diag = product - np.diag(np.diag(product))
     if not np.all(off_diag == 0):

@@ -55,7 +55,7 @@ class TestChartTabFlow:
         tab.chart_gallery._tile_buttons["散点图"].click()
         _qwait(50)
         assert len(tab._col_widgets) == 2
-        for w, col in zip(tab._col_widgets, ["直径", "长度"]):
+        for w, col in zip(tab._col_widgets, ["直径", "长度"], strict=True):
             w.setCurrentText(col)
         ok, msg = tab.validate_params()
         assert ok is True, msg
@@ -67,7 +67,7 @@ class TestChartTabFlow:
         tab.chart_gallery.expand()
         tab.chart_gallery._tile_buttons["小多图"].click()
         _qwait(50)
-        for w, col in zip(tab._col_widgets, ["直径", "班组"]):
+        for w, col in zip(tab._col_widgets, ["直径", "班组"], strict=True):
             w.setCurrentText(col)
         tab.run_and_display()
         text = tab.result_text.toPlainText()

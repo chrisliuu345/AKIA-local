@@ -48,7 +48,7 @@ class PptxReport(BaseReportEngine):
 
         self._add_cover(prs, blank, title, subtitle)
         total = len(analyses)
-        for i, atype, params, result in self.iter_analyses(analyses):
+        for i, atype, _params, result in self.iter_analyses(analyses):
             self._add_analysis_slide(
                 prs, blank, atype, result, (charts or {}).get(atype), i + 1, total)
 
@@ -113,8 +113,8 @@ class PptxReport(BaseReportEngine):
             srun.font.name = self.font
 
         img_top = Inches(1.7)
-        img_box_w = Inches(12.3)
-        img_box_h = Inches(5.0)
+        Inches(12.3)
+        Inches(5.0)
         if chart_buf is not None:
             data = BytesIO(chart_buf) if isinstance(chart_buf, bytes) else chart_buf
             data.seek(0)

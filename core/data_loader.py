@@ -100,7 +100,7 @@ class DataLoader:
                 if headers is None:
                     headers = [str(c) if c is not None else f"col_{i}" for i, c in enumerate(row)]
                     continue
-                rows_buf.append(dict(zip(headers, row)))
+                rows_buf.append(dict(zip(headers, row, strict=False)))
                 if len(rows_buf) >= chunk_size:
                     yield pd.DataFrame(rows_buf)
                     rows_buf = []

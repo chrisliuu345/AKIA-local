@@ -80,7 +80,7 @@ def analyze(
             })
 
     q_values = []
-    for i, x in enumerate(X):
+    for _, x in enumerate(X):
         deviation = x - mean_vec
         q = deviation.T @ cov_inv @ deviation
         q_values.append(q)
