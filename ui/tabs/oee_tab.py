@@ -47,10 +47,12 @@ class OEETab(BaseAnalysisTab):
 
         top = QWidget()
         top_layout = QHBoxLayout(top)
+        top_layout.setSpacing(10)
         top_layout.setContentsMargins(0, 0, 0, 0)
 
         config_group = QGroupBox("分析参数")
         config_layout = QFormLayout(config_group)
+        config_layout.setContentsMargins(10, 10, 10, 10)
 
         self.group_combo = QComboBox()
         self.group_combo.addItems(["全部", "按班组", "按班次"])
@@ -65,6 +67,13 @@ class OEETab(BaseAnalysisTab):
         config_layout.addRow(self.btn_analyze)
 
         top_layout.addWidget(config_group)
+
+
+        separator = QFrame()
+        separator.setFrameShape(QFrame.VLine)
+        separator.setStyleSheet("")
+        separator.setMaximumWidth(1)
+        top_layout.addWidget(separator)
 
         kpi_group = QGroupBox("实时指标")
         kpi_grid = QGridLayout(kpi_group)
