@@ -7,16 +7,19 @@
 #
 # 前置条件:
 #   1. Python 3.11+ 已安装
-#   2. pip install nuitka
+#   2. pip install -r requirements.txt -r dev-requirements.txt
+#      (dev-requirements 含 pyinstaller; 构建需另外 pip install pyinstaller)
 #   3. sudo apt install file  # appimagetool 需要
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_NAME="QA-Tool"
+BIN_NAME="qa-tool"
 APP_VERSION=$(python -c "import sys; sys.path.insert(0, '${SCRIPT_DIR}'); from config.settings import APP_VERSION; print(APP_VERSION)")
 BUILD_DIR="${SCRIPT_DIR}/build"
 APPDIR_DIR="${BUILD_DIR}/AppDir"
+DIST_DIR="${BUILD_DIR}/${BIN_NAME}.dist"
 
 echo "=========================================="
 echo "  QA-Tool AppImage 构建"
@@ -26,14 +29,18 @@ echo "=========================================="
 # ── 步骤 1: 清理旧构建 ──────────────────────────────────────
 echo ""
 echo "[1/5] 清理旧构建..."
-rm -rf "${BUILD_DIR}/AppDir"
-rm -rf "${BUILD_DIR}/nuitka_build"
+rm -rf "${APPDIR_DIR}"
 
-# ── 步骤 2: Nuitka 构建 ────────────────────────────────────
+# ── 步骤 2: PyInstaller onedir 构建 ────────────────────────
 echo ""
-echo "[2/5] 执行 Nuitka standalone 构建..."
+echo "[2/5] 执行 PyInstaller onedir 构建..."
 cd "${SCRIPT_DIR}"
-python build_nuitka.py --standalone
+python build_pyinstaller.py --name "${BIN_NAME}"
+
+if [ ! -d "${DIST_DIR}" ]; then
+    echo "[error] 未找到 PyInstaller 输出目录: ${DIST_DIR}"
+    exit 1
+fi
 
 # ── 步骤 3: 创建 AppDir 结构 ───────────────────────────────
 echo ""
@@ -42,15 +49,8 @@ mkdir -p "${APPDIR_DIR}/usr/bin"
 mkdir -p "${APPDIR_DIR}/usr/share/applications"
 mkdir -p "${APPDIR_DIR}/usr/share/icons/hicolor/256x256/apps"
 
-# 查找 Nuitka 输出目录
-NUITKA_OUTPUT=$(find "${BUILD_DIR}" -maxdepth 1 -type d -name "main.dist" | head -1)
-if [ -z "${NUITKA_OUTPUT}" ]; then
-    echo "[error] 未找到 Nuitka 输出目录"
-    exit 1
-fi
-
-# 复制 Nuitka 输出到 AppDir
-cp -r "${NUITKA_OUTPUT}"/* "${APPDIR_DIR}/usr/bin/"
+# 复制 PyInstaller 输出到 AppDir
+cp -r "${DIST_DIR}"/* "${APPDIR_DIR}/usr/bin/"
 
 # 创建启动脚本
 cat > "${APPDIR_DIR}/AppRun" << 'EOF'
