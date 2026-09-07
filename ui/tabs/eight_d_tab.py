@@ -131,13 +131,16 @@ class EightDTab(BaseAnalysisTab):
             add("d3_verified", cb)
             lay.addWidget(cb)
         elif code == "D4":
-            add("d4_root", _make_row(lay, "确认根因:", QLineEdit()))
+            root_edit = _make_row(lay, "确认根因:", QLineEdit())
+            add("d4_root", root_edit)
             lay.addWidget(QLabel("5Why 分析:"))
             t = QTextEdit()
             t.setMaximumHeight(80)
             add("d4_5why", t)
             lay.addWidget(t)
-            lay.addWidget(QLabel("鱼骨图 (拖拽标签, 滚轮缩放, 双击编辑):"))
+            fish_label_row = QHBoxLayout()
+            fish_label_row.addWidget(QLabel("鱼骨图 (拖拽标签, 滚轮缩放, 双击编辑):"))
+            fish_label_row.addStretch()
             from ui.widgets.fishbone_canvas import FishboneCanvas
             from analysis.quality.fishbone import CauseNode
             canvas = FishboneCanvas()
@@ -156,8 +159,18 @@ class EightDTab(BaseAnalysisTab):
                 for cname in children:
                     root.children.append(CauseNode(name=cname, level=1))
                 branches_6m[bname] = root
-            canvas.render_fishbone(branches_6m, problem=self._w.get("d4_root", QLineEdit()).text() or "")
+            canvas.render_fishbone(
+                branches_6m, problem=root_edit.text())
+            # 问题框与「确认根因」双向实时同步
+            root_edit.textChanged.connect(canvas.set_problem)
+            canvas.problem_edited.connect(root_edit.setText)
             add("d4_fishbone", canvas)
+            lay.addLayout(fish_label_row)
+            export_btn = QPushButton("导出图片")
+            export_btn.setStyleSheet(BUTTON_SECONDARY)
+            export_btn.setCursor(Qt.PointingHandCursor)
+            export_btn.clicked.connect(self._export_d4_fishbone)
+            fish_label_row.addWidget(export_btn)
             lay.addWidget(canvas)
         elif code == "D5":
             t = QTableWidget(0, 3)
@@ -206,6 +219,16 @@ class EightDTab(BaseAnalysisTab):
     def _text(self, key):
         w = self._w.get(key)
         return w.toPlainText() if hasattr(w, 'toPlainText') else (w.text() if w else "")
+
+    def _export_d4_fishbone(self):
+        """导出 D4 鱼骨图为高清 PNG"""
+        canvas = self._w.get("d4_fishbone")
+        if canvas is None:
+            return
+        path, _ = QFileDialog.getSaveFileName(
+            self, "导出鱼骨图", "fishbone.png", "PNG 图片 (*.png)")
+        if path and not canvas.export_png(path):
+            QMessageBox.warning(self, "导出失败", "图片保存失败，请重试")
 
     def import_fmea_causes(self, fmea_items: list):
         """从 FMEA 导入失效原因到 D4 鱼骨图

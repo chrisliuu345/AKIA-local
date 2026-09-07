@@ -110,10 +110,17 @@ class FishboneTab(BaseAnalysisTab):
         self.btn_render.clicked.connect(self._render)
         tree_layout.addWidget(self.btn_render)
 
+        self.btn_export = QPushButton("导出图片")
+        self.btn_export.setStyleSheet(BUTTON_SECONDARY)
+        self.btn_export.setCursor(Qt.PointingHandCursor)
+        self.btn_export.clicked.connect(self._on_export_png)
+        tree_layout.addWidget(self.btn_export)
+
         left_layout.addWidget(tree_group)
         splitter.addWidget(left)
 
         self.canvas = FishboneCanvas()
+        self.canvas.problem_edited.connect(self.problem_input.setText)
         splitter.addWidget(self.canvas)
 
         splitter.setSizes([320, 750])
@@ -207,6 +214,16 @@ class FishboneTab(BaseAnalysisTab):
     def _render(self):
         self.canvas.render_fishbone(self._branches, self._problem)
         self.analysis_completed.emit()
+
+    def _on_export_png(self):
+        if not self._branches:
+            QMessageBox.information(self, "提示", "请先绘制鱼骨图")
+            return
+        from PySide6.QtWidgets import QFileDialog
+        path, _ = QFileDialog.getSaveFileName(
+            self, "导出鱼骨图", "fishbone.png", "PNG 图片 (*.png)")
+        if path and not self.canvas.export_png(path):
+            QMessageBox.warning(self, "导出失败", "图片保存失败，请重试")
 
     @staticmethod
     def _is_branch(item):
