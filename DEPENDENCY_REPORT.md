@@ -66,10 +66,10 @@
 |------|----------|------|
 | cryptography | >=42.0 | ❌ 缺失 |
 
-### 打包工具 (1个)
+### 打包工具 (1个, 构建期)
 | 包名 | 版本要求 | 状态 |
 |------|----------|------|
-| nuitka | >=4.0 | ❌ 缺失 |
+| pyinstaller | 最新稳定版 | ❌ 缺失 |
 
 ## 总计: 23个依赖项全部缺失
 
@@ -131,9 +131,9 @@ pip install pyserial>=3.5
 pip install cryptography>=42.0
 ```
 
-### 第8步: 安装打包工具
+### 第8步: 安装打包工具 (构建期, 运行不需要)
 ```bash
-pip install nuitka>=4.0
+pip install pyinstaller
 ```
 
 ### 第9步: 验证安装
