@@ -98,7 +98,7 @@ Requires Python 3.11+
 | Reports | reportlab · python-docx · openpyxl |
 | AI | Ollama · OpenAI-compatible API · TF-IDF RAG |
 | Hardware | pyserial · MicroPython (ESP32) |
-| Build | PyInstaller · Nuitka |
+| Build | PyInstaller (onedir) · Inno Setup · AppImage · .deb |
 
 ---
 

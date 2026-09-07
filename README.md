@@ -98,7 +98,7 @@ python main.py
 | 报告 | reportlab · python-docx · openpyxl |
 | AI | Ollama · OpenAI 兼容 API · TF-IDF RAG |
 | 硬件 | pyserial · MicroPython (ESP32) |
-| 构建 | PyInstaller · Nuitka |
+| 构建 | PyInstaller (onedir) · Inno 安装器 · AppImage · .deb |
 
 ---
 

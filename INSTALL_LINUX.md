@@ -106,32 +106,33 @@ sudo usermod -aG dialout $USER
 
 ## 构建自己的包
 
+> 构建基于 PyInstaller（onedir），产物供 AppImage / .deb 打包。
+
+### 安装构建工具
+
+```bash
+# 安装项目依赖（PyInstaller 需单独安装，未列入运行 requirements）
+pip install -r requirements.txt
+pip install pyinstaller
+sudo apt install file wget dpkg-dev
+```
+
 ### 构建 AppImage
 
 ```bash
-# 安装构建工具
-pip install nuitka
-sudo apt install file wget
-
-# 执行构建
 chmod +x build_appimage.sh
 ./build_appimage.sh
 
-# 输出: build/QA-Tool-3.2.0-x86_64.AppImage
+# 输出: build/QA-Tool-<版本>-x86_64.AppImage
 ```
 
 ### 构建 .deb 包
 
 ```bash
-# 安装构建工具
-pip install nuitka
-sudo apt install dpkg-dev
-
-# 执行构建
 chmod +x build_deb.sh
 ./build_deb.sh
 
-# 输出: build/qa-tool_3.2.0_amd64.deb
+# 输出: build/qa-tool_<版本>_amd64.deb
 ```
 
 ## 故障排除
