@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QPointF, QRectF, Signal
 from PySide6.QtGui import (
     QPen, QBrush, QColor, QFont, QPainter, QPolygonF, QPainterPath,
+    QImage,
 )
 from ui.font_config import get_ui_font
 
@@ -82,7 +83,8 @@ class _LabelNode(QGraphicsItem):
             self.setText(text.strip())
             if self._on_edited:
                 self._on_edited(text.strip())
-        super().mouseDoubleClickEvent(event)
+        if event is not None:
+            super().mouseDoubleClickEvent(event)
 
     def mousePressEvent(self, event):
         self.setCursor(Qt.ClosedHandCursor)
@@ -115,17 +117,64 @@ class _LabelNode(QGraphicsItem):
 
 
 class _ProblemBox(QGraphicsRectItem):
+    """问题描述框(脊骨箭头指向的最终结果) — 双击可编辑, 宽度随文字自适应"""
+
     def __init__(self, x, y, text: str):
-        w, h = 170, 38
-        super().__init__(x, y - h / 2, w, h)
+        self._on_edited = None
+        self._text = text or ""
+        self._h = 38
+        self._x = x
+        self._y = y
+        w = self._fit_width()
+        super().__init__(x, y - self._h / 2, w, self._h)
         self.setBrush(QBrush(QColor("#363648")))
         self.setPen(QPen(QColor("#4da6ff"), 2))
         self.setFlag(QGraphicsItem.ItemIsSelectable, False)
+        self.setCursor(Qt.IBeamCursor)
 
-        self.label = QGraphicsTextItem(text, self)
+        self.label = QGraphicsTextItem(self._text, self)
         self.label.setFont(QFont(get_ui_font(), 13, QFont.Bold))
         self.label.setDefaultTextColor(TEXT_COLOR)
-        self.label.setPos(x + 8, y - 14)
+        self.label.setAcceptedMouseButtons(Qt.NoButton)
+        self._place_label()
+
+    def _fit_width(self) -> float:
+        """按文字宽度自适应框宽(最小 170)"""
+        from PySide6.QtGui import QFontMetrics
+        fm = QFontMetrics(QFont(get_ui_font(), 13, QFont.Bold))
+        tw = fm.horizontalAdvance(self._text)
+        return max(170.0, tw + 24)
+
+    def _place_label(self):
+        """文字在框内垂直居中, 左对齐 + 8px 内边距
+        (子项坐标 == 场景坐标: item 原点 (0,0); 框左上角在 (x, y-h/2))"""
+        from PySide6.QtGui import QFontMetrics
+        fm = QFontMetrics(self.label.font())
+        th = fm.height()
+        self.label.setPos(self._x + 8, self._y - self._h / 2 + (self._h - th) / 2)
+
+    def set_problem(self, text: str):
+        text = text or ""
+        if text == self._text:
+            return
+        self._text = text
+        w = self._fit_width()
+        self.setRect(self._x, self._y - self._h / 2, w, self._h)
+        self.label.setPlainText(text)
+        self._place_label()
+        self.update()
+
+    def text(self) -> str:
+        return self._text
+
+    def mouseDoubleClickEvent(self, event):
+        text, ok = QInputDialog.getText(None, "编辑问题", "问题描述:", text=self._text)
+        if ok:
+            self.set_problem(text.strip())
+            if self._on_edited:
+                self._on_edited(self._text)
+        if event is not None:
+            super().mouseDoubleClickEvent(event)
 
 
 class _CauseSpike:
@@ -300,6 +349,7 @@ class FishboneCanvas(QGraphicsView):
     node_added = Signal(str, str)
     node_deleted = Signal(str)
     zoom_changed = Signal()
+    problem_edited = Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -317,6 +367,7 @@ class FishboneCanvas(QGraphicsView):
 
         self._branches: list[_Branch] = []
         self._causes: list[_CauseSpike] = []
+        self._problem_box: _ProblemBox = None
         self._panning = False
         self._pan_start = QPointF()
         self._zoom_level = 1.0
@@ -325,7 +376,9 @@ class FishboneCanvas(QGraphicsView):
         self._scene.clear()
         self._branches.clear()
         self._causes.clear()
+        self._problem_box = None
 
+        problem = (problem or "").strip() or "质量问题"
         n = len(branches)
         if n == 0:
             t = self._scene.addText("请添加分析分支", QFont(get_ui_font(), 14))
@@ -351,6 +404,8 @@ class FishboneCanvas(QGraphicsView):
         self._scene.addPath(path, QPen(Qt.NoPen), QBrush(MUTED_COLOR))
 
         pb = _ProblemBox(spine_x2 + 10, cy, problem)
+        pb._on_edited = lambda text: self.problem_edited.emit(text)
+        self._problem_box = pb
         self._scene.addItem(pb)
 
         bx_spacing = (spine_x2 - 80 - spine_x1 - 60) / max(n - 1, 1) if n > 1 else 0
@@ -376,6 +431,42 @@ class FishboneCanvas(QGraphicsView):
         self.fitInView(self._scene.sceneRect().adjusted(-30, -30, 60, 60),
                        Qt.KeepAspectRatio)
         self._zoom_level = self.transform().m11()
+
+    def set_problem(self, text: str):
+        """就地更新问题框文字(不重建场景, 不重置节点位置/缩放)"""
+        if self._problem_box is not None:
+            self._problem_box.set_problem(text)
+
+    def problem_text(self) -> str:
+        return self._problem_box.text() if self._problem_box is not None else ""
+
+    def export_png(self, path: str, target_longest: int = 3200,
+                   margin: float = 80.0) -> bool:
+        """将整幅鱼骨图导出为高清 PNG。
+
+        以实际内容边界(itemsBoundingRect, 含被拖出场景区的节点) + 留白作为源区域,
+        等比渲染到最长边 target_longest 像素(不低于 2x), 直接 scene.render,
+        不受当前视口缩放/平移影响 —— 不会裁切、不会留大片空白。
+        """
+        if not self._scene.items():
+            return False
+        content = self._scene.itemsBoundingRect()
+        src = content.adjusted(-margin, -margin, margin, margin)
+        longest = max(src.width(), src.height())
+        scale = max(2.0, target_longest / longest if longest > 0 else 1.0)
+        w, h = max(1, int(src.width() * scale)), max(1, int(src.height() * scale))
+
+        img = QImage(w, h, QImage.Format_RGB32)
+        img.fill(BG_COLOR)
+        painter = QPainter(img)
+        painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.setRenderHint(QPainter.TextAntialiasing, True)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        try:
+            self._scene.render(painter, QRectF(0, 0, w, h), src)
+        finally:
+            painter.end()
+        return img.save(path, "PNG")
 
     def _render_children(self, parent_spike: _CauseSpike, node,
                          side: int, depth: int = 1):
@@ -436,14 +527,20 @@ class FishboneCanvas(QGraphicsView):
         if isinstance(item, _LabelNode):
             edit_action = menu.addAction("编辑文本")
             delete_action = menu.addAction("删除此节点")
+            menu.addSeparator()
+            export_action = menu.addAction("导出为 PNG")
             action = menu.exec(event.globalPos())
             if action == edit_action:
                 item.mouseDoubleClickEvent(None)
             elif action == delete_action:
                 self._remove_node(item)
+            elif action == export_action:
+                self._export_dialog()
         else:
             add_action = menu.addAction("在此添加原因")
             reset_action = menu.addAction("重置缩放")
+            menu.addSeparator()
+            export_action = menu.addAction("导出为 PNG")
             action = menu.exec(event.globalPos())
             if action == add_action:
                 sp = self.mapToScene(event.pos())
@@ -457,6 +554,18 @@ class FishboneCanvas(QGraphicsView):
                                Qt.KeepAspectRatio)
                 self._zoom_level = self.transform().m11()
                 self.zoom_changed.emit()
+            elif action == export_action:
+                self._export_dialog()
+
+    def _export_dialog(self):
+        """右键导出为高清 PNG"""
+        if not self._scene.items():
+            return
+        from PySide6.QtWidgets import QFileDialog
+        path, _ = QFileDialog.getSaveFileName(
+            self, "导出鱼骨图", "fishbone.png", "PNG 图片 (*.png)")
+        if path:
+            self.export_png(path)
 
     def _remove_node(self, item: _LabelNode):
         for c in self._causes:
