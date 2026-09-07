@@ -38,7 +38,6 @@ class CapComparisonTab(BaseAnalysisTab):
             self._populate_col_list()
 
     def _setup_ui(self):
-        tc = theme_colors()
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
 
@@ -226,13 +225,13 @@ class CapComparisonTab(BaseAnalysisTab):
         pp_vals = [r["pp"] if r["pp"] is not None else 0 for r in results]
         ppk_vals = [r["ppk"] if r["ppk"] is not None else 0 for r in results]
 
-        bars1 = ax.bar(x - w/2, cp_vals, w * 0.45, label="Cp",
+        ax.bar(x - w/2, cp_vals, w * 0.45, label="Cp",
                        color=tc["accent_bright"], alpha=0.85)
-        bars2 = ax.bar(x - w/2 + w * 0.45, cpk_vals, w * 0.45, label="Cpk",
+        ax.bar(x - w/2 + w * 0.45, cpk_vals, w * 0.45, label="Cpk",
                        color="#ff6b6b", alpha=0.85)
-        bars3 = ax.bar(x + w/2, pp_vals, w * 0.45, label="Pp",
+        ax.bar(x + w/2, pp_vals, w * 0.45, label="Pp",
                        color=tc["accent"], alpha=0.6, hatch="//")
-        bars4 = ax.bar(x + w/2 + w * 0.45, ppk_vals, w * 0.45, label="Ppk",
+        ax.bar(x + w/2 + w * 0.45, ppk_vals, w * 0.45, label="Ppk",
                        color="#ffa726", alpha=0.6, hatch="//")
 
         cpk_b = CAPABILITY_GRADES["B"][0]

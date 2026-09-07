@@ -265,7 +265,7 @@ class LineBalanceTab(BaseAnalysisTab):
         xlabels = []
         for s in stations:
             bottom = 0.0
-            for k, (pname, ct) in enumerate(zip(s["process_names"], s["cts"])):
+            for k, (pname, ct) in enumerate(zip(s["process_names"], s["cts"], strict=True)):
                 ax2.bar(f"工位{s['station_id']}", ct, bottom=bottom,
                         color=palette[k % len(palette)], width=0.55,
                         edgecolor=tc["bg_card"], linewidth=0.6)

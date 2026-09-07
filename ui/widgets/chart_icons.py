@@ -57,7 +57,7 @@ def _boxplot(ax):
     ax.plot([0.7, 0.7], [0.15, 0.32], color=_WHITE, lw=1.0)
     ax.plot([0.7, 0.7], [0.68, 0.85], color=_WHITE, lw=1.0)
     box = [(0.3, 0.32), (0.3, 0.68), (0.7, 0.68), (0.7, 0.32), (0.3, 0.32)]
-    xs, ys = zip(*box)
+    xs, ys = zip(*box, strict=True)
     ax.plot(xs, ys, color=_BLUE, lw=1.6)
     ax.plot([0.3, 0.7], [0.5, 0.5], color=_BLUE, lw=1.6)
 
@@ -110,7 +110,7 @@ def _residual(ax):
     ax.plot([0.12, 0.44], [0.42, 0.42], color=_WHITE, lw=0.8, ls="--")
     ax.add_patch(Rectangle((0.54, 0.1), 0.38, 0.8, facecolor="none",
                                edgecolor=_BLUE, lw=1.0))
-    for h, y in [(0.5, 0.18), (0.8, 0.3)]:
+    for _h, _y in [(0.5, 0.18), (0.8, 0.3)]:
         pass
     ax.plot([0.72, 0.72], [0.2, 0.7], color=_BLUE, lw=2.2)
     ax.plot([0.72, 0.72], [0.2, 0.44], color=_WHITE, lw=0.9)
@@ -186,8 +186,8 @@ def _radar(ax):
     import numpy as np
     ang = np.linspace(0, 2 * np.pi, 5, endpoint=False)
     vals = [0.7, 0.45, 0.62, 0.38, 0.55]
-    xs = [0.5 + 0.35 * v * np.cos(a) for v, a in zip(vals, ang)]
-    ys = [0.5 + 0.35 * v * np.sin(a) for v, a in zip(vals, ang)]
+    xs = [0.5 + 0.35 * v * np.cos(a) for v, a in zip(vals, ang, strict=True)]
+    ys = [0.5 + 0.35 * v * np.sin(a) for v, a in zip(vals, ang, strict=True)]
     ax.plot(xs + xs[:1], ys + ys[:1], color=_BLUE, lw=1.4)
     for a in ang:
         ax.plot([0.5, 0.5 + 0.35 * np.cos(a)], [0.5, 0.5 + 0.35 * np.sin(a)],
@@ -197,7 +197,7 @@ def _radar(ax):
 def _waterfall(ax):
     tops = [0.75, 0.55, 0.62, 0.3]
     prev = 0.1
-    for i, (x, top) in enumerate(zip([0.1, 0.3, 0.5, 0.7], tops)):
+    for i, (x, top) in enumerate(zip([0.1, 0.3, 0.5, 0.7], tops, strict=True)):
         ax.add_patch(Rectangle((x, prev), 0.16, top - prev,
                                    facecolor=_BLUE, alpha=0.5 if i < 3 else 0.8,
                                    edgecolor=_BLUE, lw=0.9))

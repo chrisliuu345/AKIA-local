@@ -64,7 +64,7 @@ def analyze(
     if len(residuals) >= 3:
         sw_stat, sw_p = stats.shapiro(residuals) if len(residuals) <= 5000 else (0, 0)
     else:
-        sw_stat, sw_p = 0, 0
+        _sw_stat, sw_p = 0, 0
 
     return {
         "chart_type": "DOE Analysis",

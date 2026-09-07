@@ -152,7 +152,7 @@ class WorkSamplingEngine:
         }
 
         if show_sample_size_estimate and ratios.get("_total", 0) > 0:
-            p = utilization["productive_pct"] / 100
+            utilization["productive_pct"] / 100
             n_required = WorkSamplingEngine.sample_size_required(
                 utilization["productive_pct"], 5.0, confidence
             )

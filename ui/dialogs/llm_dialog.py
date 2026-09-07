@@ -492,13 +492,13 @@ class LLMDialog(QDialog):
 
     def append_msg(self, role: str, text: str):
         if role == "system":
-            prefix, color = "系统", "#8e8ea0"
+            _prefix, color = "系统", "#8e8ea0"
             dot_color = "#8e8ea0"
         elif role == "user":
-            prefix, color = "你", "#4da6ff"
+            _prefix, color = "你", "#4da6ff"
             dot_color = "#4da6ff"
         else:
-            prefix, color = "AI", "#2ca02c"
+            _prefix, color = "AI", "#2ca02c"
             dot_color = "#2ca02c"
 
         safe = html.escape(text).replace("\n", "<br>")

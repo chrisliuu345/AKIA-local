@@ -135,7 +135,7 @@ class TestW69TrendSampling:
     def test_sampling_preserves_endpoints(self):
         np.random.seed(42)
         n = 2000
-        data = np.random.normal(10, 1, n)
+        np.random.normal(10, 1, n)
         MAX_POINTS = 1000
         step = max(1, n // MAX_POINTS)
         sampled_idx = list(range(0, n, step))

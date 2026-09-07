@@ -6,19 +6,33 @@ from ui.font_config import get_ui_font
 
 FONT_FAMILY = get_ui_font()
 
+
 def _f(size: int, bold: bool = False) -> QFont:
     f = QFont(FONT_FAMILY, size)
-    if bold: f.setBold(True)
+    if bold:
+        f.setBold(True)
     return f
 
-FONT_8  = _f(8);   FONT_9  = _f(9);   FONT_10 = _f(10)
-FONT_11 = _f(11);  FONT_12 = _f(12);  FONT_13 = _f(13)
-FONT_14 = _f(14);  FONT_18 = _f(18);  FONT_20 = _f(20)
-FONT_36 = _f(36);  FONT_40 = _f(40)
-FONT_8B  = _f(8, True);   FONT_9B  = _f(9, True)
-FONT_10B = _f(10, True);  FONT_11B = _f(11, True)
-FONT_12B = _f(12, True);  FONT_14B = _f(14, True)
-FONT_18B = _f(18, True);  FONT_36B = _f(36, True)
+
+FONT_8 = _f(8)
+FONT_9 = _f(9)
+FONT_10 = _f(10)
+FONT_11 = _f(11)
+FONT_12 = _f(12)
+FONT_13 = _f(13)
+FONT_14 = _f(14)
+FONT_18 = _f(18)
+FONT_20 = _f(20)
+FONT_36 = _f(36)
+FONT_40 = _f(40)
+FONT_8B = _f(8, True)
+FONT_9B = _f(9, True)
+FONT_10B = _f(10, True)
+FONT_11B = _f(11, True)
+FONT_12B = _f(12, True)
+FONT_14B = _f(14, True)
+FONT_18B = _f(18, True)
+FONT_36B = _f(36, True)
 
 
 def is_dark_theme(widget=None) -> bool:
@@ -49,21 +63,21 @@ def apply_dark_palette():
 
 def colors(widget=None):
     return {
-        "text_primary":   "#e1e2e6",
+        "text_primary": "#e1e2e6",
         "text_secondary": "#a0a3ae",
-        "text_muted":     "#6e7080",
-        "text_dim":       "#5a5c6a",
-        "border":         "#3a3a48",
-        "border_light":   "#2a2a36",
-        "bg_card":        "#262632",
-        "bg_body":        "#181822",
-        "bg_header":      "#13131c",
-        "bg_hover":       "#363648",
-        "bg_active":      "#2a384a",
+        "text_muted": "#6e7080",
+        "text_dim": "#5a5c6a",
+        "border": "#3a3a48",
+        "border_light": "#2a2a36",
+        "bg_card": "#262632",
+        "bg_body": "#181822",
+        "bg_header": "#13131c",
+        "bg_hover": "#363648",
+        "bg_active": "#2a384a",
         "bg_table_header": "#2c2c38",
-        "accent":         "#1b5faa",
-        "accent_dark":    "#14508a",
-        "accent_bright":  "#4da6ff",
+        "accent": "#1b5faa",
+        "accent_dark": "#14508a",
+        "accent_bright": "#4da6ff",
     }
 
 

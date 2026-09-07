@@ -219,7 +219,7 @@ class _CauseSpike:
         else:
             pl = self.parent.label
             pc = pl.center()
-            bw, bh = pl.boundingRect().width(), pl.boundingRect().height()
+            bw, _bh = pl.boundingRect().width(), pl.boundingRect().height()
             side = self._side
             return (pc.x() + side * bw * 0.5, pc.y())
 
@@ -307,7 +307,6 @@ class _Branch:
         self._causes: list[_CauseSpike] = []
 
         init_len = 190
-        rad = 0.55
         y_dir = -1 if angle_up else 1
         ex = bx - init_len * 0.82
         ey = by + y_dir * init_len * 0.52

@@ -555,7 +555,7 @@ class DeviceTab(BaseAnalysisTab):
         self._import_btn.setVisible(isinstance(dev, Esp32InputDevice))
 
     def _update_detail(self, dev: Device):
-        tc = theme_colors(self)
+        theme_colors(self)
         self._event_log.clear()
         self._event_log.appendPlainText(f"设备: {dev.display_name} ({dev.device_id})")
         self._event_log.appendPlainText(f"类型: {dev.device_type}  端口: {dev.port}  固件: {dev.fw_version}")

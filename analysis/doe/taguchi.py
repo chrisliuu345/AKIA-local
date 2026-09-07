@@ -292,7 +292,7 @@ def response_table(
         }
 
     ranked = sorted(result.items(), key=lambda x: x[1]["delta"], reverse=True)
-    for rank, (factor, data) in enumerate(ranked, 1):
+    for rank, (factor, _data) in enumerate(ranked, 1):
         result[factor]["rank"] = rank
 
     return result
@@ -336,7 +336,7 @@ def _anova_on_sn(
     ms_error = ss_error / df_error if df_error > 0 else 1e-10
     f_values = []
     p_values = []
-    for i, (ss, df_f) in enumerate(zip(ss_list, df_list)):
+    for _i, (ss, df_f) in enumerate(zip(ss_list, df_list, strict=True)):
         ms_f = ss / df_f if df_f > 0 else 0.0
         f_val = ms_f / ms_error if ms_error > 1e-10 else 0.0
         p_val = 1.0 - stats.f.cdf(max(f_val, 0), df_f, df_error) if df_f > 0 and df_error > 0 else 1.0
@@ -347,7 +347,7 @@ def _anova_on_sn(
         "source": sources + ["Error", "Total"],
         "ss": ss_list + [round(ss_error, 6), round(ss_total, 6)],
         "df": df_list + [df_error, N - 1],
-        "ms": [round(s / d, 6) if d > 0 else 0.0 for s, d in zip(ss_list, df_list)] +
+        "ms": [round(s / d, 6) if d > 0 else 0.0 for s, d in zip(ss_list, df_list, strict=True)] +
               [round(ms_error, 6), 0.0],
         "f_value": f_values + [None, None],
         "p_value": p_values + [None, None],
@@ -371,7 +371,7 @@ def _optimal_combination(resp_table: Dict) -> Dict[str, Dict]:
 def _predicted_sn(resp_table: Dict, grand_mean_sn: float) -> float:
     """Predict S/N at optimal combination using additive model."""
     prediction = grand_mean_sn
-    for factor, data in resp_table.items():
+    for _factor, data in resp_table.items():
         best_avg = data["level_averages"][data["best_level"]]
         prediction += best_avg - grand_mean_sn
     return round(prediction, 6)
@@ -433,5 +433,5 @@ def analyze(
         "anova": anova,
         "optimal": optimal,
         "predicted_sn": pred_sn,
-        "contribution_pct": dict(zip(factor_cols, anova["contribution_pct"])),
+        "contribution_pct": dict(zip(factor_cols, anova["contribution_pct"], strict=True)),
     }

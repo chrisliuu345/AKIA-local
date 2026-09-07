@@ -19,7 +19,7 @@ def one_way(
     groups_data = [(name, group[measurement_col].dropna().values) 
                    for name, group in data.groupby(factor_col)]
     groups = [g for _, g in groups_data if len(g) >= 2]
-    level_names = [name for name, g in groups_data if len(g) >= 2]
+    [name for name, g in groups_data if len(g) >= 2]
 
     if len(groups) < 2:
         raise ValueError(f"需要至少2个有效组(每组n≥2), 当前 {len(groups)}")

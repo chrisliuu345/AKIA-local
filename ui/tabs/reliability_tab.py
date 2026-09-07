@@ -423,7 +423,7 @@ class ReliabilityTab(BaseAnalysisTab):
             ci_low = [g.mtbf - g.mtbf_ci_low for g in groups]
             ci_high = [g.mtbf_ci_high - g.mtbf for g in groups]
             x = range(len(labels))
-            bars = ax1.bar(x, mtbf_vals, color=tc["accent"], alpha=0.8)
+            ax1.bar(x, mtbf_vals, color=tc["accent"], alpha=0.8)
             ax1.errorbar(x, mtbf_vals, yerr=[ci_low, ci_high],
                          fmt="none", ecolor="#ff6b6b", capsize=6, linewidth=1.5)
             ax1.set_xticks(x)

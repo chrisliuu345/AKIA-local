@@ -31,7 +31,8 @@ def analyze(data: pd.Series, subgroup_size: int = 5) -> Dict[str, Any]:
         s = s[valid_mask]
         num_subgroups = len(s)
         import warnings
-        warnings.warn(f"剔除{zero_count}个零标准差子组（标准差=0），剩余{num_subgroups}个子组", UserWarning)
+        warnings.warn(f"剔除{zero_count}个零标准差子组（标准差=0），剩余{num_subgroups}个子组",
+                      UserWarning, stacklevel=2)
 
     xbar_bar = xbar.mean()
     s_bar = s.mean()

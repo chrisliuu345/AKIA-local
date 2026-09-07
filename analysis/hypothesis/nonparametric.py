@@ -5,9 +5,12 @@ from typing import Dict, Any
 from scipy import stats as sp_stats
 
 
-def mann_whitney(a: np.ndarray, b: np.ndarray, alternative: str = "two-sided") -> Dict[str, Any]:
+def mann_whitney(
+    a: np.ndarray, b: np.ndarray, alternative: str = "two-sided"
+) -> Dict[str, Any]:
     """Mann-Whitney U 检验 (两独立样本, 非参数 t-test 替代)"""
-    clean_a = a[np.isfinite(a)]; clean_b = b[np.isfinite(b)]
+    clean_a = a[np.isfinite(a)]
+    clean_b = b[np.isfinite(b)]
     if len(clean_a) < 3 or len(clean_b) < 3:
         return {"error": f"样本量不足 (a={len(clean_a)}, b={len(clean_b)})"}
     stat, p = sp_stats.mannwhitneyu(clean_a, clean_b, alternative=alternative)
@@ -15,15 +18,17 @@ def mann_whitney(a: np.ndarray, b: np.ndarray, alternative: str = "two-sided") -
         "test": "Mann-Whitney U",
         "u_statistic": round(float(stat), 4),
         "p_value": round(float(p), 6),
-        "n_a": len(clean_a), "n_b": len(clean_b),
+        "n_a": len(clean_a),
+        "n_b": len(clean_b),
         "median_a": round(float(np.median(clean_a)), 4),
         "median_b": round(float(np.median(clean_b)), 4),
         "significant": p < 0.05,
     }
 
 
-def wilcoxon_signed_rank(a: np.ndarray, b: np.ndarray = None,
-                         alternative: str = "two-sided") -> Dict[str, Any]:
+def wilcoxon_signed_rank(
+    a: np.ndarray, b: np.ndarray = None, alternative: str = "two-sided"
+) -> Dict[str, Any]:
     """Wilcoxon 符号秩检验 (配对样本或单样本)"""
     if b is not None:
         min_len = min(len(a), len(b))
@@ -31,23 +36,27 @@ def wilcoxon_signed_rank(a: np.ndarray, b: np.ndarray = None,
         clean_a = a[:min_len][valid_mask]
         clean_b = b[:min_len][valid_mask]
         n = len(clean_a)
-        if n < 5: return {"error": f"样本量不足 ({n})"}
+        if n < 5:
+            return {"error": f"样本量不足 ({n})"}
         stat, p = sp_stats.wilcoxon(clean_a, clean_b, alternative=alternative)
         return {
             "test": "Wilcoxon Signed-Rank (paired)",
             "statistic": round(float(stat), 4),
             "p_value": round(float(p), 6),
-            "n": n, "significant": p < 0.05,
+            "n": n,
+            "significant": p < 0.05,
         }
     else:
         clean = a[np.isfinite(a)]
-        if len(clean) < 5: return {"error": f"样本量不足 ({len(clean)})"}
+        if len(clean) < 5:
+            return {"error": f"样本量不足 ({len(clean)})"}
         stat, p = sp_stats.wilcoxon(clean, alternative=alternative)
         return {
             "test": "Wilcoxon Signed-Rank (one-sample)",
             "statistic": round(float(stat), 4),
             "p_value": round(float(p), 6),
-            "n": len(clean), "significant": p < 0.05,
+            "n": len(clean),
+            "significant": p < 0.05,
         }
 
 
@@ -132,7 +141,9 @@ def friedman_test(*groups: np.ndarray) -> Dict[str, Any]:
 
     n_samples = [len(g) for g in clean_groups]
     if len(set(n_samples)) > 1:
-        return {"error": f"完全区组设计要求所有处理的样本量相同，当前样本量: {n_samples}"}
+        return {
+            "error": f"完全区组设计要求所有处理的样本量相同，当前样本量: {n_samples}"
+        }
 
     if len(clean_groups) == 2:
         stat, p = sp_stats.wilcoxon(clean_groups[0], clean_groups[1])

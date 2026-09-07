@@ -118,7 +118,7 @@ class RootCauseDialog(QDialog):
         layout.addLayout(btn_row)
 
     def _run_analysis(self):
-        tc = theme_colors()
+        theme_colors()
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             analyzer = RootCauseAnalyzer(use_shap=True)

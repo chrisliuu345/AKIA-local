@@ -485,7 +485,7 @@ def create_pareto_chart(
 
     cumulative = np.cumsum(sorted_values) / total * 100 if total > 0 else np.zeros_like(sorted_values)
 
-    bars = ax1.bar(range(len(sorted_labels)), sorted_values, color=CHART_COLORS["primary"], alpha=0.8)
+    ax1.bar(range(len(sorted_labels)), sorted_values, color=CHART_COLORS["primary"], alpha=0.8)
     ax1.set_ylabel("效应绝对值", fontsize=FONT_SIZE_LABEL)
     ax1.set_xticks(range(len(sorted_labels)))
     ax1.set_xticklabels(sorted_labels, rotation=label_rotation, ha="right", fontsize=label_fontsize)
@@ -568,7 +568,7 @@ def create_pie_chart(
 
     new_labels, new_sizes = [], []
     other_size = 0
-    for label, size in zip(labels, values):
+    for label, size in zip(labels, values, strict=True):
         if size / total >= min_slice_percent:
             new_labels.append(label)
             new_sizes.append(size)

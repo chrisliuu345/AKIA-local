@@ -442,7 +442,7 @@ class WeibullAnalyzer:
                 return 1e12
             return -self._weibull_loglik(b, e, g, all_times, censored)
 
-        f0 = _nll(params)
+        _nll(params)
         for i in range(n):
             for j in range(i, n):
                 p_pp = params.copy()
@@ -474,7 +474,7 @@ class WeibullAnalyzer:
             estimates.append(result.gamma)
 
         ci = {}
-        for name, est, se in zip(param_names, estimates, std_errors):
+        for name, est, se in zip(param_names, estimates, std_errors, strict=True):
             ci[name] = {
                 "estimate": round(float(est), 6),
                 "std_err": round(float(se), 6),

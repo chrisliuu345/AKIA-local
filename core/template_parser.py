@@ -73,7 +73,7 @@ class TemplateParser:
                 params = {}
                 keys = df[key_col].fillna("").astype(str).str.strip()
                 vals = df[value_col].fillna("").astype(str).str.strip()
-                for k, v in zip(keys, vals):
+                for k, v in zip(keys, vals, strict=False):
                     if k and k.lower() != "nan":
                         params[k] = self._parse_value(v)
                 if params:
@@ -89,7 +89,7 @@ class TemplateParser:
         elif "analysis" in raw and isinstance(raw["analysis"], dict):
             analyses = [raw["analysis"]]
         else:
-            for sheet_name, params in raw.items():
+            for _sheet_name, params in raw.items():
                 if "analysis_type" in params or "analysis_type" in {k.lower() for k in params}:
                     normalized = {k.lower().replace(" ", "_"): v for k, v in params.items()}
                     analyses.append(normalized)

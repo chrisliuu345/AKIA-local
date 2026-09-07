@@ -30,7 +30,6 @@ from core.audit import audit
 
 from ui.sidebar import Sidebar
 from ui._tab_registry import INDEX_MAP
-_PLUGIN_TAB_START = max(INDEX_MAP.keys()) + 1
 from ui.theme import colors as theme_colors
 from ui.font_config import get_ui_font
 from ui.widgets.elided_label import ElidedLabel
@@ -40,6 +39,8 @@ from ui.dialogs.settings_dialog import SettingsDialog
 from ui.dialogs.db_connection_dialog import DbConnectionDialog
 from core.sql_loader import SqlLoader
 from core.plugin_manager import PluginManager
+
+_PLUGIN_TAB_START = max(INDEX_MAP.keys()) + 1
 
 
 def _tab_has_data(tab) -> bool:
@@ -1005,7 +1006,7 @@ class MainWindow(QMainWindow):
         success = 0
         failed = 0
 
-        for i, (idx, tab) in enumerate(tabs.items()):
+        for _i, (idx, tab) in enumerate(tabs.items()):
             QApplication.processEvents()
             if not _tab_is_runnable(tab):
                 continue

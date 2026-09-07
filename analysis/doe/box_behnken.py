@@ -35,7 +35,7 @@ def _get_bbd_base(k: int) -> np.ndarray:
     points = np.zeros((n_points, k))
     idx = 0
     for s1, s2 in signs:
-        for pi, (i, j) in enumerate(pairs):
+        for _pi, (i, j) in enumerate(pairs):
             points[idx, i] = s1
             points[idx, j] = s2
             idx += 1

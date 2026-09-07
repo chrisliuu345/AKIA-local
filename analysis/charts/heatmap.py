@@ -34,7 +34,7 @@ def _compute_correlation_matrix(
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """计算相关系数矩阵和 p 值矩阵"""
     corr = df[numeric_cols].corr(method=method)
-    n = len(df)
+    len(df)
     p_values = pd.DataFrame(np.zeros((len(numeric_cols), len(numeric_cols))),
                             index=numeric_cols, columns=numeric_cols)
 
