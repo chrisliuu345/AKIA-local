@@ -7,7 +7,8 @@
 #
 # 前置条件:
 #   1. Python 3.11+ 已安装
-#   2. pip install nuitka
+#   2. pip install -r requirements.txt -r dev-requirements.txt
+#      (dev-requirements 含 pyinstaller; 构建需另外 pip install pyinstaller)
 #   3. sudo apt install dpkg-dev
 
 set -e
@@ -16,6 +17,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_NAME="qa-tool"
 APP_VERSION=$(python -c "import sys; sys.path.insert(0, '${SCRIPT_DIR}'); from config.settings import APP_VERSION; print(APP_VERSION)")
 DEB_DIR="${SCRIPT_DIR}/build/${APP_NAME}_${APP_VERSION}_amd64"
+DIST_DIR="${SCRIPT_DIR}/build/${APP_NAME}.dist"
 
 echo "=========================================="
 echo "  QA-Tool .deb 包构建"
@@ -26,13 +28,17 @@ echo "=========================================="
 echo ""
 echo "[1/4] 清理旧构建..."
 rm -rf "${DEB_DIR}"
-rm -rf "${SCRIPT_DIR}/build/nuitka_build"
 
-# ── 步骤 2: Nuitka 构建 ────────────────────────────────────
+# ── 步骤 2: PyInstaller onedir 构建 ────────────────────────
 echo ""
-echo "[2/4] 执行 Nuitka standalone 构建..."
+echo "[2/4] 执行 PyInstaller onedir 构建..."
 cd "${SCRIPT_DIR}"
-python build_nuitka.py --standalone
+python build_pyinstaller.py --name "${APP_NAME}"
+
+if [ ! -d "${DIST_DIR}" ]; then
+    echo "[error] 未找到 PyInstaller 输出目录: ${DIST_DIR}"
+    exit 1
+fi
 
 # ── 步骤 3: 创建 deb 包结构 ────────────────────────────────
 echo ""
@@ -43,18 +49,13 @@ mkdir -p "${DEB_DIR}/opt/qa-tool/share"
 mkdir -p "${DEB_DIR}/usr/share/applications"
 mkdir -p "${DEB_DIR}/usr/share/icons/hicolor/256x256/apps"
 
-# 查找 Nuitka 输出目录
-NUITKA_OUTPUT=$(find "${SCRIPT_DIR}/build" -maxdepth 1 -type d -name "main.dist" | head -1)
-if [ -z "${NUITKA_OUTPUT}" ]; then
-    echo "[error] 未找到 Nuitka 输出目录"
-    exit 1
-fi
+# 复制 PyInstaller 输出 (qa-tool 可执行 + _internal/)
+cp -r "${DIST_DIR}"/* "${DEB_DIR}/opt/qa-tool/bin/"
 
-# 复制 Nuitka 输出
-cp -r "${NUITKA_OUTPUT}"/* "${DEB_DIR}/opt/qa-tool/bin/"
-
-# 复制控制文件
-cp "${SCRIPT_DIR}/packaging/deb/DEBIAN/control" "${DEB_DIR}/DEBIAN/"
+# 复制控制文件(版本号动态注入)
+mkdir -p "${DEB_DIR}/DEBIAN"
+sed "s/^Version: .*/Version: ${APP_VERSION}/" \
+    "${SCRIPT_DIR}/packaging/deb/DEBIAN/control" > "${DEB_DIR}/DEBIAN/control"
 cp "${SCRIPT_DIR}/packaging/deb/DEBIAN/postinst" "${DEB_DIR}/DEBIAN/"
 cp "${SCRIPT_DIR}/packaging/deb/DEBIAN/postrm" "${DEB_DIR}/DEBIAN/"
 chmod 755 "${DEB_DIR}/DEBIAN/postinst"
