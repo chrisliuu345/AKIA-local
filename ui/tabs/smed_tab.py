@@ -12,7 +12,7 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 import numpy as np
 
 from ui.tabs.base_tab import BaseAnalysisTab
-from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY, FONT_12B
+from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY, FONT_12B, FONT_18B
 from ui.font_config import get_ui_font
 from analysis.ie.smed import SMEDEngine, SMEDTask
 
@@ -33,6 +33,10 @@ class SMEDTab(BaseAnalysisTab):
     def _setup_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
+
+        title = QLabel("SMED 快速换模")
+        title.setFont(FONT_18B)
+        layout.addWidget(title)
 
         top = QHBoxLayout()
         top.addWidget(QLabel("SMED 快速换模分析"))

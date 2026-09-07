@@ -42,10 +42,12 @@ class HypothesisTab(BaseAnalysisTab):
 
         top = QWidget()
         top_layout = QHBoxLayout(top)
+        top_layout.setSpacing(10)
         top_layout.setContentsMargins(0, 0, 0, 0)
 
         config_group = QGroupBox("分析配置")
         config_layout = QFormLayout(config_group)
+        config_layout.setContentsMargins(10, 10, 10, 10)
 
         self.test_combo = QComboBox()
         self.test_combo.addItems(["单样本 t检验", "双样本 t检验", "配对 t检验", "单因素 ANOVA", "双因素 ANOVA", "正态性检验", "方差齐性检验", "Mood 中位数检验", "Friedman 检验", "Mann-Whitney U", "Wilcoxon 符号秩", "Kruskal-Wallis", "TOST 单样本等价检验", "TOST 双样本等价检验", "χ²拟合优度检验", "χ²独立性检验", "双比例检验"])

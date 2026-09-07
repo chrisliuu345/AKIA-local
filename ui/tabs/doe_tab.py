@@ -41,10 +41,12 @@ class DOETab(BaseAnalysisTab):
 
         top = QWidget()
         top_layout = QHBoxLayout(top)
+        top_layout.setSpacing(10)
         top_layout.setContentsMargins(0, 0, 0, 0)
 
         config_group = QGroupBox("DOE 配置")
         config_layout = QFormLayout(config_group)
+        config_layout.setContentsMargins(10, 10, 10, 10)
 
         self.method_combo = QComboBox()
         self.method_combo.addItems([
