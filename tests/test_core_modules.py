@@ -1,5 +1,7 @@
 """核心模块单元测试 — formatting/fmea/sheet_merger/splitter/layered/profiler"""
+
 import sys, os
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pytest, tempfile, pandas as pd, numpy as np
 
@@ -13,12 +15,23 @@ from core.data_profiler import DataProfiler, _clean_col_name
 
 # ── formatting ──
 class TestFormatting:
-    def test_pvalue_small(self): assert format_pvalue(0.00005) == "<0.0001"
-    def test_pvalue_medium(self): assert format_pvalue(0.0005) == "<0.001"
-    def test_pvalue_normal(self): assert format_pvalue(0.0456) == "0.0456"
-    def test_cp(self): assert format_cp(1.334) == "1.334"
-    def test_pct(self): assert format_pct(0.856) == "85.6%"
-    def test_ci(self): assert format_ci(12.345, 18.9) == "[12.35, 18.90]"
+    def test_pvalue_small(self):
+        assert format_pvalue(0.00005) == "<0.0001"
+
+    def test_pvalue_medium(self):
+        assert format_pvalue(0.0005) == "<0.001"
+
+    def test_pvalue_normal(self):
+        assert format_pvalue(0.0456) == "0.0456"
+
+    def test_cp(self):
+        assert format_cp(1.334) == "1.334"
+
+    def test_pct(self):
+        assert format_pct(0.856) == "85.6%"
+
+    def test_ci(self):
+        assert format_ci(12.345, 18.9) == "[12.35, 18.90]"
 
 
 # ── FMEA ──
@@ -40,7 +53,8 @@ class TestFMEA:
 
     def test_sort(self):
         items = [FMEAItem(severity=s, occurrence=1, detection=1) for s in [3, 9, 5]]
-        for i in items: i.calc_rpn()
+        for i in items:
+            i.calc_rpn()
         sorted_items = FMEAEngine.sort_by_rpn(items)
         assert sorted_items[0].rpn == 9
         assert sorted_items[-1].rpn == 3
@@ -67,7 +81,8 @@ class TestFMEA:
 class TestSheetMerger:
     def test_merge_append(self):
         tmp = tempfile.mkdtemp()
-        p1 = os.path.join(tmp, "a.xlsx"); p2 = os.path.join(tmp, "b.xlsx")
+        p1 = os.path.join(tmp, "a.xlsx")
+        p2 = os.path.join(tmp, "b.xlsx")
         pd.DataFrame({"x": [1, 2]}).to_excel(p1, index=False)
         pd.DataFrame({"x": [3, 4]}).to_excel(p2, index=False)
         df = SheetMerger.merge_append([p1, p2])
@@ -164,11 +179,21 @@ class TestDataProfiler:
 
     def test_empty_spec_column_no_crash(self):
         """W90: USL/LSL 列全为文本/空值时 profile 不崩, usl/lsl 为 None"""
-        df = pd.DataFrame({"a": [1, 2, 3, 4, 5], "USL": ["x", "y", "z", "w", "v"],
-                           "LSL": [None, None, None, None, None]})
+        df = pd.DataFrame(
+            {
+                "a": [1, 2, 3, 4, 5],
+                "USL": ["x", "y", "z", "w", "v"],
+                "LSL": [None, None, None, None, None],
+            }
+        )
         cols = [
-            {"name": "a", "category": "measurement", "normality_pvalue": 0.5,
-             "std": 1.0, "distribution": "normal"},
+            {
+                "name": "a",
+                "category": "measurement",
+                "normality_pvalue": 0.5,
+                "std": 1.0,
+                "distribution": "normal",
+            },
             {"name": "USL", "category": "text", "missing_pct": 0},
             {"name": "LSL", "category": "text", "missing_pct": 0},
         ]
@@ -180,7 +205,9 @@ class TestDataProfiler:
 
     def test_high_correlation_detected(self):
         """W91: 两列 Pearson |r|>0.95 报高相关 (替代旧的偏度差值误判)"""
-        df = pd.DataFrame({"a": list(range(1, 101)), "b": [2 * x for x in range(1, 101)]})
+        df = pd.DataFrame(
+            {"a": list(range(1, 101)), "b": [2 * x for x in range(1, 101)]}
+        )
         dp = DataProfiler()
         r = dp.profile({"S": df})
         issues = r["sheets"]["S"]["issues"]
@@ -189,11 +216,13 @@ class TestDataProfiler:
     def test_no_false_correlation_from_skewness(self):
         """W91: 偏度相近但实际不相关的列不应报高相关 (旧逻辑会误判)"""
         rng = np.random.default_rng(42)
-        df = pd.DataFrame({
-            "a": rng.normal(0, 1, 100),
-            "b": rng.exponential(3, 100),
-            "c": rng.exponential(4, 100),
-        })
+        df = pd.DataFrame(
+            {
+                "a": rng.normal(0, 1, 100),
+                "b": rng.exponential(3, 100),
+                "c": rng.exponential(4, 100),
+            }
+        )
         dp = DataProfiler()
         r = dp.profile({"S": df})
         issues = [i for i in r["sheets"]["S"]["issues"] if "高度相关" in i]
@@ -205,6 +234,7 @@ class TestI18nZh:
     def test_zh_json_valid_and_has_keys(self):
         import json
         from pathlib import Path
+
         base = Path(__file__).resolve().parent.parent
         zh = json.loads((base / "locales" / "zh.json").read_text(encoding="utf-8"))
         assert zh, "zh.json 为空"
@@ -217,11 +247,18 @@ class TestContextBuilder:
     def test_acceptance_string_no_crash(self):
         """W93: result.acceptance 为字符串时 build() 不抛 AttributeError"""
         from core.context_builder import ContextBuilder
+
         cb = ContextBuilder()
         analyses = {
-            1: {"analysis_type": "GRR", "params": {},
-                "result": {"percentages": {"grr_pct_tv": 12.5}, "ndc": 5,
-                           "acceptance": "通过"}},
+            1: {
+                "analysis_type": "GRR",
+                "params": {},
+                "result": {
+                    "percentages": {"grr_pct_tv": 12.5},
+                    "ndc": 5,
+                    "acceptance": "通过",
+                },
+            },
         }
         text = cb.build(analyses, "f.xlsx")
         assert "判定=通过" in text

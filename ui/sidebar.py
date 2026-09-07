@@ -530,10 +530,7 @@ class Sidebar(QWidget):
             row.setMinimumHeight(32)
             row.setToolTip(f"{entry['type']} — {entry['result']}")
 
-            def make_click_handler(ti=entry["tab_index"]):
-                return lambda: self.navigation_changed.emit(ti)
-
-            row.mousePressEvent = lambda e, h=make_click_handler(): h()
+            row.mousePressEvent = lambda e, ti=entry["tab_index"]: self.navigation_changed.emit(ti)
 
             rlayout = QHBoxLayout(row)
             rlayout.setContentsMargins(6, 2, 4, 2)
@@ -571,13 +568,13 @@ class Sidebar(QWidget):
     def _refresh_styles(self):
         tc = theme_colors(self)
         accent = tc["accent"]
-        accent_bright = tc["accent_bright"]
+        tc["accent_bright"]
         text_color = tc["text_primary"]
 
         self.setStyleSheet(f"background-color: {tc['bg_body']};")
 
         hover_bg = tc["bg_hover"]
-        active_bg = tc["bg_active"]
+        tc["bg_active"]
 
         for group in self.categories:
             group.header_btn.setStyleSheet(

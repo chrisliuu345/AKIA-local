@@ -10,6 +10,11 @@ Plackett-Burman 筛选设计单元测试
 import pytest
 import numpy as np
 from analysis.doe.plackett_burman import generate_design, analyze, _hadamard_from_base
+from analysis.doe.definitive_screening import (
+    generate_design as dsd_generate,
+    analyze as dsd_analyze,
+    _verify_design_orthogonality,
+)
 
 
 # ── Plackett-Burman (1946) 已知第一行模式 ──
@@ -270,12 +275,6 @@ class TestAnalyze:
 # ═══════════════════════════════════════════════════════════
 # Definitive Screening Design (DSD) 测试
 # ═══════════════════════════════════════════════════════════
-
-from analysis.doe.definitive_screening import (
-    generate_design as dsd_generate,
-    analyze as dsd_analyze,
-    _verify_design_orthogonality,
-)
 
 
 class TestDsdDesignMatrix:

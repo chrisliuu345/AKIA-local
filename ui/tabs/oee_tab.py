@@ -289,9 +289,9 @@ class OEETab(BaseAnalysisTab):
         width = 0.19
         for k, (key, name, color) in enumerate(metrics):
             vals = [(b[key] if b[key] is not None else 0) for b in buckets]
-            bars = ax1.bar(x + (k - 1.5) * width, vals, width,
+            ax1.bar(x + (k - 1.5) * width, vals, width,
                            label=name, color=color)
-            for xi, v, b in zip(x, vals, buckets):
+            for xi, v, b in zip(x, vals, buckets, strict=True):
                 if b[key] is not None and v > 0:
                     ax1.text(xi + (k - 1.5) * width, v + 0.015, f"{v:.0%}",
                              ha="center", fontsize=7, color=tc["text_secondary"])
@@ -321,7 +321,7 @@ class OEETab(BaseAnalysisTab):
                   planned - down - speed - qual, 0]
         heights = [planned, down, speed, qual, value]
         colors = ["#1b5faa", "#e74c3c", "#e67e22", "#9467bd", "#27ae60"]
-        for i, (s, h, c) in enumerate(zip(starts, heights, colors)):
+        for i, (s, h, c) in enumerate(zip(starts, heights, colors, strict=True)):
             ax2.bar(stages[i], h, bottom=s, color=c, width=0.58)
             ax2.text(stages[i], s + h + planned * 0.015, f"{h:.2f}h",
                      ha="center", fontsize=8, color=tc["text_primary"])

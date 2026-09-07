@@ -61,10 +61,10 @@ def tolerance_interval_normal(
     p = proportion
 
     if method == "two-sided":
-        df = n - 1
+        n - 1
 
-        z_p = stats.norm.ppf((1 + p) / 2)
-        z_alpha = stats.norm.ppf(1 - alpha / 2)
+        stats.norm.ppf((1 + p) / 2)
+        stats.norm.ppf(1 - alpha / 2)
 
         k = _k_factor_two_sided(n, p, alpha)
     else:

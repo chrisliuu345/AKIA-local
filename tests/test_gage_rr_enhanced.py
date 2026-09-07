@@ -174,7 +174,7 @@ class TestAnalyzeCrossedEnhanced:
         for i in range(8):
             part_true = 50 + i
             for j in range(3):
-                for k in range(3):
+                for _k in range(3):
                     measurement = part_true + np.random.normal(0, 0.3)
                     rows.append({
                         "part": f"P{i+1}",

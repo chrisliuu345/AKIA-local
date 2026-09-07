@@ -279,7 +279,7 @@ class TimeStudyTab(BaseAnalysisTab):
             values = [st["mean"], st["median"], st["std"], st["range"]]
             colors = ["#2196F3", "#4CAF50", "#FF9800", "#F44336"]
             bars = ax2.barh(labels, values, color=colors, alpha=0.75)
-            for bar, val in zip(bars, values):
+            for bar, val in zip(bars, values, strict=True):
                 ax2.text(bar.get_width() + max(values)*0.01, bar.get_y() + bar.get_height()/2,
                          f"{val:.2f}", va="center", fontsize=8)
             cap = r.get("capability", {})

@@ -234,7 +234,7 @@ class ImportDialog(QDialog):
             self.preview_table.setColumnCount(len(df.columns))
             self.preview_table.setHorizontalHeaderLabels([str(c) for c in df.columns])
             for i in range(min(MAX_PREVIEW_ROWS, len(df))):
-                for j, col in enumerate(df.columns):
+                for j, _col in enumerate(df.columns):
                     val = str(df.iloc[i, j]) if pd.notna(df.iloc[i, j]) else ""
                     self.preview_table.setItem(i, j, QTableWidgetItem(val[:50]))
         except Exception as e:

@@ -78,7 +78,7 @@ class IEDataParser:
         mapping: Dict[str, str] = {}
         col_lower = [c.lower().strip() for c in columns]
 
-        for col_orig, col_low in zip(columns, col_lower):
+        for col_orig, col_low in zip(columns, col_lower, strict=True):
             best_field = None
             best_score = 0.0
             for field_name, aliases in cls.FIELD_ALIASES.items():
@@ -156,7 +156,7 @@ class IEDataParser:
 
         best_keyword_score = 0.0
         best_keyword_field = None
-        for cls_name, cls in OBJECT_CLASSES.items():
+        for _cls_name, cls in OBJECT_CLASSES.items():
             for field_name, aliases in cls.FIELD_ALIASES.items():
                 for alias in aliases:
                     al = alias.lower()

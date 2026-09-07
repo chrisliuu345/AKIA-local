@@ -178,7 +178,7 @@ def _check_remote_debugger() -> List[str]:
     if platform.system() == 'Windows':
         try:
             kernel32 = ctypes.windll.kernel32
-            is_debugger_present = kernel32.CheckRemoteDebuggerPresent(
+            kernel32.CheckRemoteDebuggerPresent(
                 kernel32.GetCurrentProcess(), ctypes.byref(ctypes.c_bool())
             )
         except Exception:
@@ -229,7 +229,7 @@ def _check_hardware_breakpoints() -> List[str]:
             thread_id = kernel32.GetCurrentThreadId()
             if not thread_id:
                 return issues
-            context = ctypes.create_string_buffer(1232)
+            ctypes.create_string_buffer(1232)
             CONTEXT_DEBUG_REGISTERS = 0x00100000
 
             class CONTEXT(ctypes.Structure):
@@ -253,7 +253,6 @@ def _check_process_hiding() -> List[str]:
     issues = []
     if platform.system() == 'Windows':
         try:
-            kernel32 = ctypes.windll.kernel32
             ntdll = ctypes.windll.ntdll
 
             class SYSTEM_PROCESS_INFORMATION(ctypes.Structure):
@@ -323,7 +322,6 @@ def _check_cpu_instruction_pointer() -> List[str]:
     if platform.system() == 'Windows':
         try:
             kernel32 = ctypes.windll.kernel32
-            ntdll = ctypes.windll.ntdll
 
             class CONTEXT(ctypes.Structure):
                 _fields_ = [
@@ -358,8 +356,8 @@ def _check_debug_object() -> List[str]:
         try:
             kernel32 = ctypes.windll.kernel32
             handle = kernel32.GetCurrentProcess()
-            debug_port = ctypes.c_void_p()
-            ret = kernel32.CheckRemoteDebuggerPresent(handle, ctypes.byref(ctypes.c_bool()))
+            ctypes.c_void_p()
+            kernel32.CheckRemoteDebuggerPresent(handle, ctypes.byref(ctypes.c_bool()))
         except Exception:
             pass
     return issues
@@ -381,9 +379,9 @@ def _check_process_debug_port() -> List[str]:
     if platform.system() == 'Windows':
         try:
             kernel32 = ctypes.windll.kernel32
-            handle = kernel32.GetCurrentProcess()
-            debug_port = ctypes.c_ulong()
-            size = ctypes.c_ulong()
+            kernel32.GetCurrentProcess()
+            ctypes.c_ulong()
+            ctypes.c_ulong()
         except Exception:
             pass
     return issues
@@ -394,7 +392,7 @@ def _check_debug_filter() -> List[str]:
     if platform.system() == 'Windows':
         try:
             kernel32 = ctypes.windll.kernel32
-            error_mode = kernel32.GetErrorMode()
+            kernel32.GetErrorMode()
         except Exception:
             pass
     return issues
@@ -428,7 +426,7 @@ def _check_rdtsc() -> List[str]:
     issues = []
     try:
         import ctypes
-        rdtsc = ctypes.CDLL(None).rdtsc if hasattr(ctypes.CDLL(None), 'rdtsc') else None
+        ctypes.CDLL(None).rdtsc if hasattr(ctypes.CDLL(None), 'rdtsc') else None
     except (Exception, OSError):
         pass
     return issues
@@ -503,7 +501,7 @@ def _check_debug_primitives() -> List[str]:
             h_process = kernel32.GetCurrentProcess()
             if not h_process:
                 return issues
-            debug_object = ctypes.c_void_p()
+            ctypes.c_void_p()
         except (Exception, OSError, ValueError, MemoryError):
             pass
     return issues

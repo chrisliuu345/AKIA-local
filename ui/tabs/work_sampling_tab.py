@@ -386,12 +386,12 @@ class WorkSamplingTab(BaseAnalysisTab):
         ax2.set_yticklabels(labels, fontsize=8)
         ax2.invert_yaxis()
         ax2.set_xlabel("占比 (%)", fontsize=8)
-        for bar, val in zip(bars, values):
+        for bar, val in zip(bars, values, strict=True):
             ax2.text(bar.get_width() + 0.5, bar.get_y() + bar.get_height() / 2,
                      f"{val:.1f}%", va="center", fontsize=8)
 
         ci = result.get("confidence_intervals", {})
-        for i, (key, info) in enumerate(ci.items()):
+        for i, (_key, info) in enumerate(ci.items()):
             x_low = info["ci_low_pct"]
             x_high = info["ci_high_pct"]
             ax2.hlines(i, x_low, x_high, color="#333", linewidth=2)

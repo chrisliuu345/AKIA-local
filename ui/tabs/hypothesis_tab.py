@@ -448,7 +448,7 @@ class HypothesisTab(BaseAnalysisTab):
             exp = result.get("expected", [])
             if obs and exp:
                 lines.append("\n【观测 vs 期望】")
-                for i, (o, e) in enumerate(zip(obs, exp)):
+                for i, (o, e) in enumerate(zip(obs, exp, strict=True)):
                     lines.append(f"  类别{i+1}: 观测={o}, 期望={e:.2f}")
         elif "contingency_table" in result:
             lines.append(f"χ²统计量: {result.get('chi2_statistic', '')}")

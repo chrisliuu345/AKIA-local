@@ -11,10 +11,8 @@ import matplotlib
 matplotlib.use("QtAgg")
 
 import warnings
-warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*invalid value encountered.*")
 
 from output.chart_engine import _ensure_font
-_ensure_font()
 
 from PySide6.QtWidgets import QApplication, QMessageBox, QSplashScreen
 from PySide6.QtCore import Qt
@@ -22,6 +20,9 @@ from PySide6.QtGui import QFont, QPixmap, QPainter, QColor, QIcon
 
 from config.settings import APP_NAME, APP_VERSION
 from ui.font_config import get_ui_font
+
+warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*invalid value encountered.*")
+_ensure_font()
 
 
 LOGO_PATH = os.path.join(os.path.dirname(__file__), "logo.png")
@@ -54,7 +55,7 @@ def _create_splash_canvas() -> QPixmap:
     w = int(_SPLASH_LOGICAL_W * dpr)
     h = int(_SPLASH_LOGICAL_H * dpr)
     split_y = int(h * _SPLASH_SPLIT_RATIO)
-    bar_h = max(2, int(3 * dpr))
+    max(2, int(3 * dpr))
     margin_x = int(14 * dpr)
     margin_top = int(28 * dpr)
     margin_bottom = int(10 * dpr)

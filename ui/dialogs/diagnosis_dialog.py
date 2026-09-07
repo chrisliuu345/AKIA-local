@@ -1,8 +1,16 @@
 """智能诊断对话框 V2 — 健康仪表 + 分组推荐 + 置信度可视化"""
 
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QScrollArea, QFrame, QWidget, QGridLayout, QProgressBar,
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QScrollArea,
+    QFrame,
+    QWidget,
+    QGridLayout,
+    QProgressBar,
 )
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
@@ -11,14 +19,29 @@ from ui.theme import colors as theme_colors
 from ui.font_config import get_ui_font
 
 ICON_COLORS = {
-    "SPC": "#1b5faa", "CPK": "#217ca3", "MSA": "#6b4c9a",
-    "TTEST": "#b85c38", "DOE": "#9467bd", "REG": "#17becf",
-    "IE7": "#2e7d32", "IE8": "#558b2f", "IE9": "#827717",
-    "IE10": "#00695c", "IE11": "#00838f",
-    "CHT": "#4a148c", "CPC": "#0277bd", "TRD": "#e65100", "SUM": "#bf360c",
-    "REL": "#1a237e", "FMEA": "#880e4f",
+    "SPC": "#1b5faa",
+    "CPK": "#217ca3",
+    "MSA": "#6b4c9a",
+    "TTEST": "#b85c38",
+    "DOE": "#9467bd",
+    "REG": "#17becf",
+    "IE7": "#2e7d32",
+    "IE8": "#558b2f",
+    "IE9": "#827717",
+    "IE10": "#00695c",
+    "IE11": "#00838f",
+    "CHT": "#4a148c",
+    "CPC": "#0277bd",
+    "TRD": "#e65100",
+    "SUM": "#bf360c",
+    "REL": "#1a237e",
+    "FMEA": "#880e4f",
 }
-CONF_COLORS = {"highly_recommended": "#27ae60", "recommended": "#ffa726", "optional": "#6e7080"}
+CONF_COLORS = {
+    "highly_recommended": "#27ae60",
+    "recommended": "#ffa726",
+    "optional": "#6e7080",
+}
 
 
 class DiagnosisDialog(QDialog):
@@ -35,7 +58,8 @@ class DiagnosisDialog(QDialog):
     def _setup_ui(self):
         tc = theme_colors()
         self.setStyleSheet(f"background-color: {tc['bg_body']};")
-        root = QVBoxLayout(self); root.setSpacing(10)
+        root = QVBoxLayout(self)
+        root.setSpacing(10)
 
         title_row = QHBoxLayout()
         title = QLabel("数据智能诊断")
@@ -48,7 +72,8 @@ class DiagnosisDialog(QDialog):
         btn_export.setCursor(Qt.PointingHandCursor)
         btn_export.setStyleSheet(
             f"QPushButton {{ background: {tc['bg_card']}; color: {tc['accent_bright']}; border: 1px solid {tc['accent']}; "
-            f"border-radius: 6px; padding: 6px 16px; }} QPushButton:hover {{ background: {tc['bg_hover']}; }}")
+            f"border-radius: 6px; padding: 6px 16px; }} QPushButton:hover {{ background: {tc['bg_hover']}; }}"
+        )
         btn_export.clicked.connect(self._export_report)
         title_row.addWidget(btn_export)
         btn_all = QPushButton("全部应用")
@@ -58,16 +83,18 @@ class DiagnosisDialog(QDialog):
         btn_all.setStyleSheet(
             f"QPushButton {{ background: {tc['accent']}; color: white; border: none; "
             f"border-radius: 6px; padding: 6px 20px; }} "
-            f"QPushButton:hover {{ background: {tc['accent_dark']}; }}")
+            f"QPushButton:hover {{ background: {tc['accent_dark']}; }}"
+        )
         btn_all.clicked.connect(self._apply_all)
         title_row.addWidget(btn_all)
         root.addLayout(title_row)
 
         gs = self.profile.get("global_summary", {})
         overview = QLabel(
-            f"工作表 {gs.get('total_sheets',0)} 个 · "
-            f"总行数 {gs.get('total_rows',0):,} · "
-            f"数据问题 {gs.get('total_issues',0)} 个")
+            f"工作表 {gs.get('total_sheets', 0)} 个 · "
+            f"总行数 {gs.get('total_rows', 0):,} · "
+            f"数据问题 {gs.get('total_issues', 0)} 个"
+        )
         overview.setFont(QFont(get_ui_font(), 10))
         overview.setStyleSheet(f"color: {tc['text_secondary']}; padding: 2px 0;")
         root.addWidget(overview)
@@ -75,22 +102,32 @@ class DiagnosisDialog(QDialog):
         all_health = []
         for s in self.profile.get("sheets", {}).values():
             h = s.get("health", {})
-            if h: all_health.append(h)
+            if h:
+                all_health.append(h)
         if all_health:
-            avg_h = {k: sum(x.get(k, 0) for x in all_health) / len(all_health)
-                     for k in ("completeness", "normality", "stability", "resolution")}
-            gauge_row = QHBoxLayout(); gauge_row.setSpacing(12)
-            names = [("completeness", "完整性"), ("normality", "正态性"),
-                     ("stability", "稳定性"), ("resolution", "分辨力")]
+            avg_h = {
+                k: sum(x.get(k, 0) for x in all_health) / len(all_health)
+                for k in ("completeness", "normality", "stability", "resolution")
+            }
+            gauge_row = QHBoxLayout()
+            gauge_row.setSpacing(12)
+            names = [
+                ("completeness", "完整性"),
+                ("normality", "正态性"),
+                ("stability", "稳定性"),
+                ("resolution", "分辨力"),
+            ]
             for key, label in names:
                 v = avg_h[key]
                 gauge_row.addWidget(self._make_gauge(label, v, tc), 1)
             root.addLayout(gauge_row)
 
-        scroll = QScrollArea(); scroll.setWidgetResizable(True)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
         content = QWidget()
-        clayout = QVBoxLayout(content); clayout.setSpacing(10)
+        clayout = QVBoxLayout(content)
+        clayout.setSpacing(10)
 
         for sn, sheet in self.profile.get("sheets", {}).items():
             clayout.addWidget(self._make_sheet_section(sn, sheet, tc))
@@ -109,8 +146,10 @@ class DiagnosisDialog(QDialog):
         card = QFrame()
         card.setStyleSheet(
             f"QFrame {{ background: {tc['bg_card']}; border: 1px solid {tc['border_light']}; "
-            f"border-radius: 8px; padding: 10px; }}")
-        layout = QVBoxLayout(card); layout.setSpacing(4)
+            f"border-radius: 8px; padding: 10px; }}"
+        )
+        layout = QVBoxLayout(card)
+        layout.setSpacing(4)
 
         title = QLabel(label)
         title.setFont(QFont(get_ui_font(), 9))
@@ -125,28 +164,35 @@ class DiagnosisDialog(QDialog):
         bar.setFixedHeight(6)
         bar.setStyleSheet(
             f"QProgressBar {{ background: {tc['bg_body']}; border: none; border-radius: 3px; }} "
-            f"QProgressBar::chunk {{ background: {self._gauge_color(value)}; border-radius: 3px; }}")
+            f"QProgressBar::chunk {{ background: {self._gauge_color(value)}; border-radius: 3px; }}"
+        )
         layout.addWidget(bar)
 
         pct = QLabel(f"{int(value * 100)}%")
         pct.setFont(QFont(get_ui_font(), 12, QFont.Bold))
         pct.setAlignment(Qt.AlignCenter)
-        pct.setStyleSheet(f"color: {self._gauge_color(value)}; background: transparent;")
+        pct.setStyleSheet(
+            f"color: {self._gauge_color(value)}; background: transparent;"
+        )
         layout.addWidget(pct)
         return card
 
     @staticmethod
     def _gauge_color(v: float) -> str:
-        if v >= 0.8: return "#27ae60"
-        if v >= 0.5: return "#ffa726"
+        if v >= 0.8:
+            return "#27ae60"
+        if v >= 0.5:
+            return "#ffa726"
         return "#e74c3c"
 
     def _make_sheet_section(self, sn: str, sheet: dict, tc: dict) -> QFrame:
         card = QFrame()
         card.setStyleSheet(
             f"QFrame {{ background: {tc['bg_card']}; border: 1px solid {tc['border_light']}; "
-            f"border-radius: 10px; padding: 14px; }}")
-        layout = QVBoxLayout(card); layout.setSpacing(8)
+            f"border-radius: 10px; padding: 14px; }}"
+        )
+        layout = QVBoxLayout(card)
+        layout.setSpacing(8)
 
         hdr = QHBoxLayout()
         hl = QLabel(f" {sn}")
@@ -161,7 +207,8 @@ class DiagnosisDialog(QDialog):
 
         cols = sheet.get("columns", [])
         if cols:
-            grid = QGridLayout(); grid.setSpacing(3)
+            grid = QGridLayout()
+            grid.setSpacing(3)
             headers = ["列名", "类型", "缺失%", "偏度", "异常点", "分布"]
             for j, h in enumerate(headers):
                 lbl = QLabel(h)
@@ -171,8 +218,11 @@ class DiagnosisDialog(QDialog):
             for i, c in enumerate(cols[:12], 1):
                 vals = [
                     c["name"][:20] + (".." if len(c["name"]) > 20 else ""),
-                    c["category"], str(c["missing_pct"]),
-                    f"{c.get('skewness', '-'):.2f}" if isinstance(c.get("skewness"), float) else "-",
+                    c["category"],
+                    str(c["missing_pct"]),
+                    f"{c.get('skewness', '-'):.2f}"
+                    if isinstance(c.get("skewness"), float)
+                    else "-",
                     str(c.get("outlier_count", "-")),
                     c.get("distribution", "-"),
                 ]
@@ -181,13 +231,17 @@ class DiagnosisDialog(QDialog):
                     lbl.setFont(QFont(get_ui_font(), 9))
                     lbl.setStyleSheet(f"color: {tc['text_primary']}; padding: 1px 4px;")
                     if j == 1 and c["category"] == "measurement":
-                        lbl.setStyleSheet(f"color: {tc['accent_bright']}; font-weight: bold; padding: 1px 4px;")
+                        lbl.setStyleSheet(
+                            f"color: {tc['accent_bright']}; font-weight: bold; padding: 1px 4px;"
+                        )
                     if c["missing_pct"] > 10:
                         lbl.setStyleSheet("color: #e74c3c; padding: 1px 4px;")
                     if j == 5:
                         dist = c.get("distribution", "-")
                         if dist == "normal":
-                            lbl.setStyleSheet("color: #27ae60; font-weight: bold; padding: 1px 4px;")
+                            lbl.setStyleSheet(
+                                "color: #27ae60; font-weight: bold; padding: 1px 4px;"
+                            )
                         elif dist == "skewed":
                             lbl.setStyleSheet("color: #ffa726; padding: 1px 4px;")
                     grid.addWidget(lbl, i, j)
@@ -195,18 +249,24 @@ class DiagnosisDialog(QDialog):
 
         recs = sheet.get("recommendations", [])
         if recs:
-            high_recs = [r for r in recs if r["confidence"]["grade"] == "highly_recommended"]
+            high_recs = [
+                r for r in recs if r["confidence"]["grade"] == "highly_recommended"
+            ]
             mid_recs = [r for r in recs if r["confidence"]["grade"] == "recommended"]
             low_recs = [r for r in recs if r["confidence"]["grade"] == "optional"]
 
             for group_title, group_recs, star in [
                 ("高度推荐", high_recs, "★"),
                 ("建议尝试", mid_recs, "☆"),
-                ("可选用", low_recs, "·")]:
-                if not group_recs: continue
+                ("可选用", low_recs, "·"),
+            ]:
+                if not group_recs:
+                    continue
                 sec = QLabel(f" {star} {group_title} ({len(group_recs)})")
                 sec.setFont(QFont(get_ui_font(), 11, QFont.Bold))
-                sec.setStyleSheet(f"color: {CONF_COLORS.get(group_recs[0]['confidence']['grade'], tc['accent'])}; padding: 4px 0;")
+                sec.setStyleSheet(
+                    f"color: {CONF_COLORS.get(group_recs[0]['confidence']['grade'], tc['accent'])}; padding: 4px 0;"
+                )
                 layout.addWidget(sec)
                 for rec in group_recs[:5]:
                     layout.addLayout(self._make_rec_row(rec, tc))
@@ -222,7 +282,8 @@ class DiagnosisDialog(QDialog):
         return card
 
     def _make_rec_row(self, rec: dict, tc: dict) -> QHBoxLayout:
-        row = QHBoxLayout(); row.setSpacing(8)
+        row = QHBoxLayout()
+        row.setSpacing(8)
 
         icon_text = rec["icon"][:3]
         icon = QLabel(icon_text)
@@ -231,10 +292,12 @@ class DiagnosisDialog(QDialog):
         icon.setAlignment(Qt.AlignCenter)
         icolor = ICON_COLORS.get(rec["icon"], tc["accent"])
         icon.setStyleSheet(
-            f"color: white; background: {icolor}; border-radius: 8px; font-size: 10px;")
+            f"color: white; background: {icolor}; border-radius: 8px; font-size: 10px;"
+        )
         row.addWidget(icon)
 
-        text_col = QVBoxLayout(); text_col.setSpacing(2)
+        text_col = QVBoxLayout()
+        text_col.setSpacing(2)
         title = QLabel(f"{rec['tab_name']} · {rec['method']}")
         title.setFont(QFont(get_ui_font(), 11, QFont.Bold))
         title.setStyleSheet(f"color: {tc['text_primary']};")
@@ -247,14 +310,17 @@ class DiagnosisDialog(QDialog):
         conf = rec.get("confidence", {})
         pct = conf.get("percentage", 0.5)
         cbar = QProgressBar()
-        cbar.setRange(0, 100); cbar.setValue(int(pct * 100))
-        cbar.setTextVisible(True); cbar.setFormat(f" {int(pct * 100)}%")
+        cbar.setRange(0, 100)
+        cbar.setValue(int(pct * 100))
+        cbar.setTextVisible(True)
+        cbar.setFormat(f" {int(pct * 100)}%")
         cbar.setFixedSize(60, 16)
         cbar.setFont(QFont(get_ui_font(), 8))
         ccolor = CONF_COLORS.get(conf.get("grade", "optional"), "#6e7080")
         cbar.setStyleSheet(
             f"QProgressBar {{ background: {tc['bg_body']}; border: none; border-radius: 3px; text-align: center; }} "
-            f"QProgressBar::chunk {{ background: {ccolor}; border-radius: 3px; }}")
+            f"QProgressBar::chunk {{ background: {ccolor}; border-radius: 3px; }}"
+        )
         row.addLayout(text_col, 1)
         row.addWidget(cbar)
 
@@ -264,7 +330,8 @@ class DiagnosisDialog(QDialog):
         btn.setCursor(Qt.PointingHandCursor)
         btn.setStyleSheet(
             f"QPushButton {{ background: {tc['accent']}; color: white; border: none; "
-            f"border-radius: 5px; }} QPushButton:hover {{ background: {tc['accent_dark']}; }}")
+            f"border-radius: 5px; }} QPushButton:hover {{ background: {tc['accent_dark']}; }}"
+        )
         btn.clicked.connect(lambda checked, r=rec: self.apply_clicked.emit(r))
         row.addWidget(btn)
         return row
@@ -272,13 +339,24 @@ class DiagnosisDialog(QDialog):
     def _export_report(self):
         from PySide6.QtWidgets import QFileDialog, QMessageBox
         import pandas as pd
-        path, _ = QFileDialog.getSaveFileName(self, "导出诊断报告", "diagnosis_report.xlsx", "Excel (*.xlsx)")
-        if not path: return
+
+        path, _ = QFileDialog.getSaveFileName(
+            self, "导出诊断报告", "diagnosis_report.xlsx", "Excel (*.xlsx)"
+        )
+        if not path:
+            return
         rows = []
         for sn, sheet in self.profile.get("sheets", {}).items():
             for rec in sheet.get("recommendations", []):
-                rows.append({"Sheet": sn, "推荐模块": rec["tab_name"], "方法": rec["method"],
-                    "置信度": f"{rec['confidence']['percentage']*100:.0f}%", "原因": rec["reason"]})
+                rows.append(
+                    {
+                        "Sheet": sn,
+                        "推荐模块": rec["tab_name"],
+                        "方法": rec["method"],
+                        "置信度": f"{rec['confidence']['percentage'] * 100:.0f}%",
+                        "原因": rec["reason"],
+                    }
+                )
         if rows:
             pd.DataFrame(rows).to_excel(path, index=False)
             QMessageBox.information(self, "导出完成", f"已保存 {path}")

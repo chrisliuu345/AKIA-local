@@ -204,7 +204,7 @@ class DOETab(BaseAnalysisTab):
         self.data_table.setColumnCount(len(df.columns))
         self.data_table.setHorizontalHeaderLabels(all_cols)
         for i in range(min(50, len(df))):
-            for j, col in enumerate(df.columns):
+            for j, _col in enumerate(df.columns):
                 val = str(df.iloc[i, j])
                 item = QTableWidgetItem(val)
                 item.setToolTip(val)
@@ -353,7 +353,7 @@ class DOETab(BaseAnalysisTab):
                 lines.append("\n【ANOVA】")
                 sources = anova_table.get("source", [])
                 p_vals = anova_table.get("p_value", [])
-                for s, p in zip(sources, p_vals):
+                for s, p in zip(sources, p_vals, strict=True):
                     sig = "***" if p is not None and p < 0.001 else "**" if p is not None and p < 0.01 else "*" if p is not None and p < 0.05 else ""
                     lines.append(f"  {s}: p={p} {sig}")
 

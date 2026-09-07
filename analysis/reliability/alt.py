@@ -36,7 +36,8 @@ class ALTEngine:
         if np.any(stress_temp < 200):
             import warnings
             warnings.warn("stress_temp值较小(<200)，请确认是否已转换为开尔文温度(K)。"
-                         "如果传入的是摄氏度，请先转换：T_K = T_C + 273.15", UserWarning)
+                         "如果传入的是摄氏度，请先转换：T_K = T_C + 273.15",
+                         UserWarning, stacklevel=2)
 
         T_use = use_temp + 273.15
         k = 8.617333262145e-5

@@ -74,7 +74,7 @@ class MTBFAnalyzer:
         else:
             rt = np.zeros(len(tbf))
 
-        labels_v = labels if labels else [f"事件{i + 1}" for i in range(len(tbf))]
+        labels if labels else [f"事件{i + 1}" for i in range(len(tbf))]
 
         out["overall"] = self._compute_group("全部", tbf, rt, confidence_level)
 

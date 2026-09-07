@@ -117,7 +117,7 @@ class DataCleaner(QDialog):
         table.setColumnCount(len(df.columns))
         table.setHorizontalHeaderLabels(list(df.columns))
         for i in range(n):
-            for j, col in enumerate(df.columns):
+            for j, _col in enumerate(df.columns):
                 val = str(df.iloc[i, j])
                 item = QTableWidgetItem(val)
                 item.setToolTip(val)
