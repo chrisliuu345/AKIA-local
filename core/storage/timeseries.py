@@ -73,9 +73,9 @@ class TimeseriesStore:
 
     def prune_older_than(self, cutoff_ts: float) -> int:
         with self._lock:
-            self._conn.execute("DELETE FROM measurements WHERE ts < ?", (cutoff_ts,))
+            cur = self._conn.execute("DELETE FROM measurements WHERE ts < ?", (cutoff_ts,))
             self._conn.commit()
-            return self._conn.total_changes
+            return cur.rowcount
 
     def close(self) -> None:
         with self._lock:
