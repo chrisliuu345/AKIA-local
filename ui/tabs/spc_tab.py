@@ -1,6 +1,6 @@
+"""SPS 控制图分析页 — 含图表嵌入
 """
-SPC 控制图分析页 — 含图表嵌入
-"""
+import threading
 
 from typing import Dict, Any
 import pandas as pd
@@ -11,12 +11,13 @@ from PySide6.QtWidgets import (
     QTableWidget, QTableWidgetItem, QTextEdit, QSplitter, QHeaderView,
     QFrame, QStackedWidget, QCheckBox, QMessageBox, QListWidget, QListWidgetItem,
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFont
 
 from analysis.spc import xbar_r, xbar_s, imr, p_chart, np_chart, c_chart, u_chart, cusum, ewma, laney, hotelling
 from output.chart_engine import create_control_chart
 from core.i18n import i18n
+from core.streaming.live_spc import LiveSPC
 from ui.tabs.base_tab import BaseAnalysisTab
 from ui.theme import BUTTON_SECONDARY, BUTTON_TOGGLE, BUTTON_PRIMARY_STRETCH
 from ui.font_config import get_ui_font
@@ -166,6 +167,30 @@ class SPCTab(BaseAnalysisTab):
 
         self.chart_type_combo.currentTextChanged.connect(self._on_chart_type_changed)
 
+        self.live_group = QGroupBox(i18n.tr("spc.live_group"))
+        live_layout = QFormLayout(self.live_group)
+        live_layout.setContentsMargins(10, 10, 10, 10)
+        self.live_check = QCheckBox(i18n.tr("spc.live_mode"))
+        self.live_check.setStyleSheet("font-weight: bold;")
+        self.live_check.toggled.connect(self._on_live_toggled)
+        live_layout.addRow(self.live_check)
+        self.live_dev_combo = QComboBox()
+        self.live_dev_combo.setMinimumWidth(140)
+        self.live_dev_combo.currentTextChanged.connect(self._on_live_device_changed)
+        live_layout.addRow(i18n.tr("spc.live_device"), self.live_dev_combo)
+        self.live_chan_combo = QComboBox()
+        self.live_chan_combo.setMinimumWidth(140)
+        live_layout.addRow(i18n.tr("spc.live_channel"), self.live_chan_combo)
+        self.live_win_spin = QSpinBox()
+        self.live_win_spin.setRange(10, 200)
+        self.live_win_spin.setValue(30)
+        self.live_win_spin.setSuffix(" 点")
+        live_layout.addRow(i18n.tr("spc.live_window"), self.live_win_spin)
+        self.live_status = QLabel("—")
+        self.live_status.setWordWrap(True)
+        self.live_status.setStyleSheet("font-size: 11px;")
+        live_layout.addRow(self.live_status)
+
         self.run_btn = QPushButton(i18n.tr("spc.run_btn"))
         self.run_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
         self.run_btn.setMinimumHeight(44)
@@ -201,6 +226,7 @@ class SPCTab(BaseAnalysisTab):
         config_layout.addRow(self.export_btn)
 
         top_layout.addWidget(config_group)
+        top_layout.addWidget(self.live_group)
 
         separator = QFrame()
         separator.setFrameShape(QFrame.VLine)
@@ -324,6 +350,116 @@ class SPCTab(BaseAnalysisTab):
         show = is_std and self.spec_check.isChecked()
         self.row_usl.setVisible(show)
         self.row_lsl.setVisible(show)
+
+    def set_stream_source(self, bus):
+        """外部(P3/P5)注入数据流总线 — 无总线时禁用实时模式。"""
+        self._bus = bus
+        self._live_spc = None
+        self._live_queue = []
+        self._live_lock = threading.Lock()
+        self._live_unsub = None
+        self._last_channel = ""
+        self._live_timer = QTimer(self)
+        self._live_timer.setInterval(500)
+        self._live_timer.timeout.connect(self._live_poll)
+        if bus is None:
+            self.live_check.setEnabled(False)
+            self.live_check.setToolTip(i18n.tr("spc.live_no_source"))
+            self.live_status.setText(i18n.tr("spc.live_no_source"))
+
+    def _on_live_toggled(self, checked: bool):
+        if checked:
+            self._live_start()
+        else:
+            self._live_stop()
+
+    def _live_start(self):
+        if self._bus is None:
+            self.live_status.setText(i18n.tr("spc.live_no_source"))
+            return
+        chart_type = self.chart_type_combo.currentText()
+        if chart_type not in ("I-MR", "XBar-R"):
+            self.live_status.setText(i18n.tr("spc.live_unsupported_chart"))
+            self.live_check.setChecked(False)
+            return
+        self.live_dev_combo.clear()
+        self.live_dev_combo.addItems(self._bus.topics())
+        if self.live_dev_combo.count() == 0:
+            self.live_status.setText(i18n.tr("spc.live_no_source"))
+            self.live_check.setChecked(False)
+            return
+        self._live_teardown()
+        mode = "imr" if chart_type == "I-MR" else "xbar"
+        self._live_spc = LiveSPC(
+            "live", mode=mode,
+            subgroup_size=self.subgroup_spin.value(),
+            window=self.live_win_spin.value(),
+        )
+        self._live_queue = []
+        self._live_unsub = self._bus.subscribe(
+            self.live_dev_combo.currentText(), self._live_enqueue)
+        self._live_timer.start()
+        self.live_status.setText(i18n.tr("spc.live_started"))
+
+    def _live_teardown(self):
+        """清理订阅与定时器（不动复选框状态）。"""
+        self._live_timer.stop()
+        if self._live_unsub:
+            self._live_unsub()
+            self._live_unsub = None
+        self._live_spc = None
+
+    def _live_stop(self):
+        self._live_teardown()
+        self._live_queue = []
+        self.live_status.setText(i18n.tr("spc.live_stopped"))
+
+    def _live_enqueue(self, samples: list):
+        if not samples:
+            return
+        with self._live_lock:
+            self._live_queue.extend(samples)
+
+    def _on_live_device_changed(self, _device: str):
+        # 通道列表在收到首个批量后更新
+        self.live_chan_combo.clear()
+
+    def _live_poll(self):
+        if self._live_spc is None:
+            return
+        with self._live_lock:
+            batch = self._live_queue
+            self._live_queue = []
+        if not batch:
+            return
+        device = self.live_dev_combo.currentText()
+        channels = sorted({s.channel for s in batch if s.device == device})
+        if self.live_chan_combo.count() == 0 and channels:
+            self.live_chan_combo.addItems(channels)
+        preferred = self.live_chan_combo.currentText()
+        chan = preferred if preferred in channels else channels[0] if channels else None
+        if not chan:
+            return
+        if chan != self._last_channel:
+            self._live_spc.reset()
+            self._last_channel = chan
+        values = [s.value for s in batch if s.channel == chan]
+        frame = self._live_spc.feed(values)
+        self._render_chart(
+            frame.as_chart_data(
+                "imr" if self.chart_type_combo.currentText() == "I-MR" else "xbar"),
+            self.chart_type_combo.currentText())
+        n_nelson = sum(1 for e in frame.events if e.kind == "nelson")
+        n_oos = sum(1 for e in frame.events if e.kind == "oos")
+        color = "#27ae60" if not frame.ooc and not frame.oos else "#e74c3c"
+        self.live_status.setStyleSheet(f"font-size: 11px; color: {color};")
+        text = (f"{chan} · {len(frame.data)} {i18n.tr('spc.live_pts')} · "
+                f"CL={frame.cl:.2f} UCL={frame.ucl:.2f} LCL={frame.lcl:.2f} · ")
+        if n_nelson or n_oos:
+            text += f"{i18n.tr('spc.live_ooc')} {n_nelson} · {i18n.tr('spc.live_oos')} {n_oos}"
+        else:
+            text += i18n.tr("spc.live_ok")
+        self.live_status.setText(text)
 
     def validate_params(self) -> tuple:
         if self.df is None:
