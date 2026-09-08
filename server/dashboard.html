@@ -14,6 +14,11 @@
           padding: 10px 12px; min-width: 320px; }
   .card h3 { margin: 0 0 2px; font-size: 13px; color: #9aa4b2; }
   .card .meta { font-size: 11px; color: #6a7280; margin-bottom: 6px; }
+  .chip { display: inline-block; margin: 2px 8px 2px 0; padding: 2px 8px;
+          border-radius: 10px; font-size: 12px; background: #14161a; }
+  .chip-green { color: #27ae60; }
+  .chip-yellow { color: #f39c12; }
+  .chip-red { color: #e74c3c; }
   canvas { width: 100%; height: 120px; background: #14161a; border-radius: 4px; }
   .fault { color: #e74c3c; font-weight: bold; }
   #footer { margin-top: 14px; font-size: 11px; color: #6a7280; }
@@ -21,6 +26,8 @@
 </head>
 <body>
 <h1><span class="dot"></span>QA-Tool 实时 SPC 云看板</h1>
+<div id="plant"></div>
+<div id="oee"></div>
 <div id="cards"></div>
 <div id="footer">连接状态: <span id="conn">待连接…</span></div>
 <script>
@@ -81,6 +88,43 @@ function pushSample(s) {
 }
 
 async function loadHistory() {
+  try {
+    const st = await fetch("/api/plant");
+    const { lines } = await st.json();
+    const plantEl = document.getElementById("plant");
+    plantEl.innerHTML = "";
+    for (const line of lines) {
+      const group = document.createElement("div");
+      group.className = "card";
+      const head = document.createElement("h3");
+      head.textContent = "产线: " + line.name;
+      group.appendChild(head);
+      const row = document.createElement("div");
+      for (const st of line.stations) {
+        const chip = document.createElement("span");
+        chip.className = "chip chip-" + st.status;
+        chip.textContent = "● " + st.name + (st.alert ? " ⚠" : "");
+        chip.title = st.device + " async " + (st.channels || []).join(", ");
+        row.appendChild(chip);
+      }
+      group.appendChild(row);
+      plantEl.appendChild(group);
+    }
+    const oeeResp = await fetch("/api/oee");
+    const { lines: oeeLines } = await oeeResp.json();
+    const oeeEl = document.getElementById("oee");
+    oeeEl.innerHTML = "";
+    for (const [name, m] of Object.entries(oeeLines)) {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = "<h3>OEE " + name + "</h3><div class='meta'>A " +
+        (m.availability * 100).toFixed(1) + "% · P " + (m.performance * 100).toFixed(1) +
+        "% · Q " + (m.quality * 100).toFixed(1) + "% · OEE <b>" +
+        (m.oee * 100).toFixed(1) + "%</b> · 样本 " + m.samples + "</div>";
+      oeeEl.appendChild(card);
+    }
+  } catch (e) { /* 无数据时静默 */ }
+}
   try {
     const r = await fetch("/api/devices");
     const { topics } = await r.json();
