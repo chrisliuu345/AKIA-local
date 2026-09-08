@@ -77,6 +77,10 @@ class BaseAnalysisTab(QWidget):
         # 2) 新 canvas 置于第一行
         from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
         self.canvas = FigureCanvasQTAgg(fig)
+        # 快照自然像素高 — 隐藏页渲染时布局会把 canvas 压小并同步改写 figure 尺寸,
+        # _pin 改读快照保证 showEvent 恢复时高度不丢失
+        self._canvas_natural_h = int(
+            fig.get_size_inches()[1] * fig.get_dpi())
         self.chart_layout.insertWidget(0, self.canvas)
 
         # 3) 绑定菜单 + 工具栏(隐藏)/面板挂载 + 高度同步
@@ -204,13 +208,17 @@ class BaseAnalysisTab(QWidget):
     def _pin_canvas_natural_height(self):
         """画布最小高跟随图片自然像素高 — 防止编辑面板挤压图表；每帧先复位再设精确值，
         图表高度变化时不会残留旧下限（页面滚动范围保持精确）"""
+        if not self.isVisible():
+            return
         if self.canvas is None or self.current_figure is None:
             return
         try:
             self.canvas.setMinimumHeight(0)
-            h_in = self.current_figure.get_size_inches()[1]
-            dpi = self.current_figure.get_dpi()
-            natural = int(h_in * dpi)
+            natural = getattr(self, '_canvas_natural_h', 0)
+            if natural <= 0:
+                natural = int(
+                    self.current_figure.get_size_inches()[1]
+                    * self.current_figure.get_dpi())
             if natural > 200:
                 self.canvas.setMinimumHeight(natural)
         except Exception:
@@ -224,6 +232,8 @@ class BaseAnalysisTab(QWidget):
         画布溢出），因此不依赖 minimumSizeHint 缓存。
         """
         if not hasattr(self, 'chart_container'):
+            return
+        if not self.isVisible():
             return
         h = 8  # 布局上下边距 (0,4,0,4)
         for i in range(self.chart_layout.count()):
@@ -315,11 +325,32 @@ class BaseAnalysisTab(QWidget):
 
         self._empty_overlay.show()
 
+    def _release_page_height(self):
+        """释放图表页钉死的最小高度 — 主窗口 74 个 tab 共享单一 QScrollArea，
+        隐藏页残留的最小高会把整个 QStackedWidget 撑高，其他 tab 被拉伸且需滚回顶部。
+        切离本页时释放，回到本页时由 showEvent 重新应用（图表本身保留在内存，不重绘）。"""
+        if getattr(self, 'canvas', None) is not None:
+            try:
+                self.canvas.setMinimumHeight(0)
+            except Exception:
+                pass
+        if getattr(self, 'chart_container', None) is not None:
+            self.chart_container.setMinimumHeight(300)
+        if getattr(self, 'result_stack', None) is not None:
+            self.result_stack.setMinimumHeight(300)
+
     def showEvent(self, event):
         super().showEvent(event)
         if (not hasattr(self, '_empty_overlay') or self._empty_overlay is None) \
            and self.df is None:
             pass
+        if getattr(self, 'canvas', None) is not None and self.current_figure is not None:
+            self._pin_canvas_natural_height()
+            self._sync_chart_page_height()
+
+    def hideEvent(self, event):
+        super().hideEvent(event)
+        self._release_page_height()
 
     def _hide_empty_state(self):
         """隐藏空状态遮罩"""
