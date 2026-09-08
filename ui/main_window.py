@@ -374,6 +374,10 @@ class MainWindow(QMainWindow):
         template_act = QAction(i18n.tr("menu.template"), self)
         template_act.triggered.connect(self._on_template_dialog)
         tools_menu.addAction(template_act)
+        tools_menu.addSeparator()
+        self.live_dash_act = QAction(i18n.tr("menu.live_dashboard"), self,
+                                     checkable=True, triggered=self._on_live_dashboard)
+        tools_menu.addAction(self.live_dash_act)
 
         help_menu = _pin(menubar.addMenu(i18n.tr("menu.help")))
         guide_action = QAction(i18n.tr("menu.guide"), self)
@@ -1651,6 +1655,26 @@ class MainWindow(QMainWindow):
                 self._notify_dashboard()
             except Exception as e:
                 QMessageBox.critical(self, "加载失败", str(e))
+
+    def _on_live_dashboard(self, checked: bool):
+        """启动/停止内置实时看板服务（v3.7.0-P3）。"""
+        if checked:
+            try:
+                from server.app import start_thread
+
+                self._dash_thread = start_thread(self.stream_bus)
+            except Exception as e:
+                QMessageBox.warning(
+                    self, i18n.tr("menu.live_dashboard"),
+                    f"{e}\n\npip install -r requirements-server.txt")
+                self.live_dash_act.setChecked(False)
+                return
+            QDesktopServices.openUrl(QUrl("http://127.0.0.1:8765/"))
+        else:
+            from server.app import stop_thread
+
+            stop_thread(getattr(self, "_dash_thread", None))
+            self._dash_thread = None
 
     def _on_diagnose(self):
         if not self.profile_result or not self.profile_result.get("sheets"):

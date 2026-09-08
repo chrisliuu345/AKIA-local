@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>QA-Tool 实时看板</title>
+<style>
+  body { font-family: "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+         background: #14161a; color: #d8dce2; margin: 0; padding: 16px; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  h1 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+            background: #27ae60; margin-right: 8px; }
+  #cards { display: flex; flex-wrap: wrap; gap: 12px; }
+  .card { background: #1e2128; border: 1px solid #2e3440; border-radius: 8px;
+          padding: 10px 12px; min-width: 320px; }
+  .card h3 { margin: 0 0 2px; font-size: 13px; color: #9aa4b2; }
+  .card .meta { font-size: 11px; color: #6a7280; margin-bottom: 6px; }
+  canvas { width: 100%; height: 120px; background: #14161a; border-radius: 4px; }
+  .fault { color: #e74c3c; font-weight: bold; }
+  #footer { margin-top: 14px; font-size: 11px; color: #6a7280; }
+</style>
+</head>
+<body>
+<h1><span class="dot"></span>QA-Tool 实时 SPC 云看板</h1>
+<div id="cards"></div>
+<div id="footer">连接状态: <span id="conn">待连接…</span></div>
+<script>
+const MAX_POINTS = 300;
+const wsUrl = "ws://" + location.host + "/ws/stream";
+const charts = {};   // key: device:channel -> {canvas, pts:[{t,v}], offscreen}
+
+function ctx2d(cv) {
+  return { cv, ctx: cv.getContext("2d") };
+}
+
+function draw(cv, pts) {
+  const ctx = cv.getContext("2d");
+  const w = cv.width, h = cv.height;
+  ctx.clearRect(0, 0, w, h);
+  ctx.strokeStyle = "#2e3440"; ctx.strokeRect(0, 0, w, h);
+  if (pts.length < 2) return;
+  const vs = pts.map(p => p.v);
+  const lo = Math.min(...vs), hi = Math.max(...vs);
+  const span = (hi - lo) || 1;
+  ctx.beginPath();
+  ctx.strokeStyle = "#4aa8ff"; ctx.lineWidth = 1.5;
+  pts.forEach((p, i) => {
+    const x = (i / (MAX_POINTS - 1)) * (w - 4) + 2;
+    const y = h - 6 - ((p.v - lo) / span) * (h - 12);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+}
+
+function ensureChart(device, ch) {
+  const key = device + ":" + ch;
+  if (charts[key]) return key;
+  const card = document.createElement("div");
+  card.className = "card";
+  card.id = "c-" + key;
+  const t1 = document.createElement("h3");
+  t1.textContent = device;
+  const t2 = document.createElement("div");
+  t2.className = "meta";
+  t2.textContent = ch + " · <span class='v'>—</span>";
+  const cv = document.createElement("canvas");
+  cv.width = 640; cv.height = 120;
+  card.appendChild(t1); card.appendChild(t2); card.appendChild(cv);
+  document.getElementById("cards").appendChild(card);
+  charts[key] = { card, meta: t2, cv, pts: [] };
+  return key;
+}
+
+function pushSample(s) {
+  const key = ensureChart(s.dev, s.ch);
+  const c = charts[key];
+  c.pts.push({ t: s.t, v: s.v });
+  if (c.pts.length > MAX_POINTS) c.pts.shift();
+  draw(c.cv, c.pts);
+  const v = s.v.toFixed(2);
+  c.meta.innerHTML = c.ch + " · <span class='v'>" + v + "</span>";
+}
+
+async function loadHistory() {
+  try {
+    const r = await fetch("/api/devices");
+    const { topics } = await r.json();
+    for (const dev of topics) {
+      const h = await fetch("/api/history?device=" + encodeURIComponent(dev));
+      const { samples } = await h.json();
+      for (const s of samples) pushSample({ ...s, dev });
+    }
+  } catch (e) { /* 无历史数据时静默 */ }
+}
+
+const ws = new WebSocket(wsUrl);
+ws.onopen = () => { document.getElementById("conn").textContent = "已连接"; loadHistory(); };
+ws.onmessage = (ev) => {
+  const msg = JSON.parse(ev.data);
+  if (msg.type === "batch") for (const s of msg.samples) pushSample(s);
+};
+ws.onerror = () => { document.getElementById("conn").textContent = "连接断开"; };
+ws.onclose = () => { document.getElementById("conn").textContent = "已断开"; };
+setInterval(() => { if (ws.readyState === WebSocket.OPEN) ws.send("ping"); }, 20000);
+</script>
+</body>
+</html>

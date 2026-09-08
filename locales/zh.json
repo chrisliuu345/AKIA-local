@@ -166,6 +166,7 @@
   "menu.spc": "控制图 (SPC)",
   "menu.toggle_sidebar": "显示/隐藏侧栏",
   "menu.tools": "工具(&T)",
+  "menu.live_dashboard": "实时看板",
   "menu.view": "显示(&V)",
   "menu.ai": "AI",
   "menu.one_click": "一键智能分析报告",

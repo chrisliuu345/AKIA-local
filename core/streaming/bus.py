@@ -15,26 +15,36 @@ class StreamBus:
         self._maxlen = maxlen
         self._buf: dict[str, deque[Sample]] = {}
         self._subs: dict[str, list[Callable[[list[Sample]], None]]] = {}
+        self._wild: list[Callable[[list[Sample]], None]] = []
         self._lock = threading.Lock()
 
     def publish(self, topic: str, samples: list[Sample]) -> None:
         with self._lock:
             buf = self._buf.setdefault(topic, deque(maxlen=self._maxlen))
             buf.extend(samples)
-            subs = list(self._subs.get(topic, ()))
+            subs = list(self._subs.get(topic, ())) + self._wild
         for cb in subs:
             try:
                 cb(samples)
             except Exception:
                 pass
 
-    def subscribe(self, topic: str, callback: Callable[[list[Sample]], None]) -> Callable[[], bool]:
-        """返回 unsubscribe 函数。"""
+    def subscribe(self, topic: str | None, callback: Callable[[list[Sample]], None]) -> Callable[[], bool]:
+        """返回 unsubscribe 函数。topic=None 表示订阅全部主题。"""
         with self._lock:
-            self._subs.setdefault(topic, []).append(callback)
+            if topic is None:
+                self._wild.append(callback)
+            else:
+                self._subs.setdefault(topic, []).append(callback)
 
         def unsubscribe() -> bool:
             with self._lock:
+                if topic is None:
+                    try:
+                        self._wild.remove(callback)
+                        return True
+                    except ValueError:
+                        return False
                 try:
                     self._subs[topic].remove(callback)
                     return True
