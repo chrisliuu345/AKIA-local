@@ -11,7 +11,7 @@
 > **Strategic Repositioning (2026-08-24)**: positioning shifted from enterprise multi-company platform to **personal subscription quality engineering tool** (Minitab-like), with differentiation core in real-time factory data integration + IE engineering tools + five-chain workflow + BYOK AI Agent (QAM Harness). See [Core Competitive Positioning](#core-competitive-positioning-2026-08-rework).
 
 ```
-v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ✅ ──→ v2.7.0 ✅ ──→ v2.8.0 ✅ ──→ v2.9.0 ✅ ──→ v3.0.0 ✅ ──→ v3.1.0 ✅ ──→ v3.2.0 ✅ ──→ v3.3.0 ✅ ──→ v3.4.0 ✅ ──→ v3.5.0 ✅ ──→ v3.6.0 ✅ ──→ v3.6.1 ✅(folded into 3.6.0) ──→ v3.7.0 ✅ ──→ v3.8.0 ──→ v4.0.0
+v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ✅ ──→ v2.7.0 ✅ ──→ v2.8.0 ✅ ──→ v2.9.0 ✅ ──→ v3.0.0 ✅ ──→ v3.1.0 ✅ ──→ v3.2.0 ✅ ──→ v3.3.0 ✅ ──→ v3.4.0 ✅ ──→ v3.5.0 ✅ ──→ v3.6.0 ✅ ──→ v3.6.1 ✅(folded into 3.6.0) ──→ v3.7.0 ✅ ──→ v3.7.1 (candidate) ──→ v3.8.0 ──→ v4.0.0
 ```
 
 | Stage | Version | Theme |
@@ -570,6 +570,42 @@ python build_nuitka.py --onefile      # single executable
 - Data-stream latency < 500ms (device → control chart)
 - WebSocket concurrency of 50 connections without performance degradation
 - PLC/gage connector mock tests pass
+
+## v3.7.1 — Realtime monitoring benchmark polish (candidates, researched 2026-09-08)
+
+> Sources (official pages fetched 2026-09-08):
+> [Minitab Real-Time SPC](https://www.minitab.com/en-us/products/real-time-spc/) ·
+> [WinSPC (Advantive)](https://www.advantive.com/products/winspc/) ·
+> [InfinityQS Enact](https://www.advantive.com/products/infinity-qs-enact/) ·
+> [DataLyzer](https://datalyzer.com/) (Minitab first URL 404; used /en-us/products/real-time-spc/)
+
+### Gap matrix (competitor vs QA-Tool v3.7.0)
+
+| Capability | Minitab RTSPC | WinSPC | Enact | DataLyzer | QA-Tool now |
+|---|---|---|---|---|---|
+| Realtime charts | I-MR/Xbar-R/S/I-MR-R/S/EWMA/P·NP·Laney/C·U·Laney | full set | ✓ | ✓ | live I-MR/XBar-R only |
+| Dashboard | cloud auto-update | Plant monitor single view | role dashboards | dashboards/reports | browser dashboard (WS) |
+| Data sources | full chain | RS232/USB/files/CSV/Excel/ODBC/OPC/DDE/API 500+ | machines/devices/operators | devices/CMM/DB/PLC auto | plugins Modbus/MQTT/OPC-UA/DMIS/gage |
+| Alerts | email/text custom | email/custom programs/machine stop/bidi | email/text/in-app+auto workflows | early warnings | email/webhook/desktop (debounce+cooldown), no ack/actions/SMS |
+| Config | **Autoconfigure spreadsheet** | 3-step connect wizard | wizard | modular | hand-edited data/plant.json |
+| Roles/permissions | per-role | multi-user | role dashboards | users+site licenses | none |
+| Cost/benefit | case studies | **Cost Inspector** ($/unit) | net-content MAV/TNE | ~9% cost cut | none |
+| Integrations | SAP DM etc. | MES/ERP/HMI/LIMS API | multi-site cloud | OEE/LIMS/API/DLL/Python | self-host WS/HTTP |
+
+### v3.7.1 candidate backlog (priority order)
+1. Chart upgrade: zoom + USL/LSL overlay (web & desktop)
+2. plant.json visual config editor + spreadsheet template import (Minitab Autoconfigure inspired)
+3. Alerts: levels (warning/alarm/severe) + acknowledge & audit + device-action/stop linking
+4. Cost analysis: OOS quantity × unit cost = loss estimate (Cost Inspector / net-content analogy)
+5. Real OEE: takt config → performance(P), downtime reason codes, shift calendar
+6. Retention & downsampling: minute-level aggregation + auto retention (timeseries-DB practice)
+7. Connector health page + auto-reconnect backoff (Kepware connection tree)
+8. Dashboard optional auth token + host binding
+9. Multi-site topology view + i18n UI (Enact multi-site / DataLyzer 11 languages)
+
+> Priority rule: P0(already fixed this round) > 1-5 (functional gaps) > 6-9 (scale gaps);
+> compatible with v3.8.0 AI Agent (link items 1/3 into conversational analysis).
+
 
 ---
 
