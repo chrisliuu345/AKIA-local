@@ -7,6 +7,7 @@ from core.devices.discovery import discover_devices, probe_network_device, Devic
 from core.devices.registry import DeviceRegistry
 from core.devices.monitor import DeviceMonitor
 from core.devices.device import Device, Esp32InputDevice, Esp32OutputDevice, MaixcamVisionDevice
+from core.devices.driver import Sample, DeviceDriver, MockDriver, MonitorAdapterDriver
 
 __all__ = [
     "encode_message", "decode_message",
@@ -16,4 +17,5 @@ __all__ = [
     "DeviceState", "DeviceRegistry",
     "DeviceMonitor",
     "Device", "Esp32InputDevice", "Esp32OutputDevice", "MaixcamVisionDevice",
+    "Sample", "DeviceDriver", "MockDriver", "MonitorAdapterDriver",
 ]
