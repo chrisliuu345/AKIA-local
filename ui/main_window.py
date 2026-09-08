@@ -27,6 +27,7 @@ from core.data_profiler import DataProfiler
 from core.project_manager import ProjectManager
 from core.project_context import ProjectContext
 from core.audit import audit
+from core.streaming.bus import StreamBus
 
 from ui.sidebar import Sidebar
 from ui._tab_registry import INDEX_MAP
@@ -105,6 +106,8 @@ class MainWindow(QMainWindow):
         self._pm.discover()
         self._plugin_tabs = {}
         self._plugin_tab_start = _PLUGIN_TAB_START
+        # v3.7.0: 全局数据流总线（实时 SPC / 云看板消费同一数据）
+        self.stream_bus = StreamBus()
         for name, p in self._pm.plugins.items():
             idx = self._plugin_tab_start + len(self._plugin_tabs)
             self._plugin_tabs[idx] = p
@@ -1088,6 +1091,8 @@ class MainWindow(QMainWindow):
             tab.export_clicked.connect(lambda tid=idx: self._on_export_single(tid, "docx"))
         if hasattr(tab, 'analysis_completed'):
             tab.analysis_completed.connect(lambda tid=idx: self._on_analysis_finished(tid))
+        if hasattr(tab, 'set_stream_source'):
+            tab.set_stream_source(self.stream_bus)
         _CONTEXT_TABS = {1, 16, 17, 30, 32}
         if idx in _CONTEXT_TABS and hasattr(tab, 'set_project_context'):
             tab.set_project_context(self.project_context)
