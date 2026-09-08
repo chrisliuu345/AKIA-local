@@ -83,7 +83,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
 
 <header class="top">
   <span class="logo">QA-Tool 使用指南</span>
-  <span class="tag">v3.6.0</span>
+  <span class="tag">v3.7.0</span>
   <span class="tag">Windows / Linux</span>
   <span class="meta">质量工程（QE）· 工业工程（IE）· 离线分析</span>
 </header>
@@ -302,6 +302,19 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
   </ul>
 </section>
 
+<section class="card" id="realtime">
+  <h2>实时看板（v3.7.0 新增）</h2>
+  <p>基于设备持续采集的实时 SPC 云看板，浏览器即可访问：</p>
+  <ul>
+    <li>菜单「工具 → 实时看板」：启动内置服务并打开浏览器（<code>pip install -r requirements-server.txt</code> 安装 FastAPI 依赖）</li>
+    <li>实时控制图：设备通道滚动窗口 I-MR / XBar-R，跳变 500ms 内检出的判异会即时着色</li>
+    <li>产线拓扑与工位状态灯：绿/黄/红（正常 / 判异·超规格 / 离线，离线判定 5s），拓扑在 <code>data/plant.json</code> 定义</li>
+    <li>实时 OEE：每产线滑动 10 分钟窗口的 A×P×Q</li>
+    <li>数据连接器（按需安装）：Modbus TCP / MQTT / OPC-UA / CMM DMIS / RS232 量具，插件式 <code>connectors/plugins/</code> 自动发现</li>
+    <li>告警：判异/超规格经去抖后推送 — 桌面状态栏提示、邮件（smtp）、Webhook（在用户配置中填写）</li>
+  </ul>
+</section>
+
 <section class="card" id="faq">
   <h2>常见问题</h2>
   <details>
@@ -333,7 +346,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
 
 </main>
 </div>
-<footer>QA-Tool v3.6.0 · 本指南随软件离线分发（config/help/guide.html）· 菜单「帮助 → 使用指南」或按 F1 打开</footer>
+<footer>QA-Tool v3.7.0 · 本指南随软件离线分发（config/help/guide.html）· 菜单「帮助 → 使用指南」或按 F1 打开</footer>
 
 </body>
 </html>

@@ -18,7 +18,7 @@ GUIDE = ROOT / "config" / "help" / "guide.html"
 def test_guide_html_exists_with_sections_and_faq():
     assert GUIDE.exists(), "config/help/guide.html 缺失"
     html = GUIDE.read_text(encoding="utf-8")
-    for anchor in ("quick-start", "data-import", "modules", "charts", "export", "ai", "hardware", "faq", "support"):
+    for anchor in ("quick-start", "data-import", "modules", "charts", "export", "ai", "hardware", "realtime", "faq", "support"):
         assert f'id="{anchor}"' in html, f"缺少锚点 {anchor}"
     assert html.count("<details") >= 4  # FAQ 折叠块
     assert "使用指南" in html
@@ -34,7 +34,7 @@ def test_build_scripts_package_help_dir():
 def test_version_numbers_correspond():
     """版本号对应: app/构建脚本/安装器/帮助页 版本一致"""
     from config.settings import APP_VERSION
-    assert APP_VERSION == "3.6.0"
+    assert APP_VERSION == "3.7.0"
 
     build = (ROOT / "build_pyinstaller.py").read_text(encoding="utf-8")
     assert f'APP_VERSION = "{APP_VERSION}"' in build
