@@ -11,7 +11,7 @@
 > **战略重定位（2026-08-24）**：定位从企业级多公司平台调整为**个人订阅级质量工程工具**（类 Minitab），差异化核心为实时工厂数据集成 + IE 工程工具 + 五链工作流 + BYOK AI Agent（QAM Harness）。详见[核心竞争力定位](#核心竞争力定位2026-08-重规划)。
 
 ```
-v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ✅ ──→ v2.7.0 ✅ ──→ v2.8.0 ✅ ──→ v2.9.0 ✅ ──→ v3.0.0 ✅ ──→ v3.1.0 ✅ ──→ v3.2.0 ✅ ──→ v3.3.0 ✅ ──→ v3.4.0 ✅ ──→ v3.5.0 ✅ ──→ v3.6.0 ✅ ──→ v3.6.1 ✅(并入 3.6.0) ──→ v3.7.0 ✅ ──→ v3.8.0 ──→ v4.0.0
+v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ✅ ──→ v2.7.0 ✅ ──→ v2.8.0 ✅ ──→ v2.9.0 ✅ ──→ v3.0.0 ✅ ──→ v3.1.0 ✅ ──→ v3.2.0 ✅ ──→ v3.3.0 ✅ ──→ v3.4.0 ✅ ──→ v3.5.0 ✅ ──→ v3.6.0 ✅ ──→ v3.6.1 ✅(并入 3.6.0) ──→ v3.7.0 ✅ ──→ v3.7.1(候选) ──→ v3.8.0 ──→ v4.0.0
 ```
 
 | 阶段 | 版本 | 主题 |
@@ -713,6 +713,43 @@ sudo apt install fonts-noto-cjk
 - P5 ✅ 产线拓扑（data/plant.json）+ 工位状态灯（绿/黄/红, 离线>5s）+ 实时 OEE（10min 滑动窗口）+ 告警中心（去抖/冷却 + 邮件/webhook/桌面，测试通过）
 - P6 ✅ 版本 3.7.0 四端一致 + guide.html 实时看板章节 + 文档 + 全量回归
 
+## v3.7.1 — 实时监控对标优化（候选，2026-09-08 调研）
+
+> 对标来源（官方页面 2026-09-08 抓取）：
+> [Minitab Real-Time SPC](https://www.minitab.com/en-us/products/real-time-spc/) ·
+> [WinSPC(Advantive)](https://www.advantive.com/products/winspc/) ·
+> [InfinityQS Enact](https://www.advantive.com/products/infinity-qs-enact/) ·
+> [DataLyzer](https://datalyzer.com/)（Minitab 首选 URL 404，改用 /en-us/products/real-time-spc/ 成功）
+
+### 功能对照（竞品 vs QA-Tool v3.7.0）
+
+| 能力 | Minitab RTSPC | WinSPC | Enact | DataLyzer | QA-Tool 现状 |
+|---|---|---|---|---|---|
+| 实时控制图 | I-MR/Xbar-R/S/I-MR-R/S/EWMA/P·NP·Laney/C·U·Laney | 全套 | ✓ | ✓ | 实时仅 I-MR/XBar-R（批量分析已齐全） |
+| 实时看板 | 云仪表板自动更新 | Plant monitor 单屏汇总 | 角色化仪表板 | 看板/报告 | 浏览器仪表板（WS 广播） |
+| 数据接入 | 全链路 | RS232/USB/文件/CSV/Excel/ODBC/OPC/DDE/API 500+ 方法 | 机/设备/操作员实时 | 设备/CMM/DB/PLC 自动采集 | 插件 Modbus/MQTT/OPC-UA/DMIS/量具RS232 |
+| 告警 | 邮件/短信定制 | 邮件/自定义程序/停机/双向指令 | 邮件/短信/应用内+自动工单 | 早期预警 | 邮件/webhook/桌面（去抖冷却），无确认/联动/短信 |
+| 配置方式 | **Autoconfigure 电子表格**（站/工序/规格/流程图一次配置） | 三步连接向导 | 向导 | 模块化 | data/plant.json 手工 JSON |
+| 角色/权限 | 按角色分配 | 多用户 | 角色仪表板 | 用户+站点授权 | 无 |
+| 成本/效益 | 六位数字节约案例 | **Cost Inspector**（$ / 单位） | 净含量控制 MAV/TNE | 9% 成本降低 | 无 |
+| 系统集成 | SAP DM 等 | MES/ERP/HMI/LIMS | 多厂区云平台 | OEE/LIMS/API/DLL/Python | WS/HTTP 自建 |
+
+### v3.7.1 候选改进（优先级排列）
+
+1. **实时图表增强**：web/桌面控制图加缩放 + USL/LSL 规格线绘制（对标 WinSPC/Enact 均支持）
+2. **plant.json 可视化配置**：桌面编辑器 + 表格模板导入（对标 Minitab Autoconfigure 思路）
+3. **告警补全**：等级（预告/警告/严重）+ 确认与审计留存 + 联动（webhook 已可对接，补停机/命令执行动作）
+4. **成本分析**：超规格量 × 单位成本 ≈ 损失估算（对标 Cost Inspector / 净含量控制）
+5. **实时 OEE 真人化**：节拍配置 → 性能(P) 真实计算 + 停机原因码 + 班次日历（对标 DataLyzer OEE 集成）
+6. **数据保留与降采样**：分钟均值聚合 + 保留期自动清理（对标时序库惯例）
+7. **连接器健康页 + 自动重连**：连接树/状态/重连退避（对标 Kepware 连接树）
+8. **看板可选鉴权**：API token + host 绑定（部署多机时）
+9. **多站点/多语言**：多站点拓扑合并视图 + 界面多语言（对标 Enact 多站点 / DataLyzer 11 语言）
+
+> 迭代原则：P0(本轮已修缺陷) > 1-5(功能差距) > 6-9(规模化差距)；
+> 与 v3.8.0 AI Agent 不冲突，可将 1/3 与其对话式分析联动。
+
+
 ---
 
 ## v3.8.0 — Industrial AI Agent（AI + Vision 融合平台）（待开发）
@@ -828,6 +865,7 @@ QA-Tool v3.8.0 Industrial AI Agent
 
 | 日期 | 版本 | 内容 |
 |------|---------|---------|
+| 09-08 | v3.7.0-review | 新增代码质量审查：9 处缺陷修复（B1-B9, 见 fix commit 2381c46）+ 竞品对标（Minitab RTSPC / WinSPC / Enact / DataLyzer 官方页）→ v3.7.1 候选清单 9 项入档 |
 | 09-08 | v3.7.0 | 实时 SPC 云看板与数据连接器开发完成：P1 驱动抽象/流总线/SQLite时序/PollRunner（<500ms）→ P2 LiveSPC 实时控制图（跳变<500ms 检出）→ P3 FastAPI+WS 浏览器看板（50并发）→ P4 连接器插件 SPI（Modbus/MQTT/OPC-UA/DMIS/量具 按需安装）→ P5 产线拓扑/状态灯/实时OEE/告警中心（邮件/webhook/桌面, 去抖）→ P6 版本 3.7.0 四端一致+文档；74+ 测试文件全绿；构建链 PyInstaller+Inno+AppImage+deb 维持
 | 09-07 | v3.7.0-前置 | 风格债全量清零（F841 65 / E701·E702 568 / E402 20 / B 类 72）；ruff 入 ruff.toml+dev-requirements+CI 门禁零告警；构建链 Nuitka → PyInstaller(onedir)（build_pyinstaller.py），Inno/AppImage/.deb 保留；73 测试文件全绿 |
 | 09-06 | v3.6.0 | Graph Builder 增强与交互体验完成并通过代码验收：图表编辑架构/实时交互/热力图·散点矩阵/小多图 Faceting/导出增强/帮助中心(guide.html)+菜单重构；全量质量审查并入（7 处潜在崩溃修复+ruff 清理）；73 个测试文件全绿；版本号统一 3.6.0；发布打包另行执行 |
