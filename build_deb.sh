@@ -70,6 +70,8 @@ fi
 # ── 步骤 4: 打包 .deb ──────────────────────────────────────
 echo ""
 echo "[4/4] 打包 .deb..."
+# dpkg-deb 要求 control 目录权限 <= 755; 统一目录为 755 防 ACL/umask 干扰
+find "${DEB_DIR}" -type d -exec chmod 755 {} +
 OUTPUT_FILE="${SCRIPT_DIR}/build/${APP_NAME}_${APP_VERSION}_amd64.deb"
 dpkg-deb --build "${DEB_DIR}" "${OUTPUT_FILE}"
 
