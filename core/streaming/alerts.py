@@ -9,6 +9,7 @@ import logging
 import smtplib
 import time
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor, wait
 from dataclasses import dataclass
 from email.mime.text import MIMEText
 from email.utils import formataddr
@@ -60,6 +61,9 @@ class AlertEngine:
         self._last_event: dict[tuple[str, str, str], tuple[int, float]] = {}
         self._unsubs: list = []
         self.debounce: bool = True
+        # 通知通道(邮件/webhook)可能阻塞 — 脱离采集线程
+        self._executor = ThreadPoolExecutor(max_workers=2)
+        self._pending: list = []
 
     def start(self) -> int:
         """订阅规则涉及的设备。返回订阅数。"""
@@ -75,6 +79,8 @@ class AlertEngine:
         for unsub in self._unsubs:
             unsub()
         self._unsubs = []
+        self.wait_pending()
+        self._executor.shutdown(wait=False)
 
     def _make_cb(self, spc: LiveSPC):
         def cb(samples):
@@ -102,13 +108,21 @@ class AlertEngine:
         event = AlertEvent(device, channel, ev.kind, ev.desc, ev.value, time.time())
         for h in self.handlers:
             try:
-                h.notify(event)
+                self._pending.append(self._executor.submit(h.notify, event))
             except Exception:
-                logger.exception("alert handler failed: %s", h)
+                logger.exception("alert handler dispatch failed: %s", h)
+
+    def wait_pending(self, timeout: float = 10.0):
+        """测试/退出用: 等待在途通知完成。"""
+        pending = [f for f in self._pending if not f.done()]
+        if pending:
+            wait(pending, timeout=timeout)
+        self._pending = [f for f in self._pending if not f.done()]
 
 
 def make_email_handler(host: str, port: int, user: str, password: str,
-                       to: str, from_addr: str | None = None, timeout: float = 10.0):
+                       to: str, from_addr: str | None = None, timeout: float = 10.0,
+                       use_tls: bool = False):
     def notify(e: AlertEvent):
         msg = MIMEText(
             f"{e.device}/{e.channel} {e.desc}\n"
@@ -117,7 +131,8 @@ def make_email_handler(host: str, port: int, user: str, password: str,
         msg["From"] = formataddr(("QA-Tool", from_addr or user))
         msg["To"] = to
         with smtplib.SMTP(host, port, timeout=timeout) as s:
-            s.starttls() if hasattr(s, "starttls") else None
+            if use_tls:
+                s.starttls()
             if user:
                 s.login(user, password)
             s.send_message(msg)
@@ -160,5 +175,6 @@ def build_default_handlers(settings: dict | None = None) -> list:
         handlers.append(make_email_handler(
             smtp_host, int(s.get("alert_smtp_port", 25)),
             s.get("alert_smtp_user", ""), s.get("alert_smtp_password", ""),
-            s.get("alert_email_to", "")))
+            s.get("alert_email_to", ""),
+            use_tls=bool(s.get("alert_smtp_starttls", False))))
     return handlers

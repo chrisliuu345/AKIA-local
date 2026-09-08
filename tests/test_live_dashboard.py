@@ -15,8 +15,10 @@ pytest.importorskip("fastapi")
 pytest.importorskip("uvicorn")
 
 from core.devices.driver import Sample
+from core.plant import PlantConfig, Line, Station
 from core.storage.timeseries import TimeseriesStore
 from core.streaming.bus import StreamBus
+from core.streaming.oee_live import LiveOEEComputer
 from server.app import start_thread, stop_thread
 
 PORT = 18765
@@ -122,3 +124,66 @@ def test_dashboard_page_served(server):
     text = raw.decode("utf-8")
     assert "QA-Tool 实时 SPC 云看板" in text
     assert "ws://" in text
+    # B1 回归: 图表对象必须缓存 ch 字段
+    assert "charts[key] = { card, meta: t2, cv, pts: [], ch };" in text, "ch 字段缺失"
+
+
+def test_plant_status_uses_injected_config_and_tags():
+    """B2: /api/plant 使用注入的 plant 配置, 状态灯按在线/判异着色。"""
+    import time as _t
+    bus = StreamBus()
+    store = None
+    plant = PlantConfig(lines=[Line(name="L1", stations=[
+        Station(name="S1", device="dev-a", channels=["CH0"], usl=110.0),
+        Station(name="S2", device="dev-b", channels=["CH0"]),
+    ])])
+    oee = LiveOEEComputer(bus, plant, window_s=600.0)
+    thread = start_thread(bus, store, port=18766, plant=plant, oee=oee)
+    url = "http://127.0.0.1:18766"
+    deadline = _t.time() + 10
+    while _t.time() < deadline:
+        try:
+            urllib.request.urlopen(url + "/api/plant", timeout=1).read()
+            break
+        except Exception:
+            _t.sleep(0.2)
+    else:
+        pytest.fail("server did not start")
+    try:
+        bus.publish("dev-a", [Sample("dev-a", "CH0", 100.0, _t.time()),
+                              Sample("dev-a", "CH0", 131.0, _t.time())])
+        raw = urllib.request.urlopen(url + "/api/plant", timeout=3).read()
+        lines = _json.loads(raw)["lines"]
+        assert lines[0]["name"] == "L1"
+        st = {st["name"]: st for st in lines[0]["stations"]}
+        assert st["S1"]["status"] == "yellow"  # OOS 越限
+        assert st["S2"]["status"] == "red"     # 无数据离线
+        raw = urllib.request.urlopen(url + "/api/oee", timeout=3).read()
+        oee_lines = _json.loads(raw)["lines"]
+        assert "L1" in oee_lines and oee_lines["L1"]["samples"] == 2
+    finally:
+        stop_thread(thread)
+        oee.stop()
+
+
+def test_ws_abrupt_disconnect_then_continue(server):
+    """B3: 客户端硬断连后服务照常广播, 新连接可继续收数。"""
+    import websockets.sync.client as ws_client
+    bus, store, addr = server
+    ws = ws_client.connect(f"ws://{addr}/ws/stream")
+    import socket as _sock
+    ws.socket.shutdown(_sock.SHUT_RDWR)
+    ws.socket.close()  # 客户端硬断连(跳过 WS 关闭握手)
+    bus.publish("h1", [Sample("h1", "CH0", 1.0, 100.0)])
+    with ws_client.connect(f"ws://{addr}/ws/stream") as ws2:
+        bus.publish("h2", [Sample("h2", "CH0", 2.0, 101.0)])
+        got = []
+        deadline = time.time() + 5
+        while time.time() < deadline and not got:
+            try:
+                msg = _json.loads(ws2.recv(timeout=1))
+            except TimeoutError:
+                continue
+            if msg["type"] == "batch":
+                got = msg["samples"]
+        assert got and got[0]["dev"] == "h2"
