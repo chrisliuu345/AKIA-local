@@ -17,12 +17,12 @@ VSVersionInfo(
         [
           StringStruct(u'CompanyName', u'QA-Tool'),
           StringStruct(u'FileDescription', u'QA-Tool 质量分析工具'),
-          StringStruct(u'FileVersion', u'3.6.0'),
+          StringStruct(u'FileVersion', u'3.7.0'),
           StringStruct(u'InternalName', u'QA-Tool'),
           StringStruct(u'LegalCopyright', u'Copyright © 2026 QA-Tool'),
           StringStruct(u'OriginalFilename', u'QA-Tool.exe'),
           StringStruct(u'ProductName', u'QA-Tool'),
-          StringStruct(u'ProductVersion', u'3.6.0')
+          StringStruct(u'ProductVersion', u'3.7.0')
         ]
       )
     ]),

@@ -2,7 +2,7 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> Current: v3.6.0 Graph Builder + help center (code acceptance passed ✅ 2026-09-06 · release packaging pending) | Tests: 1300+ pytest · 37 Tabs | Updated: 2026-09-06
+> Current: v3.7.0 Realtime SPC Cloud Dashboard & Data Connectors (dev completed ✅ 2026-09-08) | Tests: 1300+ pytest · 37 Tabs | Updated: 2026-09-08
 
 ---
 
@@ -11,7 +11,7 @@
 > **Strategic Repositioning (2026-08-24)**: positioning shifted from enterprise multi-company platform to **personal subscription quality engineering tool** (Minitab-like), with differentiation core in real-time factory data integration + IE engineering tools + five-chain workflow + BYOK AI Agent (QAM Harness). See [Core Competitive Positioning](#core-competitive-positioning-2026-08-rework).
 
 ```
-v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ✅ ──→ v2.7.0 ✅ ──→ v2.8.0 ✅ ──→ v2.9.0 ✅ ──→ v3.0.0 ✅ ──→ v3.1.0 ✅ ──→ v3.2.0 ✅ ──→ v3.3.0 ✅ ──→ v3.4.0 ✅ ──→ v3.5.0 ✅ ──→ v3.6.0 ✅ ──→ v3.6.1 ✅(folded into 3.6.0) ──→ v3.7.0 ──→ v3.8.0 ──→ v4.0.0
+v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ✅ ──→ v2.7.0 ✅ ──→ v2.8.0 ✅ ──→ v2.9.0 ✅ ──→ v3.0.0 ✅ ──→ v3.1.0 ✅ ──→ v3.2.0 ✅ ──→ v3.3.0 ✅ ──→ v3.4.0 ✅ ──→ v3.5.0 ✅ ──→ v3.6.0 ✅ ──→ v3.6.1 ✅(folded into 3.6.0) ──→ v3.7.0 ✅ ──→ v3.8.0 ──→ v4.0.0
 ```
 
 | Stage | Version | Theme |
@@ -23,7 +23,7 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 | Done | v3.5.0 | **MSA & Capability Deepening** (Attribute Agreement Enhancement / EMP Method / Gage R&R Enhancement / Capability Sixpack / Auto Capability / Edgeworth Approximation) |
 | Done ✅ | v3.6.0 | **Graph Builder Enhancement & Interactive Experience** (chart editor architecture / pie·pareto real-time interaction / heatmap·scatter matrix / small multiples faceting / PPT·PNG·SVG export + thumbnail gallery / help center + menu redesign / integration tests) — code acceptance passed 2026-09-06, release packaging pending |
 | Done | v3.6.1 | **Full code-quality audit** (7 latent crash fixes / hazard cleanup / full-repo ruff scan / 72-file regression) |
-| TBD | v3.7.0 | Real-Time SPC Cloud Dashboard & Data Connectors |
+| Done ✅ | v3.7.0 | **Real-Time SPC Cloud Dashboard & Data Connectors** (P1−P6, 2026-09-08) |
 | TBD | v3.8.0 | Industrial AI Agent (AI + Vision Integration) |
 | Merged | v3.9.0 | Merged into v3.8.0 (Video Time Study → Vision AI capability) |
 | TBD | v3.9.0 | Predictive Analytics & Machine Learning |
@@ -549,7 +549,7 @@ python build_nuitka.py --onefile      # single executable
 
 ---
 
-## v3.7.0 — Real-Time SPC Cloud Dashboard & Data Connectors (TBD)
+## v3.7.0 — Real-Time SPC Cloud Dashboard & Data Connectors (✅ done 2026-09-08)
 
 ### Prerequisites ✅ (cleared 2026-09-07)
 - F841 ×65, E701/E702 ×568 (ruff format), E402 ×20, B007×38 / B905×31 / B028×2 / B008×1 — zero remaining
