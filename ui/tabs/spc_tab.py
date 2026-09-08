@@ -362,6 +362,7 @@ class SPCTab(BaseAnalysisTab):
         self._live_timer = QTimer(self)
         self._live_timer.setInterval(500)
         self._live_timer.timeout.connect(self._live_poll)
+        self.destroyed.connect(lambda *_: self._live_teardown())
         if bus is None:
             self.live_check.setEnabled(False)
             self.live_check.setToolTip(i18n.tr("spc.live_no_source"))
@@ -423,6 +424,7 @@ class SPCTab(BaseAnalysisTab):
     def _on_live_device_changed(self, _device: str):
         # 通道列表在收到首个批量后更新
         self.live_chan_combo.clear()
+        self._last_channel = ""
 
     def _live_poll(self):
         if self._live_spc is None:
