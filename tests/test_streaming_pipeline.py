@@ -100,7 +100,8 @@ def test_filter_by_channel_and_prune(store):
         Sample("dev", "CH0", 3.0, 2.0),
     ])
     assert len(store.query("dev", "CH1")) == 1
-    store.prune_older_than(1.5)
+    deleted = store.prune_older_than(1.5)
+    assert deleted == 2, "B5: prune 应返回实际删除行数"
     assert len(store.query("dev")) == 1
 
 

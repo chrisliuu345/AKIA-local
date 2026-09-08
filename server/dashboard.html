@@ -73,7 +73,7 @@ function ensureChart(device, ch) {
   cv.width = 640; cv.height = 120;
   card.appendChild(t1); card.appendChild(t2); card.appendChild(cv);
   document.getElementById("cards").appendChild(card);
-  charts[key] = { card, meta: t2, cv, pts: [] };
+  charts[key] = { card, meta: t2, cv, pts: [], ch };
   return key;
 }
 
