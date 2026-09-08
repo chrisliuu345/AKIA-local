@@ -93,3 +93,40 @@ def test_mqtt_connector_parses_broker_payload(monkeypatch):
     c._on_message(None, None, msg)
     samples = c.poll()
     assert {(s.channel, s.value) for s in samples} == {("CH0", 21.5), ("CH1", 18.0)}
+
+
+def test_modbus_connector_mock_client(monkeypatch):
+    """B8: 同步客户端 + register 映射 + 读失败安全。"""
+    import connectors.plugins.modbus_tcp as mb
+
+    class RR:
+        def __init__(self, registers):
+            self.registers = registers
+
+    class FakeClient:
+        def __init__(self, host, port=502):
+            self.host, self.port = host, port
+            self.connected = False
+
+        def connect(self):
+            self.connected = True
+            return True
+
+        def read_holding_registers(self, addr, count, slave):
+            return RR([10, 20, 30][:count]) if slave == 1 else RR(None)
+
+        def close(self):
+            self.connected = False
+
+    monkeypatch.setattr(mb, "ModbusTcpClient", FakeClient)
+    c = mb.Connector({"name": "plc", "host": "127.0.0.1",
+                      "registers": {"CH0": 0, "CH1": 1}})
+    c.open()
+    samples = c.poll()
+    assert {(s.channel, s.value) for s in samples} == {("CH0", 10.0), ("CH1", 20.0)}
+    assert samples[0].device == "plc"
+    c._slave = 9
+    assert c.poll() == []  # 读失败不抛异常, 下轮重试
+    c.close()
+    assert c._client is None
+    assert c.poll() == []

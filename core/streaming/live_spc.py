@@ -113,16 +113,26 @@ class LiveSPC:
                 "lcl": ic["lcl"], "violations": ic["violations"]}
 
     def _detect(self, result: dict, data: list[float], first_new: int) -> list[LiveEvent]:
-        """仅输出新增点（序号 >= first_new）上的事件，避免窗口重算刷屏。"""
+        """仅输出新增点（序号 >= first_new）上的事件，避免窗口重算刷屏。
+
+        单点单事件: 同一新增点已报 nelson(规则1 越限)后不再叠加 ooc(极差越限)，
+        防告警双发。
+        """
         events: list[LiveEvent] = []
+        seen_pts: set[int] = set()
         for v in result["violations"]:
             pt = int(v["point"])
             if pt < first_new:
                 continue
             val = float(v.get("value")) if "value" in v else float(data[pt - 1])
+            if v.get("rule") == "above_ucl" and pt in seen_pts:
+                continue
             if v.get("rule") == "above_ucl":
                 events.append(LiveEvent("ooc", pt, "极差/单值超上控制限", val, "mr"))
-            events.append(LiveEvent("nelson", pt, str(v.get("desc", "")), val, v.get("rule", 0)))
+                seen_pts.add(pt)
+            else:
+                events.append(LiveEvent("nelson", pt, str(v.get("desc", "")), val, v.get("rule", 0)))
+                seen_pts.add(pt)
         if (self.usl is not None or self.lsl is not None) and first_new <= len(data):
             for i in range(first_new - 1, len(data)):
                 val = data[i]

@@ -113,3 +113,36 @@ def test_live_ui_pipeline_jump_shows_ooc(_qt_application):
     assert "判异" in tab.live_status.text(), tab.live_status.text()
     tab.live_check.setChecked(False)
     tab.close()
+
+
+def test_single_event_per_point_no_double():
+    """B4: 同一新增点同时触发规则1与极差越限时只报一次事件。"""
+    import random
+    rnd = random.Random(7)
+    spc = LiveSPC("CH0", mode="imr", window=30)
+    spc.feed([100.0 + rnd.gauss(0, 0.5) for _ in range(30)])
+    frame = spc.feed([106.0])
+    pts = [e.point for e in frame.events]
+    assert len(pts) == len(set(pts)), f"同点事件重复: {pts}"
+    assert pts and pts[-1] <= 30
+
+
+def test_live_ui_unsubscribes_on_destroy(_qt_application):
+    """B9: 实时监控 tab 销毁后必须退订, 不泄漏回调。"""
+    import time as _t
+    from ui.tabs.spc_tab import SPCTab
+    from core.streaming.bus import StreamBus
+    from core.devices.driver import Sample
+
+    bus = StreamBus()
+    tab = SPCTab()
+    tab.set_stream_source(bus)
+    bus.publish("mock-01", [Sample("mock-01", "CH0", 100.0, _t.time())])
+    tab.live_check.setChecked(True)
+    assert sum(len(v) for v in bus._subs.values()) > 0
+    tab.deleteLater()
+    from PySide6.QtCore import QEventLoop, QTimer
+    loop = QEventLoop()
+    QTimer.singleShot(50, loop.quit)
+    loop.exec()
+    assert sum(len(v) for v in bus._subs.values()) == 0, "销毁后未退订"

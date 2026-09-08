@@ -58,25 +58,25 @@ def create_app(bus: StreamBus, store: TimeseriesStore | None = None,
         """产线拓扑 + 工位状态灯（绿/黄/红: 正常 / 判异·超规格 / 离线）。"""
         if plant is None:
             return JSONResponse({"lines": []})
-        from core import plant as plant_mod
-        cfg = plant_mod.PlantConfig.load()
+        from core.streaming.live_spc import LiveSPC
+
+        cfg = plant
         now = time.time()
+        recent_data: dict[str, list] = {dev: bus.recent(dev, n=30) for dev in bus.topics()}
         stats = {}
-        for dev in bus.topics():
-            recent = bus.recent(dev, n=1)
+        for dev, recent in recent_data.items():
             stale = bool(recent) and (now - recent[-1].ts) > 5.0
             stats[dev] = {"online": bool(recent) and not stale}
-        from core.streaming.live_spc import LiveSPC
         ooc_live: dict[tuple[str, str], bool] = {}
         for line in cfg.lines:
             for st in line.stations:
-                spc = LiveSPC("x", mode="imr", window=30, usl=st.usl, lsl=st.lsl)
+                vals_by_ch: dict[str, list[float]] = {}
+                for s in recent_data.get(st.device, []):
+                    vals_by_ch.setdefault(s.channel, []).append(s.value)
                 for ch in st.channels or []:
-                    spc.reset()
-                    frame = spc.feed([s.value for s in bus.recent(st.device, n=30)
-                                      if s.channel == ch])
-                    key = (st.device, ch)
-                    ooc_live[key] = frame.ooc or frame.oos
+                    spc = LiveSPC("x", mode="imr", window=30, usl=st.usl, lsl=st.lsl)
+                    frame = spc.feed(vals_by_ch.get(ch, []))
+                    ooc_live[(st.device, ch)] = frame.ooc or frame.oos
         lines = []
         for line in cfg.lines:
             stations = []
@@ -122,8 +122,11 @@ def create_app(bus: StreamBus, store: TimeseriesStore | None = None,
             unsub = bus.subscribe(None, on_batch)
 
         async def sender():
-            while True:
-                await ws.send_text(await queue.get())
+            try:
+                while True:
+                    await ws.send_text(await queue.get())
+            except Exception:
+                pass  # 客户端硬断连/服务端停机 — receive 循环处结束并由 finally 清理
 
         task = loop.create_task(sender())
         try:
