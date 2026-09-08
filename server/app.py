@@ -10,6 +10,7 @@ import argparse
 import asyncio
 import json
 import threading
+import time
 from pathlib import Path
 
 from core.streaming.bus import StreamBus
@@ -21,7 +22,8 @@ DEFAULT_PORT = 8765
 _STATIC = Path(__file__).parent / "dashboard.html"
 
 
-def create_app(bus: StreamBus, store: TimeseriesStore | None = None):
+def create_app(bus: StreamBus, store: TimeseriesStore | None = None,
+               plant=None, oee=None):
     from fastapi import FastAPI, WebSocket, WebSocketDisconnect
     from fastapi.responses import FileResponse, JSONResponse
 
@@ -50,6 +52,50 @@ def create_app(bus: StreamBus, store: TimeseriesStore | None = None):
             "device": device,
             "samples": [{"t": s.ts, "ch": s.channel, "v": s.value} for s in samples],
         })
+
+    @app.get("/api/plant")
+    async def plant_status():
+        """产线拓扑 + 工位状态灯（绿/黄/红: 正常 / 判异·超规格 / 离线）。"""
+        if plant is None:
+            return JSONResponse({"lines": []})
+        from core import plant as plant_mod
+        cfg = plant_mod.PlantConfig.load()
+        now = time.time()
+        stats = {}
+        for dev in bus.topics():
+            recent = bus.recent(dev, n=1)
+            stale = bool(recent) and (now - recent[-1].ts) > 5.0
+            stats[dev] = {"online": bool(recent) and not stale}
+        from core.streaming.live_spc import LiveSPC
+        ooc_live: dict[tuple[str, str], bool] = {}
+        for line in cfg.lines:
+            for st in line.stations:
+                spc = LiveSPC("x", mode="imr", window=30, usl=st.usl, lsl=st.lsl)
+                for ch in st.channels or []:
+                    spc.reset()
+                    frame = spc.feed([s.value for s in bus.recent(st.device, n=30)
+                                      if s.channel == ch])
+                    key = (st.device, ch)
+                    ooc_live[key] = frame.ooc or frame.oos
+        lines = []
+        for line in cfg.lines:
+            stations = []
+            for st in line.stations:
+                dev = st.device
+                online = stats.get(dev, {}).get("online", False)
+                alert = any(ooc_live.get((st.device, ch), False) for ch in st.channels or [])
+                status = "red" if not online else ("yellow" if alert else "green")
+                stations.append({"name": st.name, "device": dev,
+                                 "channels": st.channels, "status": status,
+                                 "online": online, "alert": alert})
+            lines.append({"name": line.name, "stations": stations})
+        return JSONResponse({"lines": lines})
+
+    @app.get("/api/oee")
+    async def oee_metrics():
+        if oee is None:
+            return JSONResponse({"lines": {}})
+        return JSONResponse({"lines": oee.snapshot()})
 
     @app.websocket("/ws/stream")
     async def stream(ws: WebSocket):
@@ -97,11 +143,12 @@ def create_app(bus: StreamBus, store: TimeseriesStore | None = None):
 
 
 def start_thread(bus: StreamBus, store: TimeseriesStore | None = None,
-                 host: str = DEFAULT_HOST, port: int = DEFAULT_PORT):
+                 host: str = DEFAULT_HOST, port: int = DEFAULT_PORT,
+                 plant=None, oee=None):
     """在线程内启动 uvicorn — 桌面端菜单入口使用。"""
     import uvicorn
 
-    app = create_app(bus, store)
+    app = create_app(bus, store, plant=plant, oee=oee)
     cfg = uvicorn.Config(app, host=host, port=port, log_level="warning")
     server = uvicorn.Server(cfg)
     thread = threading.Thread(target=server.run, daemon=True,

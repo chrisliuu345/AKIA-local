@@ -117,6 +117,7 @@ class MainWindow(QMainWindow):
             self.sidebar.add_plugin_entry(idx, name)
 
         _step(85, "主窗口初始化完成")
+        self._start_alert_engine()
 
 
     def _setup_ui(self):
@@ -1575,6 +1576,9 @@ class MainWindow(QMainWindow):
         settings.setValue("geometry", self.saveGeometry())
         settings.setValue("windowState", self.saveState())
         settings.setValue("sidebarCollapsed", not self.sidebar.isVisible())
+        from server.app import stop_thread
+        stop_thread(getattr(self, "_dash_thread", None))
+        self._dash_thread = None
         super().closeEvent(event)
 
     def _on_batch_scheduler(self):
@@ -1660,9 +1664,14 @@ class MainWindow(QMainWindow):
         """启动/停止内置实时看板服务（v3.7.0-P3）。"""
         if checked:
             try:
+                from core.plant import PlantConfig
+                from core.streaming.oee_live import LiveOEEComputer
                 from server.app import start_thread
 
-                self._dash_thread = start_thread(self.stream_bus)
+                plant = PlantConfig.load()
+                self._oee_computer = LiveOEEComputer(self.stream_bus, plant)
+                self._dash_thread = start_thread(
+                    self.stream_bus, None, plant=plant, oee=self._oee_computer)
             except Exception as e:
                 QMessageBox.warning(
                     self, i18n.tr("menu.live_dashboard"),
@@ -1675,6 +1684,41 @@ class MainWindow(QMainWindow):
 
             stop_thread(getattr(self, "_dash_thread", None))
             self._dash_thread = None
+            oee = getattr(self, "_oee_computer", None)
+            if oee:
+                oee.stop()
+                self._oee_computer = None
+
+    def _start_alert_engine(self):
+        """按产线配置 + user_config 设置安装告警引擎（桌面状态栏通知）。"""
+        try:
+            from config.settings import get_setting
+            from core.plant import PlantConfig
+            from core.streaming.alerts import (
+                AlertEngine, DesktopHandler, rules_from_plant,
+                build_default_handlers,
+            )
+            plant = PlantConfig.load()
+            rules = rules_from_plant(plant)
+            if not rules:
+                return
+            desktop = DesktopHandler()
+            desktop.alert.connect(
+                lambda title, msg: self.statusBar().showMessage(f"{title}: {msg}", 8000))
+            settings = {
+                "alert_webhook_url": get_setting("alert_webhook_url", ""),
+                "alert_smtp_host": get_setting("alert_smtp_host", ""),
+                "alert_smtp_port": get_setting("alert_smtp_port", 25),
+                "alert_smtp_user": get_setting("alert_smtp_user", ""),
+                "alert_smtp_password": get_setting("alert_smtp_password", ""),
+                "alert_email_to": get_setting("alert_email_to", ""),
+            }
+            self._alert_engine = AlertEngine(
+                self.stream_bus, rules, [desktop] + build_default_handlers(settings))
+            self._alert_engine.start()
+        except Exception:
+            import logging
+            logging.getLogger(__name__).exception("alert engine init failed")
 
     def _on_diagnose(self):
         if not self.profile_result or not self.profile_result.get("sheets"):
