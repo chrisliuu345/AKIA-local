@@ -75,24 +75,42 @@ class TestLLMClientStop:
         assert True  # 显式断言：stop() 完成无异常
 
 
-class TestLLMWorkerInterruption:
-    def test_worker_breaks_on_interruption(self, monkeypatch, openai_client):
+class TestAgentWorkerInterruption:
+    """QAM Harness 的后台工作线程（v3.8.0 起由 AgentWorker 承担原 LLMWorker 职责）。"""
+
+    def test_worker_breaks_on_interruption(self):
         from PySide6.QtCore import QCoreApplication
-        from ui.dialogs.llm_dialog import LLMWorker
+        from ui.dialogs.llm_dialog import AgentWorker
+
         app = QCoreApplication.instance() or QCoreApplication([])
-        fake = FakeResp()
-        monkeypatch.setattr("core.llm_client.urllib.request.urlopen",
-                            lambda *a, **k: fake)
-        worker = LLMWorker(openai_client, "hi")
+
+        class SlowEngine:
+            """无限流式产出 token 的假引擎 — 只应由中断停止。"""
+
+            def __init__(self):
+                self.tokens = 0
+
+            def respond_stream(self, question):
+                for _ in range(100000):
+                    self.tokens += 1
+                    time.sleep(0.002)
+                    yield "token", "x"
+
+        engine = SlowEngine()
+        worker = AgentWorker(engine, "hi")
         received = []
-        finished = []
         worker.token_received.connect(received.append)
-        worker.finished.connect(finished.append)
         worker.start()
-        assert fake._reading.wait(timeout=2), "worker 未进入阻塞读"
+
+        deadline = time.monotonic() + 3
+        while engine.tokens < 3 and time.monotonic() < deadline:
+            app.processEvents()
+            time.sleep(0.01)
+        assert engine.tokens >= 3, "worker 未开始产出"
+
         worker.requestInterruption()
-        openai_client.stop()
         assert worker.wait(3000), "worker 未在中断后退出"
-        app.processEvents()  # 冲刷跨线程队列信号
-        assert finished, "finished 信号未发出"
+        app.processEvents()
+        assert received, "中断前应收到的 token 信号"
+        assert engine.tokens < 100000, "中断后仍在继续生成"
         assert worker.isFinished()

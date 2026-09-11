@@ -2,7 +2,7 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> 当前: v3.7.2 实时监控对标优化（8 项：规格线·缩放 / plant 可视化 / 告警分级确认 / 成本损失 / OEE 真人化 / 降采样保留 / 连接器健康 / 看板鉴权）（✅ 2026-09-10）| 测试: 1350+ pytest · 37 个 Tab | 更新: 2026-09-10
+> 当前: v3.7.2 实时监控对标优化（8 项）（✅ 2026-09-10）| 进行中: **v3.8.0 P0–P4 ✅（QAM Harness + BYOK + Vision 视频时间研究，待发布）** | 测试: 1500+ pytest · 37 个分析 Tab | 更新: 2026-09-11
 
 ---
 
@@ -26,7 +26,7 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 | 已完成 ✅ | v3.7.0 | **实时 SPC 云看板与数据连接器**（实时数据流/Web 看板/连接器插件/告警中心 — 2026-09-08 开发完成）|
 | 已完成 ✅ | v3.7.1 | **五链贯通修复 + 数据语义与工程一致性加固**（FMEA→CP→SPC 桥接修复 + ProjectContext 单一事实源 / 列类型值优先判定（测量值·时长列）+ 清洗后重算 / 打包隔离本机配置 + 敏感配置加密 / APP_VERSION 单一事实源 + CI 版本门禁 / 僵尸模块清理与分层归位）— 2026-09-10 |
 | 已完成 ✅ | v3.7.2 | **实时监控对标优化 8 项**（实时图 USL/LSL + 缩放 / plant.json 可视化配置 / 告警分级·确认·审计·联动 / 成本损失核算 / OEE 节拍真实 P + 停机原因码 + 班次日历 / 分钟降采样与分档保留 / 连接器健康页与自动重连 / 看板可选鉴权）— 2026-09-10 |
-| 待开发 | v3.8.0 | Industrial AI Agent（AI + Vision 融合平台） |
+| 开发中 ✅ | v3.8.0 | Industrial AI Agent（AI + Vision 融合平台）— P0–P4 已完成，待发布 |
 | 已合并 | v3.9.0 | 已合并至 v3.8.0（视频时间研究 → Vision AI 能力） |
 | 待开发 | v4.0.0 | 预测分析与机器学习 |
 | 待开发 | v4.1.0 | 待定（根据 v3.x 进展定义） |
@@ -809,11 +809,98 @@ QA-Tool v3.8.0 Industrial AI Agent
 
 ### 核心内容
 
-**Phase 1: Agent Core (Day 1-2)**
+**Phase 1: Agent Core (Day 1-2) — ✅ 已完成 2026-09-11**
 - `core/agent/engine.py` — Agent 主循环（LLM 调用 + 工具调度）
 - `core/agent/tools.py` — 工具注册与调度框架
 - `core/agent/conversation.py` — 多轮对话管理 + 上下文保持
 - `ui/dialogs/agent_dialog.py` — Agent 对话 UI
+
+> **Phase 1 实际交付（2026-09-11）**
+> - `core/agent/tools.py` — `ToolRegistry` / `AgentContext` / `ToolResult` +
+>   **16 个面向本软件能力的工具**（真引擎接线，非壳）:
+>   数据清单 / 列统计描述 / SPC 控制图（imr·xbar_r·xbar_s·p·np·c·u·cusum·ewma）/
+>   过程能力（正态·非正态）/ Gage R&R（交叉·嵌套）/ 假设检验（正态·t·配对·ANOVA）/
+>   OEE（IE 资源解析）/ 实时 OEE 快照 / 成本损失 / 告警查询 / 连接器健康 /
+>   五链上下文 / 产线配置 / 已运行分析 / 知识库检索 / 指标解读
+> - `core/agent/engine.py` — 在线（LLM 输出 `{"tool":...,"args":...}` → 执行 →
+>   结果回灌 → 最多 3 步）与**离线（关键词规则路由 + explain 判定阈值 + 改善建议）**
+>   双路径；LLM 异常自动降级离线；工具异常不中断主循环
+> - `core/agent/conversation.py` — 多轮裁剪 / 工具记录 / Markdown 导出
+> - `core/agent/explain.py` — Cp/Cpk/Pp/Ppk/PPM/σ/GRR/ndc/OEE/A·P·Q/p 值/RPN/
+>   平衡率/不良率的工程解读（离线也能给判定与建议）
+> - `ui/agent_bridge.py` — UI→core 适配（主窗口数据表/分析结果/五链/产线/告警/
+>   停机追踪/实时 OEE/连接器健康/知识库 → AgentContext）
+> - `ui/dialogs/llm_dialog.py` — 在既有 Ollama 对话框上升级为 QAM Harness：
+>   聊天气泡（左右分栏）/ Markdown 轻渲染 / 工具调用卡片（参数·耗时·状态）/
+>   上下文条（数据表·分析数·告警数·工具数）/ 8 个 Agent 预设 / 离线工具模式提示
+> - 流式渲染修复（2026-09-11）: token 更新由"逐块删尾"改为**锚点整段替换**，
+>   每个回答始终在同一气泡内逐字增长（原实现 `StartOfBlock` 只能删掉表格气泡的
+>   最后一段，导致每个字残留新框刷屏）；工具卡片到达时结束当前气泡避免覆盖，
+>   收尾/失败/清空同步复位锚点；新增 4 例 UI 回归（直接 token + 真实 Worker
+>   信号链路）
+> - 对话窗口交互升级（2026-09-11）: 模型选择下拉框（含刷新/自定义项）改为
+>   **「模型名称」完全自定义输入框**（回车/失焦生效，QSettings 记忆）；
+>   窗口改为独立非模态顶层窗口（可自由移动/缩放/最大化/全屏），
+>   初始尺寸按屏幕可用区域自适应并居中，双行头布局保证 860px 宽度下无遮挡
+> - 命名统一: 侧边栏与菜单「AI 助手」→ **QAM Harness**（`sidebar.llm` / `menu.ai`，
+>   `LLMDialog` 保留为兼容别名）
+> - 测试: `tests/test_agent_tools.py`(12) + `tests/test_agent_engine.py`(15) +
+>   `tests/test_agent_ui.py`(14)，覆盖真引擎数值、工具异常兜底、离线路由、
+>   LLM 工具协议解析、步数上限、UI 端到端对话
+> - P0 收尾同步完成: 路线图数字订正（36 分析 Tab / 1400+ 测试）、`.gitignore`
+>   增加运行产物（data/、analysis_report.*、chat_history.md）、remote URL 明文
+>   token 清理、`requirements-vision.txt` Vision 可选依赖占位
+
+> **P2 实际交付（BYOK 云供应商 + 隐私门，2026-09-11 ✅）**
+> 说明: 编号沿用 P0→P4（P2=BYOK、P3=Vision），与本文件原先的 "Phase 2: Vision"
+> 对应关系为 P3 = Phase 2。
+> - `core/agent/providers.py` — BYOK 注册表：**OpenAI / Anthropic / Google Gemini /
+>   DeepSeek / Z.ai(GLM) / KIMI** + **自定义 OpenAI 兼容端点**（vLLM/LM Studio/
+>   OneAPI/企业网关）；协议映射（openai / anthropic / gemini 原生 / ollama）、
+>   本地端点识别（localhost·127.x·10.x·192.168.x·172.16-31.x·::1）、密钥脱敏
+> - `core/llm_client.py` 重构 — 三套协议适配器：OpenAI 兼容 SSE、
+>   **Anthropic 原生**（x-api-key + anthropic-version + content_block_delta）、
+>   **Gemini 原生**（streamGenerateContent + alt=sse）；统一 SSE 解析、
+>   **错误归一化**（401/403/404/429/5xx/超时/DNS → 中文可读 + 密钥脱敏）、
+>   `from_config()`（读加密配置）与 `test_connection()`（延迟 + 模型数）
+> - **隐私门**（路线图验收项）: `core/agent/privacy.py` fail-closed 策略 +
+>   `ui/dialogs/privacy_dialog.py`「同意并继续 / 仅用本地工具 / 取消」，
+>   按供应商**只拦一次**（`llm_privacy_ack_<id>`，设置页可撤销），外发预览列出
+>   问题 + 工具结果摘要（截断 400 字）+ 数据列名提示与规模估算，明确声明
+>   不上传原始数据表/路径/密钥
+> - 设置面板新增「QAM Harness」标签页: 供应商 / 模型（可自定义）/ API Key
+>   （密码框 + 显示切换 + 保存即加密 + 清除）/ 接口地址覆盖 / **连通性测试**
+>   （后台线程，显示延迟与模型数）/ 隐私授权状态与撤销 / 云调用总开关
+> - 对话窗口: 供应商下拉（8 项，未配密钥置灰标注）、模型联动、隐私提示条；
+>   云调用关闭或未授权时自动降级本地工具模式
+> - API 接入快捷补配: 在对话窗口点击/切换到未配置密钥的云供应商时直接弹出
+>   密钥输入框（密码回显 + 空值校验 + 保存即加密 `_enc`），已有密钥静默接入；
+>   取消则回退原供应商，不改变当前连接
+> - 测试: `test_agent_providers.py`(7) + `test_llm_client_protocols.py`(18) +
+>   `test_agent_privacy.py`(11) + `test_settings_ai_tab.py`(8) + 对话 UI 扩展(5)
+>   + API 接入快捷补配(6) = **55 用例**，全部离线（mock urlopen），覆盖协议请求体/请求头/SSE 解析、
+>   错误归一化、密钥加密落盘与不回显、隐私门三出口
+
+> **评审 O1/O2 修复（2026-09-11 ✅）**
+> - **O1 工具覆盖补齐**：新增 `core/agent/tools_ext.py`，工具数 16 → **30**，
+>   覆盖全部 36 个分析 Tab 的主要能力——Laney P′/U′、Hotelling T²、能力 Sixpack、
+>   组间组内能力、Johnson 变换、容差区间、属性一致性、Type 1、线性·偏倚、EMP、
+>   双因素 ANOVA、卡方、两比例、TOST、Mann-Whitney/Kruskal、DOE 分析（因子/部分因子/
+>   响应曲面/BBD/PB/DSD/田口/混料）+ 设计生成 + 功效与样本量、线性回归、可靠性
+>   （Weibull/KM/Cox/Crow-AMSAA/保修/RBD）、时间序列（ARIMA/指数平滑/季节分解/
+>   ACF·PACF）、IE（标准工时/线平衡/VSM/工作抽样/SMED/TPM）、AI 根因分析。
+>   实现遵循"真引擎"原则并逐一对齐真实返回结构；DOE 引擎参数差异用
+>   `_call_with_supported` 自适应
+> - **O2 流式防泄漏**：模型输出工具 JSON 时不再把 JSON 打到界面——
+>   以 `{`/``` 开头则全缓冲；正文中出现 `{"tool"` 则只放行其之前正文；
+>   并保留 6 字符尾部防止分块切断泄漏；非工具 JSON 回答不丢内容
+> - **顺带发现（未修，待定）**：`analysis/spc/hotelling.py` 在**未提供子组列**时
+>   `sample_sizes=[1]*n` 使 `_compute_ucl` 的 `(ni-1)` 项为 0 → **T² UCL=0、
+>   100% 点被判越限**（提供 subgroup_column 后 UCL=2.447、越限 0，实测对照）。
+>   当前工具已改为显式告警并建议提供 subgroup_column；引擎公式修复需另行确认
+>   （个体观测的正确形式为 UCL = p(m+1)(m-1)/(m(m-p))·F(α;p,m-p)）
+> - 测试: `tests/test_agent_tools_ext.py`(15) + `test_agent_engine.py` 新增 4 例
+>   = **19 用例**（每个扩展工具都用真实引擎跑通合成数据）
 
 **Phase 2: Vision Infrastructure (Day 3-4)**
 - `analysis/vision/camera.py` — 相机输入抽象（USB/IP/RTSP/MJPEG）
@@ -830,6 +917,56 @@ QA-Tool v3.8.0 Industrial AI Agent
 - E2E 测试：Agent 对话 → 工具调用 → 结果返回
 - 性能优化：帧处理延迟 < 100ms
 - 文档更新
+
+> **P3 实际交付（Vision AI 视频时间研究，2026-09-11 ✅）**
+> 说明: 编号 P3 = Phase 2/3/4（Vision 基础设施 → Agent 集成 → 验收），
+> V0 为实施中发现并先行修复的工时研究计时列缺陷。
+> - **V0 前置修复**: `analysis/ie/time_study.py` 旧实现误用 `cycle`（循环序号）
+>   当观测时间，3 次 11/12/13s 的观测会算成均值 2s；已改为
+>   `observation_time > 0` 优先、否则回退 `cycle`（兼容旧数据），
+>   整体统计同步修正；新增 `tests/test_ie_time_study.py`(8)
+> - **V1 核心引擎** `analysis/vision/`（无 Qt，cv2/mediapipe 全惰性导入）:
+>   - `camera.py` — 文件/USB/RTSP/MJPEG/合成源统一 `FrameSource` 接口 +
+>     `open_source()` 解析；文件源帧序号时间戳可复现，实时源墙钟
+>   - `processor.py` — 缩放/ROI/MOG2 前景 ∪ 帧差活动特征/最大前景块质心与
+>     包围盒/位移速度/延迟统计（P95）
+>   - `pose.py` — MediaPipe **Tasks API**（1.0 起已移除旧 `mp.solutions`）
+>     PoseLandmarker VIDEO 模式 33 关键点 + 手腕摆动/搬运姿态特征；
+>     模型缺失/校验失败/依赖缺失自动降级 OpenCV 运动特征并给出提示
+>   - `model_store.py` — `pose_landmarker_lite.task`（5.6MB，SHA256
+>     `59929e1d…574d`）按需下载 + 校验，默认 `~/.qa_tool_models/`，
+>     支持 `QA_TOOL_MODELS_DIR` / `QA_TOOL_POSE_MODEL` 离线放置
+>   - `action.py` — 工作/空闲/走动/搬运/离岗规则状态机 + 最短驻留迟滞，
+>     输出状态段/时长占比；`VISION_STATUSES` 供工作抽样引擎直接复用
+>   - `session.py` — 采样节拍（固定步进，容忍浮点时间戳）/周期切分
+>     （合并小间隔、过滤过短）/`to_time_observations()`/
+>     `to_work_sampling_labels()`/逐帧回调（UI 预览）
+> - **V2 Agent 工具** `core/agent/tools_vision.py`: 工具数 30 → **34** —
+>   `vision_status`（依赖/模型探测）· `vision_analyze_video`（状态占比+周期，
+>   默认 5FPS/10 分钟，上限 30 分钟）· `vision_time_study`（周期 →
+>   标准工时，接 TimeStudyEngine）· `vision_work_sampling`（接
+>   WorkSamplingEngine，含置信区间与工时利用率）；无依赖时返回安装指引
+> - **V3 UI** `ui/tabs/vision_tab.py`（**Tab 37「视频时间研究」**，
+>   registry/sidebar/i18n/IE 菜单四处接线）: 视频源与参数区 · QThread 分析
+>   线程逐帧预览叠加状态徽标 · 状态占比/周期表 · 「发送到工时研究」
+>   （主窗口路由到 Tab 7 `set_ie_data`）· 结果 JSON 导出 · 姿态模型一键下载
+>   （进度 + SHA256）· 依赖缺失显示安装指引
+> - **V4 验收**: `tools/vision_benchmark.py`（标注 CSV 时长加权一致率 +
+>   混淆统计；`--demo` 合成自检 **99.0%**；现场片段 `--min-accuracy` 门禁）。
+>   实测（640×480，30fps 合成源采样 15fps）: OpenCV 路径 **15.1 FPS**、
+>   单帧均值 3.6ms / P95 2.9ms；MediaPipe 路径 **15.1 FPS**、
+>   均值 12.8ms / P95 14.1ms（均 <100ms 验收线）。
+>   新增测试 53 例（时间研究 8 + Vision 引擎 25 + Agent 工具 10 +
+>   Tab 6 + 基准 4），全部离线/合成数据；最终全量逐文件回归
+>   **115 文件 / 1594 通过 / 2 跳过 / 0 失败**，ruff 零告警
+> - **文档与打包**: guide.html 新增「视频时间研究」章节与模块/工具数订正
+>   （37 Tab / 34 工具）；README 中英同步；`requirements-vision.txt`
+>   统一 `opencv-contrib-python>=4.9,<5` + `mediapipe>=1.0`（避免双 cv2
+>   发行版冲突）；PyInstaller 默认排除 `cv2/mediapipe`（可选能力，
+>   随包分发需移除 excludes 后重建）
+> - **遗留（需真机验收）**: 沙箱无 `/dev/video*`，摄像头实拍与现场动作
+>   准确率需在用户机器上跑 `tools/vision_benchmark.py --video … --labels …`；
+>   合成自检达标不等于现场达标，真机素材到位后补验收记录
 
 ### BYOK 架构
 - 用户在设置面板配置自有 API Key（OpenAI / Anthropic / Google / DeepSeek / Z.ai / KIMI）
@@ -886,6 +1023,8 @@ QA-Tool v3.8.0 Industrial AI Agent
 
 | 日期 | 版本 | 内容 |
 |------|---------|---------|
+| 09-11 | v3.8.0-P3 | **Vision AI 视频时间研究完成**：V0 修复工时研究误用 cycle 计时列；新增 `analysis/vision/`（文件/USB/RTSP/MJPEG/合成源、MOG2∪帧差流水线、MediaPipe Tasks 33 关键点 + OpenCV 降级、工作/空闲/走动/搬运/离岗迟滞状态机、周期切分与 TimeObservation/工作抽样输出、姿态模型按需下载+SHA256）；QAM Harness 工具 30→34（vision_status/analyze_video/time_study/work_sampling，离线关键词路由含视频路径提取）；新增 Tab 37「视频时间研究」（QThread 实时预览、占比/周期表、发送到工时研究、JSON 导出、模型下载）；`tools/vision_benchmark.py` 合成自检 99.0%，640×480 采样 15fps 实测 15.1 FPS、P95 ≤14.1ms；新增 53 例测试；文档/README/guide 同步，PyInstaller 默认排除 cv2/mediapipe；摄像头实拍验收待用户侧素材 |
+| 09-11 | v3.8.0-P1 | **QAM Harness Agent Core 完成**：`core/agent/{tools,engine,conversation,explain}.py` + `ui/agent_bridge.py` + 对话 UI 升级（气泡/Markdown/工具卡片/上下文条）；16 个工具全部接真实分析引擎（SPC/能力/MSA/假设检验/OEE/成本/告警/连接器/五链/产线/实时/已跑分析/知识库/指标解读）；在线 LLM 工具协议 + 离线规则路由双路径（断网可用），LLM 异常自动降级；「AI 助手」更名 QAM Harness（侧栏+菜单+i18n+文档）；新增 3 个测试文件 41 用例；顺带完成 P0（路线图数字订正、.gitignore 运行产物、remote 明文 token 清理、requirements-vision.txt 占位） |
 | 09-10 | v3.7.2 | 实时监控对标优化 8 项落地：**实时图表增强**（LiveSPC 规格限输出 + chart_engine USL/LSL 参考线 + 看板滚轮缩放/拖拽/双击复位 + 桌面实时图 chart_zoom 与 plant 规格自动注入）；**看板视觉重设计**（主题令牌对齐 ui/theme.py、基准字号 15px + A−/A/A+ 可调、HiDPI 坐标轴/网格/悬停提示、KPI 汇总条、状态色点+文字双编码）；**plant.json 可视化配置**（表格编辑器 + 模板导入导出 + reload 热重载 + 默认路径 off-by-one 修复与旧位置迁移）；**告警补全**（info/warning/critical 分级 + AlertJournal JSONL 留存与确认 + 审计 + 告警中心 UI + 联动动作默认禁用；顺带修复邮件/webhook 处理器派发缺陷）；**成本损失**（超规格×单件损失 + 停机×费率，/api/cost + 看板卡片）；**OEE 真人化**（节拍→真实性能 P、停机原因码、班次日历、P/OEE 截断至 100%、班次外不计入、向后兼容旧配置）；**数据保留**（measurements_1m 分钟聚合 + 分档保留 + agg=1m 查询）；**连接器健康**（状态机 + 指数退避自动重连 + 健康页 + user_config.connectors 接线 StreamBus）；**看板鉴权**（API token HTTP/WS 双校验 + host 绑定安全回退）；**文档同步**（修复「模板格式说明」弹窗 f-string 崩溃、类型清单改由解析器常量生成；使用指南新增「分析模板与批量」章节并补全目录/工具菜单说明）。新增 10 个测试文件（约 90 用例），ruff 零告警，全量逐文件回归通过 |
 | 09-10 | v3.7.1 | 缺陷修复与加固：**五链贯通三段桥接修复**（FMEA→CP 索引错配静默失效 / CP→SPC 懒加载时序错 + 监控清单无 UI 承载 / 8D 绕过上下文直读缓存）+ ProjectContext 确立为链路唯一事实源；**数据识别语义修复**（measurement 关键词列不进 numeric_columns 导致导入误报与 DOE 空因子；"时间"关键词把可用时间/停机时间/观测时间误判为 timestamp；清洗后 select_dtypes 重算恒空）+ DataParser.refresh_info 公共 API；**工程一致性**（打包不再夹带本机 user_config.json，改发 user_config.default.json + 敏感配置 <key>_enc 加密；APP_VERSION 单一事实源 + tools/check_version.py 入 CI；退出统一清理告警引擎/看板线程/实时订阅；Linux 无 keyring 显式提示不落明文）；**结构清理**（删除 anti_debug/integrity/license_keys/license_generator/license_dialog 约 950 行僵尸代码，保留 core/license.py 兼容 shim；字体工具下沉 core/fonts.py + 分层守卫测试；插件侧栏显示 IPlugin.name；test_integration 转为真 pytest 用例，run_all_tests 迁至 tools/） |
 | 09-08 | v3.7.0-review | 新增代码质量审查：9 处缺陷修复（B1-B9, 见 fix commit 2381c46）+ 竞品对标（Minitab RTSPC / WinSPC / Enact / DataLyzer 官方页）→ v3.7.1 候选清单 9 项入档 |

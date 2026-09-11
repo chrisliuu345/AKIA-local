@@ -108,6 +108,7 @@ class MainWindow(QMainWindow):
         self._pm = PluginManager()
         self._pm.discover()
         self._plugin_tabs = {}
+        self._agent_dialog = None
         self._plugin_tab_start = _PLUGIN_TAB_START
         # v3.7.0: 全局数据流总线（实时 SPC / 云看板消费同一数据）
         self.stream_bus = StreamBus()
@@ -323,7 +324,8 @@ class MainWindow(QMainWindow):
         for idx, key in [(7, "sidebar.time_study"), (8, "sidebar.work_sampling"),
                          (9, "sidebar.line_balance"), (10, "sidebar.oee"),
                          (11, "menu.vsm"), (21, "sidebar.worker_machine"),
-                         (22, "sidebar.std_work_combo"), (29, "sidebar.smed"), (31, "sidebar.tpm")]:
+                         (22, "sidebar.std_work_combo"), (29, "sidebar.smed"),
+                         (31, "sidebar.tpm"), (37, "sidebar.vision")]:
             a = QAction(i18n.tr(key), self)
             a.triggered.connect(lambda _, i=idx: self._switch_tab(i))
             ie_sub.addAction(a)
@@ -408,24 +410,40 @@ class MainWindow(QMainWindow):
         help_menu.addAction(about_action)
 
     def _on_llm_assist(self):
+        """打开 QAM Harness（质量工程 AI Agent）对话窗口。"""
         from core.llm_client import LLMClient
         client = LLMClient()
         if not client.available:
             reply = QMessageBox.question(
-                self, "AI 助手",
-                "Ollama 服务未运行或未安装。\n\n"
-                "安装步骤:\n"
-                "1. 访问 https://ollama.com 下载并安装\n"
+                self, "QAM Harness",
+                "未检测到本地 Ollama 服务（或云 API 未配置）。\n\n"
+                "离线工具模式仍然可用: QAM Harness 会直接调用软件内分析引擎"
+                "（SPC / 过程能力 / MSA / OEE / 成本 / 告警 / 五链 / 知识库），"
+                "给出数值结论与改善建议。\n\n"
+                "需要自然语言长文解读时再安装:\n"
+                "1. 访问 https://ollama.com 下载安装\n"
                 "2. 终端运行: ollama pull qwen2.5:7b\n"
                 "3. 启动: ollama serve\n\n"
-                "是否仍然打开离线模式 (内置常见问答)?",
+                "是否打开 QAM Harness？",
                 QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes,
             )
             if reply != QMessageBox.Yes:
                 return
-        from ui.dialogs.llm_dialog import LLMDialog
-        dlg = LLMDialog(self)
-        dlg.exec()
+        from ui.dialogs.llm_dialog import QAMHarnessDialog
+        dlg = getattr(self, "_agent_dialog", None)
+        if dlg is not None and dlg.isVisible():
+            if dlg.isMinimized():
+                dlg.showNormal()
+            dlg.raise_()
+            dlg.activateWindow()
+            return
+        dlg = QAMHarnessDialog(self, engine=None)
+        dlg.setAttribute(Qt.WA_DeleteOnClose, True)
+        dlg.destroyed.connect(lambda *_: setattr(self, "_agent_dialog", None))
+        self._agent_dialog = dlg
+        dlg.show()
+        dlg.raise_()
+        dlg.activateWindow()
 
     def _on_one_click_analysis(self):
         """一键智能分析 — 画像 → 推荐 → 执行 → 报告"""
@@ -1011,6 +1029,16 @@ class MainWindow(QMainWindow):
             self.sidebar.add_history(idx, atype, key_res)
         self._notify_dashboard()
 
+    def _on_vision_time_observations(self, observations):
+        """Vision Tab → 工时研究 Tab：发送视频作业周期。"""
+        tab = self._lazy_load_tab(7)
+        if tab is None or not hasattr(tab, "set_ie_data"):
+            return
+        tab.set_ie_data(observations)
+        self._switch_tab(7)
+        self.status_label.setText(
+            f"已发送 {len(observations)} 个视频作业周期到工时研究")
+
     def _notify_dashboard(self):
         """v2.4 F1: 分析完成后通知 Dashboard 刷新 (仅当已懒加载时)
 
@@ -1114,6 +1142,8 @@ class MainWindow(QMainWindow):
             tab.analysis_completed.connect(lambda tid=idx: self._on_analysis_finished(tid))
         if hasattr(tab, 'set_stream_source'):
             tab.set_stream_source(self.stream_bus)
+        if hasattr(tab, 'send_to_time_study'):
+            tab.send_to_time_study.connect(self._on_vision_time_observations)
         if idx in _CONTEXT_TAB_INDICES and hasattr(tab, 'set_project_context'):
             tab.set_project_context(self.project_context)
             if hasattr(tab, 'load_from_context'):
