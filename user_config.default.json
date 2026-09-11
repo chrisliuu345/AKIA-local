@@ -22,5 +22,16 @@
   "ts_raw_retention_days": 0,
   "ts_rollup_retention_days": 0,
   "dashboard_host": "127.0.0.1",
-  "dashboard_port": 8765
+  "dashboard_port": 8765,
+  "llm_active_provider": "ollama",
+  "llm_cloud_enabled": false,
+  "llm_ollama_model": "qwen2.5:7b",
+  "llm_openai_model": "gpt-4o-mini",
+  "llm_anthropic_model": "claude-sonnet-4-5",
+  "llm_google_model": "gemini-2.5-flash",
+  "llm_deepseek_model": "deepseek-chat",
+  "llm_zai_model": "glm-4.5",
+  "llm_kimi_model": "moonshot-v1-8k",
+  "llm_custom_model": "",
+  "llm_custom_api_base": "http://localhost:8000/v1"
 }

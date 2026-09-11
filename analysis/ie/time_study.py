@@ -10,6 +10,28 @@ from scipy import stats
 from core.data_objects import TimeObservation
 
 
+def _effective_time(obs: TimeObservation) -> float:
+    """观测时间优先；旧数据未填观测时间时回退 cycle（历史字段曾承载计时值）。"""
+    if obs.observation_time and obs.observation_time > 0:
+        return float(obs.observation_time)
+    return float(obs.cycle)
+
+
+def _effective_times(group: pd.DataFrame) -> pd.Series:
+    """按行取有效计时列：observation_time > 0 优先，否则回退 cycle。"""
+    obs = (pd.to_numeric(group["observation_time"], errors="coerce")
+           if "observation_time" in group.columns else None)
+    cyc = (pd.to_numeric(group["cycle"], errors="coerce")
+           if "cycle" in group.columns else None)
+    if obs is None:
+        times = cyc if cyc is not None else pd.Series(np.zeros(len(group)))
+    elif cyc is None:
+        times = obs
+    else:
+        times = obs.where(obs.fillna(0) > 0, cyc)
+    return times.fillna(0.0).astype(float)
+
+
 class TimeStudyEngine:
     """秒表时间研究分析流水线"""
 
@@ -135,7 +157,7 @@ class TimeStudyEngine:
         results = []
 
         for (pid, op), group in groups:
-            times = pd.Series(group["cycle"].values)
+            times = _effective_times(group)
             times_clean, outliers = TimeStudyEngine.remove_outliers(times)
             stats_result = TimeStudyEngine.basic_stats(times_clean)
             avg_time = stats_result["mean"]
@@ -160,9 +182,7 @@ class TimeStudyEngine:
                 "capability": cap,
             })
 
-        all_clean_times = pd.Series([
-            o.cycle for o in observations
-        ])
+        all_clean_times = pd.Series([_effective_time(o) for o in observations])
         overall_times, overall_outliers = TimeStudyEngine.remove_outliers(all_clean_times)
         overall_stats = TimeStudyEngine.basic_stats(overall_times)
 
