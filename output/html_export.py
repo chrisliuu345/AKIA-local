@@ -7,7 +7,7 @@ from typing import Dict, List
 from datetime import datetime
 
 from config.settings import APP_VERSION, CHART_COLORS
-from ui.font_config import get_ui_font
+from core.fonts import get_ui_font
 
 
 def _fig_to_base64(fig) -> str:

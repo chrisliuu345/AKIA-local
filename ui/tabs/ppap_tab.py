@@ -6,6 +6,8 @@ from PySide6.QtWidgets import (
     QLineEdit, QTextEdit, QMessageBox, QFileDialog,
     QGroupBox,
 )
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor
 import numpy as np
 
 from ui.tabs.base_tab import BaseAnalysisTab
@@ -111,6 +113,7 @@ class PPAPTab(BaseAnalysisTab):
         export_btn.clicked.connect(self._export_xlsx)
         btn_row.addWidget(export_btn)
         layout.addLayout(btn_row)
+        self._refresh_matrix()      # 初始等级即渲染必交项样式（切换前也有提示）
 
     def _auto_fill_from_analyses(self):
         """从主窗口的分析结果自动填充 PPAP"""
@@ -121,19 +124,34 @@ class PPAPTab(BaseAnalysisTab):
             QMessageBox.information(self, "自动填充", "无法获取分析结果。请先运行分析。")
 
     def _refresh_matrix(self):
+        """提交等级切换 → 重绘 18 项矩阵的必交 / 非必交样式。
+
+        修复: 第 2 列是 setCellWidget(状态下拉框)，没有对应的 QTableWidgetItem，
+        原实现对 range(3) 无条件 `.item(row, c).setForeground(...)`，切换等级时
+        必然抛 AttributeError: 'NoneType' object has no attribute 'setForeground'。
+        现跳过空单元格，并顺带补上"必交项高亮"（原分支是 pass，形同未实现）。
+        """
         level = self.level_combo.currentData()
-        required = self.report.required_items() if self.report.submission_level == level else set()
         self.report.submission_level = level
         required = set(self.report.required_items())
-        for row in range(18):
-            n = row + 1
-            item = self.matrix.item(row, 0)
-            if item and n not in required:
-                item.setBackground(QTableWidgetItem().background())
-                for c in range(3):
-                    self.matrix.item(row, c).setForeground(QTableWidgetItem().foreground())
-            elif item and n in required:
-                pass
+        for row in range(self.matrix.rowCount()):
+            num_item = self.matrix.item(row, 0)
+            if num_item is None:
+                continue
+            is_required = (row + 1) in required
+            for col in range(self.matrix.columnCount()):
+                cell = self.matrix.item(row, col)      # 状态列为 cellWidget → None
+                if cell is None:
+                    continue
+                if is_required:
+                    cell.setForeground(QColor("#4da6ff"))
+                else:
+                    cell.setData(Qt.ForegroundRole, None)   # 还原默认前景/背景
+                    cell.setData(Qt.BackgroundRole, None)
+                font = cell.font()
+                font.setBold(bool(is_required and col == 1))
+                cell.setFont(font)
+        self._update_pct()
 
     def _on_status_change(self, row, status):
         """A2: 状态变更实时刷新完成度"""
@@ -142,9 +160,16 @@ class PPAPTab(BaseAnalysisTab):
     def _calc_capability(self):
         for r in range(self.dim_table.rowCount()):
             try:
-                usl = float(self.dim_table.item(r, 2).text() or 0)
-                lsl = float(self.dim_table.item(r, 3).text() or 0)
-                vals_str = self.dim_table.item(r, 4).text() if self.dim_table.item(r, 4) else ""
+                # 空单元格 → item() 为 None（与矩阵同类的崩溃隐患），显式提示
+                usl_item, lsl_item = self.dim_table.item(r, 2), self.dim_table.item(r, 3)
+                if not (usl_item and lsl_item and usl_item.text().strip()
+                        and lsl_item.text().strip()):
+                    self.dim_table.setItem(r, 5, QTableWidgetItem("缺少 USL/LSL"))
+                    continue
+                usl = float(usl_item.text())
+                lsl = float(lsl_item.text())
+                vals_item = self.dim_table.item(r, 4)
+                vals_str = vals_item.text() if vals_item else ""
                 vals = [float(v.strip()) for v in vals_str.split(",") if v.strip()]
                 if len(vals) < 2:
                     self.dim_table.setItem(r, 5, QTableWidgetItem("样本不足(n<2)"))
@@ -173,6 +198,26 @@ class PPAPTab(BaseAnalysisTab):
             self.report.items[r].status = status
         pct = self.report.completion_pct
         self.pct_label.setText(f"完成度: {pct}% (等级{level}: {len(self.report.required_items())}项)")
+        self._sync_context()
+
+    def _sync_context(self):
+        """将 PPAP 状态写入项目上下文（五链贯通 → 8D/报告）"""
+        if self._project_context is None:
+            return
+        items = {}
+        for r in range(18):
+            n_item = self.matrix.item(r, 0)
+            cb = self.matrix.cellWidget(r, 2)
+            items[n_item.text() if n_item else str(r + 1)] = (
+                cb.currentText() if cb else "pending")
+        self._project_context.set_ppap_report({
+            "part_number": self.part_no.text(),
+            "part_name": self.part_name.text(),
+            "supplier": self.supplier.text(),
+            "submission_level": self.level_combo.currentData(),
+            "completion_pct": self.report.completion_pct,
+            "items": items,
+        })
 
     def auto_populate_from_analyses(self, analyses: dict):
         """从分析结果自动填充 PPAP 项目状态

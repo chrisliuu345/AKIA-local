@@ -1,6 +1,10 @@
 """
-QA-Tool 全面测试脚本 v3 — 模块化测试，避免 GUI segfault
-结果: D:\AI-agent\Output\QA-Tool\test_report.md
+QA-Tool 全面测试脚本 v3 — 模块化脚本测试，避免 GUI segfault（遗留工具）
+
+由 tests/ 迁移至 tools/（v3.7.1）：它不是 pytest 用例（不匹配 test_*.py），
+保留用于无 pytest 环境的一次性全量冒烟；正式回归请使用 tests/ 下的
+pytest 套件（逐文件执行，见 PYTEST_RULES.md）。
+输出: tests/output/test_report.md
 """
 
 import sys, os, gc, warnings

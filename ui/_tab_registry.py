@@ -50,3 +50,25 @@ TAB_REGISTRY = [
 
 INDEX_MAP = {entry[0]: entry for entry in TAB_REGISTRY}
 TAB_COUNT = len(TAB_REGISTRY)
+
+# 命名索引 — 跨 Tab 链路（五链贯通）与程序化跳转统一使用，
+# 避免散落各处的魔法数字与对 i18n 文案的隐式依赖
+TAB_INDEX = {
+    "home": 0,
+    "spc": 1,
+    "capability": 2,
+    "msa": 3,
+    "hypothesis": 4,
+    "doe": 5,
+    "regression": 6,
+    "reliability": 13,
+    "fishbone": 14,
+    "pareto": 15,
+    "fmea": 16,
+    "control_plan": 17,
+    "eight_d": 30,
+    "ppap": 32,
+}
+
+# 五链贯通涉及的 Tab（FMEA → CP → SPC → PPAP → 8D）
+CHAIN_TABS = ("fmea", "control_plan", "spc", "ppap", "eight_d")

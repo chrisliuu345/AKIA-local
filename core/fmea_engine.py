@@ -9,6 +9,14 @@ from typing import List
 from config.settings import RPN_CRITICAL, RPN_HIGH, RPN_MEDIUM
 
 
+def _as_int(value, default: int) -> int:
+    """宽松整数转换 — 项目文件/表格中的空串或脏数据回退默认值"""
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
 @dataclass
 class FMEAItem:
     """单条 FMEA 记录"""
@@ -49,6 +57,43 @@ class FMEAItem:
             self.cause, str(self.occurrence), self.control, str(self.detection),
             str(self.rpn), self.recommended_action, self.responsible, self.action_status,
         ]
+
+    def to_dict(self) -> dict:
+        """序列化为项目上下文使用的 dict（含 RPN 与风险等级快照）"""
+        return {
+            "function": self.function,
+            "failure_mode": self.failure_mode,
+            "effect": self.effect,
+            "severity": self.severity,
+            "cause": self.cause,
+            "occurrence": self.occurrence,
+            "control": self.control,
+            "detection": self.detection,
+            "rpn": self.rpn,
+            "risk_level": self.risk_level,
+            "recommended_action": self.recommended_action,
+            "responsible": self.responsible,
+            "action_status": self.action_status,
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "FMEAItem":
+        """从 to_dict 结果还原条目（缺失字段用默认值，容忍旧项目文件）"""
+        item = cls(
+            function=d.get("function", ""),
+            failure_mode=d.get("failure_mode", ""),
+            effect=d.get("effect", ""),
+            severity=_as_int(d.get("severity"), 1),
+            cause=d.get("cause", ""),
+            occurrence=_as_int(d.get("occurrence"), 1),
+            control=d.get("control", ""),
+            detection=_as_int(d.get("detection"), 1),
+            recommended_action=d.get("recommended_action", ""),
+            responsible=d.get("responsible", ""),
+            action_status=d.get("action_status", ""),
+        )
+        item.calc_rpn()
+        return item
 
     @classmethod
     def from_row(cls, row: list) -> "FMEAItem":
