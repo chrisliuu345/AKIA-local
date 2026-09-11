@@ -109,6 +109,18 @@ class ProjectContext:
         self.eight_d_reports.append(report)
         self.updated_at = datetime.now().isoformat()
 
+    def upsert_eight_d_report(self, report: dict, report_id: str = "") -> None:
+        """按 ID 新增或替换 8D 报告 — 避免同一报告反复保存时重复堆积"""
+        key = report_id or report.get("id", "") or report.get("title", "")
+        if key:
+            for i, existing in enumerate(self.eight_d_reports):
+                existing_key = existing.get("id", "") or existing.get("title", "")
+                if existing_key == key:
+                    self.eight_d_reports[i] = report
+                    self.updated_at = datetime.now().isoformat()
+                    return
+        self.add_eight_d_report(report)
+
     def set_analysis_snapshot(self, key: str, snapshot: Dict[str, Any]):
         """设置分析结果快照"""
         self.analysis_snapshots[key] = snapshot

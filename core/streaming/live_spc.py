@@ -33,11 +33,14 @@ class LiveFrame:
     oos: bool = False
     point_index: int = 0
     chart: dict | None = None
+    spec: dict = field(default_factory=dict)   # {"usl": .., "lsl": ..} 规格限（可空）
 
     def as_chart_data(self, mode: str = "imr") -> dict:
         """输出给 create_control_chart 的 chart_data。"""
         code = {"imr": "I-MR", "xbar": "XBar-R"}.get(mode, "I-MR")
         out = {"chart_type": code}
+        if self.spec:
+            out["spec"] = dict(self.spec)
         if mode == "xbar":
             out["xbar_chart"] = self.chart or {
                 "data": self.data, "cl": self.cl, "ucl": self.ucl, "lcl": self.lcl,
@@ -54,7 +57,6 @@ class LiveFrame:
             }
         return out
 
-
 class LiveSPC:
     """滚动窗口 SPC。mode: 'imr'（单值）或 'xbar'（子组 XBar-R）。"""
 
@@ -69,6 +71,15 @@ class LiveSPC:
         self._buf: deque[float] = deque(maxlen=max(window, subgroup_size * 4))
         self._frame = LiveFrame()
         self._point_index = 0
+
+    def spec_limits(self) -> dict:
+        """已配置的规格限（均未配置 → 空 dict）— 供控制图绘制 USL/LSL 参考线。"""
+        spec: dict = {}
+        if self.usl is not None:
+            spec["usl"] = float(self.usl)
+        if self.lsl is not None:
+            spec["lsl"] = float(self.lsl)
+        return spec
 
     def reset(self) -> None:
         self._buf.clear()
@@ -85,6 +96,7 @@ class LiveSPC:
         # 新点在窗口内的起始序号（1-based）— 窗口满时从尾部定位
         first_new = max(1, len(data) - len(values) + 1)
         frame = LiveFrame(point_index=self._point_index, data=data)
+        frame.spec = self.spec_limits()
 
         if len(data) >= 2:
             result = self._analyze(data)

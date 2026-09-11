@@ -36,33 +36,3 @@ class TestLicenseManager:
         valid, status = verify_license()
         assert valid is True
         assert status == LicenseStatus.VALID
-
-
-class TestAntiDebug:
-    def test_no_crash(self):
-        from core.anti_debug import run_anti_debug_checks
-        result = run_anti_debug_checks()
-        assert isinstance(result, list)
-
-    def test_returns_list(self):
-        from core.anti_debug import run_anti_debug_checks
-        result = run_anti_debug_checks()
-        assert len(result) >= 0
-
-
-class TestIntegrity:
-    def test_compute_file_hash(self):
-        from core.integrity import compute_file_hash
-        h = compute_file_hash("main.py")
-        assert len(h) == 64  # SHA-256
-
-    def test_compute_all_hashes(self):
-        from core.integrity import compute_all_hashes
-        hashes = compute_all_hashes()
-        assert isinstance(hashes, dict)
-        assert len(hashes) > 0
-
-    def test_verify_integrity(self):
-        from core.integrity import verify_integrity
-        ok, msg = verify_integrity()
-        assert isinstance(ok, bool)

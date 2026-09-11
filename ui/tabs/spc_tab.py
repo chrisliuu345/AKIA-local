@@ -27,6 +27,7 @@ class SPCTab(BaseAnalysisTab):
 
     def __init__(self, parent=None):
         self._project_context = None
+        self._cp_monitoring_list: list = []
         super().__init__(parent)
         self._setup_ui()
 
@@ -228,6 +229,25 @@ class SPCTab(BaseAnalysisTab):
         top_layout.addWidget(config_group)
         top_layout.addWidget(self.live_group)
 
+        # CP 监控清单 — 由 控制计划 → SPC 链路写入，默认隐藏不占用布局
+        self.cp_group = QGroupBox("CP 监控清单")
+        self.cp_group.setMaximumWidth(420)
+        cp_layout = QVBoxLayout(self.cp_group)
+        cp_layout.setContentsMargins(10, 10, 10, 10)
+        self.cp_summary = QLabel("尚未从控制计划导入监控项")
+        self.cp_summary.setWordWrap(True)
+        self.cp_summary.setStyleSheet("font-size: 11px;")
+        cp_layout.addWidget(self.cp_summary)
+        self.cp_table = QTableWidget(0, 6)
+        self.cp_table.setHorizontalHeaderLabels(
+            ["工序", "特性", "规格", "控制方法", "样本量", "频率"])
+        self.cp_table.horizontalHeader().setStretchLastSection(True)
+        self.cp_table.setAlternatingRowColors(True)
+        self.cp_table.setMinimumHeight(160)
+        cp_layout.addWidget(self.cp_table)
+        self.cp_group.setVisible(False)
+        top_layout.addWidget(self.cp_group)
+
         separator = QFrame()
         separator.setFrameShape(QFrame.VLine)
         separator.setStyleSheet("")
@@ -322,9 +342,39 @@ class SPCTab(BaseAnalysisTab):
             self.hotelling_cols_list.addItem(item)
         self._populate_preview_table(df)
 
-    def import_from_cp(self, spc_items: list):
-        """从控制计划导入 SPC 监控清单"""
-        self._cp_monitoring_list = spc_items
+    def import_from_cp(self, spc_items: list) -> int:
+        """从控制计划导入 SPC 监控清单（主窗口链路调用）。返回清单条数。"""
+        self._cp_monitoring_list = [dict(it) for it in (spc_items or [])]
+        self._refresh_cp_table()
+        return len(self._cp_monitoring_list)
+
+    def _refresh_cp_table(self):
+        """刷新 CP 监控清单表格与可见状态"""
+        items = getattr(self, "_cp_monitoring_list", []) or []
+        keys = ("process", "characteristic", "tolerance",
+                "method", "sample_size", "frequency")
+        self.cp_table.setRowCount(len(items))
+        for i, item in enumerate(items):
+            for j, key in enumerate(keys):
+                self.cp_table.setItem(i, j, QTableWidgetItem(str(item.get(key, ""))))
+        if items:
+            self.cp_group.setTitle(f"CP 监控清单 ({len(items)})")
+            self.cp_summary.setText(
+                f"来自控制计划：{len(items)} 项待监控（选择对应数据列后运行分析）")
+            self.cp_group.setVisible(True)
+        else:
+            self.cp_group.setTitle("CP 监控清单")
+            self.cp_summary.setText("尚未从控制计划导入监控项")
+            self.cp_group.setVisible(False)
+
+    def load_from_context(self):
+        """从项目上下文恢复 CP 监控清单（打开 .qap 后调用）"""
+        if self._project_context is None:
+            return
+        snapshot = self._project_context.get_analysis_snapshot("spc_monitoring") or {}
+        items = snapshot.get("items") or []
+        if items:
+            self.import_from_cp(items)
 
     def _on_chart_type_changed(self, chart_type: str):
         is_cusum = chart_type == "CUSUM"
@@ -390,6 +440,7 @@ class SPCTab(BaseAnalysisTab):
             self.live_check.setChecked(False)
             return
         self._live_teardown()
+        self._plant_cfg = None  # 每次启动重读产线规格（编辑 plant.json 后即时生效）
         mode = "imr" if chart_type == "I-MR" else "xbar"
         self._live_spc = LiveSPC(
             "live", mode=mode,
@@ -409,6 +460,15 @@ class SPCTab(BaseAnalysisTab):
             self._live_unsub()
             self._live_unsub = None
         self._live_spc = None
+
+    def shutdown_stream(self):
+        """退出清理 — 由 MainWindow._shutdown_runtime() 统一调用"""
+        if getattr(self, "_live_timer", None) is None:
+            return
+        try:
+            self._live_teardown()
+        except Exception:
+            pass
 
     def _live_stop(self):
         self._live_teardown()
@@ -446,6 +506,8 @@ class SPCTab(BaseAnalysisTab):
             self._live_spc.reset()
             self._last_channel = chan
         values = [s.value for s in batch if s.channel == chan]
+        usl, lsl = self._live_spec(device, chan)
+        self._live_spc.usl, self._live_spc.lsl = usl, lsl
         frame = self._live_spc.feed(values)
         self._render_chart(
             frame.as_chart_data(
@@ -457,11 +519,30 @@ class SPCTab(BaseAnalysisTab):
         self.live_status.setStyleSheet(f"font-size: 11px; color: {color};")
         text = (f"{chan} · {len(frame.data)} {i18n.tr('spc.live_pts')} · "
                 f"CL={frame.cl:.2f} UCL={frame.ucl:.2f} LCL={frame.lcl:.2f} · ")
+        if usl is not None or lsl is not None:
+            text += (f"USL={usl if usl is not None else '—'} "
+                     f"LSL={lsl if lsl is not None else '—'} · ")
         if n_nelson or n_oos:
             text += f"{i18n.tr('spc.live_ooc')} {n_nelson} · {i18n.tr('spc.live_oos')} {n_oos}"
         else:
             text += i18n.tr("spc.live_ok")
         self.live_status.setText(text)
+
+    def _live_spec(self, device: str, channel: str):
+        """plant.json 中该设备/通道的规格限 → 实时图 USL/LSL 参考线。"""
+        try:
+            from core.plant import PlantConfig
+            cfg = getattr(self, "_plant_cfg", None)
+            if cfg is None:
+                cfg = PlantConfig.load()
+                self._plant_cfg = cfg
+        except Exception:
+            return None, None
+        for line in cfg.lines:
+            for st in line.stations:
+                if st.device == device and (not st.channels or channel in st.channels):
+                    return st.usl, st.lsl
+        return None, None
 
     def validate_params(self) -> tuple:
         if self.df is None:
@@ -726,6 +807,9 @@ class SPCTab(BaseAnalysisTab):
             fig = create_control_chart(chart_data, title=f"{chart_type} 控制图", options=self._chart_options)
             self._render_figure(fig)
             self._add_chart_toolbar()
+            if getattr(self, "live_check", None) is not None and self.live_check.isChecked():
+                from ui.widgets.chart_zoom import attach_wheel_zoom
+                attach_wheel_zoom(self.canvas)
             self.set_chart_type(chart_type)
         except Exception as e:
             self._clear_canvas()

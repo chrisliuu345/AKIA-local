@@ -338,24 +338,25 @@ class EightDTab(BaseAnalysisTab):
         r.d6 = D6Step(implementation_notes=self._text("d6_impl"), validation_result=self._text("d6_valid"))
         r.d7 = D7Step(preventive_actions=self._text("d7_prev"), standards_updated=self._text("d7_std"))
         r.d8 = D8Step(recognition_notes=self._text("d8_recog"), closure_date=self._text("d8_date"))
+        self._sync_context()
         QMessageBox.information(self, "保存完成", "8D 报告已暂存")
 
+    def _sync_context(self):
+        """将 8D 报告写入项目上下文（按标题去重，避免反复保存堆积）"""
+        if self._project_context is None:
+            return
+        report = self.report.to_dict()
+        report["id"] = report.get("title") or "8D"
+        self._project_context.upsert_eight_d_report(
+            report, report_id=report["id"])
+
     def _import_from_fmea(self):
-        """从 FMEA 导入失效原因到 D4 鱼骨图"""
-        fmea_items = []
-        if self._project_context and self._project_context.fmea_items:
-            fmea_items = self._project_context.fmea_items
-        else:
-            main_win = self.window()
-            if main_win and hasattr(main_win, '_tab_cache'):
-                fmea_tab = main_win._tab_cache.get(16)
-                if fmea_tab and hasattr(fmea_tab, '_items'):
-                    fmea_items = [
-                        {"cause": item.cause, "effect": item.effect, "rpn": item.rpn}
-                        for item in fmea_tab._items if hasattr(item, 'cause')
-                    ]
+        """从 FMEA 导入失效原因到 D4 鱼骨图（数据源：项目上下文）"""
+        fmea_items = self._project_context.fmea_items if self._project_context else []
         if not fmea_items:
-            QMessageBox.information(self, "导入 FMEA", "未找到 FMEA 数据。请先完成 FMEA 分析。")
+            QMessageBox.information(
+                self, "导入 FMEA",
+                "未找到 FMEA 数据。请先在 FMEA Tab 中完成分析。")
             return
         self.import_fmea_causes(fmea_items)
 

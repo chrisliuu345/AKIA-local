@@ -16,7 +16,7 @@ from pptx.enum.text import PP_ALIGN
 
 from config.settings import APP_NAME, APP_VERSION
 from core.i18n import i18n
-from ui.font_config import get_ui_font
+from core.fonts import get_ui_font
 from output.base_report_engine import BaseReportEngine
 
 _SLIDE_W = 13.333

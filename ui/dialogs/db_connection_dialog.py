@@ -291,7 +291,15 @@ class DbConnectionDialog(QDialog):
             name = self.config_name_edit.text().strip()
             if name:
                 cfg = config.copy()
-                cfg["password_enc"] = _obscure(cfg.pop("password", ""))
+                plain_password = cfg.pop("password", "")
+                cfg["password_enc"] = _obscure(plain_password)
+                if plain_password and not cfg["password_enc"]:
+                    # 加密不可用（如 Linux 无 keyring 后端）— 明确告知而非静默丢密码
+                    QMessageBox.warning(
+                        self, "密码未保存",
+                        "当前系统无法安全加密密码（缺少 keyring 后端）。\n\n"
+                        "连接配置已保存，但密码未保存；下次使用需要重新输入。\n"
+                        "Linux 用户可安装/启用系统密钥环后重试。")
                 cfg["name"] = name
                 self.saved_configs[name] = cfg
                 _save_configs(self.saved_configs)

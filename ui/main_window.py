@@ -30,7 +30,7 @@ from core.audit import audit
 from core.streaming.bus import StreamBus
 
 from ui.sidebar import Sidebar
-from ui._tab_registry import INDEX_MAP
+from ui._tab_registry import INDEX_MAP, TAB_INDEX, CHAIN_TABS
 from ui.theme import colors as theme_colors
 from ui.font_config import get_ui_font
 from ui.widgets.elided_label import ElidedLabel
@@ -42,6 +42,9 @@ from core.sql_loader import SqlLoader
 from core.plugin_manager import PluginManager
 
 _PLUGIN_TAB_START = max(INDEX_MAP.keys()) + 1
+
+# 五链贯通涉及的 Tab 索引（FMEA → CP → SPC → PPAP → 8D），需要注入项目上下文
+_CONTEXT_TAB_INDICES = {TAB_INDEX[key] for key in CHAIN_TABS}
 
 
 def _tab_has_data(tab) -> bool:
@@ -114,11 +117,16 @@ class MainWindow(QMainWindow):
             placeholder = QWidget()
             placeholder.setObjectName(f"placeholder_plugin_{idx}")
             self.stack.addWidget(placeholder)
-            self.sidebar.add_plugin_entry(idx, name)
+            self.sidebar.add_plugin_entry(
+                idx,
+                getattr(p, "name", name),
+                icon=getattr(p, "icon", ""),
+                tooltip=getattr(p, "description", ""),
+            )
 
         _step(85, "主窗口初始化完成")
         self._start_alert_engine()
-
+        self._start_streaming_runtime()
 
     def _setup_ui(self):
         divider_color = "#3a3a3a"
@@ -376,6 +384,13 @@ class MainWindow(QMainWindow):
         template_act.triggered.connect(self._on_template_dialog)
         tools_menu.addAction(template_act)
         tools_menu.addSeparator()
+        plant_cfg_act = QAction(i18n.tr("menu.plant_config"), self,
+                                triggered=self._on_plant_config)
+        tools_menu.addAction(plant_cfg_act)
+        tools_menu.addAction(QAction(i18n.tr("menu.alert_center"), self,
+                                     triggered=self._on_alert_center))
+        tools_menu.addAction(QAction(i18n.tr("menu.connector_health"), self,
+                                     triggered=self._on_connector_health))
         self.live_dash_act = QAction(i18n.tr("menu.live_dashboard"), self,
                                      checkable=True, triggered=self._on_live_dashboard)
         tools_menu.addAction(self.live_dash_act)
@@ -502,37 +517,38 @@ class MainWindow(QMainWindow):
                 if tab is not None and hasattr(tab, 'refresh_if_changed'):
                     tab.refresh_if_changed()
 
-    def _import_cp_from_fmea(self, cp_rows: list):
-        """从 FMEA 导入控制计划行"""
-        from ui._tab_registry import TAB_REGISTRY
-        cp_idx = None
-        for idx, entry in enumerate(TAB_REGISTRY):
-            if "控制计划" in str(entry):
-                cp_idx = idx
-                break
-        if cp_idx is None:
-            return
+    def _import_cp_from_fmea(self, cp_rows: list) -> bool:
+        """FMEA → 控制计划：追加行 → 切换 Tab → 写入项目上下文。
 
-        self._lazy_load_tab(cp_idx)
-        cp_tab = self._tab_cache.get(cp_idx)
-        if cp_tab is None:
-            return
+        返回是否成功；失败时由调用方给出提示（不再静默丢弃）。
+        """
+        cp_idx = TAB_INDEX["control_plan"]
+        cp_tab = self._lazy_load_tab(cp_idx)
+        if cp_tab is None or not hasattr(cp_tab, 'append_rows'):
+            return False
 
-        if hasattr(cp_tab, '_rows'):
-            cp_tab._rows.extend(cp_rows)
-            cp_tab._rebuild_table()
-
+        cp_tab.set_project_context(self.project_context)
+        cp_tab.append_rows(cp_rows)
         self._switch_tab(cp_idx)
+        return True
 
-    def _import_spc_from_cp(self, spc_items: list):
-        """从控制计划导入 SPC 监控清单"""
+    def _import_spc_from_cp(self, spc_items: list) -> bool:
+        """控制计划 → SPC：注入监控清单 → 切换 Tab → 写入项目上下文。
+
+        返回是否成功。注意必须先懒加载再取实例（原实现在 Tab 未打开时取到 None）。
+        """
         self._spc_monitoring_list = spc_items
+        self.project_context.set_analysis_snapshot(
+            "spc_monitoring", {"items": spc_items, "source": "control_plan"})
 
-        spc_tab = self._tab_cache.get(1)
-        if spc_tab and hasattr(spc_tab, 'import_from_cp'):
-            spc_tab.import_from_cp(spc_items)
+        spc_idx = TAB_INDEX["spc"]
+        spc_tab = self._lazy_load_tab(spc_idx)
+        if spc_tab is None or not hasattr(spc_tab, 'import_from_cp'):
+            return False
 
-        self._switch_tab(1)
+        spc_tab.import_from_cp(spc_items)
+        self._switch_tab(spc_idx)
+        return True
 
     def _on_import_quality(self):
         dialog = ImportDialog(self, mode="quality")
@@ -1098,9 +1114,10 @@ class MainWindow(QMainWindow):
             tab.analysis_completed.connect(lambda tid=idx: self._on_analysis_finished(tid))
         if hasattr(tab, 'set_stream_source'):
             tab.set_stream_source(self.stream_bus)
-        _CONTEXT_TABS = {1, 16, 17, 30, 32}
-        if idx in _CONTEXT_TABS and hasattr(tab, 'set_project_context'):
+        if idx in _CONTEXT_TAB_INDICES and hasattr(tab, 'set_project_context'):
             tab.set_project_context(self.project_context)
+            if hasattr(tab, 'load_from_context'):
+                tab.load_from_context()
 
     def _get_tabs(self, force_load: bool = False):
         """获取 Tab 字典。force_load=False 仅返回已缓存的(懒加载友好)；force_load=True 全量加载"""
@@ -1285,11 +1302,12 @@ class MainWindow(QMainWindow):
             self.project_context = PC.from_dict(ctx_dict)
         else:
             self.project_context = ProjectContext()
-        _CONTEXT_TABS = {1, 16, 17, 30, 32}
-        for idx in _CONTEXT_TABS:
+        for idx in _CONTEXT_TAB_INDICES:
             tab = self._tab_cache.get(idx)
             if tab and hasattr(tab, 'set_project_context'):
                 tab.set_project_context(self.project_context)
+                if hasattr(tab, 'load_from_context'):
+                    tab.load_from_context()
 
         info = project["manifest"]
         suffix = f" [{info.get('sheet_count', 0)} sheets]" if data_label_suffix else ""
@@ -1515,8 +1533,12 @@ class MainWindow(QMainWindow):
                     if df is not None and id(df) == current_df_id:
                         info = getattr(tab, 'parsed_info', None)
                         if info:
-                            info = info.copy()
-                            info["numeric_columns"] = list(cleaned.select_dtypes(include="number").columns)
+                            # 清洗后重算列类型/数值列（DataLoader 全列 dtype=str,
+                            # 不能用 select_dtypes 判定数值列 — 结果恒为空）
+                            try:
+                                info = self.data_parser.refresh_info(cleaned, info)
+                            except Exception:
+                                info = dict(info)
                         tab.set_data(cleaned.copy(), info or {})
                         updated.add(ti)
                 self.statusBar().showMessage(
@@ -1576,10 +1598,63 @@ class MainWindow(QMainWindow):
         settings.setValue("geometry", self.saveGeometry())
         settings.setValue("windowState", self.saveState())
         settings.setValue("sidebarCollapsed", not self.sidebar.isVisible())
-        from server.app import stop_thread
-        stop_thread(getattr(self, "_dash_thread", None))
-        self._dash_thread = None
+        self._shutdown_runtime()
         super().closeEvent(event)
+
+    def _shutdown_runtime(self):
+        """集中释放后台运行资源：看板服务 / 实时 OEE / 告警引擎 / Tab 实时订阅。
+
+        未清理会导致退出后线程池与总线订阅残留（v3.7.1 修复）。
+        """
+        import logging
+        log = logging.getLogger(__name__)
+
+        from server.app import stop_thread
+        try:
+            stop_thread(getattr(self, "_dash_thread", None))
+        except Exception:
+            log.exception("停止实时看板服务失败")
+        self._dash_thread = None
+
+        oee = getattr(self, "_oee_computer", None)
+        if oee is not None:
+            try:
+                oee.stop()
+            except Exception:
+                log.exception("停止实时 OEE 计算失败")
+            self._oee_computer = None
+
+        engine = getattr(self, "_alert_engine", None)
+        if engine is not None:
+            try:
+                engine.stop()
+            except Exception:
+                log.exception("停止告警引擎失败")
+            self._alert_engine = None
+
+        runner = getattr(self, "_ingest_runner", None)
+        if runner is not None:
+            try:
+                runner.stop()
+            except Exception:
+                log.exception("停止采集运行时失败")
+            self._ingest_runner = None
+
+        store = getattr(self, "_ts_store", None)
+        if store is not None:
+            try:
+                store.close()
+            except Exception:
+                log.exception("关闭时序库失败")
+            self._ts_store = None
+
+        for tab in list(getattr(self, "_tab_cache", {}).values()):
+            shutdown = getattr(tab, "shutdown_stream", None)
+            if callable(shutdown):
+                try:
+                    shutdown()
+                except Exception:
+                    log.exception("Tab 实时流清理失败")
 
     def _on_batch_scheduler(self):
         from ui.dialogs.batch_dialog import BatchDialog
@@ -1660,25 +1735,77 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 QMessageBox.critical(self, "加载失败", str(e))
 
+    def _on_plant_config(self):
+        """产线配置可视化编辑（v3.8.0-②）— 保存后热重载看板/OEE/实时图规格。"""
+        from ui.dialogs.plant_config_dialog import PlantConfigDialog
+        dlg = PlantConfigDialog(self)
+        if dlg.exec():
+            self._reload_plant_config()
+            self.statusBar().showMessage(
+                f"{i18n.tr('plant.saved_tip')}: {dlg.path}", 6000)
+
+    def _reload_plant_config(self):
+        """就地重载产线拓扑 — 保持对象标识，运行中的看板/OEE 立即生效。"""
+        try:
+            oee = getattr(self, "_oee_computer", None)
+            if oee is not None and getattr(oee, "plant", None) is not None:
+                oee.plant.reload()
+            elif getattr(self, "_plant_cfg", None) is not None:
+                self._plant_cfg.reload()
+            else:
+                self._plant_cfg = self._load_plant_safe()
+            for tab in list(getattr(self, "_tab_cache", {}).values()):
+                if hasattr(tab, "_plant_cfg"):
+                    tab._plant_cfg = None  # 实时图下次渲染重读
+            if getattr(self, "_alert_engine", None) is not None:
+                self._restart_alert_engine()
+        except Exception:
+            import logging
+            logging.getLogger(__name__).exception("产线配置热重载失败")
+
+    def _load_plant_safe(self):
+        try:
+            from core.plant import PlantConfig
+            return PlantConfig.load()
+        except Exception:
+            return None
+
+    def _restart_alert_engine(self):
+        engine = getattr(self, "_alert_engine", None)
+        if engine is not None:
+            try:
+                engine.stop()
+            except Exception:
+                pass
+            self._alert_engine = None
+        self._start_alert_engine()
+
     def _on_live_dashboard(self, checked: bool):
         """启动/停止内置实时看板服务（v3.7.0-P3）。"""
         if checked:
             try:
                 from core.plant import PlantConfig
                 from core.streaming.oee_live import LiveOEEComputer
-                from server.app import start_thread
+                from server.app import dashboard_config, dashboard_url, start_thread
 
+                cfg = dashboard_config()
                 plant = PlantConfig.load()
-                self._oee_computer = LiveOEEComputer(self.stream_bus, plant)
+                self._downtime = self._get_downtime_tracker()
+                self._oee_computer = LiveOEEComputer(self.stream_bus, plant,
+                                                     downtime=self._downtime)
                 self._dash_thread = start_thread(
-                    self.stream_bus, None, plant=plant, oee=self._oee_computer)
+                    self.stream_bus, None, host=cfg["host"], port=cfg["port"],
+                    plant=plant, oee=self._oee_computer,
+                    downtime=self._downtime, auth_token=cfg["token"])
+                self._dash_url = dashboard_url("127.0.0.1", cfg["port"], cfg["token"])
             except Exception as e:
                 QMessageBox.warning(
                     self, i18n.tr("menu.live_dashboard"),
                     f"{e}\n\npip install -r requirements-server.txt")
                 self.live_dash_act.setChecked(False)
                 return
-            QDesktopServices.openUrl(QUrl("http://127.0.0.1:8765/"))
+            QDesktopServices.openUrl(QUrl(getattr(self, "_dash_url",
+                                                  "http://127.0.0.1:8765/")))
         else:
             from server.app import stop_thread
 
@@ -1692,7 +1819,7 @@ class MainWindow(QMainWindow):
     def _start_alert_engine(self):
         """按产线配置 + user_config 设置安装告警引擎（桌面状态栏通知）。"""
         try:
-            from config.settings import get_setting
+            from config.settings import get_setting, get_secret
             from core.plant import PlantConfig
             from core.streaming.alerts import (
                 AlertEngine, DesktopHandler, rules_from_plant,
@@ -1705,20 +1832,108 @@ class MainWindow(QMainWindow):
             desktop = DesktopHandler()
             desktop.alert.connect(
                 lambda title, msg: self.statusBar().showMessage(f"{title}: {msg}", 8000))
+            journal = self._get_alert_journal()
             settings = {
+                "alert_journal": journal,
+                "alert_min_severity": get_setting("alert_min_severity", "info"),
                 "alert_webhook_url": get_setting("alert_webhook_url", ""),
                 "alert_smtp_host": get_setting("alert_smtp_host", ""),
                 "alert_smtp_port": get_setting("alert_smtp_port", 25),
                 "alert_smtp_user": get_setting("alert_smtp_user", ""),
-                "alert_smtp_password": get_setting("alert_smtp_password", ""),
+                "alert_smtp_password": get_secret("alert_smtp_password", ""),
                 "alert_email_to": get_setting("alert_email_to", ""),
+                "alert_actions": get_setting("alert_actions", {}) or {},
+                "alert_actions_enabled": bool(
+                    get_setting("alert_actions_enabled", False)),
             }
             self._alert_engine = AlertEngine(
                 self.stream_bus, rules, [desktop] + build_default_handlers(settings))
             self._alert_engine.start()
+            self._alert_journal = journal
         except Exception:
             import logging
             logging.getLogger(__name__).exception("alert engine init failed")
+
+    def _get_alert_journal(self):
+        """告警日志单例（告警中心与引擎共享同一实例）。"""
+        journal = getattr(self, "_alert_journal", None)
+        if journal is None:
+            from core.streaming.alert_journal import AlertJournal
+            journal = AlertJournal()
+            self._alert_journal = journal
+        return journal
+
+    def _get_downtime_tracker(self):
+        """停机追踪单例（实时 OEE / 成本损失 / 看板共用）。"""
+        tracker = getattr(self, "_downtime", None)
+        if tracker is None:
+            from config.settings import get_setting
+            from core.streaming.downtime import DowntimeTracker
+            tracker = DowntimeTracker(
+                reason_codes=get_setting("downtime_reason_codes", None))
+            self._downtime = tracker
+        return tracker
+
+    def _start_streaming_runtime(self):
+        """按 user_config.connectors 启动采集运行时（v3.8.0-⑦）。
+
+        未配置 connectors 时不启动（默认零开销）；启动后设备/连接器数据进入
+        StreamBus → 实时 SPC / OEE / 看板 / 告警全链路。单项连接器初始化
+        失败只记录健康状态，不影响其他数据源。
+        """
+        try:
+            from config.settings import get_setting
+            from connectors.health import HealthRegistry
+            from connectors.registry import create_drivers, specs_from_settings
+            from core.storage.timeseries import TimeseriesStore, default_store_path
+            from core.streaming.collector import IngestRunner
+
+            specs = specs_from_settings(get_setting("connectors", []))
+            if not specs:
+                return
+            drivers, errors = create_drivers(specs)
+            health = HealthRegistry(
+                base_backoff_s=float(get_setting("connector_backoff_base_s", 1.0)),
+                max_backoff_s=float(get_setting("connector_backoff_max_s", 60.0)),
+            )
+            for spec in specs:
+                health.register(str(spec.get("name")), kind="connector")
+            for name, message in errors:
+                health.mark_error(name, f"初始化失败: {message}")
+            if not drivers:
+                self._connector_health = health
+                return
+
+            db_path = get_setting("ts_db_path", "") or default_store_path()
+            store = TimeseriesStore(db_path)
+            raw_days = float(get_setting("ts_raw_retention_days", 0) or 0)
+            rollup_days = float(get_setting("ts_rollup_retention_days", 0) or 0)
+            runner = IngestRunner(
+                self.stream_bus, store, drivers,
+                raw_retention_s=raw_days * 86400 or None,
+                rollup_retention_s=rollup_days * 86400 or None,
+                health=health,
+            )
+            runner.start()
+            self._connector_health = health
+            self._ingest_runner = runner
+            self._ts_store = store
+        except Exception:
+            import logging
+            logging.getLogger(__name__).exception("streaming runtime init failed")
+
+    def _on_connector_health(self):
+        """连接器健康页（v3.8.0-⑦）— 状态 / 插件可用性 / 手动重连。"""
+        from ui.dialogs.connector_health_dialog import ConnectorHealthDialog
+        dlg = ConnectorHealthDialog(getattr(self, "_connector_health", None),
+                                    getattr(self, "_ingest_runner", None), self)
+        dlg.exec()
+
+    def _on_alert_center(self):
+        """告警中心（v3.8.0-③）— 等级筛选 / 确认 / 导出。"""
+        from ui.dialogs.alert_center_dialog import AlertCenterDialog
+        dlg = AlertCenterDialog(self._get_alert_journal(), self)
+        dlg.exec()
 
     def _on_diagnose(self):
         if not self.profile_result or not self.profile_result.get("sheets"):

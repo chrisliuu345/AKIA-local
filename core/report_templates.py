@@ -6,7 +6,7 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 
 from config.settings import APP_VERSION
-from ui.font_config import get_ui_font
+from core.fonts import get_ui_font
 
 
 TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "config" / "templates"

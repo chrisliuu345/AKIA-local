@@ -50,3 +50,37 @@ def test_runnable_with_data_returns_true():
 
 def test_runnable_without_data_returns_false():
     assert _tab_is_runnable(_RunnableTab(pd.DataFrame())) is False
+
+
+# ── 退出清理（v3.7.1: 告警引擎/看板线程/实时订阅不得残留）──
+
+def test_close_stops_alert_engine(_qt_application):
+    import pytest
+
+    from ui.main_window import MainWindow
+
+    window = MainWindow()
+    engine = getattr(window, "_alert_engine", None)
+
+    window.close()
+
+    assert window._alert_engine is None
+    assert window._dash_thread is None
+    if engine is not None:
+        assert engine._unsubs == [], "告警引擎订阅应已解绑"
+        with pytest.raises(RuntimeError):
+            engine._executor.submit(lambda: None)  # 线程池应已关闭
+
+
+def test_close_shuts_down_spc_live_stream(_qt_application):
+    from ui._tab_registry import TAB_INDEX
+    from ui.main_window import MainWindow
+
+    window = MainWindow()
+    spc = window._lazy_load_tab(TAB_INDEX["spc"])
+    assert getattr(spc, "_bus", None) is window.stream_bus
+
+    window.close()
+
+    assert spc._live_unsub is None
+    assert spc._live_timer.isActive() is False
