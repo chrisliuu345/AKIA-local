@@ -14,6 +14,7 @@ class DataParser:
     NUMERIC_PATTERNS = re.compile(r"^(-?\d+\.?\d*|\.\d+)$")
     DATE_PATTERNS = [
         re.compile(r"^\d{4}[-/]\d{1,2}[-/]\d{1,2}$"),
+        re.compile(r"^\d{4}[-/]\d{1,2}[-/]\d{1,2}[ T]\d{1,2}:\d{2}(:\d{2})?$"),
         re.compile(r"^\d{1,2}[-/]\d{1,2}[-/]\d{4}$"),
         re.compile(r"^\d{4}年\d{1,2}月\d{1,2}日$"),
     ]
@@ -44,6 +45,13 @@ class DataParser:
         "trial": ["试验", "重复", "次数", "trial", "replicate", "repeat"],
     }
 
+    # 值优先判定阈值: 非空样本中 >=80% 可转数值才视为数值列
+    NUMERIC_LIKE_MIN_RATIO = 0.8
+    NUMERIC_LIKE_MIN_VALUES = 2
+
+    # 不作为 numeric_columns 输出的语义角色 (规格/目标/子组序号不是可分析测量值)
+    _NON_MEASUREMENT_ROLES = ("usl", "lsl", "target", "subgroup")
+
     TAG_KEYWORDS = {
         "subgroup": ["子组", "批次", "样本号", "组号", "subgroup", "sample", "lot"],
         "measurement": ["数值", "测量值", "特性值", "value", "measurement", "data"],
@@ -57,6 +65,7 @@ class DataParser:
         self.header_row: int = 0
         self.data_start_row: int = 1
         self.column_types: Dict[str, str] = {}
+        self.numeric_like: Dict[str, bool] = {}
         self.spec_limits: Dict[str, Dict[str, float]] = {}
         self.subgroup_col: Optional[str] = None
         self.measurement_cols: List[str] = []
@@ -70,23 +79,7 @@ class DataParser:
         self.header_row = self._detect_header_row(df)
         cleaned = self._apply_header(df.copy(), self.header_row)
         cleaned, self.invalid_count = self._clean_invalid_cells(cleaned)
-        self.column_types = self._classify_columns(cleaned)
-        self.spec_limits = self._extract_spec_limits(cleaned)
-        self.subgroup_col = self._identify_subgroup_column(cleaned)
-        self.measurement_cols = self._identify_measurement_columns(cleaned)
-        self.identifier_cols = self._identify_identifier_columns(cleaned)
-        info = {
-            "header_row": self.header_row,
-            "data_start_row": self.header_row + 1,
-            "column_types": self.column_types,
-            "spec_limits": self.spec_limits,
-            "subgroup_column": self.subgroup_col,
-            "measurement_columns": self.measurement_cols,
-            "identifier_columns": self.identifier_cols,
-            "numeric_columns": [c for c, t in self.column_types.items() if t == "numeric"],
-            "row_count": len(cleaned),
-            "column_count": len(cleaned.columns),
-        }
+        info = self._analyze_frame(cleaned)
         return cleaned, info
 
     def analyze(self, df: pd.DataFrame) -> Dict[str, Any]:
@@ -95,12 +88,33 @@ class DataParser:
 
         self.header_row = self._detect_header_row(df)
         df = self._apply_header(df, self.header_row)
+        return self._analyze_frame(df)
+
+    def refresh_info(self, df: pd.DataFrame,
+                     info: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """基于变更后的 DataFrame 重算解析信息（数据清洗/列增删后调用）。
+
+        与 prepare() 的区别: 不重新探测表头（此时列名已是解析后的最终列名），
+        仅重算列类型、规格限、数值列等派生字段，并合并进原 info。
+        """
+        if df is None or df.empty:
+            raise ValueError("数据框为空，无法解析")
+        merged = dict(info or {})
+        refreshed = self._analyze_frame(df)
+        header_row = merged.get("header_row", self.header_row)
+        merged.update(refreshed)
+        merged["header_row"] = header_row
+        merged["data_start_row"] = header_row + 1
+        return merged
+
+    def _analyze_frame(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """对已是数据区的 DataFrame 重算分类与派生信息（三处入口共用）"""
         self.column_types = self._classify_columns(df)
+        self.numeric_like = {c: self._numeric_like(df[c]) for c in df.columns}
         self.spec_limits = self._extract_spec_limits(df)
         self.subgroup_col = self._identify_subgroup_column(df)
         self.measurement_cols = self._identify_measurement_columns(df)
         self.identifier_cols = self._identify_identifier_columns(df)
-
         return {
             "header_row": self.header_row,
             "data_start_row": self.header_row + 1,
@@ -109,7 +123,7 @@ class DataParser:
             "subgroup_column": self.subgroup_col,
             "measurement_columns": self.measurement_cols,
             "identifier_columns": self.identifier_cols,
-            "numeric_columns": [c for c, t in self.column_types.items() if t == "numeric"],
+            "numeric_columns": self._numeric_columns(df),
             "row_count": len(df),
             "column_count": len(df.columns),
         }
@@ -122,6 +136,41 @@ class DataParser:
         if not s:
             return True
         return bool(DataParser.INVALID_PATTERNS.match(s))
+
+    @staticmethod
+    def _is_blank(val) -> bool:
+        """空值判定 — 供数值率统计使用（比 _is_invalid_cell 宽松）"""
+        if val is None:
+            return True
+        if isinstance(val, float) and np.isnan(val):
+            return True
+        s = str(val).strip()
+        return (not s) or s.lower() in ("nan", "none", "null", "na")
+
+    @classmethod
+    def _numeric_like(cls, series: pd.Series) -> bool:
+        """值优先判定：非空样本中 >=80% 可转数值（至少 2 个有效值）"""
+        non_empty = series[~series.map(cls._is_blank)]
+        if len(non_empty) < cls.NUMERIC_LIKE_MIN_VALUES:
+            return False
+        converted = pd.to_numeric(non_empty, errors="coerce")
+        return float(converted.notna().mean()) >= cls.NUMERIC_LIKE_MIN_RATIO
+
+    def _looks_datetime(self, sample: pd.Series) -> bool:
+        """样本是否像日期/时间戳 — 名称含“时间/日期”的数值列（时长）不判为时间戳"""
+        values = [str(v).strip() for v in sample]
+        values = [v for v in values if v]
+        if not values:
+            return False
+        matched = sum(1 for v in values
+                      if any(p.match(v) for p in self.DATE_PATTERNS))
+        if matched >= len(values) * 0.5:
+            return True
+        try:
+            parsed = pd.to_datetime(pd.Series(values), errors="coerce", format="mixed")
+        except (ValueError, TypeError):
+            return False
+        return float(parsed.notna().mean()) >= 0.8
 
     @staticmethod
     def _clean_invalid_cells(df: pd.DataFrame) -> Tuple[pd.DataFrame, int]:
@@ -218,16 +267,24 @@ class DataParser:
                 types[col] = "empty"
                 continue
 
-            matched = False
+            sample = non_null.head(min(50, len(non_null)))
+
+            keyword_type = None
             for type_key, keywords in self.COLUMN_TYPE_KEYS.items():
                 if any(kw in col_lower for kw in keywords):
-                    types[col] = type_key.replace("_col", "")
-                    matched = True
+                    keyword_type = type_key.replace("_col", "")
                     break
-            if matched:
+
+            # 值优先校验：关键词只作初判，最终以数据形态为准
+            if keyword_type == "timestamp" and not self._looks_datetime(sample):
+                keyword_type = None   # 可用时间/停机时间/观测时间等数值时长列
+            elif keyword_type == "measurement" and not self._numeric_like(sample):
+                keyword_type = None   # 测量方法/测量说明等文本列
+
+            if keyword_type:
+                types[col] = keyword_type
                 continue
 
-            sample = non_null.head(min(50, len(non_null)))
             numeric_count = 0
             date_count = 0
             for v in sample:
@@ -245,7 +302,7 @@ class DataParser:
             n = len(sample)
             if numeric_count >= n * 0.8:
                 types[col] = "numeric"
-            elif date_count >= n * 0.5:
+            elif date_count >= n * 0.5 or self._looks_datetime(sample):
                 types[col] = "datetime"
             else:
                 types[col] = "text"
@@ -284,7 +341,15 @@ class DataParser:
 
     def _identify_measurement_columns(self, df: pd.DataFrame) -> List[str]:
         return [c for c, t in self.column_types.items()
-                if t in ("numeric", "measurement")]
+                if t in ("numeric", "measurement") and self.numeric_like.get(c, True)]
+
+    def _numeric_columns(self, df: pd.DataFrame) -> List[str]:
+        """可参与分析/因子选择的数值列（排除规格限、目标值、子组序号）"""
+        return [
+            c for c in df.columns
+            if self.numeric_like.get(c)
+            and self.column_types.get(c) not in self._NON_MEASUREMENT_ROLES
+        ]
 
     def _identify_identifier_columns(self, df: pd.DataFrame) -> List[str]:
         return [

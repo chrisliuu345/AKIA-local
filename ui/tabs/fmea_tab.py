@@ -172,18 +172,42 @@ class FMEATab(BaseAnalysisTab):
             "result": {"cp_rows": cp_rows, "source": "fmea"},
             "chart_data": {},
         }
+        self._sync_context()
 
         main_win = self.window()
+        imported = False
         if hasattr(main_win, "_import_cp_from_fmea"):
-            main_win._import_cp_from_fmea(cp_rows)
-        else:
-            self.analysis_completed.emit()
+            imported = bool(main_win._import_cp_from_fmea(cp_rows))
+        self.analysis_completed.emit()
 
-        QMessageBox.information(
-            self,
-            "生成完成",
-            f"已生成 {len(cp_rows)} 行控制计划，请切换到控制计划 Tab 查看。",
-        )
+        if not imported:
+            QMessageBox.warning(
+                self,
+                "生成完成",
+                f"已生成 {len(cp_rows)} 行控制计划，但未能写入控制计划 Tab。\n"
+                "请手动打开控制计划 Tab 后重试。",
+            )
+        else:
+            QMessageBox.information(
+                self,
+                "生成完成",
+                f"已生成 {len(cp_rows)} 行控制计划，已切换到控制计划 Tab。",
+            )
+
+    def _sync_context(self):
+        """将当前 FMEA 条目写入项目上下文（唯一事实源，供 CP/8D 消费）"""
+        if self._project_context is not None:
+            self._project_context.set_fmea_items(
+                [item.to_dict() for item in self._items])
+
+    def load_from_context(self):
+        """从项目上下文恢复条目（打开 .qap 后调用）"""
+        if self._project_context is None or not self._project_context.fmea_items:
+            return
+        items = [FMEAItem.from_dict(d) for d in self._project_context.fmea_items]
+        if items:
+            self._items = items
+            self._rebuild_table()
 
     def _export(self):
         path, _ = QFileDialog.getSaveFileName(
@@ -261,6 +285,7 @@ class FMEATab(BaseAnalysisTab):
                 self.table.setItem(i, j, item)
         self.table.blockSignals(False)
         self._update_stats()
+        self._sync_context()
 
     def _color_cell(self, item: QTableWidgetItem, level: str):
         if level == "high":

@@ -83,7 +83,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
 
 <header class="top">
   <span class="logo">QA-Tool 使用指南</span>
-  <span class="tag">v3.7.0</span>
+  <span class="tag">v3.7.2</span>
   <span class="tag">Windows / Linux</span>
   <span class="meta">质量工程（QE）· 工业工程（IE）· 离线分析</span>
 </header>
@@ -98,6 +98,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
   <a href="#quick-start">快速入门</a>
   <div class="grp">数据</div>
   <a href="#data-import">导入数据</a>
+  <a href="#templates">分析模板与批量</a>
   <div class="grp">功能模块</div>
   <a href="#modules">模块总览</a>
   <a href="#modules-quality">质量分析</a>
@@ -109,6 +110,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
   <a href="#export">导出与报告</a>
   <div class="grp">扩展</div>
   <a href="#ai">AI 助手</a>
+  <a href="#realtime">实时监控与看板</a>
   <a href="#hardware">硬件扩展</a>
   <div class="grp">支持</div>
   <a href="#faq">常见问题</a>
@@ -157,7 +159,9 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
     <tr><td class="k">侧边栏</td><td>功能模块分类导航，支持折叠/展开</td></tr>
     <tr><td class="k">主面板</td><td>分析配置、数据表格、结果图表；图表下方为<b>图表选项面板</b>，可实时调整参数</td></tr>
     <tr><td class="k">状态栏</td><td>当前状态、数据信息</td></tr>
-    <tr><td class="k">菜单栏</td><td>文件（导入/导出/项目）、视图、分析、AI、工具、帮助（本指南 <code>F1</code>）</td></tr>
+    <tr><td class="k">菜单栏</td><td>文件（导入/导出/项目/分析模板）、视图、分析、AI、工具、帮助（本指南 <code>F1</code>）</td></tr>
+    <tr><td class="k">工具菜单</td><td>设置 · 批量调度 · 数据清洗（含向导）· 智能诊断 · 报告模板 · <b>产线配置 (plant.json)</b> · <b>告警中心</b> · <b>连接器健康</b> · <b>实时看板</b></td></tr>
+    <tr><td class="k">帮助菜单</td><td>使用指南（<code>F1</code>）· 模板格式说明 · 关于</td></tr>
   </table>
 </section>
 
@@ -197,6 +201,80 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
     <li><b>分析模板</b>（文件 → 导入分析模板）：按模板批量套用多个分析配置</li>
     <li>也可直接在数据表格中<b>粘贴</b>数据后右键设置列角色</li>
   </ul>
+</section>
+
+<section class="card" id="templates">
+  <h2>分析模板与批量分析</h2>
+  <p>把「用哪份数据、跑哪种分析、规格限是多少」写成一个模板文件，即可一次运行多个分析配置，
+  适合每周质量报告、产线例行巡检等重复场景。支持 <b>JSON</b>（<code>.json</code>）与
+  <b>Excel</b>（<code>.xlsx</code> / <code>.xls</code> / <code>.xlsm</code>）。</p>
+  <p class="note">入口：菜单 <b>文件 → 导入分析模板</b> 运行模板；菜单 <b>帮助 → 模板格式说明</b>
+  可在软件内查看同一份说明；多个模板排队执行使用菜单 <b>工具 → 批量调度</b>。</p>
+
+  <h3>JSON 写法 A — 多分析数组（推荐）</h3>
+  <pre>{
+  "analyses": [{
+    "analysis_type": "xbar_r",
+    "data_sheet": "Sheet1",
+    "measurement_column": "直径",
+    "subgroup_size": 5,
+    "usl": 10.5,
+    "lsl": 9.5
+  }]
+}</pre>
+
+  <h3>JSON 写法 B — 单分析对象</h3>
+  <pre>{
+  "analysis": {
+    "analysis_type": "imr",
+    "measurement_column": "厚度"
+  }
+}</pre>
+
+  <h3>JSON 写法 C — 扁平键值对</h3>
+  <pre>{
+  "analysis_type": "xbar_r",
+  "data_sheet": "Sheet1",
+  "measurement_column": "值"
+}</pre>
+
+  <h3>Excel 格式</h3>
+  <p>每个 Sheet = 一个分析配置：A 列 = 参数名，B 列 = 参数值。</p>
+  <table>
+    <tr><th>参数</th><th>示例值</th></tr>
+    <tr><td class="k">analysis_type</td><td>xbar_r</td></tr>
+    <tr><td class="k">data_sheet</td><td>Sheet1</td></tr>
+    <tr><td class="k">measurement_column</td><td>直径</td></tr>
+    <tr><td class="k">subgroup_size</td><td>5</td></tr>
+    <tr><td class="k">usl</td><td>10.5</td></tr>
+    <tr><td class="k">lsl</td><td>9.5</td></tr>
+  </table>
+
+  <h3>可用分析类型（25 种）</h3>
+  <table>
+    <tr><th>类别</th><th>analysis_type 取值</th></tr>
+    <tr><td class="k">SPC 控制图</td><td><code>xbar_r</code> <code>xbar_s</code> <code>imr</code> <code>p_chart</code> <code>np_chart</code> <code>c_chart</code> <code>u_chart</code></td></tr>
+    <tr><td class="k">过程能力</td><td><code>normal_capability</code> <code>non_normal_capability</code> <code>between_within_capability</code></td></tr>
+    <tr><td class="k">MSA</td><td><code>gage_rr_crossed</code> <code>gage_rr_nested</code> <code>linearity_bias</code> <code>attribute_agreement</code></td></tr>
+    <tr><td class="k">假设检验</td><td><code>t_test_1sample</code> <code>t_test_2sample</code> <code>t_test_paired</code> <code>anova_oneway</code> <code>anova_twoway</code> <code>normality_test</code> <code>variance_test</code></td></tr>
+    <tr><td class="k">DOE</td><td><code>factorial_design</code> <code>response_surface</code> <code>doe_analysis</code> <code>box_behnken</code></td></tr>
+  </table>
+  <p class="note">写入未列出的类型时，模板校验会给出「不支持的分析类型」提示并列出有效值；
+  软件内「帮助 → 模板格式说明」中的类型清单由解析器常量自动生成，始终与当前版本一致。</p>
+
+  <h3>字段说明</h3>
+  <table>
+    <tr><th>字段</th><th>必填</th><th>说明</th></tr>
+    <tr><td class="k">analysis_type</td><td>是</td><td>分析类型（见上表）</td></tr>
+    <tr><td class="k">data_sheet</td><td>是</td><td>数据所在 Sheet 名</td></tr>
+    <tr><td class="k">measurement_column</td><td>是</td><td>测量数据列名</td></tr>
+    <tr><td class="k">subgroup_column / subgroup_size</td><td>否</td><td>子组列 / 子组大小（XBar-R·S 等）</td></tr>
+    <tr><td class="k">usl / lsl / target</td><td>否</td><td>规格上下限与目标值</td></tr>
+    <tr><td class="k">confidence_level</td><td>否</td><td>置信水平（默认 0.95）</td></tr>
+    <tr><td class="k">title / description</td><td>否</td><td>报告标题与说明</td></tr>
+    <tr><td class="k">output_format / output_path</td><td>否</td><td>输出格式（Excel/Word/PDF/PPT/HTML）与路径</td></tr>
+    <tr><td class="k">chart_options</td><td>否</td><td>图表选项（参考线、标签、网格等）</td></tr>
+  </table>
 </section>
 
 <section class="card" id="modules">
@@ -303,15 +381,22 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
 </section>
 
 <section class="card" id="realtime">
-  <h2>实时看板（v3.7.0 新增）</h2>
+  <h2>实时看板（v3.7.0 新增 · v3.7.2 增强）</h2>
   <p>基于设备持续采集的实时 SPC 云看板，浏览器即可访问：</p>
   <ul>
     <li>菜单「工具 → 实时看板」：启动内置服务并打开浏览器（<code>pip install -r requirements-server.txt</code> 安装 FastAPI 依赖）</li>
     <li>实时控制图：设备通道滚动窗口 I-MR / XBar-R，跳变 500ms 内检出的判异会即时着色</li>
-    <li>产线拓扑与工位状态灯：绿/黄/红（正常 / 判异·超规格 / 离线，离线判定 5s），拓扑在 <code>data/plant.json</code> 定义</li>
-    <li>实时 OEE：每产线滑动 10 分钟窗口的 A×P×Q</li>
+    <li><b>规格线与缩放</b>（v3.7.2）：看板控制图绘制 USL/LSL 虚线并标红超规格点，支持滚轮缩放 / 拖拽平移 / 双击复位，鼠标悬停可看具体时刻数值；桌面实时图同样支持滚轮缩放（Shift 纵向），规格限自动取自 plant.json</li>
+    <li><b>看板界面与字号</b>（v3.7.2）：界面风格与桌面端一致（同一套深色主题色与中文字体），基准字号 15px；右上角 A− / A / A+ 可整体缩放字号并记忆（车间大屏或视力不佳时建议 A+），顶部为产线/在线率/平均 OEE/成本损失汇总条</li>
+    <li>产线拓扑与工位状态灯：绿/黄/红（正常 / 判异·超规格 / 离线，离线判定 5s）</li>
+    <li><b>产线配置可视化</b>（v3.7.2）：菜单「工具 → 产线配置 (plant.json)」以表格编辑产线/工位/通道/USL·LSL/节拍/成本/班次，支持 Excel·CSV 模板导入导出，保存后看板与实时分析热生效</li>
+    <li>实时 OEE：每产线滑动 10 分钟窗口的 A×P×Q；配置节拍后性能 P 按「节拍 × 产量 ÷ 运行时间」真实计算，停机可在看板按原因码（换型/故障/缺料/保养…）打点，班次日历（如 <code>08:00-20:00</code>，支持跨零点）决定计划时间</li>
+    <li><b>成本损失</b>（v3.7.2）：超规格量 × 单件损失 + 停机分钟 × 停机费率，看板「成本损失」卡片实时展示</li>
     <li>数据连接器（按需安装）：Modbus TCP / MQTT / OPC-UA / CMM DMIS / RS232 量具，插件式 <code>connectors/plugins/</code> 自动发现</li>
-    <li>告警：判异/超规格经去抖后推送 — 桌面状态栏提示、邮件（smtp）、Webhook（在用户配置中填写）</li>
+    <li><b>连接器健康</b>（v3.7.2）：菜单「工具 → 连接器健康」查看数据源状态、插件依赖可用性并手动重连；失败按指数退避自动重连。数据源在用户配置 <code>connectors</code> 中登记（如 <code>[{"plugin": "modbus_tcp", "name": "line1", "config": {...}}]</code>）</li>
+    <li>告警：判异/超规格经去抖后推送 — 桌面状态栏提示、邮件（smtp）、Webhook（在用户配置中填写）；<b>等级分为预告/警告/严重</b>，菜单「工具 → 告警中心」可筛选、确认（写审计）与导出 CSV，需联动的停机/命令动作须显式打开 <code>alert_actions_enabled</code></li>
+    <li><b>数据保留</b>（v3.7.2）：原始点按分钟聚合（均值/极值/计数）后按 <code>ts_raw_retention_days</code> / <code>ts_rollup_retention_days</code> 分档清理，长期趋势仍可查询（<code>/api/history?agg=1m</code>）</li>
+    <li><b>看板鉴权</b>（v3.7.2）：在用户配置中设置 <code>dashboard_token</code> 后，HTTP 与 WebSocket 均需携带令牌（<code>?token=</code> 或 <code>Authorization: Bearer</code>）；<code>dashboard_host</code> 非回环且无令牌时自动回退 127.0.0.1</li>
   </ul>
 </section>
 
@@ -346,7 +431,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
 
 </main>
 </div>
-<footer>QA-Tool v3.7.0 · 本指南随软件离线分发（config/help/guide.html）· 菜单「帮助 → 使用指南」或按 F1 打开</footer>
+<footer>QA-Tool v3.7.2 · 本指南随软件离线分发（config/help/guide.html）· 菜单「帮助 → 使用指南」或按 F1 打开</footer>
 
 </body>
 </html>
