@@ -109,7 +109,8 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
   <a href="#charts">图表与实时编辑</a>
   <a href="#export">导出与报告</a>
   <div class="grp">扩展</div>
-  <a href="#ai">AI 助手</a>
+  <a href="#ai">QAM Harness</a>
+  <a href="#vision">视频时间研究</a>
   <a href="#realtime">实时监控与看板</a>
   <a href="#hardware">硬件扩展</a>
   <div class="grp">支持</div>
@@ -122,7 +123,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
 <section class="card" id="intro">
   <h2>产品简介</h2>
   <p>QA-Tool 是一款面向质量工程（QE）与工业工程（IE）的专业分析工具，基于 Python + PySide6 构建，
-  完全离线运行，无需联网或账号登录。提供 37 个分析模块、AI 智能洞察、完整报告输出，
+  完全离线运行，无需联网或账号登录。提供 37 个分析模块、QAM Harness 智能洞察、完整报告输出，
   并支持 ESP32 硬件数据采集。</p>
   <h3>核心能力</h3>
   <ul>
@@ -279,7 +280,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
 
 <section class="card" id="modules">
   <h2>模块总览</h2>
-  <p>共 37 个功能模块，按侧边栏分组如下：</p>
+  <p>共 37 个功能模块（+ 欢迎页），按侧边栏分组如下：</p>
 
   <h3 id="modules-quality">质量分析</h3>
   <table>
@@ -313,6 +314,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
     <tr><td class="k">标准作业组合</td><td>标准作业组合表</td></tr>
     <tr><td class="k">SMED</td><td>快速换模、内外作业分离</td></tr>
     <tr><td class="k">TPM</td><td>全面生产维护、OEE/MTBF/MTTR 分析</td></tr>
+    <tr><td class="k">视频时间研究</td><td>摄像头/视频动作识别（工作·空闲·走动·搬运·离岗）· 作业周期 · 标准工时（可选依赖）</td></tr>
   </table>
 
   <h3 id="modules-eng">工程工具</h3>
@@ -360,13 +362,68 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
 </section>
 
 <section class="card" id="ai">
-  <h2>AI 助手</h2>
-  <p>内置 BYOK（Bring Your Own Model）本地 AI，数据不出本机：</p>
+  <h2>QAM Harness（质量工程 AI Agent）</h2>
+  <p>菜单 <b>QAM Harness</b> 或侧边栏同名入口打开对话窗口；数据不出本机（BYOM：
+  可接本地 Ollama，也可接 OpenAI 兼容云 API）：</p>
   <ul>
-    <li>基于本地 <code>Ollama</code> 运行（如 <code>qwen2.5:7b</code>），完全离线</li>
-    <li><b>AI 助手</b>：针对当前数据/结果对话式答疑、解读</li>
-    <li><b>一键智能分析</b>：数据画像 → 自动推荐分析 → 执行 → 生成报告</li>
-    <li>未安装 Ollama 时自动提供内置常见问答（离线模式）</li>
+    <li><b>工具调用分析</b>：对话即分析 —— 直接调用软件内 <b>34 个工具</b>，覆盖
+      37 个分析 Tab 的主要能力：数据概况与列描述 · SPC 控制图（I-MR/XBar-R·S/
+      P·NP·C·U/CUSUM/EWMA/<b>Laney P′·U′</b>/<b>Hotelling T²</b>）· 过程能力
+      （正态/非正态/<b>Sixpack</b>/<b>组间组内</b>/<b>Johnson</b>/<b>容差区间</b>）·
+      MSA（Gage R&amp;R 交叉/嵌套/<b>属性一致性</b>/<b>Type 1</b>/<b>线性·偏倚</b>/<b>EMP</b>）·
+      假设检验（t/ANOVA/<b>双因素</b>/<b>卡方</b>/<b>两比例</b>/<b>TOST</b>/<b>非参数</b>）·
+      <b>DOE</b>（因子/部分因子/响应曲面/BBD/PB/DSD/田口/混料 + 设计生成 + 功效与样本量）·
+      <b>回归</b> · <b>可靠性</b>（Weibull/KM/Cox/Crow-AMSAA/保修/RBD）·
+      <b>时间序列</b>（ARIMA/指数平滑/季节分解/ACF·PACF）·
+      <b>IE</b>（标准工时/线平衡/VSM/工作抽样/SMED/TPM）·
+      <b>视频时间研究</b>（动作识别/作业周期/标准工时）· <b>AI 根因分析</b> ·
+      OEE / 成本损失 / 告警 / 数据源健康 / 五链 / 产线配置 / 已运行分析 /
+      知识库 / 指标解读；结论与界面分析同源（同一套统计引擎）</li>
+    <li><b>离线工具模式</b>: 未安装 Ollama 时按关键词自动路由到上述工具，
+      仍给出数值结论 + 判定阈值（如 Cpk≥1.33、%GRR&lt;10%）+ 改善建议</li>
+    <li><b>模型管理</b>: 本地 <code>Ollama</code>（如 <code>qwen2.5:7b</code>）或
+      <b>BYOK 云供应商</b>：OpenAI · Anthropic Claude · Google Gemini（原生协议）·
+      DeepSeek · Z.ai(GLM) · KIMI，以及<b>自定义 OpenAI 兼容端点</b>
+      （vLLM / LM Studio / OneAPI / 企业内网网关）；对话窗口「模型名称」为
+      <b>完全自定义输入框</b>（不限于内置清单，回车/失焦生效并记忆）</li>
+    <li><b>配置入口</b>: 菜单「工具 → 设置 → QAM Harness」— 选择供应商与模型、
+      填写 API Key（保存即加密，仅存 <code>llm_&lt;供应商&gt;_api_key_enc</code>）、
+      可覆盖接口地址（代理/内网），点「连通性测试」显示延迟与可用模型数；
+      对话窗口中切换到未配置密钥的云供应商时会直接弹出密钥输入框
+      （已有密钥则静默接入，不再弹出）</li>
+    <li><b>隐私门</b>: 首次调用某家云 API 会弹出确认，列出将要外发的
+      问题 + 工具结果摘要 + 数据列名提示（原始数据表、文件路径、密钥不会发送）；
+      可选「仅用本地工具」当次降级，授权按供应商只记一次，可随时撤销；
+      云调用总开关默认关闭</li>
+    <li><b>对话界面</b>: 聊天气泡 + 工具调用卡片（参数/耗时/状态）+ 上下文条
+      （数据表·分析数·告警数·工具数），支持导出 Markdown 对话记录；
+      窗口为独立非模态顶层窗口，可自由移动、缩放、最大化/全屏</li>
+    <li><b>知识库直查</b>: 底部检索框可按关键词查标准/判定表/方法说明（TF-IDF RAG）</li>
+    <li><b>一键智能分析</b>（菜单同区）：数据画像 → 自动推荐分析 → 执行 → 生成报告</li>
+  </ul>
+</section>
+
+<section class="card" id="vision">
+  <h2>视频时间研究（Vision AI）</h2>
+  <p>侧边栏「IE 工业工程 → 视频时间研究」：摄像头/视频 → 动作识别 → 作业周期 → 标准工时。
+  与「时间研究」「工作抽样」Tab 及 QAM Harness 工具同引擎。</p>
+  <ul>
+    <li><b>视频源</b>: 本地视频文件 · USB 摄像头 · RTSP · MJPEG/HTTP · 合成演示源
+      （无硬件也可试用）</li>
+    <li><b>动作识别</b>: 工作 / 空闲 / 走动 / 搬运 / 离岗；规则状态机 + 最短驻留迟滞。
+      有姿态模型时用 MediaPipe 33 关键点（Tasks API），无模型时自动降级为
+      OpenCV 运动特征（背景差分 MOG2 + 帧差 + 质心/速度）</li>
+    <li><b>结果</b>: 实时预览叠加当前状态；状态占比表 + 作业周期表；
+      「发送到工时研究」自动带入评定/宽放计算标准工时；支持导出结果 JSON</li>
+    <li><b>Agent 工具</b>: QAM Harness 可直接调用 <code>vision_analyze_video</code> /
+      <code>vision_time_study</code> / <code>vision_work_sampling</code> /
+      <code>vision_status</code></li>
+    <li><b>安装（可选依赖）</b>: <code>pip install -r requirements-vision.txt</code>；
+      主程序不依赖。姿态模型约 5.6MB，可在 Tab 内一键下载并做 SHA256 校验；
+      未安装时 Tab 显示安装指引，不阻塞其他功能</li>
+    <li><b>验收基准</b>: <code>python tools/vision_benchmark.py --demo</code> 合成自检；
+      现场验收 <code>python tools/vision_benchmark.py --video 现场.mp4
+      --labels labels.csv --min-accuracy 0.85</code>（标签 CSV: start_ms,end_ms,state）</li>
   </ul>
 </section>
 

@@ -42,6 +42,7 @@ CATEGORIES = [
             (22, "sidebar.std_work_combo"),
             (29, "sidebar.smed"),
             (31, "sidebar.tpm"),
+            (37, "sidebar.vision"),
         ],
     },
     {
