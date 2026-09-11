@@ -214,13 +214,21 @@ def load_config() -> dict:
 
 
 def save_config(values: dict) -> None:
-    """保存用户配置到本机 JSON 文件（敏感键自动加密为 <key>_enc）"""
+    """保存用户配置到本机 JSON 文件（敏感键自动加密为 <key>_enc）。
+
+    值为 None 表示**删除该键**（连同 `<key>_enc`）——用于"清除 API Key"等场景，
+    避免旧的加密值残留导致 get_secret 仍能读回已清除的密钥。
+    """
     global _user_overrides, CHART_DPI, MSA_GRR_ACCEPTABLE, MSA_GRR_MARGINAL, MSA_NDC_THRESHOLD
-    protected = _protect_secrets(values)
+    removals = [k for k, v in values.items() if v is None]
+    for key in removals:
+        _user_overrides.pop(key, None)
+        _user_overrides.pop(f"{key}_enc", None)
+    protected = _protect_secrets({k: v for k, v in values.items() if v is not None})
     _user_overrides.update(protected)
     # 迁移清理：加密成功后移除旧版明文键，避免同一密钥以两种形态共存
     for key in values:
-        if is_secret_key(key) and f"{key}_enc" in protected:
+        if is_secret_key(key) and (f"{key}_enc" in protected or key in removals):
             _user_overrides.pop(key, None)
     if "chart_dpi" in values:
         CHART_DPI = values["chart_dpi"]
