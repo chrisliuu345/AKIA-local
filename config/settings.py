@@ -5,10 +5,10 @@ IE Quality Analyzer - 全局配置
 import json
 import os
 
-from ui.font_config import get_ui_font
+from core.fonts import get_ui_font
 
 APP_NAME = "QA-Tool"
-APP_VERSION = "3.7.0"
+APP_VERSION = "3.7.2"
 ORGANIZATION = "QA-Tool"
 
 NELSON_RULES = {
@@ -167,34 +167,61 @@ MIXTURE_MODELS = ["linear", "quadratic", "special_cubic"]
 MIXTURE_MAX_COMPONENTS = 10
 
 
-_USER_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "user_config.json")
+_CONFIG_DIR = os.path.dirname(__file__)
+# 随安装包分发的公共默认值（无 secrets / 无本机设备列表）
+_DEFAULT_CONFIG_PATH = os.path.join(_CONFIG_DIR, "..", "user_config.default.json")
+# 用户本机配置（不入库、不打包）
+_USER_CONFIG_PATH = os.path.join(_CONFIG_DIR, "..", "user_config.json")
 
+_defaults = {}
 _user_overrides = {}
+
+# 敏感键后缀 — 保存时自动改存 <key>_enc（DPAPI / keyring 加密）
+_SECRET_SUFFIXES = ("_password", "_secret", "_token", "_api_key")
+
+
+def is_secret_key(key: str) -> bool:
+    """键名是否为敏感配置（密码/密钥/令牌）"""
+    k = str(key).lower()
+    return any(k.endswith(suffix) for suffix in _SECRET_SUFFIXES)
+
+
+def _read_json(path: str) -> dict:
+    """读取 JSON 配置，失败返回空 dict（损坏文件不阻塞启动）"""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, dict) else {}
+    except (OSError, ValueError):
+        return {}
 
 
 def load_config() -> dict:
-    """加载用户配置，返回可合并的 dict，并同步全局变量"""
-    global _user_overrides, CHART_DPI, MSA_GRR_ACCEPTABLE, MSA_GRR_MARGINAL, MSA_NDC_THRESHOLD
-    if os.path.exists(_USER_CONFIG_PATH):
-        try:
-            with open(_USER_CONFIG_PATH, "r", encoding="utf-8") as f:
-                _user_overrides = json.load(f)
-        except Exception:
-            _user_overrides = {}
-    if "chart_dpi" in _user_overrides:
-        CHART_DPI = _user_overrides["chart_dpi"]
-    if "msa_grr_acceptable" in _user_overrides:
-        MSA_GRR_ACCEPTABLE = _user_overrides["msa_grr_acceptable"]
-        MSA_GRR_MARGINAL = max(_user_overrides["msa_grr_acceptable"], MSA_GRR_MARGINAL)
-    if "msa_ndc_threshold" in _user_overrides:
-        MSA_NDC_THRESHOLD = _user_overrides["msa_ndc_threshold"]
-    return dict(_user_overrides)
+    """加载配置：默认文件 + 用户文件叠加，并同步全局变量"""
+    global _defaults, _user_overrides
+    global CHART_DPI, MSA_GRR_ACCEPTABLE, MSA_GRR_MARGINAL, MSA_NDC_THRESHOLD
+    _defaults = _read_json(_DEFAULT_CONFIG_PATH)
+    _user_overrides = _read_json(_USER_CONFIG_PATH)
+    merged = {**_defaults, **_user_overrides}
+    if "chart_dpi" in merged:
+        CHART_DPI = merged["chart_dpi"]
+    if "msa_grr_acceptable" in merged:
+        MSA_GRR_ACCEPTABLE = merged["msa_grr_acceptable"]
+        MSA_GRR_MARGINAL = max(merged["msa_grr_acceptable"], MSA_GRR_MARGINAL)
+    if "msa_ndc_threshold" in merged:
+        MSA_NDC_THRESHOLD = merged["msa_ndc_threshold"]
+    return dict(merged)
 
 
 def save_config(values: dict) -> None:
-    """保存用户配置到 JSON 文件"""
+    """保存用户配置到本机 JSON 文件（敏感键自动加密为 <key>_enc）"""
     global _user_overrides, CHART_DPI, MSA_GRR_ACCEPTABLE, MSA_GRR_MARGINAL, MSA_NDC_THRESHOLD
-    _user_overrides.update(values)
+    protected = _protect_secrets(values)
+    _user_overrides.update(protected)
+    # 迁移清理：加密成功后移除旧版明文键，避免同一密钥以两种形态共存
+    for key in values:
+        if is_secret_key(key) and f"{key}_enc" in protected:
+            _user_overrides.pop(key, None)
     if "chart_dpi" in values:
         CHART_DPI = values["chart_dpi"]
     if "msa_grr_acceptable" in values:
@@ -206,14 +233,53 @@ def save_config(values: dict) -> None:
         json.dump(_user_overrides, f, indent=2, ensure_ascii=False)
 
 
+def _protect_secrets(values: dict) -> dict:
+    """敏感明文 → 加密存储（<key>_enc）。加密不可用时保留明文并告警，
+    避免用户配置被静默丢弃。"""
+    import logging
+
+    out = {}
+    for key, value in values.items():
+        if is_secret_key(key) and isinstance(value, str) and value:
+            try:
+                from core.secret_store import encrypt_secret
+                encrypted = encrypt_secret(value)
+                if encrypted:
+                    out[f"{key}_enc"] = encrypted
+                    continue
+            except Exception as e:
+                logging.getLogger("QA-Tool.Settings").warning(
+                    "敏感配置 %s 加密失败，按明文保存: %s", key, e)
+        out[key] = value
+    return out
+
+
 def get_setting(key: str, default=None):
-    """读取设置，优先用户配置，回退到默认值"""
-    return _user_overrides.get(key, default)
+    """读取设置：用户配置 → 随包默认值 → 调用方默认值"""
+    if key in _user_overrides:
+        return _user_overrides[key]
+    return _defaults.get(key, default)
 
 
 def get_effective(key: str, module_default):
-    """获取最终生效值（用户配置覆盖模块默认）"""
-    return _user_overrides.get(key, module_default)
+    """获取最终生效值（用户配置 → 随包默认 → 模块默认）"""
+    if key in _user_overrides:
+        return _user_overrides[key]
+    return _defaults.get(key, module_default)
+
+
+def get_secret(key: str, default: str = "") -> str:
+    """读取敏感配置：优先解密 <key>_enc，回退旧版明文（向后兼容）"""
+    encrypted = _user_overrides.get(f"{key}_enc") or _defaults.get(f"{key}_enc")
+    if encrypted:
+        try:
+            from core.secret_store import decrypt_secret
+            value = decrypt_secret(encrypted)
+            if value:
+                return value
+        except Exception:
+            pass
+    return get_setting(key, default)
 
 
 ESP32_DEVICE_TAB_INDEX = 35
@@ -221,7 +287,7 @@ ESP32_DEVICE_TAB_INDEX = 35
 
 def esp32_extension_enabled() -> bool:
     """ESP-32 硬件拓展是否启用（默认启用，可由 user_config.json 的 esp32_extension 关闭）"""
-    return bool(_user_overrides.get("esp32_extension", True))
+    return bool(get_setting("esp32_extension", True))
 
 
 def tab_allowed(idx: int) -> bool:

@@ -9,6 +9,7 @@ TimeseriesStore；独立 CLI 时自动构建 Mock 采集演示流。
 import argparse
 import asyncio
 import json
+import secrets
 import threading
 import time
 from pathlib import Path
@@ -18,16 +19,65 @@ from core.storage.timeseries import TimeseriesStore, default_store_path
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
+LOOPBACK_HOSTS = ("127.0.0.1", "localhost", "::1")
 
 _STATIC = Path(__file__).parent / "dashboard.html"
 
 
+def dashboard_config() -> dict:
+    """从 user_config 读取看板绑定参数（v3.8.0-⑧）。
+
+    - dashboard_host / dashboard_port: 监听地址（多机部署时才改为 0.0.0.0）
+    - dashboard_token: 访问令牌（敏感键 → 经密钥库加密存储）
+    非回环地址且未设置令牌时，除非显式打开 dashboard_allow_lan_without_token，
+    一律回退到 127.0.0.1 —— 避免车间网络里裸暴露数据接口。
+    """
+    from config.settings import get_secret, get_setting
+
+    host = str(get_setting("dashboard_host", DEFAULT_HOST) or DEFAULT_HOST).strip()
+    try:
+        port = int(get_setting("dashboard_port", DEFAULT_PORT) or DEFAULT_PORT)
+    except (TypeError, ValueError):
+        port = DEFAULT_PORT
+    token = str(get_secret("dashboard_token", "") or "").strip()
+    if host not in LOOPBACK_HOSTS and not token and not bool(
+            get_setting("dashboard_allow_lan_without_token", False)):
+        host = DEFAULT_HOST
+    return {"host": host, "port": port, "token": token or None}
+
+
+def dashboard_url(host: str, port: int, token: str | None = None) -> str:
+    """看板访问地址（带令牌时自动携带 ?token=）。"""
+    base = f"http://{host}:{port}/"
+    if token:
+        return f"{base}?token={token}"
+    return base
+
+
 def create_app(bus: StreamBus, store: TimeseriesStore | None = None,
-               plant=None, oee=None):
+               plant=None, oee=None, auth_token: str | None = None,
+               downtime=None):
     from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-    from fastapi.responses import FileResponse, JSONResponse
+    from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 
     app = FastAPI(title="QA-Tool 实时看板", docs_url=None, redoc_url=None)
+
+    def _authorized(request) -> bool:
+        """v3.8.0 可选鉴权: Bearer 头或 ?token= 查询参数。未配置 token 时全放行。"""
+        if not auth_token:
+            return True
+        header = request.headers.get("authorization", "")
+        if header.lower().startswith("bearer "):
+            if secrets.compare_digest(header[7:].strip(), auth_token):
+                return True
+        supplied = request.query_params.get("token", "")
+        return bool(supplied) and secrets.compare_digest(supplied, auth_token)
+
+    @app.middleware("http")
+    async def _auth_middleware(request, call_next):
+        if _authorized(request):
+            return await call_next(request)
+        return PlainTextResponse("401 未授权: 缺少或错误的看板访问令牌", status_code=401)
 
     @app.get("/")
     async def index():
@@ -39,7 +89,14 @@ def create_app(bus: StreamBus, store: TimeseriesStore | None = None,
 
     @app.get("/api/history")
     async def history(device: str, channel: str | None = None,
-                      since: float | None = None, limit: int = 500):
+                      since: float | None = None, limit: int = 500,
+                      agg: str | None = None):
+        """历史查询 — agg=1m 时返回分钟降采样（v3.8.0-⑥），否则原始点。"""
+        if agg in ("1m", "1min", "minute") and store is not None:
+            points = store.query_rollup(device, channel, since_ts=since, limit=limit)
+            if points:
+                return JSONResponse({"device": device, "agg": "1m",
+                                     "samples": [p.as_dict() for p in points]})
         samples = []
         if store is not None:
             samples = store.query(device, channel, since_ts=since, limit=limit)
@@ -87,18 +144,73 @@ def create_app(bus: StreamBus, store: TimeseriesStore | None = None,
                 status = "red" if not online else ("yellow" if alert else "green")
                 stations.append({"name": st.name, "device": dev,
                                  "channels": st.channels, "status": status,
-                                 "online": online, "alert": alert})
-            lines.append({"name": line.name, "stations": stations})
-        return JSONResponse({"lines": lines})
+                                 "online": online, "alert": alert,
+                                 # v3.8.0: 规格线/节拍 → 看板控制图 USL·LSL 绘制
+                                 "specs": {ch: {"usl": st.usl, "lsl": st.lsl}
+                                           for ch in (st.channels or [])},
+                                 "ideal_cycle_time_s": line.cycle_time_for(st)})
+            lines.append({"name": line.name, "stations": stations,
+                          "unit_cost": line.unit_cost,
+                          "scrap_cost": line.loss_per_unit(),
+                          "downtime_cost_per_min": line.downtime_cost_per_min,
+                          "shift": line.shift})
+        tracker = downtime if downtime is not None else getattr(oee, "downtime", None)
+        return JSONResponse({
+            "lines": lines,
+            "downtime_reason_codes": list(getattr(tracker, "reason_codes", ()) or ()),
+        })
 
     @app.get("/api/oee")
     async def oee_metrics():
         if oee is None:
             return JSONResponse({"lines": {}})
-        return JSONResponse({"lines": oee.snapshot()})
+        payload = {"lines": oee.snapshot()}
+        tracker = downtime if downtime is not None else getattr(oee, "downtime", None)
+        if tracker is not None:
+            window = float(getattr(oee, "window_s", 600.0))
+            payload["downtime"] = tracker.snapshot(window)
+        return JSONResponse(payload)
+
+    @app.post("/api/downtime")
+    async def downtime_action(payload: dict):
+        """停机原因码记录（v3.8.0-⑤）: {"line":..,"action":"start|end","reason":..}"""
+        tracker = downtime if downtime is not None else getattr(oee, "downtime", None)
+        if tracker is None:
+            return JSONResponse({"ok": False, "error": "未启用停机追踪"}, status_code=400)
+        line = str(payload.get("line") or "")
+        action = str(payload.get("action") or "start")
+        if not line:
+            return JSONResponse({"ok": False, "error": "缺少产线"}, status_code=400)
+        if action == "end":
+            rec = tracker.end(line)
+            if rec is None:
+                return JSONResponse({"ok": False, "error": "该产线未处于停机状态"},
+                                    status_code=409)
+            return JSONResponse({"ok": True, "ended": rec.reason,
+                                 "seconds": round(rec.duration(), 2)})
+        rec = tracker.start(line, payload.get("reason") or "其他",
+                            device=payload.get("device") or "")
+        return JSONResponse({"ok": True, "reason": rec.reason, "start_ts": rec.start_ts})
+
+    @app.get("/api/cost")
+    async def cost_metrics():
+        """成本损失估算（v3.8.0-④）— 超规格量 × 单件损失 + 停机成本。"""
+        if plant is None:
+            return JSONResponse({"lines": {}})
+        from core.streaming.cost import CostAnalyzer
+
+        samples_by_device = {dev: bus.recent(dev, n=5000) for dev in bus.topics()}
+        snapshot = oee.snapshot() if oee is not None else None
+        analyzer = CostAnalyzer(plant, downtime=getattr(oee, "downtime", None))
+        return JSONResponse({"lines": analyzer.estimate(samples_by_device, snapshot)})
 
     @app.websocket("/ws/stream")
     async def stream(ws: WebSocket):
+        if auth_token:
+            supplied = ws.query_params.get("token", "")
+            if not (supplied and secrets.compare_digest(supplied, auth_token)):
+                await ws.close(code=1008)
+                return
         await ws.accept()
         loop = asyncio.get_running_loop()
         queue: asyncio.Queue = asyncio.Queue()
@@ -147,11 +259,13 @@ def create_app(bus: StreamBus, store: TimeseriesStore | None = None,
 
 def start_thread(bus: StreamBus, store: TimeseriesStore | None = None,
                  host: str = DEFAULT_HOST, port: int = DEFAULT_PORT,
-                 plant=None, oee=None):
+                 plant=None, oee=None, auth_token: str | None = None,
+                 downtime=None):
     """在线程内启动 uvicorn — 桌面端菜单入口使用。"""
     import uvicorn
 
-    app = create_app(bus, store, plant=plant, oee=oee)
+    app = create_app(bus, store, plant=plant, oee=oee, auth_token=auth_token,
+                     downtime=downtime)
     cfg = uvicorn.Config(app, host=host, port=port, log_level="warning")
     server = uvicorn.Server(cfg)
     thread = threading.Thread(target=server.run, daemon=True,
@@ -175,10 +289,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="QA-Tool 实时看板服务")
     parser.add_argument("--host", default=DEFAULT_HOST)
     parser.add_argument("--port", type=int, default=DEFAULT_PORT)
+    parser.add_argument("--token", default="",
+                        help="访问令牌（留空 = 不鉴权；设置后 HTTP/WS 均需携带）")
     args = parser.parse_args()
 
     store = TimeseriesStore(default_store_path())
     bus = StreamBus()
+    token = args.token.strip() or None
 
     def _demo_source():
         from core.devices.driver import MockDriver
@@ -189,5 +306,5 @@ if __name__ == "__main__":
 
     _demo_source()
     print(f"QA-Tool 实时看板: http://{args.host}:{args.port}")
-    uvicorn.run(create_app(bus, store), host=args.host, port=args.port,
-                log_level="warning")
+    uvicorn.run(create_app(bus, store, auth_token=token), host=args.host,
+                port=args.port, log_level="warning")

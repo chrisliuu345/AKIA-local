@@ -15,20 +15,20 @@ AppImage 是单文件分发格式，无需安装，双击即可运行。
 
 ```bash
 # 1. 下载 AppImage
-# 从 GitHub Releases 下载 qa-tool-3.2.0-x86_64.AppImage
+# 从 GitHub Releases 下载 qa-tool-3.7.2-x86_64.AppImage
 
 # 2. 添加执行权限
-chmod +x qa-tool-3.2.0-x86_64.AppImage
+chmod +x qa-tool-3.7.2-x86_64.AppImage
 
 # 3. 运行
-./qa-tool-3.2.0-x86_64.AppImage
+./qa-tool-3.7.2-x86_64.AppImage
 ```
 
 **可选: 集成到系统菜单**
 
 ```bash
 # 移动到 /opt 目录
-sudo mv qa-tool-3.2.0-x86_64.AppImage /opt/qa-tool.AppImage
+sudo mv qa-tool-3.7.2-x86_64.AppImage /opt/qa-tool.AppImage
 
 # 创建桌面入口
 cat > ~/.local/share/applications/qa-tool.desktop << EOF
@@ -48,10 +48,10 @@ update-desktop-database ~/.local/share/applications/
 
 ```bash
 # 1. 下载 .deb 包
-# 从 GitHub Releases 下载 qa-tool_3.2.0_amd64.deb
+# 从 GitHub Releases 下载 qa-tool_3.7.2_amd64.deb
 
 # 2. 安装
-sudo dpkg -i qa-tool_3.2.0_amd64.deb
+sudo dpkg -i qa-tool_3.7.2_amd64.deb
 
 # 3. 修复依赖（如有）
 sudo apt install -f
@@ -103,6 +103,21 @@ sudo apt install fonts-noto-cjk
 sudo usermod -aG dialout $USER
 # 重新登录生效
 ```
+
+### 密钥环（保存数据库密码需要）
+
+Linux 下数据库连接密码通过系统密钥环（keyring）+ Fernet 加密保存：
+
+```bash
+# GNOME 桌面（推荐，开箱可用）
+sudo apt install gnome-keyring
+
+# 无桌面环境 / 服务器场景可改用：
+sudo apt install python3-keyrings.alt   # 或按 keyring 文档配置后端
+```
+
+未安装可用后端时程序仍可正常运行，但**数据库密码不会保存**（保存连接时会
+弹窗提示），每次使用需重新输入；这是有意的安全设计，不会降级为明文存储。
 
 ## 构建自己的包
 
@@ -170,10 +185,10 @@ python main.py
 
 ## 版本信息
 
-- **当前版本**: v3.2.0
+- **当前版本**: v3.7.2
 - **Python**: 3.11+ (推荐 3.14)
 - **Qt**: PySide6 6.5+
-- **测试**: 820+ pytest 通过
+- **测试**: 1280+ pytest 通过（逐文件执行）
 
 ## 技术支持
 

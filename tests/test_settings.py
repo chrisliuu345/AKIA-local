@@ -8,8 +8,10 @@ from config import settings
 @pytest.fixture(autouse=True)
 def _reset_overrides():
     original = dict(settings._user_overrides)
+    original_defaults = dict(settings._defaults)
     yield
     settings._user_overrides = original
+    settings._defaults = original_defaults
 
 
 class TestChartDpiEffective:
@@ -20,8 +22,19 @@ class TestChartDpiEffective:
 
     def test_dpi_falls_back_to_module_default(self):
         from analysis.charts import chart_generator
+        # 无用户配置且无随包默认时，回退到模块默认值（v3.7.1 三层配置语义）
         settings._user_overrides = {}
+        settings._defaults = {}
         assert chart_generator._dpi() == settings.CHART_DPI
+
+    def test_dpi_priority_user_over_default_file(self):
+        """优先级: 用户配置 > 随包默认 > 模块默认"""
+        from analysis.charts import chart_generator
+        settings._defaults = {"chart_dpi": 111}
+        settings._user_overrides = {}
+        assert chart_generator._dpi() == 111
+        settings._user_overrides = {"chart_dpi": 222}
+        assert chart_generator._dpi() == 222
 
 
 class TestUserFontWiring:

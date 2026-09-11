@@ -2,7 +2,7 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> Current: v3.7.0 Realtime SPC Cloud Dashboard & Data Connectors (dev completed ✅ 2026-09-08) | Tests: 1300+ pytest · 37 Tabs | Updated: 2026-09-08
+> Current: v3.7.2 Realtime-monitoring benchmark polish, 8 items (spec limits & zoom / plant.json visual config / alert levels & ack / cost loss / real OEE P / downsampling & retention / connector health / dashboard auth) (✅ 2026-09-10) | Tests: 1350+ pytest · 37 Tabs | Updated: 2026-09-10
 
 ---
 
@@ -11,7 +11,7 @@
 > **Strategic Repositioning (2026-08-24)**: positioning shifted from enterprise multi-company platform to **personal subscription quality engineering tool** (Minitab-like), with differentiation core in real-time factory data integration + IE engineering tools + five-chain workflow + BYOK AI Agent (QAM Harness). See [Core Competitive Positioning](#core-competitive-positioning-2026-08-rework).
 
 ```
-v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ✅ ──→ v2.7.0 ✅ ──→ v2.8.0 ✅ ──→ v2.9.0 ✅ ──→ v3.0.0 ✅ ──→ v3.1.0 ✅ ──→ v3.2.0 ✅ ──→ v3.3.0 ✅ ──→ v3.4.0 ✅ ──→ v3.5.0 ✅ ──→ v3.6.0 ✅ ──→ v3.6.1 ✅(folded into 3.6.0) ──→ v3.7.0 ✅ ──→ v3.7.1 (candidate) ──→ v3.8.0 ──→ v4.0.0
+v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ✅ ──→ v2.7.0 ✅ ──→ v2.8.0 ✅ ──→ v2.9.0 ✅ ──→ v3.0.0 ✅ ──→ v3.1.0 ✅ ──→ v3.2.0 ✅ ──→ v3.3.0 ✅ ──→ v3.4.0 ✅ ──→ v3.5.0 ✅ ──→ v3.6.0 ✅ ──→ v3.6.1 ✅(folded into 3.6.0) ──→ v3.7.0 ✅ ──→ v3.7.1 ✅ ──→ v3.7.2 ✅ ──→ v3.8.0 ──→ v4.0.0
 ```
 
 | Stage | Version | Theme |
@@ -24,6 +24,8 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 | Done ✅ | v3.6.0 | **Graph Builder Enhancement & Interactive Experience** (chart editor architecture / pie·pareto real-time interaction / heatmap·scatter matrix / small multiples faceting / PPT·PNG·SVG export + thumbnail gallery / help center + menu redesign / integration tests) — code acceptance passed 2026-09-06, release packaging pending |
 | Done | v3.6.1 | **Full code-quality audit** (7 latent crash fixes / hazard cleanup / full-repo ruff scan / 72-file regression) |
 | Done ✅ | v3.7.0 | **Real-Time SPC Cloud Dashboard & Data Connectors** (P1−P6, 2026-09-08) |
+| Done ✅ | v3.7.1 | **Five-chain fixes + data semantics & engineering consistency hardening** (FMEA→CP→SPC bridge fixes + ProjectContext as single source of truth / value-first column typing (measurement & duration columns) + post-clean re-analysis / packaging no longer ships local config, secrets stored as `<key>_enc` / APP_VERSION single source + CI version gate / dead-module cleanup + layer fix) — 2026-09-10 |
+| Done ✅ | v3.7.2 | **Realtime-monitoring benchmark polish, 8 items** (live chart USL/LSL + zoom / plant.json visual config editor / alert levels, ack & audit, linked actions / cost-loss analysis / OEE takt-based performance P with downtime reason codes & shift calendar / minute downsampling + tiered retention / connector health page + auto-reconnect / optional dashboard auth) — 2026-09-10 |
 | TBD | v3.8.0 | Industrial AI Agent (AI + Vision Integration) |
 | Merged | v3.9.0 | Merged into v3.8.0 (Video Time Study → Vision AI capability) |
 | TBD | v3.9.0 | Predictive Analytics & Machine Learning |
@@ -571,7 +573,11 @@ python build_nuitka.py --onefile      # single executable
 - WebSocket concurrency of 50 connections without performance degradation
 - PLC/gage connector mock tests pass
 
-## v3.7.1 — Realtime monitoring benchmark polish (candidates, researched 2026-09-08)
+## v3.7.2 ✅ Done — Realtime monitoring benchmark polish (2026-09-10)
+
+> From the 2026-09-08 competitor benchmark (9 items). Items **1-8 shipped in
+> v3.7.2**; item 9 (multi-site / i18n) stays on the backlog for v3.8.0+.
+> Every item landed with regression tests and a 4-way consistent version bump.
 
 > Sources (official pages fetched 2026-09-08):
 > [Minitab Real-Time SPC](https://www.minitab.com/en-us/products/real-time-spc/) ·
@@ -592,16 +598,16 @@ python build_nuitka.py --onefile      # single executable
 | Cost/benefit | case studies | **Cost Inspector** ($/unit) | net-content MAV/TNE | ~9% cost cut | none |
 | Integrations | SAP DM etc. | MES/ERP/HMI/LIMS API | multi-site cloud | OEE/LIMS/API/DLL/Python | self-host WS/HTTP |
 
-### v3.7.1 candidate backlog (priority order)
-1. Chart upgrade: zoom + USL/LSL overlay (web & desktop)
-2. plant.json visual config editor + spreadsheet template import (Minitab Autoconfigure inspired)
-3. Alerts: levels (warning/alarm/severe) + acknowledge & audit + device-action/stop linking
-4. Cost analysis: OOS quantity × unit cost = loss estimate (Cost Inspector / net-content analogy)
-5. Real OEE: takt config → performance(P), downtime reason codes, shift calendar
-6. Retention & downsampling: minute-level aggregation + auto retention (timeseries-DB practice)
-7. Connector health page + auto-reconnect backoff (Kepware connection tree)
-8. Dashboard optional auth token + host binding
-9. Multi-site topology view + i18n UI (Enact multi-site / DataLyzer 11 languages)
+### v3.7.2 delivery list (items 1-8)
+1. ✅ Chart upgrade: `LiveSPC.spec_limits()` + `chart_engine._draw_spec_lines` (magenta dotted USL/LSL on I-MR/XBar/P·NP·C·U); dashboard wheel-zoom / drag-pan / double-click reset with OOS points highlighted; desktop `ui/widgets/chart_zoom.py` for live charts reading specs from plant.json
+2. ✅ plant.json visual config: `ui/dialogs/plant_config_dialog.py` table editor (rows, USL/LSL, takt, costs, shift) + Excel/CSV template import/export; `plant_to_rows` / `rows_to_plant` / `rows_from_excel` / in-place `reload()` so dashboard & OEE pick up changes live
+3. ✅ Alerts: `info/warning/critical` levels (rule override, auto by kind & overshoot) + `alert_journal.py` JSONL retention with ack/ack_by/note + `alert_fired`/`alert_ack` audit + alert-center dialog (level filter, unacked only, ack, CSV export) + linked actions disabled by default; **also fixed** a v3.7.0 defect where email/webhook handlers (plain functions) were called as `h.notify`, silently failing inside the engine
+4. ✅ Cost analysis: `core/streaming/cost.py` OOS count × per-unit loss (scrap cost, falling back to unit cost) + downtime minutes × rate; `/api/cost` and a dashboard cost card
+5. ✅ Real OEE: takt fields in `core/plant.py` (station wins, line fallback, bottleneck max), shift calendar (`parse_shift` / `shift_seconds_in_window`, midnight-crossing), `core/streaming/downtime.py` reason-code tracking; snapshot now exposes real A/P/Q plus defects / downtime_s / run_time_s / reason, backward compatible (P=1.0 and sample-based A when unconfigured)
+6. ✅ Retention & downsampling: `measurements_1m` minute rollups (avg/min/max/count, idempotent recompute), `maintain()` tiered retention, periodic runner maintenance, `/api/history?agg=1m`
+7. ✅ Connector health page + auto-reconnect: `connectors/health.py` state machine + exponential backoff (base×2ⁿ capped) + runner backoff skip and timed reconnect + health dialog (runtime status, plugin availability, manual reconnect) + `specs_from_settings` / `create_drivers` wiring user_config.connectors into the StreamBus
+8. ✅ Dashboard auth: API token (`Authorization: Bearer` or `?token=`, enforced for HTTP and WS), `dashboard_config()` host binding (non-loopback without a token falls back to loopback unless explicitly allowed), token passthrough in the dashboard page, CLI `--token`
+9. ⏳ Multi-site topology view + i18n UI (Enact multi-site / DataLyzer 11 languages) — deferred
 
 > Priority rule: P0(already fixed this round) > 1-5 (functional gaps) > 6-9 (scale gaps);
 > compatible with v3.8.0 AI Agent (link items 1/3 into conversational analysis).
@@ -729,6 +735,8 @@ QA-Tool v3.7.0 Industrial AI Agent
 
 | Date | Version | Content |
 |------|---------|---------|
+| 09-10 | v3.7.2 | Realtime-monitoring benchmark polish (8 items): live chart spec limits + zoom, plant.json visual editor with hot reload, alert levels/ack/journal/actions (plus email-webhook dispatch defect fix), cost-loss estimation, OEE takt-based P with downtime codes & shift calendar, minute downsampling + tiered retention, connector health page with backoff auto-reconnect, optional dashboard token auth. 8 new test files, ruff clean, full per-file regression green |
+| 09-10 | v3.7.1 | Defect fixes & hardening: **five-chain bridge fixes** (FMEA→CP index mismatch silently no-op / CP→SPC lazy-load ordering + monitoring list had no UI consumer / 8D read internal tab cache) + ProjectContext as the single source of truth; **data-semantics fixes** (measurement-keyword columns missing from numeric_columns → false import warnings & empty DOE factors; "time"-keyword duration columns mis-typed as timestamp; post-clean numeric_columns always empty via select_dtypes) + new DataParser.refresh_info API; **engineering consistency** (build no longer bundles local user_config.json — ships user_config.default.json and stores secrets as `<key>_enc`; APP_VERSION single source + tools/check_version.py in CI; unified shutdown of alert engine/dashboard thread/stream subscriptions; explicit no-keyring notice on Linux); **structural cleanup** (removed ~950 lines of dead modules anti_debug/integrity/license_keys/license_generator/license_dialog, kept core/license.py shim; font utils moved to core/fonts.py with layering guard test; plugin sidebar shows IPlugin.name; test_integration converted to real pytest cases, run_all_tests moved to tools/) |
 | 09-06 | v3.6.0 (addendum) | Help center added: user guide migrated from docx to offline HTML (browser-open, commercial help layout, content revised to current facts) + full menubar redesign (emoji removed, AI/Tools/Help regrouping, F1 guide, F11 display-mode entry) |
 | 09-07 | v3.7.0-prereq | Style debt fully cleared (F841 ×65 / E701·E702 ×568 / E402 ×20 / B-class ×72); ruff gate live via ruff.toml + dev-requirements + ci.yml; build chain switched Nuitka → PyInstaller (onedir), Inno/AppImage/.deb kept; 73 test files green |
 | 09-06 | v3.6.0 | Graph Builder completed & code-accepted: chart editor architecture / real-time interaction / heatmap·scatter matrix / faceting / export enhancements / help center (guide.html) + full menubar redesign; full quality pass folded in (7 latent crash fixes + ruff cleanup); 73 test files all green; version unified to 3.6.0; release packaging pending |

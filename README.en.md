@@ -11,14 +11,14 @@
 ### Linux (AppImage)
 
 ```bash
-chmod +x QA-Tool-3.5.0-x86_64.AppImage
-./QA-Tool-3.5.0-x86_64.AppImage
+chmod +x QA-Tool-3.7.2-x86_64.AppImage
+./QA-Tool-3.7.2-x86_64.AppImage
 ```
 
 ### Linux (.deb)
 
 ```bash
-sudo dpkg -i qa-tool_3.5.0_amd64.deb
+sudo dpkg -i qa-tool_3.7.2_amd64.deb
 qa-tool
 ```
 
@@ -140,4 +140,4 @@ Proprietary commercial software. Unauthorized copying, modification, or distribu
 
 ---
 
-*Python 3.14 + PySide6 · 1000+ Tests · 37 Analysis Tabs*
+*Python 3.14 + PySide6 · 1280+ Tests · 37 Analysis Tabs*
