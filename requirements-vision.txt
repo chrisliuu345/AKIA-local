@@ -1,0 +1,22 @@
+# v3.8.0 Vision 能力（可选依赖，主程序不依赖）
+#
+# 完整能力（MediaPipe 姿态骨架 + OpenCV 运动特征）：
+#   pip install -r requirements-vision.txt
+# 仅运动特征降级路径（体积更小、无 mediapipe）：
+#   pip install "opencv-contrib-python>=4.9,<5"
+#
+# 说明：
+# - 未安装时主程序与 Agent 核心功能完全可用，Vision 工具会返回安装指引；
+# - 不要同时安装 opencv-python 与 opencv-contrib-python（两个发行版都提供 cv2，
+#   会互相覆盖）；mediapipe 依赖 opencv-contrib-python，因此统一用 contrib 一套；
+# - mediapipe 1.0 起使用 Tasks API（旧 mp.solutions 已移除）。姿态模型
+#   pose_landmarker_lite.task（约 5.6MB）不随包分发，由程序按需下载到
+#   ~/.qa_tool_models/ 并校验 SHA256；离线环境可手动放置，或设
+#   QA_TOOL_POSE_MODEL 直接指定模型文件；
+# - 当前平台/Python 版本若无 mediapipe wheel，只装 OpenCV 即可自动降级为
+#   运动特征路径（背景差分 MOG2 + 帧差 + 质心/速度），不阻塞其他功能；
+# - 打包发行时不要把本文件依赖并入主包（opencv/mediapipe 体积约 150MB+），
+#   构建脚本需排除 cv2/mediapipe，保持可选安装。
+
+opencv-contrib-python>=4.9,<5
+mediapipe>=1.0

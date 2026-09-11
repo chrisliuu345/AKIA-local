@@ -18,3 +18,10 @@ TEMP/dev_private_key.pem
 TEMP/*.pem
 .integrity_baseline.json
 TEMP/
+
+# 运行期数据（程序生成，不入库）
+data/
+# 报告/对话导出默认文件名
+analysis_report.pdf
+analysis_report.md
+chat_history.md

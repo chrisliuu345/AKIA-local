@@ -2,7 +2,7 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> Current: v3.7.2 Realtime-monitoring benchmark polish, 8 items (spec limits & zoom / plant.json visual config / alert levels & ack / cost loss / real OEE P / downsampling & retention / connector health / dashboard auth) (✅ 2026-09-10) | Tests: 1350+ pytest · 37 Tabs | Updated: 2026-09-10
+> Current: v3.7.2 Realtime-monitoring benchmark polish, 8 items (spec limits & zoom / plant.json visual config / alert levels & ack / cost loss / real OEE P / downsampling & retention / connector health / dashboard auth) (✅ 2026-09-10) | Tests: 1400+ pytest · 36 analysis tabs | Updated: 2026-09-11
 
 ---
 

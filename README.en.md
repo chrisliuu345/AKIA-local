@@ -61,6 +61,7 @@ Requires Python 3.11+
 | **TPM** | Total Productive Maintenance · Six Big Losses |
 | **Line Balance** | LPT Balancing · Bottleneck Identification |
 | **VSM** | Value Stream Map · VA/NVA · Production Cycle |
+| **Vision Time Study** | Camera/video action recognition (working/idle/walking/carrying/away) · work cycles · standard time (optional deps) |
 
 ### Quality Tools
 
@@ -75,7 +76,7 @@ Requires Python 3.11+
 
 | Module | Capabilities |
 |--------|-------------|
-| **AI Assistant** | Ollama + OpenAI-compatible API · Knowledge Base RAG |
+| **QAM Harness** | AI agent with 34 local tools (SPC/capability/MSA/hypothesis/DOE/regression/reliability/time-series/IE/vision time study/cost/realtime/five-chain/root-cause) + offline tool mode · BYOK cloud providers (OpenAI/Claude/Gemini/DeepSeek/Z.ai/KIMI + custom endpoints) · encrypted keys + cloud privacy gate · Knowledge Base RAG |
 | **Charts** | 15+ chart types · Dark theme · CJK fonts |
 | **Reports** | PDF / Word / Excel / HTML · Inline charts |
 

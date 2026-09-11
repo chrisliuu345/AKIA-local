@@ -1,529 +1,775 @@
-"""AI 分析助手对话框 V2 — 预设问题 + 对话历史 + 增强上下文 + 模型持久化"""
+"""QAM Harness 对话界面（v3.8.0 Phase 1）。
+
+在原「AI 分析助手」对话框基础上升级:
+  - 接入 AgentEngine：可调用软件内 16 个工具（SPC/能力/MSA/假设检验/OEE/成本/
+    告警/五链/产线/实时/知识库/指标解读），离线时走规则路由同样能出结论
+  - 可读性: 聊天气泡（左右分栏）、Markdown 轻渲染、工具调用卡片（含参数/耗时/
+    状态）、上下文条（数据表/分析数/告警数/工具数）、等宽代码块
+  - 保留原能力: Ollama/OpenAI 兼容模型选择与持久化、知识库检索、导出、清空
+"""
+from __future__ import annotations
 
 import html
+import re
 
-from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QTextEdit, QLineEdit, QWidget, QComboBox, QFileDialog,
-)
-from PySide6.QtCore import Qt, QThread, Signal, QSettings
+from PySide6.QtCore import QEvent, QSettings, Qt, QThread, Signal
 from PySide6.QtGui import QFont, QTextCursor
+from PySide6.QtWidgets import (
+    QApplication, QComboBox, QDialog, QFileDialog, QHBoxLayout, QLabel, QLineEdit,
+    QMessageBox, QPushButton, QTextEdit, QVBoxLayout, QWidget,
+)
 
-from ui.theme import colors as theme_colors
 from ui.font_config import get_ui_font
+from ui.theme import colors as theme_colors
 
 PRESET_QUESTIONS = [
-    ("SPC判异", "控制图出现超出控制限的点，可能的原因和改善措施？"),
-    ("CPK解读", "CPK=0.8 代表什么水平？如何系统性地提升至1.33？"),
-    ("GRR判定", "GRR=25% 是否可以接受？如何改进测量系统？"),
-    ("控制图选择", "对于需要控制产品外观缺陷率的过程，应选哪种控制图？"),
-    ("分布识别", "数据不服从正态分布时，如何进行过程能力分析？"),
-    ("DOE建议", "如何用DOE找出影响产品尺寸变异的关键因子？"),
-    ("OEE改善", "OEE只有62%，如何从六大损失角度系统改善？"),
-    ("线平衡", "装配线平衡率只有72%，如何通过ECRS原则优化？"),
+    ("数据概况", "当前导入了哪些数据？用一句话总结表、行数与可用数值列。"),
+    ("能力分析", "用当前数据做过程能力分析，给出 Cpk、PPM 与改善建议。"),
+    ("控制图判异", "对当前数据跑 I-MR 控制图，说明判异点与可能的特殊原因。"),
+    ("测量系统", "评估当前测量系统（Gage R&R），%GRR 与 ndc 是否可接受？"),
+    ("实时 OEE", "实时 OEE 现在是多少？主要损失在哪一环？"),
+    ("成本损失", "当前成本损失是多少？按损失从大到小说明来源。"),
+    ("告警处置", "有哪些未确认告警？建议的处置顺序是什么？"),
+    ("五链状态", "五链（FMEA → 控制计划 → PPAP → 8D）现在是什么状态？"),
 ]
 
-HISTORY_MAX = 20
 
+class AgentWorker(QThread):
+    """后台执行 Agent 事件流 — 通过信号回主线程渲染。"""
 
-class LLMWorker(QThread):
+    tool_called = Signal(object)
     token_received = Signal(str)
-    finished = Signal(str)
+    replied = Signal(object)
+    failed = Signal(str)
 
-    def __init__(self, client, prompt):
+    def __init__(self, engine, question: str):
         super().__init__()
-        self.client = client
-        self.prompt = prompt
+        self.engine = engine
+        self.question = question
 
     def run(self):
-        full = ""
         try:
-            for token in self.client.generate(self.prompt):
+            for kind, payload in self.engine.respond_stream(self.question):
                 if self.isInterruptionRequested():
-                    break
-                full += token
-                self.token_received.emit(token)
-        except Exception as e:
-            full = f"错误: {str(e)}"
-        self.finished.emit(full)
+                    return
+                if kind == "tool":
+                    self.tool_called.emit(payload)
+                elif kind == "token":
+                    self.token_received.emit(payload)
+                elif kind == "done":
+                    self.replied.emit(payload)
+        except Exception as e:                      # 兜底: 不让异常冒到 Qt 事件循环
+            self.failed.emit(f"{type(e).__name__}: {e}")
 
 
-class LLMDialog(QDialog):
-    def __init__(self, parent=None):
+def md_to_html(text: str) -> str:
+    """轻量 Markdown → Qt 富文本（标题/加粗/行内代码/代码块/列表）。"""
+    text = text or ""
+    blocks = re.split(r"```", text)
+    out: list[str] = []
+    for idx, block in enumerate(blocks):
+        if idx % 2 == 1:                            # 代码块
+            out.append("<pre style='background:#14141e;color:#c8ccd6;"
+                       "padding:8px 10px;border-left:3px solid #1b5faa;'>"
+                       + html.escape(block.strip()) + "</pre>")
+            continue
+        safe = html.escape(block)
+        safe = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", safe)
+        safe = re.sub(r"`([^`]+)`",
+                      r"<code style='background:#35354a;color:#e0a040;'>\1</code>", safe)
+        lines = []
+        for line in safe.split("\n"):
+            stripped = line.strip()
+            if stripped.startswith("### "):
+                lines.append(f"<div style='color:#4da6ff;font-weight:bold;'>"
+                             f"{stripped[4:]}</div>")
+            elif stripped.startswith(("- ", "* ")):
+                lines.append("&nbsp;&nbsp;• " + stripped[2:])
+            elif re.match(r"^\d+\.\s", stripped):
+                lines.append("&nbsp;&nbsp;" + stripped)
+            else:
+                lines.append(line)
+        out.append("<br>".join(lines))
+    return "".join(out)
+
+
+class QAMHarnessDialog(QDialog):
+    """QAM Harness 对话窗口 — Agent 工具调用 + 知识库 + 模型管理。"""
+
+    def __init__(self, parent=None, engine=None):
         super().__init__(parent)
-        self.setWindowTitle("AI 分析助手")
-        self.setMinimumSize(700, 560)
-        self.resize(720, 600)
+        self.setWindowTitle("QAM Harness — 质量工程 AI Agent")
+        # 独立顶层窗口：可自由移动/最大化/全屏，不随主窗口模态锁定
+        self.setWindowFlags(Qt.Window | Qt.WindowMinimizeButtonHint
+                            | Qt.WindowMaximizeButtonHint
+                            | Qt.WindowCloseButtonHint)
+        self.setWindowModality(Qt.NonModal)
+        self.setSizeGripEnabled(True)
+        self.setMinimumSize(860, 560)
+        self._apply_initial_geometry(parent)
 
         from core.llm_client import LLMClient
-        s = QSettings("QA-Tool", "LLM")
-        saved_model = s.value("model", "")
-        saved_provider = s.value("provider", "ollama")
-        self.llm = LLMClient()
-        if saved_model:
-            try:
-                self.llm.set_model(saved_model, saved_provider)
-            except Exception:
-                pass
+        from ui.agent_bridge import build_engine
 
-        self.worker = None
-        self._history: list = []
+        # 已注入 engine（测试/内嵌用法）时沿用它自带的 LLM，避免被覆盖
+        self.llm = getattr(engine, "llm", None) if engine is not None else None
+        if self.llm is None:
+            self.llm = LLMClient.from_config()
+            saved_model = QSettings("QA-Tool", "LLM").value("model", "")
+            if saved_model:
+                try:
+                    self.llm.set_model(saved_model, self.llm.provider)
+                except Exception:
+                    pass
+        if engine is None:
+            engine, self.agent_context = build_engine(parent, llm=self.llm)
+        else:
+            self.agent_context = getattr(engine, "context", None)
+            if getattr(engine, "llm", None) is None:
+                engine.set_llm(self.llm)
+        self.engine = engine
+        self._last_provider_id = self.llm.provider
+
+        self.worker: AgentWorker | None = None
+        self._history: list[tuple[str, str]] = []
         self._current_ai_msg = ""
+        self._streaming_started = False
+        self._stream_anchor: int | None = None
 
         self._setup_ui()
         self.input_box.installEventFilter(self)
+        self._refresh_context_bar()
+        self._greet()
 
-    def eventFilter(self, obj, event):
-        from PySide6.QtCore import QEvent
-        if event.type() == QEvent.KeyPress:
-            if event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
-                if obj == self.input_box:
-                    self._send_message()
-                    return True
-                elif obj == self.kb_input:
-                    self._kb_search()
-                    return True
-        return super().eventFilter(obj, event)
+    def _apply_initial_geometry(self, parent):
+        """按可用屏幕确定初始尺寸，并居中于父窗口后夹取到屏幕内，避免遮挡。"""
+        screen = QApplication.primaryScreen()
+        if screen is None:
+            self.resize(1000, 720)
+            return
+        avail = screen.availableGeometry()
+        width = max(900, min(1180, int(avail.width() * 0.82)))
+        height = max(620, min(880, int(avail.height() * 0.86)))
+        self.resize(width, height)
+        if parent is not None and parent.isVisible():
+            center = parent.frameGeometry().center()
+            x = max(avail.left(), min(center.x() - width // 2,
+                                      avail.right() - width))
+            y = max(avail.top(), min(center.y() - height // 2,
+                                     avail.bottom() - height))
+            self.move(x, y)
 
+    # ------------------------------------------------------------ UI
     def _setup_ui(self):
         tc = theme_colors(self)
+        self.setStyleSheet(f"QDialog {{ background-color: {tc['bg_body']}; }}")
         layout = QVBoxLayout(self)
-        layout.setSpacing(6)
+        layout.setContentsMargins(14, 12, 14, 12)
+        layout.setSpacing(8)
 
+        # ---- 标题行 ----
         header = QHBoxLayout()
-        title = QLabel("AI 分析助手")
-        title.setFont(QFont(get_ui_font(), 16, QFont.Bold))
-        header.addWidget(title)
+        header.setSpacing(8)
+        title_box = QVBoxLayout()
+        title_box.setSpacing(0)
+        title = QLabel("QAM Harness")
+        title.setFont(QFont(get_ui_font(), 17, QFont.Bold))
+        title.setStyleSheet(f"color: {tc['text_primary']};")
+        subtitle = QLabel("质量工程 AI Agent · 本地工具调用 + 知识库（数据不出本机）")
+        subtitle.setFont(QFont(get_ui_font(), 9))
+        subtitle.setStyleSheet(f"color: {tc['text_muted']};")
+        title_box.addWidget(title)
+        title_box.addWidget(subtitle)
+        header.addLayout(title_box)
 
         self.llm_status = QLabel("")
-        self.llm_status.setFont(QFont(get_ui_font(), 9))
+        self.llm_status.setFont(QFont(get_ui_font(), 9, QFont.Bold))
         header.addWidget(self.llm_status)
         header.addStretch()
 
-        self.model_combo = QComboBox()
-        self.model_combo.setMaximumWidth(180)
-        self._populate_models()
-        s = QSettings("QA-Tool", "LLM")
-        saved = s.value("model", "")
-        if saved:
-            idx = self.model_combo.findText(saved)
-            if idx >= 0:
-                self.model_combo.setCurrentIndex(idx)
-            else:
-                self.model_combo.addItem(saved)
-                self.model_combo.setCurrentText(saved)
-        self.model_combo.currentTextChanged.connect(self._on_model_change)
-        header.addWidget(QLabel("模型:"))
-        header.addWidget(self.model_combo)
-
-        refresh_btn = QPushButton("⟳")
-        refresh_btn.setFixedSize(24, 24)
-        refresh_btn.setToolTip("刷新 Ollama 模型列表")
-        refresh_btn.setCursor(Qt.PointingHandCursor)
-        refresh_btn.clicked.connect(self._refresh_models)
-        header.addWidget(refresh_btn)
-
-        self.custom_model_input = QLineEdit()
-        self.custom_model_input.setMaximumWidth(140)
-        self.custom_model_input.setPlaceholderText("自定义模型名...")
-        self.custom_model_input.setMinimumHeight(24)
-        self.custom_model_input.setVisible(False)
-        self.custom_model_input.returnPressed.connect(self._apply_custom_model)
-        header.addWidget(self.custom_model_input)
-
-        self.provider_lbl = QLabel(self._provider_label())
-        self.provider_lbl.setFont(QFont(get_ui_font(), 8))
-        self.provider_lbl.setStyleSheet(f"color: {tc['text_muted']};")
-        header.addWidget(self.provider_lbl)
-
-        retry_btn = QPushButton("重连")
-        retry_btn.setFixedSize(40, 24)
-        retry_btn.setToolTip("重新检测 Ollama/API 连接")
-        retry_btn.clicked.connect(self._retry_connection)
-        header.addWidget(retry_btn)
-
-        export_btn = QPushButton("导出")
-        export_btn.setFixedSize(40, 24)
-        export_btn.setToolTip("导出对话历史为 Markdown")
-        export_btn.clicked.connect(self._export_history)
-        header.addWidget(export_btn)
-
-        clear_btn = QPushButton("清空")
-        clear_btn.setFixedSize(40, 24)
-        clear_btn.clicked.connect(self._clear_chat)
-        header.addWidget(clear_btn)
+        for text, tip, slot, width in (
+                ("重连", "重新检测模型服务", self._retry_connection, 54),
+                ("导出", "导出对话为 Markdown", self._export_history, 54),
+                ("清空", "清空对话", self._clear_chat, 54)):
+            btn = QPushButton(text)
+            btn.setFixedSize(width, 26)
+            btn.setToolTip(tip)
+            btn.setCursor(Qt.PointingHandCursor)
+            btn.setStyleSheet(
+                f"QPushButton {{ background: {tc['bg_card']}; color: {tc['text_secondary']};"
+                f"border: 1px solid {tc['border']}; border-radius: 6px; }}"
+                f"QPushButton:hover {{ background: {tc['bg_hover']}; color: {tc['text_primary']}; }}")
+            btn.clicked.connect(slot)
+            header.addWidget(btn)
         layout.addLayout(header)
 
+        # ---- 供应商 / 模型名称（完全自定义，无下拉选择）----
+        model_row = QHBoxLayout()
+        model_row.setSpacing(8)
+        model_row.addWidget(QLabel("供应商:"))
+        self.provider_combo = QComboBox()
+        self.provider_combo.setMinimumWidth(150)
+        self._populate_providers()
+        self.provider_combo.currentIndexChanged.connect(self._on_provider_changed)
+        self.provider_combo.activated.connect(self._on_provider_activated)
+        model_row.addWidget(self.provider_combo)
+        model_row.addWidget(QLabel("模型名称:"))
+        self.model_edit = QLineEdit()
+        self.model_edit.setMinimumWidth(220)
+        self.model_edit.setPlaceholderText(
+            "完全自定义，如 qwen2.5:7b / gpt-4o-mini / deepseek-chat")
+        self.model_edit.setToolTip("直接输入任意模型名；回车或失去焦点生效")
+        self.model_edit.returnPressed.connect(self._apply_model_name)
+        self.model_edit.editingFinished.connect(self._apply_model_name)
+        model_row.addWidget(self.model_edit, 1)
+        layout.addLayout(model_row)
+        self._sync_model_edit()
+
+        # ---- 上下文 / 工具条 ----
+        self.context_label = QLabel("")
+        self.context_label.setFont(QFont(get_ui_font(), 9))
+        self.context_label.setStyleSheet(
+            f"color: {tc['text_secondary']}; background: {tc['bg_card']};"
+            f"border: 1px solid {tc['border_light']}; border-radius: 6px; padding: 5px 10px;")
+        self.context_label.setWordWrap(True)
+        layout.addWidget(self.context_label)
+
+        # ---- 预设问题 ----
         preset_widget = QWidget()
         preset_layout = QHBoxLayout(preset_widget)
         preset_layout.setContentsMargins(0, 0, 0, 0)
         preset_layout.setSpacing(4)
-        self._preset_btns = []
         for label, question in PRESET_QUESTIONS:
             btn = QPushButton(label)
-            btn.setFont(QFont(get_ui_font(), 8))
-            btn.setFixedHeight(22)
+            btn.setFont(QFont(get_ui_font(), 9))
+            btn.setFixedHeight(24)
             btn.setCursor(Qt.PointingHandCursor)
-            btn.setToolTip(question[:60] + "…")
+            btn.setToolTip(question)
             btn.setStyleSheet(
-                f"QPushButton {{ background: {tc['bg_card']}; color: {tc['accent_bright']}; "
-                f"border: 1px solid {tc['border_light']}; border-radius: 10px; padding: 2px 8px; }}"
-                f"QPushButton:hover {{ background: {tc['bg_hover']}; border-color: {tc['accent']}; }}"
-            )
+                f"QPushButton {{ background: {tc['bg_card']}; color: {tc['accent_bright']};"
+                f"border: 1px solid {tc['border_light']}; border-radius: 11px; padding: 2px 10px; }}"
+                f"QPushButton:hover {{ background: {tc['bg_hover']};"
+                f"border-color: {tc['accent']}; }}")
             btn.clicked.connect(lambda _, q=question: self._fill_preset(q))
             preset_layout.addWidget(btn)
-            self._preset_btns.append(btn)
         preset_layout.addStretch()
         layout.addWidget(preset_widget)
 
-        kb_row = QHBoxLayout()
-        kb_row.setSpacing(6)
-        self.kb_input = QLineEdit()
-        self.kb_input.setFont(QFont(get_ui_font(), 10))
-        self.kb_input.setPlaceholderText("搜索知识库：GRR 判定 / AQL 抽样表 / SMED / 8D / 控制图选择 ...")
-        self.kb_input.setMinimumHeight(28)
-        self.kb_input.setStyleSheet(
-            f"QLineEdit {{ border: 1px solid {tc['border_light']}; border-radius: 6px; "
-            f"padding: 4px 8px; background: {tc['bg_card']}; }}"
-        )
-        self.kb_input.installEventFilter(self)
-        kb_row.addWidget(self.kb_input, 1)
-        kb_btn = QPushButton("检索")
-        kb_btn.setFont(QFont(get_ui_font(), 10))
-        kb_btn.setFixedSize(50, 28)
-        kb_btn.setCursor(Qt.PointingHandCursor)
-        kb_btn.setStyleSheet(
-            f"QPushButton {{ background: transparent; color: {tc['accent_bright']}; "
-            f"border: 1px solid {tc['accent']}; border-radius: 6px; }}"
-            f"QPushButton:hover {{ background: {tc['bg_hover']}; }}"
-        )
-        kb_btn.clicked.connect(self._kb_search)
-        kb_row.addWidget(kb_btn)
-        layout.addLayout(kb_row)
-
+        # ---- 对话区 ----
         self.chat_view = QTextEdit()
         self.chat_view.setReadOnly(True)
         self.chat_view.setFont(QFont(get_ui_font(), 11))
         self.chat_view.setStyleSheet(
-            f"QTextEdit {{ background: {tc['bg_card']}; border: 1px solid {tc['border_light']}; "
-            f"border-radius: 6px; padding: 8px; }}"
-        )
+            f"QTextEdit {{ background: {tc['bg_body']}; border: 1px solid {tc['border_light']};"
+            f"border-radius: 8px; padding: 10px 12px; line-height: 150%; }}")
         layout.addWidget(self.chat_view, 1)
 
+        # ---- 输入区 ----
         input_row = QHBoxLayout()
-        input_row.setSpacing(6)
+        input_row.setSpacing(8)
         self.input_box = QLineEdit()
         self.input_box.setFont(QFont(get_ui_font(), 11))
-        self.input_box.setPlaceholderText("输入问题，或点击上方模板快速提问…")
-        self.input_box.setMinimumHeight(36)
+        self.input_box.setPlaceholderText(
+            "输入问题（Enter 发送）— 例: 用当前数据做能力分析 / 最近告警怎么处置")
+        self.input_box.setMinimumHeight(38)
         self.input_box.setStyleSheet(
-            f"QLineEdit {{ border: 1px solid {tc['border_light']}; border-radius: 6px; "
-            f"padding: 6px 10px; background: {tc['bg_card']}; }}"
-        )
+            f"QLineEdit {{ border: 1px solid {tc['border']}; border-radius: 8px;"
+            f"padding: 6px 12px; background: {tc['bg_card']}; }}"
+            f"QLineEdit:focus {{ border-color: {tc['accent_bright']}; }}")
         self.input_box.installEventFilter(self)
         input_row.addWidget(self.input_box, 1)
 
         self.send_btn = QPushButton("发送")
         self.send_btn.setFont(QFont(get_ui_font(), 11, QFont.Bold))
-        self.send_btn.setMinimumHeight(36)
-        self.send_btn.setMinimumWidth(66)
+        self.send_btn.setMinimumHeight(38)
+        self.send_btn.setMinimumWidth(80)
         self.send_btn.setCursor(Qt.PointingHandCursor)
         self.send_btn.setStyleSheet(
-            f"QPushButton {{ background: {tc['accent']}; color: white; border: none; "
-            f"border-radius: 6px; padding: 6px 14px; }}"
-            f"QPushButton:hover {{ background: {tc['accent_dark']}; }}"
-            f"QPushButton:disabled {{ background: {tc['text_muted']}; color: {tc['bg_card']}; }}"
-        )
+            f"QPushButton {{ background: {tc['accent']}; color: white; border: none;"
+            f"border-radius: 8px; padding: 6px 18px; }}"
+            f"QPushButton:hover {{ background: {tc['accent_bright']}; }}"
+            f"QPushButton:disabled {{ background: {tc['text_muted']}; }}")
         self.send_btn.clicked.connect(self._send_message)
         input_row.addWidget(self.send_btn)
         layout.addLayout(input_row)
 
-        self._update_status()
-        if not self.llm.available:
-            self.append_msg("system",
-                "Ollama 服务未连接，已进入离线模式。\n"
-                "提问时将从内置知识库（术语/标准/判定表/六西格玛/工程工具）检索作答。\n"
-                "也可以直接使用上方检索框按关键词查询知识库。\n\n"
-                "完整 AI 问答：安装 Ollama (https://ollama.com) 后运行\n"
-                "ollama pull qwen2.5:7b && ollama serve")
-        else:
-            self.append_msg("system",
-                "AI 助手已就绪（124条知识库增强 + 8个预设场景模板）。\n"
-                "可以基于当前分析数据提问，或点击上方标签快速开始。")
+        # ---- 知识库检索（保留原快捷入口）----
+        kb_row = QHBoxLayout()
+        kb_row.setSpacing(6)
+        self.kb_input = QLineEdit()
+        self.kb_input.setFont(QFont(get_ui_font(), 10))
+        self.kb_input.setPlaceholderText(
+            "知识库直查（Enter）：GRR 判定 / AQL 抽样表 / SMED / 8D / 控制图选择 …")
+        self.kb_input.setMinimumHeight(30)
+        self.kb_input.setStyleSheet(
+            f"QLineEdit {{ border: 1px solid {tc['border_light']}; border-radius: 6px;"
+            f"padding: 4px 10px; background: {tc['bg_card']}; }}")
+        self.kb_input.installEventFilter(self)
+        kb_row.addWidget(self.kb_input, 1)
+        kb_btn = QPushButton("检索")
+        kb_btn.setFixedSize(56, 30)
+        kb_btn.setCursor(Qt.PointingHandCursor)
+        kb_btn.setStyleSheet(
+            f"QPushButton {{ background: transparent; color: {tc['accent_bright']};"
+            f"border: 1px solid {tc['accent']}; border-radius: 6px; }}"
+            f"QPushButton:hover {{ background: {tc['bg_hover']}; }}")
+        kb_btn.clicked.connect(self._kb_search)
+        kb_row.addWidget(kb_btn)
+        layout.addLayout(kb_row)
 
-    def _fill_preset(self, question: str):
-        self.input_box.setText(question)
-        self.input_box.setFocus()
+        self._update_status()
+
+    # ------------------------------------------------------------ 事件
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.KeyPress and event.key() in (Qt.Key_Return, Qt.Key_Enter):
+            if obj is self.input_box:
+                self._send_message()
+                return True
+            if obj is self.kb_input:
+                self._kb_search()
+                return True
+        return super().eventFilter(obj, event)
+
+    # ------------------------------------------------------------ 模型管理
+    def _populate_providers(self):
+        from core.agent.providers import PROVIDERS, requires_key
+        from config.settings import get_secret
+
+        self.provider_combo.clear()
+        for pid, spec in PROVIDERS.items():
+            configured = (not requires_key(pid)) or bool(get_secret(f"llm_{pid}_api_key", ""))
+            label = spec.label if configured else f"{spec.label}（未配置密钥）"
+            self.provider_combo.addItem(label, pid)
+        idx = self.provider_combo.findData(self.llm.provider)
+        if idx >= 0:
+            self.provider_combo.setCurrentIndex(idx)
+
+    def _on_provider_changed(self, *_):
+        pid = str(self.provider_combo.currentData() or "ollama")
+        if pid == self.llm.provider:
+            self._sync_model_edit()
+            self._update_status()
+            self._refresh_context_bar()
+            return
+        self._activate_provider(pid)
+
+    def _on_provider_activated(self, index: int):
+        """用户点击下拉项时触发。
+
+        QComboBox 重复选择同一项不会发出 currentIndexChanged，
+        因此"点击当前未配置密钥的供应商"需要走 activated 补弹输入框。
+        """
+        pid = str(self.provider_combo.itemData(index) or "")
+        from core.agent.providers import requires_key
+
+        if not pid or pid != self.provider_combo.currentData():
+            return                          # 切换路径由 _on_provider_changed 处理
+        if not requires_key(pid) or self._stored_key(pid):
+            return                          # 已有密钥 → 不弹窗
+        if self._activate_provider(pid):
+            self.append_msg("system", f"已接入 {self._provider_label()}。")
+
+    def _activate_provider(self, pid: str) -> bool:
+        """切换到 pid；云供应商缺密钥时先弹输入框（取消则回退选择）。"""
+        from core.agent.providers import get_provider, requires_key
+
+        spec = get_provider(pid)
+        key = self._stored_key(pid)
+        if requires_key(pid) and not key:
+            key = self._prompt_api_key(spec)
+            if key is None:
+                self._restore_provider_selection()
+                return False
+        try:
+            from config.settings import get_setting
+            model = (get_setting(f"llm_{pid}_model", "") or spec.default_model())
+            base = get_setting(f"llm_{pid}_api_base", "")
+            self.llm = type(self.llm)(model=model, provider=pid, api_key=key,
+                                      api_base=base)
+            self.engine.set_llm(self.llm)
+            self._last_provider_id = pid
+            self._mark_provider_configured(pid)
+        except Exception as e:
+            self.append_msg("system", f"切换供应商失败: {e}")
+            self._restore_provider_selection()
+            return False
+        self._sync_model_edit()
+        self._update_status()
+        self._refresh_context_bar()
+        return True
+
+    @staticmethod
+    def _stored_key(pid: str) -> str:
+        from config.settings import get_secret
+
+        return get_secret(f"llm_{pid}_api_key", "")
+
+    def _prompt_api_key(self, spec) -> str | None:
+        """弹出密钥输入框并加密落盘；取消/空输入返回 None。"""
+        from ui.dialogs.api_key_dialog import ApiKeyDialog
+
+        dlg = ApiKeyDialog(spec.id, self)
+        if dlg.exec() != QDialog.DialogCode.Accepted:
+            self.append_msg("system", f"已取消接入 {spec.label}（未保存 API Key）")
+            return None
+        key = dlg.key().strip()
+        if not key:
+            return None
+        from config.settings import save_config
+
+        save_config({f"llm_{spec.id}_api_key": key})
+        return key
+
+    def _mark_provider_configured(self, pid: str):
+        """密钥配置成功后去掉下拉项的"（未配置密钥）"标注。"""
+        from core.agent.providers import get_provider
+
+        idx = self.provider_combo.findData(pid)
+        if idx < 0:
+            return
+        label = get_provider(pid).label
+        if self.provider_combo.itemText(idx) != label:
+            blocked = self.provider_combo.blockSignals(True)
+            self.provider_combo.setItemText(idx, label)
+            self.provider_combo.blockSignals(blocked)
+
+    def _restore_provider_selection(self):
+        target = getattr(self, "_last_provider_id", None) or self.llm.provider
+        idx = self.provider_combo.findData(target)
+        if idx >= 0 and idx != self.provider_combo.currentIndex():
+            self.provider_combo.blockSignals(True)
+            self.provider_combo.setCurrentIndex(idx)
+            self.provider_combo.blockSignals(False)
+        self._update_status()
+        self._refresh_context_bar()
 
     def _provider_label(self) -> str:
-        return "OpenAI" if self.llm.provider == "openai" else "Ollama"
+        spec = getattr(self.llm, "spec", None)
+        return getattr(spec, "label", None) or getattr(self.llm, "provider", "本地")
 
-    def _populate_models(self):
-        """填充模型下拉框"""
-        self.model_combo.clear()
-        if self.llm.provider == "ollama":
-            models = self.llm.get_models()
-            self.model_combo.addItems(models)
-        else:
-            from core.llm_client import OPENAI_MODELS
-            self.model_combo.addItems(OPENAI_MODELS)
-        self.model_combo.addItem("自定义...")
+    def _sync_model_edit(self):
+        """供应商切换/初始化时同步模型名：记住的同供应商输入 > 配置 > 当前/默认。"""
+        from config.settings import get_setting
+        from core.agent.providers import get_provider
 
-    def _refresh_models(self):
-        """刷新 Ollama 模型列表"""
-        self.llm.available = self.llm._check_available()
-        if self.llm.provider == "ollama":
-            self._populate_models()
-            count = self.model_combo.count() - 1
-            self.append_msg("system", f"已刷新模型列表，找到 {count} 个模型")
-        self._update_status()
+        pid = self.llm.provider
+        settings = QSettings("QA-Tool", "LLM")
+        saved_model = str(settings.value("model", "") or "")
+        saved_provider = str(settings.value("provider", "") or "")
+        name = saved_model if saved_model and saved_provider == pid else ""
+        if not name:
+            name = str(get_setting(f"llm_{pid}_model", "") or "")
+        if not name:
+            name = getattr(self.llm, "model", "") or get_provider(pid).default_model()
+        self.model_edit.setText(str(name or ""))
 
-    def _apply_custom_model(self):
-        """应用自定义模型名"""
-        custom_name = self.custom_model_input.text().strip()
-        if not custom_name:
+    def _apply_model_name(self):
+        """完全自定义模型名：回车/失焦即生效并持久化 QSettings。"""
+        name = self.model_edit.text().strip()
+        if not name:
+            self._sync_model_edit()
             return
-        idx = self.model_combo.findText(custom_name)
-        if idx < 0:
-            self.model_combo.insertItem(self.model_combo.count() - 1, custom_name)
-        self.model_combo.setCurrentText(custom_name)
-        self.custom_model_input.setVisible(False)
-        self.custom_model_input.clear()
-
-    def _update_status(self):
-        tc = theme_colors(self)
-        if self.llm.available:
-            self.llm_status.setText(" 在线")
-            self.llm_status.setStyleSheet("color: #2ca02c; padding: 2px 8px;")
-        else:
-            self.llm_status.setText(" 离线")
-            self.llm_status.setStyleSheet(f"color: {tc['text_muted']}; padding: 2px 8px;")
-
-    def _on_model_change(self, model: str):
-        from core.llm_client import OPENAI_MODELS
-        if model == "自定义...":
-            self.custom_model_input.setVisible(True)
-            self.custom_model_input.setFocus()
+        if name == getattr(self.llm, "model", ""):
             return
-        self.custom_model_input.setVisible(False)
-        if model in OPENAI_MODELS:
-            self.llm.set_model(model, "openai")
-        else:
-            self.llm.set_model(model, "ollama")
-        self.provider_lbl.setText(self._provider_label())
+        try:
+            self.llm.set_model(name, self.llm.provider)
+        except Exception:
+            pass
+        settings = QSettings("QA-Tool", "LLM")
+        settings.setValue("model", name)
+        settings.setValue("provider", self.llm.provider)
         self._update_status()
-        s = QSettings("QA-Tool", "LLM")
-        s.setValue("model", model)
-        s.setValue("provider", self.llm.provider)
 
     def _retry_connection(self):
         self.llm.available = self.llm._check_available()
         self._update_status()
-        status = "在线" if self.llm.available else "仍离线"
-        self.append_msg("system", f"连接检测: {status}")
+        self.append_msg("system", "连接检测: " + ("在线" if self.llm.available else "仍离线（工具模式可用）"))
 
-    def _export_history(self):
-        if not self._history:
-            self.append_msg("system", "没有对话历史可导出")
-            return
-        path, _ = QFileDialog.getSaveFileName(
-            self, "导出对话历史", "chat_history.md", "Markdown (*.md)"
-        )
-        if not path:
-            return
-        lines = ["# QA-Tool AI 分析助手 — 对话记录\n"]
-        for role, text in self._history:
-            label = {"user": "你", "assistant": "AI", "system": "系统"}.get(role, role)
-            lines.append(f"**{label}**: {text}\n")
-        with open(path, "w", encoding="utf-8") as f:
-            f.write("\n".join(lines))
-        self.append_msg("system", f"对话历史已导出到: {path}")
+    def _update_status(self):
+        tc = theme_colors(self)
+        if self.llm.available:
+            self.llm_status.setText(f"● 在线 · {self._provider_label()}")
+            self.llm_status.setStyleSheet("color: #27ae60; padding: 2px 6px;")
+        else:
+            self.llm_status.setText("● 离线 · 工具模式")
+            self.llm_status.setStyleSheet(f"color: {tc['text_muted']}; padding: 2px 6px;")
+        self._update_privacy_hint()
+        self._refresh_context_bar()
+
+    def _update_privacy_hint(self):
+        """未配置密钥 / 未授权云调用 → 在状态栏给出可执行提示。"""
+        from core.agent.privacy import consent_status
+        from core.agent.providers import requires_key
+        from config.settings import get_secret
+
+        pid = self.llm.provider
+        self.privacy_note = ""
+        if requires_key(pid) and not get_secret(f"llm_{pid}_api_key", ""):
+            self.privacy_note = f"{self._provider_label()} 未配置密钥（设置 → QAM Harness）"
+        else:
+            state = consent_status(pid, getattr(self.llm, "api_base", ""))
+            if state.startswith("未授权"):
+                self.privacy_note = "首次云调用会弹出隐私确认"
+
+    def _refresh_context_bar(self):
+        ctx = self.agent_context
+        summary = ctx.summary() if ctx is not None else "无上下文"
+        tools = self.engine.tool_count()
+        model_state = (self.engine.provider_label() if self.engine.llm_available
+                       else "离线工具模式")
+        note = f"　|　{self.privacy_note}" if getattr(self, "privacy_note", "") else ""
+        self.context_label.setText(
+            f"上下文: {summary}　|　可用工具 {tools} 个"
+            f"（SPC/能力/MSA/检验/DOE/回归/可靠性/时序/IE/成本/实时/五链/知识库）"
+            f"　|　{model_state}{note}")
+
+    # ------------------------------------------------------------ 渲染
+    @staticmethod
+    def _bubble(inner_html: str, role: str, tc: dict) -> str:
+        """左右分栏气泡 — 用户靠右（蓝），助手靠左（卡片色）。"""
+        if role == "user":
+            bg, border = "#1f3550", "#2c5f92"
+            spacer = "<td width='16%'></td>"
+            cells = f"{spacer}<td style='background:{bg};border:1px solid {border};" \
+                    f"border-radius:10px;padding:9px 12px;color:{tc['text_primary']};'>" \
+                    f"{inner_html}</td>"
+        else:
+            bg, border = tc["bg_card"], tc["border_light"]
+            spacer = "<td width='16%'></td>"
+            cells = f"<td style='background:{bg};border:1px solid {border};" \
+                    f"border-radius:10px;padding:9px 12px;color:{tc['text_primary']};'>" \
+                    f"{inner_html}</td>{spacer}"
+        return (f"<table width='100%' cellspacing='0' cellpadding='0' "
+                f"style='margin:6px 0'><tr>{cells}</tr></table>")
+
+    def append_msg(self, role: str, text: str, markdown: bool = True):
+        tc = theme_colors(self)
+        if role == "system":
+            body = (f"<span style='color:{tc['text_muted']};font-size:10pt;'>"
+                    f"ⓘ {html.escape(text)}</span>")
+            self.chat_view.append(
+                f"<div style='margin:4px 0;color:{tc['text_muted']};'>{body}</div>")
+        else:
+            body = md_to_html(text) if markdown else html.escape(text).replace("\n", "<br>")
+            self.chat_view.append(self._bubble(body, role, tc))
+        self._scroll_bottom()
+
+    def _append_tool_card(self, record):
+        tc = theme_colors(self)
+        ok = getattr(record, "ok", False)
+        color = "#27ae60" if ok else "#e74c3c"
+        bg = "#1c2b22" if ok else "#2b1f1f"
+        state = "成功" if ok else "失败"
+        args = ", ".join(f"{k}={v}" for k, v in (getattr(record, "args", {}) or {}).items())
+        summary = getattr(record, "summary", "") or getattr(record, "error", "")
+        summary_html = html.escape(summary[:600]).replace("\n", "<br>")
+        ms = getattr(record, "duration_ms", 0.0)
+        card = (
+            f"<table width='100%' cellspacing='0' cellpadding='0' style='margin:6px 0'><tr>"
+            f"<td width='16%'></td>"
+            f"<td style='background:{bg};border-left:3px solid {color};"
+            f"border-radius:6px;padding:8px 12px;'>"
+            f"<span style='color:{color};font-weight:bold;'>🔧 {html.escape(record.name)}</span>"
+            f"<span style='color:{tc['text_muted']};font-size:9pt;'>"
+            f"　{args}　·　{state}　·　{ms:.0f} ms</span><br>"
+            f"<span style='color:{tc['text_secondary']};font-size:10pt;'>{summary_html}</span>"
+            f"</td><td width='16%'></td></tr></table>")
+        self.chat_view.append(card)
+        self._scroll_bottom()
+
+    def _scroll_bottom(self):
+        bar = self.chat_view.verticalScrollBar()
+        bar.setValue(bar.maximum())
+
+    def _greet(self):
+        ctx = self.agent_context
+        lines = []
+        if self.llm.available:
+            lines.append(f"QAM Harness 已就绪（{self._provider_label()}）。"
+                         "可直接提问，我会自动调用软件内工具取数分析。")
+        else:
+            lines.append("未检测到 Ollama/云 API，已进入**离线工具模式**："
+                         "仍可调用本机分析引擎（SPC/能力/MSA/OEE/成本/告警/五链/知识库），"
+                         "结论附带判定阈值与改善建议。")
+            lines.append("需要自然语言长文解读时，可安装 Ollama（`ollama serve`）后点「重连」。")
+        if ctx is not None and not ctx.data_frames:
+            lines.append("提示: 先「文件 → 导入数据文件」再提问，我就能对真实数据做分析。")
+        lines.append("试试上方标签，或直接问: “用当前数据做过程能力分析”。")
+        self.append_msg("assistant", "\n\n".join(lines))
+
+    # ------------------------------------------------------------ 发送
+    def _fill_preset(self, question: str):
+        self.input_box.setText(question)
+        self.input_box.setFocus()
 
     def _send_message(self):
-        if self.worker and self.worker.isRunning():
-            self.append_msg("system", "AI 正在生成回复，请稍候...")
+        if self.worker is not None and self.worker.isRunning():
+            self.append_msg("system", "正在生成回复，请稍候…")
             return
         text = self.input_box.text().strip()
         if not text:
             return
+
+        # ---- 隐私门（主线程弹窗；阻止后自动降级本地工具模式）----
+        from core.agent.privacy import (
+            cloud_enabled, grant_consent, is_cloud_endpoint, needs_consent,
+            set_cloud_enabled,
+        )
+        pid = self.engine.provider_id()
+        cloud = is_cloud_endpoint(pid, self.engine.api_base())
+        if self.engine.llm_available and cloud and (
+                needs_consent(pid, self.engine.api_base()) or not cloud_enabled()):
+            from ui.dialogs.privacy_dialog import CloudPrivacyDialog
+            dlg = CloudPrivacyDialog(self, self.engine.egress_preview(text),
+                                     self._provider_label())
+            dlg.exec()
+            if dlg.consent:
+                grant_consent(pid)
+                set_cloud_enabled(True)
+            elif dlg.use_local_only:
+                self.engine.force_offline = True
+                self.append_msg("system", "本次仅使用本地工具（不调用云 API）")
+            else:
+                return
+
         self.input_box.clear()
         self.send_btn.setEnabled(False)
-        self.send_btn.setText("...")
-        self.append_msg("user", text)
+        self.send_btn.setText("…")
+        self.append_msg("user", text, markdown=False)
         self._history.append(("user", text))
-
-        if not self.llm.available:
-            self._offline_reply(text)
-            return
-
-        self.chat_view.append(
-            "<p style='margin:4px 0' id='thinking'>"
-            "<span style='color:#2ca02c; font-size:14px;'>&#9679;</span> "
-            "<span style='color:#999999;'>思考中...</span></p>"
-        )
-        self.chat_view.verticalScrollBar().setValue(
-            self.chat_view.verticalScrollBar().maximum()
-        )
-
-        full_prompt = self._build_context_prompt(text)
-
-        self.worker = LLMWorker(self.llm, full_prompt)
-        self.worker.token_received.connect(self._on_token)
-        self.worker.finished.connect(self._on_finished)
         self._current_ai_msg = ""
-        self._streaming_block_added = False
+        self._streaming_started = False
+        self._stream_anchor = None
+
+        self.worker = AgentWorker(self.engine, text)
+        self.worker.tool_called.connect(self._on_tool)
+        self.worker.token_received.connect(self._on_token)
+        self.worker.replied.connect(self._on_replied)
+        self.worker.failed.connect(self._on_failed)
         self.worker.start()
 
-    def _build_context_prompt(self, question: str) -> str:
-        """构建增强提示词：分析结果 + 数据画像 + 知识库 + 对话历史"""
-        parts = []
-
-        parent = self.parent()
-        if parent and hasattr(parent, 'analyses') and parent.analyses:
-            from core.context_builder import ContextBuilder
-            cb = ContextBuilder()
-            analysis_ctx = cb.build_prompt(parent.analyses, question)
-            parts.append(analysis_ctx)
-
-        if parent and hasattr(parent, 'profile_result') and parent.profile_result:
-            prof = parent.profile_result
-            keys = list(prof.keys())[:3]
-            lines = ["数据画像:"]
-            for k in keys:
-                v = prof[k]
-                if isinstance(v, dict):
-                    lines.append(f"  {k}: {v.get('rows','?')}行×{v.get('cols','?')}列, "
-                                f"缺失{v.get('missing_pct','?')}%")
-            parts.append("\n".join(lines))
-
-        from core.knowledge_base import get_knowledge_base
-        kb = get_knowledge_base()
-        if kb.available:
-            hits = kb.search(question, top_k=3)
-            if hits:
-                kb_lines = ["相关知识库条目:"]
-                for h in hits:
-                    kb_lines.append(f"  [{h.category_label()}] {h.title}: {h.content[:300]}")
-                parts.append("\n".join(kb_lines))
-
-        if self._history:
-            recent = self._history[-6:]
-            hist_lines = ["对话历史:"]
-            for role, msg in recent:
-                hist_lines.append(f"  {role}: {msg[:200]}")
-            parts.append("\n".join(hist_lines))
-
-        parts.append(f"\n用户问题: {question}")
-
-        return "\n\n".join(parts)
+    def _on_tool(self, record):
+        # 工具卡片到达时结束当前流式气泡，避免后续 token 更新覆盖卡片
+        if self._streaming_started:
+            self._streaming_started = False
+            self._stream_anchor = None
+        self._append_tool_card(record)
 
     def _on_token(self, token: str):
         self._current_ai_msg += token
-        if not hasattr(self, '_streaming_block_added') or not self._streaming_block_added:
+        tc = theme_colors(self)
+        body = md_to_html(self._current_ai_msg)
+        block = self._bubble(body, "assistant", tc)
+        if not self._streaming_started:
+            # 记录气泡起点锚点（append 之前），后续 token 用整段替换
             cursor = self.chat_view.textCursor()
             cursor.movePosition(QTextCursor.End)
-            cursor.movePosition(QTextCursor.StartOfBlock, QTextCursor.KeepAnchor)
-            cursor.removeSelectedText()
-            safe = html.escape(self._current_ai_msg).replace("\n", "<br>")
-            cursor.insertHtml(
-                "<p style='margin:4px 0'>"
-                "<span style='color:#2ca02c; font-size:14px;'>&#9679;</span> "
-                f"<span style='color:#2ca02c;'>{safe}</span></p>"
-            )
-            self._streaming_block_added = True
+            self._stream_anchor = cursor.position()
+            self.chat_view.append(block)
+            self._streaming_started = True
         else:
-            cursor = self.chat_view.textCursor()
-            cursor.movePosition(QTextCursor.End)
-            cursor.movePosition(QTextCursor.StartOfBlock, QTextCursor.KeepAnchor)
+            cursor = QTextCursor(self.chat_view.document())
+            cursor.setPosition(self._stream_anchor or 0)
+            cursor.movePosition(QTextCursor.End, QTextCursor.KeepAnchor)
             cursor.removeSelectedText()
-            safe = html.escape(self._current_ai_msg).replace("\n", "<br>")
-            cursor.insertHtml(
-                "<p style='margin:4px 0'>"
-                "<span style='color:#2ca02c; font-size:14px;'>&#9679;</span> "
-                f"<span style='color:#2ca02c;'>{safe}</span></p>"
-            )
-        self.chat_view.verticalScrollBar().setValue(
-            self.chat_view.verticalScrollBar().maximum()
-        )
+            cursor.insertHtml(block)
+        self._scroll_bottom()
 
-    def _on_finished(self, full_text: str):
-        self._streaming_block_added = False
-        self._history.append(("assistant", full_text))
-        if len(self._history) > HISTORY_MAX * 2:
-            self._history = self._history[-HISTORY_MAX * 2:]
-        self.send_btn.setEnabled(True)
-        self.send_btn.setText("发送")
+    def _on_replied(self, reply):
+        if not self._streaming_started and getattr(reply, "text", ""):
+            self.append_msg("assistant", reply.text)
+        self._history.append(("assistant", getattr(reply, "text", "")))
+        self._streaming_started = False
+        self._stream_anchor = None
         self._current_ai_msg = ""
-
-    def _offline_reply(self, text: str):
-        from core.knowledge_base import get_knowledge_base
-        kb = get_knowledge_base()
-        reply = kb.offline_answer(text) if kb.available else None
-        if reply is None:
-            reply = ("知识库中未找到完全匹配的内容。\n"
-                     "可尝试关键词：CPK / GRR / 控制图 / AQL / 样本量 / 宽放率 / OEE / "
-                     "SMED / 8D / FMEA / Weibull / DMAIC ...\n\n"
-                     "或安装 Ollama 获得完整 AI 问答：https://ollama.com")
-        self.append_msg("assistant", reply)
-        self._history.append(("assistant", reply))
         self.send_btn.setEnabled(True)
         self.send_btn.setText("发送")
+        mode = "离线工具模式" if getattr(reply, "offline", True) else getattr(reply, "provider", "")
+        tools = len(getattr(reply, "tool_calls", []) or [])
+        self.append_msg("system",
+                        f"完成（{mode}）· 工具调用 {tools} 次 · "
+                        f"{getattr(reply, 'elapsed_ms', 0) / 1000:.1f}s")
+        self._refresh_context_bar()
+        self.engine.force_offline = False      # 仅对当次生效（此时工作线程已结束）
 
+    def _on_failed(self, message: str):
+        self._streaming_started = False
+        self._stream_anchor = None
+        self._current_ai_msg = ""
+        self.append_msg("system", f"执行失败: {message}")
+        self.send_btn.setEnabled(True)
+        self.send_btn.setText("发送")
+        self.engine.force_offline = False
+
+    # ------------------------------------------------------------ 知识库 / 导出
     def _kb_search(self):
         query = self.kb_input.text().strip()
         if not query:
             return
-        from core.knowledge_base import get_knowledge_base
-        kb = get_knowledge_base()
-        if not kb.available:
-            self.append_msg("system", "知识库不可用（config/knowledge 目录缺失）")
+        result = self.engine.registry.call("search_knowledge", {"query": query, "top_k": 5},
+                                           self.agent_context)
+        if not result.ok:
+            self.append_msg("system", result.error or "知识库不可用")
             return
-        hits = kb.search(query, top_k=5)
-        if not hits:
-            self.append_msg("system", f"知识库中未找到与「{query}」相关的内容")
+        self.append_msg("assistant", f"**知识库检索「{query}」**\n\n{result.text}")
+
+    def _export_history(self):
+        if not len(self.engine.conversation):
+            self.append_msg("system", "没有对话历史可导出")
             return
-        lines = [f"知识库检索「{query}」— {len(hits)} 条结果："]
-        for i, h in enumerate(hits, 1):
-            source_tag = h.extra.get("source", "")
-            src = f"，来源: {source_tag}" if source_tag else ""
-            lines.append(f"\n━━ 【{i}】{h.title}（{h.category_label()}，相关度 {h.score:.2f}{src}）━━")
-            lines.append(h.format_full())
-        self.append_msg("system", "\n".join(lines))
-
-    def append_msg(self, role: str, text: str):
-        if role == "system":
-            _prefix, color = "系统", "#8e8ea0"
-            dot_color = "#8e8ea0"
-        elif role == "user":
-            _prefix, color = "你", "#4da6ff"
-            dot_color = "#4da6ff"
-        else:
-            _prefix, color = "AI", "#2ca02c"
-            dot_color = "#2ca02c"
-
-        safe = html.escape(text).replace("\n", "<br>")
-        self.chat_view.append(
-            f"<p style='margin:4px 0'>"
-            f"<span style='color:{dot_color}; font-size:14px;'>&#9679;</span> "
-            f"<span style='color:{color};'>{safe}</span></p>"
-        )
-        self.chat_view.verticalScrollBar().setValue(
-            self.chat_view.verticalScrollBar().maximum()
-        )
-
-    def closeEvent(self, event):
-        if self.worker and self.worker.isRunning():
-            try:
-                self.worker.token_received.disconnect(self._on_token)
-                self.worker.finished.disconnect(self._on_finished)
-            except RuntimeError:
-                pass
-            self.worker.requestInterruption()
-            self.llm.stop()
-            if not self.worker.wait(1500):
-                self.worker.terminate()
-        super().closeEvent(event)
+        path, _ = QFileDialog.getSaveFileName(
+            self, "导出对话历史", "qam_harness_chat.md", "Markdown (*.md)")
+        if not path:
+            return
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(self.engine.conversation.to_markdown())
+        except OSError as e:
+            QMessageBox.warning(self, "导出失败", str(e))
+            return
+        self.append_msg("system", f"对话已导出: {path}")
 
     def _clear_chat(self):
         self.chat_view.clear()
         self._history.clear()
+        try:
+            self.engine.conversation.clear()
+        except Exception:
+            pass
+        self._current_ai_msg = ""
+        self._streaming_started = False
+        self._stream_anchor = None
+        self._greet()
+
+    # ------------------------------------------------------------ 关闭
+    def closeEvent(self, event):
+        if self.worker is not None and self.worker.isRunning():
+            # 逐个断开信号 — 对 worker 形态变化（测试替身/未来重构）保持健壮
+            for signal_name, slot in (("tool_called", self._on_tool),
+                                      ("token_received", self._on_token),
+                                      ("replied", self._on_replied),
+                                      ("failed", self._on_failed)):
+                signal = getattr(self.worker, signal_name, None)
+                if signal is None:
+                    continue
+                try:
+                    signal.disconnect(slot)
+                except (RuntimeError, TypeError, AttributeError):
+                    pass
+            request_stop = getattr(self.worker, "requestInterruption", None)
+            if callable(request_stop):
+                request_stop()
+            try:
+                self.llm.stop()
+            except Exception:
+                pass
+            wait = getattr(self.worker, "wait", None)
+            if callable(wait) and not wait(1500):
+                terminate = getattr(self.worker, "terminate", None)
+                if callable(terminate):
+                    terminate()
+        super().closeEvent(event)
+
+
+# 兼容旧引用（v3.8.0 起界面名称统一为 QAM Harness）
+LLMDialog = QAMHarnessDialog
