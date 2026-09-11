@@ -497,15 +497,23 @@ class Sidebar(QWidget):
         self.history_data.clear()
         self._rebuild_history()
 
-    def add_plugin_entry(self, index: int, name: str):
-        """动态添加插件项到侧栏「第三方插件」分类"""
+    def add_plugin_entry(self, index: int, name: str,
+                         icon: str = "", tooltip: str = ""):
+        """动态添加插件项到侧栏「第三方插件」分类。
+
+        name 为插件显示名（IPlugin.name），icon/description 来自插件元数据；
+        模块名仅作为内部 key，不再直接作为用户可见标签。
+        """
+        label = f"{icon} {name}".strip() if icon else name
         for group in self.categories:
             if group.title_key == "sidebar.plugins":
-                btn = QPushButton(name)
+                btn = QPushButton(label)
                 btn.setFont(QFont(get_ui_font(), 10))
                 btn.setFixedHeight(32)
                 btn.setCursor(Qt.PointingHandCursor)
                 btn.setCheckable(True)
+                if tooltip:
+                    btn.setToolTip(tooltip)
                 btn.clicked.connect(lambda checked, i=index: self.navigation_changed.emit(i))
                 btn.setProperty("plugin_name", name)
                 group.sub_buttons[index] = btn

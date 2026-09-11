@@ -2,7 +2,7 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> 当前: v3.7.0 实时 SPC 云看板与数据连接器（开发完成 ✅ 2026-09-08）| 测试: 1300+ pytest · 37 个 Tab | 更新: 2026-09-08
+> 当前: v3.7.2 实时监控对标优化（8 项：规格线·缩放 / plant 可视化 / 告警分级确认 / 成本损失 / OEE 真人化 / 降采样保留 / 连接器健康 / 看板鉴权）（✅ 2026-09-10）| 测试: 1350+ pytest · 37 个 Tab | 更新: 2026-09-10
 
 ---
 
@@ -11,7 +11,7 @@
 > **战略重定位（2026-08-24）**：定位从企业级多公司平台调整为**个人订阅级质量工程工具**（类 Minitab），差异化核心为实时工厂数据集成 + IE 工程工具 + 五链工作流 + BYOK AI Agent（QAM Harness）。详见[核心竞争力定位](#核心竞争力定位2026-08-重规划)。
 
 ```
-v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ✅ ──→ v2.7.0 ✅ ──→ v2.8.0 ✅ ──→ v2.9.0 ✅ ──→ v3.0.0 ✅ ──→ v3.1.0 ✅ ──→ v3.2.0 ✅ ──→ v3.3.0 ✅ ──→ v3.4.0 ✅ ──→ v3.5.0 ✅ ──→ v3.6.0 ✅ ──→ v3.6.1 ✅(并入 3.6.0) ──→ v3.7.0 ✅ ──→ v3.7.1(候选) ──→ v3.8.0 ──→ v4.0.0
+v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅ ──→ v2.4.1 ✅ ──→ v2.5 ✅ ──→ v2.6.0 ✅ ──→ v2.6.1 ✅ ──→ v2.6.2 ✅ ──→ v2.6.3 ✅ ──→ v2.6.4 ✅ ──→ v2.6.5 ✅ ──→ v2.7.0 ✅ ──→ v2.8.0 ✅ ──→ v2.9.0 ✅ ──→ v3.0.0 ✅ ──→ v3.1.0 ✅ ──→ v3.2.0 ✅ ──→ v3.3.0 ✅ ──→ v3.4.0 ✅ ──→ v3.5.0 ✅ ──→ v3.6.0 ✅ ──→ v3.6.1 ✅(并入 3.6.0) ──→ v3.7.0 ✅ ──→ v3.7.1 ✅ ──→ v3.7.2 ✅ ──→ v3.8.0 ──→ v4.0.0
 ```
 
 | 阶段 | 版本 | 主题 |
@@ -24,6 +24,8 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 | 已完成 ✅ | v3.6.0 | **Graph Builder 增强与交互体验**（图表编辑架构 / 饼图·帕累托实时交互 / 热力图·散点矩阵 / 小多图 Faceting / PPT·PNG·SVG 导出+缩略图图库 / 帮助中心+菜单重构 / 集成测试）— 2026-09-06 代码验收通过；构建链 2026-09-07 切 PyInstaller+Inno |
 | 已完成 | v3.6.1 | **全量代码质量审查**（7 处潜在崩溃修复 / 缺陷隐患清理 / ruff 全库扫描 / 72 文件全量回归） |
 | 已完成 ✅ | v3.7.0 | **实时 SPC 云看板与数据连接器**（实时数据流/Web 看板/连接器插件/告警中心 — 2026-09-08 开发完成）|
+| 已完成 ✅ | v3.7.1 | **五链贯通修复 + 数据语义与工程一致性加固**（FMEA→CP→SPC 桥接修复 + ProjectContext 单一事实源 / 列类型值优先判定（测量值·时长列）+ 清洗后重算 / 打包隔离本机配置 + 敏感配置加密 / APP_VERSION 单一事实源 + CI 版本门禁 / 僵尸模块清理与分层归位）— 2026-09-10 |
+| 已完成 ✅ | v3.7.2 | **实时监控对标优化 8 项**（实时图 USL/LSL + 缩放 / plant.json 可视化配置 / 告警分级·确认·审计·联动 / 成本损失核算 / OEE 节拍真实 P + 停机原因码 + 班次日历 / 分钟降采样与分档保留 / 连接器健康页与自动重连 / 看板可选鉴权）— 2026-09-10 |
 | 待开发 | v3.8.0 | Industrial AI Agent（AI + Vision 融合平台） |
 | 已合并 | v3.9.0 | 已合并至 v3.8.0（视频时间研究 → Vision AI 能力） |
 | 待开发 | v4.0.0 | 预测分析与机器学习 |
@@ -713,7 +715,11 @@ sudo apt install fonts-noto-cjk
 - P5 ✅ 产线拓扑（data/plant.json）+ 工位状态灯（绿/黄/红, 离线>5s）+ 实时 OEE（10min 滑动窗口）+ 告警中心（去抖/冷却 + 邮件/webhook/桌面，测试通过）
 - P6 ✅ 版本 3.7.0 四端一致 + guide.html 实时看板章节 + 文档 + 全量回归
 
-## v3.7.1 — 实时监控对标优化（候选，2026-09-08 调研）
+## v3.7.2 ✅ 已完成 — 实时监控对标优化（2026-09-10 开发完成）
+
+> 本节源自 2026-09-08 竞品对标调研（9 项），原 v3.7.1 候选位被缺陷修复版占用后
+> 顺延；本次落地 **1-8 项**（发布为 v3.7.2 小版本），第 9 项「多站点/多语言」
+> 仍留待 v3.8.0 或后续版本。全部批次交付含回归用例，版本 3.7.2 四端一致。
 
 > 对标来源（官方页面 2026-09-08 抓取）：
 > [Minitab Real-Time SPC](https://www.minitab.com/en-us/products/real-time-spc/) ·
@@ -734,20 +740,35 @@ sudo apt install fonts-noto-cjk
 | 成本/效益 | 六位数字节约案例 | **Cost Inspector**（$ / 单位） | 净含量控制 MAV/TNE | 9% 成本降低 | 无 |
 | 系统集成 | SAP DM 等 | MES/ERP/HMI/LIMS | 多厂区云平台 | OEE/LIMS/API/DLL/Python | WS/HTTP 自建 |
 
-### v3.7.1 候选改进（优先级排列）
+### v3.7.2 交付清单（原候选 9 项，落地 1-8）
 
-1. **实时图表增强**：web/桌面控制图加缩放 + USL/LSL 规格线绘制（对标 WinSPC/Enact 均支持）
-2. **plant.json 可视化配置**：桌面编辑器 + 表格模板导入（对标 Minitab Autoconfigure 思路）
-3. **告警补全**：等级（预告/警告/严重）+ 确认与审计留存 + 联动（webhook 已可对接，补停机/命令执行动作）
-4. **成本分析**：超规格量 × 单位成本 ≈ 损失估算（对标 Cost Inspector / 净含量控制）
-5. **实时 OEE 真人化**：节拍配置 → 性能(P) 真实计算 + 停机原因码 + 班次日历（对标 DataLyzer OEE 集成）
-6. **数据保留与降采样**：分钟均值聚合 + 保留期自动清理（对标时序库惯例）
-7. **连接器健康页 + 自动重连**：连接树/状态/重连退避（对标 Kepware 连接树）
-8. **看板可选鉴权**：API token + host 绑定（部署多机时）
-9. **多站点/多语言**：多站点拓扑合并视图 + 界面多语言（对标 Enact 多站点 / DataLyzer 11 语言）
+1. ✅ **实时图表增强**：`LiveSPC.spec_limits()` + `chart_engine._draw_spec_lines`（USL/LSL 品红虚线，I-MR/XBar/P·NP·C·U 均生效）；看板页面滚轮缩放 / 拖拽平移 / 双击复位 + 超规格点标红；桌面实时图 `ui/widgets/chart_zoom.py` 滚轮缩放（Shift 纵向）与双击复位，规格限自动读 plant.json。**看板视觉重设计**：调色板与 `ui/theme.py` 令牌一致（bg #181822/#262632、accent #1b5faa/#4da6ff、状态色 #27ae60/#ffa726/#e74c3c）、基准字号 15px 起并可 A−/A/A+ 调节（localStorage 持久化，车间大屏用）、HiDPI 画布 + Y 轴刻度/网格/时间轴、悬停十字线数值提示、KPI 汇总条、工位状态色点+文字双编码（色弱友好）、OEE 进度条与班次外提示、成本卡片
+2. ✅ **plant.json 可视化配置**：`ui/dialogs/plant_config_dialog.py` 表格编辑器（增删行 / USL·LSL / 节拍 / 成本 / 班次）+ Excel·CSV 模板导入导出；`core/plant.py` 新增 `plant_to_rows` / `rows_to_plant` / `rows_from_excel` / `reload()` 热重载（对象标识不变，看板/OEE/实时图即时生效）
+3. ✅ **告警补全**：等级 `info/warning/critical`（预告/警告/严重，规则可覆盖，按类型与超限幅度自动判定）+ `core/streaming/alert_journal.py` JSONL 留存与确认（ack/ack_by/note）+ 审计 `alert_fired`/`alert_ack` + `ui/dialogs/alert_center_dialog.py`（等级筛选/仅未确认/确认/导出 CSV）+ 联动动作 `make_action_handler`（默认 `alert_actions_enabled=false` 绝不执行）；**顺带修复** v3.7.0 遗留缺陷：邮件/webhook 处理器为函数而引擎按 `h.notify` 调用，导致两类通道在引擎路径下静默失效
+4. ✅ **成本分析**：`core/streaming/cost.py` 超规格量 × 单件损失（废品成本优先，缺省回退单位成本）+ 停机分钟 × 停机费率；`/api/cost` 与看板「成本损失」卡片（对标 Cost Inspector）
+5. ✅ **实时 OEE 真人化**：`core/plant.py` 节拍字段（工位优先、回退产线，瓶颈工位取最大）+ 班次日历（`parse_shift` / `shift_seconds_in_window`，支持跨零点）+ `core/streaming/downtime.py` 停机原因码追踪；`LiveOEEComputer` 输出 A/P/Q 真实口径与 defects / downtime_s / run_time_s / 原因码，向后兼容无节拍·无班次旧配置（P=1.0、A 沿用样本口径）
+6. ✅ **数据保留与降采样**：`measurements_1m` 分钟聚合表（avg/min/max/count，幂等重算）+ `maintain()` 分档保留（原始/聚合独立）+ `IngestRunner` 周期维护 + `/api/history?agg=1m`
+7. ✅ **连接器健康页 + 自动重连**：`connectors/health.py` 状态机（unknown/online/degraded/error/stopped）+ 指数退避（base×2ⁿ 封顶）+ `IngestRunner` 退避跳过与到期自动重连 + `ui/dialogs/connector_health_dialog.py`（运行时状态 / 插件依赖可用性 / 手动重连）+ `connectors/registry.specs_from_settings` / `create_drivers` 接线 user_config.connectors 到 StreamBus（此前桌面端总线无数据源）
+8. ✅ **看板可选鉴权**：`server/app.py` API token（`Authorization: Bearer` 或 `?token=`，HTTP 与 WS 同时校验，WS 未授权 1008 关闭）+ `dashboard_config()` host 绑定（非回环且无令牌时强制回退回环，需显式 `dashboard_allow_lan_without_token` 才放行）+ 看板页面自动透传令牌 + CLI `--token`
+9. ⏳ **多站点/多语言**：多站点拓扑合并视图 + 界面多语言（对标 Enact 多站点 / DataLyzer 11 语言）→ 顺延
 
-> 迭代原则：P0(本轮已修缺陷) > 1-5(功能差距) > 6-9(规模化差距)；
-> 与 v3.8.0 AI Agent 不冲突，可将 1/3 与其对话式分析联动。
+> **附带缺陷修复**（2026-09-10）：
+> ① 「帮助 → 模板格式说明」弹窗自 v3.6.0 起崩溃 — 帮助文本用 f-string 拼接，
+> JSON 示例中的 `{` 被当成格式化字段（`ValueError: Invalid format specifier`）；
+> 改为普通字符串 + 占位符替换，并让分析类型/必填/可选字段由
+> `TemplateParser` 常量自动生成（文档与解析器不再漂移，历史误报的
+> cusum/ewma/linear_regression 等不支持类型已清除）。
+> ② 使用指南 HTML 同步至最新支持：新增「分析模板与批量」章节（JSON 三种写法、
+> Excel 格式、25 种分析类型、字段说明）并补全目录与工具菜单说明。
+> ③ PPAP Tab 切换提交等级崩溃 — `_refresh_matrix` 对 `range(3)` 无条件
+> `matrix.item(row, c).setForeground(...)`，而第 2 列是 `setCellWidget` 状态下拉框
+> （没有 QTableWidgetItem），必然抛 `AttributeError: 'NoneType' object has no
+> attribute 'setForeground'`；现跳过空单元格、以 Qt 数据角色还原默认样式，并补上
+> 原本 `pass` 未实现的"必交项高亮"，构造后即渲染初始等级样式。同类"空单元格"
+> 隐患全库扫描（`.item(...).属性` / `.cellWidget(...).属性`）后确认其余调用点
+> 均有 None 保护或位于 try/except 内；尺寸报告空行改为显式提示"缺少 USL/LSL"。
+
+> 与 v3.8.0 AI Agent 不冲突，可将 1/3 与其对话式分析联动（告警事务与图表上下文已可编排）。
 
 
 ---
@@ -865,6 +886,8 @@ QA-Tool v3.8.0 Industrial AI Agent
 
 | 日期 | 版本 | 内容 |
 |------|---------|---------|
+| 09-10 | v3.7.2 | 实时监控对标优化 8 项落地：**实时图表增强**（LiveSPC 规格限输出 + chart_engine USL/LSL 参考线 + 看板滚轮缩放/拖拽/双击复位 + 桌面实时图 chart_zoom 与 plant 规格自动注入）；**看板视觉重设计**（主题令牌对齐 ui/theme.py、基准字号 15px + A−/A/A+ 可调、HiDPI 坐标轴/网格/悬停提示、KPI 汇总条、状态色点+文字双编码）；**plant.json 可视化配置**（表格编辑器 + 模板导入导出 + reload 热重载 + 默认路径 off-by-one 修复与旧位置迁移）；**告警补全**（info/warning/critical 分级 + AlertJournal JSONL 留存与确认 + 审计 + 告警中心 UI + 联动动作默认禁用；顺带修复邮件/webhook 处理器派发缺陷）；**成本损失**（超规格×单件损失 + 停机×费率，/api/cost + 看板卡片）；**OEE 真人化**（节拍→真实性能 P、停机原因码、班次日历、P/OEE 截断至 100%、班次外不计入、向后兼容旧配置）；**数据保留**（measurements_1m 分钟聚合 + 分档保留 + agg=1m 查询）；**连接器健康**（状态机 + 指数退避自动重连 + 健康页 + user_config.connectors 接线 StreamBus）；**看板鉴权**（API token HTTP/WS 双校验 + host 绑定安全回退）；**文档同步**（修复「模板格式说明」弹窗 f-string 崩溃、类型清单改由解析器常量生成；使用指南新增「分析模板与批量」章节并补全目录/工具菜单说明）。新增 10 个测试文件（约 90 用例），ruff 零告警，全量逐文件回归通过 |
+| 09-10 | v3.7.1 | 缺陷修复与加固：**五链贯通三段桥接修复**（FMEA→CP 索引错配静默失效 / CP→SPC 懒加载时序错 + 监控清单无 UI 承载 / 8D 绕过上下文直读缓存）+ ProjectContext 确立为链路唯一事实源；**数据识别语义修复**（measurement 关键词列不进 numeric_columns 导致导入误报与 DOE 空因子；"时间"关键词把可用时间/停机时间/观测时间误判为 timestamp；清洗后 select_dtypes 重算恒空）+ DataParser.refresh_info 公共 API；**工程一致性**（打包不再夹带本机 user_config.json，改发 user_config.default.json + 敏感配置 <key>_enc 加密；APP_VERSION 单一事实源 + tools/check_version.py 入 CI；退出统一清理告警引擎/看板线程/实时订阅；Linux 无 keyring 显式提示不落明文）；**结构清理**（删除 anti_debug/integrity/license_keys/license_generator/license_dialog 约 950 行僵尸代码，保留 core/license.py 兼容 shim；字体工具下沉 core/fonts.py + 分层守卫测试；插件侧栏显示 IPlugin.name；test_integration 转为真 pytest 用例，run_all_tests 迁至 tools/） |
 | 09-08 | v3.7.0-review | 新增代码质量审查：9 处缺陷修复（B1-B9, 见 fix commit 2381c46）+ 竞品对标（Minitab RTSPC / WinSPC / Enact / DataLyzer 官方页）→ v3.7.1 候选清单 9 项入档 |
 | 09-08 | v3.7.0 | 实时 SPC 云看板与数据连接器开发完成：P1 驱动抽象/流总线/SQLite时序/PollRunner（<500ms）→ P2 LiveSPC 实时控制图（跳变<500ms 检出）→ P3 FastAPI+WS 浏览器看板（50并发）→ P4 连接器插件 SPI（Modbus/MQTT/OPC-UA/DMIS/量具 按需安装）→ P5 产线拓扑/状态灯/实时OEE/告警中心（邮件/webhook/桌面, 去抖）→ P6 版本 3.7.0 四端一致+文档；74+ 测试文件全绿；构建链 PyInstaller+Inno+AppImage+deb 维持
 | 09-07 | v3.7.0-前置 | 风格债全量清零（F841 65 / E701·E702 568 / E402 20 / B 类 72）；ruff 入 ruff.toml+dev-requirements+CI 门禁零告警；构建链 Nuitka → PyInstaller(onedir)（build_pyinstaller.py），Inno/AppImage/.deb 保留；73 测试文件全绿 |

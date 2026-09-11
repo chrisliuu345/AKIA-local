@@ -260,6 +260,11 @@ class DOETab(BaseAnalysisTab):
         if not numeric_cols:
             numeric_cols = list(self.df.select_dtypes(include="number").columns)
         factor_cols = [c for c in numeric_cols if c != response]
+        if not factor_cols and method != "生成全因子 2^k 设计":
+            raise ValueError(
+                "没有可用的因子列。\n"
+                "DOE 分析需要至少 2 列数值数据（1 列响应 + 1 列因子）。\n"
+                "请检查：数据列是否为数值、列名是否被误判为规格/序号列。")
 
         if method == "Plackett-Burman 筛选设计":
             result = plackett_burman.analyze(self.df, response, factor_cols)

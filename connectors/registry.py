@@ -57,3 +57,49 @@ def create_connector(plugin_name: str, config: dict | None = None):
     if not info.available:
         raise ImportError(f"连接器插件 '{plugin_name}' 依赖库未安装，请按需安装")
     return info.create(config or {})
+
+
+def specs_from_settings(settings) -> list[dict]:
+    """user_config.json 的 `connectors` 配置 → 规范化规格列表（v3.8.0-⑦）。
+
+    支持两种写法:
+        "connectors": ["modbus_tcp"]
+        "connectors": [{"plugin": "mqtt_sub", "name": "line1",
+                        "config": {"topic": "qa/line1"}}]
+    """
+    if not settings:
+        return []
+    if isinstance(settings, dict):
+        settings = list(settings.values())
+    specs: list[dict] = []
+    for item in settings:
+        if isinstance(item, str):
+            specs.append({"plugin": item, "name": item, "config": {}})
+            continue
+        if not isinstance(item, dict):
+            continue
+        plugin = str(item.get("plugin") or item.get("type") or "").strip()
+        if not plugin:
+            continue
+        config = item.get("config")
+        config = dict(config) if isinstance(config, dict) else {}
+        name = str(item.get("name") or config.get("name") or plugin)
+        specs.append({"plugin": plugin, "name": name, "config": config,
+                      "enabled": bool(item.get("enabled", True))})
+    return [s for s in specs if s.get("enabled", True)]
+
+
+def create_drivers(specs: list[dict]) -> tuple[list, list[tuple[str, str]]]:
+    """规格 → 驱动实例。单项失败不影响其他数据源，返回 (drivers, errors)。"""
+    drivers: list = []
+    errors: list[tuple[str, str]] = []
+    for spec in specs or []:
+        name = str(spec.get("name") or spec.get("plugin") or "connector")
+        try:
+            config = dict(spec.get("config") or {})
+            config.setdefault("name", name)
+            drivers.append(create_connector(str(spec.get("plugin")), config))
+        except Exception as e:
+            logger.warning("connector %s 初始化失败: %s", name, e)
+            errors.append((name, str(e)))
+    return drivers, errors

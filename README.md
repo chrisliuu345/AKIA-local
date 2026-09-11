@@ -11,14 +11,14 @@
 ### Linux (AppImage)
 
 ```bash
-chmod +x QA-Tool-3.5.0-x86_64.AppImage
-./QA-Tool-3.5.0-x86_64.AppImage
+chmod +x QA-Tool-3.7.2-x86_64.AppImage
+./QA-Tool-3.7.2-x86_64.AppImage
 ```
 
 ### Linux (.deb)
 
 ```bash
-sudo dpkg -i qa-tool_3.5.0_amd64.deb
+sudo dpkg -i qa-tool_3.7.2_amd64.deb
 qa-tool
 ```
 
@@ -86,6 +86,18 @@ python main.py
 | **设备监控** | ESP32 / MaixCAM · 自动发现 · 实时数据 |
 | **ESP32** | 7 通道采集 · 执行器控制 · MicroPython 固件 |
 
+### 实时监控与看板
+
+| 模块 | 能力 |
+|------|------|
+| **实时 SPC** | 滚动窗口 I-MR/XBar-R · USL/LSL 规格线 · 滚轮缩放 · Nelson 判异 |
+| **产线拓扑** | plant.json 可视化配置（表格编辑 + 模板导入导出）· 工位状态灯 |
+| **实时 OEE** | 节拍 → 真实性能 P · 停机原因码 · 班次日历 |
+| **成本损失** | 超规格量 × 单件损失 + 停机成本（Cost Inspector 思路） |
+| **告警中心** | 预告/警告/严重分级 · 确认与审计留存 · 邮件 / webhook / 联动动作 |
+| **看板部署** | 可选 API token 鉴权 · host 绑定 · 连接器健康页与自动重连 |
+| **数据保留** | 分钟降采样（avg/min/max/count）· 原始点与聚合点分档保留期 |
+
 ---
 
 ## 技术栈
@@ -140,4 +152,4 @@ tests/                 # 1000+ 测试
 
 ---
 
-*Python 3.14 + PySide6 · 1000+ 测试 · 37 个分析 Tab*
+*Python 3.14 + PySide6 · 1280+ 测试 · 37 个分析 Tab*

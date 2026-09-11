@@ -13,7 +13,7 @@ from config.settings import (
     get_effective, get_setting,
 )
 from core.i18n import i18n
-from ui.font_config import get_ui_font
+from core.fonts import get_ui_font
 
 
 def _dpi():
@@ -201,6 +201,7 @@ def _plot_xbar_chart(ax: plt.Axes, chart_data: Dict[str, Any],
                     markeredgewidth=2, fillstyle="none")
 
     ax.set_ylabel(i18n.tr("chart.sample_mean"), fontsize=FONT_SIZE_LABEL)
+    _draw_spec_lines(ax, chart_data)
     ax.legend(loc="upper right", fontsize=8)
     ax.grid(True, alpha=0.3)
     ax.set_title(key.replace("_chart", "").upper() + " "
@@ -299,6 +300,7 @@ def _plot_simple_control_chart(ax: plt.Axes, chart_data: Dict[str, Any],
 
     ax.set_xlabel(i18n.tr("chart.subgroup_no"), fontsize=FONT_SIZE_LABEL)
     ax.set_ylabel("Statistic", fontsize=FONT_SIZE_LABEL)
+    _draw_spec_lines(ax, chart_data)
     ax.legend(loc="upper right", fontsize=8)
     ax.grid(True, alpha=0.3)
     if title:
@@ -392,6 +394,24 @@ def _plot_advanced_control_chart(ax: plt.Axes, chart_data: Dict[str, Any],
     ax.legend(loc="upper right", fontsize=7)
     ax.grid(True, alpha=0.3)
     return note
+
+
+def _draw_spec_lines(ax: plt.Axes, chart_data: Dict[str, Any]) -> None:
+    """绘制规格限参考线（USL/LSL，v3.8.0 实时图表增强）。
+
+    来源: chart_data["spec"] = {"usl": float, "lsl": float}（缺省不绘制）。
+    与 UCL/LCL 区分: 品红虚线 + USL/LSL 前缀。
+    """
+    spec = chart_data.get("spec") or {}
+    usl = spec.get("usl")
+    lsl = spec.get("lsl")
+    if usl is None and lsl is None:
+        return
+    for value, label in ((usl, "USL"), (lsl, "LSL")):
+        if value is None:
+            continue
+        ax.axhline(y=float(value), color="#c2185b", linestyle=":",
+                   linewidth=1.6, label=f"{label}={float(value):.4g}")
 
 
 def create_capability_chart(

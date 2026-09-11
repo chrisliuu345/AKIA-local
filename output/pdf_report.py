@@ -20,7 +20,7 @@ from reportlab.pdfbase.cidfonts import UnicodeCIDFont
 from config.settings import APP_NAME, APP_VERSION
 from core.i18n import i18n
 from output.base_report_engine import BaseReportEngine
-from ui.font_config import get_pdf_font_paths, get_pdf_font_candidates
+from core.fonts import get_pdf_font_paths, get_pdf_font_candidates
 
 
 def _find_cjk_fonts():

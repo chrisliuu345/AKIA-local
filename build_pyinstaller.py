@@ -13,6 +13,7 @@ build_pyinstaller.py — QA-Tool PyInstaller 构建脚本（跨平台, onedir �
 
 import sys
 import os
+import re
 import shutil
 import subprocess
 import argparse
@@ -22,13 +23,16 @@ PROJECT_DIR = Path(__file__).resolve().parent
 ENTRY_POINT = PROJECT_DIR / "main.py"
 ICON_PATH_WIN = PROJECT_DIR / "assets" / "logo.ico"
 ICON_PATH_LINUX = PROJECT_DIR / "assets" / "logo.png"
-VERSION_INFO = PROJECT_DIR / "version_info.txt"
-
-APP_VERSION = "3.7.0"
 
 BUILD_DIR = PROJECT_DIR / "build"
 DIST_DIR = PROJECT_DIR / "dist"
 WORK_DIR = BUILD_DIR / "pyi_work"
+
+# APP_VERSION 单一事实源：config/settings.py
+sys.path.insert(0, str(PROJECT_DIR))
+from config.settings import APP_VERSION  # noqa: E402
+
+GENERATED_VERSION_INFO = BUILD_DIR / "version_info.generated.txt"
 
 # 目录类数据: (源相对路径, 目标相对路径) — 落于 _internal/ 下, 与
 # config/settings.py 基于 __file__ 的路径解析一致
@@ -42,7 +46,9 @@ DATA_DIRS = [
 
 DATA_FILES = [
     ("logo.png", "logo.png"),
-    ("user_config.json", "user_config.json"),
+    # 仅打包公共默认配置；本机 user_config.json（可能含设备列表/告警密码）
+    # 严禁进入安装包，运行时由 config.settings 叠加用户文件
+    ("user_config.default.json", "user_config.default.json"),
 ]
 
 HIDDEN_IMPORTS = [
@@ -55,8 +61,6 @@ HIDDEN_IMPORTS = [
     "reportlab.pdfbase.cidfonts",
     "PIL",
     "PIL.Image",
-    "core.anti_debug",
-    "core.integrity",
 ]
 
 EXCLUDES = [
@@ -84,10 +88,54 @@ def clean_old_dirs(name: str):
                 f.unlink(missing_ok=True)
 
 
+def write_version_file(version: str) -> Path:
+    """从 APP_VERSION 生成 Windows 版本资源文件（避免与静态文件漂移）"""
+    numbers = [int(n) for n in re.findall(r"\d+", version)[:4]]
+    numbers += [0] * (4 - len(numbers))
+    tuple_text = ", ".join(str(n) for n in numbers)
+    GENERATED_VERSION_INFO.parent.mkdir(parents=True, exist_ok=True)
+    GENERATED_VERSION_INFO.write_text(
+        f"""# UTF-8 (auto-generated from config.settings.APP_VERSION={version})
+VSVersionInfo(
+  ffi=FixedFileInfo(
+    filevers=({tuple_text}),
+    prodvers=({tuple_text}),
+    mask=0x3f,
+    flags=0x0,
+    OS=0x40004,
+    fileType=0x1,
+    subtype=0x0,
+    date=(0, 0)
+  ),
+  kids=[
+    StringFileInfo([
+      StringTable(
+        u'080404b0',
+        [
+          StringStruct(u'CompanyName', u'QA-Tool'),
+          StringStruct(u'FileDescription', u'QA-Tool 质量分析工具'),
+          StringStruct(u'FileVersion', u'{version}'),
+          StringStruct(u'InternalName', u'QA-Tool'),
+          StringStruct(u'LegalCopyright', u'Copyright \\u00a9 2026 QA-Tool'),
+          StringStruct(u'OriginalFilename', u'QA-Tool.exe'),
+          StringStruct(u'ProductName', u'QA-Tool'),
+          StringStruct(u'ProductVersion', u'{version}')
+        ]
+      )
+    ]),
+    VarFileInfo([VarStruct(u'Translation', [2052, 1200])])
+  ]
+)
+""",
+        encoding="utf-8",
+    )
+    return GENERATED_VERSION_INFO
+
+
 def build(name: str, onefile: bool):
     print("\n" + "=" * 60)
     print(f"  PyInstaller 构建 — 模式: {'onefile' if onefile else 'onedir'}")
-    print(f"  平台: {sys.platform}  名称: {name}")
+    print(f"  平台: {sys.platform}  名称: {name}  版本: {APP_VERSION}")
     print("=" * 60 + "\n")
 
     cmd = [
@@ -107,9 +155,9 @@ def build(name: str, onefile: bool):
         if ICON_PATH_WIN.exists():
             cmd.append("--icon")
             cmd.append(str(ICON_PATH_WIN))
-        if VERSION_INFO.exists():
-            cmd.append("--version-file")
-            cmd.append(str(VERSION_INFO))
+        version_file = write_version_file(APP_VERSION)
+        cmd.append("--version-file")
+        cmd.append(str(version_file))
     else:
         if ICON_PATH_LINUX.exists():
             cmd.append("--icon")

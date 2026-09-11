@@ -13,7 +13,7 @@ from docx.oxml.ns import qn
 from config.settings import APP_NAME, APP_VERSION, CHART_FIGSIZE
 from core.i18n import i18n
 from output.base_report_engine import BaseReportEngine
-from ui.font_config import get_ui_font
+from core.fonts import get_ui_font
 
 def _hdg(num: int, atype: str) -> str:
     """Generate section heading"""

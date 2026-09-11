@@ -1,150 +1,993 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<title>QA-Tool 实时看板</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QA-Tool 实时 SPC 云看板</title>
 <style>
-  body { font-family: "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
-         background: #14161a; color: #d8dce2; margin: 0; padding: 16px; }
-  h1 { font-size: 20px; margin: 0 0 12px; }
-  h1 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%;
-            background: #27ae60; margin-right: 8px; }
-  #cards { display: flex; flex-wrap: wrap; gap: 12px; }
-  .card { background: #1e2128; border: 1px solid #2e3440; border-radius: 8px;
-          padding: 10px 12px; min-width: 320px; }
-  .card h3 { margin: 0 0 2px; font-size: 13px; color: #9aa4b2; }
-  .card .meta { font-size: 11px; color: #6a7280; margin-bottom: 6px; }
-  .chip { display: inline-block; margin: 2px 8px 2px 0; padding: 2px 8px;
-          border-radius: 10px; font-size: 12px; background: #14161a; }
-  .chip-green { color: #27ae60; }
-  .chip-yellow { color: #f39c12; }
-  .chip-red { color: #e74c3c; }
-  canvas { width: 100%; height: 120px; background: #14161a; border-radius: 4px; }
-  .fault { color: #e74c3c; font-weight: bold; }
-  #footer { margin-top: 14px; font-size: 11px; color: #6a7280; }
+/* 设计令牌与桌面端 ui/theme.py 对齐（bg_card/border/accent/状态色） */
+:root{
+  --bg-body:#181822; --bg-header:#13131c; --bg-card:#262632; --bg-card-2:#2c2c38;
+  --bg-inset:#1e1e28; --bg-hover:#363648;
+  --border:#3a3a48; --border-light:#2a2a36;
+  --text:#e1e2e6; --text-2:#a0a3ae; --text-3:#7b7f8c;
+  --accent:#1b5faa; --accent-bright:#4da6ff; --accent-dark:#14508a;
+  --ok:#27ae60; --warn:#ffa726; --bad:#e74c3c; --spec:#c2185b;
+  --radius:10px; --shadow:0 2px 12px rgba(0,0,0,.35);
+  --fs:15px; --fs-chart:12px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg-body); color:var(--text); font-size:var(--fs); line-height:1.5;
+  font-family:"Microsoft YaHei","Noto Sans CJK SC","PingFang SC","Source Han Sans SC",
+              "WenQuanYi Micro Hei",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+h1,h2,h3{margin:0;font-weight:600}
+button{font-family:inherit;font-size:calc(var(--fs) - 2px);cursor:pointer}
+
+/* ---------- 顶栏 ---------- */
+.topbar{
+  position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:20px;
+  flex-wrap:wrap; padding:12px 22px; background:var(--bg-header);
+  border-bottom:1px solid var(--border); box-shadow:var(--shadow);
+}
+.brand{display:flex; align-items:center; gap:12px; min-width:280px}
+.logo-dot{
+  width:14px; height:14px; border-radius:50%; background:var(--ok); flex:0 0 auto;
+  box-shadow:0 0 0 4px rgba(39,174,96,.18);
+}
+.logo-dot.offline{background:var(--bad); box-shadow:0 0 0 4px rgba(231,76,60,.18)}
+.brand-title{font-size:calc(var(--fs) + 4px); font-weight:700; letter-spacing:.4px}
+.brand-sub{font-size:calc(var(--fs) - 3px); color:var(--text-3); letter-spacing:.3px}
+.kpis{display:flex; gap:10px; flex-wrap:wrap; margin-left:auto}
+.kpi{
+  background:var(--bg-card); border:1px solid var(--border-light); border-radius:var(--radius);
+  padding:6px 14px; min-width:104px;
+}
+.kpi .k{font-size:calc(var(--fs) - 4px); color:var(--text-3); white-space:nowrap}
+.kpi .v{font-size:calc(var(--fs) + 3px); font-weight:700}
+.topbar-right{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+.pill{
+  display:inline-flex; align-items:center; gap:8px; padding:6px 14px; border-radius:999px;
+  background:var(--bg-card); border:1px solid var(--border); font-size:calc(var(--fs) - 2px);
+}
+.pill-dot{width:9px; height:9px; border-radius:50%; background:var(--warn)}
+.pill.online .pill-dot{background:var(--ok)}
+.pill.offline .pill-dot{background:var(--bad)}
+.clock{font-size:calc(var(--fs) + 1px); font-weight:600; color:var(--text-2)}
+.fs-group{display:flex; gap:6px; align-items:center}
+.icon-btn{
+  background:var(--bg-card); color:var(--text-2); border:1px solid var(--border);
+  border-radius:8px; padding:6px 11px; font-weight:700; line-height:1;
+}
+.icon-btn:hover{background:var(--bg-hover); color:var(--text); border-color:var(--accent-bright)}
+.icon-btn.on{background:var(--accent); border-color:var(--accent); color:#fff}
+
+/* ---------- 布局 ---------- */
+main{padding:18px 22px 40px; display:flex; flex-direction:column; gap:18px}
+.panel{
+  background:var(--bg-card); border:1px solid var(--border-light);
+  border-radius:14px; padding:16px 18px 18px;
+}
+.panel-head{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:14px}
+.panel-head h2{
+  font-size:calc(var(--fs) + 2px); padding-left:11px; position:relative;
+}
+.panel-head h2::before{
+  content:""; position:absolute; left:0; top:3px; bottom:3px; width:4px;
+  border-radius:2px; background:var(--accent-bright);
+}
+.panel-sub{font-size:calc(var(--fs) - 3px); color:var(--text-3)}
+.hint{margin-left:auto; font-size:calc(var(--fs) - 4px); color:var(--text-3)}
+
+/* ---------- 产线拓扑 ---------- */
+.plant-grid{display:flex; flex-direction:column; gap:12px}
+.line-block{
+  background:var(--bg-inset); border:1px solid var(--border-light);
+  border-radius:var(--radius); padding:12px 14px;
+}
+.line-head{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:10px}
+.line-name{font-size:calc(var(--fs) + 1px); font-weight:700}
+.line-meta{font-size:calc(var(--fs) - 3px); color:var(--text-3)}
+.stations{display:flex; flex-wrap:wrap; gap:10px}
+.station{
+  display:flex; flex-direction:column; gap:6px; min-width:186px; padding:10px 12px;
+  background:var(--bg-card-2); border:1px solid var(--border); border-left-width:4px;
+  border-radius:var(--radius);
+}
+.station.green{border-left-color:var(--ok)}
+.station.yellow{border-left-color:var(--warn)}
+.station.red{border-left-color:var(--bad)}
+.station-top{display:flex; align-items:center; gap:8px}
+.status-dot{width:10px; height:10px; border-radius:50%; flex:0 0 auto}
+.status-dot.green{background:var(--ok)}
+.status-dot.yellow{background:var(--warn); animation:pulse 1.4s infinite}
+.status-dot.red{background:var(--bad); animation:pulse 1.1s infinite}
+@keyframes pulse{0%{opacity:1}50%{opacity:.32}100%{opacity:1}}
+.station-name{font-size:calc(var(--fs) - 1px); font-weight:600}
+.station-state{font-size:calc(var(--fs) - 4px); color:var(--text-2)}
+.station.green .station-state{color:var(--ok)}
+.station.yellow .station-state{color:var(--warn)}
+.station.red .station-state{color:var(--bad)}
+.station-sub{font-size:calc(var(--fs) - 4px); color:var(--text-3)}
+.spec-chips{display:flex; flex-wrap:wrap; gap:6px}
+.spec-chip{
+  font-size:calc(var(--fs) - 4px); padding:2px 8px; border-radius:6px;
+  background:rgba(194,24,91,.14); color:#f4a3c0; border:1px solid rgba(194,24,91,.45);
+}
+.down-row{display:flex; align-items:center; gap:6px; flex-wrap:wrap}
+.down-row select{
+  background:var(--bg-inset); color:var(--text); border:1px solid var(--border);
+  border-radius:6px; padding:3px 6px; font-size:calc(var(--fs) - 4px); max-width:110px;
+}
+.down-row button{
+  background:var(--accent); color:#fff; border:none; border-radius:6px;
+  padding:4px 10px; font-size:calc(var(--fs) - 4px);
+}
+.down-row button.ghost{background:transparent; color:var(--text-2); border:1px solid var(--border)}
+.down-row button:hover{background:var(--accent-bright)}
+
+/* ---------- OEE / 成本 ---------- */
+.oee-grid,.cost-grid{
+  display:grid; gap:14px; grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+}
+.metric-card{
+  background:var(--bg-inset); border:1px solid var(--border-light);
+  border-radius:var(--radius); padding:14px 16px;
+}
+.metric-card.down{border-color:rgba(231,76,60,.55)}
+.metric-head{display:flex; align-items:baseline; gap:10px; margin-bottom:10px}
+.metric-name{font-size:calc(var(--fs) + 1px); font-weight:700}
+.metric-tag{margin-left:auto; font-size:calc(var(--fs) - 4px); color:var(--text-3)}
+.oee-value{font-size:calc(var(--fs) + 15px); font-weight:700; line-height:1.1}
+.oee-value.good{color:var(--ok)}
+.oee-value.warn{color:var(--warn)}
+.oee-value.bad{color:var(--bad)}
+.bars{display:flex; flex-direction:column; gap:7px; margin-top:10px}
+.bar-row{display:grid; grid-template-columns:26px 1fr 62px; align-items:center; gap:10px}
+.bar-label{font-size:calc(var(--fs) - 3px); color:var(--text-2)}
+.bar{height:10px; background:var(--bg-card-2); border-radius:6px; overflow:hidden}
+.bar > i{display:block; height:100%; border-radius:6px; background:var(--accent-bright)}
+.bar.a > i{background:#4da6ff}
+.bar.p > i{background:#8e7cff}
+.bar.q > i{background:var(--ok)}
+.bar-val{font-size:calc(var(--fs) - 2px); text-align:right; color:var(--text)}
+.metric-foot{
+  display:flex; flex-wrap:wrap; gap:12px; margin-top:10px;
+  font-size:calc(var(--fs) - 3px); color:var(--text-2);
+}
+.fault{color:var(--bad); font-weight:700}
+.cost-value{font-size:calc(var(--fs) + 13px); font-weight:700}
+.cost-value.bad{color:var(--bad)}
+.cost-value.good{color:var(--ok)}
+
+/* ---------- 控制图 ---------- */
+.chart-grid{display:grid; gap:14px; grid-template-columns:repeat(auto-fill,minmax(430px,1fr))}
+.chart-card{
+  background:var(--bg-inset); border:1px solid var(--border-light);
+  border-radius:var(--radius); padding:12px 14px 8px; position:relative;
+}
+.chart-card.oos{border-color:rgba(231,76,60,.55)}
+.chart-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px}
+.chart-dev{font-size:calc(var(--fs) - 1px); font-weight:700}
+.chart-path{font-size:calc(var(--fs) - 4px); color:var(--text-3)}
+.chart-value{
+  margin-left:auto; font-size:calc(var(--fs) + 4px); font-weight:700; color:var(--accent-bright);
+}
+.chart-value.oos{color:var(--bad)}
+.chart-badges{display:flex; gap:6px; flex-wrap:wrap; width:100%}
+.badge{
+  font-size:calc(var(--fs) - 4px); padding:2px 8px; border-radius:6px;
+  background:var(--bg-card-2); color:var(--text-2); border:1px solid var(--border);
+}
+.badge.spec{background:rgba(194,24,91,.14); color:#f4a3c0; border-color:rgba(194,24,91,.45)}
+.badge.zoom{background:rgba(77,166,255,.14); color:#9ccdff; border-color:rgba(77,166,255,.4)}
+.canvas-wrap{position:relative}
+canvas{display:block; width:100%; height:190px; background:var(--bg-body);
+       border:1px solid var(--border-light); border-radius:8px; cursor:crosshair;
+       touch-action:none}
+.tooltip{
+  position:fixed; z-index:40; pointer-events:none; display:none;
+  background:#111119; border:1px solid var(--border); border-radius:8px;
+  padding:6px 10px; font-size:calc(var(--fs) - 3px); color:var(--text);
+  box-shadow:var(--shadow); white-space:nowrap;
+}
+.empty{
+  padding:26px; text-align:center; color:var(--text-3);
+  font-size:calc(var(--fs) - 1px); border:1px dashed var(--border); border-radius:var(--radius);
+}
+footer{padding:0 22px 24px; color:var(--text-3); font-size:calc(var(--fs) - 3px)}
+@media (max-width:760px){
+  .kpis{width:100%; margin-left:0}
+  .chart-grid{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
-<h1><span class="dot"></span>QA-Tool 实时 SPC 云看板</h1>
-<div id="plant"></div>
-<div id="oee"></div>
-<div id="cards"></div>
-<div id="footer">连接状态: <span id="conn">待连接…</span></div>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo-dot" id="brand-dot"></span>
+    <div>
+      <div class="brand-title">QA-Tool 实时 SPC 云看板</div>
+      <div class="brand-sub">Real-Time Quality Dashboard · 实时工厂数据集成</div>
+    </div>
+  </div>
+  <div class="kpis" id="kpis"></div>
+  <div class="topbar-right">
+    <span class="pill" id="conn"><span class="pill-dot"></span><span id="conn-text">待连接…</span></span>
+    <span class="clock num" id="clock">--:--:--</span>
+    <div class="fs-group" title="看板字号">
+      <button class="icon-btn" id="fs-down">A−</button>
+      <button class="icon-btn" id="fs-reset">A</button>
+      <button class="icon-btn" id="fs-up">A+</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="panel">
+    <div class="panel-head">
+      <h2>产线拓扑</h2>
+      <span class="panel-sub">工位状态灯：绿=正常 · 黄=判异/超规格 · 红=离线（>5s）</span>
+      <span class="hint" id="plant-updated"></span>
+    </div>
+    <div id="plant" class="plant-grid"></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>实时 OEE</h2>
+      <span class="panel-sub">A×P×Q · 滑动窗口 10 分钟 · 节拍与班次日历取自产线配置</span>
+    </div>
+    <div id="oee" class="oee-grid"></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>成本损失</h2>
+      <span class="panel-sub">超规格量 × 单件损失 + 停机分钟 × 停机费率</span>
+    </div>
+    <div id="cost" class="cost-grid"></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>实时控制图</h2>
+      <span class="panel-sub">滚轮缩放 · 拖拽平移 · 双击复位 · 虚线 = USL/LSL 规格限，红点 = 超规格</span>
+    </div>
+    <div id="cards" class="chart-grid"></div>
+    <div id="charts-empty" class="empty">等待设备数据…（在「产线配置」中登记设备/通道后自动出现控制图）</div>
+  </section>
+</main>
+<footer id="footer">QA-Tool · 数据来自本机实时采集（SQLite 时序库）· 页面每 15 秒刷新一次汇总指标</footer>
+<div id="tooltip" class="tooltip"></div>
 <script>
 const MAX_POINTS = 300;
-const wsUrl = "ws://" + location.host + "/ws/stream";
-const charts = {};   // key: device:channel -> {canvas, pts:[{t,v}], offscreen}
+const OEE_GOOD = 0.65, OEE_WORLD_CLASS = 0.85;   // 与 config.settings 一致
+const STATUS_TEXT = { green: "正常", yellow: "判异", red: "离线" };
+const TOKEN = new URLSearchParams(location.search).get("token") || "";
+const charts = {};        // key: device:channel -> chart state
+const specs = {};         // device -> {channel: {usl, lsl}}
+let reasonCodes = [];
+let lastPlantLines = [];
 
-function ctx2d(cv) {
-  return { cv, ctx: cv.getContext("2d") };
+/* ---------- 字号（视力友好，车间大屏可放大） ---------- */
+const FS_KEY = "qa-dashboard-fs";
+let fsScale = 1;
+try { fsScale = Math.min(2.0, Math.max(0.85, parseFloat(localStorage.getItem(FS_KEY)) || 1)); }
+catch (e) { fsScale = 1; }
+
+function applyFontScale() {
+  document.documentElement.style.setProperty("--fs", (15 * fsScale).toFixed(1) + "px");
+  document.documentElement.style.setProperty("--fs-chart", (12 * fsScale).toFixed(1) + "px");
+  const reset = document.getElementById("fs-reset");
+  if (reset) reset.classList.toggle("on", Math.abs(fsScale - 1) < 0.02);
+  for (const c of Object.values(charts)) resizeCanvas(c, true);
 }
 
-function draw(cv, pts) {
-  const ctx = cv.getContext("2d");
-  const w = cv.width, h = cv.height;
-  ctx.clearRect(0, 0, w, h);
-  ctx.strokeStyle = "#2e3440"; ctx.strokeRect(0, 0, w, h);
-  if (pts.length < 2) return;
-  const vs = pts.map(p => p.v);
-  const lo = Math.min(...vs), hi = Math.max(...vs);
+function setFontScale(v) {
+  fsScale = Math.min(2.0, Math.max(0.85, v));
+  try { localStorage.setItem(FS_KEY, String(fsScale)); } catch (e) { /* 隐私模式忽略 */ }
+  applyFontScale();
+}
+
+/* ---------- 通用 ---------- */
+function api(path) {
+  if (!TOKEN) return path;
+  return path + (path.includes("?") ? "&" : "?") + "token=" + encodeURIComponent(TOKEN);
+}
+
+const wsScheme = location.protocol === "https:" ? "wss://" : "ws://";
+const wsUrl = wsScheme + location.host + "/ws/stream" +
+              (TOKEN ? "?token=" + encodeURIComponent(TOKEN) : "");
+
+const fmt = (v, digits = 2) => Number(v).toFixed(digits);
+const pct = v => (Number(v) * 100).toFixed(1) + "%";
+const clock = ts => new Date(ts * 1000).toLocaleTimeString("zh-CN", { hour12: false });
+const setText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+
+function specFor(device, ch) {
+  const s = (specs[device] || {})[ch];
+  if (!s) return null;
+  if ((s.usl === null || s.usl === undefined) && (s.lsl === null || s.lsl === undefined)) return null;
+  return s;
+}
+
+function isOos(spec, v) {
+  if (!spec) return false;
+  const overUsl = spec.usl !== null && spec.usl !== undefined && v > spec.usl;
+  const underLsl = spec.lsl !== null && spec.lsl !== undefined && v < spec.lsl;
+  return overUsl || underLsl;
+}
+
+function classFor(status) {
+  return status === "green" ? "good" : (status === "yellow" ? "warn" : "bad");
+}
+
+/* ---------- 控制图绘制 ---------- */
+const PAD = { left: 56, right: 14, top: 16, bottom: 26 };
+
+function fontPx(size) { return Math.round(size * fsScale); }
+
+function resizeCanvas(c, redraw) {
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = Math.max(280, c.cv.clientWidth || 640);
+  const cssH = Math.max(140, c.cv.clientHeight || 190);
+  c.cv.width = Math.round(cssW * dpr);
+  c.cv.height = Math.round(cssH * dpr);
+  c.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  c.w = cssW;
+  c.h = cssH;
+  if (redraw) draw(c);
+}
+
+function plotBox(c) {
+  return {
+    x0: PAD.left, y0: PAD.top,
+    x1: c.w - PAD.right, y1: c.h - PAD.bottom,
+    w: c.w - PAD.left - PAD.right, h: c.h - PAD.top - PAD.bottom,
+  };
+}
+
+function visibleRange(c) {
+  const n = c.pts.length;
+  const i0 = Math.max(0, Math.floor(c.view[0]));
+  const i1 = Math.min(n - 1, Math.ceil(c.view[1]));
+  return [i0, Math.max(i0, i1)];
+}
+
+function yRange(c, i0, i1) {
+  const spec = c.spec || {};
+  const vs = c.pts.slice(i0, i1 + 1).map(p => p.v);
+  if (spec.usl !== null && spec.usl !== undefined) vs.push(spec.usl);
+  if (spec.lsl !== null && spec.lsl !== undefined) vs.push(spec.lsl);
+  if (!vs.length) return [0, 1];
+  let lo = Math.min(...vs), hi = Math.max(...vs);
+  if (hi === lo) { hi += 1; lo -= 1; }
+  const pad = (hi - lo) * 0.12;
+  return [lo - pad, hi + pad];
+}
+
+function draw(c) {
+  const ctx = c.ctx, box = plotBox(c);
+  ctx.clearRect(0, 0, c.w, c.h);
+  ctx.fillStyle = "#181822";
+  ctx.fillRect(0, 0, c.w, c.h);
+  ctx.font = fontPx(11) + 'px "Microsoft YaHei",sans-serif';
+  ctx.textBaseline = "middle";
+
+  const n = c.pts.length;
+  if (!n) {
+    ctx.fillStyle = "#7b7f8c";
+    ctx.font = fontPx(13) + 'px "Microsoft YaHei",sans-serif';
+    ctx.textAlign = "center";
+    ctx.fillText("等待数据…", c.w / 2, c.h / 2);
+    return;
+  }
+
+  const [i0, i1] = visibleRange(c);
+  const [lo, hi] = yRange(c, i0, i1);
   const span = (hi - lo) || 1;
-  ctx.beginPath();
-  ctx.strokeStyle = "#4aa8ff"; ctx.lineWidth = 1.5;
-  pts.forEach((p, i) => {
-    const x = (i / (MAX_POINTS - 1)) * (w - 4) + 2;
-    const y = h - 6 - ((p.v - lo) / span) * (h - 12);
-    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  const spanN = Math.max(1, i1 - i0);
+  const X = i => box.x0 + ((i - i0) / spanN) * box.w;
+  const Y = v => box.y1 - ((v - lo) / span) * box.h;
+
+  /* 网格与 Y 轴刻度 */
+  ctx.textAlign = "right";
+  ctx.strokeStyle = "#2a2a36";
+  ctx.lineWidth = 1;
+  for (let t = 0; t <= 4; t++) {
+    const value = lo + (span * t) / 4;
+    const y = Math.round(Y(value)) + 0.5;
+    ctx.beginPath();
+    ctx.moveTo(box.x0, y);
+    ctx.lineTo(box.x1, y);
+    ctx.stroke();
+    ctx.fillStyle = "#7b7f8c";
+    ctx.fillText(value.toFixed(Math.abs(span) < 10 ? 2 : 1), box.x0 - 8, y);
+  }
+
+  const spec = c.spec || {};
+  const usl = (spec.usl === null || spec.usl === undefined) ? null : Number(spec.usl);
+  const lsl = (spec.lsl === null || spec.lsl === undefined) ? null : Number(spec.lsl);
+
+  /* 规格带（超限区域淡红）+ 规格线 */
+  if (usl !== null && usl < hi) {
+    ctx.fillStyle = "rgba(231,76,60,.07)";
+    ctx.fillRect(box.x0, box.y0, box.w, Math.max(0, Y(usl) - box.y0));
+  }
+  if (lsl !== null && lsl > lo) {
+    ctx.fillStyle = "rgba(231,76,60,.07)";
+    ctx.fillRect(box.x0, Y(lsl), box.w, Math.max(0, box.y1 - Y(lsl)));
+  }
+  ctx.setLineDash([5, 4]);
+  ctx.lineWidth = 1.4;
+  ctx.strokeStyle = "#c2185b";
+  [[usl, "USL"], [lsl, "LSL"]].forEach(([value, label]) => {
+    if (value === null) return;
+    const y = Y(value);
+    if (y < box.y0 - 2 || y > box.y1 + 2) return;
+    ctx.beginPath();
+    ctx.moveTo(box.x0, y);
+    ctx.lineTo(box.x1, y);
+    ctx.stroke();
+    const text = label + " " + value.toFixed(3);
+    ctx.font = fontPx(11) + 'px "Microsoft YaHei",sans-serif';
+    const tw = ctx.measureText(text).width + 10;
+    ctx.setLineDash([]);
+    ctx.fillStyle = "rgba(194,24,91,.86)";
+    ctx.fillRect(box.x1 - tw, y - 9, tw, 18);
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "center";
+    ctx.fillText(text, box.x1 - tw / 2, y);
+    ctx.setLineDash([5, 4]);
   });
+  ctx.setLineDash([]);
+
+  /* 数据序列（渐变填充 + 折线） */
+  const pts = c.pts.slice(i0, i1 + 1);
+  const grad = ctx.createLinearGradient(0, box.y0, 0, box.y1);
+  grad.addColorStop(0, "rgba(77,166,255,.30)");
+  grad.addColorStop(1, "rgba(77,166,255,0)");
+  ctx.beginPath();
+  pts.forEach((p, k) => {
+    const x = X(i0 + k), y = Y(p.v);
+    if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = "#4da6ff";
+  ctx.lineWidth = 2;
+  ctx.lineJoin = "round";
+  ctx.stroke();
+  ctx.lineTo(X(i1), box.y1);
+  ctx.lineTo(X(i0), box.y1);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  /* 超规格点与最新点 */
+  pts.forEach((p, k) => {
+    if (!isOos(c.spec, p.v)) return;
+    const x = X(i0 + k), y = Y(p.v);
+    ctx.beginPath();
+    ctx.fillStyle = "#e74c3c";
+    ctx.arc(x, y, 4.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,.85)";
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+  });
+  const lastP = c.pts[n - 1];
+  if (i1 >= n - 1) {
+    const lx = X(n - 1), ly = Y(lastP.v);
+    ctx.beginPath();
+    ctx.fillStyle = isOos(c.spec, lastP.v) ? "#e74c3c" : "#4da6ff";
+    ctx.arc(lx, ly, 4.6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(77,166,255,.35)";
+    ctx.lineWidth = 6;
+    ctx.stroke();
+  }
+
+  /* 悬停十字线 */
+  if (c.hover !== null && c.hover >= i0 && c.hover <= i1) {
+    const hx = X(c.hover);
+    ctx.strokeStyle = "rgba(225,226,230,.35)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(hx, box.y0);
+    ctx.lineTo(hx, box.y1);
+    ctx.stroke();
+  }
+
+  /* X 轴时间刻度 */
+  ctx.fillStyle = "#7b7f8c";
+  ctx.textAlign = "left";
+  ctx.fillText(clock(c.pts[i0].t), box.x0, box.y1 + 14);
+  if (i1 > i0) {
+    ctx.textAlign = "right";
+    ctx.fillText(clock(c.pts[i1].t), box.x1, box.y1 + 14);
+  }
+  ctx.strokeStyle = "#3a3a48";
+  ctx.beginPath();
+  ctx.moveTo(box.x0, box.y1 + 0.5);
+  ctx.lineTo(box.x1, box.y1 + 0.5);
   ctx.stroke();
 }
+
+/* ---------- 图表卡片 ---------- */
+const chartObserver = window.ResizeObserver
+  ? new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const c = Object.values(charts).find(x => x.cv === entry.target);
+        if (c) resizeCanvas(c, true);
+      }
+    })
+  : null;
 
 function ensureChart(device, ch) {
   const key = device + ":" + ch;
   if (charts[key]) return key;
   const card = document.createElement("div");
-  card.className = "card";
+  card.className = "chart-card";
   card.id = "c-" + key;
-  const t1 = document.createElement("h3");
-  t1.textContent = device;
-  const t2 = document.createElement("div");
-  t2.className = "meta";
-  t2.textContent = ch + " · <span class='v'>—</span>";
+  const head = document.createElement("div");
+  head.className = "chart-head";
+  head.innerHTML =
+    "<span class='chart-dev'></span><span class='chart-path'></span>" +
+    "<span class='chart-value num'>—</span>" +
+    "<span class='chart-badges'></span>";
+  const wrap = document.createElement("div");
+  wrap.className = "canvas-wrap";
   const cv = document.createElement("canvas");
-  cv.width = 640; cv.height = 120;
-  card.appendChild(t1); card.appendChild(t2); card.appendChild(cv);
+  wrap.appendChild(cv);
+  card.appendChild(head);
+  card.appendChild(wrap);
   document.getElementById("cards").appendChild(card);
-  charts[key] = { card, meta: t2, cv, pts: [], ch };
+  document.getElementById("charts-empty").style.display = "none";
+
+  const c = {
+    card, head, cv, ctx: cv.getContext("2d"), pts: [], dev: device, ch,
+    spec: specFor(device, ch), view: [0, MAX_POINTS - 1], hover: null,
+    w: 640, h: 190,
+  };
+  charts[key] = c;
+  head.querySelector(".chart-dev").textContent = device;
+  head.querySelector(".chart-path").textContent = ch;
+  bindChartEvents(c);
+  if (chartObserver) chartObserver.observe(cv);
+  resizeCanvas(c, false);
+  draw(c);
   return key;
+}
+
+function updateChartHeader(c) {
+  const last = c.pts[c.pts.length - 1];
+  const valueEl = c.head.querySelector(".chart-value");
+  const badges = c.head.querySelector(".chart-badges");
+  if (!last) { valueEl.textContent = "—"; return; }
+  const oos = isOos(c.spec, last.v);
+  valueEl.textContent = fmt(last.v, 2);
+  valueEl.classList.toggle("oos", oos);
+  c.card.classList.toggle("oos", oos);
+
+  const [i0, i1] = visibleRange(c);
+  const window = c.pts.slice(i0, i1 + 1);
+  const oosCount = window.filter(p => isOos(c.spec, p.v)).length;
+  const bits = [];
+  if (c.spec) {
+    const usl = c.spec.usl !== null && c.spec.usl !== undefined
+      ? "USL " + fmt(c.spec.usl, 3) : "";
+    const lsl = c.spec.lsl !== null && c.spec.lsl !== undefined
+      ? "LSL " + fmt(c.spec.lsl, 3) : "";
+    bits.push("<span class='badge spec'>" + [usl, lsl].filter(Boolean).join(" · ") + "</span>");
+  } else {
+    bits.push("<span class='badge'>未配置规格限</span>");
+  }
+  bits.push("<span class='badge'>窗口 " + window.length + " 点</span>");
+  if (oosCount) bits.push("<span class='badge' style='color:#e74c3c'>超规格 " + oosCount + "</span>");
+  if (c.zoomed) bits.push("<span class='badge zoom'>缩放中 · 双击复位</span>");
+  badges.innerHTML = bits.join("");
+}
+
+function bindChartEvents(c) {
+  const cv = c.cv;
+  let dragFrom = null;
+
+  cv.addEventListener("wheel", ev => {
+    ev.preventDefault();
+    const n = c.pts.length;
+    if (n < 2) return;
+    const box = plotBox(c);
+    const frac = Math.min(1, Math.max(0, (ev.clientX - cv.getBoundingClientRect().left - box.x0) / box.w));
+    const [a, b] = c.view;
+    const width = Math.max(4, b - a);
+    const center = a + width * frac;
+    const factor = ev.deltaY > 0 ? 1.25 : 0.8;
+    const nw = Math.min(Math.max(width * factor, 4), n + 2);
+    let na = center - nw * frac;
+    if (na < 0) na = 0;
+    if (na + nw > n + 1) na = Math.max(0, n + 1 - nw);
+    c.view = [na, na + nw];
+    c.zoomed = nw < n;
+    draw(c);
+    updateChartHeader(c);
+  }, { passive: false });
+
+  cv.addEventListener("mousedown", ev => { dragFrom = [ev.clientX, c.view.slice()]; });
+  cv.addEventListener("mouseup", () => { dragFrom = null; });
+  cv.addEventListener("mouseleave", () => {
+    dragFrom = null;
+    c.hover = null;
+    hideTooltip();
+    draw(c);
+  });
+  cv.addEventListener("mousemove", ev => {
+    const rect = cv.getBoundingClientRect();
+    const box = plotBox(c);
+    if (dragFrom) {
+      const [x0, view0] = dragFrom;
+      const shift = (x0 - ev.clientX) / box.w * (view0[1] - view0[0]);
+      const n = c.pts.length;
+      let na = view0[0] + shift;
+      const nw = view0[1] - view0[0];
+      if (na < 0) na = 0;
+      if (na + nw > n + 1) na = Math.max(0, n + 1 - nw);
+      c.view = [na, na + nw];
+      c.zoomed = nw < n;
+      draw(c);
+      updateChartHeader(c);
+      return;
+    }
+    const [i0, i1] = visibleRange(c);
+    const spanN = Math.max(1, i1 - i0);
+    const frac = (ev.clientX - rect.left - box.x0) / box.w;
+    const idx = Math.round(i0 + frac * spanN);
+    c.hover = Math.min(i1, Math.max(i0, idx));
+    draw(c);
+    showTooltip(c, ev);
+  });
+  cv.addEventListener("dblclick", () => {
+    c.view = [Math.max(0, c.pts.length - MAX_POINTS), c.pts.length];
+    c.zoomed = false;
+    c.hover = null;
+    hideTooltip();
+    draw(c);
+    updateChartHeader(c);
+  });
+}
+
+function showTooltip(c, ev) {
+  const p = c.pts[c.hover];
+  const tip = document.getElementById("tooltip");
+  if (!p) { hideTooltip(); return; }
+  const oos = isOos(c.spec, p.v) ? " · <span class='fault'>超规格</span>" : "";
+  tip.innerHTML = "<b>" + c.dev + " · " + c.ch + "</b><br>" +
+                  clock(p.t) + " · <span class='num'>" + fmt(p.v, 3) + "</span>" + oos;
+  tip.style.display = "block";
+  tip.style.left = Math.min(window.innerWidth - 190, ev.clientX + 14) + "px";
+  tip.style.top = Math.max(8, ev.clientY - 54) + "px";
+}
+
+function hideTooltip() {
+  document.getElementById("tooltip").style.display = "none";
 }
 
 function pushSample(s) {
   const key = ensureChart(s.dev, s.ch);
   const c = charts[key];
+  const spec = specFor(s.dev, s.ch);
+  if (spec) c.spec = spec;
   c.pts.push({ t: s.t, v: s.v });
-  if (c.pts.length > MAX_POINTS) c.pts.shift();
-  draw(c.cv, c.pts);
-  const v = s.v.toFixed(2);
-  c.meta.innerHTML = c.ch + " · <span class='v'>" + v + "</span>";
+  if (c.pts.length > MAX_POINTS * 2) c.pts.splice(0, c.pts.length - MAX_POINTS * 2);
+  if (!c.zoomed) c.view = [Math.max(0, c.pts.length - MAX_POINTS), c.pts.length];
+  if (c.hover !== null && c.hover > c.pts.length - 1) c.hover = null;
+  draw(c);
+  updateChartHeader(c);
+}
+
+/* ---------- 产线拓扑 ---------- */
+function renderPlant(lines) {
+  lastPlantLines = lines || [];
+  const el = document.getElementById("plant");
+  el.innerHTML = "";
+  let stationTotal = 0, stationOnline = 0, alertTotal = 0;
+  for (const line of lines) {
+    const block = document.createElement("div");
+    block.className = "line-block";
+    const head = document.createElement("div");
+    head.className = "line-head";
+    const bits = [];
+    if (line.ideal_cycle_time_s) bits.push("节拍 " + line.ideal_cycle_time_s + "s");
+    if (line.shift) bits.push("班次 " + line.shift);
+    if (line.unit_cost) bits.push("单位成本 " + line.unit_cost);
+    if (line.downtime_cost_per_min) bits.push("停机 " + line.downtime_cost_per_min + "/min");
+    head.innerHTML = "<span class='line-name'>" + line.name + "</span>" +
+                     "<span class='line-meta'>" + bits.join(" · ") + "</span>";
+    block.appendChild(head);
+
+    const row = document.createElement("div");
+    row.className = "stations";
+    for (const st of line.stations) {
+      stationTotal += 1;
+      if (st.online) stationOnline += 1;
+      if (st.alert) alertTotal += 1;
+      const card = document.createElement("div");
+      card.className = "station " + st.status;
+      const specs = Object.entries(st.specs || {}).map(([ch, sp]) => {
+        const parts = [];
+        if (sp.usl !== null && sp.usl !== undefined) parts.push("USL " + sp.usl);
+        if (sp.lsl !== null && sp.lsl !== undefined) parts.push("LSL " + sp.lsl);
+        return ch + (parts.length ? " " + parts.join(" / ") : "");
+      }).filter(Boolean);
+      card.innerHTML =
+        "<div class='station-top'><span class='status-dot " + st.status + "'></span>" +
+        "<span class='station-name'>" + st.name + "</span>" +
+        "<span class='station-state'>" + STATUS_TEXT[st.status] + "</span></div>" +
+        "<div class='station-sub'>" + st.device + " · " + (st.channels || []).join(", ") +
+        (st.online ? "" : " · 离线") + "</div>" +
+        (specs.length ? "<div class='spec-chips'>" +
+          specs.map(t => "<span class='spec-chip'>" + t + "</span>").join("") + "</div>" : "");
+      row.appendChild(card);
+    }
+    block.appendChild(row);
+
+    const downRow = document.createElement("div");
+    downRow.className = "down-row";
+    downRow.style.marginTop = "10px";
+    const label = document.createElement("span");
+    label.className = "line-meta";
+    label.textContent = "停机记录:";
+    const sel = document.createElement("select");
+    for (const r of reasonCodes) {
+      const opt = document.createElement("option");
+      opt.value = r; opt.textContent = r;
+      sel.appendChild(opt);
+    }
+    const downBtn = document.createElement("button");
+    downBtn.textContent = "停机";
+    downBtn.onclick = () => postDowntime(line.name, "start", sel.value, downBtn);
+    const upBtn = document.createElement("button");
+    upBtn.className = "ghost";
+    upBtn.textContent = "恢复";
+    upBtn.onclick = () => postDowntime(line.name, "end", "", upBtn);
+    downRow.append(label, sel, downBtn, upBtn);
+    block.appendChild(downRow);
+    el.appendChild(block);
+  }
+  setText("plant-updated", "更新于 " + new Date().toLocaleTimeString("zh-CN", { hour12: false }));
+  window.__plantStats = { stationTotal, stationOnline, alertTotal, lines: lines.length };
+  updateKpis();
+}
+
+async function postDowntime(line, action, reason, btn) {
+  try {
+    const resp = await fetch(api("/api/downtime"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ line, action, reason }),
+    });
+    const data = await resp.json();
+    btn.title = data.ok ? (action === "start" ? "已记录停机" : "已恢复") :
+      ("失败: " + (data.error || resp.status));
+    refreshPanels();
+  } catch (e) { /* 网络错误静默 */ }
+}
+
+/* ---------- OEE / 成本 ---------- */
+function bar(label, value, cls) {
+  const v = Math.max(0, Math.min(1, Number(value) || 0));
+  return "<div class='bar-row'><span class='bar-label'>" + label + "</span>" +
+         "<span class='bar " + cls + "'><i style='width:" + (v * 100).toFixed(1) + "%'></i></span>" +
+         "<span class='bar-val num'>" + pct(v) + "</span></div>";
+}
+
+function renderOee(lines, downtime) {
+  const el = document.getElementById("oee");
+  el.innerHTML = "";
+  const names = Object.keys(lines || {});
+  if (!names.length) {
+    el.innerHTML = "<div class='empty'>等待产线数据…</div>";
+    return;
+  }
+  /* 平均 OEE 只统计班次内产线 — 非计划时间不计入，避免拉低整体指标 */
+  const inScope = names.filter(k => {
+    const m = lines[k] || {};
+    return !(m.shift_configured && !m.in_shift);
+  });
+  window.__oeeAvg = inScope.length
+    ? inScope.reduce((s, k) => s + (lines[k].oee || 0), 0) / inScope.length
+    : undefined;
+  window.__oeeScope = { total: names.length, counted: inScope.length };
+  for (const name of names) {
+    const m = lines[name] || {};
+    const down = (downtime && downtime[name]) || {};
+    const card = document.createElement("div");
+    card.className = "metric-card" + (down.down ? " down" : "");
+    const outOfShift = m.shift_configured && !m.in_shift;
+    const status = outOfShift ? "warn"
+      : (m.oee >= OEE_WORLD_CLASS ? "good" : (m.oee >= OEE_GOOD ? "warn" : "bad"));
+    const grade = outOfShift ? "非计划时间"
+      : (m.oee >= OEE_WORLD_CLASS ? "世界级" : (m.oee >= OEE_GOOD ? "达标" : "待改善"));
+    const foot = [
+      "样本 " + (m.samples || 0),
+      "不良 " + (m.defects || 0),
+      m.ideal_cycle_time_s ? "节拍 " + m.ideal_cycle_time_s + "s" : "未配置节拍",
+      down.downtime_s ? "停机 " + fmt(down.downtime_s / 60, 1) + " min" : "",
+      down.down ? "<span class='fault'>停机中（" + down.reason + "）</span>" : "",
+      m.shift_configured ? (m.in_shift ? "班次内" : "<span class='fault'>班次外</span>")
+                         : "全天口径",
+    ].filter(Boolean);
+    card.innerHTML =
+      "<div class='metric-head'><span class='metric-name'>" + name + "</span>" +
+      "<span class='metric-tag'>" + grade + "</span></div>" +
+      "<div class='oee-value " + status + (outOfShift ? "" : " num") + "'>" +
+      (outOfShift ? "班次外" : pct(m.oee)) + "</div>" +
+      "<div class='bars'>" + bar("A", m.availability, "a") + bar("P", m.performance, "p") +
+      bar("Q", m.quality, "q") + "</div>" +
+      "<div class='metric-foot'>" + foot.join(" · ") + "</div>";
+    el.appendChild(card);
+  }
+  updateKpis();
+}
+
+function renderCost(lines) {
+  const el = document.getElementById("cost");
+  el.innerHTML = "";
+  const names = Object.keys(lines || {});
+  if (!names.length) {
+    el.innerHTML = "<div class='empty'>尚未产生成本数据（需配置单位成本/废品成本）</div>";
+    return;
+  }
+  let total = 0;
+  for (const name of names) {
+    const c = lines[name] || {};
+    total += Number(c.total_loss) || 0;
+    const card = document.createElement("div");
+    card.className = "metric-card";
+    const hasLoss = (c.total_loss || 0) > 0;
+    card.innerHTML =
+      "<div class='metric-head'><span class='metric-name'>" + name + "</span>" +
+      "<span class='metric-tag'>" + (c.currency || "货币单位未配置") + "</span></div>" +
+      "<div class='cost-value " + (hasLoss ? "bad" : "good") + " num'>" +
+      fmt(c.total_loss || 0, 2) + "</div>" +
+      "<div class='metric-foot'>" +
+      "超规格 " + (c.defects || 0) + " 件（" + pct(c.defect_rate || 0) + "） · " +
+      "废品损失 " + fmt(c.scrap_loss || 0, 2) + " · " +
+      "停机 " + fmt(c.downtime_min || 0, 1) + " min / " + fmt(c.downtime_loss || 0, 2) +
+      "</div>";
+    el.appendChild(card);
+  }
+  window.__costTotal = total;
+  updateKpis();
+}
+
+function updateKpis() {
+  const s = window.__plantStats || { stationTotal: 0, stationOnline: 0, alertTotal: 0, lines: 0 };
+  const rate = s.stationTotal ? pct(s.stationOnline / s.stationTotal) : "—";
+  const scope = window.__oeeScope || { total: 0, counted: 0 };
+  let oee = window.__oeeAvg === undefined ? "—" : pct(window.__oeeAvg);
+  if (scope.total && scope.counted < scope.total) {
+    oee += "<span style='font-size:calc(var(--fs) - 3px);color:#7b7f8c'> (" + scope.counted +
+           "/" + scope.total + " 班次内)</span>";
+  }
+  const cost = window.__costTotal === undefined ? "—" : fmt(window.__costTotal, 2);
+  document.getElementById("kpis").innerHTML = [
+    ["产线", String(s.lines)],
+    ["工位在线", (s.stationOnline + "/" + s.stationTotal) + (s.stationTotal ? "" : "")],
+    ["在线率", rate],
+    ["平均 OEE", oee],
+    ["告警工位", String(s.alertTotal)],
+    ["成本损失", cost],
+  ].map(([k, v]) => "<div class='kpi'><div class='k'>" + k +
+                    "</div><div class='v num'>" + v + "</div></div>").join("");
+}
+
+/* ---------- 数据加载 ---------- */
+async function loadPlant() {
+  const resp = await fetch(api("/api/plant"));
+  const payload = await resp.json();
+  if (payload.downtime_reason_codes && payload.downtime_reason_codes.length) {
+    reasonCodes = payload.downtime_reason_codes;
+  }
+  for (const line of payload.lines || []) {
+    for (const st of line.stations || []) {
+      for (const [ch, sp] of Object.entries(st.specs || {})) {
+        specs[st.device] = specs[st.device] || {};
+        specs[st.device][ch] = sp;
+      }
+    }
+  }
+  renderPlant(payload.lines || []);
+}
+
+async function loadOee() {
+  const resp = await fetch(api("/api/oee"));
+  const payload = await resp.json();
+  renderOee(payload.lines || {}, payload.downtime || {});
+}
+
+async function loadCost() {
+  try {
+    const resp = await fetch(api("/api/cost"));
+    if (!resp.ok) { return; }
+    const payload = await resp.json();
+    renderCost(payload.lines || {});
+  } catch (e) { /* 未启用成本分析时静默 */ }
 }
 
 async function loadHistory() {
-  try {
-    const st = await fetch("/api/plant");
-    const { lines } = await st.json();
-    const plantEl = document.getElementById("plant");
-    plantEl.innerHTML = "";
-    for (const line of lines) {
-      const group = document.createElement("div");
-      group.className = "card";
-      const head = document.createElement("h3");
-      head.textContent = "产线: " + line.name;
-      group.appendChild(head);
-      const row = document.createElement("div");
-      for (const st of line.stations) {
-        const chip = document.createElement("span");
-        chip.className = "chip chip-" + st.status;
-        chip.textContent = "● " + st.name + (st.alert ? " ⚠" : "");
-        chip.title = st.device + " async " + (st.channels || []).join(", ");
-        row.appendChild(chip);
-      }
-      group.appendChild(row);
-      plantEl.appendChild(group);
-    }
-    const oeeResp = await fetch("/api/oee");
-    const { lines: oeeLines } = await oeeResp.json();
-    const oeeEl = document.getElementById("oee");
-    oeeEl.innerHTML = "";
-    for (const [name, m] of Object.entries(oeeLines)) {
-      const card = document.createElement("div");
-      card.className = "card";
-      card.innerHTML = "<h3>OEE " + name + "</h3><div class='meta'>A " +
-        (m.availability * 100).toFixed(1) + "% · P " + (m.performance * 100).toFixed(1) +
-        "% · Q " + (m.quality * 100).toFixed(1) + "% · OEE <b>" +
-        (m.oee * 100).toFixed(1) + "%</b> · 样本 " + m.samples + "</div>";
-      oeeEl.appendChild(card);
-    }
-  } catch (e) { /* 无数据时静默 */ }
-}
-  try {
-    const r = await fetch("/api/devices");
-    const { topics } = await r.json();
-    for (const dev of topics) {
-      const h = await fetch("/api/history?device=" + encodeURIComponent(dev));
-      const { samples } = await h.json();
-      for (const s of samples) pushSample({ ...s, dev });
-    }
-  } catch (e) { /* 无历史数据时静默 */ }
+  const r = await fetch(api("/api/devices"));
+  const { topics } = await r.json();
+  for (const dev of topics) {
+    const h = await fetch(api("/api/history?device=" + encodeURIComponent(dev)));
+    const { samples } = await h.json();
+    for (const s of samples) pushSample({ ...s, dev });
+  }
 }
 
-const ws = new WebSocket(wsUrl);
-ws.onopen = () => { document.getElementById("conn").textContent = "已连接"; loadHistory(); };
-ws.onmessage = (ev) => {
-  const msg = JSON.parse(ev.data);
-  if (msg.type === "batch") for (const s of msg.samples) pushSample(s);
-};
-ws.onerror = () => { document.getElementById("conn").textContent = "连接断开"; };
-ws.onclose = () => { document.getElementById("conn").textContent = "已断开"; };
-setInterval(() => { if (ws.readyState === WebSocket.OPEN) ws.send("ping"); }, 20000);
+async function refreshPanels() {
+  try {
+    await loadPlant();
+    for (const c of Object.values(charts)) {
+      const st = specs[c.dev] || {};
+      c.spec = st[c.ch] || c.spec;
+      draw(c);
+      updateChartHeader(c);
+    }
+    await loadOee();
+    await loadCost();
+  } catch (e) { /* 无数据时静默 */ }
+}
+
+/* ---------- 连接状态 ---------- */
+function setConn(state, text) {
+  const pill = document.getElementById("conn");
+  pill.classList.remove("online", "offline");
+  if (state) pill.classList.add(state);
+  setText("conn-text", text);
+  document.getElementById("brand-dot").classList.toggle("offline", state === "offline");
+}
+
+let ws = null;
+
+function connect() {
+  ws = new WebSocket(wsUrl);
+  ws.onopen = async () => {
+    setConn("online", "已连接");
+    await refreshPanels();
+    try { await loadHistory(); } catch (e) { /* 无历史数据 */ }
+  };
+  ws.onmessage = (ev) => {
+    const msg = JSON.parse(ev.data);
+    if (msg.type === "batch") for (const s of msg.samples) pushSample(s);
+  };
+  ws.onerror = () => setConn("offline", "连接异常");
+  ws.onclose = () => {
+    setConn("offline", "已断开（自动重连中…）");
+    setTimeout(connect, 3000);
+  };
+}
+
+connect();
+setInterval(() => {
+  if (ws && ws.readyState === WebSocket.OPEN) ws.send("ping");
+}, 20000);
+setInterval(refreshPanels, 15000);
+setInterval(() => setText("clock", new Date().toLocaleTimeString("zh-CN", { hour12: false })), 1000);
+
+/* ---------- 初始化 ---------- */
+document.getElementById("fs-down").onclick = () => setFontScale(fsScale - 0.1);
+document.getElementById("fs-up").onclick = () => setFontScale(fsScale + 0.1);
+document.getElementById("fs-reset").onclick = () => setFontScale(1);
+window.addEventListener("resize", () => {
+  for (const c of Object.values(charts)) resizeCanvas(c, true);
+});
+applyFontScale();
+setText("clock", new Date().toLocaleTimeString("zh-CN", { hour12: false }));
+updateKpis();
 </script>
 </body>
 </html>

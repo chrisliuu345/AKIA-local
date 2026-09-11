@@ -4,7 +4,7 @@ import xlsxwriter
 
 from core.i18n import i18n
 from output.base_report_engine import BaseReportEngine
-from ui.font_config import get_ui_font
+from core.fonts import get_ui_font
 
 
 class ExcelReport(BaseReportEngine):

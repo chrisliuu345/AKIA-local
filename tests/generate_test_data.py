@@ -4,7 +4,7 @@
 用法: python tests/generate_test_data.py
 输出: <项目根目录>/公司仪器测试数据.xlsx（6 个 Sheet）
 
-该文件被 tests/run_all_tests.py 的 T06/T07/T42/T43 用例依赖，
+该文件被 tools/run_all_tests.py 的 T06/T07/T42/T43 用例依赖，
 缺失时会导致冒烟测试失败（代码审查 C18）。
 """
 import os

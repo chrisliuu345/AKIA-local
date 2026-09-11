@@ -1,7 +1,7 @@
 """LPA 分层审核表引擎 — 模板生成 + Excel 导出"""
 
 from typing import List, Dict
-from ui.font_config import get_ui_font
+from core.fonts import get_ui_font
 
 LPA_TEMPLATES = {
     "5S": [

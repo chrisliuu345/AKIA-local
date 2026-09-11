@@ -63,6 +63,16 @@ def test_history_api_and_devices(server):
     # 入库后历史查询走 SQLite
     assert store.count("line-01") == 3
 
+    # v3.8.0-⑥: agg=1m 返回分钟降采样
+    store.rollup(bucket_s=60, until_ts=time.time())
+    raw = urllib.request.urlopen(
+        f"http://{addr}/api/history?device=line-01&channel=CH0&agg=1m",
+        timeout=3).read()
+    rolled = _json.loads(raw)
+    assert rolled["agg"] == "1m"
+    assert rolled["samples"][0]["n"] == 3
+    assert rolled["samples"][0]["avg"] == pytest.approx(2.5)
+
 
 def test_ws_broadcast(server):
     import websockets.sync.client as ws_client
@@ -124,8 +134,11 @@ def test_dashboard_page_served(server):
     text = raw.decode("utf-8")
     assert "QA-Tool 实时 SPC 云看板" in text
     assert "ws://" in text
-    # B1 回归: 图表对象必须缓存 ch 字段
-    assert "charts[key] = { card, meta: t2, cv, pts: [], ch };" in text, "ch 字段缺失"
+    # B1 回归: 图表对象必须缓存 ch 字段（v3.8.0 起同时缓存 dev/spec/view）
+    assert "charts[key] = c;" in text, "图表对象未入缓存"
+    assert "dev: device, ch" in text, "ch 字段缺失"
+    # v3.8.0: 规格线与缩放交互随页面下发
+    assert "USL" in text and "wheel" in text
 
 
 def test_plant_status_uses_injected_config_and_tags():
@@ -158,6 +171,9 @@ def test_plant_status_uses_injected_config_and_tags():
         st = {st["name"]: st for st in lines[0]["stations"]}
         assert st["S1"]["status"] == "yellow"  # OOS 越限
         assert st["S2"]["status"] == "red"     # 无数据离线
+        # v3.8.0-①: 规格限随站点下发（看板绘制 USL/LSL 参考线）
+        assert st["S1"]["specs"]["CH0"]["usl"] == 110.0
+        assert st["S1"]["specs"]["CH0"]["lsl"] is None
         raw = urllib.request.urlopen(url + "/api/oee", timeout=3).read()
         oee_lines = _json.loads(raw)["lines"]
         assert "L1" in oee_lines and oee_lines["L1"]["samples"] == 2

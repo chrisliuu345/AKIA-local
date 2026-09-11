@@ -99,6 +99,55 @@ class ControlPlanTab(BaseAnalysisTab):
         self._rows.append([f"OP{len(self._rows)*10+10}", "", "", "", "", "", "", "", ""])
         self._rebuild_table()
 
+    def append_rows(self, rows: list) -> int:
+        """追加控制计划行（供 FMEA → CP 链路调用）。返回实际追加行数。"""
+        added = 0
+        for row in rows:
+            if not isinstance(row, (list, tuple)):
+                continue
+            normalized = [str(v) if v is not None else "" for v in row][:len(CP_HEADERS)]
+            normalized += [""] * (len(CP_HEADERS) - len(normalized))
+            self._rows.append(normalized)
+            added += 1
+        if added:
+            self._rebuild_table()
+        return added
+
+    def rows_as_dicts(self) -> list:
+        """当前控制计划行 → 列名到值的 dict 列表（写入项目上下文用）"""
+        out = []
+        for row in self._rows:
+            padded = list(row) + [""] * (len(CP_HEADERS) - len(row))
+            out.append({h: str(padded[i]) for i, h in enumerate(CP_HEADERS)})
+        return out
+
+    @staticmethod
+    def rows_from_dicts(dicts: list) -> list:
+        """项目上下文 dict 列表 → 控制计划行（兼容旧项目中的 list 行）"""
+        rows = []
+        for d in dicts or []:
+            if isinstance(d, dict):
+                rows.append([str(d.get(h, "")) for h in CP_HEADERS])
+            elif isinstance(d, (list, tuple)):
+                padded = [str(v) for v in d][:len(CP_HEADERS)]
+                padded += [""] * (len(CP_HEADERS) - len(padded))
+                rows.append(padded)
+        return rows
+
+    def _sync_context(self):
+        """将当前行写入项目上下文（唯一事实源）"""
+        if self._project_context is not None:
+            self._project_context.set_control_plan(self.rows_as_dicts())
+
+    def load_from_context(self):
+        """从项目上下文恢复行（打开 .qap 后调用）"""
+        if self._project_context is None or not self._project_context.control_plan_rows:
+            return
+        rows = self.rows_from_dicts(self._project_context.control_plan_rows)
+        if rows:
+            self._rows = rows
+            self._rebuild_table()
+
     def _delete_row(self):
         rows = set(i.row() for i in self.table.selectedIndexes())
         if not rows:
@@ -124,6 +173,7 @@ class ControlPlanTab(BaseAnalysisTab):
             while len(self._rows) <= row:
                 self._rows.append([""] * len(CP_HEADERS))
             self._rows[row][col] = item.text().strip()
+            self._sync_context()
 
     def _generate_spc_list(self):
         """从控制计划生成 SPC 监控清单"""
@@ -161,15 +211,28 @@ class ControlPlanTab(BaseAnalysisTab):
             "chart_data": {},
         }
 
-        main_win = self.window()
-        if hasattr(main_win, '_import_spc_from_cp'):
-            main_win._import_spc_from_cp(spc_items)
-        else:
-            self.analysis_completed.emit()
+        if self._project_context is not None:
+            self._project_context.set_analysis_snapshot(
+                "spc_monitoring",
+                {"items": spc_items, "source": "control_plan"},
+            )
 
-        QMessageBox.information(self, "生成完成",
-                                f"已生成 {len(spc_items)} 个 SPC 监控项。\n"
-                                "请在 SPC Tab 中选择对应列进行分析。")
+        main_win = self.window()
+        imported = False
+        if hasattr(main_win, '_import_spc_from_cp'):
+            imported = bool(main_win._import_spc_from_cp(spc_items))
+        self.analysis_completed.emit()
+
+        if imported:
+            QMessageBox.information(
+                self, "生成完成",
+                f"已生成 {len(spc_items)} 个 SPC 监控项，已在 SPC Tab 的"
+                "「CP 监控清单」中显示。\n请在 SPC Tab 中选择对应列进行分析。")
+        else:
+            QMessageBox.warning(
+                self, "生成完成",
+                f"已生成 {len(spc_items)} 个 SPC 监控项，但未能同步到 SPC Tab。\n"
+                "请手动打开 SPC Tab 后重试。")
 
     def _rebuild_table(self):
         self.table.blockSignals(True)
@@ -178,3 +241,4 @@ class ControlPlanTab(BaseAnalysisTab):
             for j, val in enumerate(row):
                 self.table.setItem(i, j, QTableWidgetItem(str(val)))
         self.table.blockSignals(False)
+        self._sync_context()

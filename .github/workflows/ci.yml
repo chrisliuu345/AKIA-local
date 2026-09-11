@@ -28,6 +28,10 @@ jobs:
         run: |
           .venv/bin/python -m ruff check .
 
+      - name: Version consistency gate
+        run: |
+          .venv/bin/python tools/check_version.py
+
       - name: Run tests (per-file, single-threaded)
         env:
           QT_QPA_PLATFORM: "offscreen"
