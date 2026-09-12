@@ -5,7 +5,8 @@
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QFormLayout, QComboBox, QSpinBox, QHBoxLayout,
     QDoubleSpinBox, QDialogButtonBox, QCheckBox, QTabWidget, QWidget,
-    QLineEdit, QPushButton, QLabel,
+    QLineEdit, QPushButton, QLabel, QMessageBox, QTableWidget,
+    QTableWidgetItem, QHeaderView, QGroupBox,
 )
 from PySide6.QtCore import QThread, Signal
 
@@ -99,6 +100,7 @@ class SettingsDialog(QDialog):
         tabs.addTab(alert_tab, "告警")
 
         tabs.addTab(self._build_agent_tab(tc), "QAM Harness")
+        tabs.addTab(self._build_plugins_tab(tc), "插件")
 
         layout.addWidget(tabs)
 
@@ -108,6 +110,71 @@ class SettingsDialog(QDialog):
         layout.addWidget(buttons)
 
     # ------------------------------------------------------------ QAM Harness
+    def _build_plugins_tab(self, tc) -> QWidget:
+        """插件接口 v2 管理页 — 状态列表 + 信任 + 插件设置页。"""
+        from core.plugin_api import PLUGIN_API_VERSION
+        from core.plugin_manager import PluginManager
+
+        manager = PluginManager()
+        manager.discover()
+
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+        hint = QLabel(
+            f"插件接口 v{PLUGIN_API_VERSION}：外部插件可贡献 Tab / Agent 工具 / "
+            "设置页。随包插件默认信任；用户目录与 pip 插件首次需信任，"
+            "信任后重新打开设置或重启应用生效。")
+        hint.setWordWrap(True)
+        hint.setStyleSheet(f"color: {tc['text_muted']}; font-size: 9pt;")
+        layout.addWidget(hint)
+
+        table = QTableWidget(0, 5)
+        table.setHorizontalHeaderLabels(["插件", "版本", "来源", "状态", "操作"])
+        table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Stretch)
+        table.setMinimumHeight(180)
+        for record in manager.records():
+            row = table.rowCount()
+            table.insertRow(row)
+            table.setItem(row, 0, QTableWidgetItem(record.name))
+            table.setItem(row, 1, QTableWidgetItem(record.version))
+            table.setItem(row, 2, QTableWidgetItem({
+                "bundled": "随包", "user": "用户目录",
+                "entry_point": "pip 包"}.get(record.source, record.source)))
+            if not record.trusted:
+                status = "待信任"
+            elif record.available:
+                status = "可用" + (f"（{record.reason}）" if record.reason else "")
+            else:
+                status = f"不可用：{record.reason or record.error or '未知原因'}"
+            table.setItem(row, 3, QTableWidgetItem(status))
+            if not record.trusted:
+                btn = QPushButton("信任")
+                btn.setFixedWidth(64)
+                btn.clicked.connect(
+                    lambda _, pid=record.id: self._trust_plugin(pid))
+                table.setCellWidget(row, 4, btn)
+        layout.addWidget(table)
+
+        for record in manager.settings_plugins():
+            page = manager.create_settings_page(record, manager.host, tab)
+            if page is None:
+                continue
+            box = QGroupBox(f"{record.name} 设置")
+            box_layout = QVBoxLayout(box)
+            box_layout.addWidget(page)
+            layout.addWidget(box)
+        layout.addStretch()
+        return tab
+
+    def _trust_plugin(self, plugin_id: str):
+        from core.plugin_manager import PluginManager
+
+        PluginManager().trust(plugin_id)
+        QMessageBox.information(
+            self, "插件已信任",
+            f"已信任插件 {plugin_id}。重新打开设置或重启应用后加载。")
+
     def _build_agent_tab(self, tc) -> QWidget:
         """QAM Harness（BYOK）配置页 — 供应商/模型/密钥/连通性/隐私授权。"""
         from core.agent.privacy import consent_status, revoke_consent

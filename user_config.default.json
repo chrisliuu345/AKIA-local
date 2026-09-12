@@ -33,5 +33,6 @@
   "llm_zai_model": "glm-4.5",
   "llm_kimi_model": "moonshot-v1-8k",
   "llm_custom_model": "",
-  "llm_custom_api_base": "http://localhost:8000/v1"
+  "llm_custom_api_base": "http://localhost:8000/v1",
+  "plugin_trusted": []
 }
