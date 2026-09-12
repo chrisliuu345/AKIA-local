@@ -65,7 +65,9 @@ HIDDEN_IMPORTS = [
 
 EXCLUDES = [
     "tkinter",
-    "unittest",
+    # 注意: 不可排除 unittest —— matplotlib → pyparsing(≥3.3) 的
+    # __init__ 会导入 pyparsing.testing，后者依赖 unittest；排除后
+    # 打包产物启动即 ModuleNotFoundError（v3.8.0 打包冒烟发现）
     "pytest",
     "IPython",
     "jupyter",

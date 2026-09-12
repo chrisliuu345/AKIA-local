@@ -99,16 +99,30 @@ def test_laney_chart(registry, ctx):
     assert "σ_Z" in res.text
 
 
-def test_hotelling_warns_on_unusable_ucl(registry, ctx):
-    """引擎在无子组时 T² UCL=0（预先存在的引擎缺陷）→ 工具必须显式告警。"""
+def test_hotelling_ucl_usable_without_subgroups(registry, ctx):
+    """v3.8.0 修复：无子组（个体观测）时 T² UCL 不再为 0、不再误报。"""
     res = _call(registry, ctx, "run_hotelling_t2", columns="测量值,参考值")
-    assert res.data["ucl_usable"] is False
-    assert "UCL 计算为 0" in res.text and "subgroup_column" in res.text
+    assert res.data["ucl_usable"] is True
+    ucl = np.asarray(res.data["t2_ucl"], dtype=float)
+    assert np.all(np.isfinite(ucl)) and np.all(ucl > 0)
+    assert "控制限不可用" not in res.text
 
     fixed = _call(registry, ctx, "run_hotelling_t2", columns="测量值,参考值",
                   subgroup_column="子组")
     assert fixed.data["ucl_usable"] is True
-    assert "UCL 计算为 0" not in fixed.text
+    assert "控制限不可用" not in fixed.text
+
+
+def test_hotelling_warns_when_limit_unusable():
+    """自由度不足（子组大小 [2,1]，p=2）时控制限为 NaN → 工具仍须显式告警。"""
+    df = pd.DataFrame({"X1": [1.0, 2.0, 3.0], "X2": [2.0, 1.0, 3.0],
+                       "G": ["a", "a", "b"]})
+    small_ctx = AgentContext(data_frames={"Sheet1": df})
+    reg = build_default_registry(small_ctx)
+    res = _call(reg, small_ctx, "run_hotelling_t2", columns="X1,X2",
+                subgroup_column="G")
+    assert res.data["ucl_usable"] is False
+    assert "控制限不可用" in res.text
 
 
 def test_capability_sixpack_and_advanced(registry, ctx):
