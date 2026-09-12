@@ -1,6 +1,7 @@
 """v3.8.0-⑧ 看板可选鉴权 — token 校验 / WS 拒绝 / host 绑定 / 地址生成。"""
 import json
 import os
+import socket
 import time
 import urllib.error
 import urllib.request
@@ -20,6 +21,13 @@ from server.app import (
 )
 
 TOKEN = "s3cret-token"
+
+
+def _free_port() -> int:
+    """向系统申请一个空闲端口，避免固定端口在满载回归时被占用/冲突。"""
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        return int(s.getsockname()[1])
 
 
 def _wait_ready(url: str, headers: dict | None = None, timeout: float = 10.0):
@@ -79,7 +87,7 @@ def test_http_requires_token_when_configured():
     bus = StreamBus()
     store = TimeseriesStore(os.path.join(os.environ.get("TMPDIR", "/tmp"),
                                          "qa_auth.db"))
-    port = 18780
+    port = _free_port()
     thread = start_thread(bus, store, host="127.0.0.1", port=port,
                           auth_token=TOKEN)
     url = f"http://127.0.0.1:{port}"
@@ -113,7 +121,7 @@ def test_ws_rejects_without_token():
     bus = StreamBus()
     store = TimeseriesStore(os.path.join(os.environ.get("TMPDIR", "/tmp"),
                                          "qa_auth_ws.db"))
-    port = 18781
+    port = _free_port()
     thread = start_thread(bus, store, host="127.0.0.1", port=port,
                           auth_token=TOKEN)
     try:
@@ -149,7 +157,7 @@ def test_no_token_means_open_access():
     bus = StreamBus()
     store = TimeseriesStore(os.path.join(os.environ.get("TMPDIR", "/tmp"),
                                          "qa_open.db"))
-    port = 18782
+    port = _free_port()
     thread = start_thread(bus, store, host="127.0.0.1", port=port)
     try:
         resp = _wait_ready(f"http://127.0.0.1:{port}/api/devices")

@@ -2,7 +2,7 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> 当前: v3.7.2 实时监控对标优化（8 项）（✅ 2026-09-10）| 进行中: **v3.8.0 P1/P2 ✅ + 插件接口 v2 ✅（视觉迁至独立项目，待发布）** | 测试: 1500+ pytest · 36 个分析 Tab | 更新: 2026-09-12
+> 当前: v3.8.0 Industrial AI Agent（QAM Harness + BYOK + 插件接口 v2）（✅ 2026-09-12）| 下一版: **v4.0.0 预测分析与机器学习（规划）** | 测试: 1567 pytest · 36 个分析 Tab | 更新: 2026-09-12
 
 ---
 
@@ -26,7 +26,7 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 | 已完成 ✅ | v3.7.0 | **实时 SPC 云看板与数据连接器**（实时数据流/Web 看板/连接器插件/告警中心 — 2026-09-08 开发完成）|
 | 已完成 ✅ | v3.7.1 | **五链贯通修复 + 数据语义与工程一致性加固**（FMEA→CP→SPC 桥接修复 + ProjectContext 单一事实源 / 列类型值优先判定（测量值·时长列）+ 清洗后重算 / 打包隔离本机配置 + 敏感配置加密 / APP_VERSION 单一事实源 + CI 版本门禁 / 僵尸模块清理与分层归位）— 2026-09-10 |
 | 已完成 ✅ | v3.7.2 | **实时监控对标优化 8 项**（实时图 USL/LSL + 缩放 / plant.json 可视化配置 / 告警分级·确认·审计·联动 / 成本损失核算 / OEE 节拍真实 P + 停机原因码 + 班次日历 / 分钟降采样与分档保留 / 连接器健康页与自动重连 / 看板可选鉴权）— 2026-09-10 |
-| 开发中 ✅ | v3.8.0 | Industrial AI Agent（QAM Harness + BYOK；视觉能力移至独立插件项目）— 待发布 |
+| 已完成 ✅ | v3.8.0 | Industrial AI Agent（QAM Harness + BYOK；视觉能力移至独立插件项目；插件接口 v2）— 2026-09-12 |
 | 独立项目 | [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion) | 视频时间研究插件（动作识别/作业周期/标准工时），基于主应用插件接口 v2 |
 | 待开发 | v4.0.0 | 预测分析与机器学习 |
 | 待开发 | v4.1.0 | 待定（根据 v3.x 进展定义） |
@@ -773,7 +773,7 @@ sudo apt install fonts-noto-cjk
 
 ---
 
-## v3.8.0 — Industrial AI Agent（QAM Harness + 插件接口）（开发中）
+## v3.8.0 ✅ 已发布 — Industrial AI Agent（QAM Harness + 插件接口）（2026-09-12）
 
 > 主题：打造工业级 AI Agent 平台（LLM 智能分析 + BYOK + 工具调用）。
 > **2026-09-12 架构调整**：机器视觉不进入主软件，改为独立插件项目
@@ -896,11 +896,13 @@ QA-Tool v3.8.0 Industrial AI Agent
 > - **O2 流式防泄漏**：模型输出工具 JSON 时不再把 JSON 打到界面——
 >   以 `{`/``` 开头则全缓冲；正文中出现 `{"tool"` 则只放行其之前正文；
 >   并保留 6 字符尾部防止分块切断泄漏；非工具 JSON 回答不丢内容
-> - **顺带发现（未修，待定）**：`analysis/spc/hotelling.py` 在**未提供子组列**时
+> - **顺带发现（已在 v3.8.0 收尾修复）**：`analysis/spc/hotelling.py` 在**未提供子组列**时
 >   `sample_sizes=[1]*n` 使 `_compute_ucl` 的 `(ni-1)` 项为 0 → **T² UCL=0、
->   100% 点被判越限**（提供 subgroup_column 后 UCL=2.447、越限 0，实测对照）。
->   当前工具已改为显式告警并建议提供 subgroup_column；引擎公式修复需另行确认
->   （个体观测的正确形式为 UCL = p(m+1)(m-1)/(m(m-p))·F(α;p,m-p)）
+>   100% 点被判越限**；子组分支亦误用总观测数代入系数与自由度（控制限约为正确值的
+>   1/6，模拟实测约 30% 控制点误报）。修复：个体观测改用 Montgomery 形式
+>   UCL = p(m+1)(m-1)/(m(m-p))·F(α;p,m-p)，子组改用 Tracy-Young-Mason
+>   Phase I 公式（模拟误报 0.06%，符合预期）；自由度退化时返回 NaN，
+>   Agent 工具据此提示"控制限不可用"
 > - 测试: `tests/test_agent_tools_ext.py`(15) + `test_agent_engine.py` 新增 4 例
 >   = **19 用例**（每个扩展工具都用真实引擎跑通合成数据）
 
@@ -1054,6 +1056,7 @@ QA-Tool v3.8.0 Industrial AI Agent
 
 | 日期 | 版本 | 内容 |
 |------|---------|---------|
+| 09-12 | v3.8.0-release | **发布收尾**：Hotelling T² 控制限公式修正（个体观测 UCL=0 → Montgomery 个体观测限；子组限改 Tracy-Young-Mason Phase I 公式，原公式模拟误报 30% → 0.06%）；看板鉴权测试改用动态空闲端口；**打包冒烟发现并修复 PyInstaller 排除 `unittest` 导致产物启动即崩溃**（matplotlib → pyparsing≥3.3 依赖，已加回归守卫）；版本 3.7.2 → 3.8.0 四端一致（settings / version_info / Inno / README·INSTALL·ROADMAP·guide）；全量逐文件回归 **108 文件 / 1567 通过 / 2 跳过 / 0 失败**，ruff 零告警，PyInstaller onedir 构建 + 25s 离屏启动冒烟通过 |
 | 09-12 | v3.8.1-plugin-api | **插件接口 v2 + 视觉迁移**：`core/plugin_api.py`（manifest/能力/依赖/工具前缀代理/API 版本门禁）+ `core/plugin_manager.py` 三级发现与信任模型 + `ui/plugin_host.py` 只读门面；主应用接线插件 Tab/Agent 工具/设置页；迁移出 `analysis/vision`、Tab 37、`tools_vision`、`requirements-vision.txt` 与视觉测试到独立项目 [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion)（README/pyproject/entry point/44 用例，已推送 `47f3102`）；插件契约测试 7 例，主库保留 36 Tab/30 工具 + 插件贡献 |
 | 09-11 | v3.8.0-P3 | **Vision AI 视频时间研究完成**：V0 修复工时研究误用 cycle 计时列；新增 `analysis/vision/`（文件/USB/RTSP/MJPEG/合成源、MOG2∪帧差流水线、MediaPipe Tasks 33 关键点 + OpenCV 降级、工作/空闲/走动/搬运/离岗迟滞状态机、周期切分与 TimeObservation/工作抽样输出、姿态模型按需下载+SHA256）；QAM Harness 工具 30→34（vision_status/analyze_video/time_study/work_sampling，离线关键词路由含视频路径提取）；新增 Tab 37「视频时间研究」（QThread 实时预览、占比/周期表、发送到工时研究、JSON 导出、模型下载）；`tools/vision_benchmark.py` 合成自检 99.0%，640×480 采样 15fps 实测 15.1 FPS、P95 ≤14.1ms；新增 53 例测试；文档/README/guide 同步，PyInstaller 默认排除 cv2/mediapipe；摄像头实拍验收待用户侧素材 |
 | 09-11 | v3.8.0-P1 | **QAM Harness Agent Core 完成**：`core/agent/{tools,engine,conversation,explain}.py` + `ui/agent_bridge.py` + 对话 UI 升级（气泡/Markdown/工具卡片/上下文条）；16 个工具全部接真实分析引擎（SPC/能力/MSA/假设检验/OEE/成本/告警/连接器/五链/产线/实时/已跑分析/知识库/指标解读）；在线 LLM 工具协议 + 离线规则路由双路径（断网可用），LLM 异常自动降级；「AI 助手」更名 QAM Harness（侧栏+菜单+i18n+文档）；新增 3 个测试文件 41 用例；顺带完成 P0（路线图数字订正、.gitignore 运行产物、remote 明文 token 清理、requirements-vision.txt 占位） |

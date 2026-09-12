@@ -11,14 +11,14 @@
 ### Linux (AppImage)
 
 ```bash
-chmod +x QA-Tool-3.7.2-x86_64.AppImage
-./QA-Tool-3.7.2-x86_64.AppImage
+chmod +x QA-Tool-3.8.0-x86_64.AppImage
+./QA-Tool-3.8.0-x86_64.AppImage
 ```
 
 ### Linux (.deb)
 
 ```bash
-sudo dpkg -i qa-tool_3.7.2_amd64.deb
+sudo dpkg -i qa-tool_3.8.0_amd64.deb
 qa-tool
 ```
 
