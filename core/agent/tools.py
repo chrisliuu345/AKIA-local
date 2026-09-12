@@ -898,8 +898,14 @@ def build_default_registry(ctx: AgentContext) -> ToolRegistry:
     from core.agent.tools_ext import register_extended_tools
     register_extended_tools(reg, ctx)
 
-    # ---------------- Vision 工具（视频时间研究/工作抽样，可选依赖）----------------
-    from core.agent.tools_vision import register_vision_tools
-    register_vision_tools(reg, ctx)
+    # ---------------- 插件工具（外部插件通过 manifest 声明贡献点）----------------
+    try:
+        from core.plugin_manager import PluginManager
+        manager = PluginManager()
+        manager.discover()
+        manager.register_agent_tools(reg, ctx)
+    except Exception:
+        import logging
+        logging.getLogger("QA-Tool.Agent").debug("插件工具注册失败", exc_info=True)
 
     return reg
