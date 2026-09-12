@@ -76,7 +76,7 @@ Requires Python 3.11+
 | Module | Capabilities |
 |--------|-------------|
 | **QAM Harness** | AI agent with 30 local tools (SPC/capability/MSA/hypothesis/DOE/regression/reliability/time-series/IE/cost/realtime/five-chain/root-cause) + offline tool mode · BYOK cloud providers (OpenAI/Claude/Gemini/DeepSeek/Z.ai/KIMI + custom endpoints) · encrypted keys + cloud privacy gate · Knowledge Base RAG |
-| **Plugin API v2** | External plugins developed/published separately: pip entry point or user dir · Tab / agent tools / settings contributions · dependency probing + trust model (e.g. QA-Tool-Vision-expansion) |
+| **Plugin API v2** | External plugins developed/published separately: pip entry point or user dir · Tab / agent tools / settings contributions · dependency probing + trust model (e.g. [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion)) |
 | **Charts** | 15+ chart types · Dark theme · CJK fonts |
 | **Reports** | PDF / Word / Excel / HTML · Inline charts |
 

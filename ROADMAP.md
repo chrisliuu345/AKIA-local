@@ -27,7 +27,7 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 | 已完成 ✅ | v3.7.1 | **五链贯通修复 + 数据语义与工程一致性加固**（FMEA→CP→SPC 桥接修复 + ProjectContext 单一事实源 / 列类型值优先判定（测量值·时长列）+ 清洗后重算 / 打包隔离本机配置 + 敏感配置加密 / APP_VERSION 单一事实源 + CI 版本门禁 / 僵尸模块清理与分层归位）— 2026-09-10 |
 | 已完成 ✅ | v3.7.2 | **实时监控对标优化 8 项**（实时图 USL/LSL + 缩放 / plant.json 可视化配置 / 告警分级·确认·审计·联动 / 成本损失核算 / OEE 节拍真实 P + 停机原因码 + 班次日历 / 分钟降采样与分档保留 / 连接器健康页与自动重连 / 看板可选鉴权）— 2026-09-10 |
 | 开发中 ✅ | v3.8.0 | Industrial AI Agent（QAM Harness + BYOK；视觉能力移至独立插件项目）— 待发布 |
-| 独立项目 | QA-Tool-Vision-expansion | 视频时间研究插件（动作识别/作业周期/标准工时），基于主应用插件接口 v2 |
+| 独立项目 | [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion) | 视频时间研究插件（动作识别/作业周期/标准工时），基于主应用插件接口 v2 |
 | 待开发 | v4.0.0 | 预测分析与机器学习 |
 | 待开发 | v4.1.0 | 待定（根据 v3.x 进展定义） |
 
@@ -990,7 +990,8 @@ QA-Tool v3.8.0 Industrial AI Agent
 > - 主应用接线：插件 Tab 进入侧栏「插件」分类（索引动态分配）· 插件工具并入
 >   QAM Harness 工具注册表 · 「设置 → 插件」页展示状态/信任/插件设置页 ·
 >   插件 Tab 的 `send_to_time_study` 信号可回传工时研究（通用路由）
-> - 首个外部插件 **QA-Tool-Vision-expansion**（独立项目，pip entry point）：
+> - 首个外部插件 **[QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion)**
+>   （独立项目，pip entry point，已推送 GitHub `47f3102`）：
 >   视觉引擎/动作识别/视频 Tab/4 个 Agent 工具/基准脚本/模型下载全部迁出，
 >   主库删除 `analysis/vision`、Tab 37、`tools_vision`、`requirements-vision.txt`
 >   与对应测试；插件侧 44 通过 / 1 跳过，主库插件契约 7 例 + 现有 UI/引擎回归通过
@@ -1053,7 +1054,7 @@ QA-Tool v3.8.0 Industrial AI Agent
 
 | 日期 | 版本 | 内容 |
 |------|---------|---------|
-| 09-12 | v3.8.1-plugin-api | **插件接口 v2 + 视觉迁移**：`core/plugin_api.py`（manifest/能力/依赖/工具前缀代理/API 版本门禁）+ `core/plugin_manager.py` 三级发现与信任模型 + `ui/plugin_host.py` 只读门面；主应用接线插件 Tab/Agent 工具/设置页；迁移出 `analysis/vision`、Tab 37、`tools_vision`、`requirements-vision.txt` 与视觉测试到独立项目 `QA-Tool-Vision-expansion`（README/pyproject/entry point/44 用例）；插件契约测试 7 例，主库保留 36 Tab/30 工具 + 插件贡献 |
+| 09-12 | v3.8.1-plugin-api | **插件接口 v2 + 视觉迁移**：`core/plugin_api.py`（manifest/能力/依赖/工具前缀代理/API 版本门禁）+ `core/plugin_manager.py` 三级发现与信任模型 + `ui/plugin_host.py` 只读门面；主应用接线插件 Tab/Agent 工具/设置页；迁移出 `analysis/vision`、Tab 37、`tools_vision`、`requirements-vision.txt` 与视觉测试到独立项目 [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion)（README/pyproject/entry point/44 用例，已推送 `47f3102`）；插件契约测试 7 例，主库保留 36 Tab/30 工具 + 插件贡献 |
 | 09-11 | v3.8.0-P3 | **Vision AI 视频时间研究完成**：V0 修复工时研究误用 cycle 计时列；新增 `analysis/vision/`（文件/USB/RTSP/MJPEG/合成源、MOG2∪帧差流水线、MediaPipe Tasks 33 关键点 + OpenCV 降级、工作/空闲/走动/搬运/离岗迟滞状态机、周期切分与 TimeObservation/工作抽样输出、姿态模型按需下载+SHA256）；QAM Harness 工具 30→34（vision_status/analyze_video/time_study/work_sampling，离线关键词路由含视频路径提取）；新增 Tab 37「视频时间研究」（QThread 实时预览、占比/周期表、发送到工时研究、JSON 导出、模型下载）；`tools/vision_benchmark.py` 合成自检 99.0%，640×480 采样 15fps 实测 15.1 FPS、P95 ≤14.1ms；新增 53 例测试；文档/README/guide 同步，PyInstaller 默认排除 cv2/mediapipe；摄像头实拍验收待用户侧素材 |
 | 09-11 | v3.8.0-P1 | **QAM Harness Agent Core 完成**：`core/agent/{tools,engine,conversation,explain}.py` + `ui/agent_bridge.py` + 对话 UI 升级（气泡/Markdown/工具卡片/上下文条）；16 个工具全部接真实分析引擎（SPC/能力/MSA/假设检验/OEE/成本/告警/连接器/五链/产线/实时/已跑分析/知识库/指标解读）；在线 LLM 工具协议 + 离线规则路由双路径（断网可用），LLM 异常自动降级；「AI 助手」更名 QAM Harness（侧栏+菜单+i18n+文档）；新增 3 个测试文件 41 用例；顺带完成 P0（路线图数字订正、.gitignore 运行产物、remote 明文 token 清理、requirements-vision.txt 占位） |
 | 09-10 | v3.7.2 | 实时监控对标优化 8 项落地：**实时图表增强**（LiveSPC 规格限输出 + chart_engine USL/LSL 参考线 + 看板滚轮缩放/拖拽/双击复位 + 桌面实时图 chart_zoom 与 plant 规格自动注入）；**看板视觉重设计**（主题令牌对齐 ui/theme.py、基准字号 15px + A−/A/A+ 可调、HiDPI 坐标轴/网格/悬停提示、KPI 汇总条、状态色点+文字双编码）；**plant.json 可视化配置**（表格编辑器 + 模板导入导出 + reload 热重载 + 默认路径 off-by-one 修复与旧位置迁移）；**告警补全**（info/warning/critical 分级 + AlertJournal JSONL 留存与确认 + 审计 + 告警中心 UI + 联动动作默认禁用；顺带修复邮件/webhook 处理器派发缺陷）；**成本损失**（超规格×单件损失 + 停机×费率，/api/cost + 看板卡片）；**OEE 真人化**（节拍→真实性能 P、停机原因码、班次日历、P/OEE 截断至 100%、班次外不计入、向后兼容旧配置）；**数据保留**（measurements_1m 分钟聚合 + 分档保留 + agg=1m 查询）；**连接器健康**（状态机 + 指数退避自动重连 + 健康页 + user_config.connectors 接线 StreamBus）；**看板鉴权**（API token HTTP/WS 双校验 + host 绑定安全回退）；**文档同步**（修复「模板格式说明」弹窗 f-string 崩溃、类型清单改由解析器常量生成；使用指南新增「分析模板与批量」章节并补全目录/工具菜单说明）。新增 10 个测试文件（约 90 用例），ruff 零告警，全量逐文件回归通过 |
