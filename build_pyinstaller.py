@@ -73,9 +73,8 @@ EXCLUDES = [
     "PySide6.QtQuick",
     "PySide6.QtQml",
     "PySide6.Qt3D",
-    # Vision 为可选能力（opencv-contrib-python + mediapipe 体积约 200MB）：
-    # 默认不进安装包；源码运行 pip install -r requirements-vision.txt 即可启用。
-    # 如需随包分发 Vision，安装可选依赖后移除以下两项再构建。
+    # 外部插件依赖（如独立项目 QA-Tool-Vision-expansion 的 opencv/mediapipe，
+    # 体积约 200MB）：主应用不内置视觉能力，默认不打包，插件按需在运行环境安装。
     "cv2",
     "mediapipe",
 ]
