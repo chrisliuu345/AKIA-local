@@ -203,8 +203,12 @@ def _register_quality_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
         chart = result.get("t2_chart", {})
         violations = chart.get("violations", []) or result.get("violations", []) or []
         ucl_values = chart.get("ucl")
-        ucl_usable = not (isinstance(ucl_values, (list, tuple, np.ndarray))
-                          and all(float(v) <= 0 for v in ucl_values))
+        flat = (list(ucl_values) if isinstance(ucl_values, (list, tuple, np.ndarray))
+                else [ucl_values])
+        try:
+            ucl_usable = all(np.isfinite(float(v)) and float(v) > 0 for v in flat)
+        except (TypeError, ValueError):
+            ucl_usable = False
         data = {"sheet": name, "columns": cols, "phase": result.get("phase", phase),
                 "t2_ucl": _pick(chart, "ucl"), "violations": len(violations),
                 "ucl_usable": ucl_usable,
@@ -213,8 +217,8 @@ def _register_quality_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
         text = (f"Hotelling T²（{data['phase']}）— 表「{name}」变量 {', '.join(cols)}: "
                 f"T² UCL={_limit_text(data['t2_ucl'])}，越限 {len(violations)} 点")
         if not ucl_usable:
-            text += ("\n⚠ 引擎在无子组（逐点单值）情形下 T² UCL 计算为 0，越限数不可用；"
-                     "请提供 subgroup_column（按批次/班次/产线分组）后重跑")
+            text += ("\n⚠ 当前样本量下 T² 控制限不可用（越限数不可信）；"
+                     "请增加观测数或提供 subgroup_column（按批次/班次/产线分组）后重跑")
         return ToolResult("run_hotelling_t2", data=data, text=text)
 
     @reg.tool("run_capability_sixpack", "能力六合一（Capability Sixpack）",

@@ -2,7 +2,7 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> Current: v3.7.2 Realtime-monitoring benchmark polish, 8 items (spec limits & zoom / plant.json visual config / alert levels & ack / cost loss / real OEE P / downsampling & retention / connector health / dashboard auth) (✅ 2026-09-10) | Tests: 1400+ pytest · 36 analysis tabs | Updated: 2026-09-11
+> Current: v3.8.0 Industrial AI Agent (QAM Harness + BYOK + Plugin API v2) (✅ 2026-09-12) | Next: **v4.0.0 Predictive Analytics & Machine Learning (planned)** | Tests: 1567 pytest · 36 analysis tabs | Updated: 2026-09-12
 
 ---
 
@@ -26,7 +26,7 @@ v2.0 ──→ v2.1 ✅ ──→ v2.2 ✅ ──→ v2.3 ✅ ──→ v2.4 ✅
 | Done ✅ | v3.7.0 | **Real-Time SPC Cloud Dashboard & Data Connectors** (P1−P6, 2026-09-08) |
 | Done ✅ | v3.7.1 | **Five-chain fixes + data semantics & engineering consistency hardening** (FMEA→CP→SPC bridge fixes + ProjectContext as single source of truth / value-first column typing (measurement & duration columns) + post-clean re-analysis / packaging no longer ships local config, secrets stored as `<key>_enc` / APP_VERSION single source + CI version gate / dead-module cleanup + layer fix) — 2026-09-10 |
 | Done ✅ | v3.7.2 | **Realtime-monitoring benchmark polish, 8 items** (live chart USL/LSL + zoom / plant.json visual config editor / alert levels, ack & audit, linked actions / cost-loss analysis / OEE takt-based performance P with downtime reason codes & shift calendar / minute downsampling + tiered retention / connector health page + auto-reconnect / optional dashboard auth) — 2026-09-10 |
-| TBD | v3.8.0 | Industrial AI Agent (AI + Vision Integration) |
+| Done ✅ | v3.8.0 | **Industrial AI Agent** (QAM Harness + BYOK + Plugin API v2; vision moved to external plugin project) — 2026-09-12 |
 | Merged | v3.9.0 | Merged into v3.8.0 (Video Time Study → Vision AI capability) |
 | TBD | v3.9.0 | Predictive Analytics & Machine Learning |
 | TBD | v4.1.0 | TBD (defined based on v3.x progress) |
@@ -615,7 +615,7 @@ python build_nuitka.py --onefile      # single executable
 
 ---
 
-## v3.8.0 — Industrial AI Agent (AI + Vision Integration) (TBD)
+## v3.8.0 ✅ Released — Industrial AI Agent (QAM Harness + Plugin API) (2026-09-12)
 
 > Theme: build an industrial-grade AI Agent platform, integrating LLM intelligent analysis + vision motion recognition, BYOK model, proactive-suggestion type.
 > v3.8.0 Video Time Study has been merged into this version, Vision AI as one of Agent's core capabilities.
@@ -735,6 +735,7 @@ QA-Tool v3.7.0 Industrial AI Agent
 
 | Date | Version | Content |
 |------|---------|---------|
+| 09-12 | v3.8.0-release | **Release wrap-up**: Hotelling T² control-limit fix (individual-observation UCL was 0 → Montgomery individual-observation limit; subgroup limit now uses the Tracy-Young-Mason Phase I formula: over-flagging 30% → 0.06% in simulation); dashboard-auth tests switched to ephemeral ports; **packaging smoke caught and fixed a PyInstaller `unittest` exclusion that made the bundle crash on startup** (matplotlib → pyparsing≥3.3 depends on it; regression guard added); version bumped 3.7.2 → 3.8.0 across settings / version_info / Inno / README·INSTALL·ROADMAP·guide; full per-file regression **108 files / 1567 passed / 2 skipped / 0 failed**, ruff clean, PyInstaller onedir build + 25s offscreen launch smoke passed |
 | 09-10 | v3.7.2 | Realtime-monitoring benchmark polish (8 items): live chart spec limits + zoom, plant.json visual editor with hot reload, alert levels/ack/journal/actions (plus email-webhook dispatch defect fix), cost-loss estimation, OEE takt-based P with downtime codes & shift calendar, minute downsampling + tiered retention, connector health page with backoff auto-reconnect, optional dashboard token auth. 8 new test files, ruff clean, full per-file regression green |
 | 09-10 | v3.7.1 | Defect fixes & hardening: **five-chain bridge fixes** (FMEA→CP index mismatch silently no-op / CP→SPC lazy-load ordering + monitoring list had no UI consumer / 8D read internal tab cache) + ProjectContext as the single source of truth; **data-semantics fixes** (measurement-keyword columns missing from numeric_columns → false import warnings & empty DOE factors; "time"-keyword duration columns mis-typed as timestamp; post-clean numeric_columns always empty via select_dtypes) + new DataParser.refresh_info API; **engineering consistency** (build no longer bundles local user_config.json — ships user_config.default.json and stores secrets as `<key>_enc`; APP_VERSION single source + tools/check_version.py in CI; unified shutdown of alert engine/dashboard thread/stream subscriptions; explicit no-keyring notice on Linux); **structural cleanup** (removed ~950 lines of dead modules anti_debug/integrity/license_keys/license_generator/license_dialog, kept core/license.py shim; font utils moved to core/fonts.py with layering guard test; plugin sidebar shows IPlugin.name; test_integration converted to real pytest cases, run_all_tests moved to tools/) |
 | 09-06 | v3.6.0 (addendum) | Help center added: user guide migrated from docx to offline HTML (browser-open, commercial help layout, content revised to current facts) + full menubar redesign (emoji removed, AI/Tools/Help regrouping, F1 guide, F11 display-mode entry) |
