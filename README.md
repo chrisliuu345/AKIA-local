@@ -132,9 +132,9 @@ analysis/              # 分析引擎 (14 模块)
 ├── charts/            # 图表生成器
 └── ai/                # AI 根因分析
 core/                  # 核心引擎
-ui/                    # PySide6 UI (37 个 Tab)
+ui/                    # PySide6 UI (36 个 Tab + 插件 Tab)
 output/                # 报告引擎
-tests/                 # 1000+ 测试
+tests/                 # 1500+ 测试
 ```
 
 ---
