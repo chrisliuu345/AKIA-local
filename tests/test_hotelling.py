@@ -119,6 +119,58 @@ class TestHotellingT2:
 
         assert result["phase"] == "phase1"
 
+    def test_individual_observations_ucl_not_zero(self):
+        """回归（v3.8.0）：无子组时旧实现 UCL=0、全部点误报越限"""
+        np.random.seed(42)
+        data = pd.DataFrame({
+            "X1": np.random.normal(0, 1, 50),
+            "X2": np.random.normal(0, 1, 50),
+        })
+        result = analyze(data, ["X1", "X2"])
+
+        ucl = np.asarray(result["t2_chart"]["ucl"], dtype=float)
+        assert np.all(np.isfinite(ucl)) and np.all(ucl > 0)
+        assert result["t2_chart"]["violations"] == []
+
+    def test_individual_ucl_matches_montgomery_formula(self):
+        """个体观测 UCL = p(m-1)(m+1)/(m(m-p))·F(1-α; p, m-p)"""
+        from scipy import stats
+
+        np.random.seed(42)
+        m, p, alpha = 50, 2, 0.0027
+        data = pd.DataFrame({
+            "X1": np.random.normal(0, 1, m),
+            "X2": np.random.normal(0, 1, m),
+        })
+        result = analyze(data, ["X1", "X2"], alpha=alpha)
+
+        expected = (p * (m - 1) * (m + 1) / (m * (m - p))
+                    * stats.f.ppf(1 - alpha, p, m - p))
+        ucl = np.asarray(result["t2_chart"]["ucl"], dtype=float)
+        assert ucl.shape == (m,)
+        assert np.allclose(ucl, expected)
+
+    def test_subgroup_ucl_matches_tym_formula(self):
+        """子组 UCL = p(m-1)(n_i-1)/(N-m-p+1)·F(1-α; p, N-m-p+1)"""
+        from scipy import stats
+
+        np.random.seed(42)
+        m, ni, p, alpha = 6, 10, 2, 0.0027
+        n = m * ni
+        data = pd.DataFrame({
+            "X1": np.random.normal(0, 1, n),
+            "X2": np.random.normal(0, 1, n),
+            "Group": np.repeat(range(m), ni),
+        })
+        result = analyze(data, ["X1", "X2"], subgroup_col="Group", alpha=alpha)
+
+        df2 = n - m - p + 1
+        expected = p * (m - 1) * (ni - 1) / df2 * stats.f.ppf(1 - alpha, p, df2)
+        ucl = np.asarray(result["t2_chart"]["ucl"], dtype=float)
+        assert len(ucl) == m
+        assert np.allclose(ucl, expected)
+        assert ucl[0] > 1.0    # 旧公式（约 2.0）在 α=0.0027 下过紧，属误报源
+
     def test_hotelling_test(self):
         """多元正态性检验"""
         np.random.seed(42)

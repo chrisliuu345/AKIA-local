@@ -15,20 +15,20 @@ AppImage 是单文件分发格式，无需安装，双击即可运行。
 
 ```bash
 # 1. 下载 AppImage
-# 从 GitHub Releases 下载 qa-tool-3.7.2-x86_64.AppImage
+# 从 GitHub Releases 下载 qa-tool-3.8.0-x86_64.AppImage
 
 # 2. 添加执行权限
-chmod +x qa-tool-3.7.2-x86_64.AppImage
+chmod +x qa-tool-3.8.0-x86_64.AppImage
 
 # 3. 运行
-./qa-tool-3.7.2-x86_64.AppImage
+./qa-tool-3.8.0-x86_64.AppImage
 ```
 
 **可选: 集成到系统菜单**
 
 ```bash
 # 移动到 /opt 目录
-sudo mv qa-tool-3.7.2-x86_64.AppImage /opt/qa-tool.AppImage
+sudo mv qa-tool-3.8.0-x86_64.AppImage /opt/qa-tool.AppImage
 
 # 创建桌面入口
 cat > ~/.local/share/applications/qa-tool.desktop << EOF
@@ -48,10 +48,10 @@ update-desktop-database ~/.local/share/applications/
 
 ```bash
 # 1. 下载 .deb 包
-# 从 GitHub Releases 下载 qa-tool_3.7.2_amd64.deb
+# 从 GitHub Releases 下载 qa-tool_3.8.0_amd64.deb
 
 # 2. 安装
-sudo dpkg -i qa-tool_3.7.2_amd64.deb
+sudo dpkg -i qa-tool_3.8.0_amd64.deb
 
 # 3. 修复依赖（如有）
 sudo apt install -f
@@ -185,7 +185,7 @@ python main.py
 
 ## 版本信息
 
-- **当前版本**: v3.7.2
+- **当前版本**: v3.8.0
 - **Python**: 3.11+ (推荐 3.14)
 - **Qt**: PySide6 6.5+
 - **测试**: 1280+ pytest 通过（逐文件执行）

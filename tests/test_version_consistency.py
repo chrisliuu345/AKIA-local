@@ -28,6 +28,14 @@ def test_pyinstaller_bundles_default_config_only():
     assert "user_config.default.json" in sources
 
 
+def test_pyinstaller_keeps_unittest_for_matplotlib():
+    """打包不得排除 unittest: matplotlib → pyparsing(≥3.3) 依赖它，
+    排除后打包产物启动即 ModuleNotFoundError（v3.8.0 打包冒烟发现）"""
+    import build_pyinstaller
+
+    assert "unittest" not in build_pyinstaller.EXCLUDES
+
+
 def test_default_config_file_has_no_secrets():
     """随包默认配置不得包含设备列表或任何敏感键"""
     import json

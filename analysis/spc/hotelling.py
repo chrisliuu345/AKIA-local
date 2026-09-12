@@ -61,7 +61,8 @@ def analyze(
             else:
                 t2_values.append(0)
         t2_values = np.array(t2_values)
-        sample_sizes = [len(data[data[subgroup_col] == g].dropna()) for g in groups]
+        sample_sizes = [len(data.loc[data[subgroup_col] == g, columns].dropna())
+                        for g in groups]
     else:
         t2_values = np.array([_compute_t2(x, mean_vec, cov_inv, 1) for x in X])
         sample_sizes = [1] * n
@@ -71,11 +72,12 @@ def analyze(
 
     violations = []
     for i, t2 in enumerate(t2_values):
-        if t2 > ucl[i] if isinstance(ucl, np.ndarray) else t2 > ucl:
+        limit = float(ucl[i]) if isinstance(ucl, np.ndarray) else float(ucl)
+        if np.isfinite(limit) and t2 > limit:
             violations.append({
                 "point": int(i + 1),
                 "rule": "T² UCL",
-                "desc": f"T²超出控制限 ({t2:.3f} > {ucl[i] if isinstance(ucl, np.ndarray) else ucl:.3f})",
+                "desc": f"T²超出控制限 ({t2:.3f} > {limit:.3f})",
                 "value": round(float(t2), 6),
             })
 
@@ -111,17 +113,54 @@ def _compute_t2(x: np.ndarray, mean: np.ndarray, cov_inv: np.ndarray, n: int) ->
     return float(n * deviation.T @ cov_inv @ deviation)
 
 
-def _compute_ucl(p: int, n: int, alpha: float, sample_sizes: Optional[List[int]] = None) -> float:
-    """计算 UCL"""
-    f_crit = stats.f.ppf(1 - alpha, p, n - p)
-    if sample_sizes and len(sample_sizes) > 1:
-        ucl_values = []
-        for ni in sample_sizes:
-            ucl = (p * (ni - 1) * (n - 1)) / (n * (n - p)) * f_crit
-            ucl_values.append(ucl)
-        return np.array(ucl_values)
+def _individual_ucl(m: int, p: int, alpha: float) -> float:
+    """单体观测（子组大小=1）的 T² 控制限。
+
+    Montgomery《Introduction to Statistical Quality Control》个体观测形式：
+
+        UCL = p(m-1)(m+1) / (m(m-p)) · F(1-α; p, m-p)
+
+    m 为观测数。旧实现把个体观测当作子组大小=1 的子组代入子组公式，
+    (m-1) 项恒为 0 → UCL=0、全部点误报越限。
+    """
+    if m - p <= 0:
+        return float("nan")
+    f_crit = stats.f.ppf(1 - alpha, p, m - p)
+    return float(p * (m - 1) * (m + 1) / (m * (m - p)) * f_crit)
+
+
+def _compute_ucl(
+    p: int,
+    n: int,
+    alpha: float,
+    sample_sizes: Optional[List[int]] = None,
+):
+    """计算 UCL（逐点，返回标量或与样本数等长的数组）。
+
+    - 子组大小均 ≤1（无子组列）：个体观测限 ``_individual_ucl``
+    - 子组数据：Tracy-Young-Mason (1992) Phase I 子组公式
+      ``p(m-1)(n_i-1)/(N-m-p+1) · F(1-α; p, N-m-p+1)``，
+      m 为子组数、N 为总观测数。旧实现误用总观测数代入系数与自由度，
+      控制限约为正确值的 1/6，导致大量误报。
+    - 自由度退化（数据量不足）时回退个体观测限，仍不可用则返回 NaN
+      （调用方据此提示"控制限不可用"）
+    """
+    sizes = [int(s) for s in sample_sizes] if sample_sizes else []
+    if not sizes or all(s <= 1 for s in sizes):
+        m = len(sizes) if sizes else n
+        ucl = _individual_ucl(m, p, alpha)
+        return np.array([ucl] * len(sizes)) if len(sizes) > 1 else ucl
+
+    m = len(sizes)
+    total = sum(sizes)
+    df2 = total - m - p + 1
+    if df2 <= 0:
+        ucl_values = np.array([_individual_ucl(m, p, alpha)] * m)
     else:
-        return (p * (n - 1) * (n - p)) / (n * (n - p)) * f_crit
+        f_crit = stats.f.ppf(1 - alpha, p, df2)
+        ucl_values = np.array(
+            [p * (m - 1) * (ni - 1) / df2 * f_crit for ni in sizes])
+    return ucl_values if m > 1 else float(ucl_values[0])
 
 
 def _compute_cl(p: int, n: int, sample_sizes: Optional[List[int]] = None) -> float:
