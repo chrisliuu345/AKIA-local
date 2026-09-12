@@ -31,7 +31,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | ✅ | v3.7.2 | 实时监控对标优化 8 项 |
 | ✅ | **v3.8.0** | **Industrial AI Agent（QAM Harness + 插件接口 v2；视觉迁至独立插件项目）** |
 | 🔌 | [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion) | 视觉插件独立仓库（视频时间研究），基于插件接口 v2 |
-| 🚧 | v4.0.0 | 预测分析与机器学习（下一阶段） |
+| 🚧 | v4.0.0 | 预测分析与机器学习（P0-P5 方案已定，待实施） |
 
 ---
 
@@ -112,32 +112,36 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | 发布包（AppImage / .deb / Inno） | 脚本就绪，按需构建上传 Release | 可选 |
 | 多站点 / 多语言 | v3.7.2 候选第 9 项顺延 | 候选 |
 | 连接器扩展（更多 PLC/CMM 协议） | 按现场需求 | 候选 |
-| 预测分析与机器学习 | v4.0.0 | 下一阶段 |
+| 预测分析与机器学习 | v4.0.0 | 分阶段方案已定（P0-P5），待实施 |
 
 ---
 
-## v4.0.0 — 预测分析与机器学习（待开发）
+## v4.0.0 — 预测分析与机器学习（分阶段方案已定 · 待实施）
 
-> 主题：补齐 Minitab Predictive Analytics 级机器学习能力；纯主软件，不涉及插件。
+> 主题：补齐 Minitab Predictive Analytics 级能力；纯主软件。复用 sklearn 1.9 / shap 0.52，不新增硬依赖（XGBoost 仅可选适配）。
 
-### 范围
+### 阶段划分（P0 → P5）
 
-- **数据准备 / 特征工程**：缺失值填充 · 分箱 · 编码 · 特征交叉 · 标准化归一化
-- **CART**：树构建 + 剪枝（预/后）· 混淆矩阵 · ROC
-- **随机森林**：Bagging + 特征随机 · OOB 误差 · 特征重要性
-- **梯度提升**：sklearn HistGradientBoosting 主实现（XGBoost 可选适配）· 学习率/深度调参
-- **MARS**：分段线性基函数 · 交互项检测（纯 numpy 自研）
-- **AutoML**：多算法试跑 + AIC/BIC/AUC 排名 + 最优模型推荐
-- **模型评估**：交叉验证 · 学习曲线 · 过拟合诊断 · 残差分析
+| 阶段 | 交付 | 验收 |
+|------|------|------|
+| **P0 数据与契约** | `analysis/ml/{__init__,common,prep}.py`：任务类型判定（回归/分类）、缺失值、编码、分箱、标准化、训练/测试切分、K 折、Pipeline 防泄漏 | 预处理与 sklearn 行为一致；`analysis/ml` 无 Qt（分层守卫） |
+| **P1 CART + 评估** | `trees.py`（分类/回归树、预剪枝 + ccp_alpha 后剪枝、规则导出）、`evaluate.py`（R²/adj-R²/RMSE/MAE/MAPE、Acc/P/R/F1/AUC、混淆矩阵、ROC、K 折 CV、学习曲线、残差诊断） | 同 seed 与 sklearn 指标一致（容差内）；回归 + 分类均覆盖 |
+| **P2 集成 + 解释** | `forest.py`（OOB、特征重要性、permutation importance）、`boosting.py`（HistGradientBoosting 主实现 + XGBoost 可选适配）、`explain.py`（SHAP 采样上限 + 原生重要性降级 + 单样本解释） | 三模型可训/评/释；无 XGBoost、SHAP 超限或缺失时自动降级不报错 |
+| **P3 MARS + AutoML** | `mars.py`（纯 numpy：前向基函数 + 后向剪枝 + GCV 选 knot + 交互项）、`automl.py`（模型库 CV 排名 + 时间预算 + 推荐 + leaderboard） | Friedman #1 合成集上 MARS 不劣于线性基线；AutoML 同 seed 可复现、与人工选模一致 |
+| **P4 UI + Agent 工具** | Tab「预测分析」（索引 37；子页：准备/训练/评估/预测，QThread 训练与取消）、`.qamodel` 模型保存加载与预测回写、`core/agent/tools_ml.py` 6 个工具（30 → 36） | E2E：准备→建模→评估→可视化→预测；离屏 UI 测试 + 工具真引擎测试通过 |
+| **P5 收尾发布** | README 中英 / guide.html / 本路线图同步；版本 4.0.0 四端一致；全量逐文件回归 + 打包冒烟 | `tools/check_version.py` 通过；ruff 零告警；onedir 构建可启动且模型推断正常 |
 
-### 落地方式
+### 关键设计决策
 
-- 新增 `analysis/ml/`：`prep.py` / `trees.py` / `forest.py` / `boosting.py` / `mars.py` / `evaluate.py` / `automl.py`
-- 复用既有依赖 sklearn / shap，以及 `analysis/ai/root_cause.py` 的 RF+SHAP、`analysis/regression/`
-- 新增 Tab「预测分析」（索引 37，插件 Tab 自动顺延）+ 6~8 个 QAM Harness 工具（30 → 约 38）
-- 遵循分层守卫（`analysis/` 禁 Qt）与逐文件测试规则
+- **分层**：`analysis/ml/` 只用 numpy/pandas/sklearn（无 Qt）；UI 训练全部走后台线程，主线程不阻塞
+- **防泄漏**：预处理统一封装为 sklearn Pipeline，CV 在折内拟合；切分支持分层抽样（分类）
+- **依赖**：不新增硬依赖；XGBoost 为可选适配（未安装自动降级），MARS 自研避免 pyearth
+- **模型文件**：`.qamodel` = joblib + JSON 元数据（模型/特征/指标/版本），只加载本工具产物
+- **解释性能**：SHAP 默认采样上限 ≤300 行（沿用 `analysis/ai/root_cause.py` 策略），超限自动降级为原生重要性
+- **接线点**（P4，已核对）：`ui/_tab_registry.py`（37）· `ui/sidebar.py` 质量分类 · `locales/zh.json` · `analyses[idx]` 记录 · 报告/PPT 导出 · Agent 工具注册（`build_default_registry` 挂钩）
+- **暂不接入**：模板批量分析（`core/template_parser.py`）暂不扩展 ML 类型，列为候选
 
-### 验收标准
+### 整版验收标准
 
 - CART / 随机森林与 scikit-learn 交叉验证一致
 - AutoML 选模与人工选模结论一致

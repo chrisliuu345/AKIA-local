@@ -120,9 +120,9 @@ analysis/              # Analysis engines (14 modules)
 ├── charts/            # Chart Generator
 └── ai/                # AI Root Cause Analysis
 core/                  # Core Engines
-ui/                    # PySide6 UI (37 Tabs)
+ui/                    # PySide6 UI (36 Tabs + plugin Tabs)
 output/                # Report Engine
-tests/                 # 1000+ Tests
+tests/                 # 1500+ Tests
 ```
 
 ---
