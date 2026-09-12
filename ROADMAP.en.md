@@ -31,7 +31,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | ✅ | v3.7.2 | Realtime-monitoring benchmark polish, 8 items |
 | ✅ | **v3.8.0** | **Industrial AI Agent (QAM Harness + Plugin API v2; vision moved to an external plugin)** |
 | 🔌 | [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion) | External vision plugin (video time study) built on Plugin API v2 |
-| 🚧 | v4.0.0 | Predictive analytics & machine learning (next stage) |
+| 🚧 | v4.0.0 | Predictive analytics & machine learning (P0-P5 plan set, pending implementation) |
 
 ---
 
@@ -112,32 +112,36 @@ Planning principles:
 | Release artifacts (AppImage / .deb / Inno) | Scripts ready; build and upload to Releases on demand | Optional |
 | Multi-site / multi-language | Deferred item #9 from v3.7.2 | Candidate |
 | Connector expansion (more PLC/CMM protocols) | Driven by site needs | Candidate |
-| Predictive analytics & ML | v4.0.0 | Next stage |
+| Predictive analytics & ML | v4.0.0 | Phased plan P0-P5 defined, pending implementation |
 
 ---
 
-## v4.0.0 — Predictive Analytics & Machine Learning (planned)
+## v4.0.0 — Predictive Analytics & Machine Learning (phased plan set · pending implementation)
 
-> Theme: close the gap to Minitab Predictive Analytics-level machine learning; main app only, no plugin involvement.
+> Theme: close the gap to Minitab Predictive Analytics-level capability; main app only. Reuse sklearn 1.9 / shap 0.52, no new hard dependencies (XGBoost is an optional adapter).
 
-### Scope
+### Phases (P0 → P5)
 
-- **Data prep / feature engineering**: missing-value imputation · binning · encoding · feature crossing · standardization/normalization
-- **CART**: tree building + pruning (pre/post) · confusion matrix · ROC
-- **Random Forests**: bagging + feature randomness · OOB error · feature importance
-- **Gradient boosting**: sklearn HistGradientBoosting as the primary implementation (optional XGBoost adapter) · learning-rate/depth tuning
-- **MARS**: piecewise-linear basis functions · interaction detection (pure numpy)
-- **AutoML**: multi-algorithm trials + AIC/BIC/AUC ranking + best-model recommendation
-- **Model evaluation**: cross-validation · learning curves · overfitting diagnosis · residual analysis
+| Phase | Deliverables | Acceptance |
+|-------|--------------|------------|
+| **P0 Data & contracts** | `analysis/ml/{__init__,common,prep}.py`: task-type detection (regression/classification), missing values, encoding, binning, standardization, train/test split, K-fold, leak-proof Pipeline | Preprocessing matches sklearn behaviour; `analysis/ml` is Qt-free (layering guard) |
+| **P1 CART + evaluation** | `trees.py` (classification/regression trees, pre-pruning + ccp_alpha post-pruning, rule export); `evaluate.py` (R²/adj-R²/RMSE/MAE/MAPE, Acc/P/R/F1/AUC, confusion matrix, ROC, K-fold CV, learning curve, residual diagnostics) | Same-seed metrics match sklearn within tolerance; both regression and classification covered |
+| **P2 Ensembles + explanation** | `forest.py` (OOB, feature importance, permutation importance); `boosting.py` (HistGradientBoosting primary + optional XGBoost adapter); `explain.py` (SHAP with sampling cap + native-importance fallback + single-sample explanation) | All three models train/evaluate/explain; graceful fallback when XGBoost is absent or SHAP exceeds the cap |
+| **P3 MARS + AutoML** | `mars.py` (pure numpy: forward basis functions + backward pruning + GCV knot selection + interactions); `automl.py` (model zoo CV ranking + time budget + recommendation + leaderboard) | On the Friedman #1 synthetic set MARS is no worse than the linear baseline; AutoML reproducible under the same seed and consistent with manual selection |
+| **P4 UI + agent tools** | "Predictive Analytics" tab (index 37; sub-pages: prepare/train/evaluate/predict, QThread training with cancel), `.qamodel` save/load and prediction write-back, `core/agent/tools_ml.py` with 6 tools (30 → 36) | E2E: prepare→train→evaluate→visualize→predict; offscreen UI tests + real-engine tool tests pass |
+| **P5 Release wrap-up** | Sync README (zh/en) / guide.html / this roadmap; version 4.0.0 across all four ends; full per-file regression + packaging smoke | `tools/check_version.py` passes; ruff clean; onedir bundle starts and model inference works |
 
-### Implementation notes
+### Key design decisions
 
-- New `analysis/ml/`: `prep.py` / `trees.py` / `forest.py` / `boosting.py` / `mars.py` / `evaluate.py` / `automl.py`
-- Reuse existing sklearn / shap dependencies plus `analysis/ai/root_cause.py` (RF+SHAP) and `analysis/regression/`
-- New "Predictive Analytics" tab (index 37; plugin tabs shift automatically) + 6-8 QAM Harness tools (30 → ~38)
-- Respect the layering guards (`analysis/` must not import Qt) and per-file test rules
+- **Layering**: `analysis/ml/` uses only numpy/pandas/sklearn (no Qt); all UI training runs on a worker thread
+- **Leak prevention**: preprocessing is wrapped in an sklearn Pipeline, CV fits inside folds; stratified split for classification
+- **Dependencies**: no new hard dependencies; XGBoost optional (auto-fallback), MARS self-implemented to avoid pyearth
+- **Model files**: `.qamodel` = joblib + JSON metadata (model/features/metrics/version); only files produced by this tool are loaded
+- **Explanation performance**: SHAP capped at ≤300 rows by default (same policy as `analysis/ai/root_cause.py`), falling back to native importance
+- **Wiring points** (P4, verified): `ui/_tab_registry.py` (37) · `ui/sidebar.py` quality category · `locales/zh.json` · `analyses[idx]` records · report/PPT export · agent tool registration (`build_default_registry` hook)
+- **Out of scope for now**: extending template batch analysis (`core/template_parser.py`) with ML types — candidate item
 
-### Acceptance criteria
+### Overall acceptance criteria
 
 - CART / Random Forests cross-validated against scikit-learn
 - AutoML selection consistent with manual model selection
