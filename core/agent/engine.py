@@ -76,15 +76,9 @@ _SPEC_RES = (
     re.compile(r"(?:lsl|规格下限|下规格限)\s*[=:：]?\s*(-?\d+(?:\.\d+)?)", re.I),
 )
 
-_VIDEO_PATH_RE = re.compile(
-    r"[^\s，。；;\"']+\.(?:mp4|avi|mov|mkv|webm|m4v)", re.I)
-
 # 关键词 → 工具（顺序即优先级，先具体后一般）
 _OFFLINE_RULES: tuple[tuple[tuple[str, ...], str], ...] = (
     (("实时",), "get_live_oee"),
-    (("视频标准工时", "视频工时", "视频时间研究"), "vision_time_study"),
-    (("视频工作抽样",), "vision_work_sampling"),
-    (("视频", "摄像头", "动作识别"), "vision_analyze_video"),
     (("成本", "损失", "废品", "金额", "省了多少"), "estimate_cost"),
     (("告警", "报警", "异常点", "超差"), "get_alerts"),
     (("连接器", "数据源", "断线", "重连", "掉线"), "get_connector_health"),
@@ -443,14 +437,6 @@ class AgentEngine:
             return {"test": "normality"}
         if name == "get_alerts":
             return {"limit": 10, "only_unacked": "全部" not in question}
-        if name in ("vision_analyze_video", "vision_time_study",
-                    "vision_work_sampling"):
-            match = _VIDEO_PATH_RE.search(question)
-            if match:
-                return {"path": match.group(0)}
-            if any(kw in question.lower() for kw in ("synthetic", "演示", "合成")):
-                return {"path": "synthetic"}
-            return {}
         if name == "search_knowledge":
             return {"query": question, "top_k": 3}
         return {}

@@ -110,7 +110,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
   <a href="#export">导出与报告</a>
   <div class="grp">扩展</div>
   <a href="#ai">QAM Harness</a>
-  <a href="#vision">视频时间研究</a>
+  <a href="#plugins">插件接口</a>
   <a href="#realtime">实时监控与看板</a>
   <a href="#hardware">硬件扩展</a>
   <div class="grp">支持</div>
@@ -123,7 +123,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
 <section class="card" id="intro">
   <h2>产品简介</h2>
   <p>QA-Tool 是一款面向质量工程（QE）与工业工程（IE）的专业分析工具，基于 Python + PySide6 构建，
-  完全离线运行，无需联网或账号登录。提供 37 个分析模块、QAM Harness 智能洞察、完整报告输出，
+  完全离线运行，无需联网或账号登录。提供 36 个分析模块、QAM Harness 智能洞察、完整报告输出，
   并支持 ESP32 硬件数据采集。</p>
   <h3>核心能力</h3>
   <ul>
@@ -280,7 +280,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
 
 <section class="card" id="modules">
   <h2>模块总览</h2>
-  <p>共 37 个功能模块（+ 欢迎页），按侧边栏分组如下：</p>
+  <p>共 36 个功能模块（+ 欢迎页 + 外部插件），按侧边栏分组如下：</p>
 
   <h3 id="modules-quality">质量分析</h3>
   <table>
@@ -314,7 +314,6 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
     <tr><td class="k">标准作业组合</td><td>标准作业组合表</td></tr>
     <tr><td class="k">SMED</td><td>快速换模、内外作业分离</td></tr>
     <tr><td class="k">TPM</td><td>全面生产维护、OEE/MTBF/MTTR 分析</td></tr>
-    <tr><td class="k">视频时间研究</td><td>摄像头/视频动作识别（工作·空闲·走动·搬运·离岗）· 作业周期 · 标准工时（可选依赖）</td></tr>
   </table>
 
   <h3 id="modules-eng">工程工具</h3>
@@ -366,8 +365,8 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
   <p>菜单 <b>QAM Harness</b> 或侧边栏同名入口打开对话窗口；数据不出本机（BYOM：
   可接本地 Ollama，也可接 OpenAI 兼容云 API）：</p>
   <ul>
-    <li><b>工具调用分析</b>：对话即分析 —— 直接调用软件内 <b>34 个工具</b>，覆盖
-      37 个分析 Tab 的主要能力：数据概况与列描述 · SPC 控制图（I-MR/XBar-R·S/
+    <li><b>工具调用分析</b>：对话即分析 —— 直接调用软件内 <b>30 个工具</b>，覆盖
+      36 个分析 Tab 的主要能力：数据概况与列描述 · SPC 控制图（I-MR/XBar-R·S/
       P·NP·C·U/CUSUM/EWMA/<b>Laney P′·U′</b>/<b>Hotelling T²</b>）· 过程能力
       （正态/非正态/<b>Sixpack</b>/<b>组间组内</b>/<b>Johnson</b>/<b>容差区间</b>）·
       MSA（Gage R&amp;R 交叉/嵌套/<b>属性一致性</b>/<b>Type 1</b>/<b>线性·偏倚</b>/<b>EMP</b>）·
@@ -375,8 +374,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
       <b>DOE</b>（因子/部分因子/响应曲面/BBD/PB/DSD/田口/混料 + 设计生成 + 功效与样本量）·
       <b>回归</b> · <b>可靠性</b>（Weibull/KM/Cox/Crow-AMSAA/保修/RBD）·
       <b>时间序列</b>（ARIMA/指数平滑/季节分解/ACF·PACF）·
-      <b>IE</b>（标准工时/线平衡/VSM/工作抽样/SMED/TPM）·
-      <b>视频时间研究</b>（动作识别/作业周期/标准工时）· <b>AI 根因分析</b> ·
+      <b>IE</b>（标准工时/线平衡/VSM/工作抽样/SMED/TPM）· <b>AI 根因分析</b> ·
       OEE / 成本损失 / 告警 / 数据源健康 / 五链 / 产线配置 / 已运行分析 /
       知识库 / 指标解读；结论与界面分析同源（同一套统计引擎）</li>
     <li><b>离线工具模式</b>: 未安装 Ollama 时按关键词自动路由到上述工具，
@@ -403,27 +401,23 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
   </ul>
 </section>
 
-<section class="card" id="vision">
-  <h2>视频时间研究（Vision AI）</h2>
-  <p>侧边栏「IE 工业工程 → 视频时间研究」：摄像头/视频 → 动作识别 → 作业周期 → 标准工时。
-  与「时间研究」「工作抽样」Tab 及 QAM Harness 工具同引擎。</p>
+<section class="card" id="plugins">
+  <h2>插件接口</h2>
+  <p>主应用只提供插件接口 v2，不内置具体能力插件；外部插件可独立开发与发布，
+  通过 pip entry point <code>qa_tool.plugins</code> 或 <code>~/.qa_tool_plugins/</code>
+  目录加载。</p>
   <ul>
-    <li><b>视频源</b>: 本地视频文件 · USB 摄像头 · RTSP · MJPEG/HTTP · 合成演示源
-      （无硬件也可试用）</li>
-    <li><b>动作识别</b>: 工作 / 空闲 / 走动 / 搬运 / 离岗；规则状态机 + 最短驻留迟滞。
-      有姿态模型时用 MediaPipe 33 关键点（Tasks API），无模型时自动降级为
-      OpenCV 运动特征（背景差分 MOG2 + 帧差 + 质心/速度）</li>
-    <li><b>结果</b>: 实时预览叠加当前状态；状态占比表 + 作业周期表；
-      「发送到工时研究」自动带入评定/宽放计算标准工时；支持导出结果 JSON</li>
-    <li><b>Agent 工具</b>: QAM Harness 可直接调用 <code>vision_analyze_video</code> /
-      <code>vision_time_study</code> / <code>vision_work_sampling</code> /
-      <code>vision_status</code></li>
-    <li><b>安装（可选依赖）</b>: <code>pip install -r requirements-vision.txt</code>；
-      主程序不依赖。姿态模型约 5.6MB，可在 Tab 内一键下载并做 SHA256 校验；
-      未安装时 Tab 显示安装指引，不阻塞其他功能</li>
-    <li><b>验收基准</b>: <code>python tools/vision_benchmark.py --demo</code> 合成自检；
-      现场验收 <code>python tools/vision_benchmark.py --video 现场.mp4
-      --labels labels.csv --min-accuracy 0.85</code>（标签 CSV: start_ms,end_ms,state）</li>
+    <li><b>贡献点</b>: Tab（侧栏「插件」分类）· QAM Harness Agent 工具
+      （自动加插件前缀，避免与内置工具冲突）· 设置页</li>
+    <li><b>能力与依赖声明</b>: manifest（id / 版本 / API 版本 / 兼容主程序版本 /
+      可选依赖 / 能力项）；缺依赖时只显示「不可用 + 安装指引」，不导入不崩溃</li>
+    <li><b>信任模型</b>: 随包插件默认信任；用户目录与 pip 插件首次需在
+      「设置 → 插件」信任后才执行</li>
+    <li><b>首个外部插件</b>: <code>QA-Tool-Vision-expansion</code>（视频时间研究：
+      动作识别 / 作业周期 / 标准工时），独立仓库与独立可选依赖，
+      安装后自动出现在侧栏「插件」分类与 QAM Harness 工具列表</li>
+    <li><b>开发</b>: 实现 <code>core.plugin_api.IQAToolPlugin</code>，
+      参考 <code>plugins/example_plugin.py</code>；API 2.x 向后兼容</li>
   </ul>
 </section>
 

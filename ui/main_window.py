@@ -107,22 +107,26 @@ class MainWindow(QMainWindow):
 
         self._pm = PluginManager()
         self._pm.discover()
+        from ui.plugin_host import PluginHost
+        self._plugin_host = PluginHost(self)
+        self._pm.set_host(self._plugin_host)
+        self._pm.on_load_all()
         self._plugin_tabs = {}
         self._agent_dialog = None
         self._plugin_tab_start = _PLUGIN_TAB_START
         # v3.7.0: 全局数据流总线（实时 SPC / 云看板消费同一数据）
         self.stream_bus = StreamBus()
-        for name, p in self._pm.plugins.items():
+        for record in self._pm.tab_plugins():
             idx = self._plugin_tab_start + len(self._plugin_tabs)
-            self._plugin_tabs[idx] = p
+            self._plugin_tabs[idx] = record
             placeholder = QWidget()
             placeholder.setObjectName(f"placeholder_plugin_{idx}")
             self.stack.addWidget(placeholder)
             self.sidebar.add_plugin_entry(
                 idx,
-                getattr(p, "name", name),
-                icon=getattr(p, "icon", ""),
-                tooltip=getattr(p, "description", ""),
+                record.name,
+                icon=record.icon,
+                tooltip=record.description,
             )
 
         _step(85, "主窗口初始化完成")
@@ -324,8 +328,7 @@ class MainWindow(QMainWindow):
         for idx, key in [(7, "sidebar.time_study"), (8, "sidebar.work_sampling"),
                          (9, "sidebar.line_balance"), (10, "sidebar.oee"),
                          (11, "menu.vsm"), (21, "sidebar.worker_machine"),
-                         (22, "sidebar.std_work_combo"), (29, "sidebar.smed"),
-                         (31, "sidebar.tpm"), (37, "sidebar.vision")]:
+                         (22, "sidebar.std_work_combo"), (29, "sidebar.smed"), (31, "sidebar.tpm")]:
             a = QAction(i18n.tr(key), self)
             a.triggered.connect(lambda _, i=idx: self._switch_tab(i))
             ie_sub.addAction(a)
@@ -1029,8 +1032,8 @@ class MainWindow(QMainWindow):
             self.sidebar.add_history(idx, atype, key_res)
         self._notify_dashboard()
 
-    def _on_vision_time_observations(self, observations):
-        """Vision Tab → 工时研究 Tab：发送视频作业周期。"""
+    def _on_time_observations_ready(self, observations):
+        """外部插件 Tab → 工时研究 Tab：发送作业周期。"""
         tab = self._lazy_load_tab(7)
         if tab is None or not hasattr(tab, "set_ie_data"):
             return
@@ -1092,8 +1095,10 @@ class MainWindow(QMainWindow):
 
         if idx >= self._plugin_tab_start:
             if idx in self._plugin_tabs:
-                p = self._plugin_tabs[idx]
-                tab = p.create_tab()
+                record = self._plugin_tabs[idx]
+                tab = self._pm.create_tab(record, self._plugin_host, parent=self)
+                if tab is None:
+                    return None
                 self._tab_cache[idx] = tab
                 old = self.stack.widget(idx)
                 if old:
@@ -1143,7 +1148,7 @@ class MainWindow(QMainWindow):
         if hasattr(tab, 'set_stream_source'):
             tab.set_stream_source(self.stream_bus)
         if hasattr(tab, 'send_to_time_study'):
-            tab.send_to_time_study.connect(self._on_vision_time_observations)
+            tab.send_to_time_study.connect(self._on_time_observations_ready)
         if idx in _CONTEXT_TAB_INDICES and hasattr(tab, 'set_project_context'):
             tab.set_project_context(self.project_context)
             if hasattr(tab, 'load_from_context'):

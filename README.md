@@ -61,7 +61,6 @@ python main.py
 | **TPM** | 全面生产维护 · 六大损失分析 |
 | **线平衡** | LPT 平衡 · 瓶颈识别 · 山积图 |
 | **VSM** | 价值流图 · VA/NVA · 生产周期 |
-| **视频时间研究** | 摄像头/视频动作识别（工作·空闲·走动·搬运·离岗）· 作业周期 · 标准工时（可选依赖） |
 
 ### 质量工具
 
@@ -76,7 +75,8 @@ python main.py
 
 | 模块 | 能力 |
 |------|------|
-| **QAM Harness** | AI Agent：34 个本地工具调用（SPC/能力/MSA/假设检验/DOE/回归/可靠性/时间序列/IE/视频时间研究/成本/实时/五链/根因）+ 离线工具模式 · BYOK 云供应商（OpenAI/Claude/Gemini/DeepSeek/Z.ai/KIMI + 自定义端点）· 密钥加密 + 云调用隐私门 · 知识库 RAG |
+| **QAM Harness** | AI Agent：30 个本地工具调用（SPC/能力/MSA/假设检验/DOE/回归/可靠性/时间序列/IE/成本/实时/五链/根因）+ 离线工具模式 · BYOK 云供应商（OpenAI/Claude/Gemini/DeepSeek/Z.ai/KIMI + 自定义端点）· 密钥加密 + 云调用隐私门 · 知识库 RAG |
+| **插件接口 v2** | 外部插件独立开发/发布：pip entry point 或用户目录加载 · 贡献 Tab / Agent 工具 / 设置页 · 能力与依赖声明 · 信任模型（如独立项目 QA-Tool-Vision-expansion） |
 | **图表** | 15+ 种图表 · 深色主题 · 中文字体 |
 | **报告** | PDF / Word / Excel / HTML · 图表内联 |
 
@@ -153,4 +153,4 @@ tests/                 # 1000+ 测试
 
 ---
 
-*Python 3.14 + PySide6 · 1280+ 测试 · 37 个分析 Tab*
+*Python 3.14 + PySide6 · 1500+ 测试 · 36 个分析 Tab + 插件接口 v2*
