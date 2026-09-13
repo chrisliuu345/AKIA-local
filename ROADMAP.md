@@ -2,7 +2,7 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> 当前: v3.8.0 Industrial AI Agent（QAM Harness + BYOK + 插件接口 v2）（✅ 2026-09-12）| 开发中: **v4.0.0 预测分析与机器学习（P0-P4 ✅ 已实现，待人工核查 + P5 发布收尾）** | 测试: 1659 pytest · 37 个分析 Tab | 更新: 2026-09-13
+> 当前: v3.8.0 Industrial AI Agent（QAM Harness + BYOK + 插件接口 v2）（✅ 2026-09-12）| 开发中: **v4.0.0 预测分析与机器学习（P0-P4 ✅ 已实现，待人工核查 + P5 发布收尾）** | 测试: 1665 pytest · 37 个分析 Tab | 更新: 2026-09-13
 
 > **维护约定（2026-09-12 起）**：每条版本记录只写「一行摘要 + 关键数据」；实现细节写进代码/测试/使用指南，本文不展开。
 > 本文件已由 1100+ 行压缩至 500 行内，展开版历史见 git 历史（`git log -p -- ROADMAP.md`）。
@@ -61,6 +61,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 
 | 日期 | 版本 | 摘要 |
 |------|------|------|
+| 09-13 | v4.0.0-quality | **全量代码质量审查**：ruff 门禁扩展并清零（T10/ISC/PIE/RUF012/RUF021/RUF034/RUF059/PLW1510/PLW2901/PLW0602）；修复 12 处真实缺陷（鱼骨图重复条件、循环变量覆盖 ×2、global 误声明、SMED/成本/抽样/项目管理冗余分支、DOE/回归/图表未用解包、startswith 合并 ×3、subprocess 显式 check）；类级可变属性补 `ClassVar` 标注；仓库卫生（取消跟踪 `test_quality.db` 与旧合规 docx 产物）；全量回归 118 文件全绿 + 打包冒烟通过 |
 | 09-13 | v4.0.0-fix2 | **共享滚动区高度残留修复（W58 复发）**：`QStackedWidget` 尺寸提示只取当前页（隐藏 Tab 的参数面板/数据表不再撑长滚动区）；切换 Tab 时显式重算滚动范围并置顶（0/120/260ms 分批同步，规避 Qt hint 缓存）；无 canvas 分析页记录并恢复上次页面高度（切回不再丢失滚动范围）；新增 2 例回归 |
 | 09-13 | v4.0.0-fix | **QAM Harness 连接检测修复**：任一云供应商已配置密钥即视为已连接 → 打开对话窗口不再误弹「未连接到 API」；自动选中已连接供应商并持久化 `llm_active_provider`；下拉框填充屏蔽信号（不再被中间态切回 Ollama）；新增 5 例回归 |
 | 09-13 | v4.0.0-dev | **预测分析与机器学习 P0-P4 实现**：`analysis/ml/`（common/prep/trees/evaluate/forest/boosting/explain/mars/automl/train/persist）——任务判定与防泄漏 Pipeline、CART（预/后剪枝 + 规则）、回归/分类指标与 CV/学习曲线/残差、随机森林（OOB/置换重要性）、HistGradientBoosting（XGBoost 可选降级）、SHAP 解释、纯 numpy MARS（Friedman #1 优于线性基线）、AutoML 排名推荐；新增 Tab「预测分析」（37：QThread 训练 + `.qamodel` 保存加载预测）；QAM Harness 工具 30 → 36 |

@@ -1,7 +1,21 @@
 # ruff 配置 — QA-Tool lint 门禁
-# 规则集: F(含 F841 未用变量) + E9 语法 + B 常见陷阱 + 遗留单行风格 E701/E702/E402
+# 基础: F(含 F841 未用变量) + E9 语法 + B 常见陷阱 + 遗留单行风格 E701/E702/E402
+# 追加高信号规则（2026-09-13 全量质量审查后加入，均已清零）:
+#   T10 调试器残留 / ISC 隐式字符串拼接（缺逗号陷阱） / PIE 常见简化
+#   RUF012 类级可变属性（可能跨实例共享） / RUF021 and-or 优先级 / RUF034 无效 if-else
+#   RUF059 未使用的解包变量 / PLW1510 subprocess 未显式 check
+#   PLW2901 循环变量被覆盖 / PLW0602 global 声明但未赋值
 # 全库门禁: ruff check . 须零告警 (CI 与本地开发共用)
 
 [lint]
-select = ["F", "E9", "B", "E701", "E702", "E402"]
+select = [
+    "F", "E9", "B", "E701", "E702", "E402",
+    "T10", "ISC", "PIE",
+    "RUF012", "RUF021", "RUF034", "RUF059",
+    "PLW1510", "PLW2901", "PLW0602",
+]
 exclude = [".venv", "build", "dist"]
+
+[lint.per-file-ignores]
+# 测试桩类常用类级可变属性（如调用记录列表），属有意为之
+"tests/*.py" = ["RUF012"]

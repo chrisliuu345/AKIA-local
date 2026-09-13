@@ -77,7 +77,7 @@ def test_history_api_and_devices(server):
 def test_ws_broadcast(server):
     import websockets.sync.client as ws_client
 
-    bus, store, addr = server
+    bus, _store, addr = server
     received = []
     with ws_client.connect(f"ws://{addr}/ws/stream") as ws:
         bus.publish("mock-a", [Sample("mock-a", "CH1", 42.0, 100.0)])
@@ -95,7 +95,7 @@ def test_ws_broadcast(server):
 def test_50_concurrent_ws_connections(server):
     import websockets.sync.client as ws_client
 
-    bus, store, addr = server
+    bus, _store, addr = server
     n = 50
     clients = []
     for _ in range(n):
@@ -129,7 +129,7 @@ def test_50_concurrent_ws_connections(server):
 
 
 def test_dashboard_page_served(server):
-    bus, store, addr = server
+    _bus, _store, addr = server
     raw = urllib.request.urlopen(f"http://{addr}/", timeout=3).read()
     text = raw.decode("utf-8")
     assert "QA-Tool 实时 SPC 云看板" in text
@@ -185,7 +185,7 @@ def test_plant_status_uses_injected_config_and_tags():
 def test_ws_abrupt_disconnect_then_continue(server):
     """B3: 客户端硬断连后服务照常广播, 新连接可继续收数。"""
     import websockets.sync.client as ws_client
-    bus, store, addr = server
+    bus, _store, addr = server
     ws = ws_client.connect(f"ws://{addr}/ws/stream")
     import socket as _sock
     ws.socket.shutdown(_sock.SHUT_RDWR)

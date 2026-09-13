@@ -175,7 +175,7 @@ def _build_scatter(data: dict, options: dict) -> Figure:
     fig, ax = plt.subplots(figsize=(8, 6), dpi=_dpi())
     ax.scatter(x, y, s=point_size, alpha=point_alpha, edgecolors="white", linewidth=0.3, color=palette[0])
     if show_reg:
-        slope, intercept, r_val, p_val, std_err = sp_stats.linregress(x, y)
+        slope, intercept, r_val, _p_val, _std_err = sp_stats.linregress(x, y)
         x_line = np.linspace(x.min(), x.max(), 100)
         ax.plot(x_line, slope * x_line + intercept, color=palette[1], linewidth=1.5,
                 label=f"y={slope:.3f}x+{intercept:.3f}  R²={r_val**2:.4f}")

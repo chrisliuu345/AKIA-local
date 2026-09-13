@@ -264,7 +264,7 @@ class AgentEngine:
         tool_calls: list[ToolCallRecord] = []
         for _step in range(self.max_tool_steps):
             prompt = self._build_prompt(question, tool_calls)
-            text, streamed = yield from self._generate(prompt)
+            text, _streamed = yield from self._generate(prompt)
             name, args = self._extract_tool_call(text)
             if not name:
                 return AgentReply(text=text.strip() or "（模型无输出）",

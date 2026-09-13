@@ -538,15 +538,17 @@ class QAMHarnessDialog(QDialog):
         if role == "user":
             bg, border = "#1f3550", "#2c5f92"
             spacer = "<td width='16%'></td>"
-            cells = f"{spacer}<td style='background:{bg};border:1px solid {border};" \
-                    f"border-radius:10px;padding:9px 12px;color:{tc['text_primary']};'>" \
-                    f"{inner_html}</td>"
+            cells = (
+                f"{spacer}<td style='background:{bg};border:1px solid {border};"
+                f"border-radius:10px;padding:9px 12px;color:{tc['text_primary']};'>"
+                f"{inner_html}</td>")
         else:
             bg, border = tc["bg_card"], tc["border_light"]
             spacer = "<td width='16%'></td>"
-            cells = f"<td style='background:{bg};border:1px solid {border};" \
-                    f"border-radius:10px;padding:9px 12px;color:{tc['text_primary']};'>" \
-                    f"{inner_html}</td>{spacer}"
+            cells = (
+                f"<td style='background:{bg};border:1px solid {border};"
+                f"border-radius:10px;padding:9px 12px;color:{tc['text_primary']};'>"
+                f"{inner_html}</td>{spacer}")
         return (f"<table width='100%' cellspacing='0' cellpadding='0' "
                 f"style='margin:6px 0'><tr>{cells}</tr></table>")
 

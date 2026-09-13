@@ -93,11 +93,11 @@ class AlertJournal:
         try:
             with open(self.path, "r", encoding="utf-8") as f:
                 for line in f:
-                    line = line.strip()
-                    if not line:
+                    stripped = line.strip()
+                    if not stripped:
                         continue
                     try:
-                        entries.append(JournalEntry.from_dict(json.loads(line)))
+                        entries.append(JournalEntry.from_dict(json.loads(stripped)))
                     except (json.JSONDecodeError, TypeError):
                         continue
         except OSError:
