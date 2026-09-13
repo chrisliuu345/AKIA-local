@@ -328,7 +328,7 @@ def test_build_context_from_main_window():
 
 
 def test_build_engine_default_registry():
-    engine, ctx = build_engine(None, llm=None)
+    engine, _ctx = build_engine(None, llm=None)
     assert engine.tool_count() >= 16
     assert engine.llm_available is False
     assert engine.provider_label() == "离线"

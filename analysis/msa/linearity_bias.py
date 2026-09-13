@@ -53,7 +53,7 @@ def analyze_linearity(
     x = data[reference_col].values
     y = data[measurement_col].values - x
 
-    slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
+    slope, intercept, r_value, p_value, _std_err = stats.linregress(x, y)
 
     linearity = abs(slope) * (x.max() - x.min())
 

@@ -5,7 +5,7 @@ RPN = 严重度(S) × 发生度(O) × 检出度(D)
 """
 
 from dataclasses import dataclass
-from typing import List
+from typing import ClassVar, List
 from config.settings import RPN_CRITICAL, RPN_HIGH, RPN_MEDIUM
 
 
@@ -45,7 +45,7 @@ class FMEAItem:
             return "medium"
         return "low"
 
-    HEADERS = [
+    HEADERS: ClassVar[List[str]] = [
         "功能/工序", "失效模式", "失效后果", "严重度S",
         "失效原因", "发生度O", "现行控制", "检出度D",
         "RPN", "建议措施", "责任人", "措施状态",

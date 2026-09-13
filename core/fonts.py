@@ -55,6 +55,7 @@ def _detect_linux_ui_font() -> str:
             capture_output=True,
             text=True,
             timeout=3,
+            check=False,
         )
         if result.returncode == 0:
             installed = result.stdout.lower()

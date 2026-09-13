@@ -29,7 +29,7 @@ def analyze(
     X = np.column_stack([np.ones(n)] + [data[fc].astype(float).values for fc in factor_cols])
 
     try:
-        coeffs, residuals, rank, sv = np.linalg.lstsq(X, y, rcond=None)
+        coeffs, _residuals, _rank, _sv = np.linalg.lstsq(X, y, rcond=None)
     except np.linalg.LinAlgError:
         coeffs = np.linalg.pinv(X) @ y
         y - X @ coeffs

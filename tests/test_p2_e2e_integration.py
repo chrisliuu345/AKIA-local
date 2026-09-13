@@ -70,7 +70,7 @@ class _Handler(BaseHTTPRequestHandler):
         self._record({})
         if self.path.startswith("/api/tags"):
             return self._json({"models": [{"name": "mock-llama:latest"}]})
-        if "/models" in self.path and "generativelanguage" in self.path or \
+        if ("/models" in self.path and "generativelanguage" in self.path) or \
                 self.path.startswith("/v1beta/models"):
             return self._json({"models": [{"name": "models/mock-gemini"}]})
         if self.path.startswith("/v1/models"):
@@ -98,8 +98,8 @@ class _Handler(BaseHTTPRequestHandler):
             ])
         if self.path.startswith("/v1/messages"):
             return self._sse([
-                'event: content_block_delta\n'
-                'data: {"type":"content_block_delta","delta":{"text":"Claude"}}\n\n',
+                ('event: content_block_delta\n'
+                'data: {"type":"content_block_delta","delta":{"text":"Claude"}}\n\n'),
                 'data: {"type":"message_stop"}\n\n',
             ])
         if self.path.endswith("/chat/completions"):

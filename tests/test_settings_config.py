@@ -38,7 +38,7 @@ def _write(path, data):
 
 class TestConfigLayering:
     def test_defaults_used_when_user_file_missing(self, cfg):
-        settings, default_path, user_path = cfg
+        settings, default_path, _user_path = cfg
         _write(default_path, {"chart_dpi": 150, "esp32_extension": False})
 
         merged = settings.load_config()

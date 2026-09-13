@@ -1,7 +1,7 @@
 """PPAP 生产件批准引擎 — 18项提交清单 + 提交等级 + 状态追踪"""
 
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import ClassVar, Dict, List, Optional
 from datetime import datetime
 
 PPAP_ITEMS = [
@@ -50,7 +50,9 @@ class PPAPItem:
     status: str = "pending"
     notes: str = ""
 
-    STATUS_COLORS = {"pending": "#888", "in_progress": "#f1c40f", "complete": "#2ecc71", "n_a": "#555"}
+    STATUS_COLORS: ClassVar[Dict[str, str]] = {
+        "pending": "#888", "in_progress": "#f1c40f",
+        "complete": "#2ecc71", "n_a": "#555"}
 
 
 @dataclass

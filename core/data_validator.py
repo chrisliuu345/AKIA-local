@@ -122,9 +122,9 @@ class DataValidator:
                     skew_val = stats.skew(data)
                     kurtosis_val = stats.kurtosis(data)
 
-            statistic, p_value = stats.shapiro(data) if len(data) <= 5000 else (None, None)
+            _statistic, p_value = stats.shapiro(data) if len(data) <= 5000 else (None, None)
             if len(data) > 5000 and not is_constant and std > 0:
-                statistic, p_value = stats.kstest(data, lambda x, m=mean, s=std: stats.norm.cdf(x, loc=m, scale=s))
+                _statistic, p_value = stats.kstest(data, lambda x, m=mean, s=std: stats.norm.cdf(x, loc=m, scale=s))
 
             self.stats[col] = {
                 "count": len(data),

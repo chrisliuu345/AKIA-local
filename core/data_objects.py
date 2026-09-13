@@ -4,7 +4,7 @@ Process, TimeObservation, QualityRecord, MaterialFlow, Resource
 """
 
 from dataclasses import dataclass, field, asdict
-from typing import Dict, List, Optional
+from typing import ClassVar, Dict, List, Optional
 
 
 @dataclass
@@ -17,10 +17,10 @@ class Process:
     labor_count: int = 1
     predecessors: List[str] = field(default_factory=list)
 
-    REQUIRED = ["process_id", "process_name"]
-    OPTIONAL = ["equipment", "cycle_time", "labor_count", "predecessors"]
+    REQUIRED: ClassVar[List[str]] = ["process_id", "process_name"]
+    OPTIONAL: ClassVar[List[str]] = ["equipment", "cycle_time", "labor_count", "predecessors"]
 
-    FIELD_ALIASES = {
+    FIELD_ALIASES: ClassVar[Dict[str, List[str]]] = {
         "process_id": ["工序编号", "工序ID", "process id", "id", "编号", "序号", "代码", "code", "站号"],
         "process_name": ["工序名称", "工序", "工序名", "process name", "name", "名称", "步骤", "工位名称", "岗位", "作业内容"],
         "equipment": ["设备", "设备名称", "equipment", "machine", "设备编号", "机台", "机器", "机床"],
@@ -56,10 +56,10 @@ class TimeObservation:
     cycle: int
     observation_time: float
 
-    REQUIRED = ["process_id", "operator", "cycle", "observation_time"]
-    OPTIONAL = []
+    REQUIRED: ClassVar[List[str]] = ["process_id", "operator", "cycle", "observation_time"]
+    OPTIONAL: ClassVar[List[str]] = []
 
-    FIELD_ALIASES = {
+    FIELD_ALIASES: ClassVar[Dict[str, List[str]]] = {
         "process_id": ["工序编号", "工序ID", "process id", "id", "编号", "工序", "序号", "工位号", "代码"],
         "operator": ["作业员", "操作员", "operator", "人员", "工人", "员工", "姓名", "操作者", "测定者", "观测者"],
         "cycle": ["循环", "周期", "cycle", "次数", "循环编号", "第几次", "次", "回", "round"],
@@ -93,10 +93,10 @@ class QualityRecord:
     lsl: Optional[float] = None
     target: Optional[float] = None
 
-    REQUIRED = ["product_id", "characteristic", "measurement"]
-    OPTIONAL = ["usl", "lsl", "target"]
+    REQUIRED: ClassVar[List[str]] = ["product_id", "characteristic", "measurement"]
+    OPTIONAL: ClassVar[List[str]] = ["usl", "lsl", "target"]
 
-    FIELD_ALIASES = {
+    FIELD_ALIASES: ClassVar[Dict[str, List[str]]] = {
         "product_id": ["产品", "产品ID", "product id", "product", "零件", "料号", "编号", "样品"],
         "characteristic": ["特性", "质量特性", "characteristic", "char", "检测项目", "指标", "尺寸"],
         "measurement": ["测量值", "measurement", "值", "value", "结果", "实测", "检测值"],
@@ -137,10 +137,10 @@ class MaterialFlow:
     quantity: float = 0.0
     distance: float = 0.0
 
-    REQUIRED = ["from_process", "to_process"]
-    OPTIONAL = ["quantity", "distance"]
+    REQUIRED: ClassVar[List[str]] = ["from_process", "to_process"]
+    OPTIONAL: ClassVar[List[str]] = ["quantity", "distance"]
 
-    FIELD_ALIASES = {
+    FIELD_ALIASES: ClassVar[Dict[str, List[str]]] = {
         "from_process": ["起点", "来源", "from", "上游", "起始工序", "起始", "from process"],
         "to_process": ["终点", "目标", "to", "下游", "目标工序", "到达", "to process"],
         "quantity": ["数量", "quantity", "qty", "搬运量", "件数", "重量"],
@@ -177,11 +177,11 @@ class Resource:
     total_qty: float = 0.0
     good_qty: float = 0.0
 
-    REQUIRED = ["resource_id"]
-    OPTIONAL = ["resource_type", "group", "shift", "available_time", "downtime",
+    REQUIRED: ClassVar[List[str]] = ["resource_id"]
+    OPTIONAL: ClassVar[List[str]] = ["resource_type", "group", "shift", "available_time", "downtime",
                 "ideal_cycle_time", "total_qty", "good_qty"]
 
-    FIELD_ALIASES = {
+    FIELD_ALIASES: ClassVar[Dict[str, List[str]]] = {
         "resource_id": ["id", "编号", "资源ID", "resource id", "名称", "设备编号", "工号"],
         "resource_type": ["类型", "资源类型", "type", "类别", "人员设备"],
         "group": ["班组", "group", "部门", "小组", "班", "组"],

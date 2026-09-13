@@ -270,7 +270,7 @@ class DisplayModeWindow(QWidget):
 
     def _build_charts(self):
         self._figures.clear()
-        tabs = getattr(self._main, "_get_tabs", lambda: {})()
+        tabs = getattr(self._main, "_get_tabs", dict)()
         analyses = getattr(self._main, "analyses", {}) or {}
         for idx in sorted(analyses.keys()):
             tab = tabs.get(idx)
