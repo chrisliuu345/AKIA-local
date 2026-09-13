@@ -244,6 +244,7 @@ class BaseAnalysisTab(QWidget):
             h += max(w.minimumHeight(), w.minimumSizeHint().height())
         if h < 300:
             h = 300
+        self._last_page_height = int(h)      # 记录，供切回时恢复（无 canvas 页同样适用）
         self.chart_container.setMinimumHeight(h)
         stack = getattr(self, 'result_stack', None)
         if stack is not None:
@@ -347,6 +348,13 @@ class BaseAnalysisTab(QWidget):
         if getattr(self, 'canvas', None) is not None and self.current_figure is not None:
             self._pin_canvas_natural_height()
             self._sync_chart_page_height()
+        elif getattr(self, '_last_page_height', 0) > 300:
+            # 无 canvas 的分析页（图表由子控件承载）：hideEvent 释放后按记录恢复，
+            # 否则切回该 Tab 时滚动范围会丢失（长页无法滚动）
+            self.chart_container.setMinimumHeight(self._last_page_height)
+            stack = getattr(self, 'result_stack', None)
+            if stack is not None:
+                stack.setMinimumHeight(self._last_page_height)
 
     def hideEvent(self, event):
         super().hideEvent(event)
