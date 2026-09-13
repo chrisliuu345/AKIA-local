@@ -195,8 +195,7 @@ class _CauseSpike:
         self.line.setPen(QPen(color, max(1.0, 2.0 - level * 0.5)))
         scene.addItem(self.line)
 
-        self.label = _LabelNode(label, font_size=fs,
-                                color=QColor("#d0d2d8") if level > 1 else QColor("#d0d2d8"))
+        self.label = _LabelNode(label, font_size=fs, color=QColor("#d0d2d8"))
         self.label._on_moved = self._on_label_moved
         self.label._on_edited = self._on_label_changed
         scene.addItem(self.label)

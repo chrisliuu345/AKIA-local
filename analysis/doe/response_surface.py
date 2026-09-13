@@ -69,7 +69,7 @@ def analyze_response_surface(
     X = np.column_stack(X_list)
 
     try:
-        coeffs, residuals, rank, sv = np.linalg.lstsq(X, response, rcond=None)
+        coeffs, residuals, _rank, _sv = np.linalg.lstsq(X, response, rcond=None)
     except np.linalg.LinAlgError:
         coeffs = np.linalg.pinv(X) @ response
         residuals = response - X @ coeffs

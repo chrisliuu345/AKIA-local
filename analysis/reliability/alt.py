@@ -45,7 +45,7 @@ class ALTEngine:
         x = 1.0 / (k * stress_temp)
         y = np.log(life)
 
-        slope, intercept, r, p, std_err = sp_stats.linregress(x, y)
+        slope, intercept, r, _p, _std_err = sp_stats.linregress(x, y)
         Ea_fitted = slope
         A_fitted = np.exp(intercept)
 
@@ -92,7 +92,7 @@ class ALTEngine:
         x = np.log(stress)
         y = np.log(life)
 
-        slope, intercept, r, p, std_err = sp_stats.linregress(x, y)
+        slope, intercept, r, _p, _std_err = sp_stats.linregress(x, y)
         n_fitted = -slope
         C_fitted = np.exp(intercept)
 
@@ -140,7 +140,7 @@ class ALTEngine:
         x = 1.0 / stress_temp
         y = np.log(life * stress_temp)
 
-        slope, intercept, r, p, std_err = sp_stats.linregress(x, y)
+        slope, intercept, r, _p, _std_err = sp_stats.linregress(x, y)
         B_fitted = slope
         A_fitted = np.exp(intercept)
 

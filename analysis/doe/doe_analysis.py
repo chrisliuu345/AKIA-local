@@ -62,7 +62,7 @@ def analyze(
     r_squared = 1 - np.sum(residuals ** 2) / np.sum((response - grand_mean) ** 2) if np.sum((response - grand_mean) ** 2) > 0 else 0
 
     if len(residuals) >= 3:
-        sw_stat, sw_p = stats.shapiro(residuals) if len(residuals) <= 5000 else (0, 0)
+        _sw_stat, sw_p = stats.shapiro(residuals) if len(residuals) <= 5000 else (0, 0)
     else:
         _sw_stat, sw_p = 0, 0
 

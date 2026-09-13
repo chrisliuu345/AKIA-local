@@ -59,16 +59,16 @@ class TestComputeCorrelationMatrix:
         assert np.all(np.diag(corr) == 1.0)
 
     def test_spearman(self, sample_df):
-        corr, p_values = _compute_correlation_matrix(sample_df, ["A", "B"], method="spearman")
+        corr, _p_values = _compute_correlation_matrix(sample_df, ["A", "B"], method="spearman")
         assert corr.shape == (2, 2)
         assert -1 <= corr.iloc[0, 1] <= 1
 
     def test_kendall(self, sample_df):
-        corr, p_values = _compute_correlation_matrix(sample_df, ["A", "B"], method="kendall")
+        corr, _p_values = _compute_correlation_matrix(sample_df, ["A", "B"], method="kendall")
         assert corr.shape == (2, 2)
 
     def test_single_column(self, sample_df):
-        corr, p_values = _compute_correlation_matrix(sample_df, ["A"])
+        corr, _p_values = _compute_correlation_matrix(sample_df, ["A"])
         assert corr.shape == (1, 1)
         assert corr.iloc[0, 0] == 1.0
 

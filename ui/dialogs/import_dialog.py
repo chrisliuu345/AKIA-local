@@ -162,8 +162,8 @@ class ImportDialog(QDialog):
                     except Exception:
                         total_rows += 0
                 info_parts = [
-                    f"工作表: {len(self.sheet_names)} 个  ({', '.join(self.sheet_names[:6])}"
-                    f"{' ...' if len(self.sheet_names) > 6 else ''})  |  估算总行数: ~{total_rows}"
+                    (f"工作表: {len(self.sheet_names)} 个  ({', '.join(self.sheet_names[:6])}"
+                    f"{' ...' if len(self.sheet_names) > 6 else ''})  |  估算总行数: ~{total_rows}")
                 ]
 
                 if self.mode == "ie":

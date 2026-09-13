@@ -1,7 +1,7 @@
 """8D 问题解决引擎 — D1-D8 数据模型 + PDF 报告生成"""
 
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import ClassVar, Dict, List, Optional
 from datetime import datetime
 
 
@@ -84,7 +84,7 @@ class EightDReport:
         if not self.created_at:
             self.created_at = datetime.now().strftime("%Y-%m-%d %H:%M")
 
-    STEP_LABELS = {
+    STEP_LABELS: ClassVar[Dict[str, str]] = {
         "D1": "组建团队", "D2": "描述问题", "D3": "临时遏制",
         "D4": "根因分析", "D5": "永久措施", "D6": "实施验证",
         "D7": "预防再发", "D8": "团队表彰",

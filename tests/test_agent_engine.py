@@ -177,7 +177,7 @@ def test_stream_preamble_then_tool_hides_json(ctx):
 
 def test_stream_json_answer_without_tool_is_not_lost(ctx):
     """非工具调用的 JSON 回答同样不能丢内容。"""
-    tokens, tools, reply = _stream(ctx, ['{"结论": "过程受控"}'])
+    _tokens, tools, reply = _stream(ctx, ['{"结论": "过程受控"}'])
     assert tools == []
     assert "过程受控" in reply.text
 
