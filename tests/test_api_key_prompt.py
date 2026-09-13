@@ -149,6 +149,88 @@ def test_cancel_prompt_reverts_selection(dialog, monkeypatch, isolated_config):
 # ---------- 输入框本身 ----------
 
 
+class _StubMessageBox:
+    """替换 QMessageBox 以捕获「未连接 API」询问（不真正弹窗）。"""
+
+    Yes = QDialog.DialogCode.Accepted
+    No = QDialog.DialogCode.Rejected
+    calls: list = []
+
+    @classmethod
+    def question(cls, *args, **kwargs):
+        cls.calls.append(args)
+        return cls._reply
+
+    _reply = Yes
+
+
+# ---------- 已连接供应商：静默通过 + 自动选中 ----------
+
+
+def test_detect_available_prefers_configured_cloud_provider(isolated_config,
+                                                            _qt_application):
+    isolated_config.save_config({"llm_deepseek_api_key": "sk-deepseek-test"})
+
+    from core.llm_client import LLMClient
+
+    client = LLMClient.detect_available()
+    assert client.provider == "deepseek"
+    assert client.available is True
+    # 自动把选择持久化为激活供应商（设置页/下次打开一致）
+    assert isolated_config.get_setting("llm_active_provider") == "deepseek"
+
+
+def test_any_key_skips_main_window_prompt(isolated_config, monkeypatch,
+                                          _qt_application):
+    isolated_config.save_config({"llm_deepseek_api_key": "sk-deepseek-test"})
+    import ui.main_window as mw
+
+    _StubMessageBox.calls = []
+    _StubMessageBox._reply = _StubMessageBox.Yes
+    monkeypatch.setattr(mw, "QMessageBox", _StubMessageBox)
+
+    client = mw._resolve_llm_client(None)
+    assert _StubMessageBox.calls == [], "已连接云 API 时不应弹出离线模式询问"
+    assert client is not None and client.provider == "deepseek"
+    assert client.available is True
+
+
+def test_no_connection_still_prompts(isolated_config, monkeypatch,
+                                     _qt_application):
+    import ui.main_window as mw
+    from core.llm_client import LLMClient
+
+    monkeypatch.setattr(LLMClient, "_check_available", lambda self: False)
+    _StubMessageBox.calls = []
+    _StubMessageBox._reply = _StubMessageBox.No
+    monkeypatch.setattr(mw, "QMessageBox", _StubMessageBox)
+
+    assert mw._resolve_llm_client(None) is None
+    assert len(_StubMessageBox.calls) == 1
+
+    _StubMessageBox._reply = _StubMessageBox.Yes
+    client = mw._resolve_llm_client(None)
+    assert client is not None and len(_StubMessageBox.calls) == 2
+
+
+def test_dialog_auto_selects_configured_provider(isolated_config,
+                                                 monkeypatch,
+                                                 _qt_application):
+    isolated_config.save_config({"llm_deepseek_api_key": "sk-deepseek-test"})
+    calls = _stub_key_dialog(monkeypatch)
+
+    dlg = _make_dialog()
+    try:
+        assert dlg.llm.provider == "deepseek"
+        assert dlg.llm.available is True
+        assert dlg.provider_combo.currentData() == "deepseek"
+        assert "未配置密钥" not in dlg.provider_combo.currentText()
+        assert calls == []                       # 不应弹密钥输入框
+    finally:
+        dlg.close()
+        dlg.deleteLater()
+
+
 def test_api_key_dialog_validates_and_trims(_qt_application):
     from ui.dialogs.api_key_dialog import ApiKeyDialog
 
