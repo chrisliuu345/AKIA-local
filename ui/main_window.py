@@ -58,6 +58,31 @@ def _tab_is_runnable(tab) -> bool:
     return _tab_has_data(tab) and callable(getattr(tab, 'run_and_display', None))
 
 
+def _resolve_llm_client(parent=None):
+    """检测可用 LLM 连接；任意云供应商已配置密钥即静默通过。
+
+    完全没有可用连接时询问是否以离线工具模式打开（取消返回 None）。
+    """
+    from core.llm_client import LLMClient
+
+    client = LLMClient.detect_available()
+    if client.available:
+        return client
+    reply = QMessageBox.question(
+        parent, "QAM Harness",
+        "未检测到可用的 LLM 连接（本地 Ollama 未运行，且未配置任何云 API Key）。\n\n"
+        "离线工具模式仍然可用: QAM Harness 会直接调用软件内分析引擎"
+        "（SPC / 过程能力 / MSA / OEE / 成本 / 告警 / 五链 / 知识库），"
+        "给出数值结论与改善建议。\n\n"
+        "需要自然语言长文解读时:\n"
+        "1. 访问 https://ollama.com 下载安装（ollama pull qwen2.5:7b && ollama serve），或\n"
+        "2. 菜单「工具 → 设置 → QAM Harness」配置云供应商 API Key\n\n"
+        "是否打开 QAM Harness？",
+        QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes,
+    )
+    return client if reply == QMessageBox.Yes else None
+
+
 class MainWindow(QMainWindow):
     def __init__(self, splash=None):
         super().__init__()
@@ -414,24 +439,9 @@ class MainWindow(QMainWindow):
 
     def _on_llm_assist(self):
         """打开 QAM Harness（质量工程 AI Agent）对话窗口。"""
-        from core.llm_client import LLMClient
-        client = LLMClient()
-        if not client.available:
-            reply = QMessageBox.question(
-                self, "QAM Harness",
-                "未检测到本地 Ollama 服务（或云 API 未配置）。\n\n"
-                "离线工具模式仍然可用: QAM Harness 会直接调用软件内分析引擎"
-                "（SPC / 过程能力 / MSA / OEE / 成本 / 告警 / 五链 / 知识库），"
-                "给出数值结论与改善建议。\n\n"
-                "需要自然语言长文解读时再安装:\n"
-                "1. 访问 https://ollama.com 下载安装\n"
-                "2. 终端运行: ollama pull qwen2.5:7b\n"
-                "3. 启动: ollama serve\n\n"
-                "是否打开 QAM Harness？",
-                QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes,
-            )
-            if reply != QMessageBox.Yes:
-                return
+        client = _resolve_llm_client(self)
+        if client is None:
+            return
         from ui.dialogs.llm_dialog import QAMHarnessDialog
         dlg = getattr(self, "_agent_dialog", None)
         if dlg is not None and dlg.isVisible():
@@ -447,6 +457,7 @@ class MainWindow(QMainWindow):
         dlg.show()
         dlg.raise_()
         dlg.activateWindow()
+
 
     def _on_one_click_analysis(self):
         """一键智能分析 — 画像 → 推荐 → 执行 → 报告"""

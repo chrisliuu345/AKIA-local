@@ -18,6 +18,19 @@ from ui.agent_bridge import build_context, build_engine
 from ui.dialogs.llm_dialog import LLMDialog, QAMHarnessDialog, md_to_html
 
 
+@pytest.fixture(autouse=True)
+def isolated_llm_config(tmp_path, monkeypatch):
+    """隔离本机 user_config.json —— 真实 API Key 不应影响离线模式断言。"""
+    import config.settings as settings
+
+    target = tmp_path / "user_config.json"
+    target.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(settings, "_USER_CONFIG_PATH", str(target))
+    monkeypatch.setattr(settings, "_defaults", {})
+    monkeypatch.setattr(settings, "_user_overrides", {})
+    return settings
+
+
 @pytest.fixture
 def ctx():
     rng = np.random.default_rng(9)
