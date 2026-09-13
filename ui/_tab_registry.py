@@ -46,6 +46,7 @@ TAB_REGISTRY = [
     (34, "sidebar.multi_plant",      "MultiPlantTab",       "ui.tabs.multi_plant_tab",      "sidebar.monitoring"),
     (35, "sidebar.device",           "DeviceTab",           "ui.tabs.device_tab",           "sidebar.monitoring"),
     (36, "sidebar.time_series",      "TimeSeriesTab",       "ui.tabs.time_series_tab",      "sidebar.quality_tools"),
+    (37, "sidebar.predictive",       "PredictiveTab",       "ui.tabs.predictive_tab",       "sidebar.quality_tools"),
 ]
 
 INDEX_MAP = {entry[0]: entry for entry in TAB_REGISTRY}
@@ -68,6 +69,7 @@ TAB_INDEX = {
     "control_plan": 17,
     "eight_d": 30,
     "ppap": 32,
+    "predictive": 37,
 }
 
 # 五链贯通涉及的 Tab（FMEA → CP → SPC → PPAP → 8D）

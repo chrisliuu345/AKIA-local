@@ -334,6 +334,7 @@
   "sidebar.load_template": "加载模板",
   "sidebar.msa": "MSA 分析",
   "sidebar.oee": "OEE 分析",
+  "sidebar.predictive": "预测分析",
   "sidebar.quality_tools": "质量分析工具",
   "sidebar.regression": "回归分析",
   "sidebar.spc": "SPC 控制图",

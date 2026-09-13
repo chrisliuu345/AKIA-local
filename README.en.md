@@ -51,6 +51,16 @@ Requires Python 3.11+
 | **Reliability** | Weibull 2P/3P/4P · KM Survival · Cox Regression · ALT · RBD |
 | **Time Series** | ARIMA · Exponential Smoothing · Seasonal Decomposition · Forecasting |
 
+### Predictive Analytics & Machine Learning (v4.0.0)
+
+| Module | Capabilities |
+|--------|--------------|
+| **AutoML** | Linear/logistic regression · CART · Random Forests (OOB) · Gradient boosting (built-in HistGradientBoosting, optional XGBoost) · MARS; CV ranking and recommendation |
+| **Feature engineering** | Missing values · one-hot encoding · quantile binning · standardization; leak-proof Pipeline · stratified split |
+| **Model evaluation** | R²/adj-R²/RMSE/MAE/MAPE · Accuracy/P/R/F1/AUC · confusion matrix · ROC · K-fold CV · learning curve · residual diagnostics |
+| **Explain & deploy** | SHAP (auto-fallback to native/permutation importance) · single-sample explanation · `.qamodel` save/load · prediction export |
+| **QAM Harness tools** | `ml_prepare_data` · `ml_train` · `ml_automl` · `ml_evaluate` · `ml_explain` · `ml_predict` |
+
 ### IE Engineering
 
 | Module | Capabilities |
@@ -75,7 +85,7 @@ Requires Python 3.11+
 
 | Module | Capabilities |
 |--------|-------------|
-| **QAM Harness** | AI agent with 30 local tools (SPC/capability/MSA/hypothesis/DOE/regression/reliability/time-series/IE/cost/realtime/five-chain/root-cause) + offline tool mode · BYOK cloud providers (OpenAI/Claude/Gemini/DeepSeek/Z.ai/KIMI + custom endpoints) · encrypted keys + cloud privacy gate · Knowledge Base RAG |
+| **QAM Harness** | AI agent with 36 local tools (SPC/capability/MSA/hypothesis/DOE/regression/reliability/time-series/IE/cost/realtime/five-chain/root-cause/machine-learning) + offline tool mode · BYOK cloud providers (OpenAI/Claude/Gemini/DeepSeek/Z.ai/KIMI + custom endpoints) · encrypted keys + cloud privacy gate · Knowledge Base RAG |
 | **Plugin API v2** | External plugins developed/published separately: pip entry point or user dir · Tab / agent tools / settings contributions · dependency probing + trust model (e.g. [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion)) |
 | **Charts** | 15+ chart types · Dark theme · CJK fonts |
 | **Reports** | PDF / Word / Excel / HTML · Inline charts |
@@ -118,9 +128,10 @@ analysis/              # Analysis engines (14 modules)
 ├── time_series/       # Time Series
 ├── ie/                # IE Engineering
 ├── charts/            # Chart Generator
-└── ai/                # AI Root Cause Analysis
+├── ai/                # AI Root Cause Analysis
+└── ml/                # Predictive analytics & ML (AutoML/MARS/explain)
 core/                  # Core Engines
-ui/                    # PySide6 UI (36 Tabs + plugin Tabs)
+ui/                    # PySide6 UI (37 Tabs + plugin Tabs)
 output/                # Report Engine
 tests/                 # 1500+ Tests
 ```
@@ -141,4 +152,4 @@ Proprietary commercial software. Unauthorized copying, modification, or distribu
 
 ---
 
-*Python 3.14 + PySide6 · 1500+ Tests · 36 Analysis Tabs + Plugin API v2*
+*Python 3.14 + PySide6 · 1650+ Tests · 37 Analysis Tabs + Plugin API v2*
