@@ -2,7 +2,7 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> Current: v3.8.0 Industrial AI Agent (QAM Harness + BYOK + Plugin API v2) (✅ 2026-09-12) | Next: **v4.0.0 Predictive Analytics & Machine Learning (planned)** | Tests: 1567 pytest · 36 analysis tabs | Updated: 2026-09-12
+> Current: v3.8.0 Industrial AI Agent (QAM Harness + BYOK + Plugin API v2) (✅ 2026-09-12) | In progress: **v4.0.0 Predictive Analytics & ML (P0-P4 ✅ implemented, pending human review + P5 release wrap-up)** | Tests: 1659 pytest · 37 analysis tabs | Updated: 2026-09-13
 
 > **Maintenance convention (from 2026-09-12)**: each version entry is one summary line plus key numbers; implementation details live in code/tests/user guide, not here.
 > This file was compressed from 1100+ lines to under 500; the expanded history is in git history (`git log -p -- ROADMAP.md`).
@@ -31,7 +31,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | ✅ | v3.7.2 | Realtime-monitoring benchmark polish, 8 items |
 | ✅ | **v3.8.0** | **Industrial AI Agent (QAM Harness + Plugin API v2; vision moved to an external plugin)** |
 | 🔌 | [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion) | External vision plugin (video time study) built on Plugin API v2 |
-| 🚧 | v4.0.0 | Predictive analytics & machine learning (P0-P5 plan set, pending implementation) |
+| 🚧 | v4.0.0 | Predictive analytics & ML (P0-P4 ✅ implemented; P5 release wrap-up pending review) |
 
 ---
 
@@ -61,6 +61,7 @@ Planning principles:
 
 | Date | Version | Summary |
 |------|---------|---------|
+| 09-13 | v4.0.0-dev | **Predictive analytics & ML P0-P4**: `analysis/ml/` (common/prep/trees/evaluate/forest/boosting/explain/mars/automl/train/persist) — task detection + leak-proof Pipeline, CART (pre/post pruning + rules), regression/classification metrics with CV/learning curve/residuals, Random Forests (OOB/permutation importance), HistGradientBoosting (optional XGBoost fallback), SHAP explanation, pure-numpy MARS (beats the linear baseline on Friedman #1), AutoML ranking; new "Predictive Analytics" tab (37: QThread training + `.qamodel` save/load/predict); QAM Harness tools 30 → 36 |
 | 09-12 | v3.8.0 | **Industrial AI Agent released**: QAM Harness (30 real tools + online/offline dual path + 6 BYOK providers + custom OpenAI-compatible endpoints + privacy gate + streaming chat UI); Plugin API v2 (manifest/capabilities/dependencies/trust + Tab/tool/settings contributions); vision moved to an external plugin project; wrap-up fixed Hotelling T² control limits (30% → 0.06% false flags) and a PyInstaller `unittest` exclusion that crashed the bundle; 108 files / 1567 passed / 2 skipped / 0 failed, ruff clean, onedir build + launch smoke passed |
 | 09-12 | v3.8.1-plugin-api | Plugin API v2 + vision migration (`core/plugin_api.py` / `plugin_manager.py` / `ui/plugin_host.py`; 7 contract tests) |
 | 09-11 | v3.8.0-P3 | Vision AI video time study (multi-source input / pipeline / pose / state machine / cycle splitting; later moved out as an external plugin) |
@@ -112,23 +113,26 @@ Planning principles:
 | Release artifacts (AppImage / .deb / Inno) | Scripts ready; build and upload to Releases on demand | Optional |
 | Multi-site / multi-language | Deferred item #9 from v3.7.2 | Candidate |
 | Connector expansion (more PLC/CMM protocols) | Driven by site needs | Candidate |
-| Predictive analytics & ML | v4.0.0 | Phased plan P0-P5 defined, pending implementation |
+| Predictive analytics & ML | v4.0.0 | P0-P4 ✅ (2026-09-13); P5 release wrap-up pending review |
 
 ---
 
-## v4.0.0 — Predictive Analytics & Machine Learning (phased plan set · pending implementation)
+## v4.0.0 — Predictive Analytics & ML (P0-P4 ✅ implemented 2026-09-13 · P5 pending)
 
 > Theme: close the gap to Minitab Predictive Analytics-level capability; main app only. Reuse sklearn 1.9 / shap 0.52, no new hard dependencies (XGBoost is an optional adapter).
+
+> **Progress**: P0-P4 are complete and stage-verified (new tests + zero ruff warnings + end-to-end smoke);
+> P5 (version 4.0.0 across all four ends + full regression + packaging smoke + final docs) runs after human review.
 
 ### Phases (P0 → P5)
 
 | Phase | Deliverables | Acceptance |
 |-------|--------------|------------|
-| **P0 Data & contracts** | `analysis/ml/{__init__,common,prep}.py`: task-type detection (regression/classification), missing values, encoding, binning, standardization, train/test split, K-fold, leak-proof Pipeline | Preprocessing matches sklearn behaviour; `analysis/ml` is Qt-free (layering guard) |
-| **P1 CART + evaluation** | `trees.py` (classification/regression trees, pre-pruning + ccp_alpha post-pruning, rule export); `evaluate.py` (R²/adj-R²/RMSE/MAE/MAPE, Acc/P/R/F1/AUC, confusion matrix, ROC, K-fold CV, learning curve, residual diagnostics) | Same-seed metrics match sklearn within tolerance; both regression and classification covered |
-| **P2 Ensembles + explanation** | `forest.py` (OOB, feature importance, permutation importance); `boosting.py` (HistGradientBoosting primary + optional XGBoost adapter); `explain.py` (SHAP with sampling cap + native-importance fallback + single-sample explanation) | All three models train/evaluate/explain; graceful fallback when XGBoost is absent or SHAP exceeds the cap |
-| **P3 MARS + AutoML** | `mars.py` (pure numpy: forward basis functions + backward pruning + GCV knot selection + interactions); `automl.py` (model zoo CV ranking + time budget + recommendation + leaderboard) | On the Friedman #1 synthetic set MARS is no worse than the linear baseline; AutoML reproducible under the same seed and consistent with manual selection |
-| **P4 UI + agent tools** | "Predictive Analytics" tab (index 37; sub-pages: prepare/train/evaluate/predict, QThread training with cancel), `.qamodel` save/load and prediction write-back, `core/agent/tools_ml.py` with 6 tools (30 → 36) | E2E: prepare→train→evaluate→visualize→predict; offscreen UI tests + real-engine tool tests pass |
+| **P0 Data & contracts** ✅ | `analysis/ml/{__init__,common,prep}.py`: task-type detection (regression/classification), missing values, encoding, binning, standardization, train/test split, K-fold, leak-proof Pipeline | Preprocessing matches sklearn behaviour; `analysis/ml` is Qt-free (layering guard) |
+| **P1 CART + evaluation** ✅ | `trees.py` (classification/regression trees, pre-pruning + ccp_alpha post-pruning, rule export); `evaluate.py` (R²/adj-R²/RMSE/MAE/MAPE, Acc/P/R/F1/AUC, confusion matrix, ROC, K-fold CV, learning curve, residual diagnostics) | Same-seed metrics match sklearn within tolerance; both regression and classification covered |
+| **P2 Ensembles + explanation** ✅ | `forest.py` (OOB, feature importance, permutation importance); `boosting.py` (HistGradientBoosting primary + optional XGBoost adapter); `explain.py` (SHAP with sampling cap + native-importance fallback + single-sample explanation) | All three models train/evaluate/explain; graceful fallback when XGBoost is absent or SHAP exceeds the cap |
+| **P3 MARS + AutoML** ✅ | `mars.py` (pure numpy: forward basis functions + backward pruning + GCV knot selection + interactions); `automl.py` (model zoo CV ranking + time budget + recommendation + leaderboard) | On the Friedman #1 synthetic set MARS is no worse than the linear baseline; AutoML reproducible under the same seed and consistent with manual selection |
+| **P4 UI + agent tools** ✅ | "Predictive Analytics" tab (index 37; prepare/train/evaluate/predict + QThread training), `.qamodel` save/load and prediction export, `core/agent/tools_ml.py` with 6 tools (30 → 36) | E2E: prepare→train→evaluate→visualize→predict; offscreen UI tests + real-engine tool tests pass |
 | **P5 Release wrap-up** | Sync README (zh/en) / guide.html / this roadmap; version 4.0.0 across all four ends; full per-file regression + packaging smoke | `tools/check_version.py` passes; ruff clean; onedir bundle starts and model inference works |
 
 ### Key design decisions
@@ -173,3 +177,4 @@ Planning principles:
 | v2.5 ~ v2.6 | 35 | +Device Monitoring (Tab 35) |
 | v3.3.0 | 36 | +Time Series |
 | v3.8.0 | 36 + plugins | Vision tab moved out; plugin tabs get dynamic indices (≥37); QAM Harness is a chat window (not a tab) |
+| v4.0.0-dev | 37 + plugins | +Predictive Analytics (Tab 37); plugin tabs start at 38 |

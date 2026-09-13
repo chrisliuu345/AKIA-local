@@ -898,6 +898,10 @@ def build_default_registry(ctx: AgentContext) -> ToolRegistry:
     from core.agent.tools_ext import register_extended_tools
     register_extended_tools(reg, ctx)
 
+    # ---------------- 机器学习工具（v4.0.0：准备/训练/AutoML/评估/解释/预测）----------------
+    from core.agent.tools_ml import register_ml_tools
+    register_ml_tools(reg, ctx)
+
     # ---------------- 插件工具（外部插件通过 manifest 声明贡献点）----------------
     try:
         from core.plugin_manager import PluginManager
