@@ -105,6 +105,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
   <a href="#modules-chart">图表工具</a>
   <a href="#modules-ie">IE 工业工程</a>
   <a href="#modules-eng">工程工具</a>
+  <a href="#predictive">预测分析（机器学习）</a>
   <div class="grp">图表与报告</div>
   <a href="#charts">图表与实时编辑</a>
   <a href="#export">导出与报告</a>
@@ -123,7 +124,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
 <section class="card" id="intro">
   <h2>产品简介</h2>
   <p>QA-Tool 是一款面向质量工程（QE）与工业工程（IE）的专业分析工具，基于 Python + PySide6 构建，
-  完全离线运行，无需联网或账号登录。提供 36 个分析模块、QAM Harness 智能洞察、完整报告输出，
+  完全离线运行，无需联网或账号登录。提供 37 个分析模块、QAM Harness 智能洞察、完整报告输出，
   并支持 ESP32 硬件数据采集。</p>
   <h3>核心能力</h3>
   <ul>
@@ -280,7 +281,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
 
 <section class="card" id="modules">
   <h2>模块总览</h2>
-  <p>共 36 个功能模块（+ 欢迎页 + 外部插件），按侧边栏分组如下：</p>
+  <p>共 37 个功能模块（+ 欢迎页 + 外部插件），按侧边栏分组如下：</p>
 
   <h3 id="modules-quality">质量分析</h3>
   <table>
@@ -291,6 +292,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
     <tr><td class="k">假设检验</td><td>t 检验、ANOVA、卡方、TOST、非参数、方差检验</td></tr>
     <tr><td class="k">实验设计 (DOE)</td><td>全因子/部分因子、PB 筛选、CCD、Box-Behnken、田口、混料、功效与样本量</td></tr>
     <tr><td class="k">回归分析</td><td>线性/多元回归、残差诊断、预测</td></tr>
+    <tr><td class="k">预测分析（机器学习）</td><td>AutoML（线性/CART/随机森林/梯度提升/MARS）、特征工程、交叉验证与学习曲线、SHAP 解释、<code>.qamodel</code> 模型保存与预测</td></tr>
   </table>
 
   <h3 id="modules-chart">图表工具</h3>
@@ -332,6 +334,31 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
   仪表板、设备监控、多工厂视图等辅助模块。</p>
 </section>
 
+<section class="card" id="predictive">
+  <h2>预测分析（机器学习 · v4.0.0 新增）</h2>
+  <p>侧边栏「质量分析工具 → 预测分析」：从数据准备到模型部署的一站式机器学习工作台，全部本地运行，
+  数据不出本机。</p>
+  <h3>使用步骤</h3>
+  <ol>
+    <li>导入数据后选择<b>目标列</b>（数值连续列 → 回归；文本 / 0-1 判定列 → 分类，可手动覆盖）</li>
+    <li>勾选<b>特征列</b>（默认勾选全部数值列，分类列勾选后自动独热编码）</li>
+    <li>选择模型与交叉验证折数，点「开始训练」（后台线程执行，界面不卡顿）</li>
+    <li>查看指标、特征重要性、规则/基函数与图表（回归：预测-实际散点 + 残差；分类：混淆矩阵 + ROC）</li>
+    <li>「保存模型」生成 <code>.qamodel</code>；之后可「加载模型 → 用已加载模型预测 → 导出预测结果」</li>
+  </ol>
+  <h3>模型与能力</h3>
+  <table>
+    <tr><th>能力</th><th>说明</th></tr>
+    <tr><td class="k">AutoML 选模</td><td>线性/逻辑回归 · CART · 随机森林（OOB）· 梯度提升（内置 HistGradientBoosting，可选 XGBoost）· MARS；按交叉验证 R² / 准确率排名并推荐最优模型</td></tr>
+    <tr><td class="k">特征工程</td><td>缺失值（中位数/众数）· 分类独热编码 · 分位数分箱 · 标准化；统一封装 Pipeline，交叉验证在折内拟合，避免数据泄漏</td></tr>
+    <tr><td class="k">模型评估</td><td>回归 R² / 调整 R² / RMSE / MAE / MAPE；分类 Accuracy / P / R / F1 / AUC · 混淆矩阵；K 折交叉验证 · 学习曲线 · 残差诊断</td></tr>
+    <tr><td class="k">模型解释</td><td>SHAP（树模型，默认采样上限 300 行）自动降级为原生重要性 / 置换重要性；支持单样本贡献分析</td></tr>
+    <tr><td class="k">模型部署</td><td><code>.qamodel</code> 保存 / 加载（joblib + 元数据，仅加载本工具产物）；对新数据预测并导出 Excel / CSV</td></tr>
+    <tr><td class="k">QAM Harness</td><td>6 个机器学习工具：<code>ml_prepare_data</code> · <code>ml_train</code> · <code>ml_automl</code> · <code>ml_evaluate</code> · <code>ml_explain</code> · <code>ml_predict</code>，支持离线关键词路由</td></tr>
+  </table>
+  <p>提示：有效样本建议 ≥100 行（最少 20 行）；MARS 仅支持回归；未安装 XGBoost 时梯度提升自动使用内置实现。</p>
+</section>
+
 <section class="card" id="charts">
   <h2>图表与实时编辑</h2>
   <ul>
@@ -365,7 +392,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
   <p>菜单 <b>QAM Harness</b> 或侧边栏同名入口打开对话窗口；数据不出本机（BYOM：
   可接本地 Ollama，也可接 OpenAI 兼容云 API）：</p>
   <ul>
-    <li><b>工具调用分析</b>：对话即分析 —— 直接调用软件内 <b>30 个工具</b>，覆盖
+    <li><b>工具调用分析</b>：对话即分析 —— 直接调用软件内 <b>36 个工具</b>，覆盖
       36 个分析 Tab 的主要能力：数据概况与列描述 · SPC 控制图（I-MR/XBar-R·S/
       P·NP·C·U/CUSUM/EWMA/<b>Laney P′·U′</b>/<b>Hotelling T²</b>）· 过程能力
       （正态/非正态/<b>Sixpack</b>/<b>组间组内</b>/<b>Johnson</b>/<b>容差区间</b>）·
@@ -376,7 +403,8 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
       <b>时间序列</b>（ARIMA/指数平滑/季节分解/ACF·PACF）·
       <b>IE</b>（标准工时/线平衡/VSM/工作抽样/SMED/TPM）· <b>AI 根因分析</b> ·
       OEE / 成本损失 / 告警 / 数据源健康 / 五链 / 产线配置 / 已运行分析 /
-      知识库 / 指标解读；结论与界面分析同源（同一套统计引擎）</li>
+      知识库 / 指标解读 · <b>机器学习</b>（数据准备 / 训练 / AutoML / 评估 /
+      SHAP 解释 / 模型预测）；结论与界面分析同源（同一套统计引擎）</li>
     <li><b>离线工具模式</b>: 未安装 Ollama 时按关键词自动路由到上述工具，
       仍给出数值结论 + 判定阈值（如 Cpk≥1.33、%GRR&lt;10%）+ 改善建议</li>
     <li><b>模型管理</b>: 本地 <code>Ollama</code>（如 <code>qwen2.5:7b</code>）或

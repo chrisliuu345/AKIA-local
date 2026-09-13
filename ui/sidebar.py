@@ -28,6 +28,7 @@ CATEGORIES = [
             (4, "sidebar.hypothesis"),
             (5, "sidebar.doe"),
             (6, "sidebar.regression"),
+            (37, "sidebar.predictive"),
         ],
     },
     {

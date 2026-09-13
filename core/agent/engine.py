@@ -78,6 +78,12 @@ _SPEC_RES = (
 
 # 关键词 → 工具（顺序即优先级，先具体后一般）
 _OFFLINE_RULES: tuple[tuple[tuple[str, ...], str], ...] = (
+    (("automl", "自动选模", "自动建模", "机器学习", "随机森林", "梯度提升",
+      "决策树模型", "mars"), "ml_automl"),
+    (("特征重要性", "shap", "模型解释", "可解释", "哪些特征重要"), "ml_explain"),
+    (("模型预测", "用模型预测", "预测新数据", "加载模型", "qamodel"), "ml_predict"),
+    (("模型评估", "交叉验证", "学习曲线", "残差诊断"), "ml_evaluate"),
+    (("训练模型", "建模", "模型训练"), "ml_train"),
     (("实时",), "get_live_oee"),
     (("成本", "损失", "废品", "金额", "省了多少"), "estimate_cost"),
     (("告警", "报警", "异常点", "超差"), "get_alerts"),
@@ -439,6 +445,18 @@ class AgentEngine:
             return {"limit": 10, "only_unacked": "全部" not in question}
         if name == "search_knowledge":
             return {"query": question, "top_k": 3}
+        if name == "ml_predict":
+            match = re.search(r"[^\s，。'\"]+\.qamodel", question)
+            args = {"rows": 10}
+            if match:
+                args["model_path"] = match.group(0)
+            return args
+        if name == "ml_explain":
+            match = re.search(r"第\s*(\d+)\s*行", question)
+            return {"row_index": int(match.group(1))} if match else {}
+        if name == "ml_automl":
+            budget = re.search(r"(\d+)\s*秒", question)
+            return {"time_budget_s": float(budget.group(1))} if budget else {}
         return {}
 
     def _execute(self, name: str, args: dict) -> ToolCallRecord:
