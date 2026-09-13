@@ -87,7 +87,13 @@ fi
 echo ""
 echo "[5/5] 打包 AppImage..."
 OUTPUT_FILE="${BUILD_DIR}/${APP_NAME}-${APP_VERSION}-x86_64.AppImage"
-ARCH=x86_64 "${APPIMAGETOOL}" "${APPDIR_DIR}" "${OUTPUT_FILE}"
+# 无 FUSE 的环境（容器/CI）用 --appimage-extract-and-run 直接解包运行
+APPIMAGETOOL_ARGS=()
+if [ ! -e /dev/fuse ]; then
+    echo "  未检测到 /dev/fuse → 使用 --appimage-extract-and-run"
+    APPIMAGETOOL_ARGS=(--appimage-extract-and-run)
+fi
+ARCH=x86_64 "${APPIMAGETOOL}" "${APPIMAGETOOL_ARGS[@]}" "${APPDIR_DIR}" "${OUTPUT_FILE}"
 
 # ── 完成 ───────────────────────────────────────────────────
 echo ""

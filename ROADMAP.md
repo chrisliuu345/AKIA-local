@@ -2,7 +2,7 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> 当前: v3.8.0 Industrial AI Agent（QAM Harness + BYOK + 插件接口 v2）（✅ 2026-09-12）| 开发中: **v4.0.0 预测分析与机器学习（P0-P4 ✅ 已实现，待人工核查 + P5 发布收尾）** | 测试: 1665 pytest · 37 个分析 Tab | 更新: 2026-09-13
+> 当前: v4.0.0 预测分析与机器学习（AutoML / CART / 随机森林 / 梯度提升 / MARS + 6 个 Agent 工具）（✅ 2026-09-13）| 下一版: v4.1.0（待定）| 测试: 1665 pytest · 37 个分析 Tab | 更新: 2026-09-13
 
 > **维护约定（2026-09-12 起）**：每条版本记录只写「一行摘要 + 关键数据」；实现细节写进代码/测试/使用指南，本文不展开。
 > 本文件已由 1100+ 行压缩至 500 行内，展开版历史见 git 历史（`git log -p -- ROADMAP.md`）。
@@ -14,7 +14,7 @@
 ```
 v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.1 ──→ v2.5 ──→ v2.6.0 ~ v2.6.5 ──→ v2.7.0
       ──→ v2.8.0 ──→ v2.9.0 ──→ v3.0.0 ──→ v3.1.0 ──→ v3.2.0 ──→ v3.3.0 ──→ v3.4.0 ──→ v3.5.0
-      ──→ v3.6.0（含 3.6.1）──→ v3.7.0（含 review）──→ v3.7.1 ──→ v3.7.2 ──→ v3.8.0 ✅ 当前 ──→ v4.0.0
+      ──→ v3.6.0（含 3.6.1）──→ v3.7.0（含 review）──→ v3.7.1 ──→ v3.7.2 ──→ v3.8.0 ──→ v4.0.0 ✅ 当前
 ```
 
 | 状态 | 版本 | 主题 |
@@ -31,7 +31,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | ✅ | v3.7.2 | 实时监控对标优化 8 项 |
 | ✅ | **v3.8.0** | **Industrial AI Agent（QAM Harness + 插件接口 v2；视觉迁至独立插件项目）** |
 | 🔌 | [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion) | 视觉插件独立仓库（视频时间研究），基于插件接口 v2 |
-| 🚧 | v4.0.0 | 预测分析与机器学习（P0-P4 ✅ 已实现；P5 发布收尾待人工核查） |
+| ✅ | **v4.0.0** | **预测分析与机器学习（CART / 随机森林 / 梯度提升 / MARS / AutoML + 特征工程 / 评估 / SHAP 解释 / 模型部署）** |
 
 ---
 
@@ -61,6 +61,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 
 | 日期 | 版本 | 摘要 |
 |------|------|------|
+| 09-13 | v4.0.0 | **预测分析与机器学习发布**：`analysis/ml/`（任务判定与防泄漏 Pipeline、CART 预/后剪枝、随机森林 OOB、HistGradientBoosting（XGBoost 可选）、纯 numpy MARS、SHAP 解释、AutoML 排名）；新增 Tab「预测分析」（37）+ 6 个 Agent 工具（30 → 36）+ `.qamodel` 模型保存/加载/预测；版本 4.0.0 四端一致；1665 通过 / 2 跳过 / 0 失败，ruff 零告警；Linux AppImage + .deb 双包已构建，Windows 安装包由 Inno 脚本在 Windows 侧构建 |
 | 09-13 | v4.0.0-quality | **全量代码质量审查**：ruff 门禁扩展并清零（T10/ISC/PIE/RUF012/RUF021/RUF034/RUF059/PLW1510/PLW2901/PLW0602）；修复 12 处真实缺陷（鱼骨图重复条件、循环变量覆盖 ×2、global 误声明、SMED/成本/抽样/项目管理冗余分支、DOE/回归/图表未用解包、startswith 合并 ×3、subprocess 显式 check）；类级可变属性补 `ClassVar` 标注；仓库卫生（取消跟踪 `test_quality.db` 与旧合规 docx 产物）；全量回归 118 文件全绿 + 打包冒烟通过 |
 | 09-13 | v4.0.0-fix2 | **共享滚动区高度残留修复（W58 复发）**：`QStackedWidget` 尺寸提示只取当前页（隐藏 Tab 的参数面板/数据表不再撑长滚动区）；切换 Tab 时显式重算滚动范围并置顶（0/120/260ms 分批同步，规避 Qt hint 缓存）；无 canvas 分析页记录并恢复上次页面高度（切回不再丢失滚动范围）；新增 2 例回归 |
 | 09-13 | v4.0.0-fix | **QAM Harness 连接检测修复**：任一云供应商已配置密钥即视为已连接 → 打开对话窗口不再误弹「未连接到 API」；自动选中已连接供应商并持久化 `llm_active_provider`；下拉框填充屏蔽信号（不再被中间态切回 Ollama）；新增 5 例回归 |
@@ -97,13 +98,13 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 
 ---
 
-## 当前版本 v3.8.0 要点
+## 当前版本 v4.0.0 要点
 
-- **QAM Harness Agent**：30 个真实工具（覆盖 36 个分析 Tab 主要能力）+ 在线 LLM 工具协议 / 离线关键词路由双路径（断网可用）+ 6 家 BYOK 云供应商（OpenAI / Anthropic / Google / DeepSeek / Z.ai / KIMI）+ 自定义 OpenAI 兼容端点 + 按供应商只拦一次的隐私门；对话 UI 支持锚点整段流式渲染、工具卡片、独立可缩放窗口、自定义模型名
-- **插件接口 v2**：`core/plugin_api.py` + `core/plugin_manager.py` + `ui/plugin_host.py`；三级发现（随包 / 用户目录 / pip entry point）+ 信任模型 + 工具前缀 + 依赖探测；未信任插件只解析 manifest、不导入
-- **视觉迁出**：`analysis/vision`、Tab 37、工具与依赖迁移至 [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion)；主库保留 36 Tab / 30 内置工具 + 插件贡献
-- **收尾修复**：Hotelling T² 控制限（个体观测 UCL=0、子组限过紧）；PyInstaller 排除 `unittest` 导致产物启动崩溃；看板鉴权测试端口冲突
-- **质量数据**：1567 通过 / 2 跳过 / 0 失败（108 文件逐文件回归）；ruff 零告警；PyInstaller onedir 构建 + 离屏启动冒烟通过
+- **预测分析 Tab（37）**：目标列/特征选择 → 任务类型自动判定 → 5 类模型（线性/逻辑回归 · CART · 随机森林 · 梯度提升 · MARS）→ 指标/CV/图表 → `.qamodel` 保存加载 → 预测导出；训练在后台线程执行
+- **特征工程与评估**：缺失值 / 独热编码 / 分位数分箱 / 标准化（Pipeline 防泄漏）· R²/RMSE/MAE/MAPE · Accuracy/P/R/F1/AUC · 混淆矩阵 · ROC · K 折 CV · 学习曲线 · 残差诊断 · SHAP 解释（自动降级）
+- **QAM Harness**：6 个机器学习工具（`ml_prepare_data` / `ml_train` / `ml_automl` / `ml_evaluate` / `ml_explain` / `ml_predict`），工具总数 30 → 36；配合 v3.8.0 的 BYOK + 隐私门 + 离线关键词路由
+- **插件接口 v2**（v3.8.0）：三级发现 + 信任模型 + Tab/工具/设置页贡献；视觉能力在 [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion) 独立演进
+- **质量数据**：1665 通过 / 2 跳过 / 0 失败（118 文件逐文件回归）；ruff 扩展门禁零告警；Linux AppImage + .deb 双包已构建（Windows 安装包脚本就绪，Windows 侧构建）
 
 ---
 
@@ -116,16 +117,16 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | 发布包（AppImage / .deb / Inno） | 脚本就绪，按需构建上传 Release | 可选 |
 | 多站点 / 多语言 | v3.7.2 候选第 9 项顺延 | 候选 |
 | 连接器扩展（更多 PLC/CMM 协议） | 按现场需求 | 候选 |
-| 预测分析与机器学习 | v4.0.0 | P0-P4 ✅（2026-09-13）；P5 发布收尾待核查 |
+| 预测分析与机器学习 | v4.0.0 ✅ 已发布 | 2026-09-13 完成 |
 
 ---
 
-## v4.0.0 — 预测分析与机器学习（P0-P4 ✅ 已实现 2026-09-13 · P5 待收尾）
+## v4.0.0 ✅ 已发布 — 预测分析与机器学习（2026-09-13）
 
 > 主题：补齐 Minitab Predictive Analytics 级能力；纯主软件。复用 sklearn 1.9 / shap 0.52，不新增硬依赖（XGBoost 仅可选适配）。
 
-> **进度**：P0-P4 已完成并通过阶段性验证（新增测试 + ruff 零告警 + 端到端冒烟）；
-> P5（版本 4.0.0 四端一致 + 全量回归 + 打包冒烟 + 文档定稿）待人工核查后执行。
+> **发布状态**：P0-P5 全部完成 —— 版本 4.0.0 四端一致（settings / version_info / Inno / README·INSTALL·ROADMAP·guide）；
+> 全量逐文件回归 118 文件通过；ruff 扩展门禁零告警；Linux AppImage + .deb 双包已构建（Windows 安装包由 Inno 脚本在 Windows 侧构建）。
 
 ### 阶段划分（P0 → P5）
 
@@ -180,4 +181,4 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | v2.5 ~ v2.6 | 35 | +设备监控（Tab 35） |
 | v3.3.0 | 36 | +时间序列 |
 | v3.8.0 | 36 + 插件 | 视觉 Tab 迁出；插件 Tab 动态索引（≥37）；QAM Harness 为对话窗口（非 Tab） |
-| v4.0.0-dev | 37 + 插件 | +预测分析（Tab 37）；插件 Tab 从 38 起 |
+| v4.0.0 | 37 + 插件 | +预测分析（Tab 37）；插件 Tab 从 38 起 |

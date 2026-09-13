@@ -83,7 +83,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
 
 <header class="top">
   <span class="logo">QA-Tool 使用指南</span>
-  <span class="tag">v3.8.0</span>
+  <span class="tag">v4.0.0</span>
   <span class="tag">Windows / Linux</span>
   <span class="meta">质量工程（QE）· 工业工程（IE）· 离线分析</span>
 </header>
@@ -94,6 +94,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
   <div class="grp">开始</div>
   <a href="#intro">产品简介</a>
   <a href="#requirements">系统要求</a>
+  <a href="#install">安装包与启动</a>
   <a href="#ui">界面导览</a>
   <a href="#quick-start">快速入门</a>
   <div class="grp">数据</div>
@@ -149,6 +150,32 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
     <tr><td class="k">内存</td><td>4 GB RAM（推荐 8 GB）</td></tr>
     <tr><td class="k">硬盘空间</td><td>500 MB</td></tr>
     <tr><td class="k">网络</td><td>不需要（完全离线运行）</td></tr>
+  </table>
+</section>
+
+<section class="card" id="install">
+  <h2>安装包与启动（v4.0.0 三版）</h2>
+  <p>v4.0.0 提供三个官方版本，均免装 Python 环境、完全离线运行：</p>
+  <table>
+    <tr><th>版本</th><th>安装文件</th><th>适用系统</th><th>安装 / 启动</th></tr>
+    <tr>
+      <td class="k">Linux AppImage</td>
+      <td><code>QA-Tool-4.0.0-x86_64.AppImage</code></td>
+      <td>任意 x86_64 Linux（Debian / Ubuntu / elementary 等）</td>
+      <td>免安装：<code>chmod +x</code> 后直接运行；可移动到 <code>/opt</code> 并自建桌面快捷方式</td>
+    </tr>
+    <tr>
+      <td class="k">Linux .deb</td>
+      <td><code>qa-tool_4.0.0_amd64.deb</code></td>
+      <td>Debian 13 / Ubuntu 22.04+ / 衍生版</td>
+      <td><code>sudo dpkg -i qa-tool_4.0.0_amd64.deb</code>，安装后从开始菜单运行 <code>qa-tool</code></td>
+    </tr>
+    <tr>
+      <td class="k">Windows 安装包</td>
+      <td><code>QA-Tool-Setup-4.0.0.exe</code></td>
+      <td>Windows 10/11（64 位）</td>
+      <td>双击运行 Inno Setup 向导，自动创建开始菜单/桌面快捷方式，支持卸载</td>
+    </tr>
   </table>
 </section>
 
@@ -511,7 +538,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
 
 </main>
 </div>
-<footer>QA-Tool v3.8.0 · 本指南随软件离线分发（config/help/guide.html）· 菜单「帮助 → 使用指南」或按 F1 打开</footer>
+<footer>QA-Tool v4.0.0 · 本指南随软件离线分发（config/help/guide.html）· 菜单「帮助 → 使用指南」或按 F1 打开</footer>
 
 </body>
 </html>
