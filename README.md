@@ -51,6 +51,16 @@ python main.py
 | **可靠性** | Weibull 2P/3P/4P · KM 生存曲线 · Cox 回归 · ALT · RBD |
 | **时间序列** | ARIMA · 指数平滑 · 季节分解 · 预测 |
 
+### 预测分析与机器学习（v4.0.0）
+
+| 模块 | 能力 |
+|------|------|
+| **AutoML 选模** | 线性/逻辑回归 · CART · 随机森林（OOB）· 梯度提升（内置 HistGradientBoosting，可选 XGBoost）· MARS；CV 排名与推荐 |
+| **特征工程** | 缺失值 · 独热编码 · 分位数分箱 · 标准化；Pipeline 防泄漏 · 分层切分 |
+| **模型评估** | R²/调整 R²/RMSE/MAE/MAPE · Accuracy/P/R/F1/AUC · 混淆矩阵 · ROC · K 折 CV · 学习曲线 · 残差诊断 |
+| **解释与部署** | SHAP（自动降级原生/置换重要性）· 单样本解释 · `.qamodel` 保存/加载 · 预测导出 |
+| **QAM Harness 工具** | `ml_prepare_data` · `ml_train` · `ml_automl` · `ml_evaluate` · `ml_explain` · `ml_predict` |
+
 ### IE 工业工程
 
 | 模块 | 能力 |
@@ -75,7 +85,7 @@ python main.py
 
 | 模块 | 能力 |
 |------|------|
-| **QAM Harness** | AI Agent：30 个本地工具调用（SPC/能力/MSA/假设检验/DOE/回归/可靠性/时间序列/IE/成本/实时/五链/根因）+ 离线工具模式 · BYOK 云供应商（OpenAI/Claude/Gemini/DeepSeek/Z.ai/KIMI + 自定义端点）· 密钥加密 + 云调用隐私门 · 知识库 RAG |
+| **QAM Harness** | AI Agent：36 个本地工具调用（SPC/能力/MSA/假设检验/DOE/回归/可靠性/时间序列/IE/成本/实时/五链/根因/机器学习）+ 离线工具模式 · BYOK 云供应商（OpenAI/Claude/Gemini/DeepSeek/Z.ai/KIMI + 自定义端点）· 密钥加密 + 云调用隐私门 · 知识库 RAG |
 | **插件接口 v2** | 外部插件独立开发/发布：pip entry point 或用户目录加载 · 贡献 Tab / Agent 工具 / 设置页 · 能力与依赖声明 · 信任模型（如独立项目 [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion)） |
 | **图表** | 15+ 种图表 · 深色主题 · 中文字体 |
 | **报告** | PDF / Word / Excel / HTML · 图表内联 |
@@ -130,9 +140,10 @@ analysis/              # 分析引擎 (14 模块)
 ├── time_series/       # 时间序列
 ├── ie/                # IE 工业工程
 ├── charts/            # 图表生成器
-└── ai/                # AI 根因分析
+├── ai/                # AI 根因分析
+└── ml/                # 预测分析与机器学习（AutoML/MARS/解释）
 core/                  # 核心引擎
-ui/                    # PySide6 UI (36 个 Tab + 插件 Tab)
+ui/                    # PySide6 UI (37 个 Tab + 插件 Tab)
 output/                # 报告引擎
 tests/                 # 1500+ 测试
 ```
@@ -153,4 +164,4 @@ tests/                 # 1500+ 测试
 
 ---
 
-*Python 3.14 + PySide6 · 1500+ 测试 · 36 个分析 Tab + 插件接口 v2*
+*Python 3.14 + PySide6 · 1650+ 测试 · 37 个分析 Tab + 插件接口 v2*

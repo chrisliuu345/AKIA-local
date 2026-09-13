@@ -2,7 +2,7 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> 当前: v3.8.0 Industrial AI Agent（QAM Harness + BYOK + 插件接口 v2）（✅ 2026-09-12）| 下一版: **v4.0.0 预测分析与机器学习（规划）** | 测试: 1567 pytest · 36 个分析 Tab | 更新: 2026-09-12
+> 当前: v3.8.0 Industrial AI Agent（QAM Harness + BYOK + 插件接口 v2）（✅ 2026-09-12）| 开发中: **v4.0.0 预测分析与机器学习（P0-P4 ✅ 已实现，待人工核查 + P5 发布收尾）** | 测试: 1659 pytest · 37 个分析 Tab | 更新: 2026-09-13
 
 > **维护约定（2026-09-12 起）**：每条版本记录只写「一行摘要 + 关键数据」；实现细节写进代码/测试/使用指南，本文不展开。
 > 本文件已由 1100+ 行压缩至 500 行内，展开版历史见 git 历史（`git log -p -- ROADMAP.md`）。
@@ -31,7 +31,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | ✅ | v3.7.2 | 实时监控对标优化 8 项 |
 | ✅ | **v3.8.0** | **Industrial AI Agent（QAM Harness + 插件接口 v2；视觉迁至独立插件项目）** |
 | 🔌 | [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion) | 视觉插件独立仓库（视频时间研究），基于插件接口 v2 |
-| 🚧 | v4.0.0 | 预测分析与机器学习（P0-P5 方案已定，待实施） |
+| 🚧 | v4.0.0 | 预测分析与机器学习（P0-P4 ✅ 已实现；P5 发布收尾待人工核查） |
 
 ---
 
@@ -61,6 +61,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 
 | 日期 | 版本 | 摘要 |
 |------|------|------|
+| 09-13 | v4.0.0-dev | **预测分析与机器学习 P0-P4 实现**：`analysis/ml/`（common/prep/trees/evaluate/forest/boosting/explain/mars/automl/train/persist）——任务判定与防泄漏 Pipeline、CART（预/后剪枝 + 规则）、回归/分类指标与 CV/学习曲线/残差、随机森林（OOB/置换重要性）、HistGradientBoosting（XGBoost 可选降级）、SHAP 解释、纯 numpy MARS（Friedman #1 优于线性基线）、AutoML 排名推荐；新增 Tab「预测分析」（37：QThread 训练 + `.qamodel` 保存加载预测）；QAM Harness 工具 30 → 36 |
 | 09-12 | v3.8.0 | **Industrial AI Agent 发布**：QAM Harness（30 真实工具 + 在线/离线双路径 + BYOK 6 家 + 自定义兼容端点 + 隐私门 + 流式对话 UI）；插件接口 v2（manifest/能力/依赖/信任 + Tab/工具/设置页贡献）；视觉迁至独立插件项目；收尾修复 Hotelling T² 控制限（误报 30%→0.06%）与 PyInstaller `unittest` 致启动崩溃；108 文件 / 1567 通过 / 2 跳过 / 0 失败，ruff 零告警，onedir 构建 + 启动冒烟通过 |
 | 09-12 | v3.8.1-plugin-api | 插件接口 v2 + 视觉迁移（`core/plugin_api.py` / `plugin_manager.py` / `ui/plugin_host.py`；契约测试 7 例） |
 | 09-11 | v3.8.0-P3 | Vision AI 视频时间研究（多源输入/流水线/姿态/状态机/周期切分；后整体迁出为独立插件） |
@@ -112,23 +113,26 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | 发布包（AppImage / .deb / Inno） | 脚本就绪，按需构建上传 Release | 可选 |
 | 多站点 / 多语言 | v3.7.2 候选第 9 项顺延 | 候选 |
 | 连接器扩展（更多 PLC/CMM 协议） | 按现场需求 | 候选 |
-| 预测分析与机器学习 | v4.0.0 | 分阶段方案已定（P0-P5），待实施 |
+| 预测分析与机器学习 | v4.0.0 | P0-P4 ✅（2026-09-13）；P5 发布收尾待核查 |
 
 ---
 
-## v4.0.0 — 预测分析与机器学习（分阶段方案已定 · 待实施）
+## v4.0.0 — 预测分析与机器学习（P0-P4 ✅ 已实现 2026-09-13 · P5 待收尾）
 
 > 主题：补齐 Minitab Predictive Analytics 级能力；纯主软件。复用 sklearn 1.9 / shap 0.52，不新增硬依赖（XGBoost 仅可选适配）。
+
+> **进度**：P0-P4 已完成并通过阶段性验证（新增测试 + ruff 零告警 + 端到端冒烟）；
+> P5（版本 4.0.0 四端一致 + 全量回归 + 打包冒烟 + 文档定稿）待人工核查后执行。
 
 ### 阶段划分（P0 → P5）
 
 | 阶段 | 交付 | 验收 |
 |------|------|------|
-| **P0 数据与契约** | `analysis/ml/{__init__,common,prep}.py`：任务类型判定（回归/分类）、缺失值、编码、分箱、标准化、训练/测试切分、K 折、Pipeline 防泄漏 | 预处理与 sklearn 行为一致；`analysis/ml` 无 Qt（分层守卫） |
-| **P1 CART + 评估** | `trees.py`（分类/回归树、预剪枝 + ccp_alpha 后剪枝、规则导出）、`evaluate.py`（R²/adj-R²/RMSE/MAE/MAPE、Acc/P/R/F1/AUC、混淆矩阵、ROC、K 折 CV、学习曲线、残差诊断） | 同 seed 与 sklearn 指标一致（容差内）；回归 + 分类均覆盖 |
-| **P2 集成 + 解释** | `forest.py`（OOB、特征重要性、permutation importance）、`boosting.py`（HistGradientBoosting 主实现 + XGBoost 可选适配）、`explain.py`（SHAP 采样上限 + 原生重要性降级 + 单样本解释） | 三模型可训/评/释；无 XGBoost、SHAP 超限或缺失时自动降级不报错 |
-| **P3 MARS + AutoML** | `mars.py`（纯 numpy：前向基函数 + 后向剪枝 + GCV 选 knot + 交互项）、`automl.py`（模型库 CV 排名 + 时间预算 + 推荐 + leaderboard） | Friedman #1 合成集上 MARS 不劣于线性基线；AutoML 同 seed 可复现、与人工选模一致 |
-| **P4 UI + Agent 工具** | Tab「预测分析」（索引 37；子页：准备/训练/评估/预测，QThread 训练与取消）、`.qamodel` 模型保存加载与预测回写、`core/agent/tools_ml.py` 6 个工具（30 → 36） | E2E：准备→建模→评估→可视化→预测；离屏 UI 测试 + 工具真引擎测试通过 |
+| **P0 数据与契约** ✅ | `analysis/ml/{__init__,common,prep}.py`：任务类型判定（回归/分类）、缺失值、编码、分箱、标准化、训练/测试切分、K 折、Pipeline 防泄漏 | 预处理与 sklearn 行为一致；`analysis/ml` 无 Qt（分层守卫） |
+| **P1 CART + 评估** ✅ | `trees.py`（分类/回归树、预剪枝 + ccp_alpha 后剪枝、规则导出）、`evaluate.py`（R²/adj-R²/RMSE/MAE/MAPE、Acc/P/R/F1/AUC、混淆矩阵、ROC、K 折 CV、学习曲线、残差诊断） | 同 seed 与 sklearn 指标一致（容差内）；回归 + 分类均覆盖 |
+| **P2 集成 + 解释** ✅ | `forest.py`（OOB、特征重要性、permutation importance）、`boosting.py`（HistGradientBoosting 主实现 + XGBoost 可选适配）、`explain.py`（SHAP 采样上限 + 原生重要性降级 + 单样本解释） | 三模型可训/评/释；无 XGBoost、SHAP 超限或缺失时自动降级不报错 |
+| **P3 MARS + AutoML** ✅ | `mars.py`（纯 numpy：前向基函数 + 后向剪枝 + GCV 选 knot + 交互项）、`automl.py`（模型库 CV 排名 + 时间预算 + 推荐 + leaderboard） | Friedman #1 合成集上 MARS 不劣于线性基线；AutoML 同 seed 可复现、与人工选模一致 |
+| **P4 UI + Agent 工具** ✅ | Tab「预测分析」（索引 37；准备/训练/评估/预测 + QThread 训练）、`.qamodel` 模型保存加载与预测导出、`core/agent/tools_ml.py` 6 个工具（30 → 36） | E2E：准备→建模→评估→可视化→预测；离屏 UI 测试 + 工具真引擎测试通过 |
 | **P5 收尾发布** | README 中英 / guide.html / 本路线图同步；版本 4.0.0 四端一致；全量逐文件回归 + 打包冒烟 | `tools/check_version.py` 通过；ruff 零告警；onedir 构建可启动且模型推断正常 |
 
 ### 关键设计决策
@@ -173,3 +177,4 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | v2.5 ~ v2.6 | 35 | +设备监控（Tab 35） |
 | v3.3.0 | 36 | +时间序列 |
 | v3.8.0 | 36 + 插件 | 视觉 Tab 迁出；插件 Tab 动态索引（≥37）；QAM Harness 为对话窗口（非 Tab） |
+| v4.0.0-dev | 37 + 插件 | +预测分析（Tab 37）；插件 Tab 从 38 起 |
