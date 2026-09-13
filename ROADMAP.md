@@ -61,6 +61,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 
 | 日期 | 版本 | 摘要 |
 |------|------|------|
+| 09-13 | v4.0.0-fix2 | **共享滚动区高度残留修复（W58 复发）**：`QStackedWidget` 尺寸提示只取当前页（隐藏 Tab 的参数面板/数据表不再撑长滚动区）；切换 Tab 时显式重算滚动范围并置顶（0/120/260ms 分批同步，规避 Qt hint 缓存）；无 canvas 分析页记录并恢复上次页面高度（切回不再丢失滚动范围）；新增 2 例回归 |
 | 09-13 | v4.0.0-fix | **QAM Harness 连接检测修复**：任一云供应商已配置密钥即视为已连接 → 打开对话窗口不再误弹「未连接到 API」；自动选中已连接供应商并持久化 `llm_active_provider`；下拉框填充屏蔽信号（不再被中间态切回 Ollama）；新增 5 例回归 |
 | 09-13 | v4.0.0-dev | **预测分析与机器学习 P0-P4 实现**：`analysis/ml/`（common/prep/trees/evaluate/forest/boosting/explain/mars/automl/train/persist）——任务判定与防泄漏 Pipeline、CART（预/后剪枝 + 规则）、回归/分类指标与 CV/学习曲线/残差、随机森林（OOB/置换重要性）、HistGradientBoosting（XGBoost 可选降级）、SHAP 解释、纯 numpy MARS（Friedman #1 优于线性基线）、AutoML 排名推荐；新增 Tab「预测分析」（37：QThread 训练 + `.qamodel` 保存加载预测）；QAM Harness 工具 30 → 36 |
 | 09-12 | v3.8.0 | **Industrial AI Agent 发布**：QAM Harness（30 真实工具 + 在线/离线双路径 + BYOK 6 家 + 自定义兼容端点 + 隐私门 + 流式对话 UI）；插件接口 v2（manifest/能力/依赖/信任 + Tab/工具/设置页贡献）；视觉迁至独立插件项目；收尾修复 Hotelling T² 控制限（误报 30%→0.06%）与 PyInstaller `unittest` 致启动崩溃；108 文件 / 1567 通过 / 2 跳过 / 0 失败，ruff 零告警，onedir 构建 + 启动冒烟通过 |
