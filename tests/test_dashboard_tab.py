@@ -71,7 +71,7 @@ def _make_tab(main, monkeypatch):
     monkeypatch.setattr("ui.tabs.dashboard_tab.describe_variables",
                         lambda analyses, df: {})
     from ui.dialogs.formula_dialog import FormulaDialog
-    monkeypatch.setattr(FormulaDialog, "load_formulas", staticmethod(lambda: {}))
+    monkeypatch.setattr(FormulaDialog, "load_formulas", staticmethod(dict))
     tab = DashboardTab()
     tab.setParent(main)
     return tab

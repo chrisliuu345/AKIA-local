@@ -215,9 +215,9 @@ class LineBalanceTab(BaseAnalysisTab):
         for s in stations:
             rows.append([
                 "工位分配", f"工位{s['station_id']}",
-                f"{' + '.join(s['process_names'])}  "
+                (f"{' + '.join(s['process_names'])}  "
                 f"[{s['total_time']}s, 利用率 {s['utilization']:.0%}"
-                f"{', 超节拍!' if s['over_takt'] else ''}]",
+                f"{', 超节拍!' if s['over_takt'] else ''}]"),
             ])
         for w in result.get("warnings", []):
             rows.append(["警告", "-", w])

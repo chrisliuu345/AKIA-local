@@ -44,7 +44,7 @@ def facet_group_table(
     limit: int = GROUP_LIMIT,
 ) -> Tuple[List[str], List[str], Dict[str, int]]:
     """清洗后分组计数并按样本数降序截断，返回 (保留组, 省略组, 各组合法样本数)"""
-    vals, groups, ok = _clean(df, value_col, group_col)
+    _vals, groups, _ok = _clean(df, value_col, group_col)
     counts = groups.value_counts()
     kept = counts.head(limit).index.tolist()
     dropped = counts.index.tolist()[limit:]

@@ -443,8 +443,8 @@ def build_default_registry(ctx: AgentContext) -> ToolRegistry:
                 "violations": len(violations), "out_of_spec": oos,
                 "detail": limits}
         lines = [f"控制图 {result.get('chart_type', chart)} — 表「{sheet_name}」列「{col}」",
-                 f"CL={_fmt(limits.get('cl'))} UCL={_fmt(limits.get('ucl'))} "
-                 f"LCL={_fmt(limits.get('lcl'))}",
+                 (f"CL={_fmt(limits.get('cl'))} UCL={_fmt(limits.get('ucl'))} "
+                 f"LCL={_fmt(limits.get('lcl'))}"),
                  f"判异点 {len(violations)} 个"
                  + (f"，超规格 {oos} 点" if (usl is not None or lsl is not None) else "")]
         lines += _violation_lines(violations)
@@ -651,11 +651,11 @@ def build_default_registry(ctx: AgentContext) -> ToolRegistry:
         data = {"group_by": group_by, "overall": overall,
                 "buckets": result.get("buckets", []),
                 "warnings": result.get("warnings", [])}
-        lines = [f"OEE（按 {group_by}）: {_fmt((overall or {}).get('oee'), 4)}"
+        lines = [(f"OEE（按 {group_by}）: {_fmt((overall or {}).get('oee'), 4)}"
                  f"（A={_fmt((overall or {}).get('availability'))}, "
                  f"P={_fmt((overall or {}).get('performance'))}, "
                  f"Q={_fmt((overall or {}).get('quality'))}），"
-                 f"评级 {(overall or {}).get('grade', '—')}"]
+                 f"评级 {(overall or {}).get('grade', '—')}")]
         for bucket in result.get("buckets", [])[:6]:
             lines.append(f"  {bucket.get('label')}: OEE={_fmt(bucket.get('oee'))} "
                          f"可用={_fmt(bucket.get('availability'))} "

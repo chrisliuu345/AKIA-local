@@ -156,7 +156,7 @@ def generate_design(
     if k > 15:
         raise ValueError("Maximum 15 factors, got " + str(k))
 
-    gen_strs, info = _get_generators(k, fraction, generators)
+    gen_strs, _info = _get_generators(k, fraction, generators)
     p = len(gen_strs)
     k_basic = k - p
 

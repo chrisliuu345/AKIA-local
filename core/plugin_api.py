@@ -160,7 +160,7 @@ class PluginToolRegistry:
     def prefixed(self, name: str) -> str:
         raw = str(name or "").strip()
         prefix = f"{self.plugin_id}_"
-        if raw.startswith(prefix) or raw.startswith(f"plugin_{prefix}"):
+        if raw.startswith((prefix, f"plugin_{prefix}")):
             return raw
         return f"{prefix}{raw}"
 

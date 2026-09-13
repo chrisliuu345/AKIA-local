@@ -290,8 +290,8 @@ class OneClickAnalyzer:
         lines = [
             "## 一键分析报告 (规则引擎)",
             "",
-            f"**数据概况**: {stats.get('total_sheets', '?')} 个工作表, "
-            f"{stats.get('total_rows', '?')} 行记录",
+            (f"**数据概况**: {stats.get('total_sheets', '?')} 个工作表, "
+            f"{stats.get('total_rows', '?')} 行记录"),
             "",
             "### 分析结果",
         ]

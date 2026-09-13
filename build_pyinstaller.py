@@ -187,7 +187,7 @@ def build(name: str, onefile: bool):
     print("  " + " \\\n  ".join(cmd) + "\n")
     print("[build] 开始构建，请耐心等待...\n")
 
-    result = subprocess.run(cmd, cwd=str(PROJECT_DIR))
+    result = subprocess.run(cmd, cwd=str(PROJECT_DIR), check=False)
     if result.returncode != 0:
         print(f"\n[error] 构建失败! 返回码: {result.returncode}")
         sys.exit(result.returncode)

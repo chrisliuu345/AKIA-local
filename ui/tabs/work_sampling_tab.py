@@ -370,7 +370,7 @@ class WorkSamplingTab(BaseAnalysisTab):
         colors = chart.get("colors", [])
 
         ax1 = fig.add_subplot(1, 2, 1)
-        wedges, texts, autotexts = ax1.pie(
+        _wedges, _texts, autotexts = ax1.pie(
             values, labels=labels, colors=colors, autopct="%1.1f%%",
             startangle=90, pctdistance=0.75,
         )

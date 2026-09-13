@@ -725,10 +725,10 @@ def _register_doe_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
                 "residual_std": _pick(result, "residual_std"),
                 "coefficients": coefficients,
                 "warnings": result.get("warnings", [])}
-        lines = [f"回归分析 — {resp} ~ {' + '.join(factors)}: "
+        lines = [(f"回归分析 — {resp} ~ {' + '.join(factors)}: "
                  f"R²={_fmt(data['r_squared'], 4)}，"
                  f"调整 R²={_fmt(data['adj_r_squared'], 4)}，"
-                 f"p={_fmt(data['p_value'], 4)}"]
+                 f"p={_fmt(data['p_value'], 4)}")]
         for coef in (coefficients or [])[:5]:
             if isinstance(coef, dict):
                 lines.append(f"  {coef.get('term', coef.get('name', '?'))}: "
@@ -776,7 +776,7 @@ def _register_reliability_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
                     f"β={_fmt(data['beta'])} η={_fmt(data['eta'])}，"
                     f"B10={_fmt(data['b10_life'])} MTBF={_fmt(data['mtbf'])}")
             return ToolResult("run_reliability", data=data, text=text)
-        if kind.startswith("kaplan") or kind.startswith("km"):
+        if kind.startswith(("kaplan", "km")):
             cols = _match_columns(frame, [time_column or "时间", event_column or "事件"])
             from analysis.reliability.survival import kaplan_meier
             result = kaplan_meier(_num_series(frame, cols[0]),
@@ -1165,8 +1165,8 @@ def _register_ai_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
             })
         data = {"sheet": name, "target": target, "method": result.get("method"),
                 "violation_rows": result.get("n_violation_rows"), "causes": causes}
-        lines = [f"根因分析 — 目标列「{target}」（{result.get('method')}）: "
-                 f"变异关联行 {result.get('n_violation_rows', 0)}"]
+        lines = [(f"根因分析 — 目标列「{target}」（{result.get('method')}）: "
+                 f"变异关联行 {result.get('n_violation_rows', 0)}")]
         for item in causes[:5]:
             lines.append(f"  {item['column']}: 评分 {_fmt(item['score'], 3)}"
                          f"（重要性 {_fmt(item['importance'], 3)}）— {item['explanation']}")

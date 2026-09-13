@@ -76,9 +76,8 @@ class SheetSplitter:
         os.makedirs(output_dir, exist_ok=True)
         paths = []
         for keys, group in df.groupby(columns):
-            if not isinstance(keys, tuple):
-                keys = (keys,)
-            name = "_".join(str(k).replace("/", "_")[:20] for k in keys)
+            key_tuple = keys if isinstance(keys, tuple) else (keys,)
+            name = "_".join(str(k).replace("/", "_")[:20] for k in key_tuple)
             path = os.path.join(output_dir, f"{name}.xlsx")
             group.to_excel(path, index=False)
             paths.append(path)

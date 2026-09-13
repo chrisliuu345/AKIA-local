@@ -89,12 +89,12 @@ class TestClean:
 
     def test_nan_value_rows_dropped(self):
         df = pd.DataFrame({"数值": [1.0, np.nan, "abc"], "分组": ["x", "x", "y"]})
-        vals, groups, ok = _clean(df, "数值", "分组")
+        _vals, _groups, ok = _clean(df, "数值", "分组")
         assert ok is False  # 只剩 1 个有效样本
 
     def test_missing_columns(self):
         df = pd.DataFrame({"数值": [1.0, 2.0]})
-        vals, groups, ok = _clean(df, "数值", "不存在")
+        _vals, _groups, ok = _clean(df, "数值", "不存在")
         assert ok is False
         _, _, ok2 = _clean(None, "数值", "分组")
         assert ok2 is False
@@ -127,7 +127,7 @@ class TestFacetGroupTable:
             "数值": [1.0, 2.0, np.nan, np.nan],
             "分组": ["x", "x", "x", "y"],
         })
-        kept, dropped, counts = facet_group_table(df, "数值", "分组")
+        kept, _dropped, counts = facet_group_table(df, "数值", "分组")
         assert kept == ["x"]
         assert "y" not in kept
         assert "y" not in counts  # 0 个有效样本的组不参与分面

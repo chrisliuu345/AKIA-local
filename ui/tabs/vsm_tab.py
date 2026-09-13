@@ -160,11 +160,11 @@ class VSMTab(BaseAnalysisTab):
         cols = ["类别", "内容"]
         rows = []
         for p in procs[:25]:
-            rows.append(["工序", f"{p.process_id} {p.process_name}  "
-                         f"CT={p.cycle_time:.1f}s  {p.labor_count}人"])
+            rows.append(["工序", (f"{p.process_id} {p.process_name}  "
+                         f"CT={p.cycle_time:.1f}s  {p.labor_count}人")])
         for f in flows[:25]:
-            rows.append(["物流", f"{f.from_process} → {f.to_process}  "
-                         f"{f.quantity:.0f}件"])
+            rows.append(["物流", (f"{f.from_process} → {f.to_process}  "
+                         f"{f.quantity:.0f}件")])
         self.preview_table.setColumnCount(2)
         self.preview_table.setHorizontalHeaderLabels(cols)
         self.preview_table.setRowCount(len(rows))
@@ -206,10 +206,10 @@ class VSMTab(BaseAnalysisTab):
             ["汇总", "Lead Time", f"{s['lead_time_days']:.2f} 天"],
             ["汇总", "Σ增值时间 (VA)", f"{s['total_va_sec']:.0f} s"],
             ["汇总", "增值比", f"{s['va_ratio']:.2%}"],
-            ["汇总", "在制品库存", f"{s['total_inventory_qty']:.0f} 件 "
-                                    f"({s['inventory_days']:.2f} 天)"],
-            ["汇总", "节拍时间", f"{s['takt_sec']:.1f} s "
-                                  f"(日需求 {s['daily_demand']:.0f} 件)"],
+            ["汇总", "在制品库存", (f"{s['total_inventory_qty']:.0f} 件 "
+                                    f"({s['inventory_days']:.2f} 天)")],
+            ["汇总", "节拍时间", (f"{s['takt_sec']:.1f} s "
+                                  f"(日需求 {s['daily_demand']:.0f} 件)")],
         ]
         if s.get("over_takt"):
             rows.append(["汇总", "超节拍工序", ", ".join(s["over_takt"])])

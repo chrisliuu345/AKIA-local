@@ -219,7 +219,7 @@ def save_config(values: dict) -> None:
     值为 None 表示**删除该键**（连同 `<key>_enc`）——用于"清除 API Key"等场景，
     避免旧的加密值残留导致 get_secret 仍能读回已清除的密钥。
     """
-    global _user_overrides, CHART_DPI, MSA_GRR_ACCEPTABLE, MSA_GRR_MARGINAL, MSA_NDC_THRESHOLD
+    global CHART_DPI, MSA_GRR_ACCEPTABLE, MSA_GRR_MARGINAL, MSA_NDC_THRESHOLD
     removals = [k for k, v in values.items() if v is None]
     for key in removals:
         _user_overrides.pop(key, None)

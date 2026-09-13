@@ -43,9 +43,8 @@ class CostAnalyzer:
         n = 0
         for s in samples:
             value = float(getattr(s, "value", s))
-            if usl is not None and value > float(usl):
-                n += 1
-            elif lsl is not None and value < float(lsl):
+            if ((usl is not None and value > float(usl))
+                    or (lsl is not None and value < float(lsl))):
                 n += 1
         return n
 

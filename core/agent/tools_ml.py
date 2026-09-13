@@ -88,8 +88,8 @@ def register_ml_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
         tgt = _target_column(frame, target)
         cols = _feature_columns(context, name, frame, tgt, features)
         out = prep.describe_dataset(frame, tgt, cols)
-        lines = [f"数据准备 — 表「{name}」目标列「{tgt}」: "
-                 f"{out['n_rows']} 行，任务类型 {out['task']}"]
+        lines = [(f"数据准备 — 表「{name}」目标列「{tgt}」: "
+                 f"{out['n_rows']} 行，任务类型 {out['task']}")]
         for col in out["columns"]:
             lines.append(f"  · {col['name']}（{col['kind']}）缺失 {col['missing']}，"
                          f"唯一值 {col['unique']}")
@@ -122,8 +122,8 @@ def register_ml_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
             "importances": importances,
             "rules": result.get("rules") or result.get("terms") or [],
         }
-        lines = [f"机器学习训练（表「{name}」→ {data['model']}）: "
-                 f"{result.get('summary_text', '')}"]
+        lines = [(f"机器学习训练（表「{name}」→ {data['model']}）: "
+                 f"{result.get('summary_text', '')}")]
         if importances:
             lines.append("  关键特征: " + "，".join(
                 f"{i['feature']}({_fmt(i['importance'])})" for i in importances))
@@ -150,8 +150,8 @@ def register_ml_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
                                 model_params={"forest": {"n_estimators": 120},
                                               "boosting": {"max_iter": 150}})
         leaderboard = _trim_leaderboard(result["leaderboard"], result["task"])
-        lines = [f"AutoML（表「{name}」，按 {result['ranking_metric']} 排名）: "
-                 f"{result['summary_text']}"]
+        lines = [(f"AutoML（表「{name}」，按 {result['ranking_metric']} 排名）: "
+                 f"{result['summary_text']}")]
         for item in leaderboard:
             lines.append(f"  {item['rank']}. {item['label']}: "
                          f"CV={_fmt(item['cv_score'])}，测试={_fmt(item['test_score'])}，"
@@ -198,9 +198,9 @@ def register_ml_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
                 "task": task, "cv_scores": fit["cv_scores"], "cv": fit["cv"],
                 "metrics": fit["metrics"], "roc": roc, "residuals": residuals,
                 "learning_curve": curve}
-        lines = [f"模型评估（{fit['model']}）: "
+        lines = [(f"模型评估（{fit['model']}）: "
                  f"{'R²' if task == 'regression' else '准确率'}="
-                 f"{_fmt(fit['metrics']['test'].get('r2' if task == 'regression' else 'accuracy'))}"]
+                 f"{_fmt(fit['metrics']['test'].get('r2' if task == 'regression' else 'accuracy'))}")]
         if residuals:
             lines.append(f"  残差: 均值 {_fmt(residuals['mean'])}，"
                          f"标准差 {_fmt(residuals['std'])}"
@@ -234,8 +234,8 @@ def register_ml_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
                                 "task": fit["task"], "method": out["method"],
                                 "importances": out["importances"][:10],
                                 "note": out["note"]}
-        lines = [f"模型解释（{fit['model']}，方法 {out['method']}）: "
-                 f"{out['note']}",
+        lines = [(f"模型解释（{fit['model']}，方法 {out['method']}）: "
+                 f"{out['note']}"),
                  "  重要性 Top: " + "，".join(
                      f"{i['feature']}({_fmt(i['importance'])})"
                      for i in out["importances"][:5])]
@@ -288,8 +288,8 @@ def register_ml_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
                 save_path, fit["pipeline"], task=fit["task"], target=tgt,
                 features=fit["features"], model=fit["model"],
                 params=fit["params"], metrics=fit["metrics"])
-        lines = [f"模型预测（{fit['model']}）: 留出集 {len(predictions)} 行，"
-                 f"完整度 {_fmt(fit['metrics']['test'].get('r2' if fit['task'] == 'regression' else 'accuracy'))}"]
+        lines = [(f"模型预测（{fit['model']}）: 留出集 {len(predictions)} 行，"
+                 f"完整度 {_fmt(fit['metrics']['test'].get('r2' if fit['task'] == 'regression' else 'accuracy'))}")]
         preview = predictions.head(preview_rows)
         lines.extend(f"  · {row}" for row in
                      preview.to_dict(orient="records"))

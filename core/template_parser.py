@@ -5,7 +5,7 @@
 import json
 import logging
 import os
-from typing import Dict, List, Any
+from typing import ClassVar, Dict, List, Any
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 class TemplateParser:
     """解析质量分析要求模板文件"""
 
-    REQUIRED_FIELDS = ["analysis_type", "data_sheet", "measurement_column"]
-    OPTIONAL_FIELDS = [
+    REQUIRED_FIELDS: ClassVar[List[str]] = ["analysis_type", "data_sheet", "measurement_column"]
+    OPTIONAL_FIELDS: ClassVar[List[str]] = [
         "subgroup_column", "subgroup_size",
         "usl", "lsl", "target",
         "title", "description",
@@ -23,7 +23,7 @@ class TemplateParser:
         "chart_options", "confidence_level",
     ]
 
-    VALID_ANALYSIS_TYPES = [
+    VALID_ANALYSIS_TYPES: ClassVar[List[str]] = [
         "xbar_r", "xbar_s", "imr",
         "p_chart", "np_chart", "c_chart", "u_chart",
         "normal_capability", "non_normal_capability", "between_within_capability",
@@ -146,7 +146,7 @@ class TemplateParser:
             return float(val)
         except ValueError:
             pass
-        if val.startswith("[") or val.startswith("{"):
+        if val.startswith(("[", "{")):
             try:
                 return json.loads(val)
             except json.JSONDecodeError:

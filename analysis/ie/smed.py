@@ -53,9 +53,7 @@ class SMEDResult:
     def total_external_after(self) -> float:
         total = 0.0
         for t in self.tasks:
-            if t.convert_to_external:
-                total += max(t.improved_time, 0) if t.improved_time > 0 else t.time_sec
-            elif t.is_external:
+            if t.convert_to_external or t.is_external:
                 total += max(t.improved_time, 0) if t.improved_time > 0 else t.time_sec
         return total
 

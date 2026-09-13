@@ -9,6 +9,8 @@
 from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout
 from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QTimer, QPoint
 from PySide6.QtGui import QFont
+from typing import ClassVar
+
 from ui.font_config import get_ui_font
 
 
@@ -23,7 +25,7 @@ _TOAST_COLORS = {
 class Toast(QFrame):
     """单条通知 — 自动滑入 + 淡出"""
 
-    _active_toasts: list = []
+    _active_toasts: ClassVar[list] = []
 
     def __init__(self, parent, message: str, toast_type: str = "info",
                  duration: int = 3000):

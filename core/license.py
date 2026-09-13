@@ -49,7 +49,6 @@ class LicenseManager:
 
 def _ensure_license_dir():
     """确保许可证目录存在 — 空操作"""
-    pass
 
 
 def verify_license() -> Tuple[bool, LicenseStatus]:

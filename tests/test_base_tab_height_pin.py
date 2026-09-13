@@ -84,7 +84,7 @@ def test_hidden_pinned_tab_stretches_others():
 
 
 def test_return_to_chart_restores_height():
-    stack, scroll, tall, plain = _harness()
+    stack, scroll, tall, _plain = _harness()
     stack.setCurrentIndex(1)
     QApplication.processEvents()
     stack.setCurrentIndex(0)
