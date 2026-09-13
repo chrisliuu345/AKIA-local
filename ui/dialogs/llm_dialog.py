@@ -114,7 +114,8 @@ class QAMHarnessDialog(QDialog):
         # 已注入 engine（测试/内嵌用法）时沿用它自带的 LLM，避免被覆盖
         self.llm = getattr(engine, "llm", None) if engine is not None else None
         if self.llm is None:
-            self.llm = LLMClient.from_config()
+            # 任意云供应商已配置密钥即自动选中（与主窗口连接检测同源）
+            self.llm = LLMClient.detect_available()
             saved_model = QSettings("QA-Tool", "LLM").value("model", "")
             if saved_model:
                 try:
@@ -335,14 +336,21 @@ class QAMHarnessDialog(QDialog):
         from core.agent.providers import PROVIDERS, requires_key
         from config.settings import get_secret
 
-        self.provider_combo.clear()
-        for pid, spec in PROVIDERS.items():
-            configured = (not requires_key(pid)) or bool(get_secret(f"llm_{pid}_api_key", ""))
-            label = spec.label if configured else f"{spec.label}（未配置密钥）"
-            self.provider_combo.addItem(label, pid)
-        idx = self.provider_combo.findData(self.llm.provider)
-        if idx >= 0:
-            self.provider_combo.setCurrentIndex(idx)
+        # 填充期间屏蔽信号：避免 clear()/addItem 触发的中间态被当成用户切换，
+        # 导致初始化时误弹密钥输入框或把已连接供应商切回 Ollama。
+        previous = self.provider_combo.blockSignals(True)
+        try:
+            self.provider_combo.clear()
+            for pid, spec in PROVIDERS.items():
+                configured = (not requires_key(pid)) or bool(
+                    get_secret(f"llm_{pid}_api_key", ""))
+                label = spec.label if configured else f"{spec.label}（未配置密钥）"
+                self.provider_combo.addItem(label, pid)
+            idx = self.provider_combo.findData(self.llm.provider)
+            if idx >= 0:
+                self.provider_combo.setCurrentIndex(idx)
+        finally:
+            self.provider_combo.blockSignals(previous)
 
     def _on_provider_changed(self, *_):
         pid = str(self.provider_combo.currentData() or "ollama")
