@@ -1609,8 +1609,11 @@ class MainWindow(QMainWindow):
             return acceptance["message"][:8]
         if "p_value" in result:
             return "显著" if result.get("is_significant") else "不显著"
-        if "model" in result:
-            r2 = result["model"].get("r_squared", 0)
+        if result.get("summary_text"):
+            return str(result["summary_text"])[:16]
+        model = result.get("model")
+        if isinstance(model, dict):        # 回归等引擎的模型详情字典
+            r2 = model.get("r_squared", 0)
             return f"R²={r2:.2f}"
         return ""
 
