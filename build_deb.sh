@@ -73,7 +73,19 @@ echo "[4/4] 打包 .deb..."
 # dpkg-deb 要求 control 目录权限 <= 755; 统一目录为 755 防 ACL/umask 干扰
 find "${DEB_DIR}" -type d -exec chmod 755 {} +
 OUTPUT_FILE="${SCRIPT_DIR}/build/${APP_NAME}_${APP_VERSION}_amd64.deb"
-dpkg-deb --build "${DEB_DIR}" "${OUTPUT_FILE}"
+if ! dpkg-deb --build "${DEB_DIR}" "${OUTPUT_FILE}" \
+        2>"${SCRIPT_DIR}/build/deb_build.log"; then
+    # 容器/网络盘上 chmod 可能无效（目录被强制 777），dpkg-deb 拒绝打包；
+    # 回退：在 /tmp（普通文件系统）复制目录后打包，产物仍输出到 build/
+    echo "  目录权限无法收紧（容器/网络盘常见），改用 /tmp 重新打包..."
+    TMP_ROOT="$(mktemp -d)"
+    cp -a "${DEB_DIR}" "${TMP_ROOT}/pkg"
+    find "${TMP_ROOT}/pkg" -type d -exec chmod 755 {} +
+    chmod 755 "${TMP_ROOT}/pkg/DEBIAN/postinst" "${TMP_ROOT}/pkg/DEBIAN/postrm"
+    chmod 644 "${TMP_ROOT}/pkg/DEBIAN/control"
+    dpkg-deb --build "${TMP_ROOT}/pkg" "${OUTPUT_FILE}"
+    rm -rf "${TMP_ROOT}"
+fi
 
 # ── 完成 ───────────────────────────────────────────────────
 echo ""

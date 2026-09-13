@@ -2,7 +2,7 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> Current: v3.8.0 Industrial AI Agent (QAM Harness + BYOK + Plugin API v2) (✅ 2026-09-12) | In progress: **v4.0.0 Predictive Analytics & ML (P0-P4 ✅ implemented, pending human review + P5 release wrap-up)** | Tests: 1665 pytest · 37 analysis tabs | Updated: 2026-09-13
+> Current: v4.0.0 Predictive Analytics & Machine Learning (AutoML / CART / Random Forests / Gradient Boosting / MARS + 6 agent tools) (✅ 2026-09-13) | Next: v4.1.0 (TBD) | Tests: 1665 pytest · 37 analysis tabs | Updated: 2026-09-13
 
 > **Maintenance convention (from 2026-09-12)**: each version entry is one summary line plus key numbers; implementation details live in code/tests/user guide, not here.
 > This file was compressed from 1100+ lines to under 500; the expanded history is in git history (`git log -p -- ROADMAP.md`).
@@ -14,7 +14,7 @@
 ```
 v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.1 ──→ v2.5 ──→ v2.6.0 ~ v2.6.5 ──→ v2.7.0
       ──→ v2.8.0 ──→ v2.9.0 ──→ v3.0.0 ──→ v3.1.0 ──→ v3.2.0 ──→ v3.3.0 ──→ v3.4.0 ──→ v3.5.0
-      ──→ v3.6.0 (incl. 3.6.1) ──→ v3.7.0 (incl. review) ──→ v3.7.1 ──→ v3.7.2 ──→ v3.8.0 ✅ current ──→ v4.0.0
+      ──→ v3.6.0 (incl. 3.6.1) ──→ v3.7.0 (incl. review) ──→ v3.7.1 ──→ v3.7.2 ──→ v3.8.0 ──→ v4.0.0 ✅ current
 ```
 
 | Status | Version | Theme |
@@ -31,7 +31,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | ✅ | v3.7.2 | Realtime-monitoring benchmark polish, 8 items |
 | ✅ | **v3.8.0** | **Industrial AI Agent (QAM Harness + Plugin API v2; vision moved to an external plugin)** |
 | 🔌 | [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion) | External vision plugin (video time study) built on Plugin API v2 |
-| 🚧 | v4.0.0 | Predictive analytics & ML (P0-P4 ✅ implemented; P5 release wrap-up pending review) |
+| ✅ | **v4.0.0** | **Predictive analytics & ML (CART / Random Forests / gradient boosting / MARS / AutoML + feature engineering / evaluation / SHAP / model deployment)** |
 
 ---
 
@@ -61,6 +61,7 @@ Planning principles:
 
 | Date | Version | Summary |
 |------|---------|---------|
+| 09-13 | v4.0.0 | **Predictive Analytics & ML released**: `analysis/ml/` (task detection + leak-proof Pipeline, CART pre/post pruning, Random Forests with OOB, HistGradientBoosting with optional XGBoost, pure-numpy MARS, SHAP explanation, AutoML ranking); new "Predictive Analytics" tab (37) + 6 agent tools (30 → 36) + `.qamodel` save/load/predict; version 4.0.0 across all four ends; 1665 passed / 2 skipped / 0 failed, ruff clean; Linux AppImage + .deb built, Windows installer produced by the Inno script on Windows |
 | 09-13 | v4.0.0-quality | **Full code-quality review**: ruff gate extended and driven to zero (T10/ISC/PIE/RUF012/RUF021/RUF034/RUF059/PLW1510/PLW2901/PLW0602); 12 real defects fixed (fishbone duplicate condition, loop-variable shadowing x2, bogus global declaration, redundant branches in SMED/cost/sampling/project manager, unused unpacking in DOE/regression/charts, startswith merged x3, explicit subprocess check); `ClassVar` annotations for class-level mutable constants; repo hygiene (untrack `test_quality.db` and stale compliance docx artifacts); full per-file regression 118 files green + packaging smoke passed |
 | 09-13 | v4.0.0-fix2 | **Shared scroll-area height fix (W58 recurrence)**: the `QStackedWidget` size hint now follows only the current page, so hidden tabs (parameter panels / data tables) no longer stretch the shared scroll area; switching tabs explicitly recomputes the range and scrolls to top (staged syncs at 0/120/260 ms to beat Qt's cached hints); canvas-less analysis pages record and restore their page height so switching back keeps the scroll range; 2 new regression cases |
 | 09-13 | v4.0.0-fix | **QAM Harness connection detection fix**: any cloud provider with a stored key now counts as connected, so opening the chat no longer shows the false "no API connected" prompt; the connected provider is auto-selected and persisted as `llm_active_provider`; the provider combo populates with signals blocked (no spurious switch back to Ollama); 5 new regression cases |
@@ -97,13 +98,13 @@ Planning principles:
 
 ---
 
-## Current Release: v3.8.0 Highlights
+## Current Release: v4.0.0 Highlights
 
-- **QAM Harness agent**: 30 real tools (covering the main capabilities of 36 analysis tabs) + online LLM tool protocol / offline keyword routing (works without network) + 6 BYOK cloud providers (OpenAI / Anthropic / Google / DeepSeek / Z.ai / KIMI) + custom OpenAI-compatible endpoints + per-provider one-shot privacy gate; chat UI with anchored whole-block streaming, tool cards, an independent resizable window and fully custom model names
-- **Plugin API v2**: `core/plugin_api.py` + `core/plugin_manager.py` + `ui/plugin_host.py`; three-tier discovery (bundled / user dir / pip entry point) + trust model + tool prefixing + dependency probing; untrusted plugins are parsed from the manifest but never imported
-- **Vision moved out**: `analysis/vision`, Tab 37, tools and dependencies now live in [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion); the main app keeps 36 tabs / 30 built-in tools plus plugin contributions
-- **Wrap-up fixes**: Hotelling T² control limits (individual-observation UCL was 0, subgroup limits too tight); PyInstaller `unittest` exclusion that crashed the bundle on startup; dashboard-auth test port collisions
-- **Quality numbers**: 1567 passed / 2 skipped / 0 failed (108 files, per-file regression); ruff clean; PyInstaller onedir build + offscreen launch smoke passed
+- **Predictive Analytics tab (37)**: target/feature selection → automatic task detection → 5 model families (linear/logistic · CART · Random Forests · gradient boosting · MARS) → metrics/CV/charts → `.qamodel` save/load → prediction export; training runs on a worker thread
+- **Feature engineering & evaluation**: missing values / one-hot / quantile binning / scaling (leak-proof Pipeline) · R²/RMSE/MAE/MAPE · Accuracy/P/R/F1/AUC · confusion matrix · ROC · K-fold CV · learning curve · residual diagnostics · SHAP with automatic fallback
+- **QAM Harness**: 6 machine-learning tools (`ml_prepare_data` / `ml_train` / `ml_automl` / `ml_evaluate` / `ml_explain` / `ml_predict`), tool count 30 → 36; combined with the v3.8.0 BYOK providers, privacy gate and offline keyword routing
+- **Plugin API v2** (v3.8.0): three-tier discovery + trust model + Tab/tool/settings contributions; vision evolves separately in [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion)
+- **Quality numbers**: 1665 passed / 2 skipped / 0 failed (118 files, per-file regression); extended ruff gate clean; Linux AppImage + .deb built (Windows installer script ready, built on Windows)
 
 ---
 
@@ -116,16 +117,16 @@ Planning principles:
 | Release artifacts (AppImage / .deb / Inno) | Scripts ready; build and upload to Releases on demand | Optional |
 | Multi-site / multi-language | Deferred item #9 from v3.7.2 | Candidate |
 | Connector expansion (more PLC/CMM protocols) | Driven by site needs | Candidate |
-| Predictive analytics & ML | v4.0.0 | P0-P4 ✅ (2026-09-13); P5 release wrap-up pending review |
+| Predictive analytics & ML | v4.0.0 ✅ released | Completed 2026-09-13 |
 
 ---
 
-## v4.0.0 — Predictive Analytics & ML (P0-P4 ✅ implemented 2026-09-13 · P5 pending)
+## v4.0.0 ✅ Released — Predictive Analytics & ML (2026-09-13)
 
 > Theme: close the gap to Minitab Predictive Analytics-level capability; main app only. Reuse sklearn 1.9 / shap 0.52, no new hard dependencies (XGBoost is an optional adapter).
 
-> **Progress**: P0-P4 are complete and stage-verified (new tests + zero ruff warnings + end-to-end smoke);
-> P5 (version 4.0.0 across all four ends + full regression + packaging smoke + final docs) runs after human review.
+> **Release status**: P0-P5 complete — version 4.0.0 across all four ends (settings / version_info / Inno / README·INSTALL·ROADMAP·guide);
+> full per-file regression 118 files green; extended ruff gate clean; Linux AppImage + .deb built (Windows installer produced by the Inno script on Windows).
 
 ### Phases (P0 → P5)
 
@@ -180,4 +181,4 @@ Planning principles:
 | v2.5 ~ v2.6 | 35 | +Device Monitoring (Tab 35) |
 | v3.3.0 | 36 | +Time Series |
 | v3.8.0 | 36 + plugins | Vision tab moved out; plugin tabs get dynamic indices (≥37); QAM Harness is a chat window (not a tab) |
-| v4.0.0-dev | 37 + plugins | +Predictive Analytics (Tab 37); plugin tabs start at 38 |
+| v4.0.0 | 37 + plugins | +Predictive Analytics (Tab 37); plugin tabs start at 38 |
