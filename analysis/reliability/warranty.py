@@ -61,7 +61,7 @@ def analyze(
         return {"analysis_type": "reliability.warranty", "error": "失效事件不足（至少3个）"}
 
     from scipy.stats import weibull_min
-    shape, loc, scale = weibull_min.fit(failures, floc=0)
+    shape, _loc, scale = weibull_min.fit(failures, floc=0)
     beta = shape
     eta = scale
 

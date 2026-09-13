@@ -618,9 +618,9 @@ def create_pie_chart(
     )
 
     try:
-        wedges, texts, autotexts = result
+        _wedges, _texts, autotexts = result
     except ValueError:
-        wedges, texts = result
+        _wedges, _texts = result
         autotexts = []
 
     if show_percentage and autotexts:

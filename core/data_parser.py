@@ -3,7 +3,7 @@
 """
 
 import re
-from typing import Dict, List, Optional, Any, Tuple
+from typing import ClassVar, Dict, List, Optional, Any, Tuple
 import pandas as pd
 import numpy as np
 
@@ -12,7 +12,7 @@ class DataParser:
     """智能数据解析：自动识别数据列类型、表头行、规格限"""
 
     NUMERIC_PATTERNS = re.compile(r"^(-?\d+\.?\d*|\.\d+)$")
-    DATE_PATTERNS = [
+    DATE_PATTERNS: ClassVar[List] = [
         re.compile(r"^\d{4}[-/]\d{1,2}[-/]\d{1,2}$"),
         re.compile(r"^\d{4}[-/]\d{1,2}[-/]\d{1,2}[ T]\d{1,2}:\d{2}(:\d{2})?$"),
         re.compile(r"^\d{1,2}[-/]\d{1,2}[-/]\d{4}$"),
@@ -33,7 +33,7 @@ class DataParser:
         r"[Ee][Rr][Rr]"
         r")$"
     )
-    COLUMN_TYPE_KEYS = {
+    COLUMN_TYPE_KEYS: ClassVar[Dict[str, List[str]]] = {
         "measurement": ["测量", "值", "数据", "measure", "value", "尺寸", "重量", "长度", "宽度", "厚度", "直径"],
         "subgroup": ["子组", "组", "批次", "样本", "subgroup", "sample", "lot", "batch"],
         "usl": ["上规格", "上限", "USL", "upper spec", "max"],
@@ -52,7 +52,7 @@ class DataParser:
     # 不作为 numeric_columns 输出的语义角色 (规格/目标/子组序号不是可分析测量值)
     _NON_MEASUREMENT_ROLES = ("usl", "lsl", "target", "subgroup")
 
-    TAG_KEYWORDS = {
+    TAG_KEYWORDS: ClassVar[Dict[str, List[str]]] = {
         "subgroup": ["子组", "批次", "样本号", "组号", "subgroup", "sample", "lot"],
         "measurement": ["数值", "测量值", "特性值", "value", "measurement", "data"],
         "spec_limit": ["规格限", "规格", "spec", "USL", "LSL", "上限", "下限"],

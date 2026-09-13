@@ -282,7 +282,7 @@ def analyze(
     if n < p:
         raise ValueError("Insufficient observations: " + str(n) + " < " + str(p) + " parameters")
 
-    coeffs, residuals, rank, sv = np.linalg.lstsq(X_scheffe, y, rcond=None)
+    coeffs, _residuals, _rank, _sv = np.linalg.lstsq(X_scheffe, y, rcond=None)
     y_pred = X_scheffe @ coeffs
     residuals_arr = y - y_pred
 

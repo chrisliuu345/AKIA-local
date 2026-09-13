@@ -218,12 +218,11 @@ class SharedProjectManager:
             dept_path = os.path.join(SHARED_DIR, dept_name)
             if not os.path.isdir(dept_path):
                 continue
-            if role == "admin":
-                pass
-            elif department and dept_name not in (department, PUBLIC_DEPT):
-                continue
-            elif not department and dept_name != PUBLIC_DEPT:
-                continue
+            if role != "admin":
+                if department and dept_name not in (department, PUBLIC_DEPT):
+                    continue
+                if not department and dept_name != PUBLIC_DEPT:
+                    continue
             for fname in os.listdir(dept_path):
                 if fname.endswith(".qap"):
                     full = os.path.join(dept_path, fname)

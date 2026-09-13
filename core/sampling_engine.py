@@ -451,12 +451,6 @@ class SamplingEngine:
         if usl is not None and lsl is not None:
             target = (usl + lsl) / 2
             spec_range = usl - lsl
-        elif usl is not None:
-            target = None
-            spec_range = None
-        elif lsl is not None:
-            target = None
-            spec_range = None
         else:
             target = None
             spec_range = None

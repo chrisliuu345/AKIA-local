@@ -647,7 +647,7 @@ class MainWindow(QMainWindow):
     def _on_import_quality(self):
         dialog = ImportDialog(self, mode="quality")
         if dialog.exec():
-            file_path, sheet_names = dialog.get_selection()
+            file_path, _sheet_names = dialog.get_selection()
             try:
                 self.status_label.setText(f"{i18n.tr('status.loading')}{file_path}...")
                 raw_data = self.data_loader.load(file_path)
@@ -709,7 +709,7 @@ class MainWindow(QMainWindow):
     def _on_import_ie(self):
         dialog = ImportDialog(self, mode="ie")
         if dialog.exec():
-            file_path, sheet_names = dialog.get_selection()
+            file_path, _sheet_names = dialog.get_selection()
             try:
                 self.status_label.setText(f"{i18n.tr('status.loading')}{file_path}...")
                 raw_data = self.data_loader.load(file_path)
