@@ -13,7 +13,9 @@ from PySide6.QtWidgets import (
     QPushButton, QApplication, QFrame,
     QScrollArea,
 )
-from PySide6.QtCore import Qt, QSettings, QPropertyAnimation, QEasingCurve, QUrl
+from PySide6.QtCore import (
+    Qt, QSettings, QPropertyAnimation, QEasingCurve, QUrl, QTimer,
+)
 from PySide6.QtGui import QAction, QIcon, QFont, QPixmap, QDragEnterEvent, QDropEvent, QDesktopServices
 
 from config.settings import APP_NAME, APP_VERSION, CHART_FIGSIZE, tab_allowed
@@ -56,6 +58,27 @@ def _tab_has_data(tab) -> bool:
 def _tab_is_runnable(tab) -> bool:
     """Tab 能否参与批量分析 — 有数据且定义了 run_and_display (Dashboard 等文档型 Tab 无此方法)"""
     return _tab_has_data(tab) and callable(getattr(tab, 'run_and_display', None))
+
+
+class _CurrentPageStack(QStackedWidget):
+    """尺寸提示只跟随当前页的堆叠容器（共享 QScrollArea 专用）。
+
+    QStackedWidget 默认取**所有页**尺寸提示的最大值：某个 Tab 运行分析后，
+    即使已切换到其他 Tab，隐藏页的参数面板 / 数据表 / 图表残留仍会把共享
+    滚动区撑长（滚动条不回落）。这里改为只返回当前页的提示值，隐藏页不再
+    影响布局；页内高度仍由各 Tab 自身的 min hint 与脚本化 pin 控制。
+    """
+
+    def sizeHint(self):
+        current = self.currentWidget()
+        return current.sizeHint() if current is not None else super().sizeHint()
+
+    def minimumSizeHint(self):
+        current = self.currentWidget()
+        if current is None:
+            return super().minimumSizeHint()
+        hint = current.minimumSizeHint()
+        return hint if hint.isValid() else current.sizeHint()
 
 
 def _resolve_llm_client(parent=None):
@@ -199,7 +222,7 @@ class MainWindow(QMainWindow):
         vdivider.setStyleSheet(f"color: {divider_color};")
         vdivider.setMaximumWidth(1)
 
-        self.stack = QStackedWidget()
+        self.stack = _CurrentPageStack()
         self._tab_cache = {}
 
         self.welcome_page = WelcomePage()
@@ -219,6 +242,7 @@ class MainWindow(QMainWindow):
         scroll.setWidgetResizable(True)
         scroll.setWidget(self.stack)
         scroll.setFrameShape(QFrame.NoFrame)
+        self.scroll_area = scroll
         layout.addWidget(scroll, 1)
 
     def _toggle_sidebar(self, collapsed: bool):
@@ -531,6 +555,9 @@ class MainWindow(QMainWindow):
             self._tab_anim_widget = target
             self.stack.setCurrentIndex(index)
             self.sidebar.set_active(index)
+            # 切换后按当前页重算共享滚动范围，并回到顶部（隐藏页残留不再起作用）
+            self._sync_scroll_range(reset_scroll=True)
+            self._schedule_scroll_sync()
 
             anim = QPropertyAnimation(effect, b"opacity")
             anim.setDuration(200)
@@ -548,6 +575,41 @@ class MainWindow(QMainWindow):
                 tab = self._tab_cache.get(27)
                 if tab is not None and hasattr(tab, 'refresh_if_changed'):
                     tab.refresh_if_changed()
+
+    def _sync_scroll_range(self, reset_scroll: bool = False):
+        """按当前页重算共享滚动范围（隐藏页残留高度不再影响滚动条）。
+
+        QScrollArea 只在收到布局请求时重算范围；Tab 内容（参数面板/图表/数据表）
+        变化后不会自动触发，因此需要显式把当前页的最小高度写入 stack 并
+        updateGeometry，保证"运行分析 → 切走"后滚动条回落到当前页长度。
+        """
+        if not hasattr(self, "stack"):
+            return
+        page = self.stack.currentWidget()
+        height = 0
+        if page is not None:
+            layout = page.layout()
+            if layout is not None:      # 激活布局，拿到分析渲染后的真实最小高度
+                layout.activate()
+            hint = page.minimumSizeHint()
+            height = hint.height() if hint.isValid() else page.sizeHint().height()
+        self.stack.setMinimumHeight(max(0, int(height)))
+        self.stack.updateGeometry()
+        if reset_scroll and getattr(self, "scroll_area", None) is not None:
+            self.scroll_area.verticalScrollBar().setValue(0)
+
+    def _schedule_scroll_sync(self, delays=(0, 120, 260)):
+        """分批延后同步滚动范围。
+
+        Qt 的 minimumSizeHint 有缓存：图表渲染 / show-hide 重新 pin 之后，
+        同一拍内读到的仍是旧值。这里在 0/120/260ms 各同步一次，覆盖布局、
+        动画与图表首帧完成的时间点，成本仅为几次 setMinimumHeight。
+        """
+        for delay in delays:
+            if delay <= 0:
+                self._sync_scroll_range()
+            else:
+                QTimer.singleShot(int(delay), self._sync_scroll_range)
 
     def _import_cp_from_fmea(self, cp_rows: list) -> bool:
         """FMEA → 控制计划：追加行 → 切换 Tab → 写入项目上下文。
@@ -1042,6 +1104,8 @@ class MainWindow(QMainWindow):
             key_res = self._summarize_result(result.get("result", {}))
             self.sidebar.add_history(idx, atype, key_res)
         self._notify_dashboard()
+        # 渲染完成后布局才稳定，分批延后同步滚动范围（立即读会拿到旧 hint）
+        self._schedule_scroll_sync()
 
     def _on_time_observations_ready(self, observations):
         """外部插件 Tab → 工时研究 Tab：发送作业周期。"""
