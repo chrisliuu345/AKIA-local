@@ -86,6 +86,42 @@ class LLMClient:
         key = get_secret(f"llm_{pid}_api_key", "")
         return cls(model=model, provider=pid, api_key=key, api_base=base)
 
+    # ------------------------------------------------------------ 连接检测
+    @staticmethod
+    def _keyed_provider_ids(preferred: str | None = None) -> list[str]:
+        """已配置密钥的云供应商（按 偏好 → 当前激活 → 注册表顺序）。"""
+        from config.settings import get_secret, get_setting
+        from core.agent.providers import PROVIDERS, requires_key
+
+        order: list[str] = []
+        for candidate in (preferred, get_setting("llm_active_provider", "")):
+            pid = str(candidate or "").strip().lower()
+            if pid and pid in PROVIDERS and pid not in order:
+                order.append(pid)
+        order += [pid for pid in PROVIDERS if pid not in order]
+        return [pid for pid in order
+                if requires_key(pid) and bool(get_secret(f"llm_{pid}_api_key", ""))]
+
+    @classmethod
+    def detect_available(cls, preferred: str | None = None) -> "LLMClient":
+        """返回优先使用"已连接"供应商的客户端。
+
+        任意云供应商已配置密钥即视为已连接（并按需把选择持久化为
+        `llm_active_provider`，供设置页与下次打开保持一致）；都没有时
+        回退到当前配置（本地 Ollama 会在构造时探测一次）。
+        """
+        keyed = cls._keyed_provider_ids(preferred)
+        if keyed:
+            pid = keyed[0]
+            try:
+                from config.settings import get_setting, save_config
+                if str(get_setting("llm_active_provider", "") or "").lower() != pid:
+                    save_config({"llm_active_provider": pid})
+            except Exception:                      # noqa: BLE001 - 配置不可写时仍可用
+                pass
+            return cls.from_config(pid)
+        return cls.from_config(preferred)
+
     def config_summary(self) -> dict:
         return {"provider": self.provider, "label": self.spec.label,
                 "protocol": self.protocol, "model": self.model,
