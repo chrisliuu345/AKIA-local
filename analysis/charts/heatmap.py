@@ -16,11 +16,12 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
 from config.settings import (
-    CHART_COLORS, CHART_DPI,
+    CHART_DPI,
     FONT_SIZE_TITLE, FONT_SIZE_TICK,
     get_effective,
 )
 from output.chart_engine import _ensure_font
+from output import chart_style
 
 
 def _dpi():
@@ -93,7 +94,7 @@ def create_correlation_heatmap(
     _ensure_font()
     opts = options or {}
     method = opts.get("method", "pearson")
-    colormap = opts.get("colormap", "RdYlGn_r")
+    colormap = opts.get("colormap", "RdBu_r")
     show_annotations = opts.get("show_annotations", True)
     show_significance = opts.get("show_significance", True)
     label_fontsize = opts.get("label_fontsize", FONT_SIZE_TICK)
@@ -136,7 +137,8 @@ def create_correlation_heatmap(
     sns.heatmap(
         corr, mask=mask, annot=sns_annot, fmt="", cmap=colormap,
         vmin=-1, vmax=1, center=0, square=True,
-        linewidths=0.5, cbar_kws={"shrink": 0.8},
+        linewidths=0.6, linecolor=chart_style.semantic()["panel"],
+        cbar_kws={"shrink": 0.8},
         annot_kws={"size": annot_fontsize},
         ax=ax,
     )
@@ -146,8 +148,17 @@ def create_correlation_heatmap(
 
     if title:
         ax.set_title(title, fontsize=FONT_SIZE_TITLE, fontweight="bold", pad=12)
+    # 注释文字按单元格明暗自动取色（深色格用面板色，浅色格用正文色）
+    for text in ax.texts:
+        x, y = text.get_position()
+        col_idx, row_idx = int(float(x)), int(float(y))
+        if 0 <= row_idx < len(corr) and 0 <= col_idx < len(corr):
+            value = float(corr.iloc[row_idx, col_idx])
+            text.set_color(chart_style.semantic()["panel"] if abs(value) > 0.55
+                           else chart_style.semantic()["text"])
 
-    fig.tight_layout()
+    chart_style.style_axes(ax, grid=None, hide_spines=())
+    chart_style.finalize_figure(fig)
     return fig
 
 
@@ -196,7 +207,8 @@ def create_scatter_matrix(
             ax = axes[i, j]
             if i == j:
                 ax.hist(df[numeric_cols[i]].dropna(), bins=20,
-                        color=CHART_COLORS["primary"], alpha=0.7, edgecolor="white")
+                        color=chart_style.semantic()["data"], alpha=0.7,
+                        edgecolor=chart_style.semantic()["panel"])
             else:
                 x = df[numeric_cols[j]].dropna()
                 y = df[numeric_cols[i]].dropna()
@@ -204,7 +216,8 @@ def create_scatter_matrix(
                 x, y = x[common_idx], y[common_idx]
 
                 ax.scatter(x, y, s=point_size, alpha=point_alpha,
-                           color=CHART_COLORS["primary"], edgecolors="white", linewidth=0.5)
+                           color=chart_style.semantic()["data"],
+                           edgecolors=chart_style.semantic()["panel"], linewidth=0.5)
 
                 if show_regression and len(x) > 2:
                     z = np.polyfit(x, y, 1)

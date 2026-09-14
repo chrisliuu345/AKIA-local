@@ -24,10 +24,11 @@ import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 
 from config.settings import (
-    CHART_COLORS, FONT_SIZE_TITLE, FONT_SIZE_TICK,
+    FONT_SIZE_TITLE, FONT_SIZE_TICK,
     get_effective,
 )
 from output.chart_engine import _ensure_font, CHART_DPI
+from output import chart_style
 
 GROUP_LIMIT = 12
 _MISSING_LABEL = "(缺失)"
@@ -105,7 +106,7 @@ def create_small_multiples(
     height = float(opts.get("height", 4))
     share_x = opts.get("share_x", True)
     share_y = opts.get("share_y", True)
-    color = opts.get("color", CHART_COLORS["primary"])
+    color = opts.get("color", chart_style.semantic()["data"])
 
     vals, groups, ok = _clean(df, value_col, group_col)
     if not ok:
@@ -134,7 +135,8 @@ def create_small_multiples(
         if kind == "箱线图":
             ax.boxplot(gvals, patch_artist=True, widths=0.5,
                        boxprops=dict(facecolor=color, alpha=0.6),
-                       medianprops=dict(color="#e1e2e6", linewidth=1.5))
+                       medianprops=dict(color=chart_style.semantic()["text"],
+                                        linewidth=1.5))
             ax.set_xticks([])
         else:
             if shared_edges is not None:
@@ -159,7 +161,8 @@ def create_small_multiples(
     note = f"分组: {group_col}"
     if dropped:
         note += f"（另有 {len(dropped)} 组因超过 {GROUP_LIMIT} 组上限被省略）"
-    fig.text(0.02, 1.0, note, fontsize=FONT_SIZE_TICK, color="#a0a3ae", va="bottom")
+    fig.text(0.02, 1.0, note, fontsize=FONT_SIZE_TICK,
+             color=chart_style.semantic()["text_muted"], va="bottom")
 
     if title:
         fig.suptitle(title, fontsize=FONT_SIZE_TITLE, fontweight="bold", y=1.04)

@@ -8,12 +8,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from config.settings import (
-    CHART_COLORS, CHART_DPI, CHART_FIGSIZE,
+    CHART_DPI, CHART_FIGSIZE,
     FONT_SIZE_TITLE, FONT_SIZE_LABEL, FONT_SIZE_TICK,
-    get_effective, get_setting,
+    get_effective,
 )
+from output import chart_style
 from core.i18n import i18n
-from core.fonts import get_ui_font
 
 
 def _dpi():
@@ -21,29 +21,8 @@ def _dpi():
 
 
 def setup_chinese_font():
-    import matplotlib.font_manager as fm
-    fm._load_fontmanager(try_read_cache=False)
-    available = {f.name for f in fm.fontManager.ttflist}
-
-    platform_font = get_ui_font()
-    preferred = [
-        platform_font, "Microsoft YaHei", "SimHei", "Noto Sans SC",
-        "Noto Sans JP", "Noto Sans", "DejaVu Sans",
-        "Arial Unicode MS", "WenQuanYi Micro Hei",
-    ]
-    user_font = get_setting("font_family", "")
-    if user_font:
-        preferred.insert(0, user_font)
-    matched = [p for p in preferred if p in available]
-    if matched:
-        current = list(plt.rcParams["font.sans-serif"])
-        for m in reversed(matched):
-            if m in current:
-                current.remove(m)
-            current.insert(0, m)
-        plt.rcParams["font.sans-serif"] = current
-    plt.rcParams["font.family"] = "sans-serif"
-    plt.rcParams["axes.unicode_minus"] = False
+    """兼容入口 — 字体配置已统一到 output.chart_style。"""
+    chart_style.setup_fonts()
 
 
 _font_initialized = False
@@ -52,7 +31,7 @@ _font_initialized = False
 def _ensure_font():
     global _font_initialized
     if not _font_initialized:
-        setup_chinese_font()
+        chart_style.apply_chart_style()
         _font_initialized = True
 
 MAX_VISIBLE_POINTS = 300
@@ -184,26 +163,21 @@ def _plot_xbar_chart(ax: plt.Axes, chart_data: Dict[str, Any],
 
     ms = 5 if was_thinned else 4
     lw = 1.5 if was_thinned else 1.2
-    ax.plot(x_labels, data, "o-", color=CHART_COLORS["data_points"],
+    s = chart_style.semantic()
+    ax.plot(x_labels, data, "o-", color=s["data"],
             markersize=ms, linewidth=lw, label=i18n.tr("chart.data_points"))
-    ax.axhline(y=cl, color=CHART_COLORS["center_line"], linestyle="-",
-               linewidth=1.5, label=f"CL={cl:.4f}")
-    if show_limits:
-        ax.axhline(y=ucl, color=CHART_COLORS["ucl_lcl"], linestyle="--",
-                   linewidth=1.2, label=f"UCL={ucl:.4f}")
-        ax.axhline(y=lcl, color=CHART_COLORS["ucl_lcl"], linestyle="--",
-                   linewidth=1.2, label=f"LCL={lcl:.4f}")
+    limits = chart_style.add_limit_lines(
+        ax, cl=cl, ucl=ucl if show_limits else None,
+        lcl=lcl if show_limits else None, labels=True)
 
-    for v in violations:
-        pt = v.get("point", 0)
-        if 1 <= pt <= n_raw:
-            ax.plot(pt, data_raw[pt - 1], "ro", markersize=10,
-                    markeredgewidth=2, fillstyle="none")
+    vx = [v.get("point") for v in violations if 1 <= v.get("point", 0) <= n_raw]
+    vy = [data_raw[pt - 1] for pt in vx]
+    chart_style.mark_violations(ax, vx, vy, label=i18n.tr("chart.violations"))
 
     ax.set_ylabel(i18n.tr("chart.sample_mean"), fontsize=FONT_SIZE_LABEL)
-    _draw_spec_lines(ax, chart_data)
-    ax.legend(loc="upper right", fontsize=8)
-    ax.grid(True, alpha=0.3)
+    spec_values = _draw_spec_lines(ax, chart_data)
+    chart_style.style_axes(ax, grid="y", legend=True)
+    chart_style.smart_ylim(ax, data, *limits, *spec_values)
     ax.set_title(key.replace("_chart", "").upper() + " "
                  + i18n.tr("chart.control_chart"), fontsize=FONT_SIZE_TITLE)
     return note
@@ -226,27 +200,21 @@ def _plot_range_chart(ax: plt.Axes, chart_data: Dict[str, Any],
 
     ms = 5 if was_thinned else 4
     lw = 1.5 if was_thinned else 1.2
-    ax.plot(x_labels, data, "s-", color=CHART_COLORS["secondary"],
+    s = chart_style.semantic()
+    ax.plot(x_labels, data, "s-", color=s["data_alt"],
             markersize=ms, linewidth=lw, label=i18n.tr("chart.range"))
-    ax.axhline(y=cl, color=CHART_COLORS["center_line"], linestyle="-",
-               linewidth=1.5, label=f"CL={cl:.4f}")
-    if show_limits:
-        ax.axhline(y=ucl, color=CHART_COLORS["ucl_lcl"], linestyle="--",
-                   linewidth=1.2, label=f"UCL={ucl:.4f}")
-        if lcl > 0:
-            ax.axhline(y=lcl, color=CHART_COLORS["ucl_lcl"], linestyle="--",
-                       linewidth=1.2, label=f"LCL={lcl:.4f}")
+    limits = chart_style.add_limit_lines(
+        ax, cl=cl, ucl=ucl if show_limits else None,
+        lcl=lcl if (show_limits and lcl > 0) else None, labels=True)
 
-    for v in violations:
-        pt = v.get("point", 0)
-        if 1 <= pt <= n_raw:
-            ax.plot(pt, data_raw[pt - 1], "ro", markersize=10,
-                    markeredgewidth=2, fillstyle="none")
+    vx = [v.get("point") for v in violations if 1 <= v.get("point", 0) <= n_raw]
+    vy = [data_raw[pt - 1] for pt in vx]
+    chart_style.mark_violations(ax, vx, vy)
 
     ax.set_xlabel(i18n.tr("chart.subgroup_no"), fontsize=FONT_SIZE_LABEL)
     ax.set_ylabel(i18n.tr("chart.range"), fontsize=FONT_SIZE_LABEL)
-    ax.legend(loc="upper right", fontsize=8)
-    ax.grid(True, alpha=0.3)
+    chart_style.style_axes(ax, grid="y", legend=True)
+    chart_style.smart_ylim(ax, data, *limits)
     ax.set_title(key.replace("_chart", "").upper() + " "
                  + i18n.tr("chart.control_chart"), fontsize=FONT_SIZE_TITLE)
     return note
@@ -277,32 +245,43 @@ def _plot_simple_control_chart(ax: plt.Axes, chart_data: Dict[str, Any],
 
     ms = 5 if was_thinned else 4
     lw = 1.5 if was_thinned else 1.2
-    ax.plot(x_labels, data, "o-", color=CHART_COLORS["data_points"],
-            markersize=ms, linewidth=lw)
-    ax.axhline(y=cl, color=CHART_COLORS["center_line"], linestyle="-",
-               linewidth=1.5, label=f"CL={cl:.4f}")
+    s = chart_style.semantic()
+    ax.plot(x_labels, data, "o-", color=s["data"],
+            markersize=ms, linewidth=lw, label=i18n.tr("chart.data_points"))
+    limits: List[float] = []
 
     if show_limits and ucl_vals_raw and was_thinned:
         idxs = [x - 1 for x in x_labels]
         ucl_thin = [ucl_vals_raw[i] for i in idxs]
         lcl_thin = [lcl_vals_raw[i] for i in idxs]
-        ax.plot(x_labels, ucl_thin, "--", color=CHART_COLORS["ucl_lcl"],
-                linewidth=1.2, label="UCL")
-        ax.plot(x_labels, lcl_thin, "--", color=CHART_COLORS["ucl_lcl"],
-                linewidth=1.2, label="LCL")
+        ax.plot(x_labels, ucl_thin, "--", color=s["limit"],
+                linewidth=1.1, label="UCL")
+        ax.plot(x_labels, lcl_thin, "--", color=s["limit"],
+                linewidth=1.1, label="LCL")
+        limits = [*ucl_thin, *lcl_thin]
     elif show_limits:
         if ucl_vals_raw:
             ax.plot(range(1, len(data_raw) + 1), ucl_vals_raw, "--",
-                    color=CHART_COLORS["ucl_lcl"], linewidth=1.2, label="UCL")
+                    color=s["limit"], linewidth=1.1, label="UCL")
+            limits.extend(ucl_vals_raw)
         if lcl_vals_raw:
             ax.plot(range(1, len(data_raw) + 1), lcl_vals_raw, "--",
-                    color=CHART_COLORS["ucl_lcl"], linewidth=1.2, label="LCL")
+                    color=s["limit"], linewidth=1.1, label="LCL")
+            limits.extend(lcl_vals_raw)
+
+    ax.axhline(y=cl, color=s["center"], linestyle="-",
+               linewidth=1.4, label=f"CL={cl:.4f}")
+    limits.append(float(cl))
+
+    vx = [v.get("point") for v in violations if 1 <= v.get("point", 0) <= len(data_raw)]
+    vy = [data_raw[pt - 1] for pt in vx]
+    chart_style.mark_violations(ax, vx, vy)
 
     ax.set_xlabel(i18n.tr("chart.subgroup_no"), fontsize=FONT_SIZE_LABEL)
     ax.set_ylabel("Statistic", fontsize=FONT_SIZE_LABEL)
-    _draw_spec_lines(ax, chart_data)
-    ax.legend(loc="upper right", fontsize=8)
-    ax.grid(True, alpha=0.3)
+    limits.extend(_draw_spec_lines(ax, chart_data))
+    chart_style.style_axes(ax, grid="y", legend=True)
+    chart_style.smart_ylim(ax, data, *limits)
     if title:
         ax.set_title(title, fontsize=FONT_SIZE_TITLE)
     return note
@@ -325,26 +304,30 @@ def _plot_advanced_control_chart(ax: plt.Axes, chart_data: Dict[str, Any],
         ms = 4 if (was_p or was_m) else 3
         lw = 1.2 if (was_p or was_m) else 1.0
 
-        ax.plot(xp, data_p, "o-", color=CHART_COLORS["primary"],
+        s = chart_style.semantic()
+        ax.plot(xp, data_p, "o-", color=s["data"],
                 markersize=ms, linewidth=lw, label="CUSUM+")
-        ax.plot(xm, [-v for v in data_m], "s-", color=CHART_COLORS["warning"],
+        ax.plot(xm, [-v for v in data_m], "s-", color=s["data_alt"],
                 markersize=ms, linewidth=lw, label="CUSUM-")
-        ax.axhline(y=0, color=CHART_COLORS["center_line"], linestyle="-",
+        ax.axhline(y=0, color=s["center"], linestyle="-",
                    linewidth=1.2, label="CL=0")
         if show_limits:
-            ax.axhline(y=ucl, color=CHART_COLORS["ucl_lcl"], linestyle="--",
+            ax.axhline(y=ucl, color=s["limit"], linestyle="--",
                        linewidth=1.2, label=f"h={ucl:.3f}")
-            ax.axhline(y=lcl, color=CHART_COLORS["ucl_lcl"], linestyle="--",
+            ax.axhline(y=lcl, color=s["limit"], linestyle="--",
                        linewidth=1.2, label=f"-h={lcl:.3f}")
         ax.set_ylabel("CUSUM", fontsize=FONT_SIZE_LABEL)
 
+        vx, vy = [], []
         for v in violations:
             pt = v.get("point", 0) - 1
             if 0 <= pt < len(cusum_plus):
                 if "CUSUM+" in str(v.get("rule", "")):
-                    ax.plot(pt + 1, cusum_plus[pt], "ro", markersize=8)
+                    vx.append(pt + 1), vy.append(cusum_plus[pt])
                 else:
-                    ax.plot(pt + 1, -cusum_minus[pt], "ro", markersize=8)
+                    vx.append(pt + 1), vy.append(-cusum_minus[pt])
+        chart_style.mark_violations(ax, vx, vy, size=9)
+        chart_style.smart_ylim(ax, data_p, [-v for v in data_m], ucl, lcl, 0)
 
     elif chart_type == "EWMA":
         chart = chart_data.get("ewma_chart", chart_data)
@@ -359,11 +342,12 @@ def _plot_advanced_control_chart(ax: plt.Axes, chart_data: Dict[str, Any],
         lcl = chart.get("lcl", [])
         ms = 4 if was_e else 3
 
-        ax.plot(xr, data_r, "o", color="#cccccc", markersize=ms - 1,
+        s = chart_style.semantic()
+        ax.plot(xr, data_r, "o", color=s["text_muted"], markersize=ms - 1,
                 label="原始数据")
-        ax.plot(xe, data_e, "o-", color=CHART_COLORS["primary"],
+        ax.plot(xe, data_e, "o-", color=s["data"],
                 markersize=ms, linewidth=1.5, label="EWMA")
-        ax.axhline(y=cl, color=CHART_COLORS["center_line"], linestyle="-",
+        ax.axhline(y=cl, color=s["center"], linestyle="-",
                    linewidth=1.2, label=f"CL={cl:.3f}")
 
         n_full = len(ewma_data)
@@ -372,46 +356,44 @@ def _plot_advanced_control_chart(ax: plt.Axes, chart_data: Dict[str, Any],
             ucl_thin = [ucl[i] for i in idxs]
             lcl_thin = [lcl[i] for i in idxs]
             x_axis = xe if was_e else list(range(1, n_full + 1))
-            ax.plot(x_axis, ucl_thin, "--", color=CHART_COLORS["ucl_lcl"],
+            ax.plot(x_axis, ucl_thin, "--", color=s["limit"],
                     linewidth=1.2, label="UCL")
-            ax.plot(x_axis, lcl_thin, "--", color=CHART_COLORS["ucl_lcl"],
+            ax.plot(x_axis, lcl_thin, "--", color=s["limit"],
                     linewidth=1.2, label="LCL")
         elif show_limits:
             ax.axhline(y=chart.get("ucl_const", 0),
-                       color=CHART_COLORS["ucl_lcl"],
+                       color=s["limit"],
                        linestyle="--", linewidth=1.2, label="Steady UCL")
             ax.axhline(y=chart.get("lcl_const", 0),
-                       color=CHART_COLORS["ucl_lcl"],
+                       color=s["limit"],
                        linestyle="--", linewidth=1.2, label="Steady LCL")
         ax.set_ylabel("EWMA", fontsize=FONT_SIZE_LABEL)
 
-        for v in violations:
-            pt = v.get("point", 0) - 1
-            if 0 <= pt < len(ewma_data):
-                ax.plot(pt + 1, ewma_data[pt], "ro", markersize=8)
+        vx = [v.get("point", 0) for v in violations
+              if 1 <= v.get("point", 0) <= len(ewma_data)]
+        chart_style.mark_violations(ax, vx, [ewma_data[pt - 1] for pt in vx],
+                                    size=9)
+        chart_style.smart_ylim(ax, data_e, data_r, cl,
+                               ucl if isinstance(ucl, list) else [ucl],
+                               lcl if isinstance(lcl, list) else [lcl])
 
     ax.set_xlabel(i18n.tr("chart.subgroup_no"), fontsize=FONT_SIZE_LABEL)
-    ax.legend(loc="upper right", fontsize=7)
-    ax.grid(True, alpha=0.3)
+    chart_style.style_axes(ax, grid="y", legend=True)
     return note
 
 
-def _draw_spec_lines(ax: plt.Axes, chart_data: Dict[str, Any]) -> None:
-    """绘制规格限参考线（USL/LSL，v3.8.0 实时图表增强）。
+def _draw_spec_lines(ax: plt.Axes, chart_data: Dict[str, Any]) -> List[float]:
+    """绘制规格限参考线（USL/LSL），返回纳入的数值（供 y 轴范围计算）。
 
-    来源: chart_data["spec"] = {"usl": float, "lsl": float}（缺省不绘制）。
-    与 UCL/LCL 区分: 品红虚线 + USL/LSL 前缀。
+    来源: chart_data["spec"] = {"usl": float, "lsl": float}，或顶层 usl/lsl。
+    与 UCL/LCL 区分: 橙色点划线 + USL/LSL 前缀（统一取自 chart_style）。
     """
     spec = chart_data.get("spec") or {}
-    usl = spec.get("usl")
-    lsl = spec.get("lsl")
+    usl = spec.get("usl", chart_data.get("usl"))
+    lsl = spec.get("lsl", chart_data.get("lsl"))
     if usl is None and lsl is None:
-        return
-    for value, label in ((usl, "USL"), (lsl, "LSL")):
-        if value is None:
-            continue
-        ax.axhline(y=float(value), color="#c2185b", linestyle=":",
-                   linewidth=1.6, label=f"{label}={float(value):.4g}")
+        return []
+    return chart_style.add_limit_lines(ax, usl=usl, lsl=lsl, orientation="h")
 
 
 def create_capability_chart(
@@ -437,30 +419,26 @@ def create_capability_chart(
     ax_hist = axes[0]
     ax_stats = axes[1]
 
+    s = chart_style.semantic()
     ax_hist.hist(original_data, bins=min(50, int(np.sqrt(len(original_data))) * 2),
-                 color=CHART_COLORS["primary"], alpha=0.7, edgecolor="white", density=True)
+                 color=s["data"], alpha=0.55, edgecolor=s["panel"], density=True)
 
     mean = cap_data.get("summary", {}).get("mean", np.mean(original_data))
     std = cap_data.get("summary", {}).get("std_overall", np.std(original_data, ddof=1))
     x_range = np.linspace(min(original_data), max(original_data), 200)
     from scipy import stats as sp_stats
     y_norm = sp_stats.norm.pdf(x_range, mean, std)
-    ax_hist.plot(x_range, y_norm, "r-", linewidth=1.5, label=i18n.tr("chart.norm_fit"))
+    ax_hist.plot(x_range, y_norm, "-", color=s["fit"], linewidth=1.8,
+                 label=i18n.tr("chart.norm_fit"))
 
     cap = cap_data.get("capability", {})
     usl = cap.get("usl")
     lsl = cap.get("lsl")
     if show_limits:
-        if usl:
-            ax_hist.axvline(x=usl, color="red", linestyle="--", linewidth=1.5, label=f"USL={usl}")
-        if lsl:
-            ax_hist.axvline(x=lsl, color="red", linestyle="--", linewidth=1.5, label=f"LSL={lsl}")
+        chart_style.add_limit_lines(ax_hist, usl=usl, lsl=lsl, orientation="v")
 
     ax_hist.set_ylabel(i18n.tr("chart.density"), fontsize=label_fontsize)
-    ax_hist.legend(fontsize=8)
-
-    if show_grid:
-        ax_hist.grid(True, alpha=0.3)
+    chart_style.style_axes(ax_hist, grid="y" if show_grid else None, legend=True)
 
     ax_stats.axis("off")
     stats_text = f"Mean={mean:.4f}  Std={std:.4f}  n={len(original_data)}\n"
@@ -473,11 +451,14 @@ def create_capability_chart(
 
     ax_stats.text(0.5, 0.5, stats_text, transform=ax_stats.transAxes,
                   fontsize=FONT_SIZE_LABEL, ha="center", va="center",
-                  bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.5))
+                  color=chart_style.semantic()["text"],
+                  bbox=dict(boxstyle="round", facecolor=chart_style.semantic()["panel"],
+                            edgecolor=chart_style.semantic()["axis"], alpha=0.9))
 
     if title:
-        fig.suptitle(title, fontsize=FONT_SIZE_TITLE, fontweight="bold")
-    fig.tight_layout(pad=2.0)
+        fig.suptitle(title, fontsize=FONT_SIZE_TITLE, fontweight="bold",
+                     color=chart_style.semantic()["text"])
+    chart_style.finalize_figure(fig, pad=1.6)
 
     return fig
 
@@ -505,21 +486,28 @@ def create_pareto_chart(
 
     cumulative = np.cumsum(sorted_values) / total * 100 if total > 0 else np.zeros_like(sorted_values)
 
-    ax1.bar(range(len(sorted_labels)), sorted_values, color=CHART_COLORS["primary"], alpha=0.8)
+    s = chart_style.semantic()
+    ax1.bar(range(len(sorted_labels)), sorted_values, color=s["data"], alpha=0.85,
+            edgecolor=s["panel"], linewidth=0.6)
     ax1.set_ylabel("效应绝对值", fontsize=FONT_SIZE_LABEL)
     ax1.set_xticks(range(len(sorted_labels)))
     ax1.set_xticklabels(sorted_labels, rotation=label_rotation, ha="right", fontsize=label_fontsize)
 
     if show_cumulative:
         ax2 = ax1.twinx()
-        ax2.plot(range(len(sorted_labels)), cumulative, "ro-", linewidth=2, markersize=6)
-        ax2.set_ylabel("累计百分比 (%)", fontsize=FONT_SIZE_LABEL, color="red")
+        ax2.plot(range(len(sorted_labels)), cumulative, "o-", color=s["fit"],
+                 linewidth=1.8, markersize=5)
+        ax2.set_ylabel("累计百分比 (%)", fontsize=FONT_SIZE_LABEL, color=s["fit"])
+        ax2.tick_params(axis="y", colors=s["fit"])
         ax2.set_ylim(0, 105)
+        chart_style.style_axes(ax2, grid=None, hide_spines=("top",))
 
     if show_grid:
-        ax1.grid(True, alpha=0.3, axis="y")
+        chart_style.style_axes(ax1, grid="y")
+    chart_style.smart_ylim(ax1, sorted_values, include_zero=True)
     if title:
         ax1.set_title(title, fontsize=FONT_SIZE_TITLE, fontweight="bold")
+    chart_style.finalize_figure(fig)
 
     return fig
 
@@ -539,25 +527,26 @@ def create_histogram(data: np.ndarray, title: str = "", bins: int = 0, options: 
         bins = opts.get("bins", min(50, int(np.sqrt(len(data))) * 2))
     bins = int(bins)  # 滑块经缩放还原可能为 45.0 之类整数值浮点，numpy 不接受 float bins
 
-    ax.hist(data, bins=bins, color=CHART_COLORS["primary"], alpha=0.7, edgecolor="white", histtype=histtype)
+    s = chart_style.semantic()
+    ax.hist(data, bins=bins, color=s["data"], alpha=0.75, edgecolor=s["panel"],
+            histtype=histtype)
 
     if show_mean:
-        ax.axvline(x=np.mean(data), color="red", linestyle="--", linewidth=1.5, label=f"Mean={np.mean(data):.4f}")
+        ax.axvline(x=np.mean(data), color=s["center"], linestyle="--",
+                   linewidth=1.5, label=f"Mean={np.mean(data):.4f}")
 
     if show_density and len(data) > 1:
         from scipy import stats as sp_stats
         x_range = np.linspace(data.min(), data.max(), 200)
         kde = sp_stats.gaussian_kde(data)
         ax.plot(x_range, kde(x_range) * len(data) * (data.max() - data.min()) / bins,
-                color="orange", linewidth=2, label="Density")
+                color=s["fit"], linewidth=2, label="Density")
 
     ax.set_xlabel("数值", fontsize=label_fontsize)
     ax.set_ylabel("频次", fontsize=label_fontsize)
-    if ax.get_legend_handles_labels()[0]:
-        ax.legend(fontsize=8)
-
-    if show_grid:
-        ax.grid(True, alpha=0.3)
+    chart_style.style_axes(ax, grid="y" if show_grid else None,
+                           legend=bool(ax.get_legend_handles_labels()[0]))
+    chart_style.finalize_figure(fig)
 
     if title:
         ax.set_title(title, fontsize=FONT_SIZE_TITLE, fontweight="bold")
@@ -614,7 +603,10 @@ def create_pie_chart(
         explode=explode,
         autopct=autopct_str if show_percentage else None,
         startangle=90,
-        textprops={"fontsize": label_fontsize, "color": "#e1e2e6"},
+        colors=chart_style.palette(len(new_sizes)),
+        wedgeprops={"edgecolor": chart_style.semantic()["panel"], "linewidth": 1.0},
+        textprops={"fontsize": label_fontsize,
+                   "color": chart_style.semantic()["text"]},
     )
 
     try:
