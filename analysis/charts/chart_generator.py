@@ -13,6 +13,7 @@ from output.chart_engine import (
     create_histogram, create_pareto_chart,
     _ensure_font,
 )
+from output import chart_style
 from analysis.charts.heatmap import (
     create_correlation_heatmap, create_scatter_matrix,
 )
@@ -24,24 +25,12 @@ from config.settings import (
     get_effective,
 )
 
-_DARK_AXES = {
-    "axes.facecolor": "#262632",
-    "axes.edgecolor": "#3a3a48",
-    "axes.labelcolor": "#e1e2e6",
-    "axes.titlecolor": "#e1e2e6",
-    "xtick.color": "#a0a3ae",
-    "ytick.color": "#a0a3ae",
-    "grid.color": "#2a2a36",
-    "text.color": "#e1e2e6",
-    "figure.facecolor": "#181822",
-    "figure.edgecolor": "#181822",
-}
-
+# 命名调色板（UI 下拉保留原名；全部取自统一色盲友好序列的组合）
 _CHART_PALETTES = {
-    "专业蓝": ["#1b5faa", "#4da6ff", "#14508a", "#7fc1ff", "#0d3d73"],
-    "暖色调": ["#e67e22", "#f39c12", "#d35400", "#f1c40f", "#e74c3c"],
-    "自然色": ["#27ae60", "#2ecc71", "#1abc9c", "#16a085", "#3498db"],
-    "质感灰": ["#6e7080", "#a0a3ae", "#3a3a48", "#5a5c6a", "#e1e2e6"],
+    "专业蓝": chart_style.palette(),
+    "暖色调": ["#E69F00", "#D55E00", "#F0E442", "#CC79A7", "#0072B2"],
+    "自然色": ["#009E73", "#56B4E9", "#0072B2", "#E69F00", "#CC79A7"],
+    "质感灰": ["#6e7080", "#a0a3ae", "#5a5c6a", "#c9ccd4", "#8a8c96"],
 }
 
 def _dpi():
@@ -49,11 +38,9 @@ def _dpi():
 
 
 def _apply_dark_theme(dark: bool = True):
-    if dark:
-        plt.rcParams.update(_DARK_AXES)
-    else:
-        for k in _DARK_AXES:
-            plt.rcParams[k] = "#ffffff" if "color" in k.lower() else plt.rcParams[k]
+    """兼容入口 — 统一走 output.chart_style（dark/light 双主题）。"""
+    chart_style.apply_chart_style(
+        chart_style.THEME_DARK if dark else chart_style.THEME_LIGHT)
 
 
 def _get_palette(palette_name: str = "专业蓝") -> List[str]:
@@ -125,7 +112,6 @@ def _build_boxplot(data: dict, options: dict) -> Figure:
         fig, ax = plt.subplots(figsize=(8, 5), dpi=_dpi())
         ax.text(0.5, 0.5, "请选择数值列", ha="center", va="center", fontsize=14)
         return fig
-    palette = _get_palette(options.get("palette", "专业蓝"))
     chart_opts = options.get("chart_options", {})
     label_fontsize = chart_opts.get("label_fontsize", FONT_SIZE_TICK)
     show_grid = chart_opts.get("show_grid", True)
@@ -133,22 +119,27 @@ def _build_boxplot(data: dict, options: dict) -> Figure:
     fig, ax = plt.subplots(figsize=(max(7, len(cols) * 2), 5), dpi=_dpi())
     values = [pd.to_numeric(df[c], errors="coerce").dropna().values for c in cols if c in df.columns]
     labels = [c for c in cols if c in df.columns]
+    s = chart_style.semantic()
     bp = ax.boxplot(values, patch_artist=True,
-                    medianprops={"color": "#e1e2e6", "linewidth": 1.5})
+                    medianprops={"color": s["text"], "linewidth": 1.5},
+                    boxprops={"edgecolor": s["axis"]},
+                    whiskerprops={"color": s["axis"]},
+                    capprops={"color": s["axis"]})
     ax.set_xticklabels(labels, fontsize=label_fontsize)
-    for patch, color in zip(bp["boxes"], palette[:len(values)], strict=True):
+    for patch, color in zip(bp["boxes"], chart_style.palette(len(values)),
+                            strict=True):
         patch.set_facecolor(color)
         patch.set_alpha(0.6)
     if show_mean:
         for i, vals in enumerate(values, start=1):
             if len(vals):
                 ax.plot(i, np.mean(vals), marker="o", markersize=5,
-                        color="red", alpha=0.8, zorder=3)
+                        color=s["limit"], alpha=0.9, zorder=3)
     ax.set_title(options.get("title", "箱线图"), fontsize=FONT_SIZE_TITLE, fontweight="bold")
     ax.set_ylabel("数值", fontsize=label_fontsize)
-    if show_grid:
-        ax.grid(True, alpha=0.3, axis="y")
-    fig.tight_layout()
+    chart_style.style_axes(ax, grid="y" if show_grid else None)
+    chart_style.smart_ylim(ax, *values, include_zero=False)
+    chart_style.finalize_figure(fig)
     return fig
 
 
@@ -173,20 +164,22 @@ def _build_scatter(data: dict, options: dict) -> Figure:
     point_size = chart_opts.get("point_size", 50)
     point_alpha = chart_opts.get("point_alpha", 0.6)
     fig, ax = plt.subplots(figsize=(8, 6), dpi=_dpi())
-    ax.scatter(x, y, s=point_size, alpha=point_alpha, edgecolors="white", linewidth=0.3, color=palette[0])
+    ax.scatter(x, y, s=point_size, alpha=point_alpha,
+               edgecolors=chart_style.semantic()["panel"], linewidth=0.4,
+               color=palette[0])
     if show_reg:
         slope, intercept, r_val, _p_val, _std_err = sp_stats.linregress(x, y)
         x_line = np.linspace(x.min(), x.max(), 100)
-        ax.plot(x_line, slope * x_line + intercept, color=palette[1], linewidth=1.5,
+        ax.plot(x_line, slope * x_line + intercept,
+                color=chart_style.semantic()["fit"], linewidth=1.8,
                 label=f"y={slope:.3f}x+{intercept:.3f}  R²={r_val**2:.4f}")
         ax.legend(fontsize=9)
     ax.set_xlabel(cols[0], fontsize=FONT_SIZE_LABEL)
     ax.set_ylabel(cols[1], fontsize=FONT_SIZE_LABEL)
     ax.set_title(options.get("title", f"{cols[0]} vs {cols[1]}"),
                  fontsize=FONT_SIZE_TITLE, fontweight="bold")
-    ax.legend(fontsize=9)
-    ax.grid(True, alpha=0.3)
-    fig.tight_layout()
+    chart_style.style_axes(ax, grid="y", legend=True)
+    chart_style.finalize_figure(fig)
     return fig
 
 
@@ -224,10 +217,10 @@ def _build_probplot(data: dict, options: dict) -> Figure:
         return fig
     fig, ax = plt.subplots(figsize=(8, 6), dpi=_dpi())
     sp_stats.probplot(series.values, dist="norm", plot=ax)
-    ax.get_lines()[1].set_color("#4da6ff")
+    ax.get_lines()[1].set_color(chart_style.semantic()["fit"])
     ax.get_lines()[1].set_linewidth(1.5)
-    ax.get_lines()[0].set_markerfacecolor("#1b5faa")
-    ax.get_lines()[0].set_markeredgecolor("white")
+    ax.get_lines()[0].set_markerfacecolor(chart_style.semantic()["data"])
+    ax.get_lines()[0].set_markeredgecolor(chart_style.semantic()["panel"])
     ax.get_lines()[0].set_markersize(5)
     ax.set_title(options.get("title", f"{cols[0]} — 概率图"),
                  fontsize=FONT_SIZE_TITLE, fontweight="bold")
@@ -520,7 +513,8 @@ def _build_time_series(data: dict, options: dict) -> Figure:
     ax.set_xlabel(date_col, fontsize=FONT_SIZE_LABEL)
     ax.set_ylabel(val_col, fontsize=FONT_SIZE_LABEL)
     ax.set_title(options.get("title", f"{val_col} 时间序列"), fontsize=FONT_SIZE_TITLE, fontweight="bold")
-    ax.grid(True, alpha=0.3)
+    chart_style.style_axes(ax, grid="y")
+    chart_style.smart_ylim(ax, values)
     fig.autofmt_xdate()
     fig.tight_layout()
     return fig
@@ -599,8 +593,8 @@ def _build_radar(data: dict, options: dict) -> Figure:
     ax.set_xticks(angles[:-1])
     ax.set_xticklabels(valid_cols, fontsize=FONT_SIZE_TICK)
     ax.set_title(options.get("title", "雷达图"), fontsize=FONT_SIZE_TITLE, fontweight="bold", pad=20)
-    ax.set_facecolor("#1c1c26")
-    fig.tight_layout()
+    ax.set_facecolor(chart_style.semantic()["panel"])
+    chart_style.finalize_figure(fig)
     return fig
 
 
@@ -622,24 +616,25 @@ def _build_waterfall(data: dict, options: dict) -> Figure:
         ax.text(0.5, 0.5, "数据点不足", ha="center", va="center", fontsize=14)
         return fig
     palette = _get_palette(options.get("palette", "专业蓝"))
+    s = chart_style.semantic()
     fig, ax = plt.subplots(figsize=(max(10, len(vals) * 1.2), 5), dpi=_dpi())
 
     bottom = 0.0
     for i, (_lbl, v) in enumerate(zip(labels, vals, strict=True)):
-        color = palette[0] if v >= 0 else palette[2] if len(palette) > 2 else "#e74c3c"
+        color = palette[0] if v >= 0 else s["limit"]
         ax.bar(i, v, bottom=bottom, color=color, alpha=0.8,
-                     edgecolor="white", linewidth=0.5)
+               edgecolor=s["panel"], linewidth=0.5)
         if i > 0:
-            ax.plot([i - 1, i], [bottom, bottom], linewidth=0.8, color="#6e7080")
+            ax.plot([i - 1, i], [bottom, bottom], linewidth=0.8, color=s["axis"])
         bottom += v
 
     ax.set_xticks(range(len(labels)))
     ax.set_xticklabels(labels, fontsize=FONT_SIZE_TICK, rotation=30, ha="right")
     ax.set_ylabel(val_col, fontsize=FONT_SIZE_LABEL)
     ax.set_title(options.get("title", "瀑布图"), fontsize=FONT_SIZE_TITLE, fontweight="bold")
-    ax.axhline(y=0, color="#a0a3ae", linewidth=0.8)
-    ax.grid(True, alpha=0.3, axis="y")
-    fig.tight_layout()
+    ax.axhline(y=0, color=s["text_muted"], linewidth=0.8)
+    chart_style.style_axes(ax, grid="y")
+    chart_style.finalize_figure(fig)
     return fig
 
 
@@ -663,16 +658,10 @@ def _apply_figure_palette(fig: Figure, palette_name: str):
 
 
 def _apply_figure_theme(fig: Figure, options: dict):
-    dark = options.get("dark_mode", True)
-    if dark:
-        fig.patch.set_facecolor("#181822")
-        for ax in fig.get_axes():
-            ax.set_facecolor("#262632")
-            for spine in ax.spines.values():
-                spine.set_color("#3a3a48")
-            ax.tick_params(colors="#a0a3ae")
-            ax.yaxis.label.set_color("#e1e2e6")
-            ax.xaxis.label.set_color("#e1e2e6")
+    """后置主题（dark/light）— 统一走 output.chart_style。"""
+    theme = (chart_style.THEME_DARK if options.get("dark_mode", True)
+             else chart_style.THEME_LIGHT)
+    chart_style.style_for_export(fig, theme=theme)
 
 
 def _build_acf(data: dict, options: dict) -> Figure:

@@ -1,5 +1,6 @@
 {
   "chart_dpi": 120,
+  "chart_theme": "dark",
   "esp32_extension": true,
   "msa_grr_acceptable": 0.1,
   "msa_ndc_threshold": 5,

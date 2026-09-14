@@ -170,7 +170,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 
 | 批次 | 交付 | 验收 |
 |------|------|------|
-| **B1 图表风格层** | 新增 `output/chart_style.py`（唯一风格源：深/浅主题 · Okabe-Ito 色盲友好语义色板 · rcParams · `smart_ylim` / `mark_violations` / `add_limit_lines`）；迁移 `chart_engine` + `chart_generator` | 10+ 类图表风格一致；无默认色循环残留；深/浅主题可切换 |
+| **B1 图表风格层** ✅ 2026-09-14 | 新增 `output/chart_style.py`（唯一风格源：深/浅主题 · Okabe-Ito 色盲友好语义色板 · rcParams · `smart_ylim` / `mark_violations` / `add_limit_lines`）；迁移 `chart_engine` + `chart_generator` + `heatmap`/`faceting`；控制图与时序接入智能 y 轴；热力图改发散色 + 对角消隐 | 16 例新测试通过；10+ 类图表风格一致；无默认色循环残留；深/浅主题可切换（对照图 `TEMP/chart_audit_{before,after_b1}_2026-09-14.png`） |
 | **B2 图表缺陷修复** | 审计 8 项：时序 y 轴智能留白 · 箱线图多量纲（标准化/分面）· 帕累托 80% 线+柱值标签 · 控制图图例与违规注释 · 能力图统计面板 · 热力图去对角+发散色 · 主题耦合色 · 字号/网格统一 | 审计清单全消；`TEMP/chart_audit_*.png` 前后对照 |
 | **B3 界面体验** | 全局命令面板（Tab/工具/指标跳转）· 长任务进度与取消（批量分析/模型训练）· Toast 接线或删除 · 统一空状态与错误提示 | 主流程键盘可达；无阻塞式长任务 |
 | **B4 质量与性能基线** | 类型现代化（UP006 945 / UP035 251 / RUF013 125）· `tools_ext`/`main_window` 热点拆分 · 冷启动与百万行导入基准 | 基准阈值入 CI；ruff 扩展门禁保持零告警 |
