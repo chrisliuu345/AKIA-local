@@ -2,7 +2,7 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> Current: v4.0.0 Predictive Analytics & Machine Learning (AutoML / CART / Random Forests / Gradient Boosting / MARS + 6 agent tools) (✅ 2026-09-13) | Next: v4.1.0 (TBD) | Tests: 1665 pytest · 37 analysis tabs | Updated: 2026-09-13
+> Current: v4.0.0 Predictive Analytics & Machine Learning (AutoML / CART / Random Forests / Gradient Boosting / MARS + 6 agent tools) (✅ 2026-09-13) | Next: **v4.1.0 Chart & UI experience unification (planned)** | Tests: 1665 pytest · 37 analysis tabs | Updated: 2026-09-14
 
 > **Maintenance convention (from 2026-09-12)**: each version entry is one summary line plus key numbers; implementation details live in code/tests/user guide, not here.
 > This file was compressed from 1100+ lines to under 500; the expanded history is in git history (`git log -p -- ROADMAP.md`).
@@ -14,7 +14,8 @@
 ```
 v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.1 ──→ v2.5 ──→ v2.6.0 ~ v2.6.5 ──→ v2.7.0
       ──→ v2.8.0 ──→ v2.9.0 ──→ v3.0.0 ──→ v3.1.0 ──→ v3.2.0 ──→ v3.3.0 ──→ v3.4.0 ──→ v3.5.0
-      ──→ v3.6.0 (incl. 3.6.1) ──→ v3.7.0 (incl. review) ──→ v3.7.1 ──→ v3.7.2 ──→ v3.8.0 ──→ v4.0.0 ✅ current
+      ──→ v3.6.0 (incl. 3.6.1) ──→ v3.7.0 (incl. review) ──→ v3.7.1 ──→ v3.7.2 ──→ v3.8.0 ──→ v4.0.0 ✅
+      ──→ v4.1.0 (planned) ──→ v4.2.0 (planned) ──→ v4.3.0 (planned)
 ```
 
 | Status | Version | Theme |
@@ -32,6 +33,9 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | ✅ | **v3.8.0** | **Industrial AI Agent (QAM Harness + Plugin API v2; vision moved to an external plugin)** |
 | 🔌 | [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion) | External vision plugin (video time study) built on Plugin API v2 |
 | ✅ | **v4.0.0** | **Predictive analytics & ML (CART / Random Forests / gradient boosting / MARS / AutoML + feature engineering / evaluation / SHAP / model deployment)** |
+| 🚧 | v4.1.0 | Chart & UI experience unification (style layer / chart fixes / command palette / performance baseline) |
+| 🚧 | v4.2.0 | Algorithm trust & depth (known-value validation matrix / multivariate SPC / uncertainty intervals / method docs) |
+| 🚧 | v4.3.0 | ML in production + ecosystem (model governance / online scoring / plugin CLI·SDK) |
 
 ---
 
@@ -115,8 +119,8 @@ Planning principles:
 | Manual review of proactive-suggestion accuracy (≥3.5/5) | Needs engineer scoring | User |
 | Vision acceptance on real footage (site video + labelled CSV, ≥85% agreement) | Needs site material | Plugin project |
 | Release artifacts (AppImage / .deb / Inno) | Scripts ready; build and upload to Releases on demand | Optional |
-| Multi-site / multi-language | Deferred item #9 from v3.7.2 | Candidate |
-| Connector expansion (more PLC/CMM protocols) | Driven by site needs | Candidate |
+| Multi-site / multi-language | i18n framework lands in v4.3.0; full EN pack after | v4.3 / later |
+| Connector expansion (more PLC/CMM protocols) | Driven by site needs | v4.3.0 B4 |
 | Predictive analytics & ML | v4.0.0 ✅ released | Completed 2026-09-13 |
 
 ---
@@ -154,6 +158,42 @@ Planning principles:
 - CART / Random Forests cross-validated against scikit-learn
 - AutoML selection consistent with manual model selection
 - End-to-end: data prep → feature engineering → modeling → evaluation → visualization
+
+---
+
+## Upcoming Releases (v4.1.0 → v4.3.0)
+
+> **Cadence**: one release every 4–6 weeks, 3–5 items per release, ~20% buffer for user-reported issues; same DoD (per-file regression + extended ruff gate + version consistency + packaging smoke).
+> **Boundaries**: no new tabs, no heavy hard dependencies, no enterprise features; Plugin API 2.x stays backward compatible.
+
+### v4.1.0 — Chart & UI Experience Unification (next)
+
+| Batch | Deliverables | Acceptance |
+|-------|--------------|------------|
+| **B1 Chart style layer** | New `output/chart_style.py` (single source: dark/light themes · Okabe-Ito colour-blind-safe semantic palette · rcParams · `smart_ylim` / `mark_violations` / `add_limit_lines`); migrate `chart_engine` + `chart_generator` | 10+ chart types share one style; no default colour-cycle leakage; themes switchable |
+| **B2 Chart defect fixes** | The 8 audit findings: smart y-limits for time series · multi-scale boxplots (standardise/facet) · Pareto 80% line + bar labels · control-chart legend and violation annotations · capability stats panel · heatmap diagonal masking + diverging colours · theme-coupled colours · font/grid unification | Audit list cleared; before/after gallery in `TEMP/chart_audit_*.png` |
+| **B3 UI experience** | Global command palette (tab/tool/metric jump) · progress + cancel for long tasks (batch analysis / model training) · wire up or drop Toast · unified empty states and error messages | Main flows keyboard-accessible; no blocking long tasks |
+| **B4 Quality & performance baseline** | Type modernisation (UP006 945 / UP035 251 / RUF013 125) · split `tools_ext` / `main_window` hotspots · cold-start and 1M-row import benchmarks | Benchmarks gated in CI; extended ruff gate stays clean |
+
+### v4.2.0 — Algorithm Trust & Depth
+
+| Batch | Deliverables | Acceptance |
+|-------|--------------|------------|
+| **B1 Known-value validation matrix** | NIST/literature known-value cases for SPC · MSA · DOE · reliability · time series, wired into the CI gate | ≥1 known-value case per critical algorithm |
+| **B2 Algorithm depth** | Multivariate SPC (MEWMA / generalized variance) · non-normal capability with uncertainty intervals · robust ARIMA auto-ordering · reliability interval estimation | Cross-validated against reference implementations |
+| **B3 Stability** | Large-sample benchmark suite · numerical stability for ill-conditioned matrices and extreme values | Benchmarks and robustness cases pass |
+| **B4 Method documentation** | New "methods & references" chapter in guide.html (formulas / assumptions / citations) | Docs traceable to code |
+
+### v4.3.0 — ML in Production + Ecosystem
+
+| Batch | Deliverables | Acceptance |
+|-------|--------------|------------|
+| **B1 Model governance** | Model registry / versions / model cards · batch training comparison · hold-out and drift monitoring | Models traceable; drift alerts demonstrable |
+| **B2 Online scoring** | Train → deploy → live-dashboard inference and predictive alerts · ML support in template batch analysis | E2E: train → deploy → online score |
+| **B3 Algorithm add-ons** | Lightweight tuning · prediction intervals/calibration · optional LightGBM adapter (no new hard dependency) | No new hard deps; graceful fallback |
+| **B4 Ecosystem** | Plugin scaffold CLI + plugin index/templates + compatibility matrix + 2 sample plugins · headless CLI + local Python SDK · connector expansion · i18n framework | Third party ships a plugin in 30 minutes; one command produces a report |
+
+> **After 4.3 (candidates)**: full English localisation · light/high-contrast themes and accessibility · auto-update · subscription & activation · mobile dashboard.
 
 ---
 
