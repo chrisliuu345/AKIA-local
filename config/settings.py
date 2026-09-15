@@ -4,6 +4,8 @@ IE Quality Analyzer - 全局配置
 
 import json
 import os
+import shutil
+import sys
 
 from core.fonts import get_ui_font
 
@@ -170,8 +172,46 @@ MIXTURE_MAX_COMPONENTS = 10
 _CONFIG_DIR = os.path.dirname(__file__)
 # 随安装包分发的公共默认值（无 secrets / 无本机设备列表）
 _DEFAULT_CONFIG_PATH = os.path.join(_CONFIG_DIR, "..", "user_config.default.json")
-# 用户本机配置（不入库、不打包）
-_USER_CONFIG_PATH = os.path.join(_CONFIG_DIR, "..", "user_config.json")
+
+
+def _default_user_config_path() -> str:
+    """用户本机配置路径（不入库、不打包）。
+
+    - 源码运行: 仓库根 ``user_config.json``（保持既有行为与测试隔离方式）
+    - 打包运行: 平台用户目录 —— AppImage 只读挂载 / Program Files 无写权限，
+      安装目录不可写，必须落到用户可写位置
+    - ``QA_TOOL_USER_CONFIG`` 环境变量优先（便携版/多实例）
+    """
+    override = os.environ.get("QA_TOOL_USER_CONFIG")
+    if override:
+        return override
+    if not getattr(sys, "frozen", False):
+        return os.path.abspath(os.path.join(_CONFIG_DIR, "..", "user_config.json"))
+    if sys.platform == "win32":
+        base = os.environ.get("APPDATA") or os.path.expanduser("~")
+        return os.path.join(base, "QA-Tool", "user_config.json")
+    base = os.environ.get("XDG_CONFIG_HOME") or os.path.join(
+        os.path.expanduser("~"), ".config")
+    return os.path.join(base, "QA-Tool", "user_config.json")
+
+
+_USER_CONFIG_PATH = _default_user_config_path()
+
+
+def _migrate_legacy_user_config(target: str) -> None:
+    """打包版首次启动时，把旧版安装目录内的 user_config.json 迁移到用户目录。"""
+    legacy = os.path.abspath(os.path.join(_CONFIG_DIR, "..", "user_config.json"))
+    if os.path.abspath(target) == legacy or os.path.exists(target):
+        return
+    if not os.path.exists(legacy):
+        return
+    try:
+        parent = os.path.dirname(target)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+        shutil.copy2(legacy, target)
+    except OSError:
+        pass
 
 _defaults = {}
 _user_overrides = {}
@@ -200,6 +240,9 @@ def load_config() -> dict:
     """加载配置：默认文件 + 用户文件叠加，并同步全局变量"""
     global _defaults, _user_overrides
     global CHART_DPI, MSA_GRR_ACCEPTABLE, MSA_GRR_MARGINAL, MSA_NDC_THRESHOLD
+    if getattr(sys, "frozen", False):
+        # 仅打包版需要迁移（源码运行时 legacy 路径本身就是用户配置路径）
+        _migrate_legacy_user_config(_USER_CONFIG_PATH)
     _defaults = _read_json(_DEFAULT_CONFIG_PATH)
     _user_overrides = _read_json(_USER_CONFIG_PATH)
     merged = {**_defaults, **_user_overrides}
@@ -237,6 +280,9 @@ def save_config(values: dict) -> None:
         MSA_GRR_MARGINAL = max(values["msa_grr_acceptable"], MSA_GRR_MARGINAL)
     if "msa_ndc_threshold" in values:
         MSA_NDC_THRESHOLD = values["msa_ndc_threshold"]
+    parent = os.path.dirname(_USER_CONFIG_PATH)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
     with open(_USER_CONFIG_PATH, "w", encoding="utf-8") as f:
         json.dump(_user_overrides, f, indent=2, ensure_ascii=False)
 

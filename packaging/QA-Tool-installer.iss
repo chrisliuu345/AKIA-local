@@ -79,18 +79,22 @@ var
 begin
   if CurStep = ssPostInstall then
   begin
-    F := ExpandConstant('{app}\_internal\user_config.json');
+    { 公共默认配置（运行时用户配置落在 %APPDATA%\QA-Tool\user_config.json）}
+    F := ExpandConstant('{app}\_internal\user_config.default.json');
     if not Esp32Check.Checked then
     begin
-      L := TStringList.Create;
-      try
-        L.LoadFromFile(F);
-        Txt := L.Text;
-        StringChange(Txt, '"esp32_extension": true', '"esp32_extension": false');
-        L.Text := Txt;
-        L.SaveToFile(F);
-      finally
-        L.Free;
+      if FileExists(F) then
+      begin
+        L := TStringList.Create;
+        try
+          L.LoadFromFile(F);
+          Txt := L.Text;
+          StringChange(Txt, '"esp32_extension": true', '"esp32_extension": false');
+          L.Text := Txt;
+          L.SaveToFile(F);
+        finally
+          L.Free;
+        end;
       end;
     end;
   end;
