@@ -116,10 +116,50 @@ def _build_boxplot(data: dict, options: dict) -> Figure:
     label_fontsize = chart_opts.get("label_fontsize", FONT_SIZE_TICK)
     show_grid = chart_opts.get("show_grid", True)
     show_mean = chart_opts.get("show_mean", True)
-    fig, ax = plt.subplots(figsize=(max(7, len(cols) * 2), 5), dpi=_dpi())
+    mode = str(chart_opts.get("box_mode", options.get("box_mode", "auto"))).lower()
+
     values = [pd.to_numeric(df[c], errors="coerce").dropna().values for c in cols if c in df.columns]
     labels = [c for c in cols if c in df.columns]
     s = chart_style.semantic()
+
+    # 量纲差异过大（如 外径≈10 / 温度≈60 / 压力≈5）时自动分面，
+    # 避免低量纲列被压成一条线；box_mode 可强制 single / split。
+    if len(values) > 1 and (mode == "split"
+                            or (mode == "auto" and _scale_mismatch(values))):
+        ncols = min(4, len(values))
+        nrows = int(np.ceil(len(values) / ncols))
+        fig, axes = plt.subplots(nrows, ncols,
+                                 figsize=(max(8, 2.8 * ncols), 3.6 * nrows),
+                                 dpi=_dpi(), squeeze=False)
+        colors = chart_style.palette(len(values))
+        for idx, (label, vals) in enumerate(zip(labels, values, strict=True)):
+            ax = axes[idx // ncols][idx % ncols]
+            if len(vals):
+                bp = ax.boxplot([vals], patch_artist=True,
+                                medianprops={"color": s["text"], "linewidth": 1.5},
+                                boxprops={"edgecolor": s["axis"]},
+                                whiskerprops={"color": s["axis"]},
+                                capprops={"color": s["axis"]})
+                bp["boxes"][0].set_facecolor(colors[idx])
+                bp["boxes"][0].set_alpha(0.6)
+                if show_mean:
+                    ax.axhline(float(np.mean(vals)), color=s["limit"],
+                               linestyle="--", linewidth=1.1,
+                               label=f"Mean={float(np.mean(vals)):.4g}")
+                chart_style.smart_ylim(ax, vals)
+            ax.set_title(str(label), fontsize=FONT_SIZE_TICK + 1)
+            chart_style.style_axes(ax, grid="y" if show_grid else None,
+                                   legend=show_mean)
+        for idx in range(len(values), nrows * ncols):
+            axes[idx // ncols][idx % ncols].set_visible(False)
+        fig.suptitle(options.get("title", "箱线图"),
+                     fontsize=FONT_SIZE_TITLE, fontweight="bold")
+        fig.text(0.01, 0.005, "注：各列量纲差异较大，已按列分面显示",
+                 fontsize=9, color=s["text_muted"])
+        chart_style.finalize_figure(fig)
+        return fig
+
+    fig, ax = plt.subplots(figsize=(max(7, len(cols) * 2), 5), dpi=_dpi())
     bp = ax.boxplot(values, patch_artist=True,
                     medianprops={"color": s["text"], "linewidth": 1.5},
                     boxprops={"edgecolor": s["axis"]},
@@ -141,6 +181,15 @@ def _build_boxplot(data: dict, options: dict) -> Figure:
     chart_style.smart_ylim(ax, *values, include_zero=False)
     chart_style.finalize_figure(fig)
     return fig
+
+
+def _scale_mismatch(values, ratio: float = 5.0) -> bool:
+    """多列量纲差异检测（最大/最小数据跨度比 > ratio）。"""
+    spans = [float(np.ptp(v)) for v in values if len(v) > 1]
+    positive = [span for span in spans if span > 0]
+    if len(positive) < 2:
+        return False
+    return max(positive) / min(positive) > float(ratio)
 
 
 def _build_scatter(data: dict, options: dict) -> Figure:

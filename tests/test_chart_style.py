@@ -253,3 +253,96 @@ class TestChartEntryPoints:
                 _assert_unified(fig)
             finally:
                 plt.close(fig)
+
+
+# ---------------- B2 缺陷修复 ----------------
+
+class TestChartPolish:
+
+    def test_pareto_has_80_line_and_value_labels(self):
+        _apply(chart_style.THEME_DARK)
+        fig = create_pareto_chart(["A", "B", "C"], [42, 27, 15], title="帕累托")
+        texts = [t.get_text() for ax in fig.get_axes() for t in ax.texts]
+        assert "80%" in texts
+        assert {"42", "27", "15"} <= set(texts)
+        # 80% 参考线画在累计百分比轴上
+        twin_lines = [line.get_ydata() for ax in fig.get_axes() for line in ax.lines]
+        assert any(len(set(y)) == 1 and list(set(y))[0] == 80.0
+                   for y in twin_lines if len(y))
+        plt.close(fig)
+
+    def test_pareto_options_can_disable_labels(self):
+        _apply(chart_style.THEME_DARK)
+        fig = create_pareto_chart(["A", "B"], [10, 5],
+                                  options={"show_values": False,
+                                           "show_80_line": False})
+        texts = [t.get_text() for ax in fig.get_axes() for t in ax.texts]
+        assert "80%" not in texts and "10" not in texts
+        plt.close(fig)
+
+    def test_boxplot_auto_splits_for_mismatched_scales(self):
+        from analysis.charts.chart_generator import generate_chart
+
+        _apply(chart_style.THEME_DARK)
+        rng = np.random.default_rng(3)
+        df = pd.DataFrame({"外径": rng.normal(10, 0.1, 60),
+                           "温度": rng.normal(60, 3, 60),
+                           "压力": rng.normal(5, 0.3, 60)})
+        fig = generate_chart("箱线图", {"df": df, "columns": ["外径", "温度", "压力"]},
+                             {"dark_mode": True})
+        visible = [ax for ax in fig.get_axes() if ax.get_visible()]
+        assert len(visible) == 3, "量纲差异大时应按列分面"
+        # 每列独立 y 轴：外径范围不应包含 60
+        outer_ax = visible[0]
+        assert outer_ax.get_ylim()[1] < 30
+        plt.close(fig)
+
+    def test_boxplot_single_axis_for_similar_scales(self):
+        from analysis.charts.chart_generator import generate_chart
+
+        _apply(chart_style.THEME_DARK)
+        rng = np.random.default_rng(4)
+        df = pd.DataFrame({"A": rng.normal(100, 10, 60),
+                           "B": rng.normal(105, 12, 60),
+                           "C": rng.normal(98, 9, 60)})
+        fig = generate_chart("箱线图", {"df": df, "columns": ["A", "B", "C"]},
+                             {"dark_mode": True})
+        visible = [ax for ax in fig.get_axes() if ax.get_visible()]
+        assert len(visible) == 1
+        plt.close(fig)
+
+    def test_control_chart_legend_outside_and_rule_labels(self):
+        _apply(chart_style.THEME_DARK)
+        rng = np.random.default_rng(5)
+        data = {"chart_type": "XBar-R",
+                "xbar_chart": {"data": list(rng.normal(10, 0.08, 20)),
+                               "cl": 10.0, "ucl": 10.25, "lcl": 9.75,
+                               "violations": [{"point": 7, "rule": "1"},
+                                              {"point": 15, "rule": "2"}]},
+                "r_chart": {"data": list(rng.normal(0.5, 0.05, 20)),
+                            "cl": 0.5, "ucl": 0.9, "lcl": 0.1, "violations": []}}
+        fig = create_control_chart(data, title="控制图")
+        ax = fig.get_axes()[0]
+        legend = ax.get_legend()
+        assert legend is not None and legend.get_frame_on() is False
+        # 图例锚点在坐标区右侧之外（不再压住 UCL 线）
+        fig.canvas.draw()
+        assert legend.get_window_extent().x0 >= ax.get_window_extent().x1 - 1
+        texts = [t.get_text() for t in ax.texts]
+        assert any(text.startswith("规则") for text in texts)
+        plt.close(fig)
+
+    def test_capability_stats_card(self):
+        _apply(chart_style.THEME_DARK)
+        rng = np.random.default_rng(6)
+        values = rng.normal(10, 0.12, 80)
+        cap = {"summary": {"mean": float(values.mean()),
+                           "std_overall": float(values.std(ddof=1))},
+               "capability": {"cp": 1.4, "cpk": 1.12, "usl": 10.5, "lsl": 9.5,
+                              "ppm_total": 1200, "grade": "B"}}
+        fig = create_capability_chart(cap, values, title="能力")
+        texts = [t.get_text() for ax in fig.get_axes() for t in ax.texts]
+        assert "Cpk / Ppk" in texts and "Cp / Pp" in texts
+        assert "B" in texts
+        assert any(text.startswith("Mean") for text in texts)
+        plt.close(fig)
