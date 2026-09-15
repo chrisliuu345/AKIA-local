@@ -20,7 +20,7 @@ class TestW86HardcodedPaths:
         import os
         base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         path = os.path.join(base, "utils", "generate_test_data.py")
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             content = f.read()
         assert "D:\\" not in content or "output_path =" not in content.split("D:\\")[0]
 

@@ -8,17 +8,17 @@ Edgeworth 近似能力指数 — 非参数能力评估
       Minitab Nonparametric Capability Analysis
 """
 
-from typing import Dict, Any, Optional
+from typing import Any
 import numpy as np
 from scipy import stats
 
 
 def analyze(
     data: np.ndarray,
-    usl: Optional[float] = None,
-    lsl: Optional[float] = None,
-    target: Optional[float] = None,
-) -> Dict[str, Any]:
+    usl: float | None = None,
+    lsl: float | None = None,
+    target: float | None = None,
+) -> dict[str, Any]:
     """
     Edgeworth 近似能力分析
 

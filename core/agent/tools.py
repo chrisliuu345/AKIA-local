@@ -13,7 +13,8 @@ from __future__ import annotations
 import math
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
+from collections.abc import Callable
 
 import pandas as pd
 
@@ -117,7 +118,7 @@ class ToolRegistry:
 
     # ---------- 调用 ----------
     def call(self, name: str, args: dict | None = None,
-             context: "AgentContext | None" = None) -> ToolResult:
+             context: AgentContext | None = None) -> ToolResult:
         spec = self._tools.get(name)
         if spec is None:
             return ToolResult(name=name, ok=False,
@@ -344,8 +345,8 @@ def build_default_registry(ctx: AgentContext) -> ToolRegistry:
               "对某一列做描述统计（均值/标准差/分位数/缺失/唯一值）",
               {"sheet": "表名(可选)", "column": "列名(可选,默认首个数值列)"},
               category="数据")
-    def _describe_column(context: AgentContext, sheet: str = None,
-                         column: str = None):
+    def _describe_column(context: AgentContext, sheet: str | None = None,
+                         column: str | None = None):
         sheet_name = context.sheet_of(sheet)
         df = context.frame(sheet_name)
         if df is None:
@@ -381,9 +382,9 @@ def build_default_registry(ctx: AgentContext) -> ToolRegistry:
                "lsl": "规格下限(可选)", "sample_size": "NP 图样本量(可选)",
                "sample_sizes_column": "P/U 图的样本量列(可选)"},
               category="质量分析", returns="chart_type/cl/ucl/lcl/violations")
-    def _run_spc(context: AgentContext, chart_type: str = "imr", sheet: str = None,
-                 column: str = None, subgroup_size: int = 5, usl=None, lsl=None,
-                 sample_size=None, sample_sizes_column: str = None):
+    def _run_spc(context: AgentContext, chart_type: str = "imr", sheet: str | None = None,
+                 column: str | None = None, subgroup_size: int = 5, usl=None, lsl=None,
+                 sample_size=None, sample_sizes_column: str | None = None):
         kind = "numeric"
         sheet_name, col, series = _series(context, sheet, column, kind)
         chart = str(chart_type or "imr").lower().strip()
@@ -458,8 +459,8 @@ def build_default_registry(ctx: AgentContext) -> ToolRegistry:
                "usl": "规格上限", "lsl": "规格下限", "target": "目标值(可选)",
                "subgroup_size": "子组大小(默认5)", "method": "normal/non_normal"},
               category="质量分析", returns="cp/cpk/pp/ppk/ppm/grade")
-    def _run_capability(context: AgentContext, sheet: str = None,
-                        column: str = None, usl=None, lsl=None, target=None,
+    def _run_capability(context: AgentContext, sheet: str | None = None,
+                        column: str | None = None, usl=None, lsl=None, target=None,
                         subgroup_size: int = 5, method: str = "normal"):
         sheet_name, col, series = _series(context, sheet, column)
         usl_v, lsl_v, target_v = _to_float(usl), _to_float(lsl), _to_float(target)
@@ -503,9 +504,9 @@ def build_default_registry(ctx: AgentContext) -> ToolRegistry:
                "part_column": "零件列", "operator_column": "操作员列",
                "tolerance": "公差(可选)", "nested": "true 为嵌套设计"},
               category="质量分析", returns="grr_pct/ndc/acceptance")
-    def _run_msa_grr(context: AgentContext, sheet: str = None,
-                     measurement_column: str = None, part_column: str = None,
-                     operator_column: str = None, tolerance=None,
+    def _run_msa_grr(context: AgentContext, sheet: str | None = None,
+                     measurement_column: str | None = None, part_column: str | None = None,
+                     operator_column: str | None = None, tolerance=None,
                      nested: bool = False):
         sheet_name = context.sheet_of(sheet)
         df = context.frame(sheet_name)
@@ -541,8 +542,8 @@ def build_default_registry(ctx: AgentContext) -> ToolRegistry:
                "confidence_level": "置信水平(默认0.95)"},
               category="质量分析", returns="p_value/is_significant/conclusion")
     def _run_hypothesis_test(context: AgentContext, test: str = "normality",
-                             sheet: str = None, column: str = None,
-                             group_column: str = None, second_column: str = None,
+                             sheet: str | None = None, column: str | None = None,
+                             group_column: str | None = None, second_column: str | None = None,
                              pop_mean=None, confidence_level: float = 0.95):
         kind = str(test or "normality").lower()
         if kind in ("anova_oneway", "anova", "anova_one_way"):
@@ -622,7 +623,7 @@ def build_default_registry(ctx: AgentContext) -> ToolRegistry:
               "按资源/班组/班次计算 OEE（A×P×Q 与六大损失分解）",
               {"sheet": "表名(可选)", "group_by": "all/group/shift"},
               category="IE 与成本", returns="availability/performance/quality/oee/grade")
-    def _run_oee(context: AgentContext, sheet: str = None, group_by: str = "all"):
+    def _run_oee(context: AgentContext, sheet: str | None = None, group_by: str = "all"):
         resources = context.extra.get("ie_resources")
         if not resources:
             from core.ie_parser import IEDataParser
@@ -715,7 +716,7 @@ def build_default_registry(ctx: AgentContext) -> ToolRegistry:
               category="实时工厂")
     def _get_alerts(context: AgentContext, limit: int = 10,
                     only_unacked: bool = True, min_severity: str = "info",
-                    device: str = None):
+                    device: str | None = None):
         if context.journal is None:
             return ToolResult("get_alerts", ok=False, error="告警日志未接入")
         entries = context.journal.entries(limit=int(limit or 10),

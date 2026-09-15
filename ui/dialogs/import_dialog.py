@@ -1,7 +1,6 @@
 """数据导入对话框 — 文件选择 + 模式感知 + 格式校验"""
 
 import os
-from typing import Tuple
 
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
@@ -309,7 +308,7 @@ class ImportDialog(QDialog):
             self._error_message = f"格式检测失败: {str(e)}"
             return False
 
-    def get_selection(self) -> Tuple[str, list]:
+    def get_selection(self) -> tuple[str, list]:
         return self.file_path, self.sheet_names
 
     @property

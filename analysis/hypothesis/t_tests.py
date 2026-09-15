@@ -2,13 +2,13 @@
 假设检验模块 — t检验 (单样本/双样本/配对)
 """
 
-from typing import Dict, Any, Optional
+from typing import Any
 import numpy as np
 import pandas as pd
 from scipy import stats
 
 
-def one_sample(data: pd.Series, pop_mean: float, alternative: str = "two-sided") -> Dict[str, Any]:
+def one_sample(data: pd.Series, pop_mean: float, alternative: str = "two-sided") -> dict[str, Any]:
     clean = data.dropna().astype(float)
     n = len(clean)
     if n < 2:
@@ -44,9 +44,9 @@ def one_sample(data: pd.Series, pop_mean: float, alternative: str = "two-sided")
 def two_sample(
     group1: pd.Series,
     group2: pd.Series,
-    equal_var: Optional[bool] = None,
+    equal_var: bool | None = None,
     alternative: str = "two-sided",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """双样本 t 检验
 
     equal_var 三态:
@@ -93,7 +93,7 @@ def two_sample(
     }
 
 
-def paired(before: pd.Series, after: pd.Series, alternative: str = "two-sided") -> Dict[str, Any]:
+def paired(before: pd.Series, after: pd.Series, alternative: str = "two-sided") -> dict[str, Any]:
     paired_df = pd.DataFrame({"before": before, "after": after}).dropna()
     b = paired_df["before"].astype(float)
     a = paired_df["after"].astype(float)

@@ -7,7 +7,7 @@
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -26,7 +26,7 @@ CATEGORY_LABELS = {
 class KnowledgeEntry:
     __slots__ = ("id", "title", "category", "keywords", "content", "extra", "score")
 
-    def __init__(self, raw: Dict[str, Any], default_category: str):
+    def __init__(self, raw: dict[str, Any], default_category: str):
         self.id = raw.get("id", "")
         self.title = raw.get("title", "")
         self.category = raw.get("category", default_category)
@@ -84,9 +84,9 @@ class KnowledgeBase:
     DATA_DIR = Path(__file__).resolve().parent.parent / "config" / "knowledge"
     FILES = ("terminology.json", "standards.json", "tables.json", "six_sigma.json", "engineering.json")
 
-    def __init__(self, data_dir: Optional[Path] = None):
-        self.entries: List[KnowledgeEntry] = []
-        self.vectorizer: Optional[TfidfVectorizer] = None
+    def __init__(self, data_dir: Path | None = None):
+        self.entries: list[KnowledgeEntry] = []
+        self.vectorizer: TfidfVectorizer | None = None
         self.matrix = None
         self.available = False
         try:
@@ -95,12 +95,12 @@ class KnowledgeBase:
             self.entries = []
 
     def load_all(self, data_dir: Path):
-        raw_entries: List[KnowledgeEntry] = []
+        raw_entries: list[KnowledgeEntry] = []
         for fname in self.FILES:
             fpath = data_dir / fname
             if not fpath.exists():
                 continue
-            with open(fpath, "r", encoding="utf-8") as f:
+            with open(fpath, encoding="utf-8") as f:
                 data = json.load(f)
             default_cat = fname.split(".")[0]
             for item in data.get("entries", []):
@@ -122,8 +122,8 @@ class KnowledgeBase:
         self.available = True
 
     def search(self, query: str, top_k: int = 5,
-               category: Optional[str] = None,
-               min_score: float = 0.02) -> List[KnowledgeEntry]:
+               category: str | None = None,
+               min_score: float = 0.02) -> list[KnowledgeEntry]:
         """混合检索: TF-IDF(0.5) + 关键词精确匹配(0.3) + 标题匹配(0.2) → 融合排序"""
         if not self.available or not query.strip():
             return []
@@ -145,7 +145,7 @@ class KnowledgeBase:
         combined = sims * 0.5 + kw_boost + title_boost
 
         order = combined.argsort()[::-1]
-        results: List[KnowledgeEntry] = []
+        results: list[KnowledgeEntry] = []
         seen_ids = set()
         for idx in order:
             if combined[idx] < min_score:
@@ -162,14 +162,14 @@ class KnowledgeBase:
                 break
         return results
 
-    def get_entry(self, entry_id: str) -> Optional[KnowledgeEntry]:
+    def get_entry(self, entry_id: str) -> KnowledgeEntry | None:
         for e in self.entries:
             if e.id == entry_id:
                 return e
         return None
 
-    def stats(self) -> Dict[str, int]:
-        counts: Dict[str, int] = {}
+    def stats(self) -> dict[str, int]:
+        counts: dict[str, int] = {}
         for e in self.entries:
             counts[e.category] = counts.get(e.category, 0) + 1
         return counts
@@ -186,7 +186,7 @@ class KnowledgeBase:
             return f"{head}--- 知识库参考（优先依据以下内容作答）---\n{ref}\n\n{marker}{tail}"
         return f"{base_prompt}\n\n--- 知识库参考 ---\n{ref}"
 
-    def offline_answer(self, question: str, top_k: int = 3) -> Optional[str]:
+    def offline_answer(self, question: str, top_k: int = 3) -> str | None:
         """LLM 离线时用检索结果直接作答；无匹配返回 None"""
         hits = self.search(question, top_k=top_k)
         if not hits:
@@ -199,7 +199,7 @@ class KnowledgeBase:
         return "\n".join(parts)
 
 
-_kb_instance: Optional[KnowledgeBase] = None
+_kb_instance: KnowledgeBase | None = None
 
 
 def get_knowledge_base() -> KnowledgeBase:

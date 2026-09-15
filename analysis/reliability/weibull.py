@@ -16,7 +16,7 @@
 
 import math
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 from scipy import stats as sp_stats
@@ -39,9 +39,9 @@ class WeibullResult:
     mean_life: float
     ad_statistic: float
     r_squared: float
-    probability_data: Dict[str, List[float]]
-    reliability_curve: Dict[str, List[float]]
-    confidence_intervals: Optional[Dict[str, Dict[str, float]]] = None
+    probability_data: dict[str, list[float]]
+    reliability_curve: dict[str, list[float]]
+    confidence_intervals: dict[str, dict[str, float]] | None = None
 
 
 class WeibullAnalyzer:
@@ -50,11 +50,11 @@ class WeibullAnalyzer:
     MIN_POINTS = 5
 
     def analyze(self, failure_times: list,
-                censored: Optional[list] = None,
+                censored: list | None = None,
                 fit_method: str = "mle",
                 three_parameter: bool = False,
                 four_parameter: bool = False,
-                confidence_level: float = 0.95) -> Dict[str, Any]:
+                confidence_level: float = 0.95) -> dict[str, Any]:
         """主入口 — 对失效时间数据进行 Weibull 分析
 
         参数:
@@ -68,7 +68,7 @@ class WeibullAnalyzer:
         返回:
             {"result": WeibullResult, "warnings": [...], "error": str|None}
         """
-        out: Dict[str, Any] = {
+        out: dict[str, Any] = {
             "result": None, "warnings": [], "error": None,
         }
 
@@ -98,7 +98,7 @@ class WeibullAnalyzer:
         if np.std(failure_only) == 0:
             out["warnings"].append("所有失效时间相同，Weibull拟合可能退化（β→0, η→极小值）")
 
-        result: Optional[WeibullResult] = None
+        result: WeibullResult | None = None
 
         if fit_method == "rank-regression":
             result = self._fit_rank_regression(ft, cen)
@@ -195,7 +195,7 @@ class WeibullAnalyzer:
         )
 
     def _fit_3p_mle(self, failures: np.ndarray, censored: np.ndarray,
-                    all_times: np.ndarray) -> Optional[WeibullResult]:
+                    all_times: np.ndarray) -> WeibullResult | None:
         """数值优化 3P Weibull — 以 2P 结果为初始值"""
         p2 = sp_stats.weibull_min.fit(failures, floc=0)
         beta0, _, eta0 = p2
@@ -238,7 +238,7 @@ class WeibullAnalyzer:
         )
 
     def _fit_4p_mle(self, failures: np.ndarray, censored: np.ndarray,
-                    all_times: np.ndarray) -> Optional[WeibullResult]:
+                    all_times: np.ndarray) -> WeibullResult | None:
         """数值优化 4P Weibull — 以 2P 结果为初始值，gamma 允许负值
 
         4P Weibull 扩展了 3P 的约束，允许 location 参数为负值，
@@ -386,7 +386,7 @@ class WeibullAnalyzer:
 
     @staticmethod
     def _probability_plot_data(failures: np.ndarray,
-                               result: WeibullResult) -> Dict[str, List[float]]:
+                               result: WeibullResult) -> dict[str, list[float]]:
         """Weibull 概率图数据"""
         n = len(failures)
         sorted_f = np.sort(failures)
@@ -399,7 +399,7 @@ class WeibullAnalyzer:
         }
 
     @staticmethod
-    def _reliability_curve_data(result: WeibullResult) -> Dict[str, List[float]]:
+    def _reliability_curve_data(result: WeibullResult) -> dict[str, list[float]]:
         """R(t) / h(t) 曲线数据"""
         b10 = result.gamma + result.eta * (-np.log(0.90)) ** (1 / result.beta)
         t_max = max(b10 * 3, result.characteristic_life * 2)
@@ -417,7 +417,7 @@ class WeibullAnalyzer:
         self, result: WeibullResult, failures: np.ndarray,
         censored: np.ndarray, all_times: np.ndarray,
         confidence_level: float,
-    ) -> Dict[str, Dict[str, float]]:
+    ) -> dict[str, dict[str, float]]:
         """基于 Fisher 信息矩阵计算参数置信区间
 
         通过数值 Hessian 估计参数的标准误差，然后使用正态近似

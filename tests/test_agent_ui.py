@@ -244,8 +244,7 @@ def test_worker_streaming_renders_single_bubble(dialog):
         available = True
 
         def generate(self, prompt, model=None):
-            for ch in "逐字输出测试":
-                yield ch
+            yield from "逐字输出测试"
 
     dialog.engine.set_llm(_FakeLLM())
     before = _table_count(dialog)

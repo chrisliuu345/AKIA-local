@@ -32,6 +32,13 @@ jobs:
         run: |
           .venv/bin/python tools/check_version.py
 
+      - name: Performance baseline (cold start / 1M import / chart / ML)
+        env:
+          QT_QPA_PLATFORM: "offscreen"
+          MPLCONFIGDIR: /tmp/mplcache
+        run: |
+          .venv/bin/python tools/benchmark.py --tolerance 4
+
       - name: Run tests (per-file, single-threaded)
         env:
           QT_QPA_PLATFORM: "offscreen"

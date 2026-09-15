@@ -184,10 +184,11 @@ def test_any_key_skips_main_window_prompt(isolated_config, monkeypatch,
                                           _qt_application):
     isolated_config.save_config({"llm_deepseek_api_key": "sk-deepseek-test"})
     import ui.main_window as mw
+    import ui.main_window_helpers as mwh
 
     _StubMessageBox.calls = []
     _StubMessageBox._reply = _StubMessageBox.Yes
-    monkeypatch.setattr(mw, "QMessageBox", _StubMessageBox)
+    monkeypatch.setattr(mwh, "QMessageBox", _StubMessageBox)
 
     client = mw._resolve_llm_client(None)
     assert _StubMessageBox.calls == [], "已连接云 API 时不应弹出离线模式询问"
@@ -198,12 +199,13 @@ def test_any_key_skips_main_window_prompt(isolated_config, monkeypatch,
 def test_no_connection_still_prompts(isolated_config, monkeypatch,
                                      _qt_application):
     import ui.main_window as mw
+    import ui.main_window_helpers as mwh
     from core.llm_client import LLMClient
 
     monkeypatch.setattr(LLMClient, "_check_available", lambda self: False)
     _StubMessageBox.calls = []
     _StubMessageBox._reply = _StubMessageBox.No
-    monkeypatch.setattr(mw, "QMessageBox", _StubMessageBox)
+    monkeypatch.setattr(mwh, "QMessageBox", _StubMessageBox)
 
     assert mw._resolve_llm_client(None) is None
     assert len(_StubMessageBox.calls) == 1

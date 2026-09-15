@@ -1,7 +1,6 @@
 """SMED 快速换模分析引擎 — 内外作业分离 + 改善对比"""
 
 from dataclasses import dataclass, field
-from typing import List
 
 @dataclass
 class SMEDTask:
@@ -29,7 +28,7 @@ class SMEDTask:
 
 @dataclass
 class SMEDResult:
-    tasks: List[SMEDTask] = field(default_factory=list)
+    tasks: list[SMEDTask] = field(default_factory=list)
 
     @property
     def total_internal_before(self) -> float:
@@ -98,7 +97,7 @@ class SMEDResult:
 
 class SMEDEngine:
     def __init__(self):
-        self.tasks: List[SMEDTask] = []
+        self.tasks: list[SMEDTask] = []
 
     def add_task(self, name: str, task_type: str = "internal", time_sec: float = 0.0) -> SMEDTask:
         t = SMEDTask(name=name, task_type=task_type, time_sec=time_sec)

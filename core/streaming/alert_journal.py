@@ -59,7 +59,7 @@ class JournalEntry:
         return json.dumps(asdict(self), ensure_ascii=False)
 
     @classmethod
-    def from_dict(cls, data: dict) -> "JournalEntry":
+    def from_dict(cls, data: dict) -> JournalEntry:
         known = {f for f in cls.__dataclass_fields__}
         return cls(**{k: v for k, v in data.items() if k in known})
 
@@ -91,7 +91,7 @@ class AlertJournal:
             return
         entries: list[JournalEntry] = []
         try:
-            with open(self.path, "r", encoding="utf-8") as f:
+            with open(self.path, encoding="utf-8") as f:
                 for line in f:
                     stripped = line.strip()
                     if not stripped:

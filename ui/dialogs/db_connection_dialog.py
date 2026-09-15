@@ -3,7 +3,6 @@
 """
 
 import json
-from typing import Dict, List, Tuple
 
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
@@ -45,7 +44,7 @@ def _unobscure(text: str) -> str:
         return ""
 
 
-def _load_saved_configs() -> Dict[str, dict]:
+def _load_saved_configs() -> dict[str, dict]:
     settings = QSettings("QA-Tool", "DBConnections")
     raw = settings.value("connections", "[]")
     try:
@@ -54,7 +53,7 @@ def _load_saved_configs() -> Dict[str, dict]:
         return {}
 
 
-def _save_configs(configs: Dict[str, dict]):
+def _save_configs(configs: dict[str, dict]):
     settings = QSettings("QA-Tool", "DBConnections")
     settings.setValue("connections", json.dumps(list(configs.values()), ensure_ascii=False))
 
@@ -65,8 +64,8 @@ class DbConnectionDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.sql_loader = SqlLoader()
-        self.saved_configs: Dict[str, dict] = _load_saved_configs()
-        self.selected_tables: List[str] = []
+        self.saved_configs: dict[str, dict] = _load_saved_configs()
+        self.selected_tables: list[str] = []
         self._setup_ui()
         self._load_config_combo()
 
@@ -307,6 +306,6 @@ class DbConnectionDialog(QDialog):
         self.connection_established.emit(config)
         self.accept()
 
-    def get_selection(self) -> Tuple[str, List[str]]:
+    def get_selection(self) -> tuple[str, list[str]]:
         config = self._get_config_from_ui()
         return config, self.selected_tables

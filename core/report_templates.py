@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from string import Template
-from typing import Dict, Any, List, Optional
+from typing import Any
 from datetime import datetime
 
 from config.settings import APP_VERSION
@@ -25,7 +25,7 @@ def _get_font_family() -> str:
     return get_ui_font()
 
 
-_BUILTIN_TEMPLATES: Dict[str, str] = {}
+_BUILTIN_TEMPLATES: dict[str, str] = {}
 
 
 def _ensure_templates():
@@ -95,10 +95,10 @@ class ReportTemplateEngine:
     def __init__(self):
         _ensure_templates()
 
-    def list_templates(self) -> List[Dict[str, str]]:
+    def list_templates(self) -> list[dict[str, str]]:
         return [{"id": k, "name": v["name"]} for k, v in TEMPLATES.items()]
 
-    def load_template(self, template_id: str) -> Optional[str]:
+    def load_template(self, template_id: str) -> str | None:
         info = TEMPLATES.get(template_id)
         if not info:
             return None
@@ -107,7 +107,7 @@ class ReportTemplateEngine:
             return fpath.read_text(encoding="utf-8")
         return _BUILTIN_TEMPLATES.get(template_id)
 
-    def render(self, template_id: str, context: Dict[str, Any]) -> str:
+    def render(self, template_id: str, context: dict[str, Any]) -> str:
         raw = self.load_template(template_id)
         if not raw:
             return "<p>模板未找到</p>"
@@ -126,7 +126,7 @@ class ReportTemplateEngine:
         except Exception as e:
             return f"<p>模板渲染错误: {e}</p>"
 
-    def build_context(self, analyses: Dict[int, Dict]) -> Dict[str, Any]:
+    def build_context(self, analyses: dict[int, dict]) -> dict[str, Any]:
         """从分析结果构建模板上下文"""
         ctx = {}
         for idx, a in analyses.items():

@@ -2,7 +2,7 @@
 通用统计图表生成器 — 12 种图表（分批交付，D1 前 6 种）
 """
 
-from typing import List, OrderedDict
+from collections import OrderedDict
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -43,7 +43,7 @@ def _apply_dark_theme(dark: bool = True):
         chart_style.THEME_DARK if dark else chart_style.THEME_LIGHT)
 
 
-def _get_palette(palette_name: str = "专业蓝") -> List[str]:
+def _get_palette(palette_name: str = "专业蓝") -> list[str]:
     return _CHART_PALETTES.get(palette_name, _CHART_PALETTES["专业蓝"])
 
 
@@ -74,7 +74,7 @@ CHART_CONFIGS = OrderedDict([
 ])
 
 
-def _build_summary(data: pd.DataFrame, columns: List[str]) -> str:
+def _build_summary(data: pd.DataFrame, columns: list[str]) -> str:
     lines = []
     for col in columns:
         if col not in data.columns:
@@ -1053,7 +1053,7 @@ BUILDERS = {
 }
 
 
-def generate_chart(chart_type: str, data: dict, options: dict = None) -> Figure:
+def generate_chart(chart_type: str, data: dict, options: dict | None = None) -> Figure:
     _ensure_font()
     if options is None:
         options = {}

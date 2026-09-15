@@ -1,6 +1,6 @@
 """可靠性分析 Tab — Weibull 寿命分析 + MTBF/MTTR"""
 
-from typing import Dict, Any
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -31,11 +31,11 @@ class ReliabilityTab(BaseAnalysisTab):
         self._weibull = WeibullAnalyzer()
         self._mtbf = MTBFAnalyzer()
         self._mode = "weibull"
-        self._kpi_labels: Dict[str, QLabel] = {}
+        self._kpi_labels: dict[str, QLabel] = {}
         super().__init__(parent)
         self._setup_ui()
 
-    def set_data(self, df: pd.DataFrame, parsed_info: Dict[str, Any] = None):
+    def set_data(self, df: pd.DataFrame, parsed_info: dict[str, Any] | None = None):
         """重写以填充列选择器"""
         BaseAnalysisTab.set_data(self, df, parsed_info)
         if df is not None:
@@ -404,7 +404,7 @@ class ReliabilityTab(BaseAnalysisTab):
         }
         self.analysis_completed.emit()
 
-    def _draw_mtbf_chart(self, result: Dict[str, Any]):
+    def _draw_mtbf_chart(self, result: dict[str, Any]):
         self._clear_canvas()
         tc = theme_colors()
         plt.rcParams["axes.unicode_minus"] = False

@@ -3,7 +3,6 @@
 import html as _html
 import io
 import base64
-from typing import Dict, List
 from datetime import datetime
 
 from config.settings import APP_VERSION, CHART_COLORS
@@ -18,7 +17,7 @@ def _fig_to_base64(fig) -> str:
         return base64.b64encode(buf.read()).decode()
 
 
-def export_html(analyses: List[Dict], charts: Dict[str, bytes] = None,
+def export_html(analyses: list[dict], charts: dict[str, bytes] | None = None,
                 output_path: str = "", title: str = "QA-Tool 分析报告") -> str:
     items = []
     for a in analyses:

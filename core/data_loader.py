@@ -3,7 +3,7 @@
 """
 
 import os
-from typing import Dict, List, Optional, Any
+from typing import Any
 import pandas as pd
 from config.settings import SUPPORTED_EXCEL_EXTENSIONS, MAX_PREVIEW_ROWS, CHUNK_SIZE
 from core.ie_parser import IEDataParser
@@ -17,14 +17,14 @@ class DataLoader:
 
     def __init__(self):
         self.file_path: str = ""
-        self.raw_data: Dict[str, pd.DataFrame] = {}
-        self.sheet_info: Dict[str, Dict[str, Any]] = {}
-        self.metadata: Dict[str, Any] = {}
+        self.raw_data: dict[str, pd.DataFrame] = {}
+        self.sheet_info: dict[str, dict[str, Any]] = {}
+        self.metadata: dict[str, Any] = {}
         self.ie_parser: IEDataParser = IEDataParser()
-        self.ie_data: Dict[str, List[Any]] = {}
-        self.ie_summary: Dict[str, Any] = {}
+        self.ie_data: dict[str, list[Any]] = {}
+        self.ie_summary: dict[str, Any] = {}
 
-    def load(self, file_path: str, sheet_names: Optional[List[str]] = None) -> Dict[str, pd.DataFrame]:
+    def load(self, file_path: str, sheet_names: list[str] | None = None) -> dict[str, pd.DataFrame]:
         ext = os.path.splitext(file_path)[1].lower()
         if ext not in SUPPORTED_EXCEL_EXTENSIONS:
             raise ValueError(f"不支持的文件格式: {ext}，支持: {SUPPORTED_EXCEL_EXTENSIONS}")
@@ -89,8 +89,7 @@ class DataLoader:
         """
         ext = os.path.splitext(file_path)[1].lower()
         if ext == ".csv":
-            for chunk in pd.read_csv(file_path, chunksize=chunk_size, dtype=str):
-                yield chunk
+            yield from pd.read_csv(file_path, chunksize=chunk_size, dtype=str)
         elif ext in (".xlsx", ".xlsm"):
             from openpyxl import load_workbook
             wb = load_workbook(file_path, read_only=True, data_only=True)
@@ -120,7 +119,7 @@ class DataLoader:
             raise KeyError(f"Sheet '{sheet_name}' 不存在. 可用: {list(self.raw_data.keys())}")
         return self.raw_data[sname].head(rows)
 
-    def get_sheet_names(self) -> List[str]:
+    def get_sheet_names(self) -> list[str]:
         return list(self.raw_data.keys())
 
     def get_dataframe(self, sheet_name: str = "Sheet1") -> pd.DataFrame:
@@ -141,7 +140,7 @@ class DataLoader:
             "sheet_names": list(self.raw_data.keys()),
         }
 
-    def load_ie_data(self) -> Dict[str, List[Any]]:
+    def load_ie_data(self) -> dict[str, list[Any]]:
         """将已加载的 raw_data 解析为 IE 数据对象"""
         if not self.raw_data:
             return {}
@@ -149,7 +148,7 @@ class DataLoader:
         self.ie_summary = self.ie_parser.get_summary(self.ie_data)
         return self.ie_data
 
-    def get_ie_objects(self, obj_type: str) -> List[Any]:
+    def get_ie_objects(self, obj_type: str) -> list[Any]:
         """获取指定类型的 IE 数据对象"""
         return self.ie_data.get(obj_type, [])
 

@@ -12,7 +12,7 @@
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 import math
 import numpy as np
@@ -29,7 +29,7 @@ class MTBFResult:
     mttr: float
     availability: float
     failure_rate: float
-    laplace_stat: Optional[float]
+    laplace_stat: float | None
     trend: str
     mtbf_ci_low: float
     mtbf_ci_high: float
@@ -41,10 +41,10 @@ class MTBFAnalyzer:
     MIN_EVENTS = 2
 
     def analyze(self, time_between_failures: list,
-                repair_times: Optional[list] = None,
-                labels: Optional[list] = None,
-                group_by: Optional[list] = None,
-                confidence_level: float = 0.90) -> Dict[str, Any]:
+                repair_times: list | None = None,
+                labels: list | None = None,
+                group_by: list | None = None,
+                confidence_level: float = 0.90) -> dict[str, Any]:
         """主入口
 
         参数:
@@ -57,7 +57,7 @@ class MTBFAnalyzer:
         返回:
             {"overall": MTBFResult, "groups": [MTBFResult], "warnings": [...], "error": str|None}
         """
-        out: Dict[str, Any] = {
+        out: dict[str, Any] = {
             "overall": None, "groups": [], "warnings": [], "error": None,
         }
 
@@ -127,7 +127,7 @@ class MTBFAnalyzer:
         )
 
     @staticmethod
-    def _laplace_test(tbf: np.ndarray) -> Tuple[Optional[float], str]:
+    def _laplace_test(tbf: np.ndarray) -> tuple[float | None, str]:
         """Laplace 趋势检验: H0=齐次泊松过程 (无趋势)"""
         n = len(tbf)
         if n < 3:
@@ -153,9 +153,9 @@ class MTBFAnalyzer:
 
 def crow_amsaa(
     failure_times: list,
-    total_time: Optional[float] = None,
+    total_time: float | None = None,
     confidence_level: float = 0.90,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Crow-AMSAA (Power Law) 增长模型
 

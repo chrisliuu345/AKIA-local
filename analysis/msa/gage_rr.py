@@ -7,7 +7,7 @@
 - 不确定度预算 (GUM 方法)
 """
 
-from typing import Dict, Any, Optional
+from typing import Any
 import numpy as np
 import pandas as pd
 from config import settings as _cfg
@@ -18,8 +18,8 @@ def analyze_crossed(
     measurement_col: str,
     part_col: str,
     operator_col: str,
-    tolerance: Optional[float] = None,
-) -> Dict[str, Any]:
+    tolerance: float | None = None,
+) -> dict[str, Any]:
     data = df.copy()
     data[measurement_col] = pd.to_numeric(data[measurement_col], errors="coerce")
     data = data.dropna(subset=[measurement_col, part_col, operator_col])
@@ -101,8 +101,8 @@ def analyze_nested(
     measurement_col: str,
     part_col: str,
     operator_col: str,
-    tolerance: Optional[float] = None,
-) -> Dict[str, Any]:
+    tolerance: float | None = None,
+) -> dict[str, Any]:
     data = df.copy()
     data[measurement_col] = pd.to_numeric(data[measurement_col], errors="coerce")
     data = data.dropna(subset=[measurement_col, part_col, operator_col])
@@ -153,7 +153,7 @@ def _avg_range(df: pd.DataFrame, measurement_col: str, part_col: str, operator_c
 
 def _variance_component_data(
     ev: float, av: float, pv: float, grr: float, tv: float
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     方差分量图数据
 
@@ -184,7 +184,7 @@ def _interaction_chart_data(
     measurement_col: str,
     part_col: str,
     operator_col: str,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     交互效应图数据
 
@@ -226,8 +226,8 @@ def _uncertainty_budget(
     p: int,
     o: int,
     r: int,
-    tolerance: Optional[float],
-) -> Dict[str, Any]:
+    tolerance: float | None,
+) -> dict[str, Any]:
     """
     不确定度预算 (GUM 方法)
 
@@ -261,7 +261,7 @@ def _uncertainty_budget(
     }
 
 
-def _uncertainty_interpretation(u_expanded: float, tolerance: Optional[float]) -> str:
+def _uncertainty_interpretation(u_expanded: float, tolerance: float | None) -> str:
     """不确定度解释"""
     if tolerance is None:
         return "未提供公差，无法判断不确定度是否可接受"
@@ -280,7 +280,7 @@ def _uncertainty_interpretation(u_expanded: float, tolerance: Optional[float]) -
         return "不确定度过大，测量系统不可接受"
 
 
-def _grr_acceptance(grr_pct: float, ndc: int) -> Dict[str, Any]:
+def _grr_acceptance(grr_pct: float, ndc: int) -> dict[str, Any]:
     if grr_pct <= _cfg.MSA_GRR_ACCEPTABLE * 100 and ndc >= _cfg.MSA_NDC_THRESHOLD:
         level = "acceptable"
         message = "测量系统可接受"

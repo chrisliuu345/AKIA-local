@@ -3,7 +3,7 @@
 """
 
 import re
-from typing import ClassVar, Dict, List, Optional, Any, Tuple
+from typing import ClassVar, Any
 import pandas as pd
 import numpy as np
 
@@ -12,7 +12,7 @@ class DataParser:
     """智能数据解析：自动识别数据列类型、表头行、规格限"""
 
     NUMERIC_PATTERNS = re.compile(r"^(-?\d+\.?\d*|\.\d+)$")
-    DATE_PATTERNS: ClassVar[List] = [
+    DATE_PATTERNS: ClassVar[list] = [
         re.compile(r"^\d{4}[-/]\d{1,2}[-/]\d{1,2}$"),
         re.compile(r"^\d{4}[-/]\d{1,2}[-/]\d{1,2}[ T]\d{1,2}:\d{2}(:\d{2})?$"),
         re.compile(r"^\d{1,2}[-/]\d{1,2}[-/]\d{4}$"),
@@ -33,7 +33,7 @@ class DataParser:
         r"[Ee][Rr][Rr]"
         r")$"
     )
-    COLUMN_TYPE_KEYS: ClassVar[Dict[str, List[str]]] = {
+    COLUMN_TYPE_KEYS: ClassVar[dict[str, list[str]]] = {
         "measurement": ["测量", "值", "数据", "measure", "value", "尺寸", "重量", "长度", "宽度", "厚度", "直径"],
         "subgroup": ["子组", "组", "批次", "样本", "subgroup", "sample", "lot", "batch"],
         "usl": ["上规格", "上限", "USL", "upper spec", "max"],
@@ -52,7 +52,7 @@ class DataParser:
     # 不作为 numeric_columns 输出的语义角色 (规格/目标/子组序号不是可分析测量值)
     _NON_MEASUREMENT_ROLES = ("usl", "lsl", "target", "subgroup")
 
-    TAG_KEYWORDS: ClassVar[Dict[str, List[str]]] = {
+    TAG_KEYWORDS: ClassVar[dict[str, list[str]]] = {
         "subgroup": ["子组", "批次", "样本号", "组号", "subgroup", "sample", "lot"],
         "measurement": ["数值", "测量值", "特性值", "value", "measurement", "data"],
         "spec_limit": ["规格限", "规格", "spec", "USL", "LSL", "上限", "下限"],
@@ -64,15 +64,15 @@ class DataParser:
     def __init__(self):
         self.header_row: int = 0
         self.data_start_row: int = 1
-        self.column_types: Dict[str, str] = {}
-        self.numeric_like: Dict[str, bool] = {}
-        self.spec_limits: Dict[str, Dict[str, float]] = {}
-        self.subgroup_col: Optional[str] = None
-        self.measurement_cols: List[str] = []
-        self.identifier_cols: List[str] = []
+        self.column_types: dict[str, str] = {}
+        self.numeric_like: dict[str, bool] = {}
+        self.spec_limits: dict[str, dict[str, float]] = {}
+        self.subgroup_col: str | None = None
+        self.measurement_cols: list[str] = []
+        self.identifier_cols: list[str] = []
         self.invalid_count: int = 0
 
-    def prepare(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+    def prepare(self, df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, Any]]:
         """清洗并解析数据：返回 (列名同步的DataFrame, 解析信息)"""
         if df.empty:
             raise ValueError("数据框为空，无法解析")
@@ -82,7 +82,7 @@ class DataParser:
         info = self._analyze_frame(cleaned)
         return cleaned, info
 
-    def analyze(self, df: pd.DataFrame) -> Dict[str, Any]:
+    def analyze(self, df: pd.DataFrame) -> dict[str, Any]:
         if df.empty:
             raise ValueError("数据框为空，无法解析")
 
@@ -91,7 +91,7 @@ class DataParser:
         return self._analyze_frame(df)
 
     def refresh_info(self, df: pd.DataFrame,
-                     info: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+                     info: dict[str, Any] | None = None) -> dict[str, Any]:
         """基于变更后的 DataFrame 重算解析信息（数据清洗/列增删后调用）。
 
         与 prepare() 的区别: 不重新探测表头（此时列名已是解析后的最终列名），
@@ -107,7 +107,7 @@ class DataParser:
         merged["data_start_row"] = header_row + 1
         return merged
 
-    def _analyze_frame(self, df: pd.DataFrame) -> Dict[str, Any]:
+    def _analyze_frame(self, df: pd.DataFrame) -> dict[str, Any]:
         """对已是数据区的 DataFrame 重算分类与派生信息（三处入口共用）"""
         self.column_types = self._classify_columns(df)
         self.numeric_like = {c: self._numeric_like(df[c]) for c in df.columns}
@@ -173,7 +173,7 @@ class DataParser:
         return float(parsed.notna().mean()) >= 0.8
 
     @staticmethod
-    def _clean_invalid_cells(df: pd.DataFrame) -> Tuple[pd.DataFrame, int]:
+    def _clean_invalid_cells(df: pd.DataFrame) -> tuple[pd.DataFrame, int]:
         invalid_mask = df.map(DataParser._is_invalid_cell)
         invalid_rows = invalid_mask.any(axis=1)
         cleaned = df[~invalid_rows].reset_index(drop=True)
@@ -258,7 +258,7 @@ class DataParser:
             df = df.iloc[1:].reset_index(drop=True)
         return df
 
-    def _classify_columns(self, df: pd.DataFrame) -> Dict[str, str]:
+    def _classify_columns(self, df: pd.DataFrame) -> dict[str, str]:
         types = {}
         for col in df.columns:
             col_lower = str(col).lower()
@@ -309,7 +309,7 @@ class DataParser:
 
         return types
 
-    def _extract_spec_limits(self, df: pd.DataFrame) -> Dict[str, Dict[str, float]]:
+    def _extract_spec_limits(self, df: pd.DataFrame) -> dict[str, dict[str, float]]:
         specs = {}
         for col, _col_type in self.column_types.items():
             col_lower = str(col).lower()
@@ -332,18 +332,18 @@ class DataParser:
 
         return specs
 
-    def _identify_subgroup_column(self, df: pd.DataFrame) -> Optional[str]:
+    def _identify_subgroup_column(self, df: pd.DataFrame) -> str | None:
         for col in df.columns:
             col_lower = str(col).lower()
             if any(kw in col_lower for kw in self.COLUMN_TYPE_KEYS.get("subgroup", [])):
                 return col
         return None
 
-    def _identify_measurement_columns(self, df: pd.DataFrame) -> List[str]:
+    def _identify_measurement_columns(self, df: pd.DataFrame) -> list[str]:
         return [c for c, t in self.column_types.items()
                 if t in ("numeric", "measurement") and self.numeric_like.get(c, True)]
 
-    def _numeric_columns(self, df: pd.DataFrame) -> List[str]:
+    def _numeric_columns(self, df: pd.DataFrame) -> list[str]:
         """可参与分析/因子选择的数值列（排除规格限、目标值、子组序号）"""
         return [
             c for c in df.columns
@@ -351,7 +351,7 @@ class DataParser:
             and self.column_types.get(c) not in self._NON_MEASUREMENT_ROLES
         ]
 
-    def _identify_identifier_columns(self, df: pd.DataFrame) -> List[str]:
+    def _identify_identifier_columns(self, df: pd.DataFrame) -> list[str]:
         return [
             c for c, t in self.column_types.items()
             if t in ("text",) and c != self.subgroup_col
@@ -361,7 +361,7 @@ class DataParser:
         return pd.to_numeric(df[col], errors="coerce").dropna()
 
     @staticmethod
-    def suggest_subgroup_size(df: pd.DataFrame, col: str) -> Optional[int]:
+    def suggest_subgroup_size(df: pd.DataFrame, col: str) -> int | None:
         data = pd.to_numeric(df[col], errors="coerce").dropna()
         total = len(data)
         common_sizes = [2, 3, 4, 5, 6, 8, 10, 12, 15, 20]

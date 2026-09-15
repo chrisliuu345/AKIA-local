@@ -1,6 +1,5 @@
 """LPA 分层审核表引擎 — 模板生成 + Excel 导出"""
 
-from typing import List, Dict
 from core.fonts import get_ui_font
 
 LPA_TEMPLATES = {
@@ -37,14 +36,14 @@ LPA_TEMPLATES = {
 
 class LPAEngine:
     @staticmethod
-    def get_templates() -> Dict[str, list]:
+    def get_templates() -> dict[str, list]:
         return LPA_TEMPLATES
 
     @staticmethod
     def generate_excel(
-        processes: List[str],
-        selected_categories: List[str] = None,
-        auditors: List[str] = None,
+        processes: list[str],
+        selected_categories: list[str] | None = None,
+        auditors: list[str] | None = None,
         output_path: str = "LPA_Checklist.xlsx",
     ):
         """生成 LPA Excel 检查表"""

@@ -2,7 +2,7 @@
 通用图表生成 Tab — 动态配置面板 + 12 种图表类型
 """
 
-from typing import Dict, Any
+from typing import Any
 import pandas as pd
 
 from PySide6.QtWidgets import (
@@ -27,8 +27,8 @@ class ChartTab(BaseAnalysisTab):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.df: pd.DataFrame = None
-        self.parsed_info: Dict[str, Any] = {}
-        self.current_result: Dict[str, Any] = {}
+        self.parsed_info: dict[str, Any] = {}
+        self.current_result: dict[str, Any] = {}
         self.current_figure = None
         self.canvas = None
         self._col_widgets: list = []
@@ -224,7 +224,7 @@ class ChartTab(BaseAnalysisTab):
                 w.addItems(all_cols)
                 w.setCurrentIndex(-1)
 
-    def set_data(self, df: pd.DataFrame, parsed_info: Dict[str, Any] = None):
+    def set_data(self, df: pd.DataFrame, parsed_info: dict[str, Any] | None = None):
         self.df = df
         self.parsed_info = parsed_info or {}
         self._populate_column_widgets()
@@ -292,7 +292,7 @@ class ChartTab(BaseAnalysisTab):
             return f"列「{col}」不含数值数据（全为文本/空值），无法用于图表分析。\n请改用其他列，或检查数据格式。"
         return None
 
-    def run_analysis(self) -> Dict[str, Any]:
+    def run_analysis(self) -> dict[str, Any]:
         chart_type = self.chart_type_combo.currentText()
         params = self._collect_params()
 
@@ -333,7 +333,7 @@ class ChartTab(BaseAnalysisTab):
 
         return {"figure": fig, "summary": summary, "chart_type": chart_type}
 
-    def display_result(self, analysis: Dict[str, Any] = None):
+    def display_result(self, analysis: dict[str, Any] | None = None):
         if analysis is None:
             return
         fig = analysis.get("figure")
@@ -350,7 +350,7 @@ class ChartTab(BaseAnalysisTab):
         if chart_type:
             self.set_chart_type(chart_type)
 
-    def run_and_display(self) -> Dict[str, Any]:
+    def run_and_display(self) -> dict[str, Any]:
         ok, msg = self.validate_params()
         if not ok:
             self._clear_canvas()

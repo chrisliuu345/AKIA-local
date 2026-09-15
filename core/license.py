@@ -5,7 +5,6 @@
 """
 
 from enum import Enum
-from typing import Tuple
 
 
 class LicenseStatus(Enum):
@@ -30,7 +29,7 @@ class LicenseManager:
         raw = f"{platform.node()}|{platform.machine()}|{platform.processor()}"
         return hashlib.md5(raw.encode()).hexdigest()[:32]
 
-    def verify(self) -> Tuple[bool, LicenseStatus]:
+    def verify(self) -> tuple[bool, LicenseStatus]:
         """验证许可证 — 始终返回有效"""
         return True, LicenseStatus.VALID
 
@@ -51,7 +50,7 @@ def _ensure_license_dir():
     """确保许可证目录存在 — 空操作"""
 
 
-def verify_license() -> Tuple[bool, LicenseStatus]:
+def verify_license() -> tuple[bool, LicenseStatus]:
     """验证许可证 — 始终返回有效"""
     return True, LicenseStatus.VALID
 

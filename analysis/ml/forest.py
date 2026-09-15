@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -19,7 +19,7 @@ DEFAULT_MAX_PREVIEW = 200
 
 
 def make_estimator(task: str, n_estimators: int = DEFAULT_N_ESTIMATORS,
-                   max_depth: Optional[int] = None, min_samples_leaf: int = 1,
+                   max_depth: int | None = None, min_samples_leaf: int = 1,
                    max_features: str = "sqrt", oob_score: bool = True,
                    random_state: int = 42):
     """按任务类型构建随机森林估计器（默认启用 OOB）。"""
@@ -35,10 +35,10 @@ def make_estimator(task: str, n_estimators: int = DEFAULT_N_ESTIMATORS,
 def analyze(
     df: pd.DataFrame,
     target: str,
-    features: Optional[List[str]] = None,
-    task: Optional[str] = None,
+    features: list[str] | None = None,
+    task: str | None = None,
     n_estimators: int = DEFAULT_N_ESTIMATORS,
-    max_depth: Optional[int] = None,
+    max_depth: int | None = None,
     min_samples_leaf: int = 1,
     max_features: str = "sqrt",
     oob_score: bool = True,
@@ -47,10 +47,10 @@ def analyze(
     cv: int = 5,
     random_state: int = 42,
     scale: bool = False,
-    bin_features: Optional[List[str]] = None,
+    bin_features: list[str] | None = None,
     n_bins: int = 5,
     max_preview: int = DEFAULT_MAX_PREVIEW,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """随机森林完整流程：切分 → 拟合 → 指标/CV/OOB/重要性/置换重要性。"""
     if df is None or len(df) == 0:
         raise MLDataError("数据表为空")
@@ -140,7 +140,7 @@ def analyze(
 
 
 def _permutation_importance(pipeline, X_test, y_test, task: str,
-                            repeats: int, random_state: int) -> List[Dict[str, Any]]:
+                            repeats: int, random_state: int) -> list[dict[str, Any]]:
     """置换重要性（基于原始特征列，可读性优于编码后列名）。"""
     if repeats <= 0 or len(X_test) < 2:
         return []
@@ -156,13 +156,13 @@ def _permutation_importance(pipeline, X_test, y_test, task: str,
         return []
 
 
-def _summary_text(task: str, metrics: Dict[str, Any], cv_result: Dict[str, Any],
-                  oob: Optional[float]) -> str:
+def _summary_text(task: str, metrics: dict[str, Any], cv_result: dict[str, Any],
+                  oob: float | None) -> str:
     kind = "分类" if task == TASK_CLASSIFICATION else "回归"
     cv = cv_result["summary"]
     oob_text = ""
     if oob is not None:
-        oob_text = f"，OOB={'%0.3f' % oob}" if task == TASK_CLASSIFICATION \
+        oob_text = f"，OOB={f'{oob:.3f}'}" if task == TASK_CLASSIFICATION \
             else f"，OOB R²={oob:.3f}"
     if task == TASK_CLASSIFICATION:
         test = metrics["test"]

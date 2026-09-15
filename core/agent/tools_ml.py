@@ -6,15 +6,15 @@ ml_prepare_data · ml_train · ml_automl · ml_evaluate · ml_explain · ml_pred
 """
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 
 from core.agent.tools import AgentContext, ToolRegistry, ToolResult, _fmt
-from core.agent.tools_ext import _as_list, _df, _match_columns
+from core.agent.tool_helpers import _as_list, _df, _match_columns
 
 
-def _target_column(frame: pd.DataFrame, target: Optional[str]) -> str:
+def _target_column(frame: pd.DataFrame, target: str | None) -> str:
     if not target:
         raise ValueError("请指定目标列 target（数值列做回归，文本/0-1 列做分类）")
     return _match_columns(frame, [target], kind="any")[0]
@@ -32,7 +32,7 @@ def _feature_columns(ctx: AgentContext, name: str, frame: pd.DataFrame,
 
 
 def _model_runner(frame: pd.DataFrame, target: str, features: list[str],
-                  task: Optional[str], model: str, cv: int, test_size: float,
+                  task: str | None, model: str, cv: int, test_size: float,
                   random_state: int) -> dict:
     """按模型名分发到对应真引擎（保持各引擎的丰富输出）。"""
     from analysis.ml import boosting, forest, mars, train, trees
@@ -81,8 +81,8 @@ def register_ml_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
               "对数据表做机器学习体检：任务类型判定（回归/分类）、特征建议、缺失与类别分布",
               {"sheet": "表名(可选)", "target": "目标列(必填)", "features": "特征列(逗号分隔，可选)"},
               category="机器学习", returns="task/columns/class_counts")
-    def _prepare_data(context: AgentContext, sheet: str = None,
-                      target: str = None, features=None):
+    def _prepare_data(context: AgentContext, sheet: str | None = None,
+                      target: str | None = None, features=None):
         from analysis.ml import prep
         name, frame = _df(context, sheet)
         tgt = _target_column(frame, target)
@@ -107,8 +107,8 @@ def register_ml_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
                "model": "tree/forest/boosting/mars/linear", "task": "regression/classification(可选)",
                "cv": "折数(默认5)"},
               category="机器学习", returns="metrics/cv/importances/rules")
-    def _train(context: AgentContext, sheet: str = None, target: str = None,
-               features=None, model: str = "tree", task: str = None,
+    def _train(context: AgentContext, sheet: str | None = None, target: str | None = None,
+               features=None, model: str = "tree", task: str | None = None,
                cv: int = 5):
         name, frame = _df(context, sheet)
         tgt = _target_column(frame, target)
@@ -137,7 +137,7 @@ def register_ml_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
               {"sheet": "表名(可选)", "target": "目标列(必填)", "features": "特征列(可选)",
                "models": "模型列表(可选)", "cv": "折数(默认5)", "time_budget_s": "时间预算秒(默认90)"},
               category="机器学习", returns="leaderboard/best_model")
-    def _automl(context: AgentContext, sheet: str = None, target: str = None,
+    def _automl(context: AgentContext, sheet: str | None = None, target: str | None = None,
                 features=None, models=None, cv: int = 5,
                 time_budget_s: float = 90.0):
         from analysis.ml import automl
@@ -173,7 +173,7 @@ def register_ml_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
               {"sheet": "表名(可选)", "target": "目标列(必填)", "features": "特征列(可选)",
                "model": "模型名", "cv": "折数(默认5)", "learning_curve": "是否输出学习曲线(true/false)"},
               category="机器学习", returns="cv_scores/roc/residuals/learning_curve")
-    def _evaluate(context: AgentContext, sheet: str = None, target: str = None,
+    def _evaluate(context: AgentContext, sheet: str | None = None, target: str | None = None,
                   features=None, model: str = "forest", cv: int = 5,
                   learning_curve: bool = False):
         from analysis.ml import evaluate, train
@@ -219,8 +219,8 @@ def register_ml_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
                "model": "模型名(默认forest)", "row_index": "单样本行号(0 起，可选)",
                "max_rows": "SHAP 采样上限(默认300)"},
               category="机器学习", returns="method/importances/contributions")
-    def _explain(context: AgentContext, sheet: str = None, target: str = None,
-                 features=None, model: str = "forest", row_index: int = None,
+    def _explain(context: AgentContext, sheet: str | None = None, target: str | None = None,
+                 features=None, model: str = "forest", row_index: int | None = None,
                  max_rows: int = 300):
         from analysis.ml import explain as explain_mod
         from analysis.ml import train
@@ -257,9 +257,9 @@ def register_ml_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
                "features": "特征列(可选)", "model": "模型名", "model_path": ".qamodel 路径(可选)",
                "rows": "预览行数(默认10)", "save_path": "训练后保存模型路径(可选)"},
               category="机器学习", returns="predictions/model_path")
-    def _predict(context: AgentContext, sheet: str = None, target: str = None,
-                 features=None, model: str = "forest", model_path: str = None,
-                 rows: int = 10, save_path: str = None):
+    def _predict(context: AgentContext, sheet: str | None = None, target: str | None = None,
+                 features=None, model: str = "forest", model_path: str | None = None,
+                 rows: int = 10, save_path: str | None = None):
         from analysis.ml import persist, train
         name, frame = _df(context, sheet)
         preview_rows = max(1, int(rows))

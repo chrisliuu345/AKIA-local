@@ -65,7 +65,7 @@ class DeviceRegistry:
         with self._lock:
             try:
                 if os.path.exists(_CONFIG_PATH):
-                    with open(_CONFIG_PATH, "r", encoding="utf-8") as f:
+                    with open(_CONFIG_PATH, encoding="utf-8") as f:
                         cfg = json.load(f)
                     return cfg.get("devices", [])
             except Exception:
@@ -86,7 +86,7 @@ class DeviceRegistry:
             try:
                 cfg = {}
                 if os.path.exists(_CONFIG_PATH):
-                    with open(_CONFIG_PATH, "r", encoding="utf-8") as f:
+                    with open(_CONFIG_PATH, encoding="utf-8") as f:
                         cfg = json.load(f)
                 cfg["devices"] = devices_data
                 dir_name = os.path.dirname(_CONFIG_PATH) or "."

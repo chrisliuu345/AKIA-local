@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -37,7 +37,7 @@ _CV_SCORING = {
 }
 
 
-def regression_metrics(y_true, y_pred, n_features: Optional[int] = None) -> Dict[str, Any]:
+def regression_metrics(y_true, y_pred, n_features: int | None = None) -> dict[str, Any]:
     """回归指标（与 sklearn 定义一致）。"""
     y_true = np.asarray(y_true, dtype=float)
     y_pred = np.asarray(y_pred, dtype=float)
@@ -61,14 +61,14 @@ def regression_metrics(y_true, y_pred, n_features: Optional[int] = None) -> Dict
     }
 
 
-def classification_metrics(y_true, y_pred, y_score=None) -> Dict[str, Any]:
+def classification_metrics(y_true, y_pred, y_score=None) -> dict[str, Any]:
     """分类指标 — 混淆矩阵 + weighted/macro 指标 + AUC（可选）。"""
     y_true = np.asarray(y_true)
     y_pred = np.asarray(y_pred)
     labels = sorted({str(v) for v in y_true} | {str(v) for v in y_pred})
     report = classification_report(y_true, y_pred, zero_division=0,
                                    output_dict=True)
-    out: Dict[str, Any] = {
+    out: dict[str, Any] = {
         "n": int(len(y_true)),
         "accuracy": float(accuracy_score(y_true, y_pred)),
         "f1_weighted": float(report.get("weighted avg", {}).get("f1-score", 0.0)),
@@ -109,7 +109,7 @@ def classification_metrics(y_true, y_pred, y_score=None) -> Dict[str, Any]:
 
 
 def compute_metrics(task: str, y_true, y_pred, y_score=None,
-                    n_features: Optional[int] = None) -> Dict[str, Any]:
+                    n_features: int | None = None) -> dict[str, Any]:
     """按任务类型分发指标计算。"""
     if task == TASK_REGRESSION:
         return regression_metrics(y_true, y_pred, n_features=n_features)
@@ -119,7 +119,7 @@ def compute_metrics(task: str, y_true, y_pred, y_score=None,
 
 
 def _cv_splitter(task: str, cv: int, random_state: int,
-                 y: Optional[pd.Series] = None):
+                 y: pd.Series | None = None):
     if task == TASK_CLASSIFICATION:
         folds = min(int(cv), int(pd.Series(y).value_counts().min()))
         folds = max(2, folds)
@@ -130,16 +130,16 @@ def _cv_splitter(task: str, cv: int, random_state: int,
 
 
 def cross_validation(pipeline, X, y, task: str, cv: int = 5,
-                     random_state: int = 42) -> Dict[str, Any]:
+                     random_state: int = 42) -> dict[str, Any]:
     """K 折交叉验证 — 每折在训练部分拟合 Pipeline（无泄漏）。"""
     splitter = _cv_splitter(task, cv, random_state, y)
     scoring = _CV_SCORING[task]
-    scores: Dict[str, List[float]] = {}
+    scores: dict[str, list[float]] = {}
     for key, name in scoring.items():
         raw = cross_val_score(clone(pipeline), X, y, cv=splitter, scoring=name)
         scores[key] = [float(-v if name.startswith("neg_") else v) for v in raw]
 
-    summary: Dict[str, Any] = {"folds": len(next(iter(scores.values())))}
+    summary: dict[str, Any] = {"folds": len(next(iter(scores.values())))}
     for key, values in scores.items():
         summary[f"{key}_mean"] = float(np.mean(values))
         summary[f"{key}_std"] = float(np.std(values, ddof=1)) if len(values) > 1 else 0.0
@@ -148,7 +148,7 @@ def cross_validation(pipeline, X, y, task: str, cv: int = 5,
 
 def learning_curve_data(pipeline, X, y, task: str, cv: int = 5,
                         train_sizes: int = 5,
-                        random_state: int = 42) -> Dict[str, Any]:
+                        random_state: int = 42) -> dict[str, Any]:
     """学习曲线 — 训练集/验证集得分随样本量变化（用于过拟合诊断）。"""
     splitter = _cv_splitter(task, cv, random_state, y)
     scoring = "r2" if task == TASK_REGRESSION else "accuracy"
@@ -166,7 +166,7 @@ def learning_curve_data(pipeline, X, y, task: str, cv: int = 5,
     }
 
 
-def roc_curve_data(y_true, y_score) -> Optional[Dict[str, Any]]:
+def roc_curve_data(y_true, y_score) -> dict[str, Any] | None:
     """二分类 ROC 曲线数据；多分类返回 None（由混淆矩阵/指标承担）。"""
     y_true = np.asarray(y_true)
     classes = sorted({str(v) for v in y_true})
@@ -187,13 +187,13 @@ def roc_curve_data(y_true, y_score) -> Optional[Dict[str, Any]]:
     }
 
 
-def residual_diagnostics(y_true, y_pred) -> Dict[str, Any]:
+def residual_diagnostics(y_true, y_pred) -> dict[str, Any]:
     """残差诊断 — 分布/正态性/异方差提示。"""
     y_true = np.asarray(y_true, dtype=float)
     y_pred = np.asarray(y_pred, dtype=float)
     residuals = y_true - y_pred
     std = float(np.std(residuals, ddof=1)) if len(residuals) > 1 else 0.0
-    out: Dict[str, Any] = {
+    out: dict[str, Any] = {
         "mean": float(np.mean(residuals)),
         "std": std,
         "max_abs": float(np.max(np.abs(residuals))) if len(residuals) else float("nan"),

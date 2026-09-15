@@ -6,7 +6,7 @@ ARIMA 建模 — 手动定阶 + 网格搜索自动选阶 + 残差诊断 + 预测
   auto_select()   — 网格搜索自动选阶
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -17,14 +17,14 @@ from statsmodels.stats.stattools import durbin_watson
 
 def analyze(
     data: pd.Series,
-    order: Optional[Tuple[int, int, int]] = None,
+    order: tuple[int, int, int] | None = None,
     auto_select: bool = True,
     max_p: int = 5,
     max_d: int = 2,
     max_q: int = 5,
     forecast_steps: int = 12,
     confidence_level: float = 0.95,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     ARIMA 建模 + 预测
 
@@ -140,7 +140,7 @@ def auto_select(
     max_p: int = 5,
     max_d: int = 2,
     max_q: int = 5,
-) -> Tuple[Optional[Tuple[int, int, int]], List[Dict]]:
+) -> tuple[tuple[int, int, int] | None, list[dict]]:
     """
     网格搜索自动选阶
 
@@ -158,7 +158,7 @@ def _auto_select(
     max_p: int,
     max_d: int,
     max_q: int,
-) -> Tuple[Optional[Tuple[int, int, int]], List[Dict]]:
+) -> tuple[tuple[int, int, int] | None, list[dict]]:
     """内部网格搜索"""
     candidates = []
     len(data)

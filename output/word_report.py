@@ -3,7 +3,7 @@ Word 报告生成器 — 基于 python-docx 生成专业质量分析报告
 """
 
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Any
 from io import BytesIO
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor
@@ -23,7 +23,7 @@ def _hdg(num: int, atype: str) -> str:
 class WordReport(BaseReportEngine):
     """生成 Word (.docx) 格式的质量分析报告"""
 
-    def __init__(self, font: str = None, font_size: int = 11):
+    def __init__(self, font: str | None = None, font_size: int = 11):
         super().__init__()
         self.document = Document()
         self.font = font or get_ui_font()
@@ -43,11 +43,11 @@ class WordReport(BaseReportEngine):
 
     def generate(
         self,
-        analyses: List[Dict[str, Any]],
+        analyses: list[dict[str, Any]],
         output_path: str,
         title: str = "",
         subtitle: str = "",
-        charts: Dict[str, Any] = None,
+        charts: dict[str, Any] | None = None,
     ) -> str:
         if not title:
             title = i18n.tr("report.title")
@@ -150,7 +150,7 @@ class WordReport(BaseReportEngine):
         doc.add_heading(i18n.tr("report.toc"), level=1)
         doc.add_page_break()
 
-    def _add_params_table(self, params: Dict[str, Any]):
+    def _add_params_table(self, params: dict[str, Any]):
         doc = self.document
         table = doc.add_table(rows=len(params) + 1, cols=2, style="Light Grid Accent 1")
         table.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -161,7 +161,7 @@ class WordReport(BaseReportEngine):
             table.cell(i, 0).text = str(k)
             table.cell(i, 1).text = str(v)
 
-    def _add_spc_results(self, result: Dict):
+    def _add_spc_results(self, result: dict):
         doc = self.document
         summary = result.get("summary", {})
 
@@ -186,7 +186,7 @@ class WordReport(BaseReportEngine):
                 doc.add_paragraph(f"点 {v.get('point', '')}: {v.get('desc', v.get('type', ''))}",
                                   style="List Bullet")
 
-    def _add_capability_results(self, result: Dict):
+    def _add_capability_results(self, result: dict):
         doc = self.document
         cap = result.get("capability", {})
         summary = result.get("summary", {})
@@ -207,7 +207,7 @@ class WordReport(BaseReportEngine):
             table.cell(i, 0).text = k
             table.cell(i, 1).text = v
 
-    def _add_msa_results(self, result: Dict):
+    def _add_msa_results(self, result: dict):
         doc = self.document
         vc = result.get("variance_components", {})
         pct = result.get("percentages", {})
@@ -229,7 +229,7 @@ class WordReport(BaseReportEngine):
         acceptance = result.get("acceptance", {})
         doc.add_paragraph(f"{i18n.tr('report.judgment')}: {acceptance.get('message', '')} ({acceptance.get('level', '')})")
 
-    def _add_hypothesis_results(self, result: Dict):
+    def _add_hypothesis_results(self, result: dict):
         doc = self.document
         table = doc.add_table(rows=4, cols=2, style="Light Grid Accent 1")
         table.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -244,7 +244,7 @@ class WordReport(BaseReportEngine):
             table.cell(i, 0).text = k
             table.cell(i, 1).text = v
 
-    def _add_doe_results(self, result: Dict):
+    def _add_doe_results(self, result: dict):
         doc = self.document
         effects = result.get("effects", result.get("main_effects", {}))
 

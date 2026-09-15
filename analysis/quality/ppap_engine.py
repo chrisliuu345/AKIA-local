@@ -1,7 +1,7 @@
 """PPAP 生产件批准引擎 — 18项提交清单 + 提交等级 + 状态追踪"""
 
 from dataclasses import dataclass, field
-from typing import ClassVar, Dict, List, Optional
+from typing import ClassVar
 from datetime import datetime
 
 PPAP_ITEMS = [
@@ -50,7 +50,7 @@ class PPAPItem:
     status: str = "pending"
     notes: str = ""
 
-    STATUS_COLORS: ClassVar[Dict[str, str]] = {
+    STATUS_COLORS: ClassVar[dict[str, str]] = {
         "pending": "#888", "in_progress": "#f1c40f",
         "complete": "#2ecc71", "n_a": "#555"}
 
@@ -61,9 +61,9 @@ class DimensionRecord:
     spec_nominal: float = 0.0
     usl: float = 0.0
     lsl: float = 0.0
-    measurements: List[float] = field(default_factory=list)
-    cp: Optional[float] = None
-    cpk: Optional[float] = None
+    measurements: list[float] = field(default_factory=list)
+    cp: float | None = None
+    cpk: float | None = None
 
 
 @dataclass
@@ -72,8 +72,8 @@ class PPAPReport:
     part_name: str = ""
     supplier: str = ""
     submission_level: int = 3
-    items: List[PPAPItem] = field(default_factory=list)
-    dimensions: List[DimensionRecord] = field(default_factory=list)
+    items: list[PPAPItem] = field(default_factory=list)
+    dimensions: list[DimensionRecord] = field(default_factory=list)
     psw_notes: str = ""
     created_at: str = ""
 
@@ -89,7 +89,7 @@ class PPAPReport:
         done = sum(1 for i in self.items if i.number in required and i.status in ("complete", "n_a"))
         return round(done / max(len(required), 1) * 100, 1)
 
-    def required_items(self) -> List[int]:
+    def required_items(self) -> list[int]:
         return SUBMISSION_ITEMS.get(self.submission_level, [18])
 
     def to_dict(self) -> dict:

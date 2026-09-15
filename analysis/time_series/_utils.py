@@ -1,11 +1,10 @@
 """时间序列分析 — 内部工具函数"""
 
-from typing import Optional
 
 import pandas as pd
 
 
-def detect_period(data: pd.Series) -> Optional[int]:
+def detect_period(data: pd.Series) -> int | None:
     """通过 ACF 峰值检测季节周期"""
     try:
         from statsmodels.tsa.stattools import acf
