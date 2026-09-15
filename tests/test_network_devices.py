@@ -40,7 +40,7 @@ class _FakeMaixcamServer:
         while not self._stop.is_set():
             try:
                 conn, _ = self._srv.accept()
-            except socket.timeout:
+            except TimeoutError:
                 continue
             except OSError:
                 return
@@ -54,7 +54,7 @@ class _FakeMaixcamServer:
             while not self._stop.is_set():
                 try:
                     data = conn.recv(4096)
-                except socket.timeout:
+                except TimeoutError:
                     continue
                 if not data:
                     return

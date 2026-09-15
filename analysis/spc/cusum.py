@@ -2,17 +2,17 @@
 CUSUM (累积和) 控制图分析 — 双侧 Tabular CUSUM
 """
 
-from typing import Dict, Any
+from typing import Any
 import numpy as np
 import pandas as pd
 
 
 def analyze(
     data: pd.Series,
-    target: float = None,
+    target: float | None = None,
     k: float = 0.5,
     h: float = 5.0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     values = data.values.astype(float)
     n = len(values)
     if n < 2:

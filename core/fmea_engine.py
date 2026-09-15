@@ -5,7 +5,7 @@ RPN = 严重度(S) × 发生度(O) × 检出度(D)
 """
 
 from dataclasses import dataclass
-from typing import ClassVar, List
+from typing import ClassVar
 from config.settings import RPN_CRITICAL, RPN_HIGH, RPN_MEDIUM
 
 
@@ -45,7 +45,7 @@ class FMEAItem:
             return "medium"
         return "low"
 
-    HEADERS: ClassVar[List[str]] = [
+    HEADERS: ClassVar[list[str]] = [
         "功能/工序", "失效模式", "失效后果", "严重度S",
         "失效原因", "发生度O", "现行控制", "检出度D",
         "RPN", "建议措施", "责任人", "措施状态",
@@ -130,7 +130,7 @@ class FMEAEngine:
     """FMEA 数据管理 — CRUD + RPN 排序 + 统计"""
 
     @staticmethod
-    def create_default(mode: str = "pfmea") -> List[FMEAItem]:
+    def create_default(mode: str = "pfmea") -> list[FMEAItem]:
         """创建默认示例条目"""
         if mode == "dfmea":
             items = [
@@ -153,11 +153,11 @@ class FMEAEngine:
         return items
 
     @staticmethod
-    def sort_by_rpn(items: List[FMEAItem], descending: bool = True) -> List[FMEAItem]:
+    def sort_by_rpn(items: list[FMEAItem], descending: bool = True) -> list[FMEAItem]:
         return sorted(items, key=lambda x: x.rpn, reverse=descending)
 
     @staticmethod
-    def get_stats(items: List[FMEAItem]) -> dict:
+    def get_stats(items: list[FMEAItem]) -> dict:
         if not items:
             return {"total": 0, "high": 0, "medium": 0, "low": 0, "max_rpn": 0, "top3": []}
         levels = [i.risk_level for i in items]
@@ -171,13 +171,13 @@ class FMEAEngine:
         }
 
     @staticmethod
-    def to_dataframe(items: List[FMEAItem]):
+    def to_dataframe(items: list[FMEAItem]):
         import pandas as pd
         data = [i.to_row() for i in items]
         return pd.DataFrame(data, columns=FMEAItem.HEADERS)
 
     @staticmethod
-    def generate_cp_rows(items: List[FMEAItem], rpn_threshold: int = RPN_HIGH) -> list:
+    def generate_cp_rows(items: list[FMEAItem], rpn_threshold: int = RPN_HIGH) -> list:
         """从高风险 FMEA 条目生成控制计划行
 
         映射关系:

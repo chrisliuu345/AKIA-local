@@ -2,12 +2,12 @@
 P控制图 (不合格品率控制图) — 向量化实现
 """
 
-from typing import Dict, Any
+from typing import Any
 import numpy as np
 import pandas as pd
 
 
-def analyze(defectives: pd.Series, sample_sizes: pd.Series) -> Dict[str, Any]:
+def analyze(defectives: pd.Series, sample_sizes: pd.Series) -> dict[str, Any]:
     n = len(defectives)
     if n < 2:
         raise ValueError(f"数据量不足: 需要至少 2 个子组, 当前 {n}")

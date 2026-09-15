@@ -2,12 +2,12 @@
 C控制图 (缺陷数控制图)
 """
 
-from typing import Dict, Any
+from typing import Any
 import numpy as np
 import pandas as pd
 
 
-def analyze(defects: pd.Series) -> Dict[str, Any]:
+def analyze(defects: pd.Series) -> dict[str, Any]:
     n = len(defects)
     if n < 2:
         raise ValueError(f"数据量不足: 需要至少 2 个子组, 当前 {n}")

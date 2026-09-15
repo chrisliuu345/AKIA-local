@@ -8,7 +8,7 @@
 - 配色方案选择
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -30,9 +30,9 @@ def _dpi():
 
 def _compute_correlation_matrix(
     df: pd.DataFrame,
-    numeric_cols: List[str],
+    numeric_cols: list[str],
     method: str = "pearson",
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """计算相关系数矩阵和 p 值矩阵"""
     corr = df[numeric_cols].corr(method=method)
     len(df)
@@ -72,9 +72,9 @@ def _significance_stars(p_value: float) -> str:
 
 def create_correlation_heatmap(
     df: pd.DataFrame,
-    numeric_cols: Optional[List[str]] = None,
+    numeric_cols: list[str] | None = None,
     title: str = "相关矩阵热力图",
-    options: Optional[Dict[str, Any]] = None,
+    options: dict[str, Any] | None = None,
 ) -> Figure:
     """
     创建相关系数矩阵热力图
@@ -164,9 +164,9 @@ def create_correlation_heatmap(
 
 def create_scatter_matrix(
     df: pd.DataFrame,
-    numeric_cols: Optional[List[str]] = None,
+    numeric_cols: list[str] | None = None,
     title: str = "散点矩阵图",
-    options: Optional[Dict[str, Any]] = None,
+    options: dict[str, Any] | None = None,
 ) -> Figure:
     """
     创建散点矩阵图（多变量两两散点 + 直方图对角线）

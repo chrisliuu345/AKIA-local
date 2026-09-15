@@ -173,7 +173,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | **B1 图表风格层** ✅ 2026-09-14 | 新增 `output/chart_style.py`（唯一风格源：深/浅主题 · Okabe-Ito 色盲友好语义色板 · rcParams · `smart_ylim` / `mark_violations` / `add_limit_lines`）；迁移 `chart_engine` + `chart_generator` + `heatmap`/`faceting`；控制图与时序接入智能 y 轴；热力图改发散色 + 对角消隐 | 16 例新测试通过；10+ 类图表风格一致；无默认色循环残留；深/浅主题可切换（对照图 `TEMP/chart_audit_{before,after_b1}_2026-09-14.png`） |
 | **B2 图表缺陷修复** ✅ 2026-09-15 | 审计 8 项全消：时序 y 轴智能留白（B1）· 箱线图多量纲自动分面（`box_mode=auto/single/split`）· 帕累托 80% 参考线 + 柱值标签 · 控制图图例外置 + 判异规则标注 · 能力图统计卡片重排（指标双列 + 等级徽章）· 热力图发散色 + 对角消隐 + 注释对比度 · 主题耦合色消除 · 字号/网格统一 | 22 例风格/缺陷测试通过；对照图 `TEMP/chart_audit_{before,after_b1,after_b2}_2026-09-*.png` |
 | **B3 界面体验** ✅ 2026-09-15 | 全局命令面板（Ctrl+K / Ctrl+P：37 Tab + 插件 + 16 项常用操作）· 批量分析分步执行 + 进度条 + 取消（Ctrl+Shift+B）· Toast 接线（分析完成 / 导出 / 批量汇总，批量期间抑制逐条弹窗）· 统一空状态（无数据 Tab 自动"导入数据"遮罩 + 按钮接线） | 15 例新测试通过；主流程键盘可达；批量分析全程 UI 可响应、可取消 |
-| **B4 质量与性能基线** | 类型现代化（UP006 945 / UP035 251 / RUF013 125）· `tools_ext`/`main_window` 热点拆分 · 冷启动与百万行导入基准 | 基准阈值入 CI；ruff 扩展门禁保持零告警 |
+| **B4 质量与性能基线** ✅ 2026-09-15 | 类型现代化全量完成（**UP 家族 + RUF013 清零**：PEP 585/604 注解、typing 弃用导入、隐式 Optional；154 文件）· 热点拆分：`ui/main_window_helpers.py`（Tab 判定 / 当前页 Stack / LLM 检测）+ `core/agent/tool_helpers.py`（工具共享助手），main_window 2295→2241、tools_ext 1175→1061 · 性能基线 `tools/benchmark.py` 四项指标（冷启动 2.2s / 百万行导入 14.0s / 5k 图渲染 1.5s / 5k 行 ML 训练 1.5s）+ `perf_baseline.json` + CI 步骤（tolerance ×4，子进程隔离） | 基准入 CI；ruff 扩展门禁（含 UP 全家）零告警；全量回归通过 |
 
 ### v4.2.0 — 算法可信度与深度
 

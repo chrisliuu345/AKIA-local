@@ -2,7 +2,7 @@
 卡方检验与比例检验 — 拟合优度/独立性/2比例检验
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Any
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -10,9 +10,9 @@ from scipy import stats
 
 def chi_square_gof(
     observed: pd.Series,
-    expected: Optional[pd.Series] = None,
-    probabilities: Optional[List[float]] = None,
-) -> Dict[str, Any]:
+    expected: pd.Series | None = None,
+    probabilities: list[float] | None = None,
+) -> dict[str, Any]:
     """
     卡方拟合优度检验
 
@@ -72,7 +72,7 @@ def chi_square_independence(
     data: pd.DataFrame,
     col1: str,
     col2: str,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     卡方独立性检验
 
@@ -117,7 +117,7 @@ def two_proportion_test(
     successes2: int,
     n2: int,
     alternative: str = "two-sided",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     双样本比例检验
 

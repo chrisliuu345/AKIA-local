@@ -16,7 +16,7 @@
 - color: 主色
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -43,7 +43,7 @@ def facet_group_table(
     value_col: str,
     group_col: str,
     limit: int = GROUP_LIMIT,
-) -> Tuple[List[str], List[str], Dict[str, int]]:
+) -> tuple[list[str], list[str], dict[str, int]]:
     """清洗后分组计数并按样本数降序截断，返回 (保留组, 省略组, 各组合法样本数)"""
     _vals, groups, _ok = _clean(df, value_col, group_col)
     counts = groups.value_counts()
@@ -56,7 +56,7 @@ def _clean(
     df: pd.DataFrame,
     value_col: str,
     group_col: str,
-) -> Tuple[pd.Series, pd.Series, bool]:
+) -> tuple[pd.Series, pd.Series, bool]:
     """返回 (数值, 分组, 可用标志)。值列非数值/分组缺失均剔除；可用样本 <2 视为不可用"""
     if df is None or len(df) == 0:
         return pd.Series(dtype=float), pd.Series(dtype=str), False
@@ -71,7 +71,7 @@ def _clean(
     return vals, groups, True
 
 
-def layout(n_groups: int, mode: str, col_wrap: int) -> Tuple[int, int]:
+def layout(n_groups: int, mode: str, col_wrap: int) -> tuple[int, int]:
     """按排列方式计算 (nrows, ncols)"""
     wrap = max(1, int(col_wrap))
     if mode == "row":
@@ -95,7 +95,7 @@ def create_small_multiples(
     value_col: str,
     group_col: str,
     title: str = "小多图",
-    options: Optional[Dict[str, Any]] = None,
+    options: dict[str, Any] | None = None,
 ) -> Figure:
     """按分组变量生成多子图网格图"""
     _ensure_font()
@@ -179,7 +179,7 @@ def _message_fig(title: str, message: str) -> Figure:
     return fig
 
 
-def faceting_summary_lines(df: pd.DataFrame, value_col: str, group_col: str) -> List[str]:
+def faceting_summary_lines(df: pd.DataFrame, value_col: str, group_col: str) -> list[str]:
     """摘要文本：值列统计 + 分组水平（含省略说明）"""
     lines = []
     vals, groups, ok = _clean(df, value_col, group_col)

@@ -2,7 +2,7 @@
 时间序列分析页 — ACF/PACF / 季节分解 / 指数平滑 / ARIMA / 模型对比
 """
 
-from typing import Dict, Any
+from typing import Any
 import pandas as pd
 
 from PySide6.QtWidgets import (
@@ -24,8 +24,8 @@ class TimeSeriesTab(BaseAnalysisTab):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.df: pd.DataFrame = None
-        self.parsed_info: Dict[str, Any] = {}
-        self.current_result: Dict[str, Any] = {}
+        self.parsed_info: dict[str, Any] = {}
+        self.current_result: dict[str, Any] = {}
         self.current_figure = None
         self.canvas = None
         self._setup_ui()
@@ -199,7 +199,7 @@ class TimeSeriesTab(BaseAnalysisTab):
         bottom_layout.addWidget(self.result_stack)
         layout.addLayout(bottom_layout)
 
-    def set_data(self, df: pd.DataFrame, parsed_info: Dict[str, Any] = None):
+    def set_data(self, df: pd.DataFrame, parsed_info: dict[str, Any] | None = None):
         self.df = df
         self.parsed_info = parsed_info or {}
         cols = list(df.columns)
@@ -228,7 +228,7 @@ class TimeSeriesTab(BaseAnalysisTab):
             return False, "请选择数值列"
         return True, ""
 
-    def run_and_display(self) -> Dict[str, Any]:
+    def run_and_display(self) -> dict[str, Any]:
         ok, msg = self.validate_params()
         if not ok:
             self._clear_canvas()
@@ -250,7 +250,7 @@ class TimeSeriesTab(BaseAnalysisTab):
             self.result_text.setStyleSheet("color: #e74c3c; font-weight: bold;")
             self.result_text.setText(f"分析失败: {str(e)}")
 
-    def run_analysis(self) -> Dict[str, Any]:
+    def run_analysis(self) -> dict[str, Any]:
         from analysis.time_series import acf_pacf, seasonal_decomposition, exponential_smoothing, arima, forecasting
 
         value_col = self.value_col_combo.currentText()
@@ -307,7 +307,7 @@ class TimeSeriesTab(BaseAnalysisTab):
         }
         return result
 
-    def display_result(self, result: Dict[str, Any]):
+    def display_result(self, result: dict[str, Any]):
         self._clear_canvas()
         self.result_text.clear()
         self.result_table.setRowCount(0)
@@ -325,7 +325,7 @@ class TimeSeriesTab(BaseAnalysisTab):
 
         self._render_chart(result)
 
-    def _render_chart(self, result: Dict[str, Any]):
+    def _render_chart(self, result: dict[str, Any]):
         chart_type = result.get("chart_type", "")
 
         data_for_chart = {}

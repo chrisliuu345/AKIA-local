@@ -9,13 +9,13 @@ References:
 Supports: L4, L8, L9, L12, L16, L18, L27, L36 arrays
 S/N ratios: larger-is-better, smaller-is-better, nominal-is-best (I/II)
 """
-from typing import Dict, Any, List, Optional
+from typing import Any
 import numpy as np
 import pandas as pd
 from scipy import stats
 
 
-_ARRAYS: Dict[str, dict] = {}
+_ARRAYS: dict[str, dict] = {}
 
 
 def _init_arrays():
@@ -92,7 +92,7 @@ def _init_arrays():
 _init_arrays()
 
 
-def _select_array(num_factors: int, factor_levels: List[int]) -> str:
+def _select_array(num_factors: int, factor_levels: list[int]) -> str:
     """Select smallest suitable orthogonal array."""
     all_2 = all(l == 2 for l in factor_levels)
     all_3 = all(l == 3 for l in factor_levels)
@@ -134,12 +134,12 @@ def _build_plackett_burman(n: int) -> np.ndarray:
 
 
 def generate_design(
-    factors: List[str],
-    factor_levels: Optional[List[int]] = None,
-    array: Optional[str] = None,
-    noise_factors: Optional[List[str]] = None,
-    noise_levels: Optional[List[int]] = None,
-    random_seed: Optional[int] = None,
+    factors: list[str],
+    factor_levels: list[int] | None = None,
+    array: str | None = None,
+    noise_factors: list[str] | None = None,
+    noise_levels: list[int] | None = None,
+    random_seed: int | None = None,
 ) -> pd.DataFrame:
     """Generate Taguchi orthogonal array design.
 
@@ -267,8 +267,8 @@ def compute_sn_ratio(values: np.ndarray, sn_type: str = "larger_is_better") -> f
 def response_table(
     design_df: pd.DataFrame,
     sn_ratios: np.ndarray,
-    factor_cols: List[str],
-) -> Dict[str, Dict]:
+    factor_cols: list[str],
+) -> dict[str, dict]:
     """Compute response table: level averages, delta, rank for each factor.
 
     Returns
@@ -301,8 +301,8 @@ def response_table(
 def _anova_on_sn(
     design_df: pd.DataFrame,
     sn_ratios: np.ndarray,
-    factor_cols: List[str],
-) -> Dict[str, Any]:
+    factor_cols: list[str],
+) -> dict[str, Any]:
     """Perform ANOVA on S/N ratios with optional pooling."""
     N = len(sn_ratios)
     grand_sum = float(np.sum(sn_ratios))
@@ -356,7 +356,7 @@ def _anova_on_sn(
     }
 
 
-def _optimal_combination(resp_table: Dict) -> Dict[str, Dict]:
+def _optimal_combination(resp_table: dict) -> dict[str, dict]:
     """Select best level for each factor (highest S/N average)."""
     optimal = {}
     for factor, data in resp_table.items():
@@ -368,7 +368,7 @@ def _optimal_combination(resp_table: Dict) -> Dict[str, Dict]:
     return optimal
 
 
-def _predicted_sn(resp_table: Dict, grand_mean_sn: float) -> float:
+def _predicted_sn(resp_table: dict, grand_mean_sn: float) -> float:
     """Predict S/N at optimal combination using additive model."""
     prediction = grand_mean_sn
     for _factor, data in resp_table.items():
@@ -380,9 +380,9 @@ def _predicted_sn(resp_table: Dict, grand_mean_sn: float) -> float:
 def analyze(
     df: pd.DataFrame,
     response_col: str,
-    factor_cols: List[str],
+    factor_cols: list[str],
     sn_type: str = "larger_is_better",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Analyze Taguchi design data.
 
     Parameters

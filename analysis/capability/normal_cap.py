@@ -2,7 +2,7 @@
 正态过程能力分析 — Cp, Cpk, Pp, Ppk, Cpm
 """
 
-from typing import Dict, Any, Optional
+from typing import Any
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -12,11 +12,11 @@ from analysis.capability._utils import get_capability_grade
 
 def analyze(
     data: pd.Series,
-    usl: Optional[float] = None,
-    lsl: Optional[float] = None,
-    target: Optional[float] = None,
+    usl: float | None = None,
+    lsl: float | None = None,
+    target: float | None = None,
     subgroup_size: int = 5,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     clean = data.dropna().values.astype(float)
     n = len(clean)
     if n < 2:

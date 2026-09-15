@@ -5,7 +5,7 @@
 """
 
 import math
-from typing import Any, Dict, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -16,9 +16,9 @@ def analyze(
     warranty_period: float,
     cost_per_failure: float,
     total_units: int,
-    censored: Optional[pd.Series] = None,
+    censored: pd.Series | None = None,
     confidence_level: float = 0.95,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     保修分析
 

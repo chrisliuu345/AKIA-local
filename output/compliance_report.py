@@ -4,7 +4,7 @@ import json
 import logging
 import os
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Any
 
 from config.settings import APP_VERSION
 from output.base_report_engine import BaseReportEngine
@@ -31,14 +31,14 @@ class ComplianceReportGenerator:
     """合规模板 → 报告生成"""
 
     @staticmethod
-    def list_templates() -> List[Dict[str, str]]:
+    def list_templates() -> list[dict[str, str]]:
         if not os.path.isdir(TEMPLATES_DIR):
             return []
         result = []
         for fname in os.listdir(TEMPLATES_DIR):
             if fname.endswith(".json"):
                 try:
-                    with open(os.path.join(TEMPLATES_DIR, fname), "r", encoding="utf-8") as f:
+                    with open(os.path.join(TEMPLATES_DIR, fname), encoding="utf-8") as f:
                         t = json.load(f)
                     result.append({
                         "id": fname.replace(".json", ""),
@@ -52,7 +52,7 @@ class ComplianceReportGenerator:
         return result
 
     @staticmethod
-    def load_template(template_id: str) -> Dict[str, Any]:
+    def load_template(template_id: str) -> dict[str, Any]:
         if not template_id or "/" in template_id or "\\" in template_id or ".." in template_id:
             raise ValueError(f"非法的模板 ID: {template_id}")
         path = os.path.join(TEMPLATES_DIR, f"{template_id}.json")
@@ -62,12 +62,12 @@ class ComplianceReportGenerator:
             raise ValueError(f"模板路径越界: {template_id}")
         if not os.path.exists(path):
             raise FileNotFoundError(f"模板不存在: {template_id}")
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             return json.load(f)
 
     @staticmethod
-    def generate(template_id: str, analyses: List[Dict],
-                 output_path: str, charts: Dict[str, bytes] = None,
+    def generate(template_id: str, analyses: list[dict],
+                 output_path: str, charts: dict[str, bytes] | None = None,
                  file_name: str = "") -> str:
         try:
             template = ComplianceReportGenerator.load_template(template_id)

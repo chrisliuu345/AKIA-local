@@ -5,7 +5,7 @@
   analyze() — 完整指数平滑分析 + 预测
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -19,10 +19,10 @@ def analyze(
     data: pd.Series,
     method: str = "holt_winters",
     seasonal: str = "additive",
-    seasonal_periods: Optional[int] = None,
+    seasonal_periods: int | None = None,
     forecast_steps: int = 12,
     confidence_level: float = 0.95,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     指数平滑分析 + 预测
 

@@ -9,12 +9,12 @@
 """
 
 import numpy as np
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 def _compute_system_r(
-    reliabilities: List[float], structure: str,
-    parallel_groups: Optional[List[List[int]]], k: int,
+    reliabilities: list[float], structure: str,
+    parallel_groups: list[list[int]] | None, k: int,
 ) -> float:
     """内部辅助: 计算系统可靠度"""
     if structure == "series":
@@ -29,12 +29,12 @@ def _compute_system_r(
 
 
 def calculate_system_reliability(
-    components: List[Dict[str, Any]],
+    components: list[dict[str, Any]],
     structure: str = "series",
-    parallel_groups: Optional[List[List[int]]] = None,
-    k_out_of_n: Optional[Dict[str, int]] = None,
+    parallel_groups: list[list[int]] | None = None,
+    k_out_of_n: dict[str, int] | None = None,
     mission_time: float = 1.0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     可靠性框图计算
 
@@ -107,7 +107,7 @@ def calculate_system_reliability(
     }
 
 
-def _series(reliabilities: List[float]) -> float:
+def _series(reliabilities: list[float]) -> float:
     """串联系统: R = ∏Ri"""
     r = 1.0
     for ri in reliabilities:
@@ -115,7 +115,7 @@ def _series(reliabilities: List[float]) -> float:
     return r
 
 
-def _parallel(reliabilities: List[float]) -> float:
+def _parallel(reliabilities: list[float]) -> float:
     """并联系统: R = 1 - ∏(1-Ri)"""
     r = 1.0
     for ri in reliabilities:
@@ -123,7 +123,7 @@ def _parallel(reliabilities: List[float]) -> float:
     return 1 - r
 
 
-def _mixed(reliabilities: List[float], groups: List[List[int]]) -> float:
+def _mixed(reliabilities: list[float], groups: list[list[int]]) -> float:
     """混合系统: 每组并联，组间串联"""
     r = 1.0
     for group in groups:
@@ -132,7 +132,7 @@ def _mixed(reliabilities: List[float], groups: List[List[int]]) -> float:
     return r
 
 
-def _k_out_of_n(reliabilities: List[float], k: int) -> float:
+def _k_out_of_n(reliabilities: list[float], k: int) -> float:
     """k/n 表决系统: 至少 k 个正常
     使用动态规划计算精确概率
     """
@@ -154,10 +154,10 @@ def _k_out_of_n(reliabilities: List[float], k: int) -> float:
 
 
 def system_mtbf(
-    components: List[Dict[str, Any]],
+    components: list[dict[str, Any]],
     structure: str = "series",
-    parallel_groups: Optional[List[List[int]]] = None,
-) -> Dict[str, Any]:
+    parallel_groups: list[list[int]] | None = None,
+) -> dict[str, Any]:
     """
     系统 MTBF 计算（基于指数分布假设）
 
@@ -211,7 +211,7 @@ def system_mtbf(
     }
 
 
-def _parallel_mtbf(lambdas: List[float]) -> float:
+def _parallel_mtbf(lambdas: list[float]) -> float:
     """并联系统 MTBF (数值积分)"""
     t_max = max(5.0 / min(lambdas), 100)
     n_points = 1000
@@ -227,7 +227,7 @@ def _parallel_mtbf(lambdas: List[float]) -> float:
     return float(integral)
 
 
-def _parallel_lambda(lambdas: List[float]) -> float:
+def _parallel_lambda(lambdas: list[float]) -> float:
     """并联组等效失效率"""
     mtbf = _parallel_mtbf(lambdas)
     return 1.0 / mtbf if mtbf > 0 else float("inf")

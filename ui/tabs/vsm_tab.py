@@ -2,7 +2,7 @@
 价值流分析页 (VSM) — 工序框 + 库存三角 + 时间阶梯线
 """
 
-from typing import Dict, Any, List
+from typing import Any
 
 from PySide6.QtWidgets import (
     QFrame,
@@ -30,8 +30,8 @@ from analysis.ie.vsm import VSMEngine
 class VSMTab(BaseAnalysisTab):
 
     def __init__(self, parent=None):
-        self.ie_processes: List[Process] = []
-        self.ie_flows: List[MaterialFlow] = []
+        self.ie_processes: list[Process] = []
+        self.ie_flows: list[MaterialFlow] = []
         super().__init__(parent)
         self._setup_ui()
 
@@ -147,8 +147,8 @@ class VSMTab(BaseAnalysisTab):
     def set_raw_data(self, *args, **kwargs):
         pass
 
-    def set_ie_data(self, processes: List[Process] = None,
-                    flows: List[MaterialFlow] = None):
+    def set_ie_data(self, processes: list[Process] | None = None,
+                    flows: list[MaterialFlow] | None = None):
         if processes is not None:
             self.ie_processes = processes
         if flows is not None:
@@ -195,11 +195,11 @@ class VSMTab(BaseAnalysisTab):
         self._display_result(result)
         self.analysis_completed.emit()
 
-    def _display_result(self, result: Dict[str, Any]):
+    def _display_result(self, result: dict[str, Any]):
         self._fill_table(result)
         self._draw_vsm(result)
 
-    def _fill_table(self, result: Dict[str, Any]):
+    def _fill_table(self, result: dict[str, Any]):
         s = result["summary"]
         headers = ["类别", "项目", "值"]
         rows = [
@@ -229,7 +229,7 @@ class VSMTab(BaseAnalysisTab):
                 self.result_table.setItem(i, j, QTableWidgetItem(str(val)))
         self.result_table.resizeColumnsToContents()
 
-    def _draw_vsm(self, result: Dict[str, Any]):
+    def _draw_vsm(self, result: dict[str, Any]):
         self._clear_canvas()
         tc = theme_colors()
         plt.rcParams["axes.unicode_minus"] = False

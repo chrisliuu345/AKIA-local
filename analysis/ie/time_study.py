@@ -3,7 +3,7 @@
 一键计算: 平均时间/正常时间/标准工时/异常值剔除/时间分布/能力分析
 """
 
-from typing import Dict, List, Any, Tuple, Optional
+from typing import Any
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -36,7 +36,7 @@ class TimeStudyEngine:
     """秒表时间研究分析流水线"""
 
     @staticmethod
-    def remove_outliers(times: pd.Series, method: str = "iqr") -> Tuple[pd.Series, List[int]]:
+    def remove_outliers(times: pd.Series, method: str = "iqr") -> tuple[pd.Series, list[int]]:
         if len(times) < 5:
             return times, []
         if method == "zscore":
@@ -51,7 +51,7 @@ class TimeStudyEngine:
         return times[mask].reset_index(drop=True), outliers
 
     @staticmethod
-    def basic_stats(times: pd.Series) -> Dict[str, Any]:
+    def basic_stats(times: pd.Series) -> dict[str, Any]:
         n = len(times)
         if n == 0:
             return {"n": 0, "mean": 0, "median": 0, "std": 0, "min": 0,
@@ -77,7 +77,7 @@ class TimeStudyEngine:
         return normal_time * (1 + allowance_pct / 100.0)
 
     @staticmethod
-    def time_distribution(times: pd.Series, bins: int = None) -> Dict[str, Any]:
+    def time_distribution(times: pd.Series, bins: int | None = None) -> dict[str, Any]:
         n = len(times)
         if n < 3:
             return {"n": n, "bins": [], "counts": [], "normality_test": None}
@@ -103,8 +103,8 @@ class TimeStudyEngine:
         }
 
     @staticmethod
-    def capability_analysis(times: pd.Series, takt_time: Optional[float] = None,
-                            target_time: Optional[float] = None) -> Dict[str, Any]:
+    def capability_analysis(times: pd.Series, takt_time: float | None = None,
+                            target_time: float | None = None) -> dict[str, Any]:
         n = len(times)
         if n < 3 or takt_time is None:
             return {"n": n, "available": False}
@@ -145,9 +145,9 @@ class TimeStudyEngine:
         }
 
     @staticmethod
-    def analyze(observations: List[TimeObservation], rating: float = 1.0,
-                allowance_pct: float = 12.0, takt_time: Optional[float] = None,
-                confidence_level: float = 0.95) -> Dict[str, Any]:
+    def analyze(observations: list[TimeObservation], rating: float = 1.0,
+                allowance_pct: float = 12.0, takt_time: float | None = None,
+                confidence_level: float = 0.95) -> dict[str, Any]:
         """一键分析流水线"""
         if not observations:
             return {"valid": False, "error": "无观测数据"}

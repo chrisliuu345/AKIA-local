@@ -1,13 +1,13 @@
 """非参数检验 — Mann-Whitney U / Wilcoxon / Kruskal-Wallis / Mood中位数 / Friedman"""
 
 import numpy as np
-from typing import Dict, Any
+from typing import Any
 from scipy import stats as sp_stats
 
 
 def mann_whitney(
     a: np.ndarray, b: np.ndarray, alternative: str = "two-sided"
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Mann-Whitney U 检验 (两独立样本, 非参数 t-test 替代)"""
     clean_a = a[np.isfinite(a)]
     clean_b = b[np.isfinite(b)]
@@ -28,7 +28,7 @@ def mann_whitney(
 
 def wilcoxon_signed_rank(
     a: np.ndarray, b: np.ndarray = None, alternative: str = "two-sided"
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Wilcoxon 符号秩检验 (配对样本或单样本)"""
     if b is not None:
         min_len = min(len(a), len(b))
@@ -60,7 +60,7 @@ def wilcoxon_signed_rank(
         }
 
 
-def kruskal_wallis(*groups: np.ndarray) -> Dict[str, Any]:
+def kruskal_wallis(*groups: np.ndarray) -> dict[str, Any]:
     """Kruskal-Wallis H 检验 (多独立样本, 非参数 ANOVA 替代)"""
     clean_groups = [g[np.isfinite(g)] for g in groups]
     clean_groups = [g for g in clean_groups if len(g) >= 3]
@@ -78,7 +78,7 @@ def kruskal_wallis(*groups: np.ndarray) -> Dict[str, Any]:
     }
 
 
-def mood_median_test(*groups: np.ndarray) -> Dict[str, Any]:
+def mood_median_test(*groups: np.ndarray) -> dict[str, Any]:
     """Mood 中位数检验
 
     检验多个独立样本是否来自具有相同中位数的总体。
@@ -116,7 +116,7 @@ def mood_median_test(*groups: np.ndarray) -> Dict[str, Any]:
     }
 
 
-def friedman_test(*groups: np.ndarray) -> Dict[str, Any]:
+def friedman_test(*groups: np.ndarray) -> dict[str, Any]:
     """Friedman 检验 (完全区组设计, 非参数重复测量 ANOVA 替代)
 
     适用于：

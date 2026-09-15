@@ -2,7 +2,7 @@
 工时研究分析页面 — 秒表时间研究，一键自动分析
 """
 
-from typing import Dict, Any, List
+from typing import Any
 
 from PySide6.QtWidgets import (
     QFrame,
@@ -27,7 +27,7 @@ from analysis.ie.time_study import TimeStudyEngine
 class TimeStudyTab(BaseAnalysisTab):
 
     def __init__(self, parent=None):
-        self.ie_observations: List[TimeObservation] = []
+        self.ie_observations: list[TimeObservation] = []
         super().__init__(parent)
         self._setup_ui()
 
@@ -170,7 +170,7 @@ class TimeStudyTab(BaseAnalysisTab):
     def set_raw_data(self, *args, **kwargs):
         pass
 
-    def set_ie_data(self, observations: List[TimeObservation]):
+    def set_ie_data(self, observations: list[TimeObservation]):
         self.ie_observations = observations
         self._populate_preview(observations)
         pids = sorted(set(o.process_id for o in observations if o.process_id))
@@ -180,7 +180,7 @@ class TimeStudyTab(BaseAnalysisTab):
         self.process_filter.addItems(pids)
         self.process_filter.blockSignals(False)
 
-    def _populate_preview(self, observations: List[TimeObservation]):
+    def _populate_preview(self, observations: list[TimeObservation]):
         cols = ["工序编号", "作业员", "循环", "观测时间(s)"]
         self.preview_table.setColumnCount(len(cols))
         self.preview_table.setHorizontalHeaderLabels(cols)
@@ -222,7 +222,7 @@ class TimeStudyTab(BaseAnalysisTab):
         self._display_result(result)
         self.analysis_completed.emit()
 
-    def _display_result(self, result: Dict[str, Any]):
+    def _display_result(self, result: dict[str, Any]):
         if not result.get("valid"):
             return
 
@@ -249,7 +249,7 @@ class TimeStudyTab(BaseAnalysisTab):
 
         self._draw_chart(results, summary)
 
-    def _draw_chart(self, results: list, summary: Dict[str, Any]):
+    def _draw_chart(self, results: list, summary: dict[str, Any]):
         self._clear_canvas()
         n = len(results)
         if n == 0:

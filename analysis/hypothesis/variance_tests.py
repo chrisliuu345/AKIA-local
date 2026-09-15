@@ -2,13 +2,13 @@
 方差齐性检验
 """
 
-from typing import Dict, Any
+from typing import Any
 import numpy as np
 import pandas as pd
 from scipy import stats
 
 
-def variance_tests(*groups: pd.Series, confidence_level: float = 0.95) -> Dict[str, Any]:
+def variance_tests(*groups: pd.Series, confidence_level: float = 0.95) -> dict[str, Any]:
     clean_groups = [g.dropna().astype(float).values for g in groups if len(g.dropna()) >= 2]
     if len(clean_groups) < 2:
         raise ValueError("需要至少2个有效组")

@@ -1,0 +1,6 @@
+{
+  "cold_start_s": 2.296,
+  "import_1m_rows_s": 14.269,
+  "chart_render_5k_s": 1.732,
+  "ml_train_5k_s": 1.588
+}

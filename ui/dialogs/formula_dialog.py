@@ -19,7 +19,7 @@ from ui.theme import BUTTON_SECONDARY, colors as theme_colors
 
 
 class FormulaDialog(QDialog):
-    def __init__(self, parent=None, analyses: dict = None, df=None):
+    def __init__(self, parent=None, analyses: dict | None = None, df=None):
         super().__init__(parent)
         self.setWindowTitle(i18n.tr("formula.title"))
         self.setMinimumSize(720, 480)

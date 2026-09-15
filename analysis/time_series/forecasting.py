@@ -6,7 +6,7 @@
   predict()         — 统一预测（调用各子模块）
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -15,11 +15,11 @@ from . import arima, exponential_smoothing
 
 def compare_models(
     data: pd.Series,
-    models: Optional[List[str]] = None,
+    models: list[str] | None = None,
     forecast_steps: int = 12,
-    seasonal_periods: Optional[int] = None,
+    seasonal_periods: int | None = None,
     seasonal: str = "additive",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     多模型对比，按 AIC/BIC 排名
 
@@ -85,9 +85,9 @@ def predict(
     data: pd.Series,
     model: str = "arima",
     forecast_steps: int = 12,
-    order: Optional[tuple] = None,
-    seasonal_periods: Optional[int] = None,
-) -> Dict[str, Any]:
+    order: tuple | None = None,
+    seasonal_periods: int | None = None,
+) -> dict[str, Any]:
     """
     统一预测接口
 
@@ -117,10 +117,10 @@ def _run_model(
     model_name: str,
     data: pd.Series,
     forecast_steps: int,
-    seasonal_periods: Optional[int] = None,
-    order: Optional[tuple] = None,
+    seasonal_periods: int | None = None,
+    order: tuple | None = None,
     seasonal: str = "additive",
-) -> Optional[Dict]:
+) -> dict | None:
     """内部：运行单个模型并返回标准化结果"""
     try:
         if model_name == "arima":

@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -23,7 +23,7 @@ class MLDataError(ValueError):
     """数据不满足建模条件（UI/Agent 直接展示 message）。"""
 
 
-def detect_task_type(target: pd.Series, task: Optional[str] = None) -> str:
+def detect_task_type(target: pd.Series, task: str | None = None) -> str:
     """判定任务类型；显式 task 优先。
 
     规则:
@@ -55,7 +55,7 @@ def detect_task_type(target: pd.Series, task: Optional[str] = None) -> str:
 
 
 def resolve_features(df: pd.DataFrame, target: str,
-                     features: Optional[List[str]] = None) -> List[str]:
+                     features: list[str] | None = None) -> list[str]:
     """解析特征列：显式 features 优先，否则取全部列 - target。"""
     if target not in df.columns:
         raise MLDataError(f"目标列不存在: {target}")
@@ -72,9 +72,9 @@ def resolve_features(df: pd.DataFrame, target: str,
 
 
 def validate_dataset(df: pd.DataFrame, target: str,
-                     features: Optional[List[str]] = None,
-                     task: Optional[str] = None,
-                     min_rows: int = MIN_ROWS) -> Dict[str, Any]:
+                     features: list[str] | None = None,
+                     task: str | None = None,
+                     min_rows: int = MIN_ROWS) -> dict[str, Any]:
     """数据集体检 — 返回任务类型、特征分组与行数统计；不满足条件抛 MLDataError。"""
     if df is None or len(df) == 0:
         raise MLDataError("数据表为空")
@@ -123,6 +123,6 @@ def validate_dataset(df: pd.DataFrame, target: str,
     }
 
 
-def base_result(analysis_type: str, **payload: Any) -> Dict[str, Any]:
+def base_result(analysis_type: str, **payload: Any) -> dict[str, Any]:
     """统一结果契约 — 所有 ML 引擎返回 analysis_type 前缀 "ml."。"""
     return {"analysis_type": f"ml.{analysis_type}", **payload}

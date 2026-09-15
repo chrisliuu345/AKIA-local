@@ -7,7 +7,7 @@ import os
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Dict, List, Callable
+from collections.abc import Callable
 
 from PySide6.QtCore import QObject, QTimer, QThread, Signal
 
@@ -17,8 +17,8 @@ class BatchTask:
     """批量任务定义 — 复用 TemplateParser 的分析配置格式"""
     name: str
     data_source: str = ""
-    sheet_filter: List[str] = field(default_factory=list)
-    analyses: List[Dict] = field(default_factory=list)
+    sheet_filter: list[str] = field(default_factory=list)
+    analyses: list[dict] = field(default_factory=list)
     output_path: str = ""
     output_format: str = "docx"
     schedule: str = "once"
@@ -57,15 +57,15 @@ class BatchScheduler(QObject):
 
     TASKS_FILE = os.path.join(os.path.expanduser("~"), ".qa_tool_batch", "tasks.json")
 
-    def __init__(self, execute_fn: Callable = None, parent=None):
+    def __init__(self, execute_fn: Callable | None = None, parent=None):
         super().__init__(parent)
-        self.tasks: Dict[str, BatchTask] = {}
+        self.tasks: dict[str, BatchTask] = {}
         self._timer = QTimer(self)
         self._timer.timeout.connect(self._check_schedule)
-        self._workers: List[_WorkerThread] = []
+        self._workers: list[_WorkerThread] = []
         self._running: set[str] = set()
         self._poll_interval_ms = 30000
-        self._log: List[str] = []
+        self._log: list[str] = []
         self._execute_fn = execute_fn or self._default_execute
         self._load_tasks()
 
@@ -85,7 +85,7 @@ class BatchScheduler(QObject):
             self.task_removed.emit(task_id)
             self._log_msg(f"任务已删除: {name}")
 
-    def get_tasks(self) -> List[BatchTask]:
+    def get_tasks(self) -> list[BatchTask]:
         return list(self.tasks.values())
 
     def start(self, interval_ms: int = 30000):
@@ -173,7 +173,7 @@ class BatchScheduler(QObject):
         self._log.append(entry)
         self.log_message.emit(entry)
 
-    def get_log(self) -> List[str]:
+    def get_log(self) -> list[str]:
         return self._log[-200:]
 
     def _save_tasks(self):
@@ -195,7 +195,7 @@ class BatchScheduler(QObject):
         if not os.path.exists(self.TASKS_FILE):
             return
         try:
-            with open(self.TASKS_FILE, "r", encoding="utf-8") as f:
+            with open(self.TASKS_FILE, encoding="utf-8") as f:
                 data = json.load(f)
             for d in data:
                 t = BatchTask(

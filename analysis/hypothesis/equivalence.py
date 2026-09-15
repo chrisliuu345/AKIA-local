@@ -4,7 +4,7 @@
 TOST (Two One-Sided Tests) 用于证明两个均值之间的差异在临床上不重要。
 """
 
-from typing import Dict, Any
+from typing import Any
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -15,7 +15,7 @@ def one_sample_tost(
     target_mean: float,
     margin: float,
     alpha: float = 0.05,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     单样本 TOST 等价检验
 
@@ -83,7 +83,7 @@ def two_sample_tost(
     margin: float,
     alpha: float = 0.05,
     equal_var: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     双样本 TOST 等价检验
 
