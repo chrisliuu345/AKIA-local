@@ -4,7 +4,7 @@ Hotelling T² 多元控制图 — 单样本/多变量监控
 参考: Hotelling (1947) "Multivariate Quality Control"
 """
 
-from typing import Dict, Any, Optional, List
+from typing import Any
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -12,11 +12,11 @@ from scipy import stats
 
 def analyze(
     data: pd.DataFrame,
-    columns: List[str],
-    subgroup_col: Optional[str] = None,
+    columns: list[str],
+    subgroup_col: str | None = None,
     phase: str = "phase1",
     alpha: float = 0.0027,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Hotelling T² 分析
 
@@ -133,7 +133,7 @@ def _compute_ucl(
     p: int,
     n: int,
     alpha: float,
-    sample_sizes: Optional[List[int]] = None,
+    sample_sizes: list[int] | None = None,
 ):
     """计算 UCL（逐点，返回标量或与样本数等长的数组）。
 
@@ -163,7 +163,7 @@ def _compute_ucl(
     return ucl_values if m > 1 else float(ucl_values[0])
 
 
-def _compute_cl(p: int, n: int, sample_sizes: Optional[List[int]] = None) -> float:
+def _compute_cl(p: int, n: int, sample_sizes: list[int] | None = None) -> float:
     """计算中心线（期望值）"""
     return p * (n - 1) / (n - p) * (n + 1) / n
 
@@ -172,7 +172,7 @@ def _multivariate_normality_test(
     X: np.ndarray,
     mean: np.ndarray,
     cov: np.ndarray,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """多元正态性检验（基于 Mardia 偏度/峰度）"""
     n, p = X.shape
 

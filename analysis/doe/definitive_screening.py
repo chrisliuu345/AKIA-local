@@ -10,13 +10,13 @@ Definitive Screening Design (DSD) — 会议矩阵构造
 
 支持的因子数: k=4..12，试验次数 N=2k+1
 """
-from typing import Dict, Any, List, Optional
+from typing import Any
 import numpy as np
 import pandas as pd
 from scipy import stats
 
 
-_DSD_DESIGNS: Dict[int, np.ndarray] = {
+_DSD_DESIGNS: dict[int, np.ndarray] = {
     4: np.array([
         [ 1,  1,  1,  1],
         [ 1, -1, -1,  1],
@@ -43,9 +43,9 @@ def _verify_design_orthogonality(D: np.ndarray) -> bool:
 
 
 def generate_design(
-    factors: List[str],
+    factors: list[str],
     center_points: int = 0,
-    random_seed: Optional[int] = None,
+    random_seed: int | None = None,
 ) -> pd.DataFrame:
     """生成 Definitive Screening Design
 
@@ -126,9 +126,9 @@ def generate_design(
 def analyze(
     df: pd.DataFrame,
     response_col: str,
-    factor_cols: List[str],
+    factor_cols: list[str],
     alpha: float = 0.05,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """分析 Definitive Screening Design
 
     与 PB 分析类似，但额外支持：

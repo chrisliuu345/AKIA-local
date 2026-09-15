@@ -7,7 +7,7 @@
 """
 
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -31,14 +31,14 @@ def _count_violations(spc: dict) -> int:
 
 def summarize_plant(
     file_path: str,
-    sheet_name: Optional[str] = None,
-    column: Optional[str] = None,
-) -> Dict[str, Any]:
+    sheet_name: str | None = None,
+    column: str | None = None,
+) -> dict[str, Any]:
     """读取单工厂文件, 输出汇总指标 dict。
 
     cpk 仅在文件含 USL/LSL 规格列时计算 (DataParser 自动识别)。
     """
-    out: Dict[str, Any] = {
+    out: dict[str, Any] = {
         "file_path": file_path,
         "name": os.path.basename(file_path),
         "sheet": None,
@@ -128,7 +128,7 @@ def summarize_plant(
     return out
 
 
-def build_comparison(plants: List[Dict[str, Any]]) -> Dict[str, Any]:
+def build_comparison(plants: list[dict[str, Any]]) -> dict[str, Any]:
     """汇总多工厂结果 + 派生对比指标"""
     ok = [p for p in plants if not p.get("error")]
     cpk_values = [p["cpk"] for p in ok if p["cpk"] is not None]

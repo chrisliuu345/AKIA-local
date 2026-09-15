@@ -2,13 +2,13 @@
 偏倚和线性研究
 """
 
-from typing import Dict, Any
+from typing import Any
 import numpy as np
 import pandas as pd
 from scipy import stats
 
 
-def analyze_bias(data: pd.Series, reference: float) -> Dict[str, Any]:
+def analyze_bias(data: pd.Series, reference: float) -> dict[str, Any]:
     clean = data.dropna().astype(float)
     n = len(clean)
     if n < 2:
@@ -41,7 +41,7 @@ def analyze_linearity(
     df: pd.DataFrame,
     measurement_col: str,
     reference_col: str,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     data = df.copy()
     data[measurement_col] = pd.to_numeric(data[measurement_col], errors="coerce")
     data[reference_col] = pd.to_numeric(data[reference_col], errors="coerce")

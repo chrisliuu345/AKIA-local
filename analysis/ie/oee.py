@@ -9,7 +9,7 @@
 聚合采用加权和：A=Σop/Σavail，P=Σ(ideal×qty)/Σop，Q=Σgood/Σtotal。
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from core.data_objects import Resource
 
@@ -17,9 +17,9 @@ from core.data_objects import Resource
 class OEEEngine:
     WORLD_CLASS = 0.85
 
-    def analyze(self, resources: List[Resource],
-                group_by: str = "all") -> Dict[str, Any]:
-        out: Dict[str, Any] = {
+    def analyze(self, resources: list[Resource],
+                group_by: str = "all") -> dict[str, Any]:
+        out: dict[str, Any] = {
             "overall": {}, "buckets": [], "warnings": [], "error": None,
         }
 
@@ -44,13 +44,13 @@ class OEEEngine:
         return out
 
     @staticmethod
-    def _bucketize(rows: List[Resource], key) -> List:
-        buckets: Dict[str, List[Resource]] = {}
+    def _bucketize(rows: list[Resource], key) -> list:
+        buckets: dict[str, list[Resource]] = {}
         for r in rows:
             buckets.setdefault(key(r), []).append(r)
         return sorted(buckets.items(), key=lambda kv: kv[0])
 
-    def _metrics(self, label: str, rows: List[Resource]) -> Dict[str, Any]:
+    def _metrics(self, label: str, rows: list[Resource]) -> dict[str, Any]:
         sum_avail = sum(r.available_time for r in rows)
         sum_down = sum(max(r.downtime, 0.0) for r in rows)
         sum_op = max(sum_avail - sum_down, 0.0)
@@ -68,12 +68,12 @@ class OEEEngine:
                 "notes": [f"'{label}' 分组可用时间为 0，已跳过计算"],
             }
 
-        notes: List[str] = []
+        notes: list[str] = []
         a = sum_op / sum_avail
 
         perf_rows = [r for r in rows
                      if r.ideal_cycle_time > 0 and r.total_qty > 0]
-        p: Optional[float] = None
+        p: float | None = None
         perf_time_h = 0.0
         if perf_rows:
             perf_sec = sum(r.ideal_cycle_time * r.total_qty for r in perf_rows)
@@ -87,7 +87,7 @@ class OEEEngine:
             notes.append("缺少理想节拍/产量，性能按 100% 计")
 
         q_rows = [r for r in rows if r.total_qty > 0]
-        q: Optional[float] = None
+        q: float | None = None
         if q_rows and all(r.good_qty >= 0 for r in q_rows):
             total = sum(r.total_qty for r in q_rows)
             good = sum(min(r.good_qty, r.total_qty) for r in q_rows)

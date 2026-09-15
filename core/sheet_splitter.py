@@ -1,12 +1,11 @@
 """工作表拆分引擎 — 按列值/行数/条件/分组"""
 
 import hashlib, os, pandas as pd
-from typing import List
 
 
 class SheetSplitter:
     @staticmethod
-    def split_by_column(df: pd.DataFrame, column: str, output_dir: str) -> List[str]:
+    def split_by_column(df: pd.DataFrame, column: str, output_dir: str) -> list[str]:
         """按列值拆分为多个文件"""
         os.makedirs(output_dir, exist_ok=True)
         paths = []
@@ -26,7 +25,7 @@ class SheetSplitter:
     @staticmethod
     def split_by_rows(
         df: pd.DataFrame, rows_per_file: int, output_dir: str
-    ) -> List[str]:
+    ) -> list[str]:
         """按行数拆分"""
         os.makedirs(output_dir, exist_ok=True)
         paths = []
@@ -44,7 +43,7 @@ class SheetSplitter:
         operator: str,
         threshold: float,
         output_dir: str,
-    ) -> List[str]:
+    ) -> list[str]:
         """按条件拆分 (如 cpk < 1.0)"""
         os.makedirs(output_dir, exist_ok=True)
         col = pd.to_numeric(df[condition_col], errors="coerce")
@@ -70,8 +69,8 @@ class SheetSplitter:
 
     @staticmethod
     def split_by_group(
-        df: pd.DataFrame, columns: List[str], output_dir: str
-    ) -> List[str]:
+        df: pd.DataFrame, columns: list[str], output_dir: str
+    ) -> list[str]:
         """按多级分组拆分 (车间→产线)"""
         os.makedirs(output_dir, exist_ok=True)
         paths = []

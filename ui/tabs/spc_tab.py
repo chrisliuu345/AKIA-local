@@ -2,7 +2,7 @@
 """
 import threading
 
-from typing import Dict, Any
+from typing import Any
 import pandas as pd
 
 from PySide6.QtWidgets import (
@@ -329,7 +329,7 @@ class SPCTab(BaseAnalysisTab):
 
         layout.addWidget(splitter)
 
-    def set_data(self, df: pd.DataFrame, parsed_info: Dict[str, Any]):
+    def set_data(self, df: pd.DataFrame, parsed_info: dict[str, Any]):
         self.df = df
         self.parsed_info = parsed_info
         self.col_combo.clear()
@@ -570,7 +570,7 @@ class SPCTab(BaseAnalysisTab):
                 return False, f"子组分析需要至少 {subgroup_size * 2} 行数据，当前有效数据 {len(data)} 行"
         return True, ""
 
-    def run_and_display(self) -> Dict[str, Any]:
+    def run_and_display(self) -> dict[str, Any]:
         valid, msg = self.validate_params()
         if not valid:
             self._clear_canvas()
@@ -605,7 +605,7 @@ class SPCTab(BaseAnalysisTab):
             item = self.hotelling_cols_list.item(i)
             item.setCheckState(check_state)
 
-    def run_analysis(self) -> Dict[str, Any]:
+    def run_analysis(self) -> dict[str, Any]:
         col = self.col_combo.currentText()
         chart_type = self.chart_type_combo.currentText()
         subgroup_size = self.subgroup_spin.value()
@@ -661,7 +661,7 @@ class SPCTab(BaseAnalysisTab):
                     chart["violations"] = []
         return self.current_result
 
-    def display_result(self, analysis: Dict[str, Any] = None):
+    def display_result(self, analysis: dict[str, Any] | None = None):
         if analysis is None:
             analysis = self.current_result
         result = analysis.get("result", {})
@@ -759,7 +759,7 @@ class SPCTab(BaseAnalysisTab):
 
         self._switch_result_view(0)
 
-    def _extract_violations(self, result: Dict[str, Any]) -> list:
+    def _extract_violations(self, result: dict[str, Any]) -> list:
         t2_chart = result.get("t2_chart", {})
         if t2_chart and t2_chart.get("violations"):
             return t2_chart["violations"]
@@ -800,7 +800,7 @@ class SPCTab(BaseAnalysisTab):
         except Exception as e:
             QMessageBox.warning(self, "根因分析", f"分析失败: {e}")
 
-    def _render_chart(self, result: Dict, chart_type: str):
+    def _render_chart(self, result: dict, chart_type: str):
         try:
             chart_data = result if result else {"chart_type": chart_type, "data": [], "cl": 0}
             chart_data.setdefault("chart_type", chart_type)

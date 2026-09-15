@@ -3,7 +3,7 @@
 """
 
 from collections import OrderedDict
-from typing import Dict, Any, List
+from typing import Any
 
 from PySide6.QtWidgets import (
     QFrame,
@@ -34,10 +34,10 @@ class WorkSamplingTab(BaseAnalysisTab):
     statuses_changed = Signal()
 
     def __init__(self, parent=None):
-        self.observations: List[str] = []
+        self.observations: list[str] = []
         self.statuses = OrderedDict(_DEFAULT_STATUSES)
-        self._obs_entries: List[QComboBox] = []
-        self._status_checks: List[QPushButton] = []
+        self._obs_entries: list[QComboBox] = []
+        self._status_checks: list[QPushButton] = []
         super().__init__(parent)
         self._setup_ui()
 
@@ -331,7 +331,7 @@ class WorkSamplingTab(BaseAnalysisTab):
                 item = self.obs_table.item(i, 1)
                 self.observations.append(item.text() if item else "")
 
-    def _display_result(self, result: Dict[str, Any]):
+    def _display_result(self, result: dict[str, Any]):
         if not result.get("valid"):
             return
 
@@ -359,7 +359,7 @@ class WorkSamplingTab(BaseAnalysisTab):
 
         self._draw_chart(result, util)
 
-    def _draw_chart(self, result: Dict[str, Any], util: Dict[str, Any]):
+    def _draw_chart(self, result: dict[str, Any], util: dict[str, Any]):
         self._clear_canvas()
         fig = Figure(figsize=(10, 4.5), dpi=100)
         fig.subplots_adjust(left=0.08, right=0.95, top=0.90, bottom=0.10, wspace=0.35)

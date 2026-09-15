@@ -1,6 +1,5 @@
 """鱼骨图分析 Tab — 交互式 QGraphicsView 画布 (拖动/双击编辑/右键删除)"""
 
-from typing import Dict
 
 from PySide6.QtWidgets import (
     QWidget,
@@ -31,7 +30,7 @@ from analysis.quality.fishbone import FishboneEngine
 class FishboneTab(BaseAnalysisTab):
     def __init__(self, parent=None):
         self._engine = FishboneEngine()
-        self._branches: Dict = {}
+        self._branches: dict = {}
         self._problem = "质量问题"
         super().__init__(parent)
         self._setup_ui()

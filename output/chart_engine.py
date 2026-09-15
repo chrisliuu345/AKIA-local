@@ -3,7 +3,7 @@
 """
 
 import io
-from typing import Dict, Any, List, Tuple
+from typing import Any
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
@@ -76,8 +76,8 @@ def _smart_thin(data: list, violations: list,
     return thinned, x_labels, True, info
 
 
-def _violation_annotations(violations: List[Dict[str, Any]],
-                           limit: int = 8) -> List[str]:
+def _violation_annotations(violations: list[dict[str, Any]],
+                           limit: int = 8) -> list[str]:
     """判异点规则标注 — 数量过多时省略，避免图面拥挤。"""
     if not violations or len(violations) > limit:
         return []
@@ -88,7 +88,7 @@ def _violation_annotations(violations: List[Dict[str, Any]],
     return labels
 
 
-def _get_max_data_length(chart_data: Dict[str, Any]) -> int:
+def _get_max_data_length(chart_data: dict[str, Any]) -> int:
     """估算图表数据点数，用于动态图宽"""
     max_n = 0
     for key in ("xbar_chart", "i_chart", "r_chart", "mr_chart", "s_chart",
@@ -106,10 +106,10 @@ def _get_max_data_length(chart_data: Dict[str, Any]) -> int:
 
 
 def create_control_chart(
-    chart_data: Dict[str, Any],
+    chart_data: dict[str, Any],
     title: str = "",
-    figsize: Tuple[float, float] = CHART_FIGSIZE,
-    options: Dict[str, Any] = None,
+    figsize: tuple[float, float] = CHART_FIGSIZE,
+    options: dict[str, Any] | None = None,
 ) -> Figure:
     _ensure_font()
     opts = options or {}
@@ -159,7 +159,7 @@ def create_control_chart(
     return fig
 
 
-def _plot_xbar_chart(ax: plt.Axes, chart_data: Dict[str, Any],
+def _plot_xbar_chart(ax: plt.Axes, chart_data: dict[str, Any],
                      chart_type: str, show_limits: bool = True) -> str:
     """绘制 XBar/I 控制图，返回抽样提示文字"""
     key = "xbar_chart" if chart_type in ("XBar-R", "XBar-S") else "i_chart"
@@ -199,7 +199,7 @@ def _plot_xbar_chart(ax: plt.Axes, chart_data: Dict[str, Any],
     return note
 
 
-def _plot_range_chart(ax: plt.Axes, chart_data: Dict[str, Any],
+def _plot_range_chart(ax: plt.Axes, chart_data: dict[str, Any],
                       chart_type: str, show_limits: bool = True) -> str:
     """绘制 R/S/MR 控制图，返回抽样提示文字"""
     key = "r_chart" if chart_type in ("XBar-R", "XBar-S") else "mr_chart"
@@ -239,7 +239,7 @@ def _plot_range_chart(ax: plt.Axes, chart_data: Dict[str, Any],
     return note
 
 
-def _plot_simple_control_chart(ax: plt.Axes, chart_data: Dict[str, Any],
+def _plot_simple_control_chart(ax: plt.Axes, chart_data: dict[str, Any],
                                 title: str, show_limits: bool = True) -> str:
     """绘制 P/NP/C/U 单图控制图，返回抽样提示文字"""
     data_raw = chart_data.get("data", chart_data.get("p_values", []))
@@ -267,7 +267,7 @@ def _plot_simple_control_chart(ax: plt.Axes, chart_data: Dict[str, Any],
     s = chart_style.semantic()
     ax.plot(x_labels, data, "o-", color=s["data"],
             markersize=ms, linewidth=lw, label=i18n.tr("chart.data_points"))
-    limits: List[float] = []
+    limits: list[float] = []
 
     if show_limits and ucl_vals_raw and was_thinned:
         idxs = [x - 1 for x in x_labels]
@@ -309,7 +309,7 @@ def _plot_simple_control_chart(ax: plt.Axes, chart_data: Dict[str, Any],
     return note
 
 
-def _plot_advanced_control_chart(ax: plt.Axes, chart_data: Dict[str, Any],
+def _plot_advanced_control_chart(ax: plt.Axes, chart_data: dict[str, Any],
                                   chart_type: str, show_limits: bool = True) -> str:
     """绘制 CUSUM/EWMA 高级控制图，返回抽样提示文字"""
     note = ""
@@ -409,7 +409,7 @@ def _plot_advanced_control_chart(ax: plt.Axes, chart_data: Dict[str, Any],
     return note
 
 
-def _draw_spec_lines(ax: plt.Axes, chart_data: Dict[str, Any]) -> List[float]:
+def _draw_spec_lines(ax: plt.Axes, chart_data: dict[str, Any]) -> list[float]:
     """绘制规格限参考线（USL/LSL），返回纳入的数值（供 y 轴范围计算）。
 
     来源: chart_data["spec"] = {"usl": float, "lsl": float}，或顶层 usl/lsl。
@@ -424,10 +424,10 @@ def _draw_spec_lines(ax: plt.Axes, chart_data: Dict[str, Any]) -> List[float]:
 
 
 def create_capability_chart(
-    cap_data: Dict[str, Any],
+    cap_data: dict[str, Any],
     original_data: np.ndarray,
     title: str = "",
-    options: Dict[str, Any] = None,
+    options: dict[str, Any] | None = None,
 ) -> Figure:
     _ensure_font()
     opts = options or {}
@@ -516,10 +516,10 @@ def create_capability_chart(
 
 
 def create_pareto_chart(
-    labels: List[str],
-    values: List[float],
+    labels: list[str],
+    values: list[float],
     title: str = "Pareto图",
-    options: Dict[str, Any] = None,
+    options: dict[str, Any] | None = None,
 ) -> Figure:
     _ensure_font()
     opts = options or {}
@@ -578,7 +578,7 @@ def create_pareto_chart(
     return fig
 
 
-def create_histogram(data: np.ndarray, title: str = "", bins: int = 0, options: Dict[str, Any] = None) -> Figure:
+def create_histogram(data: np.ndarray, title: str = "", bins: int = 0, options: dict[str, Any] | None = None) -> Figure:
     _ensure_font()
     opts = options or {}
     label_fontsize = opts.get("label_fontsize", FONT_SIZE_LABEL)
@@ -621,10 +621,10 @@ def create_histogram(data: np.ndarray, title: str = "", bins: int = 0, options: 
 
 
 def create_pie_chart(
-    labels: List[str],
-    values: List[float],
+    labels: list[str],
+    values: list[float],
     title: str = "",
-    options: Dict[str, Any] = None,
+    options: dict[str, Any] | None = None,
 ) -> Figure:
     _ensure_font()
     opts = options or {}

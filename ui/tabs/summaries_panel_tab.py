@@ -2,7 +2,7 @@
 
 import numpy as np
 import pandas as pd
-from typing import Dict, Any
+from typing import Any
 
 from PySide6.QtWidgets import (
     QWidget,
@@ -32,7 +32,7 @@ class SummaryPanelTab(BaseAnalysisTab):
         super().__init__(parent)
         self._setup_ui()
 
-    def set_data(self, df: pd.DataFrame, parsed_info: Dict[str, Any] = None):
+    def set_data(self, df: pd.DataFrame, parsed_info: dict[str, Any] | None = None):
         BaseAnalysisTab.set_data(self, df, parsed_info)
         if df is not None:
             self._populate_list()

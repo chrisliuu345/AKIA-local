@@ -2,7 +2,7 @@
 数据校验模块 — 缺失值检测、异常值检测、正态性预检、数据完整性验证
 """
 
-from typing import Dict, List, Any
+from typing import Any
 import pandas as pd
 from scipy import stats
 
@@ -11,11 +11,11 @@ class DataValidator:
     """数据质量校验引擎"""
 
     def __init__(self):
-        self.warnings: List[Dict[str, Any]] = []
-        self.errors: List[Dict[str, Any]] = []
-        self.stats: Dict[str, Any] = {}
+        self.warnings: list[dict[str, Any]] = []
+        self.errors: list[dict[str, Any]] = []
+        self.stats: dict[str, Any] = {}
 
-    def validate(self, df: pd.DataFrame, measurement_cols: List[str]) -> Dict[str, Any]:
+    def validate(self, df: pd.DataFrame, measurement_cols: list[str]) -> dict[str, Any]:
         self.warnings.clear()
         self.errors.clear()
         self.stats.clear()
@@ -39,7 +39,7 @@ class DataValidator:
         if df.empty:
             self.errors.append({"type": "empty", "message": "数据框为空"})
 
-    def _check_missing(self, df: pd.DataFrame, measurement_cols: List[str]) -> None:
+    def _check_missing(self, df: pd.DataFrame, measurement_cols: list[str]) -> None:
         total_rows = len(df)
         for col in measurement_cols:
             if col not in df.columns:
@@ -62,7 +62,7 @@ class DataValidator:
                 else:
                     self.warnings.append(msg)
 
-    def _check_outliers(self, df: pd.DataFrame, measurement_cols: List[str]) -> None:
+    def _check_outliers(self, df: pd.DataFrame, measurement_cols: list[str]) -> None:
         for col in measurement_cols:
             if col not in df.columns:
                 continue
@@ -98,7 +98,7 @@ class DataValidator:
                 "message": f"检测到 {dup_count} 行重复数据",
             })
 
-    def _compute_summary(self, df: pd.DataFrame, measurement_cols: List[str]) -> None:
+    def _compute_summary(self, df: pd.DataFrame, measurement_cols: list[str]) -> None:
         for col in measurement_cols:
             if col not in df.columns:
                 continue
@@ -143,7 +143,7 @@ class DataValidator:
             }
 
     @staticmethod
-    def check_normality(data: pd.Series) -> Dict[str, Any]:
+    def check_normality(data: pd.Series) -> dict[str, Any]:
         clean = data.dropna()
         n = len(clean)
         if n < 3:
@@ -170,7 +170,7 @@ class DataValidator:
         }
 
     @staticmethod
-    def check_variance_equality(*groups: pd.Series) -> Dict[str, Any]:
+    def check_variance_equality(*groups: pd.Series) -> dict[str, Any]:
         clean_groups = [g.dropna() for g in groups if len(g.dropna()) >= 2]
         if len(clean_groups) < 2:
             return {"equal_variance": False, "reason": "有效组数不足"}

@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -32,7 +32,7 @@ def xgboost_available() -> bool:
 def make_estimator(task: str, backend: str = "auto",
                    max_iter: int = DEFAULT_MAX_ITER,
                    learning_rate: float = DEFAULT_LEARNING_RATE,
-                   max_depth: Optional[int] = None,
+                   max_depth: int | None = None,
                    min_samples_leaf: int = 20,
                    l2_regularization: float = 0.0,
                    random_state: int = 42):
@@ -69,22 +69,22 @@ def make_estimator(task: str, backend: str = "auto",
 def analyze(
     df: pd.DataFrame,
     target: str,
-    features: Optional[List[str]] = None,
-    task: Optional[str] = None,
+    features: list[str] | None = None,
+    task: str | None = None,
     backend: str = "auto",
     max_iter: int = DEFAULT_MAX_ITER,
     learning_rate: float = DEFAULT_LEARNING_RATE,
-    max_depth: Optional[int] = None,
+    max_depth: int | None = None,
     min_samples_leaf: int = 20,
     l2_regularization: float = 0.0,
     test_size: float = prep.DEFAULT_TEST_SIZE,
     cv: int = 5,
     random_state: int = 42,
     scale: bool = False,
-    bin_features: Optional[List[str]] = None,
+    bin_features: list[str] | None = None,
     n_bins: int = 5,
     max_preview: int = 200,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """梯度提升完整流程：切分 → 拟合 → 指标/CV/重要性。"""
     if df is None or len(df) == 0:
         raise MLDataError("数据表为空")
@@ -164,7 +164,7 @@ def analyze(
     )
 
 
-def _summary_text(task: str, metrics: Dict[str, Any], cv_result: Dict[str, Any],
+def _summary_text(task: str, metrics: dict[str, Any], cv_result: dict[str, Any],
                   backend: str) -> str:
     kind = "分类" if task == TASK_CLASSIFICATION else "回归"
     cv = cv_result["summary"]

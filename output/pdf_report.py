@@ -3,7 +3,7 @@ PDF 报告生成器 — 基于 reportlab，可靠中文渲染
 """
 import os
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Any
 from xml.sax.saxutils import escape
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
@@ -106,11 +106,11 @@ class PDFReport(BaseReportEngine):
 
     def generate(
         self,
-        analyses: List[Dict[str, Any]],
+        analyses: list[dict[str, Any]],
         output_path: str,
         title: str = "",
         subtitle: str = "",
-        charts: Dict[str, bytes] = None,
+        charts: dict[str, bytes] | None = None,
         watermark: str = "",
     ) -> str:
         if not title:
@@ -199,7 +199,7 @@ class PDFReport(BaseReportEngine):
         col_w = [1.2 * cm, 9 * cm, 5.8 * cm]
         self._draw_table(data, col_w, S, header_bg="#1b5faa")
 
-    def _add_analysis_detail(self, result: Dict, S: dict):
+    def _add_analysis_detail(self, result: dict, S: dict):
         if "capability" in result:
             cap = result["capability"]
             rows = [
@@ -254,7 +254,7 @@ class PDFReport(BaseReportEngine):
             col_w = [3 * cm] + [3.25 * cm] * 4
             self._draw_table(rows, col_w, S, header_bg="#1b5faa")
 
-    def _add_kv_table(self, title: str, params: Dict, S: dict):
+    def _add_kv_table(self, title: str, params: dict, S: dict):
         self.story.append(Paragraph(title, S["h2"]))
         rows = [["参数", "值"]]
         rows += [[str(k), str(v)] for k, v in params.items()]
@@ -262,7 +262,7 @@ class PDFReport(BaseReportEngine):
         self._draw_table(rows, col_w, S)
         self.story.append(Spacer(1, 0.3 * cm))
 
-    def _draw_table(self, data: List[List[str]], col_widths: List[float],
+    def _draw_table(self, data: list[list[str]], col_widths: list[float],
                     S: dict, header_bg: str = "#1b5faa"):
         tbl = Table(data, colWidths=col_widths, repeatRows=1)
         style_cmds = [
@@ -288,11 +288,11 @@ class PDFReport(BaseReportEngine):
 
 
 def generate_pdf_report(
-    analyses: List[Dict[str, Any]],
+    analyses: list[dict[str, Any]],
     output_path: str,
     title: str = "",
     subtitle: str = "",
-    charts: Dict[str, bytes] = None,
+    charts: dict[str, bytes] | None = None,
     watermark: str = "",
 ) -> str:
     """Convenience wrapper: generate a PDF report with optional watermark."""

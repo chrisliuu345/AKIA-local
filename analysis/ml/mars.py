@@ -12,7 +12,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any
+from collections.abc import Sequence
 
 import numpy as np
 import pandas as pd
@@ -27,8 +28,8 @@ from analysis.ml.common import (
     detect_task_type,
 )
 
-Atom = Tuple[int, float, int]          # (feature_index, knot, side)
-Term = Tuple[Atom, ...]
+Atom = tuple[int, float, int]          # (feature_index, knot, side)
+Term = tuple[Atom, ...]
 
 DEFAULT_MAX_TERMS = 21
 DEFAULT_MAX_DEGREE = 2
@@ -60,7 +61,7 @@ class MARSRegressor(RegressorMixin, BaseEstimator):
                  interaction_features: int = DEFAULT_INTERACTION_FEATURES,
                  pruning: bool = True,
                  min_improvement: float = 1e-6,
-                 feature_names: Optional[Sequence[str]] = None):
+                 feature_names: Sequence[str] | None = None):
         self.max_terms = max_terms
         self.max_degree = max_degree
         self.n_knots = n_knots
@@ -76,8 +77,8 @@ class MARSRegressor(RegressorMixin, BaseEstimator):
             return str(self.feature_names[j])
         return f"x{j}"
 
-    def _knots(self, X: np.ndarray) -> List[List[float]]:
-        knots: List[List[float]] = []
+    def _knots(self, X: np.ndarray) -> list[list[float]]:
+        knots: list[list[float]] = []
         quantiles = np.linspace(0.1, 0.9, int(self.n_knots))
         for j in range(X.shape[1]):
             column = X[:, j]
@@ -88,9 +89,9 @@ class MARSRegressor(RegressorMixin, BaseEstimator):
             knots.append([float(v) for v in values])
         return knots
 
-    def _candidate_terms(self, X: np.ndarray, terms: List[Term],
-                         knots: List[List[float]]) -> List[Term]:
-        candidates: List[Term] = []
+    def _candidate_terms(self, X: np.ndarray, terms: list[Term],
+                         knots: list[list[float]]) -> list[Term]:
+        candidates: list[Term] = []
         for j, feature_knots in enumerate(knots):
             for knot in feature_knots:
                 candidates.append(((j, knot, 1),))
@@ -138,7 +139,7 @@ class MARSRegressor(RegressorMixin, BaseEstimator):
         self._y = y
         self.n_features_in_ = X.shape[1]
         knots = self._knots(X)
-        terms: List[Term] = []
+        terms: list[Term] = []
 
         for _ in range(max(0, int(self.max_terms) - 1)):
             candidates = self._candidate_terms(X, terms, knots)
@@ -207,7 +208,7 @@ class MARSRegressor(RegressorMixin, BaseEstimator):
 
     # -- 可读输出 -----------------------------------------------------
 
-    def term_labels(self, max_terms: Optional[int] = None) -> List[str]:
+    def term_labels(self, max_terms: int | None = None) -> list[str]:
         labels = []
         for term in getattr(self, "terms_", []):
             parts = []
@@ -225,8 +226,8 @@ class MARSRegressor(RegressorMixin, BaseEstimator):
 def analyze(
     df: pd.DataFrame,
     target: str,
-    features: Optional[List[str]] = None,
-    task: Optional[str] = None,
+    features: list[str] | None = None,
+    task: str | None = None,
     max_terms: int = DEFAULT_MAX_TERMS,
     max_degree: int = DEFAULT_MAX_DEGREE,
     n_knots: int = DEFAULT_N_KNOTS,
@@ -234,10 +235,10 @@ def analyze(
     test_size: float = prep.DEFAULT_TEST_SIZE,
     cv: int = 5,
     random_state: int = 42,
-    bin_features: Optional[List[str]] = None,
+    bin_features: list[str] | None = None,
     n_bins: int = 5,
     max_preview: int = 200,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """MARS 完整流程（仅回归）：切分 → 前向/后向 → 指标/CV/可读项。"""
     if df is None or len(df) == 0:
         raise MLDataError("数据表为空")

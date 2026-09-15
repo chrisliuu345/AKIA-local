@@ -9,7 +9,7 @@ ACF/PACF 分析 — 平稳性检验 + 自相关/偏自相关 + Ljung-Box + Durbi
 """
 
 import pandas as pd
-from typing import Any, Dict, Optional
+from typing import Any
 
 from statsmodels.tsa.stattools import adfuller, acf, pacf
 from statsmodels.stats.diagnostic import acorr_ljungbox
@@ -19,7 +19,7 @@ from statsmodels.stats.stattools import durbin_watson
 def check_stationarity(
     data: pd.Series,
     significance_level: float = 0.05,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     ADF 平稳性检验
 
@@ -64,7 +64,7 @@ def compute_acf(
     data: pd.Series,
     lags: int = 40,
     alpha: float = 0.05,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     计算自相关函数（ACF）
 
@@ -99,7 +99,7 @@ def compute_pacf(
     data: pd.Series,
     lags: int = 40,
     alpha: float = 0.05,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     计算偏自相关函数（PACF）
 
@@ -134,8 +134,8 @@ def analyze(
     data: pd.Series,
     lags: int = 40,
     significance_level: float = 0.05,
-    ljung_box_lags: Optional[int] = None,
-) -> Dict[str, Any]:
+    ljung_box_lags: int | None = None,
+) -> dict[str, Any]:
     """
     完整 ACF/PACF 分析
 

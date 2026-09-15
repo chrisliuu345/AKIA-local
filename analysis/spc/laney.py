@@ -1,7 +1,7 @@
 """Laney P'/U' 控制图 — 修正过度离散/欠离散计数数据"""
 
 import numpy as np
-from typing import Dict, Any
+from typing import Any
 from scipy import stats
 
 
@@ -10,7 +10,7 @@ def analyze(
     sample_sizes,
     chart_type: str = "Laney P'",
     alpha: float = 0.0027,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Laney P'/U' 控制图统一入口
 
     Args:
@@ -37,7 +37,7 @@ def laney_p_prime(
     defects: np.ndarray,
     sample_sizes: np.ndarray,
     alpha: float = 0.0027,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Laney P' 图 — 修正过度离散的计数数据（比例）
 
     适用于子组内变异无法解释过度离散的场景，如：
@@ -112,7 +112,7 @@ def laney_u_prime(
     defects: np.ndarray,
     sample_sizes: np.ndarray,
     alpha: float = 0.0027,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Laney U' 图 — 修正过度离散的计数数据（单位缺陷数）
 
     适用于子组内变异无法解释过度离散的场景，如：

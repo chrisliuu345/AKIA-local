@@ -166,7 +166,7 @@ def main():
     srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     srv.bind((HOST, PORT))
     srv.listen(2)
-    print("qa_tool_server listening on %s:%d as %s" % (HOST, PORT, DEVICE_ID))
+    print(f"qa_tool_server listening on {HOST}:{PORT} as {DEVICE_ID}")
     while True:
         conn, addr = srv.accept()
         threading.Thread(

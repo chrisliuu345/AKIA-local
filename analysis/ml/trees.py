@@ -8,7 +8,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -23,7 +23,7 @@ DEFAULT_MAX_RULES = 12
 DEFAULT_MAX_PREVIEW = 200
 
 
-def make_estimator(task: str, max_depth: Optional[int] = None,
+def make_estimator(task: str, max_depth: int | None = None,
                    min_samples_leaf: int = 1, ccp_alpha: float = 0.0,
                    random_state: int = 42):
     """按任务类型构建决策树估计器。"""
@@ -67,7 +67,7 @@ def auto_ccp_alpha(preprocessor, X_train: pd.DataFrame, y_train: pd.Series,
         return 0.0
 
 
-def export_rules(pipeline: Pipeline, max_rules: int = DEFAULT_MAX_RULES) -> List[str]:
+def export_rules(pipeline: Pipeline, max_rules: int = DEFAULT_MAX_RULES) -> list[str]:
     """导出树规则文本（限制行数，供展示）。"""
     try:
         model = pipeline.named_steps["model"]
@@ -81,9 +81,9 @@ def export_rules(pipeline: Pipeline, max_rules: int = DEFAULT_MAX_RULES) -> List
 def analyze(
     df: pd.DataFrame,
     target: str,
-    features: Optional[List[str]] = None,
-    task: Optional[str] = None,
-    max_depth: Optional[int] = None,
+    features: list[str] | None = None,
+    task: str | None = None,
+    max_depth: int | None = None,
     min_samples_leaf: int = 1,
     ccp_alpha: float = 0.0,
     auto_prune: bool = False,
@@ -91,11 +91,11 @@ def analyze(
     cv: int = 5,
     random_state: int = 42,
     scale: bool = False,
-    bin_features: Optional[List[str]] = None,
+    bin_features: list[str] | None = None,
     n_bins: int = 5,
     max_rules: int = DEFAULT_MAX_RULES,
     max_preview: int = DEFAULT_MAX_PREVIEW,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """CART 完整流程：切分 →（可选）自动剪枝 → 拟合 → 指标/CV/规则/重要性。"""
     if df is None or len(df) == 0:
         raise MLDataError("数据表为空")
@@ -187,7 +187,7 @@ def analyze(
     )
 
 
-def _summary_text(task: str, metrics: Dict[str, Any], cv_result: Dict[str, Any],
+def _summary_text(task: str, metrics: dict[str, Any], cv_result: dict[str, Any],
                   ccp_alpha: float) -> str:
     kind = "分类" if task == TASK_CLASSIFICATION else "回归"
     cv_sum = cv_result["summary"]

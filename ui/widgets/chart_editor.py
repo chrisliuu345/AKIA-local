@@ -5,7 +5,7 @@
 默认展开常显，直接调整即实时生效
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QSlider, QRadioButton, QCheckBox, QButtonGroup,
@@ -28,10 +28,10 @@ class ChartEditorPanel(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._current_chart_type: Optional[str] = None
-        self._options: Dict[str, Any] = {}
-        self._controls: Dict[str, QWidget] = {}
-        self._slider_scales: Dict[str, int] = {}
+        self._current_chart_type: str | None = None
+        self._options: dict[str, Any] = {}
+        self._controls: dict[str, QWidget] = {}
+        self._slider_scales: dict[str, int] = {}
         self._is_expanded = True
         self._building = False
         self._setup_ui()
@@ -244,10 +244,10 @@ class ChartEditorPanel(QWidget):
         self._options[key] = state == Qt.CheckState.Checked.value
         self.options_changed.emit(self._options.copy())
 
-    def get_options(self) -> Dict[str, Any]:
+    def get_options(self) -> dict[str, Any]:
         return self._options.copy()
 
-    def set_options(self, options: Dict[str, Any]):
+    def set_options(self, options: dict[str, Any]):
         self._options = options.copy()
         self._update_controls_from_options()
 

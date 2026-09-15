@@ -11,7 +11,6 @@ KPI 指标 (core/kpi_extractor.build_variable_namespace) + 数据列统计 (mean
 """
 
 import ast
-from typing import Dict, List, Tuple
 
 import pandas as pd
 
@@ -31,7 +30,7 @@ MAX_EXPR_LEN = 500
 MAX_EVAL_DEPTH = 200
 
 _MAX_PARSE_CACHE = 256
-_parse_cache: Dict[str, ast.Expression] = {}
+_parse_cache: dict[str, ast.Expression] = {}
 
 
 def _parse(expr: str) -> ast.Expression:
@@ -74,7 +73,7 @@ def validate(expr: str) -> None:
                 raise FormulaError("只支持数值常量")
 
 
-def evaluate(expr: str, variables: Dict[str, float]) -> float:
+def evaluate(expr: str, variables: dict[str, float]) -> float:
     """校验并求值 — NameError/除零等转为 FormulaError, 保证只抛 FormulaError"""
     import math
     validate(expr)
@@ -156,13 +155,13 @@ def sanitize_name(name: str) -> str:
     return result
 
 
-def _column_stats(df: pd.DataFrame) -> Dict[str, float]:
+def _column_stats(df: pd.DataFrame) -> dict[str, float]:
     """数值列统计变量 — {列名}_mean/_std/_max/_min (重复列名用位置访问)
 
     sanitize 后同名的列 (如 "A/B" 与 "A B" → A_B) 追加序号防覆盖。
     """
-    stats: Dict[str, float] = {}
-    seen: Dict[str, int] = {}
+    stats: dict[str, float] = {}
+    seen: dict[str, int] = {}
     for i, col in enumerate(df.columns):
         try:
             series = pd.to_numeric(df.iloc[:, i], errors="coerce")
@@ -182,7 +181,7 @@ def _column_stats(df: pd.DataFrame) -> Dict[str, float]:
     return stats
 
 
-def describe_variables(analyses: Dict[int, Dict], df: pd.DataFrame = None) -> Dict[str, float]:
+def describe_variables(analyses: dict[int, dict], df: pd.DataFrame = None) -> dict[str, float]:
     """构建公式变量命名空间 — KPI 指标 + 数据列统计
 
     analyses: MainWindow.analyses; df: 主数据表 (可选)
@@ -196,6 +195,6 @@ def describe_variables(analyses: Dict[int, Dict], df: pd.DataFrame = None) -> Di
     return ns
 
 
-def variable_list(variables: Dict[str, float]) -> List[Tuple[str, str]]:
+def variable_list(variables: dict[str, float]) -> list[tuple[str, str]]:
     """变量列表 [(名称, 格式化值)] — 供对话框展示"""
     return [(name, f"{value:.4g}") for name, value in sorted(variables.items())]

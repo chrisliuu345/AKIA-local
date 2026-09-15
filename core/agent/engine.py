@@ -15,7 +15,7 @@ import json
 import re
 import time
 from dataclasses import dataclass, field
-from typing import Iterator
+from collections.abc import Iterator
 
 from core.agent.conversation import Conversation
 from core.agent.explain import explain_metric

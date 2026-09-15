@@ -7,7 +7,7 @@ PowerPoint 报告生成器 — 基于 python-pptx 生成图文图表报告 (.ppt
 
 from datetime import datetime
 from io import BytesIO
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pptx import Presentation
 from pptx.util import Inches, Pt
@@ -33,11 +33,11 @@ class PptxReport(BaseReportEngine):
 
     def generate(
         self,
-        analyses: List[Dict[str, Any]],
+        analyses: list[dict[str, Any]],
         output_path: str,
         title: str = "",
         subtitle: str = "",
-        charts: Optional[Dict[str, Any]] = None,
+        charts: dict[str, Any] | None = None,
     ) -> str:
         if not title:
             title = i18n.tr("report.title")
@@ -87,8 +87,8 @@ class PptxReport(BaseReportEngine):
         run3.font.color.rgb = _GRAY
         run3.font.name = self.font
 
-    def _add_analysis_slide(self, prs, layout, atype: str, result: Dict,
-                            chart_buf: Optional[Any], index: int, total: int):
+    def _add_analysis_slide(self, prs, layout, atype: str, result: dict,
+                            chart_buf: Any | None, index: int, total: int):
         slide = prs.slides.add_slide(layout)
 
         title_box = slide.shapes.add_textbox(Inches(0.55), Inches(0.3), Inches(12.2), Inches(0.8))
