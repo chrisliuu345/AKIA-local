@@ -34,6 +34,7 @@
   "chart.norm_fit": "正态拟合",
   "chart.normality_test": "正态性检验",
   "chart.pareto": "帕累托图",
+  "chart.violations": "判异点",
   "chart.pareto_title": "因子效应 Pareto 图",
   "chart.probplot": "概率图",
   "chart.range": "极差",
