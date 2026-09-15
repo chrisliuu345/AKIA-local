@@ -8,31 +8,31 @@
 
 ## 快速开始
 
-v4.0.0 提供 **三个官方版本**（均为免 Python 环境的离线运行包）：
+v4.1.0 提供 **三个官方版本**（均为免 Python 环境的离线运行包）：
 
 | 版本 | 安装文件 | 适用系统 | 安装方式 |
 |------|----------|----------|----------|
-| **Linux AppImage** | `QA-Tool-4.0.0-x86_64.AppImage` | 任意 x86_64 Linux（Debian / Ubuntu / elementary 等） | 免安装：赋予执行权限后直接运行 |
-| **Linux .deb** | `qa-tool_4.0.0_amd64.deb` | Debian 13 / Ubuntu 22.04+ / 衍生版 | `sudo dpkg -i` 安装，开始菜单启动 |
-| **Windows 安装包** | `QA-Tool-Setup-4.0.0.exe` | Windows 10/11（64 位） | 双击 Inno Setup 向导安装，开始菜单/桌面启动 |
+| **Linux AppImage** | `QA-Tool-4.1.0-x86_64.AppImage` | 任意 x86_64 Linux（Debian / Ubuntu / elementary 等） | 免安装：赋予执行权限后直接运行 |
+| **Linux .deb** | `qa-tool_4.1.0_amd64.deb` | Debian 13 / Ubuntu 22.04+ / 衍生版 | `sudo dpkg -i` 安装，开始菜单启动 |
+| **Windows 安装包** | `QA-Tool-Setup-4.1.0.exe` | Windows 10/11（64 位） | 双击 Inno Setup 向导安装，开始菜单/桌面启动 |
 
 ### Linux（AppImage，免安装）
 
 ```bash
-chmod +x QA-Tool-4.0.0-x86_64.AppImage
-./QA-Tool-4.0.0-x86_64.AppImage
+chmod +x QA-Tool-4.1.0-x86_64.AppImage
+./QA-Tool-4.1.0-x86_64.AppImage
 ```
 
 ### Linux（.deb，系统集成）
 
 ```bash
-sudo dpkg -i qa-tool_4.0.0_amd64.deb
+sudo dpkg -i qa-tool_4.1.0_amd64.deb
 qa-tool
 ```
 
 ### Windows（安装包）
 
-从 [Releases](https://github.com/chrisliuu345/QA-Tool/releases) 下载 `QA-Tool-Setup-4.0.0.exe`，
+从 [Releases](https://github.com/chrisliuu345/QA-Tool/releases) 下载 `QA-Tool-Setup-4.1.0.exe`，
 双击按向导安装（Inno Setup 安装器，含开始菜单与桌面快捷方式）。
 
 ### 源码运行
