@@ -10,128 +10,14 @@
 """
 from __future__ import annotations
 
-import dataclasses
-
 import numpy as np
 import pandas as pd
 
-from core.agent.tools import (
-    AgentContext, ToolRegistry, ToolResult, _fmt, _to_float,
+from core.agent.tool_helpers import (
+    _as_list, _call_with_supported, _dataclass_dict, _df, _first_spec,
+    _limit_text, _match_columns, _num_series, _pick,
 )
-
-
-# ---------------------------------------------------------------- 辅助
-
-
-def _df(ctx: AgentContext, sheet: str | None) -> tuple[str, pd.DataFrame]:
-    name = ctx.sheet_of(sheet)
-    frame = ctx.frame(name)
-    if frame is None:
-        raise ValueError("尚未导入数据表")
-    return name, frame
-
-
-def _as_list(value) -> list[str]:
-    if value is None:
-        return []
-    if isinstance(value, (list, tuple)):
-        return [str(v).strip() for v in value if str(v).strip()]
-    return [p.strip() for p in str(value).replace("；", ",").replace(";", ",").split(",")
-            if p.strip()]
-
-
-def _match_columns(frame: pd.DataFrame, wanted: list[str], kind: str = "any") -> list[str]:
-    """列名解析：精确 → 大小写 → 包含匹配；未匹配到的直接报错（避免静默跑错列）。"""
-    columns = [str(c) for c in frame.columns]
-    out: list[str] = []
-    for want in wanted:
-        hit = None
-        for col in columns:
-            if col == want:
-                hit = col
-                break
-        if hit is None:
-            lowered = want.lower()
-            hit = next((c for c in columns if c.lower() == lowered), None)
-        if hit is None:
-            hit = next((c for c in columns if lowered_in(lowered, c)), None)
-        if hit is None:
-            raise ValueError(f"列「{want}」不存在（可用列: {', '.join(columns[:12])}）")
-        out.append(hit)
-    return out
-
-
-def lowered_in(needle: str, haystack: str) -> bool:
-    return needle in str(haystack).lower()
-
-
-def _num_series(frame: pd.DataFrame, column: str) -> pd.Series:
-    series = pd.to_numeric(frame[column], errors="coerce").dropna()
-    if len(series) < 2:
-        raise ValueError(f"列「{column}」有效数值不足（{len(series)} 行）")
-    return series
-
-
-def _first_spec(frame: pd.DataFrame, usl, lsl) -> tuple[float | None, float | None]:
-    """USL/LSL：参数优先，其次从数据表的 USL/LSL 列取首值。"""
-    def _column_value(names) -> float | None:
-        for name in names:
-            if name in frame.columns:
-                series = pd.to_numeric(frame[name], errors="coerce").dropna()
-                if not series.empty:
-                    return float(series.iloc[0])
-        return None
-
-    usl_v = _to_float(usl)
-    if usl_v is None:
-        usl_v = _column_value(("USL", "usl", "规格上限"))
-    lsl_v = _to_float(lsl)
-    if lsl_v is None:
-        lsl_v = _column_value(("LSL", "lsl", "规格下限"))
-    return usl_v, lsl_v
-
-
-def _pick(mapping, *keys, default=None):
-    """从（可能嵌套的）结果 dict 中按 key 取第一个非空值。"""
-    if not isinstance(mapping, dict):
-        return default
-    for key in keys:
-        if key in mapping and mapping[key] is not None:
-            return mapping[key]
-    for value in mapping.values():
-        if isinstance(value, dict):
-            found = _pick(value, *keys, default=None)
-            if found is not None:
-                return found
-    return default
-
-
-def _dataclass_dict(obj) -> dict:
-    if dataclasses.is_dataclass(obj) and not isinstance(obj, type):
-        return dataclasses.asdict(obj)
-    return obj if isinstance(obj, dict) else {"value": str(obj)}
-
-
-def _limit_text(value) -> str:
-    """控制限可能是标量或逐点列表 → 统一显示为 '标量' 或 '最小 ~ 最大'。"""
-    if isinstance(value, (list, tuple, np.ndarray)):
-        items = [float(v) for v in value if v is not None]
-        if not items:
-            return "—"
-        return f"{_fmt(min(items))} ~ {_fmt(max(items))}"
-    return _fmt(value)
-
-
-def _call_with_supported(fn, *args, **kwargs):
-    """只传目标函数签名接受的 kwargs（各设计引擎参数不完全一致）。"""
-    import inspect
-
-    try:
-        params = inspect.signature(fn).parameters
-    except (TypeError, ValueError):
-        return fn(*args, **kwargs)
-    accepted = {k: v for k, v in kwargs.items() if k in params}
-    return fn(*args, **accepted)
+from core.agent.tools import AgentContext, ToolRegistry, ToolResult, _fmt, _to_float
 
 
 # ---------------------------------------------------------------- 注册入口
@@ -157,8 +43,8 @@ def _register_quality_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
               {"defects_column": "不合格品数/缺陷数列", "sizes_column": "子组样本量/单位数列",
                "chart_type": "P 或 U（默认 P）", "sheet": "表名(可选)"},
               category="质量分析", returns="cl/ucl/lcl/violations/sigma_z")
-    def _laney(context: AgentContext, defects_column: str = None,
-               sizes_column: str = None, chart_type: str = "P", sheet: str = None):
+    def _laney(context: AgentContext, defects_column: str | None = None,
+               sizes_column: str | None = None, chart_type: str = "P", sheet: str | None = None):
         name, frame = _df(context, sheet)
         cols = _match_columns(frame, [defects_column or "", sizes_column or ""])
         defects = _num_series(frame, cols[0]).values
@@ -187,8 +73,8 @@ def _register_quality_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
               {"columns": "测量列(逗号分隔，至少 2 列)", "subgroup_column": "子组列(可选)",
                "phase": "phase1/phase2", "sheet": "表名(可选)"},
               category="质量分析", returns="t2_ucl/violations/hotelling_test")
-    def _hotelling(context: AgentContext, columns=None, subgroup_column: str = None,
-                   phase: str = "phase1", sheet: str = None):
+    def _hotelling(context: AgentContext, columns=None, subgroup_column: str | None = None,
+                   phase: str = "phase1", sheet: str | None = None):
         name, frame = _df(context, sheet)
         wanted = _as_list(columns) or context.numeric_columns(name)[:3]
         if len(wanted) < 2:
@@ -227,8 +113,8 @@ def _register_quality_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
                "target": "目标值(可选)", "subgroup_size": "子组大小(默认1)",
                "sheet": "表名(可选)"},
               category="质量分析", returns="cp/cpk/ppk/percent_defective/稳定性")
-    def _sixpack(context: AgentContext, column: str = None, usl=None, lsl=None,
-                 target=None, subgroup_size: int = 1, sheet: str = None):
+    def _sixpack(context: AgentContext, column: str | None = None, usl=None, lsl=None,
+                 target=None, subgroup_size: int = 1, sheet: str | None = None):
         name, frame = _df(context, sheet)
         col = _match_columns(frame, [column] if column else
                              [context.pick_column(name) or ""])[0]
@@ -255,9 +141,9 @@ def _register_quality_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
                "proportion": "容差区间覆盖比例(默认0.99)", "sheet": "表名(可选)"},
               category="质量分析")
     def _cap_advanced(context: AgentContext, method: str = "between_within",
-                      column: str = None, subgroup_column: str = None,
+                      column: str | None = None, subgroup_column: str | None = None,
                       usl=None, lsl=None, confidence: float = 0.95,
-                      proportion: float = 0.99, sheet: str = None):
+                      proportion: float = 0.99, sheet: str | None = None):
         name, frame = _df(context, sheet)
         kind = str(method or "between_within").lower()
         col = _match_columns(frame, [column] if column else
@@ -320,10 +206,10 @@ def _register_quality_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
                "lsl": "规格下限(可选)", "sheet": "表名(可选)"},
               category="质量分析")
     def _msa_advanced(context: AgentContext, method: str = "type1",
-                      measurement_column: str = None, part_column: str = None,
-                      operator_column: str = None, reference_column: str = None,
-                      result_column: str = None, standard_column: str = None,
-                      reference=None, usl=None, lsl=None, sheet: str = None):
+                      measurement_column: str | None = None, part_column: str | None = None,
+                      operator_column: str | None = None, reference_column: str | None = None,
+                      result_column: str | None = None, standard_column: str | None = None,
+                      reference=None, usl=None, lsl=None, sheet: str | None = None):
         name, frame = _df(context, sheet)
         kind = str(method or "type1").lower()
         if kind.startswith("attr"):
@@ -417,12 +303,12 @@ def _register_quality_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
                "alpha": "显著性水平(默认0.05)", "sheet": "表名(可选)"},
               category="质量分析")
     def _hyp_advanced(context: AgentContext, method: str = "anova_twoway",
-                      column: str = None, second_column: str = None,
-                      group_column: str = None, factor_a: str = None,
-                      factor_b: str = None, categorical_column: str = None,
+                      column: str | None = None, second_column: str | None = None,
+                      group_column: str | None = None, factor_a: str | None = None,
+                      factor_b: str | None = None, categorical_column: str | None = None,
                       successes1=None, n1=None, successes2=None, n2=None,
                       target_mean=None, margin=None, alpha: float = 0.05,
-                      sheet: str = None):
+                      sheet: str | None = None):
         name, frame = _df(context, sheet)
         kind = str(method or "").lower()
         kw = dict(alpha=float(alpha or 0.05))
@@ -471,8 +357,8 @@ def _register_quality_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
             data = {"method": "proportion", "p_value": _pick(result, "p_value"),
                     "z": _pick(result, "z_statistic", "z"),
                     "detail": result}
-            text = (f"两比例检验 — p1={_fmt((int(successes1 or 0) / max(int(n1 or 1), 1)))} "
-                    f"vs p2={_fmt((int(successes2 or 0) / max(int(n2 or 1), 1)))}: "
+            text = (f"两比例检验 — p1={_fmt(int(successes1 or 0) / max(int(n1 or 1), 1))} "
+                    f"vs p2={_fmt(int(successes2 or 0) / max(int(n2 or 1), 1))}: "
                     f"p={_fmt(data['p_value'], 4)}")
             return ToolResult("run_hypothesis_advanced", data=data, text=text)
         if kind.startswith("tost"):
@@ -550,9 +436,9 @@ def _register_doe_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
                           "nominal_is_best)", "sheet": "表名(可选)"},
               category="DOE", returns="r_squared/显著效应/p_value")
     def _doe(context: AgentContext, design: str = "factorial",
-             response_column: str = None, factor_columns=None, alpha: float = 0.05,
+             response_column: str | None = None, factor_columns=None, alpha: float = 0.05,
              model: str = "quadratic", sn_type: str = "larger_is_better",
-             sheet: str = None):
+             sheet: str | None = None):
         name, frame = _df(context, sheet)
         kind = str(design or "factorial").lower()
         if kind not in _DOE_ANALYZERS:
@@ -700,8 +586,8 @@ def _register_doe_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
               {"response_column": "响应列", "factor_columns": "自变量列(逗号分隔)",
                "sheet": "表名(可选)"}, category="回归",
               returns="r_squared/coefficients/p_value")
-    def _regression(context: AgentContext, response_column: str = None,
-                    factor_columns=None, sheet: str = None):
+    def _regression(context: AgentContext, response_column: str | None = None,
+                    factor_columns=None, sheet: str | None = None):
         name, frame = _df(context, sheet)
         resp = _match_columns(
             frame, [response_column or context.pick_column(name) or ""])[0]
@@ -753,11 +639,11 @@ def _register_reliability_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
                "structure": "RBD 结构(series/parallel)", "sheet": "表名(可选)"},
               category="可靠性")
     def _reliability(context: AgentContext, method: str = "weibull",
-                     time_column: str = None, event_column: str = None,
+                     time_column: str | None = None, event_column: str | None = None,
                      covariates=None, warranty_period=None, cost_per_failure=None,
                      total_units=None, three_parameter: bool = False,
-                     mtbf_column: str = None, mission_time: float = 1.0,
-                     structure: str = "series", sheet: str = None):
+                     mtbf_column: str | None = None, mission_time: float = 1.0,
+                     structure: str = "series", sheet: str | None = None):
         name, frame = _df(context, sheet)
         kind = str(method or "weibull").lower()
         if kind.startswith("weibull"):
@@ -892,10 +778,10 @@ def _register_timeseries_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
                "es_method": "指数平滑方法(holt_winters/holt/simple)",
                "lags": "ACF/PACF 滞后阶数(默认40)", "sheet": "表名(可选)"},
               category="时间序列")
-    def _timeseries(context: AgentContext, method: str = "arima", column: str = None,
+    def _timeseries(context: AgentContext, method: str = "arima", column: str | None = None,
                     horizon: int = 12, period=None, model: str = "additive",
                     es_method: str = "holt_winters", lags: int = 40,
-                    sheet: str = None):
+                    sheet: str | None = None):
         name, frame = _df(context, sheet)
         col = _match_columns(frame, [column or context.pick_column(name) or ""])[0]
         series = _num_series(frame, col)
@@ -966,11 +852,11 @@ def _register_ie_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
                "task_column": "作业名(SMED)", "task_type_column": "内外作业列(SMED)",
                "improved_column": "改善后时间列(SMED)", "sheet": "表名(可选)"},
               category="IE 与成本")
-    def _ie(context: AgentContext, method: str = "time_study", time_column: str = None,
+    def _ie(context: AgentContext, method: str = "time_study", time_column: str | None = None,
              rating: float = 1.0, allowance_pct: float = 15.0, takt=None,
-             daily_demand=None, status_column: str = None, task_column: str = None,
-             task_type_column: str = None, improved_column: str = None,
-             sheet: str = None):
+             daily_demand=None, status_column: str | None = None, task_column: str | None = None,
+             task_type_column: str | None = None, improved_column: str | None = None,
+             sheet: str | None = None):
         name, frame = _df(context, sheet)
         kind = str(method or "time_study").lower()
         if kind.startswith("time"):
@@ -1144,8 +1030,8 @@ def _register_ai_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
               {"target_column": "目标列(如测量值)", "top_k": "输出条数(默认8)",
                "subgroup_size": "子组大小(默认1)", "sheet": "表名(可选)"},
               category="质量分析", returns="causes[column/score/explanation]")
-    def _root_cause(context: AgentContext, target_column: str = None,
-                    top_k: int = 8, subgroup_size: int = 1, sheet: str = None):
+    def _root_cause(context: AgentContext, target_column: str | None = None,
+                    top_k: int = 8, subgroup_size: int = 1, sheet: str | None = None):
         name, frame = _df(context, sheet)
         target = _match_columns(
             frame, [target_column or context.pick_column(name) or ""])[0]

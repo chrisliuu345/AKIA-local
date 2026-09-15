@@ -8,7 +8,7 @@
 - Edgeworth 近似能力指数
 """
 
-from typing import Dict, Any, Optional, List
+from typing import Any
 import warnings
 import numpy as np
 import pandas as pd
@@ -26,10 +26,10 @@ DISTRIBUTIONS = {
 
 def analyze(
     data: pd.Series,
-    usl: Optional[float] = None,
-    lsl: Optional[float] = None,
-    target: Optional[float] = None,
-) -> Dict[str, Any]:
+    usl: float | None = None,
+    lsl: float | None = None,
+    target: float | None = None,
+) -> dict[str, Any]:
     """
     自动能力分析
 
@@ -72,7 +72,7 @@ def analyze(
     }
 
 
-def _fit_all_distributions(data: np.ndarray) -> List[Dict[str, Any]]:
+def _fit_all_distributions(data: np.ndarray) -> list[dict[str, Any]]:
     """拟合所有支持的分布"""
     results = []
 
@@ -136,7 +136,7 @@ def _fit_all_distributions(data: np.ndarray) -> List[Dict[str, Any]]:
     return sorted(results, key=lambda x: x["aic"])
 
 
-def _select_best_distribution(fit_results: List[Dict[str, Any]]) -> Dict[str, Any]:
+def _select_best_distribution(fit_results: list[dict[str, Any]]) -> dict[str, Any]:
     """选择最佳分布 (基于 AIC)"""
     if not fit_results:
         return {"distribution": "normal", "name": "正态", "params": (0, 1), "aic": float('inf')}
@@ -154,7 +154,7 @@ def _select_best_distribution(fit_results: List[Dict[str, Any]]) -> Dict[str, An
     }
 
 
-def _select_transform(data: np.ndarray) -> Dict[str, Any]:
+def _select_transform(data: np.ndarray) -> dict[str, Any]:
     """选择最优变换"""
     skewness = float(stats.skew(data))
     kurtosis = float(stats.kurtosis(data))
@@ -212,10 +212,10 @@ def _calculate_capability(
     data: np.ndarray,
     usl: float,
     lsl: float,
-    target: Optional[float],
-    transform_result: Dict[str, Any],
-    best_dist: Dict[str, Any],
-) -> Dict[str, Any]:
+    target: float | None,
+    transform_result: dict[str, Any],
+    best_dist: dict[str, Any],
+) -> dict[str, Any]:
     """计算能力指数"""
     len(data)
     mean = float(np.mean(data))

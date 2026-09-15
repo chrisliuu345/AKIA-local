@@ -8,7 +8,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pandas as pd
 from sklearn.pipeline import Pipeline
@@ -17,7 +17,7 @@ from analysis.ml import automl, evaluate, prep
 from analysis.ml.common import TASK_REGRESSION, base_result
 
 DEFAULT_MODEL = "forest"
-DEFAULT_PARAMS: Dict[str, Dict[str, Any]] = {
+DEFAULT_PARAMS: dict[str, dict[str, Any]] = {
     "forest": {"n_estimators": 120},
     "boosting": {"max_iter": 150},
 }
@@ -32,7 +32,7 @@ _ALIASES = {
 }
 
 
-def normalize_model(name: Optional[str]) -> str:
+def normalize_model(name: str | None) -> str:
     key = str(name or DEFAULT_MODEL).strip().lower()
     resolved = _ALIASES.get(key)
     if resolved is None:
@@ -44,15 +44,15 @@ def normalize_model(name: Optional[str]) -> str:
 def fit_pipeline(
     df: pd.DataFrame,
     target: str,
-    features: Optional[List[str]] = None,
-    task: Optional[str] = None,
+    features: list[str] | None = None,
+    task: str | None = None,
     model: str = DEFAULT_MODEL,
-    params: Optional[Dict[str, Any]] = None,
+    params: dict[str, Any] | None = None,
     test_size: float = prep.DEFAULT_TEST_SIZE,
     cv: int = 5,
     random_state: int = 42,
     scale: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """切分 → 拟合 → 指标 + CV；返回可直接持久化/预测的 Pipeline。"""
     name = normalize_model(model)
     prepared = prep.prepare_data(df, target, features=features, task=task,

@@ -1,7 +1,6 @@
 """TPM 全面生产维护引擎 — MTBF/MTTR + 六大损失 + 维护计划"""
 
 from dataclasses import dataclass, field
-from typing import List
 
 
 @dataclass
@@ -51,7 +50,7 @@ class TPMRecord:
 
 @dataclass
 class TPMResult:
-    records: List[TPMRecord] = field(default_factory=list)
+    records: list[TPMRecord] = field(default_factory=list)
 
     @property
     def avg_mtbf(self) -> float:
@@ -99,8 +98,8 @@ class TPMResult:
 
 class TPMEngine:
     def __init__(self):
-        self.records: List[TPMRecord] = []
-        self.maintenance_plan: List[dict] = []
+        self.records: list[TPMRecord] = []
+        self.maintenance_plan: list[dict] = []
 
     def add_record(self, **kwargs) -> TPMRecord:
         r = TPMRecord(**kwargs)

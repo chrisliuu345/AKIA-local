@@ -6,7 +6,7 @@
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from typing import Any
 
 import numpy as np
 
@@ -15,7 +15,7 @@ import numpy as np
 class CauseNode:
     """鱼骨图节点 — 可递归嵌套子原因"""
     name: str
-    children: List["CauseNode"] = field(default_factory=list)
+    children: list["CauseNode"] = field(default_factory=list)
     level: int = 0
 
 
@@ -42,7 +42,7 @@ class FishboneEngine:
     """鱼骨图数据模型 + 渲染"""
 
     @staticmethod
-    def create_default(problem: str = "质量问题") -> Dict[str, CauseNode]:
+    def create_default(problem: str = "质量问题") -> dict[str, CauseNode]:
         """创建默认 6M 模板"""
         branches = {}
         for m_name, sub_causes in M6_DEFAULTS.items():
@@ -53,7 +53,7 @@ class FishboneEngine:
         return branches
 
     @staticmethod
-    def to_dict(branches: Dict[str, CauseNode]) -> Dict[str, Any]:
+    def to_dict(branches: dict[str, CauseNode]) -> dict[str, Any]:
         """序列化为可 JSON 存储的 dict"""
         def node_to_dict(node: CauseNode) -> dict:
             return {
@@ -63,7 +63,7 @@ class FishboneEngine:
         return {k: node_to_dict(v) for k, v in branches.items()}
 
     @staticmethod
-    def from_dict(data: Dict[str, Any]) -> Dict[str, CauseNode]:
+    def from_dict(data: dict[str, Any]) -> dict[str, CauseNode]:
         """从 dict 反序列化"""
         def dict_to_node(d: dict, level: int = 0) -> CauseNode:
             node = CauseNode(name=d["name"], level=level)
@@ -74,14 +74,14 @@ class FishboneEngine:
         return {k: dict_to_node(v) for k, v in data.items()}
 
     @staticmethod
-    def count_causes(branches: Dict[str, CauseNode]) -> int:
+    def count_causes(branches: dict[str, CauseNode]) -> int:
         """统计所有子原因总数"""
         def _count(node: CauseNode) -> int:
             return 1 + sum(_count(c) for c in node.children)
         return sum(_count(root) for root in branches.values()) - len(branches)
 
     @staticmethod
-    def render(branches: Dict[str, CauseNode],
+    def render(branches: dict[str, CauseNode],
                problem: str = "质量问题",
                figsize: tuple = (14, 7),
                dpi: int = 100):

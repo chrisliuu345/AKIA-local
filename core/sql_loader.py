@@ -3,7 +3,7 @@ SQL 数据库加载引擎 — SQLAlchemy 统一接入 MySQL/PostgreSQL/SQL Serve
 输出接口与 DataLoader 保持一致: {table_name: DataFrame}
 """
 
-from typing import Dict, List, Optional, Any
+from typing import Any
 import re
 from urllib.parse import quote
 import pandas as pd
@@ -52,10 +52,10 @@ def build_connection_string(config: dict) -> str:
 
 class SqlLoader:
     def __init__(self):
-        self.engine: Optional[Engine] = None
-        self.connection_config: Dict[str, Any] = {}
-        self.tables: Dict[str, pd.DataFrame] = {}
-        self.metadata: Dict[str, Any] = {}
+        self.engine: Engine | None = None
+        self.connection_config: dict[str, Any] = {}
+        self.tables: dict[str, pd.DataFrame] = {}
+        self.metadata: dict[str, Any] = {}
 
     def connect(self, config: dict) -> bool:
         self.connection_config = config.copy()
@@ -69,7 +69,7 @@ class SqlLoader:
             self.engine = None
             raise RuntimeError(f"数据库连接失败: {sanitize_connection_error(e)}") from e
 
-    def get_table_names(self) -> List[str]:
+    def get_table_names(self) -> list[str]:
         if not self.engine:
             raise RuntimeError("未连接到数据库")
         insp = inspect(self.engine)
@@ -77,7 +77,7 @@ class SqlLoader:
         views = insp.get_view_names()
         return tables + views
 
-    def load(self, table_names: Optional[List[str]] = None) -> Dict[str, pd.DataFrame]:
+    def load(self, table_names: list[str] | None = None) -> dict[str, pd.DataFrame]:
         if not self.engine:
             raise RuntimeError("未连接到数据库")
         if table_names is None:
@@ -125,7 +125,7 @@ class SqlLoader:
             except Exception as e:
                 raise RuntimeError(f"预览表 '{table_name}' 失败: {sanitize_connection_error(e)}") from e
 
-    def get_table_names_like(self, pattern: str) -> List[str]:
+    def get_table_names_like(self, pattern: str) -> list[str]:
         all_tables = self.get_table_names()
         return [t for t in all_tables if pattern.lower() in t.lower()]
 

@@ -4,7 +4,7 @@ IE 数据解析器 — 将 Excel sheet 自动映射为统一数据对象列表
 """
 
 import difflib
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any
 import pandas as pd
 
 from core.data_objects import OBJECT_CLASSES
@@ -37,15 +37,15 @@ class IEDataParser:
     """Excel → 统一 IE 数据对象"""
 
     def __init__(self):
-        self._column_cache: Dict[str, Dict[str, str]] = {}
+        self._column_cache: dict[str, dict[str, str]] = {}
 
     @staticmethod
-    def detect_type(sheet_name: str, columns: List[str]) -> Tuple[Optional[str], float]:
+    def detect_type(sheet_name: str, columns: list[str]) -> tuple[str | None, float]:
         """根据 sheet 名称和列名自动检测数据类型。
         返回 (类型名, 置信度 0-1)
         """
         name_lower = sheet_name.lower().replace("_", "").replace(" ", "")
-        scores: Dict[str, float] = {}
+        scores: dict[str, float] = {}
 
         for obj_type, keywords in _SHEET_KEYWORDS.items():
             s = 0.0
@@ -68,14 +68,14 @@ class IEDataParser:
         return best, confidence
 
     @staticmethod
-    def map_columns(columns: List[str], obj_type: str) -> Dict[str, str]:
+    def map_columns(columns: list[str], obj_type: str) -> dict[str, str]:
         """将 Excel 列名映射到数据对象字段名。
         返回 {excel_column: field_name}
         """
         cls = OBJECT_CLASSES.get(obj_type)
         if not cls:
             return {}
-        mapping: Dict[str, str] = {}
+        mapping: dict[str, str] = {}
         col_lower = [c.lower().strip() for c in columns]
 
         for col_orig, col_low in zip(columns, col_lower, strict=True):
@@ -100,7 +100,7 @@ class IEDataParser:
         return mapping
 
     def parse(self, df: pd.DataFrame, obj_type: str,
-              column_map: Optional[Dict[str, str]] = None) -> List[Any]:
+              column_map: dict[str, str] | None = None) -> list[Any]:
         """将 DataFrame 转换为数据对象列表。
         返回 List[Process|TimeObservation|...]
         """
@@ -114,7 +114,7 @@ class IEDataParser:
         objects = []
         rows = df[list(column_map.keys())].fillna("").to_dict("records")
         for row_dict_raw in rows:
-            row_dict: Dict[str, Any] = {}
+            row_dict: dict[str, Any] = {}
             for excel_col, field_name in column_map.items():
                 row_dict[field_name] = row_dict_raw.get(excel_col, "")
             if row_dict:
@@ -126,11 +126,11 @@ class IEDataParser:
 
         return objects
 
-    def parse_all(self, raw_data: Dict[str, pd.DataFrame]) -> Dict[str, List[Any]]:
+    def parse_all(self, raw_data: dict[str, pd.DataFrame]) -> dict[str, list[Any]]:
         """批量解析所有 sheet 为对应的数据对象。
         返回 {类型名: [对象列表]}
         """
-        result: Dict[str, List[Any]] = {}
+        result: dict[str, list[Any]] = {}
         for sheet_name, df in raw_data.items():
             columns = list(df.columns)
             obj_type, confidence = self.detect_type(sheet_name, columns)
@@ -144,7 +144,7 @@ class IEDataParser:
         return result
 
     @staticmethod
-    def _infer_column_semantic_type(col_name: str, sample_values: pd.Series) -> Tuple[Optional[str], float]:
+    def _infer_column_semantic_type(col_name: str, sample_values: pd.Series) -> tuple[str | None, float]:
         """三维推断：关键词(0.4) + 数据类型(0.3) + 值域分布(0.3)
 
         返回 (field_name, confidence 0-1)。
@@ -204,7 +204,7 @@ class IEDataParser:
         confidence = best_keyword_score + dtype_score + dist_score
         return best_keyword_field, min(confidence, 1.0)
 
-    def get_summary(self, ie_data: Dict[str, List[Any]]) -> Dict[str, Any]:
+    def get_summary(self, ie_data: dict[str, list[Any]]) -> dict[str, Any]:
         """生成 IE 数据摘要"""
         summary = {}
         for obj_type, objects in ie_data.items():

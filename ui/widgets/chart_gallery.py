@@ -4,7 +4,6 @@
 默认折叠为一行标题，展开后按类别分组的图块网格（点击即选图表类型）。
 """
 
-from typing import List, Tuple
 
 from PySide6.QtCore import Qt, Signal, QSize
 from PySide6.QtWidgets import (
@@ -16,7 +15,7 @@ from PySide6.QtGui import QFont
 from ui.font_config import get_ui_font
 from ui.widgets.chart_icons import get_chart_icon
 
-GALLERY_GROUPS: List[Tuple[str, List[str]]] = [
+GALLERY_GROUPS: list[tuple[str, list[str]]] = [
     ("分布分析", ["直方图", "箱线图", "概率图"]),
     ("相关与比较", ["散点图", "矩阵图", "散点矩阵图", "残差图"]),
     ("质量工具", ["帕累托图", "小多图"]),
@@ -55,7 +54,7 @@ class ChartGallery(QWidget):
 
     type_chosen = Signal(str)
 
-    def __init__(self, chart_types: List[str], parent=None):
+    def __init__(self, chart_types: list[str], parent=None):
         super().__init__(parent)
         self._expanded = False
         self._current: str = ""

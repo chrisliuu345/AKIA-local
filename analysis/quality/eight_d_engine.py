@@ -1,7 +1,7 @@
 """8D 问题解决引擎 — D1-D8 数据模型 + PDF 报告生成"""
 
 from dataclasses import dataclass, field
-from typing import ClassVar, Dict, List, Optional
+from typing import ClassVar
 from datetime import datetime
 
 
@@ -34,14 +34,14 @@ class D3Step:
 @dataclass
 class D4Step:
     """D4: 根因分析"""
-    fishbone_data: Optional[dict] = None
+    fishbone_data: dict | None = None
     five_why: str = ""
     root_cause: str = ""
 
 @dataclass
 class D5Step:
     """D5: 永久纠正措施 (PCA)"""
-    pca_items: List[dict] = field(default_factory=list)
+    pca_items: list[dict] = field(default_factory=list)
     verification_method: str = ""
 
 @dataclass
@@ -84,7 +84,7 @@ class EightDReport:
         if not self.created_at:
             self.created_at = datetime.now().strftime("%Y-%m-%d %H:%M")
 
-    STEP_LABELS: ClassVar[Dict[str, str]] = {
+    STEP_LABELS: ClassVar[dict[str, str]] = {
         "D1": "组建团队", "D2": "描述问题", "D3": "临时遏制",
         "D4": "根因分析", "D5": "永久措施", "D6": "实施验证",
         "D7": "预防再发", "D8": "团队表彰",

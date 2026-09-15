@@ -12,7 +12,7 @@ from ui.font_config import get_ui_font
 
 
 class TemplateDialog(QDialog):
-    def __init__(self, parent=None, analyses: dict = None):
+    def __init__(self, parent=None, analyses: dict | None = None):
         super().__init__(parent)
         self.analyses = analyses or {}
         self.engine = ReportTemplateEngine()

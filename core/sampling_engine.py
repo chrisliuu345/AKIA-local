@@ -1,7 +1,7 @@
 """抽样检验引擎 — GB/T 2828.1 AQL + GB/T 6378 计量型 + C=0 抽样 + 随机/分层/系统抽样 + 序贯"""
 
 import numpy as np, pandas as pd
-from typing import List, Tuple, Optional, Dict, Any
+from typing import Any
 
 
 _LOT_CODE = [
@@ -361,14 +361,14 @@ class SamplingEngine:
         }
 
     @staticmethod
-    def random_sample(df: pd.DataFrame, n: int, seed: int = None) -> pd.DataFrame:
+    def random_sample(df: pd.DataFrame, n: int, seed: int | None = None) -> pd.DataFrame:
         if n >= len(df):
             return df.copy()
         return df.sample(n, random_state=seed).reset_index(drop=True)
 
     @staticmethod
     def stratified_sample(
-        df: pd.DataFrame, column: str, n: int, seed: int = None
+        df: pd.DataFrame, column: str, n: int, seed: int | None = None
     ) -> pd.DataFrame:
         groups = df.groupby(column)
         frac = min(n / len(df), 1.0)
@@ -389,8 +389,8 @@ class SamplingEngine:
 
     @staticmethod
     def sequential_decision(
-        results: List[int], ac: int, re: int
-    ) -> Tuple[str, int, int]:
+        results: list[int], ac: int, re: int
+    ) -> tuple[str, int, int]:
         """序贯抽样判定: 返(decision, defects, inspected)"""
         d, total = 0, 0
         for i, r in enumerate(results, 1):
@@ -409,11 +409,11 @@ class SamplingEngine:
     def measurement_sampling(
         lot_size: int,
         aql: float = 1.0,
-        usl: Optional[float] = None,
-        lsl: Optional[float] = None,
-        sigma: Optional[float] = None,
+        usl: float | None = None,
+        lsl: float | None = None,
+        sigma: float | None = None,
         level: str = "II",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """计量型抽样检验 (GB/T 6378 / ANSI/ASQ Z1.9)
 
         基于均值和标准差的计量型抽样方案。
@@ -495,9 +495,9 @@ class SamplingEngine:
     def measurement_decision(
         sample_data: np.ndarray,
         k_factor: float,
-        usl: Optional[float] = None,
-        lsl: Optional[float] = None,
-    ) -> Dict[str, Any]:
+        usl: float | None = None,
+        lsl: float | None = None,
+    ) -> dict[str, Any]:
         """计量型抽样判定
 
         根据样本数据和k因子判定批次是否接收。
@@ -566,7 +566,7 @@ class SamplingEngine:
         lot_size: int,
         aql: float = 0.10,
         level: str = "normal",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """C=0 抽样方案 (零缺陷接收)
 
         C=0抽样方案要求零缺陷才能接收批次。
@@ -612,7 +612,7 @@ class SamplingEngine:
         }
 
     @staticmethod
-    def c_zero_decision(results: List[int]) -> Dict[str, Any]:
+    def c_zero_decision(results: list[int]) -> dict[str, Any]:
         """C=0 抽样判定
 
         根据检验结果判定批次是否接收。

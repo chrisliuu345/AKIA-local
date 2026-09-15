@@ -2,7 +2,7 @@
 MSA 测量系统分析页 — 含图表嵌入
 """
 
-from typing import Dict, Any
+from typing import Any
 import pandas as pd
 import numpy as np
 
@@ -185,7 +185,7 @@ class MSATab(BaseAnalysisTab):
 
         layout.addWidget(splitter)
 
-    def set_data(self, df: pd.DataFrame, parsed_info: Dict[str, Any]):
+    def set_data(self, df: pd.DataFrame, parsed_info: dict[str, Any]):
         self.df = df
         self.parsed_info = parsed_info
         self.measure_col.clear()
@@ -236,7 +236,7 @@ class MSATab(BaseAnalysisTab):
                 return False, f"Type 1 量具研究至少需要 5 个观测值，当前 {len(data)}"
         return True, ""
 
-    def run_and_display(self) -> Dict[str, Any]:
+    def run_and_display(self) -> dict[str, Any]:
         valid, msg = self.validate_params()
         if not valid:
             self._clear_canvas()
@@ -255,7 +255,7 @@ class MSATab(BaseAnalysisTab):
             self.result_text.setText(f"▎分析失败\n{str(e)}")
             return None
 
-    def run_analysis(self) -> Dict[str, Any]:
+    def run_analysis(self) -> dict[str, Any]:
         from analysis.msa import gage_rr, linearity_bias, attribute_agree, type1_study, emp
 
         method = self.method_combo.currentText()
@@ -291,7 +291,7 @@ class MSATab(BaseAnalysisTab):
         }
         return self.current_result
 
-    def display_result(self, analysis: Dict[str, Any] = None):
+    def display_result(self, analysis: dict[str, Any] | None = None):
         if analysis is None:
             analysis = self.current_result
         result = analysis.get("result", {})

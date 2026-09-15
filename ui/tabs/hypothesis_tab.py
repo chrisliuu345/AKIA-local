@@ -2,7 +2,7 @@
 假设检验分析页 — 含图表嵌入
 """
 
-from typing import Dict, Any
+from typing import Any
 import pandas as pd
 import numpy as np
 
@@ -230,7 +230,7 @@ class HypothesisTab(BaseAnalysisTab):
 
         layout.addWidget(splitter)
 
-    def set_data(self, df: pd.DataFrame, parsed_info: Dict[str, Any]):
+    def set_data(self, df: pd.DataFrame, parsed_info: dict[str, Any]):
         self.df = df
         self.parsed_info = parsed_info
         all_cols = list(df.columns)
@@ -309,7 +309,7 @@ class HypothesisTab(BaseAnalysisTab):
                 return False, f"列选择错误：{e}"
         return True, ""
 
-    def run_and_display(self) -> Dict[str, Any]:
+    def run_and_display(self) -> dict[str, Any]:
         valid, msg = self.validate_params()
         if not valid:
             self._clear_canvas()
@@ -328,7 +328,7 @@ class HypothesisTab(BaseAnalysisTab):
             self.result_text.setText(f"▎分析失败\n{str(e)}")
             return None
 
-    def run_analysis(self) -> Dict[str, Any]:
+    def run_analysis(self) -> dict[str, Any]:
         from analysis.hypothesis import t_tests, anova, normality, variance_tests, nonparametric, equivalence, proportion
 
         method = self.test_combo.currentText()
@@ -415,7 +415,7 @@ class HypothesisTab(BaseAnalysisTab):
         }
         return self.current_result
 
-    def display_result(self, analysis: Dict[str, Any] = None):
+    def display_result(self, analysis: dict[str, Any] | None = None):
         if analysis is None:
             analysis = self.current_result
         result = analysis.get("result", {})

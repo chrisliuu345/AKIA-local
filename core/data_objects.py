@@ -4,7 +4,7 @@ Process, TimeObservation, QualityRecord, MaterialFlow, Resource
 """
 
 from dataclasses import dataclass, field, asdict
-from typing import ClassVar, Dict, List, Optional
+from typing import ClassVar
 
 
 @dataclass
@@ -15,12 +15,12 @@ class Process:
     equipment: str = ""
     cycle_time: float = 0.0
     labor_count: int = 1
-    predecessors: List[str] = field(default_factory=list)
+    predecessors: list[str] = field(default_factory=list)
 
-    REQUIRED: ClassVar[List[str]] = ["process_id", "process_name"]
-    OPTIONAL: ClassVar[List[str]] = ["equipment", "cycle_time", "labor_count", "predecessors"]
+    REQUIRED: ClassVar[list[str]] = ["process_id", "process_name"]
+    OPTIONAL: ClassVar[list[str]] = ["equipment", "cycle_time", "labor_count", "predecessors"]
 
-    FIELD_ALIASES: ClassVar[Dict[str, List[str]]] = {
+    FIELD_ALIASES: ClassVar[dict[str, list[str]]] = {
         "process_id": ["工序编号", "工序ID", "process id", "id", "编号", "序号", "代码", "code", "站号"],
         "process_name": ["工序名称", "工序", "工序名", "process name", "name", "名称", "步骤", "工位名称", "岗位", "作业内容"],
         "equipment": ["设备", "设备名称", "equipment", "machine", "设备编号", "机台", "机器", "机床"],
@@ -29,11 +29,11 @@ class Process:
         "predecessors": ["前置工序", "前置关系", "紧前工序", "predecessors", "prev", "前置", "上游工序", "前工序"],
     }
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, d: Dict) -> "Process":
+    def from_dict(cls, d: dict) -> "Process":
         return cls(
             process_id=str(d.get("process_id", "")),
             process_name=str(d.get("process_name", "")),
@@ -56,21 +56,21 @@ class TimeObservation:
     cycle: int
     observation_time: float
 
-    REQUIRED: ClassVar[List[str]] = ["process_id", "operator", "cycle", "observation_time"]
-    OPTIONAL: ClassVar[List[str]] = []
+    REQUIRED: ClassVar[list[str]] = ["process_id", "operator", "cycle", "observation_time"]
+    OPTIONAL: ClassVar[list[str]] = []
 
-    FIELD_ALIASES: ClassVar[Dict[str, List[str]]] = {
+    FIELD_ALIASES: ClassVar[dict[str, list[str]]] = {
         "process_id": ["工序编号", "工序ID", "process id", "id", "编号", "工序", "序号", "工位号", "代码"],
         "operator": ["作业员", "操作员", "operator", "人员", "工人", "员工", "姓名", "操作者", "测定者", "观测者"],
         "cycle": ["循环", "周期", "cycle", "次数", "循环编号", "第几次", "次", "回", "round"],
         "observation_time": ["时间", "观测时间", "time", "秒", "秒表", "工时", "耗时", "秒数", "观测值", "测量值", "实测", "实际时间"],
     }
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, d: Dict) -> "TimeObservation":
+    def from_dict(cls, d: dict) -> "TimeObservation":
         return cls(
             process_id=str(d.get("process_id", "")),
             operator=str(d.get("operator", "")),
@@ -89,14 +89,14 @@ class QualityRecord:
     product_id: str
     characteristic: str
     measurement: float
-    usl: Optional[float] = None
-    lsl: Optional[float] = None
-    target: Optional[float] = None
+    usl: float | None = None
+    lsl: float | None = None
+    target: float | None = None
 
-    REQUIRED: ClassVar[List[str]] = ["product_id", "characteristic", "measurement"]
-    OPTIONAL: ClassVar[List[str]] = ["usl", "lsl", "target"]
+    REQUIRED: ClassVar[list[str]] = ["product_id", "characteristic", "measurement"]
+    OPTIONAL: ClassVar[list[str]] = ["usl", "lsl", "target"]
 
-    FIELD_ALIASES: ClassVar[Dict[str, List[str]]] = {
+    FIELD_ALIASES: ClassVar[dict[str, list[str]]] = {
         "product_id": ["产品", "产品ID", "product id", "product", "零件", "料号", "编号", "样品"],
         "characteristic": ["特性", "质量特性", "characteristic", "char", "检测项目", "指标", "尺寸"],
         "measurement": ["测量值", "measurement", "值", "value", "结果", "实测", "检测值"],
@@ -105,11 +105,11 @@ class QualityRecord:
         "target": ["target", "目标值", "目标", "标称值", "中心值", "规格中心"],
     }
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, d: Dict) -> "QualityRecord":
+    def from_dict(cls, d: dict) -> "QualityRecord":
         def _maybe_float(v):
             if v is None or str(v).strip() == "":
                 return None
@@ -137,21 +137,21 @@ class MaterialFlow:
     quantity: float = 0.0
     distance: float = 0.0
 
-    REQUIRED: ClassVar[List[str]] = ["from_process", "to_process"]
-    OPTIONAL: ClassVar[List[str]] = ["quantity", "distance"]
+    REQUIRED: ClassVar[list[str]] = ["from_process", "to_process"]
+    OPTIONAL: ClassVar[list[str]] = ["quantity", "distance"]
 
-    FIELD_ALIASES: ClassVar[Dict[str, List[str]]] = {
+    FIELD_ALIASES: ClassVar[dict[str, list[str]]] = {
         "from_process": ["起点", "来源", "from", "上游", "起始工序", "起始", "from process"],
         "to_process": ["终点", "目标", "to", "下游", "目标工序", "到达", "to process"],
         "quantity": ["数量", "quantity", "qty", "搬运量", "件数", "重量"],
         "distance": ["距离", "distance", "dist", "米", "m", "搬运距离"],
     }
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, d: Dict) -> "MaterialFlow":
+    def from_dict(cls, d: dict) -> "MaterialFlow":
         return cls(
             from_process=str(d.get("from_process", "")),
             to_process=str(d.get("to_process", "")),
@@ -177,11 +177,11 @@ class Resource:
     total_qty: float = 0.0
     good_qty: float = 0.0
 
-    REQUIRED: ClassVar[List[str]] = ["resource_id"]
-    OPTIONAL: ClassVar[List[str]] = ["resource_type", "group", "shift", "available_time", "downtime",
+    REQUIRED: ClassVar[list[str]] = ["resource_id"]
+    OPTIONAL: ClassVar[list[str]] = ["resource_type", "group", "shift", "available_time", "downtime",
                 "ideal_cycle_time", "total_qty", "good_qty"]
 
-    FIELD_ALIASES: ClassVar[Dict[str, List[str]]] = {
+    FIELD_ALIASES: ClassVar[dict[str, list[str]]] = {
         "resource_id": ["id", "编号", "资源ID", "resource id", "名称", "设备编号", "工号"],
         "resource_type": ["类型", "资源类型", "type", "类别", "人员设备"],
         "group": ["班组", "group", "部门", "小组", "班", "组"],
@@ -193,11 +193,11 @@ class Resource:
         "good_qty": ["良品数", "合格数", "good", "良品", "合格品数", "合格数量"],
     }
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, d: Dict) -> "Resource":
+    def from_dict(cls, d: dict) -> "Resource":
         return cls(
             resource_type=str(d.get("resource_type", "设备") or "设备"),
             resource_id=str(d.get("resource_id", "")),
@@ -226,7 +226,7 @@ _OBJECT_TYPES = {
 OBJECT_CLASSES = _OBJECT_TYPES
 
 
-def _parse_list(value) -> List[str]:
+def _parse_list(value) -> list[str]:
     if isinstance(value, list):
         return [str(v).strip() for v in value if str(v).strip()]
     s = str(value or "").strip()
@@ -238,9 +238,9 @@ def _parse_list(value) -> List[str]:
     return [s]
 
 
-def get_type_by_name(name: str) -> Optional[type]:
+def get_type_by_name(name: str) -> type | None:
     return _OBJECT_TYPES.get(name)
 
 
-def get_all_types() -> List[str]:
+def get_all_types() -> list[str]:
     return list(_OBJECT_TYPES.keys())

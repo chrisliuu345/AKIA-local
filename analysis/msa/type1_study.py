@@ -4,7 +4,7 @@ Type 1 量具研究 — Cg/Cgk + 偏倚t检验
 参考: MSA 4th Edition Chapter III
 """
 
-from typing import Dict, Any, Optional
+from typing import Any
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -13,12 +13,12 @@ from scipy import stats
 def analyze(
     data: pd.Series,
     reference: float,
-    usl: Optional[float] = None,
-    lsl: Optional[float] = None,
-    tolerance: Optional[float] = None,
+    usl: float | None = None,
+    lsl: float | None = None,
+    tolerance: float | None = None,
     study_variation: float = 6.0,
     bias_test: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Type 1 量具研究
 
@@ -116,7 +116,7 @@ def analyze(
     return result
 
 
-def _type1_acceptance(cg, cgk, bias_significant: bool) -> Dict[str, Any]:
+def _type1_acceptance(cg, cgk, bias_significant: bool) -> dict[str, Any]:
     """Type 1 量具研究判定"""
     cg_ok = cg == "inf" or (isinstance(cg, (int, float)) and cg >= 1.33)
     cgk_ok = cgk == "inf" or (isinstance(cgk, (int, float)) and cgk >= 1.33)

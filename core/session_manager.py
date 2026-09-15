@@ -5,7 +5,7 @@
 import json
 import os
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Any
 
 
 class SessionManager:
@@ -13,8 +13,8 @@ class SessionManager:
 
     def __init__(self, default_dir: str = ""):
         self.sessions_dir = default_dir or os.path.join(os.path.expanduser("~"), ".qa_tool_sessions")
-        self.current_session: Dict[str, Any] = {}
-        self.history: List[Dict[str, Any]] = []
+        self.current_session: dict[str, Any] = {}
+        self.history: list[dict[str, Any]] = []
         os.makedirs(self.sessions_dir, exist_ok=True)
 
     def create_session(self, name: str = "", file_path: str = "") -> str:
@@ -30,7 +30,7 @@ class SessionManager:
         }
         return session_id
 
-    def add_analysis(self, analysis_type: str, params: Dict[str, Any], result: Dict[str, Any]) -> None:
+    def add_analysis(self, analysis_type: str, params: dict[str, Any], result: dict[str, Any]) -> None:
         entry = {
             "timestamp": datetime.now().isoformat(),
             "analysis_type": analysis_type,
@@ -41,17 +41,17 @@ class SessionManager:
             self.current_session.setdefault("analyses", []).append(entry)
         self.history.append(entry)
 
-    def set_analyses(self, analyses: Dict[int, Dict[str, Any]]) -> None:
+    def set_analyses(self, analyses: dict[int, dict[str, Any]]) -> None:
         """整体写入内存分析结果快照 (键为 Tab 索引, JSON 序列化为字符串键)"""
         if self.current_session:
             self.current_session["analysis_snapshot"] = {str(k): v for k, v in analyses.items()}
 
-    def get_analyses(self) -> Dict[int, Dict[str, Any]]:
+    def get_analyses(self) -> dict[int, dict[str, Any]]:
         """读取分析结果快照并还原 int 键"""
         snap = self.current_session.get("analysis_snapshot", {}) if self.current_session else {}
         return {int(k): v for k, v in snap.items()}
 
-    def save(self, file_path: Optional[str] = None) -> str:
+    def save(self, file_path: str | None = None) -> str:
         if not file_path:
             sid = self.current_session.get("session_id", datetime.now().strftime("%Y%m%d_%H%M%S"))
             file_path = os.path.join(self.sessions_dir, f"session_{sid}.json")
@@ -60,21 +60,21 @@ class SessionManager:
             json.dump(self.current_session, f, indent=2, ensure_ascii=False, default=str)
         return file_path
 
-    def load(self, file_path: str) -> Dict[str, Any]:
+    def load(self, file_path: str) -> dict[str, Any]:
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"会话文件不存在: {file_path}")
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             self.current_session = json.load(f)
         return self.current_session
 
-    def list_sessions(self) -> List[Dict[str, str]]:
+    def list_sessions(self) -> list[dict[str, str]]:
         sessions = []
         if os.path.exists(self.sessions_dir):
             for fname in os.listdir(self.sessions_dir):
                 if fname.endswith(".json"):
                     fpath = os.path.join(self.sessions_dir, fname)
                     try:
-                        with open(fpath, "r", encoding="utf-8") as f:
+                        with open(fpath, encoding="utf-8") as f:
                             data = json.load(f)
                         sessions.append({
                             "file": fpath,
@@ -92,7 +92,7 @@ class SessionManager:
     def clear_session(self) -> None:
         self.current_session = {}
 
-    def get_history(self, limit: int = 50) -> List[Dict[str, Any]]:
+    def get_history(self, limit: int = 50) -> list[dict[str, Any]]:
         return self.history[-limit:]
 
     def set_config(self, key: str, value: Any) -> None:

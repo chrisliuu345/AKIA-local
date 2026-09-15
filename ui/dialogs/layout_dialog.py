@@ -13,7 +13,7 @@ from ui.theme import BUTTON_SECONDARY
 class LayoutDialog(QDialog):
     """卡片显隐与排序 — 勾选=显示, 顺序=卡片顺序; 确定后写入 QSettings"""
 
-    def __init__(self, parent=None, items: list = None, settings: QSettings = None):
+    def __init__(self, parent=None, items: list | None = None, settings: QSettings = None):
         super().__init__(parent)
         self.setWindowTitle(i18n.tr("dashboard.layout"))
         self.setMinimumSize(360, 420)

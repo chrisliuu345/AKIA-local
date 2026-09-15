@@ -10,7 +10,7 @@ References:
 Supports: {q,m} simplex lattice, simplex centroid, extreme vertices,
           Scheffé linear/quadratic/special-cubic models
 """
-from typing import Dict, Any, List
+from typing import Any
 import itertools
 import numpy as np
 import pandas as pd
@@ -19,7 +19,7 @@ from config.settings import MIXTURE_MODELS, MIXTURE_MAX_COMPONENTS
 
 
 def simplex_lattice(
-    components: List[str],
+    components: list[str],
     degree: int = 2,
 ) -> pd.DataFrame:
     """Generate {q, m} simplex lattice design.
@@ -60,7 +60,7 @@ def simplex_lattice(
 
 
 def simplex_centroid(
-    components: List[str],
+    components: list[str],
 ) -> pd.DataFrame:
     """Generate simplex-centroid design (2^q - 1 runs).
 
@@ -101,9 +101,9 @@ def simplex_centroid(
 
 
 def extreme_vertices(
-    components: List[str],
-    lower_bounds: List[float],
-    upper_bounds: List[float],
+    components: list[str],
+    lower_bounds: list[float],
+    upper_bounds: list[float],
 ) -> pd.DataFrame:
     """Generate extreme vertices design (McLean-Anderson algorithm).
 
@@ -206,7 +206,7 @@ def _build_scheffe_matrix(X: np.ndarray, model: str) -> np.ndarray:
     return np.hstack(cols)
 
 
-def _model_term_names(components: List[str], model: str) -> List[str]:
+def _model_term_names(components: list[str], model: str) -> list[str]:
     """Generate term names for Scheffé model."""
     q = len(components)
     names = list(components)
@@ -228,10 +228,10 @@ def _model_term_names(components: List[str], model: str) -> List[str]:
 def analyze(
     df: pd.DataFrame,
     response_col: str,
-    component_cols: List[str],
+    component_cols: list[str],
     model: str = "quadratic",
     alpha: float = 0.05,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Analyze mixture design data using Scheffé polynomial regression.
 
     Parameters

@@ -13,6 +13,8 @@ select = [
     "T10", "ISC", "PIE",
     "RUF012", "RUF021", "RUF034", "RUF059",
     "PLW1510", "PLW2901", "PLW0602",
+    # 类型现代化（2026-09-15 全量迁移：PEP 585/604 注解 + 弃用 typing 导入 + 隐式 Optional）
+    "UP", "RUF013",
 ]
 exclude = [".venv", "build", "dist"]
 

@@ -2,14 +2,14 @@
 XBar-R 控制图分析
 """
 
-from typing import Dict, Any, List
+from typing import Any
 import numpy as np
 import pandas as pd
 from config.settings import CONTROL_CHART_CONSTANTS
 from ._rules import check_all_nelson_rules
 
 
-def analyze(data: pd.Series, subgroup_size: int = 5) -> Dict[str, Any]:
+def analyze(data: pd.Series, subgroup_size: int = 5) -> dict[str, Any]:
     n = len(data)
     if n < subgroup_size * 2:
         raise ValueError(f"数据量不足: 需要至少 {subgroup_size * 2} 点, 当前 {n}")
@@ -71,7 +71,7 @@ def analyze(data: pd.Series, subgroup_size: int = 5) -> Dict[str, Any]:
     }
 
 
-def _check_range_violations(r_values: np.ndarray, ucl: float, lcl: float) -> List[Dict]:
+def _check_range_violations(r_values: np.ndarray, ucl: float, lcl: float) -> list[dict]:
     violations = []
     for i, r_val in enumerate(r_values):
         if r_val > ucl:

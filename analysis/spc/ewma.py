@@ -4,7 +4,7 @@ EWMA (指数加权移动平均) 控制图分析
 向量化实现，性能提升 3-5x（n=10,000 时从 >200ms 降至 <50ms）
 """
 
-from typing import Dict, Any
+from typing import Any
 import numpy as np
 import pandas as pd
 from scipy.signal import lfilter
@@ -14,7 +14,7 @@ def analyze(
     data: pd.Series,
     lam: float = 0.2,
     L: float = 3.0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     values = data.values.astype(float)
     n = len(values)
     if n < 2:

@@ -6,7 +6,7 @@ SHAP 行数默认上限 300（沿用 analysis/ai/root_cause.py 策略），
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -37,11 +37,11 @@ def _is_tree_model(model) -> bool:
 def explain_model(
     pipeline,
     X: pd.DataFrame,
-    y: Optional[pd.Series] = None,
+    y: pd.Series | None = None,
     max_rows: int = DEFAULT_MAX_ROWS,
     use_shap: bool = True,
     random_state: int = 42,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """全局解释 — 返回按重要性排序的特征列表（SHAP 优先，逐级降级）。"""
     if X is None or len(X) == 0:
         raise ValueError("解释需要非空特征数据")
@@ -108,7 +108,7 @@ def explain_sample(
     row: pd.Series,
     max_features: int = DEFAULT_TOP_FEATURES,
     use_shap: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """单样本解释 — 返回贡献最大的前 N 个特征（SHAP）或全局重要性提示。"""
     frame = row.to_frame().T if isinstance(row, pd.Series) else row
     model = pipeline.named_steps["model"]
@@ -146,13 +146,13 @@ def explain_sample(
         note=note)
 
 
-def _pairs(names: List[str], values: np.ndarray) -> List[Dict[str, Any]]:
+def _pairs(names: list[str], values: np.ndarray) -> list[dict[str, Any]]:
     pairs = sorted(zip(names, (float(v) for v in values), strict=False),
                    key=lambda kv: abs(kv[1]), reverse=True)
     return [{"feature": k, "importance": v} for k, v in pairs]
 
 
-def _flatten_base_value(expected) -> Optional[float]:
+def _flatten_base_value(expected) -> float | None:
     if expected is None:
         return None
     try:

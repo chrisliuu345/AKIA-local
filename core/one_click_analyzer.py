@@ -1,6 +1,7 @@
 """一键智能分析引擎 — 数据画像 → 推荐分析 → 批量执行 → AI 撰写结论 → 整合报告"""
 
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
+from collections.abc import Callable
 import pandas as pd
 
 from core.data_profiler import DataProfiler
@@ -16,7 +17,7 @@ class OneClickAnalyzer:
     def __init__(self, llm_client=None):
         self.profiler = DataProfiler()
         self.llm = llm_client
-        self._progress_cb: Optional[Callable[[str, int], None]] = None
+        self._progress_cb: Callable[[str, int], None] | None = None
 
     def set_progress_callback(self, cb: Callable[[str, int], None]):
         """设置进度回调: cb(message, percent)"""
@@ -27,7 +28,7 @@ class OneClickAnalyzer:
             self._progress_cb(msg, pct)
         _log.info(msg)
 
-    def profile_and_recommend(self, raw_data: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
+    def profile_and_recommend(self, raw_data: dict[str, pd.DataFrame]) -> dict[str, Any]:
         """数据画像并生成推荐分析列表"""
         self._emit("分析数据画像...", 5)
         profile = self.profiler.profile(raw_data)
@@ -115,9 +116,9 @@ class OneClickAnalyzer:
             },
         }
 
-    def execute_analyses(self, raw_data: Dict[str, pd.DataFrame],
-                         profile_result: Dict[str, Any],
-                         selected: List[str]) -> List[Dict[str, Any]]:
+    def execute_analyses(self, raw_data: dict[str, pd.DataFrame],
+                         profile_result: dict[str, Any],
+                         selected: list[str]) -> list[dict[str, Any]]:
         """执行选定的分析, 返回结果列表"""
         results = []
         total = len(selected)
@@ -151,8 +152,8 @@ class OneClickAnalyzer:
         self._emit("分析执行完成", 85)
         return results
 
-    def _run_single_analysis(self, atype: str, raw_data: Dict, df: pd.DataFrame,
-                             num_cols: List[str], profile: Dict) -> Optional[Dict]:
+    def _run_single_analysis(self, atype: str, raw_data: dict, df: pd.DataFrame,
+                             num_cols: list[str], profile: dict) -> dict | None:
         """执行单个分析（轻量版本 — 返回摘要即可）"""
         if df.empty:
             return None
@@ -252,7 +253,7 @@ class OneClickAnalyzer:
 
         return None
 
-    def synthesize(self, results: List[Dict], profile: Dict) -> str:
+    def synthesize(self, results: list[dict], profile: dict) -> str:
         """调用 LLM 生成分析结论（或使用知识库降级）"""
         summary_parts = []
         for r in results:
@@ -285,7 +286,7 @@ class OneClickAnalyzer:
 
         return self._fallback_synthesis(results, stats)
 
-    def _fallback_synthesis(self, results: List[Dict], stats: Dict) -> str:
+    def _fallback_synthesis(self, results: list[dict], stats: dict) -> str:
         """无 LLM 时基于规则的报告生成"""
         lines = [
             "## 一键分析报告 (规则引擎)",
@@ -332,8 +333,8 @@ class OneClickAnalyzer:
 
         return "\n".join(lines)
 
-    def run(self, raw_data: Dict[str, pd.DataFrame],
-            selected: Optional[List[str]] = None) -> Dict[str, Any]:
+    def run(self, raw_data: dict[str, pd.DataFrame],
+            selected: list[str] | None = None) -> dict[str, Any]:
         """一键执行全流程: 画像 → 推荐 → 执行 → 合成"""
         self._emit("开始一键分析...", 0)
 

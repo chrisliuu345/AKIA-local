@@ -4,7 +4,7 @@
 训练在后台线程执行（按钮触发），run_and_display() 为同步入口（批量分析/测试）。
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -52,13 +52,13 @@ class PredictiveTab(BaseAnalysisTab):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.df: Optional[pd.DataFrame] = None
-        self.parsed_info: Dict[str, Any] = {}
-        self.current_result: Dict[str, Any] = {}
+        self.df: pd.DataFrame | None = None
+        self.parsed_info: dict[str, Any] = {}
+        self.current_result: dict[str, Any] = {}
         self.current_figure = None
         self.canvas = None
-        self._worker: Optional[_TrainWorker] = None
-        self._model_bundle: Optional[Dict[str, Any]] = None
+        self._worker: _TrainWorker | None = None
+        self._model_bundle: dict[str, Any] | None = None
         self._setup_ui()
 
     # ---------------- UI ----------------
@@ -181,7 +181,7 @@ class PredictiveTab(BaseAnalysisTab):
 
     # ---------------- 数据 ----------------
 
-    def set_data(self, df: pd.DataFrame, parsed_info: Dict[str, Any] = None):
+    def set_data(self, df: pd.DataFrame, parsed_info: dict[str, Any] | None = None):
         self.df = df
         self.parsed_info = parsed_info or {}
         if hasattr(self, "_hide_empty_state"):
@@ -245,7 +245,7 @@ class PredictiveTab(BaseAnalysisTab):
         test_size = float(self.test_spin.value())
         seed = int(self.seed_spin.value())
 
-        def job() -> Dict[str, Any]:
+        def job() -> dict[str, Any]:
             common = dict(task=task, cv=cv, test_size=test_size, random_state=seed)
             if model == "tree":
                 return trees.analyze(df, target, features, auto_prune=True, **common)
@@ -283,7 +283,7 @@ class PredictiveTab(BaseAnalysisTab):
         self.status_label.setStyleSheet("color: #e74c3c;")
         self.status_label.setText(f"训练失败: {message}")
 
-    def run_and_display(self) -> Optional[Dict[str, Any]]:
+    def run_and_display(self) -> dict[str, Any] | None:
         """同步入口（批量分析/测试）——后台按钮走 _on_run_clicked。"""
         ok, message = self.validate_params()
         if not ok:
@@ -302,7 +302,7 @@ class PredictiveTab(BaseAnalysisTab):
 
     # ---------------- 展示 ----------------
 
-    def display_result(self, analysis: Dict[str, Any] = None):
+    def display_result(self, analysis: dict[str, Any] | None = None):
         source = analysis or self.current_result
         payload = source.get("result", source)
         self.current_result = {
@@ -365,7 +365,7 @@ class PredictiveTab(BaseAnalysisTab):
         self.prediction_table.horizontalHeader().setSectionResizeMode(
             QHeaderView.Stretch)
 
-    def _render_chart(self, analysis: Dict[str, Any]):
+    def _render_chart(self, analysis: dict[str, Any]):
         try:
             import matplotlib.pyplot as plt
             from config.settings import CHART_DPI
@@ -449,7 +449,7 @@ class PredictiveTab(BaseAnalysisTab):
         self.status_label.setText(f"模型已保存: {saved}")
         return saved
 
-    def load_model_from(self, path: str) -> Dict[str, Any]:
+    def load_model_from(self, path: str) -> dict[str, Any]:
         self._model_bundle = persist.load_model(path)
         self.status_label.setStyleSheet("color: #2e7d32;")
         self.status_label.setText(
@@ -458,7 +458,7 @@ class PredictiveTab(BaseAnalysisTab):
             f"{self._model_bundle.get('target', '')}）")
         return self._model_bundle
 
-    def predict_with_loaded(self) -> Optional[pd.DataFrame]:
+    def predict_with_loaded(self) -> pd.DataFrame | None:
         if self._model_bundle is None:
             self.status_label.setStyleSheet("color: #e74c3c;")
             self.status_label.setText("请先加载模型（.qamodel）")

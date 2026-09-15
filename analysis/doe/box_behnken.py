@@ -2,13 +2,13 @@
 Box-Behnken 设计 — 响应曲面实验设计
 """
 
-from typing import Dict, Any, List
+from typing import Any
 import numpy as np
 import pandas as pd
 from . import response_surface
 
 
-def generate_bbd(factors: List[str], center_points: int = 3) -> pd.DataFrame:
+def generate_bbd(factors: list[str], center_points: int = 3) -> pd.DataFrame:
     k = len(factors)
     if k < 3:
         raise ValueError("Box-Behnken 设计至少需要 3 个因子")
@@ -45,8 +45,8 @@ def _get_bbd_base(k: int) -> np.ndarray:
 def analyze_box_behnken(
     df: pd.DataFrame,
     response_col: str,
-    factor_cols: List[str],
-) -> Dict[str, Any]:
+    factor_cols: list[str],
+) -> dict[str, Any]:
     result = response_surface.analyze_response_surface(df, response_col, factor_cols)
     result["chart_type"] = "Box-Behnken Design"
     result["design_type"] = "Box-Behnken"

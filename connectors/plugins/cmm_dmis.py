@@ -41,7 +41,7 @@ class Connector(ConnectorBase):
                 self.config["tty"], baudrate=int(self.config.get("baud", 9600)),
                 timeout=0.5)
         else:
-            self._file_obj = open(self.config["path"], "r", encoding="utf-8",
+            self._file_obj = open(self.config["path"], encoding="utf-8",
                                   errors="replace")
         # 串口/管道跳到末尾只读新增输出; 普通文件从头读
         if source == "tty":

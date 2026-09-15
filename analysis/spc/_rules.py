@@ -5,14 +5,13 @@ xbar_r / xbar_s / imr 统一调用 check_all_nelson_rules()
 每条规则返回格式: {"point": int, "rule": int, "desc": str, "value": float}
 """
 
-from typing import List, Dict
 import numpy as np
 from config.settings import NELSON_RULES
 
 
-def check_all_nelson_rules(values: np.ndarray, mean: float, sigma: float) -> List[Dict]:
+def check_all_nelson_rules(values: np.ndarray, mean: float, sigma: float) -> list[dict]:
     """执行全部 8 条 Nelson 判异规则，返回违规点列表"""
-    violations: List[Dict] = []
+    violations: list[dict] = []
     violations.extend(_rule_1(values, mean, sigma))
     violations.extend(_rule_2(values, mean))
     violations.extend(_rule_3(values))
@@ -24,7 +23,7 @@ def check_all_nelson_rules(values: np.ndarray, mean: float, sigma: float) -> Lis
     return violations
 
 
-def _mk(point: int, rule: int, value: float, desc: str = "") -> Dict:
+def _mk(point: int, rule: int, value: float, desc: str = "") -> dict:
     """构造统一的违规记录"""
     return {
         "point": point,
@@ -34,13 +33,13 @@ def _mk(point: int, rule: int, value: float, desc: str = "") -> Dict:
     }
 
 
-def _rule_1(values: np.ndarray, mean: float, sigma: float) -> List[Dict]:
+def _rule_1(values: np.ndarray, mean: float, sigma: float) -> list[dict]:
     mask = np.abs(values - mean) > 3 * sigma
     idx = np.where(mask)[0]
     return [_mk(int(i + 1), 1, values[i]) for i in idx]
 
 
-def _rule_2(values: np.ndarray, mean: float) -> List[Dict]:
+def _rule_2(values: np.ndarray, mean: float) -> list[dict]:
     violations = []
     n = len(values)
     if n < 9:
@@ -52,7 +51,7 @@ def _rule_2(values: np.ndarray, mean: float) -> List[Dict]:
     return violations
 
 
-def _rule_3(values: np.ndarray) -> List[Dict]:
+def _rule_3(values: np.ndarray) -> list[dict]:
     n = len(values)
     if n < 6:
         return []
@@ -65,7 +64,7 @@ def _rule_3(values: np.ndarray) -> List[Dict]:
     return violations
 
 
-def _rule_4(values: np.ndarray, mean: float) -> List[Dict]:
+def _rule_4(values: np.ndarray, mean: float) -> list[dict]:
     """检测连续 14 点交替上下（锯齿模式）"""
     n = len(values)
     if n < 14:
@@ -79,7 +78,7 @@ def _rule_4(values: np.ndarray, mean: float) -> List[Dict]:
     return violations
 
 
-def _rule_5(values: np.ndarray, mean: float, sigma: float) -> List[Dict]:
+def _rule_5(values: np.ndarray, mean: float, sigma: float) -> list[dict]:
     """W18 fix: 超2σ的点中≥2点同侧（不要求全部3点同侧）"""
     n = len(values)
     if n < 3:
@@ -94,7 +93,7 @@ def _rule_5(values: np.ndarray, mean: float, sigma: float) -> List[Dict]:
     return violations
 
 
-def _rule_6(values: np.ndarray, mean: float, sigma: float) -> List[Dict]:
+def _rule_6(values: np.ndarray, mean: float, sigma: float) -> list[dict]:
     n = len(values)
     if n < 5:
         return []
@@ -109,7 +108,7 @@ def _rule_6(values: np.ndarray, mean: float, sigma: float) -> List[Dict]:
     return violations
 
 
-def _rule_7(values: np.ndarray, mean: float, sigma: float) -> List[Dict]:
+def _rule_7(values: np.ndarray, mean: float, sigma: float) -> list[dict]:
     n = len(values)
     if n < 15:
         return []
@@ -122,7 +121,7 @@ def _rule_7(values: np.ndarray, mean: float, sigma: float) -> List[Dict]:
     return violations
 
 
-def _rule_8(values: np.ndarray, mean: float, sigma: float) -> List[Dict]:
+def _rule_8(values: np.ndarray, mean: float, sigma: float) -> list[dict]:
     """检测连续 8 点均在中心线 ±1σ 外（不限定同侧）"""
     n = len(values)
     if n < 8:

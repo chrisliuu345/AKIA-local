@@ -2,7 +2,7 @@
 方差分析 (ANOVA) — 单因素/双因素/一般线性模型
 """
 
-from typing import Dict, Any
+from typing import Any
 import pandas as pd
 from scipy import stats
 
@@ -11,7 +11,7 @@ def one_way(
     df: pd.DataFrame,
     measurement_col: str,
     factor_col: str,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     data = df.copy()
     data[measurement_col] = pd.to_numeric(data[measurement_col], errors="coerce")
     data = data.dropna(subset=[measurement_col, factor_col])
@@ -70,7 +70,7 @@ def two_way(
     measurement_col: str,
     factor_a_col: str,
     factor_b_col: str,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     data = df.copy()
     data[measurement_col] = pd.to_numeric(data[measurement_col], errors="coerce")
     data = data.dropna(subset=[measurement_col, factor_a_col, factor_b_col])

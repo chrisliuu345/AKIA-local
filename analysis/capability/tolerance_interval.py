@@ -2,7 +2,7 @@
 
 import numpy as np
 from scipy import stats
-from typing import Dict, Any, Tuple
+from typing import Any
 
 
 def tolerance_interval_normal(
@@ -10,7 +10,7 @@ def tolerance_interval_normal(
     confidence: float = 0.95,
     proportion: float = 0.99,
     method: str = "two-sided",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """正态公差区间
 
     基于正态分布假设，估计包含指定比例总体的区间。
@@ -94,7 +94,7 @@ def tolerance_interval_nonparam(
     confidence: float = 0.95,
     proportion: float = 0.99,
     method: str = "two-sided",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """非参数公差区间
 
     不依赖分布假设，基于顺序统计量的非参数方法。
@@ -188,7 +188,7 @@ def _k_factor_one_sided(n: int, p: float, alpha: float) -> float:
     return (k + k_approx) / 2
 
 
-def _find_order_statistics_two_sided(n: int, p: float, alpha: float) -> Tuple[int, int]:
+def _find_order_statistics_two_sided(n: int, p: float, alpha: float) -> tuple[int, int]:
     """找到双侧公差区间的顺序统计量位置
 
     寻找r和s使得：

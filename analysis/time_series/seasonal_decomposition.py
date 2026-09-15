@@ -5,7 +5,7 @@
   analyze() — 完整季节性分解
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -17,9 +17,9 @@ from ._utils import detect_period
 def analyze(
     data: pd.Series,
     model: str = "additive",
-    period: Optional[int] = None,
+    period: int | None = None,
     method: str = "classical",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     季节性分解
 

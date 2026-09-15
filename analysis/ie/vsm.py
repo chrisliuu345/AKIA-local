@@ -9,7 +9,7 @@ Lead Time(天) = Σ库存天数 + ΣCT/每班秒数
 增值比 = ΣCT / (Lead Time × 每班秒数)
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from core.data_objects import MaterialFlow, Process
 
@@ -17,11 +17,11 @@ from core.data_objects import MaterialFlow, Process
 class VSMEngine:
     WORKDAY_SECONDS = 28800.0
 
-    def analyze(self, processes: List[Process],
-                flows: List[MaterialFlow],
+    def analyze(self, processes: list[Process],
+                flows: list[MaterialFlow],
                 daily_demand: float,
-                workday_seconds: Optional[float] = None) -> Dict[str, Any]:
-        out: Dict[str, Any] = {
+                workday_seconds: float | None = None) -> dict[str, Any]:
+        out: dict[str, Any] = {
             "steps": [], "summary": {}, "warnings": [], "error": None,
         }
 
@@ -42,13 +42,13 @@ class VSMEngine:
         if order_note:
             out["warnings"].append(order_note)
 
-        inv_map: Dict[str, float] = {}
+        inv_map: dict[str, float] = {}
         for f in flows:
             if f.quantity and f.quantity > 0:
                 key = f"{f.from_process}|{f.to_process}"
                 inv_map[key] = inv_map.get(key, 0.0) + f.quantity
 
-        steps: List[Dict[str, Any]] = []
+        steps: list[dict[str, Any]] = []
         total_va = 0.0
         total_inv_qty = 0.0
         for i, p in enumerate(ordered):
@@ -96,12 +96,12 @@ class VSMEngine:
         return out
 
     @staticmethod
-    def _order_processes(processes: List[Process],
-                         flows: List[MaterialFlow]):
+    def _order_processes(processes: list[Process],
+                         flows: list[MaterialFlow]):
         by_id = {p.process_id: p for p in processes}
         name_map = {p.process_name: p.process_id for p in processes}
 
-        links: Dict[str, str] = {}
+        links: dict[str, str] = {}
         targets: set = set()
         for f in flows:
             src = f.from_process if f.from_process in by_id else name_map.get(f.from_process)
@@ -115,10 +115,10 @@ class VSMEngine:
 
         starts = [pid for pid in by_id if pid not in targets]
         starts.sort(key=lambda pid: 0 if pid in links else 1)
-        ordered_ids: List[str] = []
+        ordered_ids: list[str] = []
         visited: set = set()
         for s in starts:
-            cur: Optional[str] = s
+            cur: str | None = s
             while cur and cur not in visited and cur in by_id:
                 ordered_ids.append(cur)
                 visited.add(cur)
@@ -132,8 +132,8 @@ class VSMEngine:
         return [by_id[pid] for pid in ordered_ids], note
 
     @staticmethod
-    def _find_inventory(inv_map: Dict[str, float], cur: Process,
-                        nxt: Process, flows: List[MaterialFlow]) -> float:
+    def _find_inventory(inv_map: dict[str, float], cur: Process,
+                        nxt: Process, flows: list[MaterialFlow]) -> float:
         keys = (
             f"{cur.process_id}|{nxt.process_id}",
             f"{cur.process_name}|{nxt.process_name}",

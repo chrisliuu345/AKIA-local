@@ -8,7 +8,7 @@
 
 import math
 import numpy as np
-from typing import Dict, Any, List
+from typing import Any
 from scipy import stats as sp_stats
 
 
@@ -17,7 +17,7 @@ class ALTEngine:
 
     @staticmethod
     def arrhenius_life(stress_temp: np.ndarray, life: np.ndarray,
-                       use_temp: float, activation_energy: float = 0.7) -> Dict[str, Any]:
+                       use_temp: float, activation_energy: float = 0.7) -> dict[str, Any]:
         """Arrhenius 模型: L(T) = A * exp(Ea/(k*T))
         参数:
             stress_temp: 加速应力温度 (K, 已转换)
@@ -72,7 +72,7 @@ class ALTEngine:
 
     @staticmethod
     def inverse_power_law(stress: np.ndarray, life: np.ndarray,
-                          use_stress: float) -> Dict[str, Any]:
+                          use_stress: float) -> dict[str, Any]:
         """逆幂律模型: L(V) = C * V^(-n)
         适用于电压/压力/载荷等非热应力
         参数:
@@ -118,7 +118,7 @@ class ALTEngine:
 
     @staticmethod
     def eyring(stress_temp: np.ndarray, life: np.ndarray,
-               use_temp: float) -> Dict[str, Any]:
+               use_temp: float) -> dict[str, Any]:
         """Eyring 模型: L(T) = (A/T) * exp(B/T)
         比 Arrhenius 更精确的热应力模型
         参数:
@@ -170,13 +170,13 @@ class ALTEngine:
 
 def alt_trial_plan(
     model: str,
-    stress_levels: List[float],
+    stress_levels: list[float],
     use_condition: float,
     target_life: float,
     n_per_level: int = 10,
     total_sample: int = 60,
     confidence_level: float = 0.90,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     ALT 试验规划
 

@@ -4,7 +4,7 @@ Johnson 变换 — SU/SB/SL/LN 四类变换
 参考: Johnson (1949) "Systems of Frequency Curves"
 """
 
-from typing import Dict, Any
+from typing import Any
 import numpy as np
 from scipy import stats
 
@@ -15,7 +15,7 @@ JOHNSON_TYPES = ["SU", "SB", "SL", "LN"]
 def johnson_transform(
     data: np.ndarray,
     method: str = "auto",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Johnson 变换
 
@@ -52,7 +52,7 @@ def johnson_transform(
 
 def inverse_transform(
     transformed: np.ndarray,
-    params: Dict[str, float],
+    params: dict[str, float],
     johnson_type: str,
 ) -> np.ndarray:
     """
@@ -82,7 +82,7 @@ def inverse_transform(
 
 def transform_value(
     value: float,
-    params: Dict[str, float],
+    params: dict[str, float],
     johnson_type: str,
 ) -> float:
     """
@@ -131,7 +131,7 @@ def transform_value(
         raise ValueError(f"不支持的 Johnson 类型: {johnson_type}")
 
 
-def _auto_select_transform(data: np.ndarray) -> Dict[str, Any]:
+def _auto_select_transform(data: np.ndarray) -> dict[str, Any]:
     """自动选择最佳 Johnson 变换类型"""
     best_result = None
     best_score = float("inf")
@@ -164,7 +164,7 @@ def _auto_select_transform(data: np.ndarray) -> Dict[str, Any]:
     return best_result
 
 
-def _fit_johnson(data: np.ndarray, jtype: str) -> Dict[str, Any]:
+def _fit_johnson(data: np.ndarray, jtype: str) -> dict[str, Any]:
     """拟合指定类型的 Johnson 变换"""
     x_min, x_max = data.min(), data.max()
     x_range = x_max - x_min
@@ -202,7 +202,7 @@ def _fit_johnson(data: np.ndarray, jtype: str) -> Dict[str, Any]:
     }
 
 
-def _estimate_params_moment(data: np.ndarray, jtype: str) -> Dict[str, float]:
+def _estimate_params_moment(data: np.ndarray, jtype: str) -> dict[str, float]:
     """使用矩估计法估计 Johnson 参数"""
     len(data)
     mean = np.mean(data)
@@ -247,7 +247,7 @@ def _estimate_params_moment(data: np.ndarray, jtype: str) -> Dict[str, float]:
         raise ValueError(f"不支持的 Johnson 类型: {jtype}")
 
 
-def _inverse_su(transformed: np.ndarray, params: Dict[str, float]) -> np.ndarray:
+def _inverse_su(transformed: np.ndarray, params: dict[str, float]) -> np.ndarray:
     """SU 逆变换"""
     gamma = params.get("gamma", 0)
     delta = params.get("delta", 1)
@@ -259,7 +259,7 @@ def _inverse_su(transformed: np.ndarray, params: Dict[str, float]) -> np.ndarray
     return xi + lam * z
 
 
-def _inverse_sb(transformed: np.ndarray, params: Dict[str, float]) -> np.ndarray:
+def _inverse_sb(transformed: np.ndarray, params: dict[str, float]) -> np.ndarray:
     """SB 逆变换"""
     gamma = params.get("gamma", 0)
     delta = params.get("delta", 1)
@@ -271,7 +271,7 @@ def _inverse_sb(transformed: np.ndarray, params: Dict[str, float]) -> np.ndarray
     return xi + lam * exp_y / (1 + exp_y)
 
 
-def _inverse_sl(transformed: np.ndarray, params: Dict[str, float]) -> np.ndarray:
+def _inverse_sl(transformed: np.ndarray, params: dict[str, float]) -> np.ndarray:
     """SL 逆变换"""
     gamma = params.get("gamma", 0)
     delta = params.get("delta", 1)
@@ -282,7 +282,7 @@ def _inverse_sl(transformed: np.ndarray, params: Dict[str, float]) -> np.ndarray
     return xi + lam * np.exp(y)
 
 
-def _inverse_ln(transformed: np.ndarray, params: Dict[str, float]) -> np.ndarray:
+def _inverse_ln(transformed: np.ndarray, params: dict[str, float]) -> np.ndarray:
     """LN 逆变换"""
     gamma = params.get("gamma", 0)
     delta = params.get("delta", 1)

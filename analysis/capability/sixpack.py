@@ -12,7 +12,7 @@ Capability Sixpack — 六合图
 参考: Minitab Quality Tools > Capability Analysis > Sixpack
 """
 
-from typing import Dict, Any, Optional
+from typing import Any
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -20,11 +20,11 @@ from scipy import stats
 
 def analyze(
     data: pd.Series,
-    usl: Optional[float] = None,
-    lsl: Optional[float] = None,
-    target: Optional[float] = None,
+    usl: float | None = None,
+    lsl: float | None = None,
+    target: float | None = None,
     subgroup_size: int = 1,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Capability Sixpack 分析
 
@@ -101,7 +101,7 @@ def _get_d2(n: int) -> float:
     return d2_table.get(n, 1.128)
 
 
-def _control_chart_data(data: np.ndarray, subgroup_size: int) -> Dict[str, Any]:
+def _control_chart_data(data: np.ndarray, subgroup_size: int) -> dict[str, Any]:
     """控制图数据 (I-MR 或 Xbar-R)"""
     n = len(data)
 
@@ -183,11 +183,11 @@ def _get_d4(n: int) -> float:
 
 def _histogram_data(
     data: np.ndarray,
-    usl: Optional[float],
-    lsl: Optional[float],
+    usl: float | None,
+    lsl: float | None,
     mean: float,
     std: float,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """直方图数据 + 正态拟合曲线"""
     n_bins = min(50, max(10, int(np.sqrt(len(data)))))
     counts, bin_edges = np.histogram(data, bins=n_bins)
@@ -216,7 +216,7 @@ def _probability_plot_data(
     data: np.ndarray,
     mean: float,
     std: float,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """概率图数据 (正态性检验)"""
     sorted_data = np.sort(data)
     n = len(sorted_data)
@@ -240,11 +240,11 @@ def _statistics_data(
     mean: float,
     std_overall: float,
     std_within: float,
-    usl: Optional[float],
-    lsl: Optional[float],
-    target: Optional[float],
+    usl: float | None,
+    lsl: float | None,
+    target: float | None,
     subgroup_size: int,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """统计量数据"""
     n = len(data)
     result = {
@@ -299,11 +299,11 @@ def _capability_grade(cpk: float) -> str:
 
 def _percent_defective_data(
     data: np.ndarray,
-    usl: Optional[float],
-    lsl: Optional[float],
+    usl: float | None,
+    lsl: float | None,
     mean: float,
     std: float,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """不合格品率数据"""
     len(data)
 
@@ -336,12 +336,12 @@ def _percent_defective_data(
 
 def _capability_plot_data(
     data: np.ndarray,
-    usl: Optional[float],
-    lsl: Optional[float],
+    usl: float | None,
+    lsl: float | None,
     mean: float,
     std_within: float,
     std_overall: float,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """能力图数据 (Cp/Cpk/Pp/Ppk 对比)"""
     if usl is None or lsl is None or std_within == 0:
         return {"indices": [], "values": []}
