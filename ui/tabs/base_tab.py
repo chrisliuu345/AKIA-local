@@ -365,6 +365,19 @@ class BaseAnalysisTab(QWidget):
         if self._empty_overlay:
             self._empty_overlay.hide()
 
+    def ensure_empty_state(self, message: str = ""):
+        """按需创建统一空状态遮罩（无数据时提示导入）。"""
+        if getattr(self, "_empty_overlay", None) is None:
+            self._setup_empty_state(message=message or "请先导入数据")
+
+    def show_empty_state(self, message: str = ""):
+        """显示空状态遮罩（主窗口在切到无数据 Tab 时调用）。"""
+        self.ensure_empty_state(message)
+        if self._empty_overlay is not None:
+            self._empty_overlay.setGeometry(self.rect())
+            self._empty_overlay.show()
+            self._empty_overlay.raise_()
+
     def _resize_empty_overlay(self):
         """在 resizeEvent 中调用，保持遮罩大小与 Tab 一致"""
         if self._empty_overlay and self._empty_overlay.isVisible():
