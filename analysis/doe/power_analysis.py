@@ -12,7 +12,7 @@ Supports:
     - 1-Variance
     - One-Way ANOVA
 """
-from typing import Dict, Any, Tuple
+from typing import Any
 import math
 import numpy as np
 from scipy import stats
@@ -487,10 +487,10 @@ def sample_size_one_way_anova(
 
 def oc_curve(
     test_type: str,
-    n_range: Tuple[int, int] = (5, 100),
+    n_range: tuple[int, int] = (5, 100),
     steps: int = 20,
     **kwargs,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Generate OC curve data (Power vs Sample Size).
 
     Parameters

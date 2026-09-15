@@ -189,7 +189,7 @@ def is_secret_key(key: str) -> bool:
 def _read_json(path: str) -> dict:
     """读取 JSON 配置，失败返回空 dict（损坏文件不阻塞启动）"""
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
         return data if isinstance(data, dict) else {}
     except (OSError, ValueError):

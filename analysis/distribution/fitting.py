@@ -5,7 +5,7 @@
 拟合优度：Anderson-Darling, Kolmogorov-Smirnov, Chi-Square
 """
 
-from typing import Dict, Any, Optional, List
+from typing import Any
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -17,7 +17,7 @@ SUPPORTED_DISTRIBUTIONS = ["normal", "lognormal", "exponential", "gamma", "weibu
 def fit_distribution(
     data: pd.Series,
     distribution: str = "normal",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     拟合指定分布并返回参数估计
 
@@ -63,8 +63,8 @@ def fit_distribution(
 def goodness_of_fit(
     data: pd.Series,
     distribution: str = "normal",
-    tests: Optional[List[str]] = None,
-) -> Dict[str, Any]:
+    tests: list[str] | None = None,
+) -> dict[str, Any]:
     """
     拟合优度检验
 
@@ -114,8 +114,8 @@ def goodness_of_fit(
 
 def compare_distributions(
     data: pd.Series,
-    distributions: Optional[List[str]] = None,
-) -> Dict[str, Any]:
+    distributions: list[str] | None = None,
+) -> dict[str, Any]:
     """
     比较多个分布的拟合效果
 
@@ -168,7 +168,7 @@ def compare_distributions(
     }
 
 
-def _fit_normal(data: np.ndarray) -> Dict[str, Any]:
+def _fit_normal(data: np.ndarray) -> dict[str, Any]:
     """正态分布拟合"""
     mu, sigma = stats.norm.fit(data)
     return {
@@ -177,7 +177,7 @@ def _fit_normal(data: np.ndarray) -> Dict[str, Any]:
     }
 
 
-def _fit_lognormal(data: np.ndarray) -> Dict[str, Any]:
+def _fit_lognormal(data: np.ndarray) -> dict[str, Any]:
     """对数正态分布拟合"""
     if np.any(data <= 0):
         shift = abs(np.min(data)) + 0.001
@@ -197,7 +197,7 @@ def _fit_lognormal(data: np.ndarray) -> Dict[str, Any]:
     }
 
 
-def _fit_exponential(data: np.ndarray) -> Dict[str, Any]:
+def _fit_exponential(data: np.ndarray) -> dict[str, Any]:
     """指数分布拟合"""
     if np.any(data < 0):
         shift = abs(np.min(data))
@@ -216,7 +216,7 @@ def _fit_exponential(data: np.ndarray) -> Dict[str, Any]:
     }
 
 
-def _fit_gamma(data: np.ndarray) -> Dict[str, Any]:
+def _fit_gamma(data: np.ndarray) -> dict[str, Any]:
     """Gamma 分布拟合"""
     if np.any(data <= 0):
         shift = abs(np.min(data)) + 0.001
@@ -236,7 +236,7 @@ def _fit_gamma(data: np.ndarray) -> Dict[str, Any]:
     }
 
 
-def _fit_weibull(data: np.ndarray) -> Dict[str, Any]:
+def _fit_weibull(data: np.ndarray) -> dict[str, Any]:
     """Weibull 分布拟合"""
     if np.any(data <= 0):
         shift = abs(np.min(data)) + 0.001
@@ -256,7 +256,7 @@ def _fit_weibull(data: np.ndarray) -> Dict[str, Any]:
     }
 
 
-def _get_scipy_dist(distribution: str, params: Dict[str, float]):
+def _get_scipy_dist(distribution: str, params: dict[str, float]):
     """获取 scipy 分布对象"""
     if distribution == "normal":
         return stats.norm(loc=params.get("mu", 0), scale=params.get("sigma", 1))
@@ -283,7 +283,7 @@ def _get_scipy_dist(distribution: str, params: Dict[str, float]):
     return None
 
 
-def _anderson_darling_test(data: np.ndarray, dist) -> Dict[str, Any]:
+def _anderson_darling_test(data: np.ndarray, dist) -> dict[str, Any]:
     """Anderson-Darling 检验"""
     try:
         result = stats.anderson(data, dist="norm")
@@ -309,7 +309,7 @@ def _anderson_darling_test(data: np.ndarray, dist) -> Dict[str, Any]:
         }
 
 
-def _kolmogorov_smirnov_test(data: np.ndarray, dist) -> Dict[str, Any]:
+def _kolmogorov_smirnov_test(data: np.ndarray, dist) -> dict[str, Any]:
     """Kolmogorov-Smirnov 检验"""
     result = stats.kstest(data, dist.cdf)
     return {
@@ -320,7 +320,7 @@ def _kolmogorov_smirnov_test(data: np.ndarray, dist) -> Dict[str, Any]:
     }
 
 
-def _chi_square_test(data: np.ndarray, dist, bins: int = 10) -> Dict[str, Any]:
+def _chi_square_test(data: np.ndarray, dist, bins: int = 10) -> dict[str, Any]:
     """Chi-Square 拟合优度检验"""
     n = len(data)
     observed, bin_edges = np.histogram(data, bins=bins)
@@ -358,7 +358,7 @@ def _chi_square_test(data: np.ndarray, dist, bins: int = 10) -> Dict[str, Any]:
     }
 
 
-def _compute_log_likelihood(data: np.ndarray, distribution: str, params: Dict[str, float]) -> float:
+def _compute_log_likelihood(data: np.ndarray, distribution: str, params: dict[str, float]) -> float:
     """计算对数似然值"""
     dist = _get_scipy_dist(distribution, params)
     if dist is None:

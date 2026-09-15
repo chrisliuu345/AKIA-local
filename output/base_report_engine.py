@@ -1,6 +1,6 @@
 """BaseReportEngine — 所有报告生成器的共享逻辑"""
 
-from typing import Dict, List, Tuple, Iterator
+from collections.abc import Iterator
 from datetime import datetime
 
 from config.settings import APP_NAME, APP_VERSION
@@ -11,7 +11,7 @@ class BaseReportEngine:
     """Excel / Word / PDF 报告器的共享基类"""
 
     @staticmethod
-    def iter_analyses(analyses: List[Dict]) -> Iterator[Tuple[int, str, Dict, Dict]]:
+    def iter_analyses(analyses: list[dict]) -> Iterator[tuple[int, str, dict, dict]]:
         for i, analysis in enumerate(analyses):
             atype = analysis.get("analysis_type",
                        analysis.get("chart_type", f"分析_{i+1}"))
@@ -20,7 +20,7 @@ class BaseReportEngine:
             yield i, atype, params, result
 
     @staticmethod
-    def footers() -> Tuple[str, str]:
+    def footers() -> tuple[str, str]:
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         return (
             f"{i18n.tr('report.generated_time')}: {ts}  |  {APP_NAME} v{APP_VERSION}",
@@ -28,7 +28,7 @@ class BaseReportEngine:
         )
 
     @staticmethod
-    def extract_conclusion(result: Dict) -> str:
+    def extract_conclusion(result: dict) -> str:
         acceptance = result.get("acceptance", {})
         if acceptance.get("message"):
             return acceptance["message"]
@@ -44,7 +44,7 @@ class BaseReportEngine:
         return "-"
 
     @staticmethod
-    def extract_key_result(result: Dict) -> str:
+    def extract_key_result(result: dict) -> str:
         cap = result.get("capability", {})
         if cap:
             cpk = cap.get("cpk", cap.get("ppk", ""))
@@ -60,7 +60,7 @@ class BaseReportEngine:
         return ""
 
     @staticmethod
-    def classify_analysis_type(analysis: Dict) -> str:
+    def classify_analysis_type(analysis: dict) -> str:
         atype = analysis.get("analysis_type", analysis.get("chart_type", ""))
         result = analysis.get("result", {})
         if "percentages" in result or "acceptance" in result:
@@ -88,5 +88,5 @@ class BaseReportEngine:
         return safe[:min(len(safe), max_len)]
 
     @staticmethod
-    def param_rows(params: Dict) -> List[Tuple[str, str]]:
+    def param_rows(params: dict) -> list[tuple[str, str]]:
         return [(str(k), str(v)) for k, v in params.items()]

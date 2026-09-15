@@ -3,7 +3,7 @@
 """
 
 from collections import OrderedDict
-from typing import Dict, List, Any
+from typing import Any
 import numpy as np
 
 
@@ -31,8 +31,8 @@ class WorkSamplingEngine:
         return OrderedDict(BUILTIN_STATUSES)
 
     @staticmethod
-    def calculate_ratios(observations: List[str],
-                         statuses: OrderedDict = None) -> Dict[str, Dict[str, Any]]:
+    def calculate_ratios(observations: list[str],
+                         statuses: OrderedDict | None = None) -> dict[str, dict[str, Any]]:
         if statuses is None:
             statuses = BUILTIN_STATUSES
         total = len(observations)
@@ -74,8 +74,8 @@ class WorkSamplingEngine:
         return {"_total": total, "ratios": ratios}
 
     @staticmethod
-    def confidence_intervals(ratios_data: Dict[str, Any],
-                             confidence: float = 0.95) -> Dict[str, Dict[str, Any]]:
+    def confidence_intervals(ratios_data: dict[str, Any],
+                             confidence: float = 0.95) -> dict[str, dict[str, Any]]:
         total = ratios_data.get("_total", 0)
         if total == 0:
             return {}
@@ -101,7 +101,7 @@ class WorkSamplingEngine:
         return result
 
     @staticmethod
-    def calculate_utilization(ratios_data: Dict[str, Any]) -> Dict[str, Any]:
+    def calculate_utilization(ratios_data: dict[str, Any]) -> dict[str, Any]:
         ratios = ratios_data.get("ratios", {})
         total = ratios_data.get("_total", 0)
         productive_count = sum(info["count"] for info in ratios.values()
@@ -126,9 +126,9 @@ class WorkSamplingEngine:
         return max(1, int(np.ceil(n)))
 
     @staticmethod
-    def analyze(observations: List[str], confidence: float = 0.95,
-                custom_statuses: OrderedDict = None,
-                show_sample_size_estimate: bool = True) -> Dict[str, Any]:
+    def analyze(observations: list[str], confidence: float = 0.95,
+                custom_statuses: OrderedDict | None = None,
+                show_sample_size_estimate: bool = True) -> dict[str, Any]:
         statuses = custom_statuses if custom_statuses else BUILTIN_STATUSES
         ratios = WorkSamplingEngine.calculate_ratios(observations, statuses)
         ci = WorkSamplingEngine.confidence_intervals(ratios, confidence)

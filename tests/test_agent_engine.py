@@ -40,8 +40,7 @@ class FakeLLM:
     def generate(self, prompt):
         self.prompts.append(prompt)
         text = self.script.pop(0) if self.script else "（无更多脚本）"
-        for chunk in [text[i:i + 24] for i in range(0, len(text), 24)]:
-            yield chunk
+        yield from [text[i:i + 24] for i in range(0, len(text), 24)]
 
 
 # ---------- 离线路径 ----------

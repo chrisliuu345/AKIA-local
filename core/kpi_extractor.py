@@ -10,7 +10,7 @@
 供显示层 format_pct 和公式引擎共同使用。
 """
 
-from typing import Dict, Any
+from typing import Any
 
 
 def _scalar(v) -> bool:
@@ -227,13 +227,13 @@ def _extract_ie_default(r: dict) -> dict:
     return metrics
 
 
-def extract_metrics(analyses: Dict[int, Dict]) -> Dict[str, Dict[str, Any]]:
+def extract_metrics(analyses: dict[int, dict]) -> dict[str, dict[str, Any]]:
     """从 MainWindow.analyses 提取每项分析的关键指标
 
     analyses: {tab_index: {"analysis_type": str, "params": {}, "result": {}}}
     返回: {analysis_type: {metric_name: value}} — 每个 Tab 仅保留最新结果
     """
-    out: Dict[str, Dict[str, Any]] = {}
+    out: dict[str, dict[str, Any]] = {}
     for idx in sorted(analyses.keys()):
         entry = analyses[idx]
         if not isinstance(entry, dict):
@@ -243,7 +243,7 @@ def extract_metrics(analyses: Dict[int, Dict]) -> Dict[str, Dict[str, Any]]:
         if not isinstance(r, dict):
             continue
 
-        metrics: Dict[str, Any] = {}
+        metrics: dict[str, Any] = {}
         if "capability" in r:
             metrics.update(_extract_capability(r))
         if any(k.endswith("_chart") and isinstance(v, dict) for k, v in r.items()) \
@@ -283,12 +283,12 @@ def extract_metrics(analyses: Dict[int, Dict]) -> Dict[str, Dict[str, Any]]:
     return out
 
 
-def build_variable_namespace(analyses: Dict[int, Dict]) -> Dict[str, float]:
+def build_variable_namespace(analyses: dict[int, dict]) -> dict[str, float]:
     """为公式引擎构建扁平变量命名空间 — {metric_name: value}
 
     同名指标取最近一次分析的值; 仅保留数值变量。
     """
-    ns: Dict[str, float] = {}
+    ns: dict[str, float] = {}
     for metrics in extract_metrics(analyses).values():
         for name, value in metrics.items():
             if _scalar(value):

@@ -1,12 +1,11 @@
 """工作表合并引擎 — 追加/JOIN/批量合并"""
 
 import os, pandas as pd
-from typing import List, Dict
 
 
 class SheetMerger:
     @staticmethod
-    def merge_append(files: List[str], sheet_name: str = "Sheet1") -> pd.DataFrame:
+    def merge_append(files: list[str], sheet_name: str = "Sheet1") -> pd.DataFrame:
         """多文件同结构纵向追加"""
         dfs = []
         for f in files:
@@ -45,7 +44,7 @@ class SheetMerger:
         return SheetMerger.merge_append(sorted(files))
 
     @staticmethod
-    def merge_sheets(file_path: str) -> Dict[str, pd.DataFrame]:
+    def merge_sheets(file_path: str) -> dict[str, pd.DataFrame]:
         """单文件多 Sheet 合并"""
         xl = pd.ExcelFile(file_path)
         result = {}

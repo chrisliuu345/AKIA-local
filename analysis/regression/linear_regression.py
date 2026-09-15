@@ -2,7 +2,7 @@
 线性回归分析 — 简单线性回归 / 多元回归
 """
 
-from typing import Dict, Any, List
+from typing import Any
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -11,8 +11,8 @@ from scipy import stats
 def analyze(
     df: pd.DataFrame,
     response_col: str,
-    factor_cols: List[str],
-) -> Dict[str, Any]:
+    factor_cols: list[str],
+) -> dict[str, Any]:
     data = df.dropna(subset=[response_col] + factor_cols).copy()
     for col in [response_col] + factor_cols:
         coerced = pd.to_numeric(data[col], errors="coerce")

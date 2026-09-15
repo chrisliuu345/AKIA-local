@@ -234,7 +234,7 @@ class TcpTransport(Transport):
                             self.on_message(msg)
                         except Exception as e:
                             logger.exception("on_message callback error: %s", e)
-            except socket.timeout:
+            except TimeoutError:
                 continue
             except OSError as e:
                 if self._stop_event.is_set():

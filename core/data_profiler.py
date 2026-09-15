@@ -1,6 +1,6 @@
 """数据画像引擎 — 自动分析数据特征并推荐分析方法"""
 
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Any
 import warnings
 import numpy as np
 import pandas as pd
@@ -13,7 +13,7 @@ class DataProfiler:
     def __init__(self, sample_size: int = 5000):
         self.sample_size = sample_size
 
-    def profile(self, raw_data: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
+    def profile(self, raw_data: dict[str, pd.DataFrame]) -> dict[str, Any]:
         sheets = {}
         total_rows = 0
         total_issues = []
@@ -48,7 +48,7 @@ class DataProfiler:
             },
         }
 
-    def _profile_columns(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
+    def _profile_columns(self, df: pd.DataFrame) -> list[dict[str, Any]]:
         result = []
         for col in df.columns:
             series = pd.to_numeric(df[col], errors="coerce")
@@ -59,7 +59,7 @@ class DataProfiler:
             if missing_pct >= 100.0:
                 continue
 
-            info: Dict[str, Any] = {
+            info: dict[str, Any] = {
                 "name": _clean_col_name(col),
                 "dtype": str(df[col].dtype),
                 "missing_pct": missing_pct,
@@ -128,7 +128,7 @@ class DataProfiler:
         return result
 
     @staticmethod
-    def _score_recommendation(cols: List[Dict], rec: Dict) -> Tuple[str, float]:
+    def _score_recommendation(cols: list[dict], rec: dict) -> tuple[str, float]:
         """计算推荐置信度: 返回 (等级, 百分比)
 
         等级: highly_recommended / recommended / optional
@@ -166,7 +166,7 @@ class DataProfiler:
         return ("optional", 0.50)
 
     @staticmethod
-    def _health_check(cols: List[Dict]) -> Dict[str, Any]:
+    def _health_check(cols: list[dict]) -> dict[str, Any]:
         """四项数据健康指标: 完整性 / 正态性 / 稳定性 / 分辨力"""
         numeric = [c for c in cols if c["category"] == "measurement"]
         if not numeric:
@@ -200,7 +200,7 @@ class DataProfiler:
         }
 
     def _generate_recommendations(self, df: pd.DataFrame, sheet_name: str,
-                                  cols: List[Dict]) -> List[Dict[str, Any]]:
+                                  cols: list[dict]) -> list[dict[str, Any]]:
         recs = []
         numeric = [c for c in cols if c["category"] == "measurement"]
         identifiers = [c for c in cols if c["category"] == "identifier"]
@@ -377,8 +377,8 @@ class DataProfiler:
 
         return recs
 
-    def _detect_issues(self, cols: List[Dict], sheet_name: str,
-                   df: Optional[pd.DataFrame] = None) -> List[str]:
+    def _detect_issues(self, cols: list[dict], sheet_name: str,
+                   df: pd.DataFrame | None = None) -> list[str]:
         issues = []
         for c in cols:
             if c["missing_pct"] > 10:
@@ -413,7 +413,7 @@ class DataProfiler:
         return issues
 
 
-def _find_spec_col(col_names: List[str], keyword: str) -> Optional[str]:
+def _find_spec_col(col_names: list[str], keyword: str) -> str | None:
     for c in col_names:
         if keyword.lower() in str(c).lower():
             return c

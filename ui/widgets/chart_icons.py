@@ -6,7 +6,7 @@
 """
 
 from io import BytesIO
-from typing import Callable, Dict
+from collections.abc import Callable
 
 from matplotlib.patches import Rectangle
 from PySide6.QtGui import QIcon, QPixmap
@@ -204,7 +204,7 @@ def _waterfall(ax):
         prev = top
 
 
-_DRAW_FUNCS: Dict[str, Callable] = {
+_DRAW_FUNCS: dict[str, Callable] = {
     "直方图": _histogram,
     "箱线图": _boxplot,
     "散点图": _scatter,
@@ -224,7 +224,7 @@ _DRAW_FUNCS: Dict[str, Callable] = {
     "瀑布图": _waterfall,
 }
 
-_CACHE: Dict[str, QIcon] = {}
+_CACHE: dict[str, QIcon] = {}
 
 
 def _icon_for(chart_type: str) -> QIcon:

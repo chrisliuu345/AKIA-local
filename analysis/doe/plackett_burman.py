@@ -7,20 +7,20 @@ Plackett-Burman 筛选设计 — Hadamard 矩阵构造 + 效应分析
 
 支持的试验次数: N=4, 8, 12, 16 (最大 k=15 因子)
 """
-from typing import Dict, Any, List, Optional
+from typing import Any
 import numpy as np
 import pandas as pd
 from scipy import stats
 
 
-_BASE_ROWS: Dict[int, List[int]] = {
+_BASE_ROWS: dict[int, list[int]] = {
     4:  [-1, 1, -1],
     8:  [1, 1, 1, -1, 1, -1, -1],
     12: [1, 1, -1, 1, 1, 1, -1, -1, -1, 1, -1],
 }
 
 
-def _hadamard_from_base(base_row: List[int]) -> np.ndarray:
+def _hadamard_from_base(base_row: list[int]) -> np.ndarray:
     """从第一行构造 Hadamard 矩阵（循环移位法）
 
     Parameters
@@ -64,10 +64,10 @@ def _sylvester_hadamard(k: int) -> np.ndarray:
 
 
 def generate_design(
-    factors: List[str],
-    n_runs: Optional[int] = None,
+    factors: list[str],
+    n_runs: int | None = None,
     center_points: int = 0,
-    block: Optional[str] = None,
+    block: str | None = None,
 ) -> pd.DataFrame:
     """生成 Plackett-Burman 筛选设计
 
@@ -146,9 +146,9 @@ def generate_design(
 def analyze(
     df: pd.DataFrame,
     response_col: str,
-    factor_cols: List[str],
+    factor_cols: list[str],
     alpha: float = 0.05,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """分析 Plackett-Burman 筛选设计
 
     计算主效应、方差分析（ANOVA）、Pareto 数据。

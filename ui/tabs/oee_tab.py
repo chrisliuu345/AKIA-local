@@ -2,7 +2,7 @@
 OEE 设备综合效率分析页 — KPI 仪表盘 + 损失瀑布
 """
 
-from typing import Dict, Any, List
+from typing import Any
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
@@ -29,8 +29,8 @@ from analysis.ie.oee import OEEEngine
 class OEETab(BaseAnalysisTab):
 
     def __init__(self, parent=None):
-        self.ie_resources: List[Resource] = []
-        self._kpi_labels: Dict[str, QLabel] = {}
+        self.ie_resources: list[Resource] = []
+        self._kpi_labels: dict[str, QLabel] = {}
         super().__init__(parent)
         self._setup_ui()
 
@@ -172,11 +172,11 @@ class OEETab(BaseAnalysisTab):
     def set_raw_data(self, *args, **kwargs):
         pass
 
-    def set_ie_data(self, resources: List[Resource]):
+    def set_ie_data(self, resources: list[Resource]):
         self.ie_resources = resources
         self._populate_preview(resources)
 
-    def _populate_preview(self, resources: List[Resource]):
+    def _populate_preview(self, resources: list[Resource]):
         cols = ["资源ID", "类型", "班组", "班次", "可用(h)", "停机(h)",
                 "节拍(s)", "总产量", "良品数"]
         self.preview_table.setColumnCount(len(cols))
@@ -217,13 +217,13 @@ class OEETab(BaseAnalysisTab):
         self._display_result(result)
         self.analysis_completed.emit()
 
-    def _display_result(self, result: Dict[str, Any]):
+    def _display_result(self, result: dict[str, Any]):
         ov = result["overall"]
         self._update_kpis(ov)
         self._fill_table(result)
         self._draw_charts(result)
 
-    def _update_kpis(self, ov: Dict[str, Any]):
+    def _update_kpis(self, ov: dict[str, Any]):
         tc = theme_colors()
 
         def pct(key):
@@ -246,7 +246,7 @@ class OEETab(BaseAnalysisTab):
             color = "#e74c3c"
         self._kpi_labels["oee"].setStyleSheet(f"color: {color}; border: none;")
 
-    def _fill_table(self, result: Dict[str, Any]):
+    def _fill_table(self, result: dict[str, Any]):
         headers = ["维度", "记录数", "可用(h)", "停机(h)", "运行(h)",
                    "A", "P", "Q", "OEE", "评级", "备注"]
         buckets = result["buckets"]
@@ -267,7 +267,7 @@ class OEETab(BaseAnalysisTab):
                 self.result_table.setItem(i, j, QTableWidgetItem(str(val)))
         self.result_table.resizeColumnsToContents()
 
-    def _draw_charts(self, result: Dict[str, Any]):
+    def _draw_charts(self, result: dict[str, Any]):
         self._clear_canvas()
         tc = theme_colors()
         plt.rcParams["axes.unicode_minus"] = False

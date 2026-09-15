@@ -2,7 +2,7 @@
 过程能力分析页 — 含图表嵌入
 """
 
-from typing import Dict, Any
+from typing import Any
 import pandas as pd
 import numpy as np
 
@@ -256,7 +256,7 @@ class CapabilityTab(BaseAnalysisTab):
         self.lsl_spin.setVisible(not is_dist_fit)
         self.row_dist.setVisible(is_dist_fit)
 
-    def set_data(self, df: pd.DataFrame, parsed_info: Dict[str, Any]):
+    def set_data(self, df: pd.DataFrame, parsed_info: dict[str, Any]):
         self.df = df
         self.parsed_info = parsed_info
         self.col_combo.clear()
@@ -282,7 +282,7 @@ class CapabilityTab(BaseAnalysisTab):
             return False, f"规格限无效：USL ({usl}) 必须大于 LSL ({lsl})"
         return True, ""
 
-    def run_and_display(self) -> Dict[str, Any]:
+    def run_and_display(self) -> dict[str, Any]:
         valid, msg = self.validate_params()
         if not valid:
             self._clear_canvas()
@@ -301,7 +301,7 @@ class CapabilityTab(BaseAnalysisTab):
             self.result_text.setText(f"▎分析失败\n{str(e)}")
             return None
 
-    def run_analysis(self) -> Dict[str, Any]:
+    def run_analysis(self) -> dict[str, Any]:
         from analysis.capability import normal_cap, non_normal_cap, between_within_cap, tolerance_interval
         from analysis.distribution import fitting
 
@@ -355,7 +355,7 @@ class CapabilityTab(BaseAnalysisTab):
         }
         return self.current_result
 
-    def display_result(self, analysis: Dict[str, Any] = None):
+    def display_result(self, analysis: dict[str, Any] | None = None):
         if analysis is None:
             analysis = self.current_result
         result = analysis.get("result", {})
@@ -447,7 +447,7 @@ class CapabilityTab(BaseAnalysisTab):
         self.result_table.horizontalHeader().setStretchLastSection(True)
         self._switch_result_view(0)
 
-    def _render_chart(self, result: Dict, raw_data: np.ndarray):
+    def _render_chart(self, result: dict, raw_data: np.ndarray):
         try:
             fig = create_capability_chart(result, raw_data, title="过程能力分析", options=self._chart_options)
             self._render_figure(fig)

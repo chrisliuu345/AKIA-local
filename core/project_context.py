@@ -5,7 +5,7 @@
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
+from typing import Any
 from datetime import datetime
 from config.settings import RPN_HIGH
 
@@ -16,9 +16,9 @@ class QualityCharacteristic:
     id: str = ""
     name: str = ""
     process: str = ""
-    usl: Optional[float] = None
-    lsl: Optional[float] = None
-    target: Optional[float] = None
+    usl: float | None = None
+    lsl: float | None = None
+    target: float | None = None
     unit: str = ""
     data_source: str = ""
     spc_method: str = ""
@@ -51,15 +51,15 @@ class ProjectContext:
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str = field(default_factory=lambda: datetime.now().isoformat())
 
-    characteristics: List[QualityCharacteristic] = field(default_factory=list)
+    characteristics: list[QualityCharacteristic] = field(default_factory=list)
 
-    fmea_items: List[dict] = field(default_factory=list)
-    control_plan_rows: List[dict] = field(default_factory=list)
-    ppap_report: Dict[str, Any] = field(default_factory=dict)
-    eight_d_reports: List[dict] = field(default_factory=list)
+    fmea_items: list[dict] = field(default_factory=list)
+    control_plan_rows: list[dict] = field(default_factory=list)
+    ppap_report: dict[str, Any] = field(default_factory=dict)
+    eight_d_reports: list[dict] = field(default_factory=list)
 
-    analysis_snapshots: Dict[str, Dict[str, Any]] = field(default_factory=dict)
-    chart_options: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    analysis_snapshots: dict[str, dict[str, Any]] = field(default_factory=dict)
+    chart_options: dict[str, dict[str, Any]] = field(default_factory=dict)
 
     def add_characteristic(self, qc: QualityCharacteristic):
         """添加质量特性"""
@@ -68,7 +68,7 @@ class ProjectContext:
         self.characteristics.append(qc)
         self.updated_at = datetime.now().isoformat()
 
-    def get_characteristic(self, qc_id: str) -> Optional[QualityCharacteristic]:
+    def get_characteristic(self, qc_id: str) -> QualityCharacteristic | None:
         """按 ID 获取质量特性"""
         for qc in self.characteristics:
             if qc.id == qc_id:
@@ -89,17 +89,17 @@ class ProjectContext:
         self.characteristics = [qc for qc in self.characteristics if qc.id != qc_id]
         self.updated_at = datetime.now().isoformat()
 
-    def set_fmea_items(self, items: List[dict]):
+    def set_fmea_items(self, items: list[dict]):
         """设置 FMEA 条目"""
         self.fmea_items = items
         self.updated_at = datetime.now().isoformat()
 
-    def set_control_plan(self, rows: List[dict]):
+    def set_control_plan(self, rows: list[dict]):
         """设置控制计划行"""
         self.control_plan_rows = rows
         self.updated_at = datetime.now().isoformat()
 
-    def set_ppap_report(self, report: Dict[str, Any]):
+    def set_ppap_report(self, report: dict[str, Any]):
         """设置 PPAP 报告状态"""
         self.ppap_report = report
         self.updated_at = datetime.now().isoformat()
@@ -121,33 +121,33 @@ class ProjectContext:
                     return
         self.add_eight_d_report(report)
 
-    def set_analysis_snapshot(self, key: str, snapshot: Dict[str, Any]):
+    def set_analysis_snapshot(self, key: str, snapshot: dict[str, Any]):
         """设置分析结果快照"""
         self.analysis_snapshots[key] = snapshot
         self.updated_at = datetime.now().isoformat()
 
-    def get_analysis_snapshot(self, key: str) -> Optional[Dict[str, Any]]:
+    def get_analysis_snapshot(self, key: str) -> dict[str, Any] | None:
         """获取分析结果快照"""
         return self.analysis_snapshots.get(key)
 
-    def set_chart_options(self, chart_id: str, options: Dict[str, Any]):
+    def set_chart_options(self, chart_id: str, options: dict[str, Any]):
         """设置图表编辑参数"""
         self.chart_options[chart_id] = options
         self.updated_at = datetime.now().isoformat()
 
-    def get_chart_options(self, chart_id: str) -> Optional[Dict[str, Any]]:
+    def get_chart_options(self, chart_id: str) -> dict[str, Any] | None:
         """获取图表编辑参数"""
         return self.chart_options.get(chart_id)
 
-    def get_high_risk_fmea_items(self, threshold: int = RPN_HIGH) -> List[dict]:
+    def get_high_risk_fmea_items(self, threshold: int = RPN_HIGH) -> list[dict]:
         """获取高风险 FMEA 条目 (RPN >= threshold)"""
         return [item for item in self.fmea_items if item.get("rpn", 0) >= threshold]
 
-    def get_characteristics_for_spc(self) -> List[QualityCharacteristic]:
+    def get_characteristics_for_spc(self) -> list[QualityCharacteristic]:
         """获取需要 SPC 监控的质量特性"""
         return [qc for qc in self.characteristics if qc.spc_method and qc.data_source]
 
-    def get_fmea_items_for_cp(self) -> List[dict]:
+    def get_fmea_items_for_cp(self) -> list[dict]:
         """获取需要生成控制计划的 FMEA 条目 (高风险项)"""
         return self.get_high_risk_fmea_items()
 

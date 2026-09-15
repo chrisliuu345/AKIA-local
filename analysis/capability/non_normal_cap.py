@@ -2,7 +2,7 @@
 非正态过程能力分析 — Box-Cox变换 + Johnson变换 + 百分位法
 """
 
-from typing import Dict, Any, Optional
+from typing import Any
 import warnings
 import numpy as np
 import pandas as pd
@@ -16,10 +16,10 @@ from analysis.capability.johnson_transform import (
 
 def analyze(
     data: pd.Series,
-    usl: Optional[float] = None,
-    lsl: Optional[float] = None,
+    usl: float | None = None,
+    lsl: float | None = None,
     method: str = "box_cox",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """非正态过程能力分析
 
     Args:
@@ -61,7 +61,7 @@ def analyze(
         return result
 
     shift = 0.0
-    lam: Optional[float] = None
+    lam: float | None = None
     johnson_params = None
     johnson_type = None
     
@@ -156,9 +156,9 @@ def analyze(
 
 def _analyze_percentile(
     data: np.ndarray,
-    usl: Optional[float] = None,
-    lsl: Optional[float] = None,
-) -> Dict[str, Any]:
+    usl: float | None = None,
+    lsl: float | None = None,
+) -> dict[str, Any]:
     """百分位法能力分析
 
     不依赖分布假设，直接使用经验分布函数计算能力指数。
@@ -274,10 +274,10 @@ def _johnson_transform(data: np.ndarray) -> tuple:
     return (data - np.mean(data)) / std, None
 
 
-def _transform_value(value: float, method: str, lam: Optional[float],
+def _transform_value(value: float, method: str, lam: float | None,
                      shift: float, mean: float, std: float,
-                     johnson_params: Optional[Dict] = None,
-                     johnson_type: Optional[str] = None) -> float:
+                     johnson_params: dict | None = None,
+                     johnson_type: str | None = None) -> float:
     """把原始尺度下的规格限变换到变换后尺度, 与数据变换口径完全一致"""
     if method == "johnson" and johnson_params and johnson_type:
         return johnson_transform_value(value, johnson_params, johnson_type)

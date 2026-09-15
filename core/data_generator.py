@@ -1,12 +1,12 @@
 """随机数据生成器 — 7种分布 + MSA/DOE/SPC 模板"""
 
-from typing import ClassVar, List
+from typing import ClassVar
 
 import numpy as np, pandas as pd
 
 
 class DataGenerator:
-    DISTS: ClassVar[List[str]] = ["正态", "对数正态", "指数", "均匀", "Weibull", "二项", "泊松"]
+    DISTS: ClassVar[list[str]] = ["正态", "对数正态", "指数", "均匀", "Weibull", "二项", "泊松"]
 
     @staticmethod
     def generate(dist: str, n: int, **params) -> np.ndarray:

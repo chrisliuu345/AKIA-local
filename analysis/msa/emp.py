@@ -12,7 +12,7 @@ EMP (Empirical Measurement Process) 方法量具研究
 - 可区分类别数 (ndc)
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Any
 import numpy as np
 import pandas as pd
 from config import settings as _cfg
@@ -23,8 +23,8 @@ def analyze_crossed(
     measurement_col: str,
     part_col: str,
     operator_col: str,
-    tolerance: Optional[float] = None,
-) -> Dict[str, Any]:
+    tolerance: float | None = None,
+) -> dict[str, Any]:
     """
     EMP Crossed 量具研究
 
@@ -123,8 +123,8 @@ def analyze_nested(
     measurement_col: str,
     part_col: str,
     operator_col: str,
-    tolerance: Optional[float] = None,
-) -> Dict[str, Any]:
+    tolerance: float | None = None,
+) -> dict[str, Any]:
     """
     EMP Nested 量具研究（每个零件由不同操作员测量）
 
@@ -215,7 +215,7 @@ def analyze_nested(
     }
 
 
-def _discrimination_grade(ndc: int) -> Dict[str, Any]:
+def _discrimination_grade(ndc: int) -> dict[str, Any]:
     """
     分辨力分级
 
@@ -257,7 +257,7 @@ def _wheeler_criteria(
     tv: float,
     ndc: int,
     grr_pct: float,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Wheeler 判异准则（8 条）
 
@@ -337,7 +337,7 @@ def _calculate_interaction(
     measurement_col: str,
     part_col: str,
     operator_col: str,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     计算交互效应数据（零件 × 操作员）
     """
@@ -373,8 +373,8 @@ def _calculate_interaction(
 def _emp_acceptance(
     grr_pct: float,
     ndc: int,
-    discrimination_grade: Dict[str, Any],
-) -> Dict[str, Any]:
+    discrimination_grade: dict[str, Any],
+) -> dict[str, Any]:
     """
     EMP 接收准则
 

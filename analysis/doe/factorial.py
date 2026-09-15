@@ -2,13 +2,13 @@
 因子设计 — 全因子/2^k因子设计
 """
 
-from typing import Dict, Any, List
+from typing import Any
 import numpy as np
 import pandas as pd
 from scipy import stats
 
 
-def generate_design(factors: List[str], replicates: int = 1) -> pd.DataFrame:
+def generate_design(factors: list[str], replicates: int = 1) -> pd.DataFrame:
     k = len(factors)
     n_runs = 2 ** k * replicates
 
@@ -27,8 +27,8 @@ def generate_design(factors: List[str], replicates: int = 1) -> pd.DataFrame:
 def analyze_factorial(
     df: pd.DataFrame,
     response_col: str,
-    factor_cols: List[str],
-) -> Dict[str, Any]:
+    factor_cols: list[str],
+) -> dict[str, Any]:
     data = df
     data = data.dropna(subset=[response_col] + factor_cols)
     for col in [response_col] + factor_cols:

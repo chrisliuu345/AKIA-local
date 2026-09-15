@@ -8,7 +8,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pandas as pd
 from sklearn.compose import ColumnTransformer
@@ -28,10 +28,10 @@ DEFAULT_RANDOM_STATE = 42
 
 
 def build_preprocessor(
-    numeric_features: List[str],
-    categorical_features: Optional[List[str]] = None,
+    numeric_features: list[str],
+    categorical_features: list[str] | None = None,
     scale: bool = True,
-    bin_features: Optional[List[str]] = None,
+    bin_features: list[str] | None = None,
     n_bins: int = 5,
 ) -> ColumnTransformer:
     """构建特征预处理 ColumnTransformer（数值 / 分箱 / 分类三分支）。"""
@@ -39,7 +39,7 @@ def build_preprocessor(
     bin_features = [c for c in (bin_features or []) if c in numeric_features]
     plain_numeric = [c for c in numeric_features if c not in bin_features]
 
-    numeric_steps: List[tuple] = [("imputer", SimpleImputer(strategy="median"))]
+    numeric_steps: list[tuple] = [("imputer", SimpleImputer(strategy="median"))]
     if scale:
         numeric_steps.append(("scaler", StandardScaler()))
 
@@ -77,15 +77,15 @@ def build_preprocessor(
 def prepare_data(
     df: pd.DataFrame,
     target: str,
-    features: Optional[List[str]] = None,
-    task: Optional[str] = None,
+    features: list[str] | None = None,
+    task: str | None = None,
     test_size: float = DEFAULT_TEST_SIZE,
     random_state: int = DEFAULT_RANDOM_STATE,
     scale: bool = True,
-    bin_features: Optional[List[str]] = None,
+    bin_features: list[str] | None = None,
     n_bins: int = 5,
     stratify: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """体检 + 切分 + 构建预处理流水线（未拟合，由模型 Pipeline 统一拟合）。
 
     返回:
@@ -137,9 +137,9 @@ def prepare_data(
 
 def describe_dataset(
     df: pd.DataFrame,
-    target: Optional[str] = None,
-    features: Optional[List[str]] = None,
-) -> Dict[str, Any]:
+    target: str | None = None,
+    features: list[str] | None = None,
+) -> dict[str, Any]:
     """数据体检（不建模）— 供 UI 预检与 Agent 工具使用。"""
     if target is None:
         raise ValueError("必须提供目标列")

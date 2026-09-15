@@ -1,6 +1,6 @@
 """帕累托图增强 Tab — 列选择 + 排序 + 累计百分比 + 二层钻取"""
 
-from typing import Dict, Any
+from typing import Any
 
 import pandas as pd
 
@@ -28,7 +28,7 @@ class ParetoTab(BaseAnalysisTab):
         super().__init__(parent)
         self._setup_ui()
 
-    def set_data(self, df: pd.DataFrame, parsed_info: Dict[str, Any] = None):
+    def set_data(self, df: pd.DataFrame, parsed_info: dict[str, Any] | None = None):
         BaseAnalysisTab.set_data(self, df, parsed_info)
         self._full_df = df
         if df is not None:

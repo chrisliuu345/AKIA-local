@@ -7,7 +7,7 @@ References:
 
 Supports: 1/2, 1/4, 1/8 fractions, Resolution III/IV/V, alias structure
 """
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Any
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -20,12 +20,12 @@ def _base_factorial(k: int) -> np.ndarray:
     return 2 * ((idx[:, np.newaxis] >> np.arange(k)[::-1]) & 1).astype(int) - 1
 
 
-def _parse_generator(gen_str: str) -> List[int]:
+def _parse_generator(gen_str: str) -> list[int]:
     """Parse generator string like 'ABC' into column indices [0,1,2]"""
     return [ord(c.upper()) - ord('A') for c in gen_str.upper()]
 
 
-def _apply_generator(base_design: np.ndarray, col_indices: List[int]) -> np.ndarray:
+def _apply_generator(base_design: np.ndarray, col_indices: list[int]) -> np.ndarray:
     """Create generator column by element-wise product of base columns"""
     result = np.ones(len(base_design), dtype=int)
     for idx in col_indices:
@@ -34,8 +34,8 @@ def _apply_generator(base_design: np.ndarray, col_indices: List[int]) -> np.ndar
 
 
 def _get_generators(k: int, fraction: str,
-                    user_generators: Optional[Dict[str, str]] = None
-                    ) -> Tuple[List[str], Dict]:
+                    user_generators: dict[str, str] | None = None
+                    ) -> tuple[list[str], dict]:
     """Resolve generators from user input or minimum aberration table"""
     fraction_map = {"1/2": 1, "1/4": 2, "1/8": 3}
     if fraction not in fraction_map:
@@ -63,7 +63,7 @@ def _get_generators(k: int, fraction: str,
     return gens, {}
 
 
-def compute_defining_relation(generators: List[str]) -> List[str]:
+def compute_defining_relation(generators: list[str]) -> list[str]:
     """Compute full defining relation from generator list.
 
     Returns list of words including generators and all their products.
@@ -85,7 +85,7 @@ def compute_defining_relation(generators: List[str]) -> List[str]:
     return words
 
 
-def compute_resolution(defining_relation: List[str]) -> int:
+def compute_resolution(defining_relation: list[str]) -> int:
     """Compute design resolution from defining relation.
 
     Resolution = min word length in defining relation (excluding 'I').
@@ -95,8 +95,8 @@ def compute_resolution(defining_relation: List[str]) -> int:
     return min(len(w) for w in defining_relation)
 
 
-def compute_alias_structure(factors: List[str],
-                            design_matrix: np.ndarray) -> Dict[str, List[str]]:
+def compute_alias_structure(factors: list[str],
+                            design_matrix: np.ndarray) -> dict[str, list[str]]:
     """Compute alias groups from design matrix.
 
     Two effects are aliased if their column vectors are identical.
@@ -113,7 +113,7 @@ def compute_alias_structure(factors: List[str],
             col = design_matrix[:, i] * design_matrix[:, j]
             effect_cols[name] = col.tobytes()
 
-    groups: Dict[bytes, List[str]] = {}
+    groups: dict[bytes, list[str]] = {}
     for effect, col_hash in effect_cols.items():
         groups.setdefault(col_hash, []).append(effect)
 
@@ -121,12 +121,12 @@ def compute_alias_structure(factors: List[str],
 
 
 def generate_design(
-    factors: List[str],
+    factors: list[str],
     fraction: str = "1/2",
-    generators: Optional[Dict[str, str]] = None,
+    generators: dict[str, str] | None = None,
     center_points: int = 0,
     block: bool = False,
-    random_seed: Optional[int] = None,
+    random_seed: int | None = None,
 ) -> pd.DataFrame:
     """Generate 2^(k-p) fractional factorial design.
 
@@ -205,9 +205,9 @@ def generate_design(
 def analyze(
     df: pd.DataFrame,
     response_col: str,
-    factor_cols: List[str],
+    factor_cols: list[str],
     alpha: float = 0.05,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Analyze fractional factorial design data.
 
     Computes main effects, ANOVA, alias structure, Pareto data.

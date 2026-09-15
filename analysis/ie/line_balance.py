@@ -4,7 +4,7 @@
 自动平衡：给定目标节拍，最长作业时间优先（LPT）在前置约束下分配最少工位
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from core.data_objects import Process
 
@@ -12,9 +12,9 @@ from core.data_objects import Process
 class LineBalanceEngine:
     """输入 Process 列表（cycle_time 必填），输出现状评估 + 平衡建议"""
 
-    def analyze(self, processes: List[Process],
-                takt: Optional[float] = None) -> Dict[str, Any]:
-        out: Dict[str, Any] = {
+    def analyze(self, processes: list[Process],
+                takt: float | None = None) -> dict[str, Any]:
+        out: dict[str, Any] = {
             "takt": None, "current": {}, "stations": [], "balanced": {},
             "warnings": [], "error": None,
         }
@@ -64,11 +64,11 @@ class LineBalanceEngine:
         return out
 
     @staticmethod
-    def _balance_lpt(processes: List[Process], takt: float) -> List[Dict[str, Any]]:
+    def _balance_lpt(processes: list[Process], takt: float) -> list[dict[str, Any]]:
         by_id = {p.process_id: p for p in processes}
         remaining = set(by_id.keys())
         assigned: set = set()
-        stations: List[Dict[str, Any]] = []
+        stations: list[dict[str, Any]] = []
 
         max_iterations = len(processes) * 2
         iteration = 0
@@ -99,7 +99,7 @@ class LineBalanceEngine:
                     })
                 break
             station_time = 0.0
-            members: List[Process] = []
+            members: list[Process] = []
 
             while True:
                 cands = [p for p in ready(remaining)

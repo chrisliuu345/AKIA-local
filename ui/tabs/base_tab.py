@@ -1,6 +1,6 @@
 """BaseAnalysisTab — 所有分析 Tab 的共享基类"""
 
-from typing import Dict, Any, Optional
+from typing import Any
 from io import BytesIO
 import pandas as pd
 
@@ -23,15 +23,15 @@ class BaseAnalysisTab(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.df: pd.DataFrame = None
-        self.parsed_info: Dict[str, Any] = {}
-        self.current_result: Dict[str, Any] = {}
+        self.parsed_info: dict[str, Any] = {}
+        self.current_result: dict[str, Any] = {}
         self.current_figure = None
         self.canvas = None
         self._raw_data = {}
         self._data_parser = None
         self._empty_overlay: QWidget = None
-        self._current_chart_type: Optional[str] = None
-        self._chart_options: Dict[str, Any] = {}
+        self._current_chart_type: str | None = None
+        self._chart_options: dict[str, Any] = {}
         self._chart_editor_panel = None
 
     def _clear_canvas(self):
@@ -110,7 +110,7 @@ class BaseAnalysisTab(QWidget):
     def _on_save_svg(self):
         self._on_save_figure("SVG 矢量图 (*.svg)", "svg", dpi=None)
 
-    def _on_save_figure(self, file_filter: str, fmt: str, dpi: int = None):
+    def _on_save_figure(self, file_filter: str, fmt: str, dpi: int | None = None):
         """将当前图表导出为文件 — 与显示尺寸解耦（保存后还原画布）"""
         if not hasattr(self, 'current_figure') or self.current_figure is None:
             return
@@ -128,7 +128,7 @@ class BaseAnalysisTab(QWidget):
                 fig.set_size_inches(*original_size)
                 self.canvas.draw()
 
-    def set_data(self, df: pd.DataFrame = None, parsed_info: Dict[str, Any] = None):
+    def set_data(self, df: pd.DataFrame = None, parsed_info: dict[str, Any] | None = None):
         """设置分析数据（子类可重写以填充列选择器）"""
         self.df = df
         self.parsed_info = parsed_info or {}
@@ -412,7 +412,7 @@ class BaseAnalysisTab(QWidget):
             # 面板控件重建后 min 尺寸已变 → 立即重算页面高度，避免滚动范围滞后一帧
             self._sync_chart_page_height()
 
-    def _on_chart_options_changed(self, options: Dict[str, Any]):
+    def _on_chart_options_changed(self, options: dict[str, Any]):
         """图表选项变更回调 — 防抖合并后重新生成当前图表"""
         self._chart_options = options.copy()
         try:
@@ -435,11 +435,11 @@ class BaseAnalysisTab(QWidget):
         except Exception as e:
             print(f"图表重绘失败: {e}")
 
-    def get_chart_options(self) -> Dict[str, Any]:
+    def get_chart_options(self) -> dict[str, Any]:
         """获取当前图表选项"""
         return self._chart_options.copy()
 
-    def set_chart_options(self, options: Dict[str, Any]):
+    def set_chart_options(self, options: dict[str, Any]):
         """设置图表选项"""
         self._chart_options = options.copy()
         if self._chart_editor_panel:

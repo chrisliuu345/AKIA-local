@@ -14,7 +14,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Sequence, Tuple
+from collections.abc import Sequence
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -24,7 +24,7 @@ THEME_LIGHT = "light"
 DEFAULT_THEME = THEME_DARK
 
 # Okabe-Ito 色盲友好序列（首色为数据蓝）
-PALETTE: List[str] = [
+PALETTE: list[str] = [
     "#0072B2",  # 蓝
     "#E69F00",  # 橙
     "#009E73",  # 蓝绿
@@ -36,7 +36,7 @@ PALETTE: List[str] = [
 ]
 
 # 语义色（与主题相关）
-_THEMES: Dict[str, Dict[str, str]] = {
+_THEMES: dict[str, dict[str, str]] = {
     THEME_DARK: {
         "figure_bg": "#181822",
         "panel": "#262632",
@@ -94,12 +94,12 @@ def current_theme() -> str:
     return name if name in _THEMES else DEFAULT_THEME
 
 
-def semantic(theme: Optional[str] = None) -> Dict[str, str]:
+def semantic(theme: str | None = None) -> dict[str, str]:
     """主题语义色字典（副本，调用方可安全修改）。"""
     return dict(_THEMES.get(str(theme or current_theme()).lower(), _THEMES[DEFAULT_THEME]))
 
 
-def palette(n: Optional[int] = None, theme: Optional[str] = None) -> List[str]:
+def palette(n: int | None = None, theme: str | None = None) -> list[str]:
     """取调色板；n 超出长度时自动循环。"""
     colors = list(PALETTE)
     if n is None or int(n) <= 0:
@@ -114,7 +114,7 @@ def setup_fonts() -> None:
         import matplotlib.font_manager as fm
         fm._load_fontmanager(try_read_cache=False)
         available = {f.name for f in fm.fontManager.ttflist}
-        preferred: List[str] = []
+        preferred: list[str] = []
         try:
             from core.fonts import get_ui_font
             preferred.append(get_ui_font())
@@ -142,7 +142,7 @@ def setup_fonts() -> None:
     plt.rcParams["axes.unicode_minus"] = False
 
 
-def apply_chart_style(theme: Optional[str] = None, *, dpi: Optional[int] = None) -> str:
+def apply_chart_style(theme: str | None = None, *, dpi: int | None = None) -> str:
     """应用统一 rcParams，返回实际生效主题名。"""
     name = str(theme or current_theme()).lower()
     if name not in _THEMES:
@@ -209,7 +209,7 @@ def style_axes(ax, *, grid: str = "y", legend: bool = False,
 
 
 def smart_ylim(ax, *values, pad: float = 0.08, include_zero: bool = False,
-               min_span: Optional[float] = None) -> Optional[Tuple[float, float]]:
+               min_span: float | None = None) -> tuple[float, float] | None:
     """按数据幅度设置 y 轴范围，避免"平线贴底"（0 锚定）与贴边。
 
     参数:
@@ -246,7 +246,7 @@ def smart_ylim(ax, *values, pad: float = 0.08, include_zero: bool = False,
 
 def add_limit_lines(ax, *, cl=None, ucl=None, lcl=None, usl=None, lsl=None,
                     orientation: str = "h", labels: bool = True,
-                    fontsize: int = 9) -> List[float]:
+                    fontsize: int = 9) -> list[float]:
     """绘制 CL / UCL / LCL / USL / LSL 参考线，返回纳入的数值列表。
 
     - 控制限（UCL/LCL）: 朱红虚线
@@ -254,7 +254,7 @@ def add_limit_lines(ax, *, cl=None, ucl=None, lcl=None, usl=None, lsl=None,
     - 中心线（CL）: 蓝绿实线
     """
     s = semantic()
-    included: List[float] = []
+    included: list[float] = []
     draw = ax.axhline if orientation == "h" else ax.axvline
     if cl is not None:
         draw(float(cl), color=s["center"], linestyle="-", linewidth=1.4,
@@ -275,8 +275,8 @@ def add_limit_lines(ax, *, cl=None, ucl=None, lcl=None, usl=None, lsl=None,
     return included
 
 
-def mark_violations(ax, xs, ys, *, annotate: Optional[Sequence[str]] = None,
-                    size: int = 11, label: Optional[str] = None) -> None:
+def mark_violations(ax, xs, ys, *, annotate: Sequence[str] | None = None,
+                    size: int = 11, label: str | None = None) -> None:
     """判异点：空心圈 + 可选规则注释（形式区别于细虚线控制限）。"""
     s = semantic()
     xs = list(xs)

@@ -7,7 +7,6 @@
 
 import json
 from pathlib import Path
-from typing import Dict
 
 
 LOCALE_DIR = Path(__file__).parent.parent / "locales"
@@ -27,7 +26,7 @@ class I18n:
     def __init__(self):
         if self._initialized:
             return
-        self._translations: Dict[str, str] = {}
+        self._translations: dict[str, str] = {}
         self._load()
         self._initialized = True
 
@@ -39,7 +38,7 @@ class I18n:
         path = LOCALE_DIR / "zh.json"
         if path.exists():
             try:
-                with open(path, "r", encoding="utf-8") as f:
+                with open(path, encoding="utf-8") as f:
                     loaded = json.load(f)
                     if loaded:
                         self._translations = loaded

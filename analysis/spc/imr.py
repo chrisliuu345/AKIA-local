@@ -2,13 +2,13 @@
 I-MR (单值-移动极差) 控制图分析
 """
 
-from typing import Dict, Any, List
+from typing import Any
 import numpy as np
 import pandas as pd
 from ._rules import check_all_nelson_rules
 
 
-def analyze(data: pd.Series) -> Dict[str, Any]:
+def analyze(data: pd.Series) -> dict[str, Any]:
     n = len(data)
     if n < 2:
         raise ValueError(f"数据量不足: 需要至少 2 点, 当前 {n}")
@@ -60,7 +60,7 @@ def analyze(data: pd.Series) -> Dict[str, Any]:
     }
 
 
-def _check_mr_violations(mr_values: np.ndarray, ucl: float) -> List[Dict]:
+def _check_mr_violations(mr_values: np.ndarray, ucl: float) -> list[dict]:
     violations = []
     for i, v in enumerate(mr_values):
         if v > ucl:

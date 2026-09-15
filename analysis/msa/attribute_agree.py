@@ -8,7 +8,7 @@
 - 偏差矩阵 (评注者 × 标准)
 """
 
-from typing import Dict, Any, List
+from typing import Any
 import numpy as np
 import pandas as pd
 
@@ -20,7 +20,7 @@ def analyze(
     operator_col: str = "",
     part_col: str = "",
     method: str = "auto",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     属性一致性分析
 
@@ -168,7 +168,7 @@ def _kappa_max(
     df: pd.DataFrame,
     result_col: str,
     standard_col: str,
-    categories: List[str],
+    categories: list[str],
 ) -> float:
     """
     计算 Kappa_max (最大可能 Kappa)
@@ -206,9 +206,9 @@ def _calculate_bias_matrix(
     result_col: str,
     standard_col: str,
     operator_col: str,
-    categories: List[str],
+    categories: list[str],
     operators: np.ndarray,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     计算偏差矩阵 (评注者 × 标准)
 
@@ -263,7 +263,7 @@ def _calculate_bias_matrix(
 
 
 def _calculate_cohen_kappa(df: pd.DataFrame, result_col: str, standard_col: str,
-                           categories: List[str]) -> float:
+                           categories: list[str]) -> float:
     """Cohen's Kappa (2 评注者)"""
     n = len(df)
     observed = 0

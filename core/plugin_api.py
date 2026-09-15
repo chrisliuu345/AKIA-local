@@ -74,7 +74,7 @@ class Dependency:
     hint: str = ""
 
     @classmethod
-    def parse(cls, value: Any) -> "Dependency":
+    def parse(cls, value: Any) -> Dependency:
         if isinstance(value, Dependency):
             return value
         if isinstance(value, dict):
@@ -114,7 +114,7 @@ class PluginManifest:
         }
 
     @classmethod
-    def from_dict(cls, data: dict, defaults: "PluginManifest | None" = None) -> "PluginManifest":
+    def from_dict(cls, data: dict, defaults: PluginManifest | None = None) -> PluginManifest:
         base = defaults
         raw = dict(data or {})
         plugin_id = str(raw.get("id") or (base.id if base else "")).strip().lower()

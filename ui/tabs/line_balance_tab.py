@@ -2,7 +2,7 @@
 生产线平衡分析页 — 山积图 + 自动平衡建议
 """
 
-from typing import Dict, Any, List
+from typing import Any
 
 from PySide6.QtWidgets import (
     QFrame,
@@ -29,7 +29,7 @@ from analysis.ie.line_balance import LineBalanceEngine
 class LineBalanceTab(BaseAnalysisTab):
 
     def __init__(self, parent=None):
-        self.ie_processes: List[Process] = []
+        self.ie_processes: list[Process] = []
         super().__init__(parent)
         self._setup_ui()
 
@@ -146,11 +146,11 @@ class LineBalanceTab(BaseAnalysisTab):
     def set_raw_data(self, *args, **kwargs):
         pass
 
-    def set_ie_data(self, processes: List[Process]):
+    def set_ie_data(self, processes: list[Process]):
         self.ie_processes = processes
         self._populate_preview(processes)
 
-    def _populate_preview(self, processes: List[Process]):
+    def _populate_preview(self, processes: list[Process]):
         cols = ["工序编号", "工序名称", "设备", "CT(s)", "人数", "前置工序"]
         self.preview_table.setColumnCount(len(cols))
         self.preview_table.setHorizontalHeaderLabels(cols)
@@ -190,11 +190,11 @@ class LineBalanceTab(BaseAnalysisTab):
         self._display_result(result)
         self.analysis_completed.emit()
 
-    def _display_result(self, result: Dict[str, Any]):
+    def _display_result(self, result: dict[str, Any]):
         self._fill_table(result)
         self._draw_yamazumi(result)
 
-    def _fill_table(self, result: Dict[str, Any]):
+    def _fill_table(self, result: dict[str, Any]):
         cur = result["current"]
         bal = result["balanced"]
         stations = result["stations"]
@@ -230,7 +230,7 @@ class LineBalanceTab(BaseAnalysisTab):
                 self.result_table.setItem(i, j, QTableWidgetItem(str(val)))
         self.result_table.resizeColumnsToContents()
 
-    def _draw_yamazumi(self, result: Dict[str, Any]):
+    def _draw_yamazumi(self, result: dict[str, Any]):
         self._clear_canvas()
         tc = theme_colors()
         plt.rcParams["axes.unicode_minus"] = False

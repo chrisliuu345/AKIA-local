@@ -1,6 +1,5 @@
 """LLM 上下文构建器 — 将分析结果转换为结构化提示"""
 
-from typing import Dict, List
 from datetime import datetime
 
 
@@ -8,9 +7,9 @@ class ContextBuilder:
     MAX_HISTORY = 20
 
     def __init__(self):
-        self.history: List[Dict[str, str]] = []
+        self.history: list[dict[str, str]] = []
 
-    def build(self, analyses: Dict[int, dict], file_name: str = "") -> str:
+    def build(self, analyses: dict[int, dict], file_name: str = "") -> str:
         parts = []
         if file_name:
             parts.append(f"数据文件: {file_name}")
@@ -59,7 +58,7 @@ class ContextBuilder:
 
         return "\n".join(parts)
 
-    def build_prompt(self, analyses: Dict[int, dict], user_question: str,
+    def build_prompt(self, analyses: dict[int, dict], user_question: str,
                      file_name: str = "") -> str:
         context = self.build(analyses, file_name)
 

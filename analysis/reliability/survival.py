@@ -7,7 +7,7 @@
   cox_regression()  — Cox 比例风险回归
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -18,10 +18,10 @@ from lifelines.statistics import logrank_test as _logrank_test
 def kaplan_meier(
     durations: pd.Series,
     event_observed: pd.Series,
-    group_col: Optional[pd.Series] = None,
+    group_col: pd.Series | None = None,
     confidence_level: float = 0.95,
-    label: Optional[str] = None,
-) -> Dict[str, Any]:
+    label: str | None = None,
+) -> dict[str, Any]:
     """
     Kaplan-Meier 生存分析
 
@@ -92,7 +92,7 @@ def kaplan_meier_compare(
     label_A: str = "Group A",
     label_B: str = "Group B",
     confidence_level: float = 0.95,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     双组 Kaplan-Meier 生存分析 + Log-rank 检验
 
@@ -144,7 +144,7 @@ def logrank_test(
     event_observed_A: pd.Series,
     durations_B: pd.Series,
     event_observed_B: pd.Series,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Log-rank 检验（两组比较）
 
@@ -180,10 +180,10 @@ def cox_regression(
     df: pd.DataFrame,
     duration_col: str,
     event_col: str,
-    covariates: Optional[List[str]] = None,
+    covariates: list[str] | None = None,
     penalizer: float = 0.0,
     confidence_level: float = 0.95,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Cox 比例风险回归
 

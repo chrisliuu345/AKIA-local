@@ -2,7 +2,7 @@
 回归分析页
 """
 
-from typing import Dict, Any
+from typing import Any
 import pandas as pd
 
 from PySide6.QtWidgets import (
@@ -28,8 +28,8 @@ class RegressionTab(BaseAnalysisTab):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.df: pd.DataFrame = None
-        self.parsed_info: Dict[str, Any] = {}
-        self.current_result: Dict[str, Any] = {}
+        self.parsed_info: dict[str, Any] = {}
+        self.current_result: dict[str, Any] = {}
         self.current_figure = None
         self.canvas = None
         self._setup_ui()
@@ -171,7 +171,7 @@ class RegressionTab(BaseAnalysisTab):
         bottom_layout.addWidget(self.result_stack)
         layout.addLayout(bottom_layout)
 
-    def set_data(self, df: pd.DataFrame, parsed_info: Dict[str, Any] = None):
+    def set_data(self, df: pd.DataFrame, parsed_info: dict[str, Any] | None = None):
         self.df = df
         self.parsed_info = parsed_info or {}
         cols = list(df.columns)
@@ -205,7 +205,7 @@ class RegressionTab(BaseAnalysisTab):
         self.response_combo.setCurrentText(col_name)
         self.data_table.selectColumn(index)
 
-    def run_and_display(self) -> Dict[str, Any]:
+    def run_and_display(self) -> dict[str, Any]:
         ok, msg = self.validate_params()
         if not ok:
             self._clear_canvas()
@@ -229,7 +229,7 @@ class RegressionTab(BaseAnalysisTab):
             return False, i18n.tr("reg.val_no_response")
         return True, ""
 
-    def run_analysis(self) -> Dict[str, Any]:
+    def run_analysis(self) -> dict[str, Any]:
         response = self.response_combo.currentText()
         factors = []
         for combo in [self.factor1_combo, self.factor2_combo, self.factor3_combo]:
@@ -245,7 +245,7 @@ class RegressionTab(BaseAnalysisTab):
         }
         return self.current_result
 
-    def display_result(self, analysis: Dict[str, Any] = None):
+    def display_result(self, analysis: dict[str, Any] | None = None):
         if analysis is None:
             analysis = self.current_result
         result = analysis.get("result", {})
@@ -279,7 +279,7 @@ class RegressionTab(BaseAnalysisTab):
         self.result_text.update()
         self._switch_result_view(0)
 
-    def _render_chart(self, result: Dict):
+    def _render_chart(self, result: dict):
         try:
             import matplotlib.pyplot as plt
             from config.settings import CHART_DPI

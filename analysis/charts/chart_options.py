@@ -4,7 +4,7 @@
 用于图表编辑面板，支持实时调整和持久化到 .qap 项目文件
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 from dataclasses import dataclass, field, asdict
 import json
 
@@ -26,7 +26,7 @@ class RadioOption:
     """单选参数"""
     key: str
     label: str
-    options: List[str]
+    options: list[str]
     default: str = ""
 
 
@@ -42,11 +42,11 @@ class CheckboxOption:
 class ChartTypeOptions:
     """单种图表类型的参数集合"""
     chart_type: str
-    sliders: List[SliderOption] = field(default_factory=list)
-    radios: List[RadioOption] = field(default_factory=list)
-    checkboxes: List[CheckboxOption] = field(default_factory=list)
+    sliders: list[SliderOption] = field(default_factory=list)
+    radios: list[RadioOption] = field(default_factory=list)
+    checkboxes: list[CheckboxOption] = field(default_factory=list)
 
-    def get_defaults(self) -> Dict[str, Any]:
+    def get_defaults(self) -> dict[str, Any]:
         defaults = {}
         for s in self.sliders:
             defaults[s.key] = s.default
@@ -56,7 +56,7 @@ class ChartTypeOptions:
             defaults[c.key] = c.default
         return defaults
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "chart_type": self.chart_type,
             "sliders": [asdict(s) for s in self.sliders],
@@ -222,7 +222,7 @@ SPC_OPTIONS = ChartTypeOptions(
 # ========== 注册表 ==========
 # 键必须与触发编辑的图表类型名一致（ChartTab/SPCTab 等传入 set_chart_type 的名称）
 
-CHART_OPTIONS_REGISTRY: Dict[str, ChartTypeOptions] = {
+CHART_OPTIONS_REGISTRY: dict[str, ChartTypeOptions] = {
     "饼图": PIE_OPTIONS,
     "柱状图": BAR_OPTIONS,
     "帕累托图": PARETO_OPTIONS,
@@ -249,27 +249,27 @@ CHART_OPTIONS_REGISTRY: Dict[str, ChartTypeOptions] = {
 }
 
 
-def get_chart_options(chart_type: str) -> Optional[ChartTypeOptions]:
+def get_chart_options(chart_type: str) -> ChartTypeOptions | None:
     """获取指定图表类型的参数定义"""
     return CHART_OPTIONS_REGISTRY.get(chart_type)
 
 
-def get_all_chart_types() -> List[str]:
+def get_all_chart_types() -> list[str]:
     """获取所有支持编辑的图表类型"""
     return list(CHART_OPTIONS_REGISTRY.keys())
 
 
-def get_default_options(chart_type: str) -> Dict[str, Any]:
+def get_default_options(chart_type: str) -> dict[str, Any]:
     """获取指定图表类型的默认参数"""
     opts = get_chart_options(chart_type)
     return opts.get_defaults() if opts else {}
 
 
-def options_to_json(options: Dict[str, Any]) -> str:
+def options_to_json(options: dict[str, Any]) -> str:
     """参数序列化为 JSON"""
     return json.dumps(options, ensure_ascii=False, indent=2)
 
 
-def options_from_json(json_str: str) -> Dict[str, Any]:
+def options_from_json(json_str: str) -> dict[str, Any]:
     """从 JSON 反序列化参数"""
     return json.loads(json_str)

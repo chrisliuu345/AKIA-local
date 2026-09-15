@@ -9,7 +9,7 @@ SHAP 不可用时自动降级为 RandomForest feature_importances_。
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -39,8 +39,8 @@ class RootCauseAnalyzer:
     def __init__(self, n_estimators: int = 100, use_shap: bool = True,
                  max_rows: int = 1000, shap_rows: int = 300,
                  random_state: int = 42,
-                 w_importance: float = None, w_correlation: float = None,
-                 w_linkage: float = None):
+                 w_importance: float | None = None, w_correlation: float | None = None,
+                 w_linkage: float | None = None):
         from config.settings import (
             ROOT_CAUSE_W_IMPORTANCE, ROOT_CAUSE_W_CORRELATION, ROOT_CAUSE_W_LINKAGE,
         )
@@ -54,9 +54,9 @@ class RootCauseAnalyzer:
         self.W_LINKAGE = w_linkage if w_linkage is not None else ROOT_CAUSE_W_LINKAGE
 
     def analyze(self, df: pd.DataFrame, target_column: str,
-                violations: Optional[List[Dict]] = None,
+                violations: list[dict] | None = None,
                 subgroup_size: int = 1,
-                top_k: int = 8) -> Dict[str, Any]:
+                top_k: int = 8) -> dict[str, Any]:
         """
         参数:
             df: 原始数据表（含全部列）
@@ -141,10 +141,10 @@ class RootCauseAnalyzer:
                 pass
         return np.asarray(model.feature_importances_), "rf"
 
-    def _compute_correlations(self, X: pd.DataFrame, y: pd.Series) -> Dict[str, float]:
+    def _compute_correlations(self, X: pd.DataFrame, y: pd.Series) -> dict[str, float]:
         from scipy import stats as sp_stats
 
-        result: Dict[str, float] = {}
+        result: dict[str, float] = {}
         yv = y.to_numpy(dtype=float)
         for c in X.columns:
             xv = X[c].to_numpy(dtype=float)
@@ -165,8 +165,8 @@ class RootCauseAnalyzer:
         return result
 
     @staticmethod
-    def _violation_row_indices(violations: Optional[List[Dict]],
-                               subgroup_size: int, n_rows: int) -> List[int]:
+    def _violation_row_indices(violations: list[dict] | None,
+                               subgroup_size: int, n_rows: int) -> list[int]:
         if not violations:
             return []
         sg = max(int(subgroup_size), 1)
@@ -184,8 +184,8 @@ class RootCauseAnalyzer:
         return sorted(rows)
 
     def _compute_anomaly_linkage(self, df: pd.DataFrame,
-                                 feature_cols: List[str],
-                                 violation_rows: List[int]) -> Dict[str, int]:
+                                 feature_cols: list[str],
+                                 violation_rows: list[int]) -> dict[str, int]:
         linkage = {c: 0 for c in feature_cols}
         if not violation_rows:
             return linkage
@@ -206,18 +206,18 @@ class RootCauseAnalyzer:
             return np.zeros_like(values)
         return values / vmax
 
-    def _rank_causes(self, cols: List[str],
+    def _rank_causes(self, cols: list[str],
                      importance: np.ndarray,
-                     correlation: Dict[str, float],
-                     linkage: Dict[str, int],
-                     n_viol_rows: int) -> List[RootCause]:
+                     correlation: dict[str, float],
+                     linkage: dict[str, int],
+                     n_viol_rows: int) -> list[RootCause]:
         imp_norm = self._normalize(np.asarray(importance, dtype=float))
         corr_arr = np.array([correlation.get(c, 0.0) for c in cols])
         corr_norm = self._normalize(corr_arr)
         link_arr = np.array([linkage.get(c, 0) for c in cols], dtype=float)
         link_norm = self._normalize(link_arr)
 
-        causes: List[RootCause] = []
+        causes: list[RootCause] = []
         for i, c in enumerate(cols):
             score = (self.W_IMPORTANCE * imp_norm[i]
                      + self.W_CORRELATION * corr_norm[i]
@@ -236,9 +236,9 @@ class RootCauseAnalyzer:
         return causes
 
     @staticmethod
-    def _explain(cause: RootCause, cols: List[str],
+    def _explain(cause: RootCause, cols: list[str],
                  imp_norm: np.ndarray, n_viol_rows: int) -> str:
-        parts: List[str] = []
+        parts: list[str] = []
         if cause.importance >= 0.9:
             parts.append("特征重要性最高")
         elif cause.importance >= 0.6:

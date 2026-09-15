@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
@@ -26,10 +26,10 @@ class CommandPaletteDialog(QDialog):
 
     triggered = Signal(dict)
 
-    def __init__(self, entries: List[Dict[str, Any]], parent=None):
+    def __init__(self, entries: list[dict[str, Any]], parent=None):
         super().__init__(parent)
         self._entries = list(entries)
-        self._visible: List[Dict[str, Any]] = []
+        self._visible: list[dict[str, Any]] = []
         self.setWindowTitle("命令面板")
         self.setWindowFlags(Qt.Dialog | Qt.FramelessWindowHint)
         self.setModal(True)
@@ -96,7 +96,7 @@ class CommandPaletteDialog(QDialog):
             self.list.setCurrentRow(0)
 
     @staticmethod
-    def _matches(entry: Dict[str, Any], needle: str) -> bool:
+    def _matches(entry: dict[str, Any], needle: str) -> bool:
         if not needle:
             return True
         haystack = " ".join(str(entry.get(key, "")) for key in

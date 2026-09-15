@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import joblib
 import pandas as pd
@@ -25,8 +25,8 @@ class ModelFileError(ValueError):
 
 
 def save_model(path, pipeline, *, task: str, target: str, features,
-               model: str = "", params: Optional[dict] = None,
-               metrics: Optional[dict] = None) -> str:
+               model: str = "", params: dict | None = None,
+               metrics: dict | None = None) -> str:
     """保存 Pipeline + 元数据，返回实际写入路径。"""
     target_path = Path(path)
     if target_path.suffix != MODEL_EXT:
@@ -48,7 +48,7 @@ def save_model(path, pipeline, *, task: str, target: str, features,
     return str(target_path)
 
 
-def load_model(path) -> Dict[str, Any]:
+def load_model(path) -> dict[str, Any]:
     """读取 .qamodel；文件缺失或格式不符抛 ModelFileError。"""
     source = Path(path)
     if not source.exists():
@@ -67,13 +67,13 @@ def load_model(path) -> Dict[str, Any]:
     return payload
 
 
-def model_info(path) -> Dict[str, Any]:
+def model_info(path) -> dict[str, Any]:
     """读取元数据（不含 Pipeline 使用）。"""
     payload = load_model(path)
     return {k: v for k, v in payload.items() if k != "pipeline"}
 
 
-def predict_frame(bundle: Dict[str, Any], df: pd.DataFrame,
+def predict_frame(bundle: dict[str, Any], df: pd.DataFrame,
                   proba: bool = True) -> pd.DataFrame:
     """用模型对数据表预测，返回含「预测值」（分类含「预测概率」）的表。"""
     if bundle.get("format") != FORMAT_NAME:

@@ -2,7 +2,7 @@
 组间/组内过程能力分析
 """
 
-from typing import Dict, Any, Optional
+from typing import Any
 import numpy as np
 import pandas as pd
 from analysis.capability._utils import get_capability_grade
@@ -12,9 +12,9 @@ def analyze(
     data: pd.DataFrame,
     measurement_col: str,
     subgroup_col: str,
-    usl: Optional[float] = None,
-    lsl: Optional[float] = None,
-) -> Dict[str, Any]:
+    usl: float | None = None,
+    lsl: float | None = None,
+) -> dict[str, Any]:
     df = data.dropna(subset=[measurement_col, subgroup_col]).copy()
     df[measurement_col] = pd.to_numeric(df[measurement_col], errors="coerce")
     df = df.dropna(subset=[measurement_col])

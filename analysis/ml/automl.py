@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pandas as pd
 from sklearn.linear_model import LinearRegression, LogisticRegression
@@ -27,7 +27,7 @@ MODEL_LABELS = {
 }
 
 
-def available_models(task: str) -> List[str]:
+def available_models(task: str) -> list[str]:
     """按任务类型返回可用模型名（MARS 仅回归）。"""
     models = ["linear", "tree", "forest", "boosting"]
     if task == TASK_REGRESSION:
@@ -35,7 +35,7 @@ def available_models(task: str) -> List[str]:
     return models
 
 
-def make_estimator(name: str, task: str, params: Optional[Dict[str, Any]] = None):
+def make_estimator(name: str, task: str, params: dict[str, Any] | None = None):
     """按名称构建估计器（供排序与单模型复跑复用）。"""
     params = dict(params or {})
     if name == "linear":
@@ -60,16 +60,16 @@ def make_estimator(name: str, task: str, params: Optional[Dict[str, Any]] = None
 def analyze(
     df: pd.DataFrame,
     target: str,
-    features: Optional[List[str]] = None,
-    task: Optional[str] = None,
-    models: Optional[List[str]] = None,
-    model_params: Optional[Dict[str, Dict[str, Any]]] = None,
+    features: list[str] | None = None,
+    task: str | None = None,
+    models: list[str] | None = None,
+    model_params: dict[str, dict[str, Any]] | None = None,
     test_size: float = prep.DEFAULT_TEST_SIZE,
     cv: int = 5,
     random_state: int = 42,
-    time_budget_s: Optional[float] = None,
+    time_budget_s: float | None = None,
     max_preview: int = 200,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """AutoML 主流程 — 统一切分下比较各模型，返回 leaderboard 与推荐。"""
     if df is None or len(df) == 0:
         raise MLDataError("数据表为空")
@@ -90,9 +90,9 @@ def analyze(
             f"（{resolved_task} 可选: {', '.join(available_models(resolved_task))}）")
 
     params_by_model = dict(model_params or {})
-    leaderboard: List[Dict[str, Any]] = []
-    skipped: List[Dict[str, str]] = []
-    pipelines: Dict[str, Pipeline] = {}
+    leaderboard: list[dict[str, Any]] = []
+    skipped: list[dict[str, str]] = []
+    pipelines: dict[str, Pipeline] = {}
     started = time.perf_counter()
 
     for index, name in enumerate(wanted):
@@ -162,8 +162,8 @@ def analyze(
     )
 
 
-def _recommendation(task: str, leaderboard: List[Dict[str, Any]],
-                    skipped: List[Dict[str, str]]) -> str:
+def _recommendation(task: str, leaderboard: list[dict[str, Any]],
+                    skipped: list[dict[str, str]]) -> str:
     if not leaderboard:
         return "未评估任何模型（时间预算过小）"
     metric = "R²" if task == TASK_REGRESSION else "准确率"

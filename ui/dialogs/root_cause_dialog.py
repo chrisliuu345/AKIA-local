@@ -1,6 +1,5 @@
 """AI 根因分析对话框 — 根因排行榜 + 特征重要性图 + 相关性热力图"""
 
-from typing import Dict, List, Optional
 
 import pandas as pd
 from PySide6.QtWidgets import (
@@ -24,7 +23,7 @@ class RootCauseDialog(QDialog):
     """对 SPC 违规点做三路证据融合根因排序"""
 
     def __init__(self, df: pd.DataFrame, target_column: str,
-                 violations: Optional[List[Dict]] = None,
+                 violations: list[dict] | None = None,
                  subgroup_size: int = 1, chart_type: str = "",
                  parent=None):
         super().__init__(parent)
@@ -140,11 +139,11 @@ class RootCauseDialog(QDialog):
             f"（联动行 {result.get('n_violation_rows', 0)}） | 算法: {method_label}"
         )
 
-        causes: List[RootCause] = result["causes"]
+        causes: list[RootCause] = result["causes"]
         self._fill_table(causes)
         self._render_charts(causes)
 
-    def _fill_table(self, causes: List[RootCause]):
+    def _fill_table(self, causes: list[RootCause]):
         tc = theme_colors()
         self.table.setRowCount(len(causes))
         for i, c in enumerate(causes):
@@ -167,7 +166,7 @@ class RootCauseDialog(QDialog):
                     item.setFont(font)
                 self.table.setItem(i, j, item)
 
-    def _render_charts(self, causes: List[RootCause]):
+    def _render_charts(self, causes: list[RootCause]):
         tc = theme_colors()
         plt.rcParams["axes.unicode_minus"] = False
 

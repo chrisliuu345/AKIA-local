@@ -16,7 +16,7 @@ import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
-from typing import Generator, List
+from collections.abc import Generator
 
 from core.agent.providers import (
     ProviderSpec, get_provider, masked_key, requires_key, resolve_base_url,
@@ -46,7 +46,7 @@ class LLMClient:
     OLLAMA_BASE = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
     TIMEOUT = 30
 
-    def __init__(self, model: str = None, provider: str = "ollama", *,
+    def __init__(self, model: str | None = None, provider: str = "ollama", *,
                  api_key: str | None = None, api_base: str | None = None,
                  timeout: float | None = None):
         self.provider = str(provider or "ollama").strip().lower()
@@ -167,7 +167,7 @@ class LLMClient:
             return bool(self.api_base)
         return bool(self.api_key)
 
-    def get_models(self) -> List[str]:
+    def get_models(self) -> list[str]:
         """Ollama 动态取模型列表；云供应商返回注册表内置清单。"""
         if self.protocol == "ollama":
             try:
@@ -191,7 +191,7 @@ class LLMClient:
             return False
 
     # ------------------------------------------------------------ 生成
-    def generate(self, prompt: str, model: str = None) -> Generator[str, None, None]:
+    def generate(self, prompt: str, model: str | None = None) -> Generator[str, None, None]:
         self._stop_event.clear()
         m = model or self.model
         if self.protocol == "ollama":

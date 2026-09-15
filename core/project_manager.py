@@ -7,7 +7,7 @@ import os
 import io
 import zipfile
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import Any
 from PySide6.QtCore import QSettings
 
 import pandas as pd
@@ -20,11 +20,11 @@ class ProjectManager:
     """QA-Tool 项目文件 (.qap) 管理器"""
 
     @staticmethod
-    def save_project(path: str, raw_data: Dict[str, pd.DataFrame],
-                     analyses: Dict[int, Dict[str, Any]],
-                     chart_bytes: Dict[str, bytes],
+    def save_project(path: str, raw_data: dict[str, pd.DataFrame],
+                     analyses: dict[int, dict[str, Any]],
+                     chart_bytes: dict[str, bytes],
                      annotations: str = "",
-                     project_context: Optional[Dict[str, Any]] = None) -> str:
+                     project_context: dict[str, Any] | None = None) -> str:
         """保存项目为 .qap 文件。
 
         raw_data: {sheet_name: DataFrame}
@@ -76,7 +76,7 @@ class ProjectManager:
         return path
 
     @staticmethod
-    def load_project(path: str) -> Dict[str, Any]:
+    def load_project(path: str) -> dict[str, Any]:
         """从 .qap 加载项目，返回完整上下文字典。
 
         Returns: {
@@ -91,10 +91,10 @@ class ProjectManager:
         if not os.path.exists(path):
             raise FileNotFoundError(f"项目文件不存在: {path}")
 
-        raw_data: Dict[str, pd.DataFrame] = {}
-        analyses: Dict[int, Dict] = {}
-        chart_bytes: Dict[str, bytes] = {}
-        manifest: Dict = {}
+        raw_data: dict[str, pd.DataFrame] = {}
+        analyses: dict[int, dict] = {}
+        chart_bytes: dict[str, bytes] = {}
+        manifest: dict = {}
         annotations = ""
         project_context = None
 
@@ -129,7 +129,7 @@ class ProjectManager:
         }
 
     @staticmethod
-    def get_project_info(path: str) -> Dict[str, Any]:
+    def get_project_info(path: str) -> dict[str, Any]:
         """仅读取 manifest，不解压全部内容"""
         if not os.path.exists(path):
             raise FileNotFoundError(f"项目文件不存在: {path}")
@@ -139,7 +139,7 @@ class ProjectManager:
         return {}
 
     @staticmethod
-    def recent_projects() -> List[Dict[str, str]]:
+    def recent_projects() -> list[dict[str, str]]:
         settings = QSettings("QA-Tool", "RecentProjects")
         raw = settings.value("list", "[]")
         try:
@@ -189,10 +189,10 @@ class SharedProjectManager:
     """团队共享 .qap 项目管理"""
 
     @staticmethod
-    def save_shared(path: str, raw_data: Dict[str, pd.DataFrame],
-                    analyses: Dict[int, Dict], chart_bytes: Dict[str, bytes],
+    def save_shared(path: str, raw_data: dict[str, pd.DataFrame],
+                    analyses: dict[int, dict], chart_bytes: dict[str, bytes],
                     department: str, annotations: str = "",
-                    project_context: Optional[Dict[str, Any]] = None) -> str:
+                    project_context: dict[str, Any] | None = None) -> str:
         """保存项目到共享目录"""
         dept_norm = (department or PUBLIC_DEPT).replace("\\", "/")
         safe_dept = os.path.basename(dept_norm)
@@ -209,7 +209,7 @@ class SharedProjectManager:
         return ProjectManager.save_project(full_path, raw_data, analyses, chart_bytes, annotations, project_context)
 
     @staticmethod
-    def list_shared(department: str = "", role: str = "") -> List[Dict[str, str]]:
+    def list_shared(department: str = "", role: str = "") -> list[dict[str, str]]:
         """列出共享项目。admin 看到全部；其他人看到本部门+公共。"""
         projects = []
         if not os.path.exists(SHARED_DIR):
@@ -235,6 +235,6 @@ class SharedProjectManager:
         return projects
 
     @staticmethod
-    def load_shared(path: str) -> Dict[str, Any]:
+    def load_shared(path: str) -> dict[str, Any]:
         """加载共享项目（与 load_project 相同）"""
         return ProjectManager.load_project(path)
