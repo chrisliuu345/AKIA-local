@@ -76,6 +76,18 @@ def _smart_thin(data: list, violations: list,
     return thinned, x_labels, True, info
 
 
+def _violation_annotations(violations: List[Dict[str, Any]],
+                           limit: int = 8) -> List[str]:
+    """判异点规则标注 — 数量过多时省略，避免图面拥挤。"""
+    if not violations or len(violations) > limit:
+        return []
+    labels = []
+    for item in violations:
+        rule = item.get("rule")
+        labels.append(f"规则{rule}" if rule not in (None, "") else "")
+    return labels
+
+
 def _get_max_data_length(chart_data: Dict[str, Any]) -> int:
     """估算图表数据点数，用于动态图宽"""
     max_n = 0
@@ -125,7 +137,8 @@ def create_control_chart(
         full_title = f"{title}\n{sample_note}" if sample_note else title
         fig.suptitle(full_title, fontsize=FONT_SIZE_TITLE, fontweight="bold")
     elif sample_note:
-        fig.suptitle(sample_note, fontsize=9, color="#888888")
+        fig.suptitle(sample_note, fontsize=9,
+                     color=chart_style.semantic()["text_muted"])
 
     show_grid = opts.get("show_grid")
     label_fontsize = opts.get("label_fontsize")
@@ -141,7 +154,7 @@ def create_control_chart(
                 if ax.get_ylabel():
                     ax.set_ylabel(ax.get_ylabel(), fontsize=label_fontsize)
 
-    fig.tight_layout(pad=2.0)
+    chart_style.finalize_figure(fig, pad=1.4)
 
     return fig
 
@@ -172,11 +185,14 @@ def _plot_xbar_chart(ax: plt.Axes, chart_data: Dict[str, Any],
 
     vx = [v.get("point") for v in violations if 1 <= v.get("point", 0) <= n_raw]
     vy = [data_raw[pt - 1] for pt in vx]
-    chart_style.mark_violations(ax, vx, vy, label=i18n.tr("chart.violations"))
+    chart_style.mark_violations(
+        ax, vx, vy, label=i18n.tr("chart.violations"),
+        annotate=_violation_annotations(
+            [v for v in violations if 1 <= v.get("point", 0) <= n_raw]))
 
     ax.set_ylabel(i18n.tr("chart.sample_mean"), fontsize=FONT_SIZE_LABEL)
     spec_values = _draw_spec_lines(ax, chart_data)
-    chart_style.style_axes(ax, grid="y", legend=True)
+    chart_style.style_axes(ax, grid="y", legend=True, legend_outside=True)
     chart_style.smart_ylim(ax, data, *limits, *spec_values)
     ax.set_title(key.replace("_chart", "").upper() + " "
                  + i18n.tr("chart.control_chart"), fontsize=FONT_SIZE_TITLE)
@@ -209,11 +225,14 @@ def _plot_range_chart(ax: plt.Axes, chart_data: Dict[str, Any],
 
     vx = [v.get("point") for v in violations if 1 <= v.get("point", 0) <= n_raw]
     vy = [data_raw[pt - 1] for pt in vx]
-    chart_style.mark_violations(ax, vx, vy)
+    chart_style.mark_violations(
+        ax, vx, vy,
+        annotate=_violation_annotations(
+            [v for v in violations if 1 <= v.get("point", 0) <= n_raw]))
 
     ax.set_xlabel(i18n.tr("chart.subgroup_no"), fontsize=FONT_SIZE_LABEL)
     ax.set_ylabel(i18n.tr("chart.range"), fontsize=FONT_SIZE_LABEL)
-    chart_style.style_axes(ax, grid="y", legend=True)
+    chart_style.style_axes(ax, grid="y", legend=True, legend_outside=True)
     chart_style.smart_ylim(ax, data, *limits)
     ax.set_title(key.replace("_chart", "").upper() + " "
                  + i18n.tr("chart.control_chart"), fontsize=FONT_SIZE_TITLE)
@@ -275,12 +294,15 @@ def _plot_simple_control_chart(ax: plt.Axes, chart_data: Dict[str, Any],
 
     vx = [v.get("point") for v in violations if 1 <= v.get("point", 0) <= len(data_raw)]
     vy = [data_raw[pt - 1] for pt in vx]
-    chart_style.mark_violations(ax, vx, vy)
+    chart_style.mark_violations(
+        ax, vx, vy,
+        annotate=_violation_annotations(
+            [v for v in violations if 1 <= v.get("point", 0) <= len(data_raw)]))
 
     ax.set_xlabel(i18n.tr("chart.subgroup_no"), fontsize=FONT_SIZE_LABEL)
     ax.set_ylabel("Statistic", fontsize=FONT_SIZE_LABEL)
     limits.extend(_draw_spec_lines(ax, chart_data))
-    chart_style.style_axes(ax, grid="y", legend=True)
+    chart_style.style_axes(ax, grid="y", legend=True, legend_outside=True)
     chart_style.smart_ylim(ax, data, *limits)
     if title:
         ax.set_title(title, fontsize=FONT_SIZE_TITLE)
@@ -318,7 +340,7 @@ def _plot_advanced_control_chart(ax: plt.Axes, chart_data: Dict[str, Any],
                        linewidth=1.2, label=f"-h={lcl:.3f}")
         ax.set_ylabel("CUSUM", fontsize=FONT_SIZE_LABEL)
 
-        vx, vy = [], []
+        vx, vy, vlabels = [], [], []
         for v in violations:
             pt = v.get("point", 0) - 1
             if 0 <= pt < len(cusum_plus):
@@ -326,7 +348,11 @@ def _plot_advanced_control_chart(ax: plt.Axes, chart_data: Dict[str, Any],
                     vx.append(pt + 1), vy.append(cusum_plus[pt])
                 else:
                     vx.append(pt + 1), vy.append(-cusum_minus[pt])
-        chart_style.mark_violations(ax, vx, vy, size=9)
+                rule = v.get("rule")
+                vlabels.append(f"规则{rule}" if rule else "")
+        chart_style.mark_violations(
+            ax, vx, vy, size=9,
+            annotate=vlabels if len(vx) <= 8 else None)
         chart_style.smart_ylim(ax, data_p, [-v for v in data_m], ucl, lcl, 0)
 
     elif chart_type == "EWMA":
@@ -369,16 +395,17 @@ def _plot_advanced_control_chart(ax: plt.Axes, chart_data: Dict[str, Any],
                        linestyle="--", linewidth=1.2, label="Steady LCL")
         ax.set_ylabel("EWMA", fontsize=FONT_SIZE_LABEL)
 
-        vx = [v.get("point", 0) for v in violations
-              if 1 <= v.get("point", 0) <= len(ewma_data)]
-        chart_style.mark_violations(ax, vx, [ewma_data[pt - 1] for pt in vx],
-                                    size=9)
+        kept = [v for v in violations if 1 <= v.get("point", 0) <= len(ewma_data)]
+        vx = [v.get("point", 0) for v in kept]
+        chart_style.mark_violations(
+            ax, vx, [ewma_data[pt - 1] for pt in vx], size=9,
+            annotate=_violation_annotations(kept))
         chart_style.smart_ylim(ax, data_e, data_r, cl,
                                ucl if isinstance(ucl, list) else [ucl],
                                lcl if isinstance(lcl, list) else [lcl])
 
     ax.set_xlabel(i18n.tr("chart.subgroup_no"), fontsize=FONT_SIZE_LABEL)
-    chart_style.style_axes(ax, grid="y", legend=True)
+    chart_style.style_axes(ax, grid="y", legend=True, legend_outside=True)
     return note
 
 
@@ -414,7 +441,8 @@ def create_capability_chart(
         return fig
 
     fig, axes = plt.subplots(2, 1, figsize=(10, 8), dpi=_dpi(),
-                              gridspec_kw={"height_ratios": [3, 1]})
+                              gridspec_kw={"height_ratios": [4, 1],
+                                           "hspace": 0.32})
 
     ax_hist = axes[0]
     ax_stats = axes[1]
@@ -437,28 +465,52 @@ def create_capability_chart(
     if show_limits:
         chart_style.add_limit_lines(ax_hist, usl=usl, lsl=lsl, orientation="v")
 
+    ax_hist.axvline(x=mean, color=s["center"], linestyle="--", linewidth=1.3,
+                    label=f"Mean={mean:.4g}")
+
     ax_hist.set_ylabel(i18n.tr("chart.density"), fontsize=label_fontsize)
-    chart_style.style_axes(ax_hist, grid="y" if show_grid else None, legend=True)
+    chart_style.style_axes(ax_hist, grid="y" if show_grid else None,
+                           legend=True, legend_outside=True)
 
     ax_stats.axis("off")
-    stats_text = f"Mean={mean:.4f}  Std={std:.4f}  n={len(original_data)}\n"
+    ax_stats.set_xlim(0, 1)
+    ax_stats.set_ylim(0, 1)
+
+    metrics = [("Mean", f"{mean:.4f}"), ("Std (overall)", f"{std:.4f}"),
+               ("n", f"{len(original_data)}")]
+    cp = cpk = ppm = grade = ""
     if cap:
         cp = cap.get("cp", cap.get("pp", ""))
         cpk = cap.get("cpk", cap.get("ppk", ""))
         ppm = cap.get("ppm_total", "")
         grade = cap.get("grade", "")
-        stats_text += f"Cp/Pp={cp}  Cpk/Ppk={cpk}  PPM={ppm}\n等级: {grade}"
+        metrics += [("Cp / Pp", f"{cp}"), ("Cpk / Ppk", f"{cpk}"), ("PPM", f"{ppm}")]
 
-    ax_stats.text(0.5, 0.5, stats_text, transform=ax_stats.transAxes,
-                  fontsize=FONT_SIZE_LABEL, ha="center", va="center",
-                  color=chart_style.semantic()["text"],
-                  bbox=dict(boxstyle="round", facecolor=chart_style.semantic()["panel"],
-                            edgecolor=chart_style.semantic()["axis"], alpha=0.9))
+    for column, start_x in ((metrics[:3], 0.03), (metrics[3:6], 0.32)):
+        y = 0.80
+        for key, value in column:
+            ax_stats.text(start_x, y, key, fontsize=10, color=s["text_muted"],
+                          va="top")
+            ax_stats.text(start_x + 0.145, y, str(value), fontsize=13,
+                          color=s["text"], va="top", fontweight="bold")
+            y -= 0.32
+
+    grade_color = s["good"]
+    try:
+        cpk_value = float(cap.get("cpk", cap.get("ppk")))
+        grade_color = (s["good"] if cpk_value >= 1.33
+                       else s["warning"] if cpk_value >= 1.0 else s["bad"])
+    except (TypeError, ValueError, AttributeError):
+        pass
+    ax_stats.text(0.78, 0.56, str(grade) if grade else "-", fontsize=30,
+                  fontweight="bold", color=grade_color, ha="center", va="center")
+    ax_stats.text(0.78, 0.16, "过程能力等级", fontsize=9, color=s["text_muted"],
+                  ha="center", va="center")
 
     if title:
         fig.suptitle(title, fontsize=FONT_SIZE_TITLE, fontweight="bold",
                      color=chart_style.semantic()["text"])
-    chart_style.finalize_figure(fig, pad=1.6)
+    chart_style.finalize_figure(fig, pad=1.1)
 
     return fig
 
@@ -475,6 +527,8 @@ def create_pareto_chart(
     label_fontsize = opts.get("label_fontsize", FONT_SIZE_TICK)
     show_cumulative = opts.get("show_cumulative", True)
     show_grid = opts.get("show_grid", True)
+    show_values = opts.get("show_values", True)
+    show_80_line = opts.get("show_80_line", True)
 
     fig, ax1 = plt.subplots(figsize=(10, 5), dpi=_dpi())
 
@@ -487,8 +541,15 @@ def create_pareto_chart(
     cumulative = np.cumsum(sorted_values) / total * 100 if total > 0 else np.zeros_like(sorted_values)
 
     s = chart_style.semantic()
-    ax1.bar(range(len(sorted_labels)), sorted_values, color=s["data"], alpha=0.85,
-            edgecolor=s["panel"], linewidth=0.6)
+    bars = ax1.bar(range(len(sorted_labels)), sorted_values, color=s["data"],
+                   alpha=0.85, edgecolor=s["panel"], linewidth=0.6)
+    if show_values:
+        for rect, value in zip(bars, sorted_values, strict=True):
+            ax1.annotate(f"{value:g}", (rect.get_x() + rect.get_width() / 2,
+                                        rect.get_height()),
+                         xytext=(0, 3), textcoords="offset points",
+                         ha="center", va="bottom", fontsize=max(label_fontsize - 1, 8),
+                         color=s["text"])
     ax1.set_ylabel("效应绝对值", fontsize=FONT_SIZE_LABEL)
     ax1.set_xticks(range(len(sorted_labels)))
     ax1.set_xticklabels(sorted_labels, rotation=label_rotation, ha="right", fontsize=label_fontsize)
@@ -497,6 +558,11 @@ def create_pareto_chart(
         ax2 = ax1.twinx()
         ax2.plot(range(len(sorted_labels)), cumulative, "o-", color=s["fit"],
                  linewidth=1.8, markersize=5)
+        if show_80_line:
+            ax2.axhline(y=80, color=s["text_muted"], linestyle=":", linewidth=1.0)
+            ax2.annotate("80%", (len(sorted_labels) - 1, 80), xytext=(-4, 4),
+                         textcoords="offset points", ha="right", va="bottom",
+                         fontsize=max(label_fontsize - 1, 8), color=s["text_muted"])
         ax2.set_ylabel("累计百分比 (%)", fontsize=FONT_SIZE_LABEL, color=s["fit"])
         ax2.tick_params(axis="y", colors=s["fit"])
         ax2.set_ylim(0, 105)
@@ -504,7 +570,7 @@ def create_pareto_chart(
 
     if show_grid:
         chart_style.style_axes(ax1, grid="y")
-    chart_style.smart_ylim(ax1, sorted_values, include_zero=True)
+    chart_style.smart_ylim(ax1, sorted_values, include_zero=True, pad=0.12)
     if title:
         ax1.set_title(title, fontsize=FONT_SIZE_TITLE, fontweight="bold")
     chart_style.finalize_figure(fig)
