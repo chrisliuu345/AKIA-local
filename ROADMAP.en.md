@@ -2,7 +2,7 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> Current: v4.0.0 Predictive Analytics & Machine Learning (AutoML / CART / Random Forests / Gradient Boosting / MARS + 6 agent tools) (✅ 2026-09-13) | Next: **v4.1.0 Chart & UI experience unification (planned)** | Tests: 1665 pytest · 37 analysis tabs | Updated: 2026-09-14
+> Current: v4.1.0 Chart & UI experience unification (chart style layer / defect fixes / command palette / performance baseline) (✅ 2026-09-15) | Next: **v4.2.0 Algorithm trust & depth (planned)** | Tests: 1708 pytest · 37 analysis tabs | Updated: 2026-09-15
 
 > **Maintenance convention (from 2026-09-12)**: each version entry is one summary line plus key numbers; implementation details live in code/tests/user guide, not here.
 > This file was compressed from 1100+ lines to under 500; the expanded history is in git history (`git log -p -- ROADMAP.md`).
@@ -14,8 +14,8 @@
 ```
 v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.1 ──→ v2.5 ──→ v2.6.0 ~ v2.6.5 ──→ v2.7.0
       ──→ v2.8.0 ──→ v2.9.0 ──→ v3.0.0 ──→ v3.1.0 ──→ v3.2.0 ──→ v3.3.0 ──→ v3.4.0 ──→ v3.5.0
-      ──→ v3.6.0 (incl. 3.6.1) ──→ v3.7.0 (incl. review) ──→ v3.7.1 ──→ v3.7.2 ──→ v3.8.0 ──→ v4.0.0 ✅
-      ──→ v4.1.0 (planned) ──→ v4.2.0 (planned) ──→ v4.3.0 (planned)
+      ──→ v3.6.0 (incl. 3.6.1) ──→ v3.7.0 (incl. review) ──→ v3.7.1 ──→ v3.7.2 ──→ v3.8.0 ──→ v4.0.0
+      ──→ v4.1.0 ✅ current ──→ v4.2.0 (planned) ──→ v4.3.0 (planned)
 ```
 
 | Status | Version | Theme |
@@ -33,7 +33,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | ✅ | **v3.8.0** | **Industrial AI Agent (QAM Harness + Plugin API v2; vision moved to an external plugin)** |
 | 🔌 | [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion) | External vision plugin (video time study) built on Plugin API v2 |
 | ✅ | **v4.0.0** | **Predictive analytics & ML (CART / Random Forests / gradient boosting / MARS / AutoML + feature engineering / evaluation / SHAP / model deployment)** |
-| 🚧 | v4.1.0 | Chart & UI experience unification (style layer / chart fixes / command palette / performance baseline) |
+| ✅ | **v4.1.0** | **Chart & UI experience unification (B1 style layer / B2 chart fixes / B3 command palette·batch progress·toasts·empty state / B4 quality & performance baseline)** |
 | 🚧 | v4.2.0 | Algorithm trust & depth (known-value validation matrix / multivariate SPC / uncertainty intervals / method docs) |
 | 🚧 | v4.3.0 | ML in production + ecosystem (model governance / online scoring / plugin CLI·SDK) |
 
@@ -65,6 +65,7 @@ Planning principles:
 
 | Date | Version | Summary |
 |------|---------|---------|
+| 09-15 | v4.1.0 | **Chart & UI experience unification released**: B1 `output/chart_style.py` unified style layer (dark/light themes + Okabe-Ito semantic colours + smart y-limits / violation markers / limit lines) migrated across both chart entry points; B2 all 8 audit findings cleared (auto-faceted boxplots, Pareto 80% line + bar labels, outside control-chart legend + rule annotations, capability stats card, diverging heatmap with masked diagonal…); B3 global command palette (Ctrl+K/Ctrl+P), stepwise batch analysis with progress/cancel (Ctrl+Shift+B), Toast wiring, unified empty state; B4 type modernisation (whole UP family + RUF013, 155 files), hotspot split (main_window/tools_ext → two helper modules), performance baseline in CI (cold start 2.2s / 1M import 14.0s / 5k chart 1.5s / 5k-row ML 1.5s); version 4.1.0 across all four ends; 124 files / 1708 passed / 2 skipped / 0 failed, ruff clean; **packaging pending** |
 | 09-13 | v4.0.0 | **Predictive Analytics & ML released**: `analysis/ml/` (task detection + leak-proof Pipeline, CART pre/post pruning, Random Forests with OOB, HistGradientBoosting with optional XGBoost, pure-numpy MARS, SHAP explanation, AutoML ranking); new "Predictive Analytics" tab (37) + 6 agent tools (30 → 36) + `.qamodel` save/load/predict; version 4.0.0 across all four ends; 1665 passed / 2 skipped / 0 failed, ruff clean; Linux AppImage + .deb built, Windows installer produced by the Inno script on Windows |
 | 09-13 | v4.0.0-quality | **Full code-quality review**: ruff gate extended and driven to zero (T10/ISC/PIE/RUF012/RUF021/RUF034/RUF059/PLW1510/PLW2901/PLW0602); 12 real defects fixed (fishbone duplicate condition, loop-variable shadowing x2, bogus global declaration, redundant branches in SMED/cost/sampling/project manager, unused unpacking in DOE/regression/charts, startswith merged x3, explicit subprocess check); `ClassVar` annotations for class-level mutable constants; repo hygiene (untrack `test_quality.db` and stale compliance docx artifacts); full per-file regression 118 files green + packaging smoke passed |
 | 09-13 | v4.0.0-fix2 | **Shared scroll-area height fix (W58 recurrence)**: the `QStackedWidget` size hint now follows only the current page, so hidden tabs (parameter panels / data tables) no longer stretch the shared scroll area; switching tabs explicitly recomputes the range and scrolls to top (staged syncs at 0/120/260 ms to beat Qt's cached hints); canvas-less analysis pages record and restore their page height so switching back keeps the scroll range; 2 new regression cases |
@@ -102,13 +103,13 @@ Planning principles:
 
 ---
 
-## Current Release: v4.0.0 Highlights
+## Current Release: v4.1.0 Highlights
 
-- **Predictive Analytics tab (37)**: target/feature selection → automatic task detection → 5 model families (linear/logistic · CART · Random Forests · gradient boosting · MARS) → metrics/CV/charts → `.qamodel` save/load → prediction export; training runs on a worker thread
-- **Feature engineering & evaluation**: missing values / one-hot / quantile binning / scaling (leak-proof Pipeline) · R²/RMSE/MAE/MAPE · Accuracy/P/R/F1/AUC · confusion matrix · ROC · K-fold CV · learning curve · residual diagnostics · SHAP with automatic fallback
-- **QAM Harness**: 6 machine-learning tools (`ml_prepare_data` / `ml_train` / `ml_automl` / `ml_evaluate` / `ml_explain` / `ml_predict`), tool count 30 → 36; combined with the v3.8.0 BYOK providers, privacy gate and offline keyword routing
-- **Plugin API v2** (v3.8.0): three-tier discovery + trust model + Tab/tool/settings contributions; vision evolves separately in [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion)
-- **Quality numbers**: 1665 passed / 2 skipped / 0 failed (118 files, per-file regression); extended ruff gate clean; Linux AppImage + .deb built (Windows installer script ready, built on Windows)
+- **Chart style layer (B1)**: `output/chart_style.py` as the single style source — dark/light themes, Okabe-Ito colour-blind-safe semantic palette (data/centre/control limit/spec/fit/violation), unified rcParams plus `smart_ylim` / `add_limit_lines` / `mark_violations` / `style_for_export`; chart_engine, chart_generator, heatmap and faceting all migrated
+- **Chart defect fixes (B2)**: all 8 audit findings cleared — auto-faceted multi-scale boxplots, Pareto 80% line with bar labels, outside control-chart legend with rule annotations, capability stats card with grade badge, diverging heatmap with masked diagonal, smart time-series y-limits, theme-coupled colours and font/grid unification
+- **UI experience (B3)**: global command palette (Ctrl+K / Ctrl+P across 37 tabs + plugins + 16 actions), stepwise batch analysis with progress and cancel (Ctrl+Shift+B), Toast wiring (analysis/export/batch), unified empty state (tabs without data show the import overlay)
+- **Quality & performance baseline (B4)**: complete type modernisation (whole UP family + RUF013 cleared), `main_window` / `tools_ext` hotspot split, `tools/benchmark.py` with four metrics gated in CI (tolerance ×4)
+- **Quality numbers**: 1708 passed / 2 skipped / 0 failed (124 files, per-file regression); extended ruff gate (incl. all UP rules) clean; **packaging pending**
 
 ---
 
@@ -166,7 +167,10 @@ Planning principles:
 > **Cadence**: one release every 4–6 weeks, 3–5 items per release, ~20% buffer for user-reported issues; same DoD (per-file regression + extended ruff gate + version consistency + packaging smoke).
 > **Boundaries**: no new tabs, no heavy hard dependencies, no enterprise features; Plugin API 2.x stays backward compatible.
 
-### v4.1.0 — Chart & UI Experience Unification (next)
+### v4.1.0 ✅ Released — Chart & UI Experience Unification (2026-09-15)
+
+> **Release status**: B1–B4 complete, version 4.1.0 across all four ends (settings / version_info / Inno / README·INSTALL·ROADMAP·guide);
+> full per-file regression 124 files green; extended ruff gate clean; performance baseline gated in CI; **Linux/Windows packaging deferred as planned**.
 
 | Batch | Deliverables | Acceptance |
 |-------|--------------|------------|

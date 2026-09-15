@@ -8,31 +8,31 @@
 
 ## Quick Start
 
-v4.0.0 ships **three official editions** (all standalone, no Python required, fully offline):
+v4.1.0 ships **three official editions** (all standalone, no Python required, fully offline):
 
 | Edition | Installer file | Systems | Install |
 |---------|----------------|---------|---------|
-| **Linux AppImage** | `QA-Tool-4.0.0-x86_64.AppImage` | Any x86_64 Linux (Debian / Ubuntu / elementary, …) | Portable: make executable and run |
-| **Linux .deb** | `qa-tool_4.0.0_amd64.deb` | Debian 13 / Ubuntu 22.04+ / derivatives | `sudo dpkg -i`, launch from the app menu |
-| **Windows installer** | `QA-Tool-Setup-4.0.0.exe` | Windows 10/11 (64-bit) | Run the Inno Setup wizard; menu/desktop shortcuts |
+| **Linux AppImage** | `QA-Tool-4.1.0-x86_64.AppImage` | Any x86_64 Linux (Debian / Ubuntu / elementary, …) | Portable: make executable and run |
+| **Linux .deb** | `qa-tool_4.1.0_amd64.deb` | Debian 13 / Ubuntu 22.04+ / derivatives | `sudo dpkg -i`, launch from the app menu |
+| **Windows installer** | `QA-Tool-Setup-4.1.0.exe` | Windows 10/11 (64-bit) | Run the Inno Setup wizard; menu/desktop shortcuts |
 
 ### Linux (AppImage, portable)
 
 ```bash
-chmod +x QA-Tool-4.0.0-x86_64.AppImage
-./QA-Tool-4.0.0-x86_64.AppImage
+chmod +x QA-Tool-4.1.0-x86_64.AppImage
+./QA-Tool-4.1.0-x86_64.AppImage
 ```
 
 ### Linux (.deb, system integration)
 
 ```bash
-sudo dpkg -i qa-tool_4.0.0_amd64.deb
+sudo dpkg -i qa-tool_4.1.0_amd64.deb
 qa-tool
 ```
 
 ### Windows (installer)
 
-Download `QA-Tool-Setup-4.0.0.exe` from
+Download `QA-Tool-Setup-4.1.0.exe` from
 [Releases](https://github.com/chrisliuu345/QA-Tool/releases) and run the Inno Setup wizard
 (start-menu and desktop shortcuts included).
 
