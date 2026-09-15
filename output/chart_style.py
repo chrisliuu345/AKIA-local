@@ -181,7 +181,9 @@ def apply_chart_style(theme: Optional[str] = None, *, dpi: Optional[int] = None)
 
 
 def style_axes(ax, *, grid: str = "y", legend: bool = False,
-               hide_spines: Sequence[str] = ("top", "right")) -> None:
+               hide_spines: Sequence[str] = ("top", "right"),
+               legend_outside: bool = False,
+               legend_loc: str = "best", legend_cols: int = 1) -> None:
     """统一坐标轴：网格方向 / 脊线 / 子图背景。"""
     s = semantic()
     ax.set_facecolor(s["panel"])
@@ -197,7 +199,13 @@ def style_axes(ax, *, grid: str = "y", legend: bool = False,
         if side in ax.spines:
             ax.spines[side].set_color(s["axis"])
     if legend and ax.get_legend_handles_labels()[0]:
-        ax.legend(frameon=False, fontsize=9, loc="best")
+        if legend_outside:
+            ax.legend(frameon=False, fontsize=9, loc="upper left",
+                      bbox_to_anchor=(1.01, 1.0), borderaxespad=0,
+                      ncol=int(legend_cols))
+        else:
+            ax.legend(frameon=False, fontsize=9, loc=legend_loc,
+                      ncol=int(legend_cols))
 
 
 def smart_ylim(ax, *values, pad: float = 0.08, include_zero: bool = False,
