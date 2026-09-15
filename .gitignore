@@ -12,6 +12,7 @@ build/
 dist/
 # 本地发布产物（不打入仓库）
 4.0.0release/
+4.1.0release/
 *.spec
 *.exe
 .DS_Store
