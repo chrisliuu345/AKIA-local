@@ -8,7 +8,7 @@ import os
 from core.fonts import get_ui_font
 
 APP_NAME = "QA-Tool"
-APP_VERSION = "4.0.0"
+APP_VERSION = "4.1.0"
 ORGANIZATION = "QA-Tool"
 
 NELSON_RULES = {
