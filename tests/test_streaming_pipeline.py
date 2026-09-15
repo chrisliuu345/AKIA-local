@@ -42,15 +42,16 @@ def test_mock_driver_generates_rate_bounded_samples(tmp_path):
 def test_mock_jump_produces_offset_samples():
     d = MockDriver(name="mock-01", rate_hz=50.0, channels=("CH0", "CH1"))
     d.open()
-    d.inject_jump(10.0, duration=0.1)
     time.sleep(0.02)
     normal = d.poll()
-    time.sleep(0.05)
+    # 跳变窗口放宽到 0.6s：避免满载回归时调度抖动把窗口耗尽（原 0.1s 会偶发失败）
+    d.inject_jump(10.0, duration=0.6)
+    time.sleep(0.1)
     jumped = d.poll()
     d.close()
-    # 跳变窗口内的采样普遍高于基线 (mean=100 + 10 > 105)
-    assert any(s.value > 108.0 for s in jumped), "跳变期间应有 >110 的样本"
-    assert not any(s.value > 108.0 for s in normal[3:] if s.ts < 0.0)  # 基线期无异常
+    assert jumped, "跳变窗口内应采到样本"
+    assert any(s.value > 108.0 for s in jumped), "跳变期间应有 >108 的样本"
+    assert not any(s.value > 108.0 for s in normal), "注入前的基线样本不应带跳变"
 
 
 def test_bus_publish_subscribe_and_recent():

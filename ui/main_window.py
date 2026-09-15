@@ -245,6 +245,64 @@ class MainWindow(QMainWindow):
         self.scroll_area = scroll
         layout.addWidget(scroll, 1)
 
+    # ------------------------------------------------------------ 命令面板
+    def _build_command_entries(self) -> list:
+        """构建命令面板条目：全部 Tab（含插件）+ 常用操作。"""
+        from ui._tab_registry import TAB_REGISTRY
+
+        entries = []
+        for idx, key, _cls, _mod, _cat in TAB_REGISTRY:
+            entries.append({"label": i18n.tr(key), "category": "跳转",
+                            "hint": f"Tab {idx}", "kind": "tab",
+                            "payload": idx, "keywords": key})
+        for idx, record in getattr(self, "_plugin_tabs", {}).items():
+            manifest = getattr(record, "manifest", None)
+            name = (getattr(manifest, "name", "") or "插件")
+            entries.append({"label": str(name), "category": "插件",
+                            "hint": f"Tab {idx}", "kind": "tab",
+                            "payload": idx, "keywords": f"plugin {name}"})
+
+        actions = [
+            ("导入数据文件", "操作", "Ctrl+O", self._on_import_quality, "import excel"),
+            ("导入 IE 数据", "操作", "", self._on_import_ie, "import ie"),
+            ("导入数据库", "操作", "", self._on_import_db, "sql database"),
+            ("打开项目", "操作", "Ctrl+Shift+O", self._on_load_project, "open project qap"),
+            ("保存项目", "操作", "Ctrl+Shift+S", self._on_save_project, "save project qap"),
+            ("批量分析", "操作", "", self._on_run_all_analyses, "batch run all"),
+            ("导出报告 (Word)", "操作", "", lambda: self._on_export_all("docx"),
+             "export report word"),
+            ("数据清洗", "操作", "", self._on_data_cleaner, "clean data"),
+            ("数据清洗向导", "操作", "", self._on_data_clean_wizard, "clean wizard"),
+            ("产线配置 (plant.json)", "操作", "", self._on_plant_config, "plant config"),
+            ("告警中心", "操作", "", self._on_alert_center, "alerts center"),
+            ("连接器健康", "操作", "", self._on_connector_health, "connector health"),
+            ("设置", "操作", "", self._on_settings, "settings preferences"),
+            ("使用指南", "操作", "F1", self._on_open_guide, "help guide manual"),
+            ("显示模式", "视图", "F11", self._open_display_mode, "display mode fullscreen"),
+            ("QAM Harness", "Agent", "", self._on_llm_assist, "ai agent chat llm"),
+        ]
+        for label, category, hint, callback, keywords in actions:
+            entries.append({"label": label, "category": category, "hint": hint,
+                            "kind": "action", "callback": callback,
+                            "keywords": keywords})
+        return entries
+
+    def _open_command_palette(self):
+        """Ctrl+K / Ctrl+P — 全局命令面板。"""
+        from ui.dialogs.command_palette import CommandPaletteDialog
+
+        dialog = CommandPaletteDialog(self._build_command_entries(), self)
+        dialog.triggered.connect(self._execute_command)
+        dialog.exec()
+
+    def _execute_command(self, entry: dict):
+        if entry.get("kind") == "tab":
+            self._switch_tab(int(entry.get("payload", 0)))
+            return
+        callback = entry.get("callback")
+        if callable(callback):
+            callback()
+
     def _toggle_sidebar(self, collapsed: bool):
         self.sidebar.setVisible(not collapsed)
         self.expand_strip.setVisible(collapsed)
@@ -361,6 +419,11 @@ class MainWindow(QMainWindow):
             lambda checked: self._toggle_sidebar(not checked)
         )
         view_menu.addAction(self.toggle_sidebar_action)
+        palette_action = QAction("命令面板", self)
+        palette_action.setShortcuts(["Ctrl+K", "Ctrl+P"])
+        palette_action.setToolTip("快速跳转模块 / 执行操作")
+        palette_action.triggered.connect(self._open_command_palette)
+        view_menu.addAction(palette_action)
         display_mode_action = QAction(i18n.tr("menu.display_mode"), self)
         display_mode_action.setShortcut("F11")
         display_mode_action.triggered.connect(self._open_display_mode)
@@ -411,6 +474,7 @@ class MainWindow(QMainWindow):
         run_all = QAction(i18n.tr("menu.run"), self)
         run_all.setShortcut("F5")
         run_all.triggered.connect(self._on_run_all_analyses)
+        run_all.setShortcut("Ctrl+Shift+B")
         analysis_menu.addAction(run_all)
 
         ai_menu = _pin(menubar.addMenu(i18n.tr("menu.ai")))
@@ -555,6 +619,7 @@ class MainWindow(QMainWindow):
             self._tab_anim_widget = target
             self.stack.setCurrentIndex(index)
             self.sidebar.set_active(index)
+            self._update_tab_empty_state(index)
             # 切换后按当前页重算共享滚动范围，并回到顶部（隐藏页残留不再起作用）
             self._sync_scroll_range(reset_scroll=True)
             self._schedule_scroll_sync()
@@ -597,6 +662,23 @@ class MainWindow(QMainWindow):
         self.stack.updateGeometry()
         if reset_scroll and getattr(self, "scroll_area", None) is not None:
             self.scroll_area.verticalScrollBar().setValue(0)
+
+    #: 不显示"未导入数据"空状态的 Tab（欢迎页/看板/监控/多产线/设备等文档型页面）
+    _EMPTY_STATE_SKIP = frozenset({0, 27, 33, 34, 35})
+
+    def _update_tab_empty_state(self, index: int):
+        """统一空状态：无数据的分析 Tab 显示"导入数据"遮罩，有数据则隐藏。"""
+        if index in self._EMPTY_STATE_SKIP:
+            return
+        tab = self.stack.widget(index)
+        if tab is None or not hasattr(tab, "show_empty_state"):
+            return
+        if _tab_has_data(tab):
+            hide = getattr(tab, "_hide_empty_state", None)
+            if callable(hide):
+                hide()
+        else:
+            tab.show_empty_state()
 
     def _schedule_scroll_sync(self, delays=(0, 120, 260)):
         """分批延后同步滚动范围。
@@ -874,6 +956,7 @@ class MainWindow(QMainWindow):
             tab = self._lazy_load_tab(idx)
             if tab and hasattr(tab, 'set_raw_data'):
                 tab.set_raw_data(raw_data, self.data_parser)
+                self._update_tab_empty_state(idx)
 
         assigned = set()
         for tab_idx, keywords in sheet_map.items():
@@ -1093,16 +1176,11 @@ class MainWindow(QMainWindow):
         tab = tabs.get(idx)
         result = getattr(tab, 'current_result', None)
         if result:
-            self.analyses[idx] = result.copy()
-            self.analyses[idx]["_completed_at"] = datetime.now().isoformat(timespec="seconds")
-            self.session_manager.add_analysis(
-                result.get("analysis_type", "Unknown"),
-                result.get("params", {}),
-                result.get("result", {})
-            )
-            atype = result.get("analysis_type", "")
-            key_res = self._summarize_result(result.get("result", {}))
-            self.sidebar.add_history(idx, atype, key_res)
+            self._store_analysis(idx, result)
+            self._update_tab_empty_state(idx)
+            if getattr(self, "_batch_progress", None) is None:
+                self._show_toast(f"分析完成：{result.get('analysis_type', '')}",
+                                 "success")
         self._notify_dashboard()
         # 渲染完成后布局才稳定，分批延后同步滚动范围（立即读会拿到旧 hint）
         self._schedule_scroll_sync()
@@ -1127,41 +1205,96 @@ class MainWindow(QMainWindow):
             tab.refresh_if_changed()
 
     def _on_run_all_analyses(self):
+        """批量分析：逐 Tab 分步执行，带进度与取消（UI 全程可响应）。"""
         if not self.current_data:
             QMessageBox.warning(self, i18n.tr("msg.no_data"), i18n.tr("msg.no_data_file"))
             return
 
-        from PySide6.QtWidgets import QApplication
         tabs = self._get_tabs(force_load=True)
-        success = 0
-        failed = 0
+        queue = [(idx, tab) for idx, tab in tabs.items() if _tab_is_runnable(tab)]
+        if not queue:
+            self.statusBar().showMessage("没有可运行的 Tab（请先导入数据）", 5000)
+            return
 
-        for _i, (idx, tab) in enumerate(tabs.items()):
-            QApplication.processEvents()
-            if not _tab_is_runnable(tab):
-                continue
-            try:
-                tab.run_and_display()
-                result = getattr(tab, 'current_result', None)
-                if result:
-                    self.analyses[idx] = result.copy()
-                    self.analyses[idx]["_completed_at"] = datetime.now().isoformat(timespec="seconds")
-                    atype = result.get("analysis_type", "")
-                    key_res = self._summarize_result(result.get("result", {}))
-                    self.sidebar.add_history(idx, atype, key_res)
-                success += 1
-            except Exception:
-                import logging
-                logging.getLogger(__name__).exception(f"批量分析 tab idx={idx} 失败")
-                failed += 1
+        from PySide6.QtWidgets import QProgressDialog
 
-        self.statusBar().showMessage(
-            f"批量分析完成: 成功 {success}, 失败 {failed}", 5000
-        )
+        self._batch_queue = queue
+        self._batch_success = 0
+        self._batch_failed = 0
+        self._batch_cancelled = False
+        progress = QProgressDialog("准备批量分析…", "取消", 0, len(queue), self)
+        progress.setWindowTitle("批量分析")
+        progress.setWindowModality(Qt.WindowModal)
+        progress.setMinimumDuration(0)
+        progress.setAutoClose(False)
+        progress.canceled.connect(self._cancel_batch_analysis)
+        self._batch_progress = progress
+        progress.setValue(0)
+        progress.show()
+        QTimer.singleShot(0, self._run_batch_step)
+
+    def _cancel_batch_analysis(self):
+        self._batch_cancelled = True
+
+    def _run_batch_step(self):
+        """执行一个 Tab 后让出事件循环（保持界面响应与取消可用）。"""
+        progress = getattr(self, "_batch_progress", None)
+        if progress is None:
+            return
+        if self._batch_cancelled or not self._batch_queue:
+            self._finish_batch_analysis()
+            return
+        idx, tab = self._batch_queue.pop(0)
+        total = progress.maximum()
+        progress.setLabelText(
+            f"批量分析 {total - len(self._batch_queue)}/{total}：{type(tab).__name__}")
+        try:
+            tab.run_and_display()
+            result = getattr(tab, "current_result", None)
+            if result:
+                self._store_analysis(idx, result)
+            self._batch_success += 1
+        except Exception:
+            import logging
+            logging.getLogger(__name__).exception(f"批量分析 tab idx={idx} 失败")
+            self._batch_failed += 1
+        progress.setValue(total - len(self._batch_queue))
+        QTimer.singleShot(0, self._run_batch_step)
+
+    def _finish_batch_analysis(self):
+        progress = getattr(self, "_batch_progress", None)
+        if progress is not None:
+            progress.close()
+            progress.deleteLater()
+            self._batch_progress = None
+        self._batch_queue = []
+        tail = "（已取消）" if self._batch_cancelled else ""
+        message = (f"批量分析{tail}完成：成功 {self._batch_success}，"
+                   f"失败 {self._batch_failed}")
+        self.statusBar().showMessage(message, 6000)
+        self._show_toast(message, "warning" if self._batch_failed else "success")
         self._notify_dashboard()
-        if success > 0:
-            self.stack.setCurrentIndex(1)
-            self.sidebar.set_active(1)
+        self._schedule_scroll_sync()
+
+    def _store_analysis(self, idx: int, result: dict):
+        """统一收纳分析结果（analyses + 会话历史 + 侧栏历史）。"""
+        self.analyses[idx] = result.copy()
+        self.analyses[idx]["_completed_at"] = datetime.now().isoformat(timespec="seconds")
+        self.session_manager.add_analysis(
+            result.get("analysis_type", "Unknown"),
+            result.get("params", {}),
+            result.get("result", {}))
+        atype = result.get("analysis_type", "")
+        key_res = self._summarize_result(result.get("result", {}))
+        self.sidebar.add_history(idx, atype, key_res)
+
+    def _show_toast(self, message: str, toast_type: str = "info"):
+        """统一轻提示（替代阻塞式弹窗）。"""
+        try:
+            from ui.widgets.toast import Toast
+            Toast.show(self, message, toast_type=toast_type, duration=2600)
+        except Exception:  # noqa: BLE001 - 提示失败不影响主流程
+            pass
 
     def _lazy_load_tab(self, idx: int):
         """按需加载 Tab — 首次访问时 import + 实例化 + 替换占位符"""
@@ -1220,6 +1353,8 @@ class MainWindow(QMainWindow):
             tab.export_clicked.connect(lambda tid=idx: self._on_export_single(tid, "docx"))
         if hasattr(tab, 'analysis_completed'):
             tab.analysis_completed.connect(lambda tid=idx: self._on_analysis_finished(tid))
+        if hasattr(tab, 'import_data_requested'):
+            tab.import_data_requested.connect(self._on_import_quality)
         if hasattr(tab, 'set_stream_source'):
             tab.set_stream_source(self.stream_bus)
         if hasattr(tab, 'send_to_time_study'):
@@ -1293,6 +1428,7 @@ class MainWindow(QMainWindow):
                 self.status_label.setText(f"{i18n.tr('status.exported')}{file_path}")
                 audit("export", "user",
                       f"单Tab导出 {fmt} {os.path.basename(file_path)}")
+                self._show_toast(f"已导出：{os.path.basename(file_path)}", "success")
                 QMessageBox.information(self, i18n.tr("msg.export_complete"), f"{i18n.tr('msg.export_saved')}\n{file_path}")
             except Exception as e:
                 QMessageBox.critical(self, i18n.tr("msg.export_failed"), str(e))
@@ -1330,6 +1466,7 @@ class MainWindow(QMainWindow):
                 self.status_label.setText(f"{i18n.tr('status.exported')}{file_path}")
                 audit("export", "user",
                       f"汇总导出 {fmt} {os.path.basename(file_path)}")
+                self._show_toast(f"已导出：{os.path.basename(file_path)}", "success")
                 QMessageBox.information(self, i18n.tr("msg.export_complete"), f"{i18n.tr('msg.export_saved')}\n{file_path}")
             except Exception as e:
                 QMessageBox.critical(self, i18n.tr("msg.export_failed"), str(e))
@@ -1357,6 +1494,7 @@ class MainWindow(QMainWindow):
                 self.status_label.setText(f"{i18n.tr('status.exported')}{file_path}")
                 audit("export", "user",
                       f"合规报告 {template_id} {os.path.basename(file_path)}")
+                self._show_toast(f"已导出：{os.path.basename(file_path)}", "success")
                 QMessageBox.information(self, i18n.tr("msg.export_complete"),
                                         f"{i18n.tr('msg.export_saved')}\n{file_path}")
             except Exception as e:
@@ -1650,6 +1788,7 @@ class MainWindow(QMainWindow):
                             except Exception:
                                 info = dict(info)
                         tab.set_data(cleaned.copy(), info or {})
+                        self._update_tab_empty_state(ti)
                         updated.add(ti)
                 self.statusBar().showMessage(
                     f"数据清洗已完成，已更新 {len(updated)} 个分析模块", 5000
