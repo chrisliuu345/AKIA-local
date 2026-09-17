@@ -284,10 +284,11 @@ class BaseAnalysisTab(QWidget):
             QApplication.clipboard().setImage(img)
 
     def _setup_empty_state(self, icon: str = "", message: str = ""):
-        """创建空状态遮罩层 — 鼠标事件穿透, 不遮挡下方分析面板"""
+        """创建空状态遮罩层 — 无数据时覆盖分析面板，中央提供可点击的导入按钮。"""
         tc = theme_colors()
         self._empty_overlay = QFrame(self)
-        self._empty_overlay.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        # 注意：不可对遮罩设 WA_TransparentForMouseEvents——Qt 会连同子控件
+        # 一起屏蔽鼠标事件，导致"导入数据"按钮永远收不到点击（W 系列回归）。
         self._empty_overlay.setStyleSheet(
             f"QFrame {{ background: {tc['bg_body']}; border: none; }}")
         self._empty_overlay.setGeometry(self.rect())
@@ -312,7 +313,6 @@ class BaseAnalysisTab(QWidget):
         layout.addWidget(msg_lbl)
 
         btn = QPushButton("导入数据")
-        btn.setAttribute(Qt.WA_TransparentForMouseEvents, False)
         btn.setFont(QFont(get_ui_font(), 11, QFont.Bold))
         btn.setFixedSize(160, 40)
         btn.setCursor(Qt.PointingHandCursor)

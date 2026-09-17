@@ -68,6 +68,36 @@ def test_empty_state_import_button_emits_signal(window):
     assert calls == [1]
 
 
+def test_empty_state_import_button_is_hit_testable(window):
+    """真实鼠标命中测试：遮罩透明属性会连同子控件一起吞掉点击（回归守卫）。"""
+    from PySide6.QtCore import Qt
+    from PySide6.QtTest import QTest
+
+    tab = window._lazy_load_tab(1)
+    window._switch_tab(1)
+    QApplication.processEvents()
+    overlay = tab._empty_overlay
+    buttons = overlay.findChildren(QPushButton)
+    assert buttons, "空状态应包含导入按钮"
+    button = buttons[0]
+
+    calls = []
+    try:                                   # 断开主窗口的真实导入动作，避免弹文件对话框
+        tab.import_data_requested.disconnect()
+    except (RuntimeError, TypeError):
+        pass
+    tab.import_data_requested.connect(lambda: calls.append(1))
+
+    center = button.mapToGlobal(button.rect().center())
+    hit = QApplication.widgetAt(center)
+    assert hit is not None and (hit is button or button.isAncestorOf(hit)), \
+        f"按钮中心被 {hit} 拦截，导入按钮不可点击"
+
+    QTest.mouseClick(hit, Qt.LeftButton, pos=hit.mapFromGlobal(center))
+    QApplication.processEvents()
+    assert calls == [1]
+
+
 def test_empty_state_skips_dashboard_tabs(window):
     window._switch_tab(27)                  # Dashboard — 不套空状态遮罩
     QApplication.processEvents()
