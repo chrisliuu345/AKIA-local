@@ -71,6 +71,7 @@ class DataParser:
         self.measurement_cols: list[str] = []
         self.identifier_cols: list[str] = []
         self.invalid_count: int = 0
+        self.duplicate_columns: list[dict[str, str]] = []
 
     def prepare(self, df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, Any]]:
         """清洗并解析数据：返回 (列名同步的DataFrame, 解析信息)"""
@@ -109,6 +110,9 @@ class DataParser:
 
     def _analyze_frame(self, df: pd.DataFrame) -> dict[str, Any]:
         """对已是数据区的 DataFrame 重算分类与派生信息（三处入口共用）"""
+        # 表头行可能自带重名列（如实际报表中两个"二维码"）：
+        # 先去重，避免 df[col] 返回 DataFrame 导致下游 pd.to_numeric 崩溃。
+        self._dedupe_columns(df)
         self.column_types = self._classify_columns(df)
         self.numeric_like = {c: self._numeric_like(df[c]) for c in df.columns}
         self.spec_limits = self._extract_spec_limits(df)
@@ -123,10 +127,38 @@ class DataParser:
             "subgroup_column": self.subgroup_col,
             "measurement_columns": self.measurement_cols,
             "identifier_columns": self.identifier_cols,
+            "duplicate_columns": list(self.duplicate_columns),
             "numeric_columns": self._numeric_columns(df),
             "row_count": len(df),
             "column_count": len(df.columns),
         }
+
+    def _dedupe_columns(self, df: pd.DataFrame) -> pd.DataFrame:
+        """列名去重（就地改名，返回同一 DataFrame）。
+
+        空列名 → 列N；重名 → 名称.1、名称.2（保持列顺序）；重命名记录在
+        ``self.duplicate_columns`` 并随解析信息返回，便于 UI 告知用户。
+        """
+        seen: set[str] = set()
+        counts: dict[str, int] = {}
+        renamed: list[dict[str, str]] = []
+        new_cols: list[str] = []
+        for idx, col in enumerate(df.columns):
+            base = str(col).strip() or f"列{idx + 1}"
+            name = base
+            if name in seen:
+                suffix = counts.get(base, 1)
+                while f"{base}.{suffix}" in seen:
+                    suffix += 1
+                name = f"{base}.{suffix}"
+                counts[base] = suffix + 1
+                renamed.append({"original": base, "renamed": name})
+            seen.add(name)
+            counts.setdefault(base, 1)
+            new_cols.append(name)
+        df.columns = new_cols
+        self.duplicate_columns = renamed
+        return df
 
     @staticmethod
     def _is_invalid_cell(val) -> bool:

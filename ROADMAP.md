@@ -76,6 +76,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 
 | 日期 | 版本 | 摘要 |
 |------|------|------|
+| 09-17 | fix-import | **真实报表表头重名列导入崩溃修复**：`CO401-20220930.xls` 表头含两个「二维码」→ `_apply_header` 后列名重复 → `df[col]` 返回 DataFrame → `pd.to_numeric` 抛 TypeError；解析器在 `_analyze_frame` 入口统一列名去重（`二维码.1`）并把重命名写入解析信息；新增 4 例回归（含真实表头结构复现），真实文件 722×77 → 589×77 导入成功 |
 | 09-17 | v4.2.0-P1b | **已知值矩阵批次 2 完成**：+9 例——EWMA / CUSUM / Hotelling T² · Gage R&R（AIAG 均值-极差）· Weibull 2P-MLE（独立 brentq 解）· ARIMA(0,1,0) 随机游走 · CART 完美分裂；P1 合计 12 文件 / 29 例，7 域全覆盖 |
 | 09-17 | fix-ui | **空状态「导入数据」按钮无响应修复**：遮罩的 `WA_TransparentForMouseEvents` 会连同子控件一起屏蔽鼠标事件，按钮永远收不到点击；移除该属性并新增「真实命中 + 鼠标点击」回归测试（`widgetAt` 定位按钮中心后 QTest 点击） |
 | 09-17 | v4.2.0-P1a | **已知值矩阵批次 1**：7 域 20 例（SPC 控制图+Nelson 8 规则 / 正态能力 / Cohen κ / 2² 因子 / KM+Crow-AMSAA / 样本 ACF / 回归+分类指标）；**发现并修复 2 处缺陷**——`classification_metrics` 数值标签混淆矩阵全 0、DOE 完全拟合除零告警；容差预设扩展 `rounded_6dp`/`rounded_4dp` |
