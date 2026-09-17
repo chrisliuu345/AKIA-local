@@ -3,7 +3,7 @@
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
 > Current: v4.1.0 Chart & UI experience unification (chart style layer / defect fixes / command palette / performance baseline) (✅ 2026-09-15) | Next: **v4.2.0 Algorithm trust & depth (planned)**
-> Deepening line: **v4.2 Trust → v4.3 Evidence → v4.4 Closed loop → v4.5 Open → v4.6 Intelligence** (from analysis tool to factory evidence system) | Tests: 1708 pytest · 37 analysis tabs | Updated: 2026-09-17
+> Deepening line: **v4.2 Trust → v4.3 Case & evidence → v4.4 Closed loop → v4.5 Open → v4.6 Intelligence** (from analysis tool to a shop-floor improvement evidence chain) | Tests: 1708 pytest · 37 analysis tabs | Updated: 2026-09-17
 
 > **Maintenance convention (from 2026-09-12)**: each version entry is one summary line plus key numbers; implementation details live in code/tests/user guide, not here.
 > This file was compressed from 1100+ lines to under 500; the expanded history is in git history (`git log -p -- ROADMAP.md`).
@@ -16,7 +16,7 @@
 v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.1 ──→ v2.5 ──→ v2.6.0 ~ v2.6.5 ──→ v2.7.0
       ──→ v2.8.0 ──→ v2.9.0 ──→ v3.0.0 ──→ v3.1.0 ──→ v3.2.0 ──→ v3.3.0 ──→ v3.4.0 ──→ v3.5.0
       ──→ v3.6.0 (incl. 3.6.1) ──→ v3.7.0 (incl. review) ──→ v3.7.1 ──→ v3.7.2 ──→ v3.8.0 ──→ v4.0.0
-      ──→ v4.1.0 ✅ current ──→ v4.2.0 Trust (planned) ──→ v4.3.0 Evidence (planned) ──→ v4.4.0 Closed loop (planned)
+      ──→ v4.1.0 ✅ current ──→ v4.2.0 Trust (planned) ──→ v4.3.0 Case·evidence (planned) ──→ v4.4.0 Closed loop (planned)
       ──→ v4.5.0 Open (planned) ──→ v4.6.0 Intelligence (planned)
 ```
 
@@ -36,18 +36,18 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | 🔌 | [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion) | External vision plugin (video time study) built on Plugin API v2 |
 | ✅ | **v4.0.0** | **Predictive analytics & ML (CART / Random Forests / gradient boosting / MARS / AutoML + feature engineering / evaluation / SHAP / model deployment)** |
 | ✅ | **v4.1.0** | **Chart & UI experience unification (B1 style layer / B2 chart fixes / B3 command palette·batch progress·toasts·empty state / B4 quality & performance baseline)** |
-| 🚧 | v4.2.0 | Algorithm trust & depth (known-value validation matrix / multivariate SPC · change-point detection · residual control charts / conclusion credentials) |
-| 🚧 | v4.3.0 | Evidence ledger (bitemporal data model / provenance & confidence grading / structured audit / evidence pack · desensitized sharing) |
-| 🚧 | v4.4.0 | Real-time quality closed loop (alert→8D auto case / measurement system online / sampling transfer state machine / benefit ledger · COPQ) |
+| 🚧 | v4.2.0 | Algorithm trust & depth (known-value validation matrix / multivariate SPC · change-point detection · residual control charts / conclusion credentials / first closed-loop slice) |
+| 🚧 | v4.3.0 | Improvement case & evidence ledger (ImprovementCase lifecycle / MeasurementEvent · plugin data sources / standard version records / evidence view · desensitized sharing) |
+| 🚧 | v4.4.0 | Closed-loop execution & effect verification (alert→8D auto case / measurement system online / sampling transfer / benefit ledger · COPQ / skill-constrained line balancing) |
 | 🚧 | v4.5.0 | Open ecosystem (MCP server · native tool calling / CLI · SDK quality gate / industry rule packs · plugin scaffold) |
-| 🚧 | v4.6.0 | Intelligent online & data assets (model governance · online scoring / process window recommendation / IE evidence chain / anonymous benchmark · edge SPC) |
+| 🚧 | v4.6.0 | Intelligent online & local data assets (model governance · online scoring / process window recommendation / IE evidence chain / local assets · edge SPC) |
 
 ---
 
 ## Core Positioning & Moats (2026-09 rework)
 
-> Positioning: personal-subscription quality engineering tool (Minitab-like) → deepening into a "factory evidence system". No open-source product covers this breadth; the closest alternative is the commercial Datalyzer (~$2593/yr).
-> The moat is not feature count but two things: (1) a data model competitors cannot cheaply rewrite (bitemporal + provenance + confidence grading); (2) data assets that thicken with use (process baselines / gauge health history / benefit ledger / anonymous benchmarks).
+> Positioning: personal-subscription quality engineering tool (Minitab-like) → deepening into a "shop-floor improvement evidence-chain tool". No open-source product covers this breadth; the closest alternative is the commercial Datalyzer (~$2593/yr).
+> The moat is not feature count but two things: (1) a data model competitors cannot cheaply rewrite — improvement cases plus bitemporal/provenance/confidence grading (scoped to measurements · standards · conclusions, not bitemporal everywhere); (2) data assets that thicken with use (process baselines / gauge health history / benefit ledger / case library).
 
 | # | Pillar | Landscape | Delivered in |
 |---|--------|-----------|--------------|
@@ -56,7 +56,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | 3 | **IE tool suite** (SMED/TPM/OEE/8D/FMEA/PPAP/Control Plan) | Minitab has no IE | v2.2.0 ✅ |
 | 4 | **QAM Harness** (BYOK agent: 36 tools + offline routing + privacy gate) | Copilot is cloud-only | v3.8.0 ✅ |
 | 5 | **Chinese-first + offline desktop** (GB/T built in) | Open gap | Throughout |
-| 6 | **Evidence system** (bitemporal + provenance/confidence grading + replayable conclusions + evidence-pack exchange) | Minitab / Datalyzer have none | v4.2.0–v4.3.0 |
+| 6 | **Improvement cases & evidence system** (ImprovementCase spine + provenance/confidence grading + replayable conclusions + evidence-pack exchange) | Minitab / Datalyzer have none | v4.2.0–v4.3.0 |
 | 7 | **Open interface ecosystem** (MCP server + headless CLI/SDK + industry rule packs) | Open in the AI ecosystem; no de-facto plugin standard | v4.5.0 |
 
 Planning principles:
@@ -68,6 +68,7 @@ Planning principles:
 5. External capabilities ship as Plugin API v2 plugins (e.g. vision); the main app keeps only the interface
 6. **Data-model first**: time (bitemporal), provenance and confidence grading come before feature expansion; every conclusion must be traceable and replayable
 7. **Open the engine**: core engines ship through MCP/CLI/SDK; the app keeps the experience and evidence layers
+8. **Case first**: every new capability must plug into the improvement loop (measure → analyse → improve → verify → standardise) rather than ship as an isolated tool; existing tools are capabilities inside a case
 
 ---
 
@@ -75,6 +76,7 @@ Planning principles:
 
 | Date | Version | Summary |
 |------|---------|---------|
+| 09-17 | roadmap-rev | **Plan review revision (vs the GPT critique)**: established "improvement case as the spine, bitemporal as the mechanism" — v4.3 moves from storage-first to case-first (ImprovementCase → MeasurementEvent/plugin data sources → standard versions → evidence pack); v4.2 gains the first vertical closed-loop slice; skill-constrained line balancing moves from v4.6 up to v4.4; case closure now requires re-measurement + statistical verdict; anonymous benchmarking is demoted to a server-stage candidate |
 | 09-17 | roadmap | **v4.2–v4.6 deepening plan**: converged into the five-step line "trust → evidence → closed loop → open → intelligence"; four moat layers defined (bitemporal data model / judgement verification / exchange interfaces / data assets); new items: known-value matrix, change-point detection & residual control charts, conclusion credentials, bitemporal evidence ledger, desensitized evidence pack, alert→8D auto case, measurement-system online, sampling transfer state machine, benefit ledger & COPQ, MCP server, CLI·SDK, industry rule packs, process window, IE evidence chain, anonymous benchmark, edge SPC |
 | 09-15 | v4.1.0 | **Chart & UI experience unification released**: B1 `output/chart_style.py` unified style layer (dark/light themes + Okabe-Ito semantic colours + smart y-limits / violation markers / limit lines) migrated across both chart entry points; B2 all 8 audit findings cleared (auto-faceted boxplots, Pareto 80% line + bar labels, outside control-chart legend + rule annotations, capability stats card, diverging heatmap with masked diagonal…); B3 global command palette (Ctrl+K/Ctrl+P), stepwise batch analysis with progress/cancel (Ctrl+Shift+B), Toast wiring, unified empty state; B4 type modernisation (whole UP family + RUF013, 155 files), hotspot split (main_window/tools_ext → two helper modules), performance baseline in CI (cold start 2.2s / 1M import 14.0s / 5k chart 1.5s / 5k-row ML 1.5s); version 4.1.0 across all four ends; 124 files / 1708 passed / 2 skipped / 0 failed, ruff clean; **packaging pending** |
 | 09-13 | v4.0.0 | **Predictive Analytics & ML released**: `analysis/ml/` (task detection + leak-proof Pipeline, CART pre/post pruning, Random Forests with OOB, HistGradientBoosting with optional XGBoost, pure-numpy MARS, SHAP explanation, AutoML ranking); new "Predictive Analytics" tab (37) + 6 agent tools (30 → 36) + `.qamodel` save/load/predict; version 4.0.0 across all four ends; 1665 passed / 2 skipped / 0 failed, ruff clean; Linux AppImage + .deb built, Windows installer produced by the Inno script on Windows |
@@ -131,11 +133,13 @@ Planning principles:
 | Manual review of proactive-suggestion accuracy (≥3.5/5) | Needs engineer scoring | User |
 | Vision acceptance on real footage (site video + labelled CSV, ≥85% agreement) | Needs site material | Plugin project |
 | Release artifacts (AppImage / .deb / Inno) | Scripts ready; build and upload to Releases on demand | Optional |
-| Bitemporal evidence ledger + confidence grading | The single most important step after 4.1; see v4.3.0 | v4.3.0 |
+| ImprovementCase object + evidence ledger | Bitemporal narrowed to measurements/standards/conclusions; see v4.3.0 | v4.3.0 |
+| Case workspace entry | Reuse Home first; adding a tab requires explicit review | v4.3.0 decision |
 | MCP server + native tool calling | Decides the AI-ecosystem position; see v4.5.0 | v4.5.0 |
-| Alert→8D auto case / measurement system online | Reuses alert · MSA · connector-health modules | v4.4.0 |
+| Alert→8D auto case / measurement system online / skill-constrained balancing | Reuses alert · MSA · connector-health · line-balance engines | v4.4.0 |
 | Full English pack | i18n framework lands in v4.5.0; translation after | v4.5 / later |
 | Connector expansion (more PLC/CMM protocols) | Driven by site needs | v4.6.0 B4 |
+| Anonymous industry benchmark | Needs server-side aggregation + privacy review; not in this repo's near-term scope | Server stage |
 
 ---
 
@@ -177,10 +181,10 @@ Planning principles:
 
 ## Upcoming Releases (v4.1.0 → v4.6.0)
 
-> **Main line**: from a "quality analysis tool" to a "factory evidence system" — make algorithms trustworthy (4.2), give data / standards / judgements time and provenance (4.3), build the real-time closed loop on that ledger (4.4), open the engines through MCP/CLI/rule packs (4.5), then let models and time-accumulated data compound (4.6).
-> **Moat layers**: L1 data model (bitemporal + provenance + confidence grading) · L2 judgement verification (known-value matrix + replayable conclusions) · L3 exchange interfaces (.qap evidence pack / desensitized sharing / MCP / rule packs) · L4 data assets (process baselines / gauge health history / benefit ledger / anonymous benchmarks).
+> **Main line**: from a "quality analysis tool" to a "shop-floor improvement evidence-chain tool" — with the **ImprovementCase as the spine**: measure → analyse → improve → re-measure → verify → standardise. Make algorithms trustworthy (4.2), then connect cases, data, standards and judgements into a ledger (4.3), execute the closed loop on that ledger (4.4), open the engines through MCP/CLI/rule packs (4.5), then let models and time-accumulated data compound (4.6).
+> **Moat layers**: L1 data model (improvement case + bitemporal/provenance/confidence grading, scoped to measurements · standards · conclusions) · L2 judgement verification (known-value matrix + replayable conclusions) · L3 exchange interfaces (.qap evidence pack / desensitized sharing / MCP / rule packs) · L4 data assets (process baselines / gauge health history / benefit ledger / case library).
 > **Cadence**: one release every 4–6 weeks, 3–5 items per release, ~20% buffer for user-reported issues; same DoD (per-file regression + extended ruff gate + version consistency + packaging smoke).
-> **Boundaries**: no new tabs, no heavy hard dependencies, no enterprise features; Plugin API 2.x stays backward compatible.
+> **Boundaries**: in principle no new tabs (the case workspace reuses Home first; adding one requires explicit review); no heavy hard dependencies, no enterprise features; Plugin API 2.x stays backward compatible (new capabilities ship as additive 2.1).
 > **Not doing**: enterprise multi-user QMS/MES · generic BI dashboards · home-grown statistical solvers · cloud-dependent SaaS (keeps the offline + trustworthy-evidence differentiation).
 
 ### v4.1.0 ✅ Released — Chart & UI Experience Unification (2026-09-15)
@@ -197,7 +201,7 @@ Planning principles:
 
 ### v4.2.0 — Algorithm Trust & Depth (planned)
 
-> Trust layer: first prove the maths is right, then prove how a judgement was made — "trusted algorithms + replayable conclusions".
+> Trust layer: first prove the maths is right, then prove how a judgement was made; and validate the case loop with a minimal vertical slice.
 
 | Batch | Deliverables | Acceptance |
 |-------|--------------|------------|
@@ -205,28 +209,30 @@ Planning principles:
 | **B2 Algorithm depth** | Multivariate SPC (MEWMA / generalized variance) · change-point detection (PELT/Bayesian) · residual control charts for autocorrelated data · non-normal capability with uncertainty intervals · reliability intervals · robust ARIMA auto-ordering | Cross-validated against reference implementations; false-alarm rate on autocorrelated data drops materially |
 | **B3 Stability** | Large-sample benchmark suite · numerical stability for ill-conditioned matrices and extreme values | Benchmarks and robustness cases pass |
 | **B4 Conclusion credentials v1 + method docs** | Every conclusion carries rule version + parameters + data fingerprint + app version; two runs on the same data can be diffed (report review mode); new "methods & references" chapter in guide.html | Reports reviewable and conclusions replayable; docs traceable to code |
+| **B5 First closed-loop slice (v0)** | A lightweight case record inside `.qap` runs: baseline measurement → time study → line-balance bottleneck → improvement plan → re-measurement → paired test → conclusion → standard draft; manual/CSV data sources first, with the plugin data-source interface reserved | Single case demonstrable end to end; every step carries a timestamp and a data reference; works without the vision plugin |
 
-### v4.3.0 — Evidence Ledger: Bitemporal & Provenance (planned)
+### v4.3.0 — Improvement Case & Evidence Ledger (planned)
 
-> Data-model layer (the most important step): time, provenance and confidence become first-class; answers "which standard version applied, and on what basis was the judgement made".
-
-| Batch | Deliverables | Acceptance |
-|-------|--------------|------------|
-| **B1 Bitemporal measurement events** | `measurements` gains `valid_from / valid_to / recorded_at / source / confidence` with indexes; migration backfills history; existing query API unchanged | Old APIs unchanged; both "value at the time" and "current value" queryable |
-| **B2 Versioned project context** | QualityCharacteristic moves from a current value to a sequence of validity intervals; spec limits / control limits / standard time / standard work combination sheets all versioned with change reasons | Any historical lot restores the standard then in force; "who changed what, when and why" is answerable |
-| **B3 Structured audit ledger** | Audit upgrades from text logs to an append-only event stream (data edits / alert acks / 8D actions / report exports), cross-linked with the bitemporal ledger | Every number in a report points back to events; the evidence index is searchable |
-| **B4 Evidence view & exchange v1** | Traceability code on reports + evidence-chain view (attached to project context/audit); `.qap` evidence-pack export; desensitized share pack (distribution-fitted synthetic data + statistical-equivalence statement) | Conclusions replayable; the share pack keeps statistical properties, contains no raw values and can be reviewed independently |
-
-### v4.4.0 — Real-Time Quality Closed Loop (planned)
-
-> Closed-loop layer: run "abnormality → disposition → benefit" on the evidence ledger, leaving a trail at every step.
+> Data-model layer (the most important step): establish the case spine first, then let time, provenance and confidence serve it; bitemporal covers only measurements / standards / conclusions, not the whole database.
 
 | Batch | Deliverables | Acceptance |
 |-------|--------------|------------|
-| **B1 Alert→8D auto case** | A critical alert auto-generates an 8D draft: data snapshot + violation points + ProjectContext characteristics + FMEA entries; D1–D3 prefilled, D4 left open | Case opened the moment the exception occurs (≤1 min), fully attached to the ledger |
+| **B1 Improvement case object & lifecycle** | `ImprovementCase` as a first-class object: phases (baseline measure / analyse / improve / re-measure / verify / standardise), baseline data refs, analysis-conclusion refs, improvement plan and implementation records; UI entry reuses Home first (a new tab needs review); old `.qap` files still load | A case replays "problem → improvement → result" end to end; old `.qap` files are untouched |
+| **B2 MeasurementEvent contract + plugin data sources** | Unified `MeasurementEvent` (source / method / ts / recorded_at / confidence / validity / raw_ref); device connectors, the vision plugin, manual entry and file imports all emit it; Plugin API 2.1 adds a `data_source` capability (2.0 plugins unaffected) | The vision plugin can inject data into a case; manual/CSV paths work equally |
+| **B3 Standard version records** | Spec limits / control limits / standard time / standard work combination sheets / control-plan rows gain `valid_from / valid_to / change_reason` with automatic change history; bitemporal applies only to measurements / standards / conclusions | Any historical lot restores the standard then in force; "who changed what, when and why" is answerable |
+| **B4 Evidence view & exchange v1** | Conclusion credentials (rule version + parameters + data fingerprint + event refs) join the ledger; structured append-only audit events (data edits / alert acks / 8D actions / report exports); report traceability code + evidence-chain view; `.qap` evidence-pack export + desensitized share pack (synthetic data + statistical-equivalence statement) | Conclusions replayable; every number in a report points back to events; the share pack has no raw values and can be reviewed independently |
+
+### v4.4.0 — Closed-Loop Execution & Effect Verification (planned)
+
+> Closed-loop layer: quality and IE improvement actions both land on cases; closing a case requires data-verified effects, not paperwork.
+
+| Batch | Deliverables | Acceptance |
+|-------|--------------|------------|
+| **B1 Alert→8D auto case** | A critical alert auto-generates an 8D draft: data snapshot + violation points + ProjectContext characteristics + FMEA entries; D1–D3 prefilled, D4 left open; D6 must link re-measurement data + a statistical verdict (paired/SPC/capability), not free text | Case opened the moment the exception occurs (≤1 min); closure has data evidence |
 | **B2 Measurement system online** | Standard-part/repeat measurements accumulate → rolling repeatability and bias · measurement-process control charts · gauge health score (reusing the connector-health model) · drift beyond limits triggers a re-study prompt | MSA turns from a one-off study into a live state; drift is alarmable |
 | **B3 Sampling transfer state machine** | GB/T 2828.1 normal/tightened/reduced transfers per supplier and product line; inspection-lot history remembered; rationale recorded (why this lot was tightened) | Transfer rules execute deterministically; auditable |
-| **B4 Benefit ledger & COPQ** | Improvement-project benefit ledger (monthly recompute, bitemporal consistency, double-count protection) · COPQ in four categories (prevention/appraisal/internal failure/external failure) + ROI; only A/A-/B-confidence data may enter; improvement and appraisal data are separated | Answers "how much did this improvement actually save"; low-confidence data is blocked |
+| **B4 Benefit ledger & COPQ** | Improvement-case benefit ledger (monthly recompute, consistent standard-version basis, double-count protection) · COPQ in four categories (prevention/appraisal/internal failure/external failure) + ROI; only A/A-/B-confidence data may enter; improvement and appraisal data are separated | Answers "how much did this improvement actually save"; low-confidence data is blocked |
+| **B5 Skill-constrained line balancing (case template #2)** | Skill matrix (operator × process × proficiency) plus equipment/headcount constraints feed the LPT solver; output is an executable staffing plan, not just a balance rate; results attach to a case as baseline + re-measurement | A theoretical balance rate becomes a shop-floor-feasible roster under skill constraints; synthetic-data E2E demo |
 
 ### v4.5.0 — Open Ecosystem & AI Infrastructure (planned)
 
@@ -247,12 +253,14 @@ Planning principles:
 |-------|--------------|------------|
 | **B1 Model governance & online scoring** | Model registry / versions / model cards · train → deploy → live-dashboard inference and predictive alerts · drift monitoring · ML in template batch analysis | Models traceable; drift alerts demonstrable; E2E online scoring |
 | **B2 Process window recommendation** | DOE response surfaces + ML feature importance + live data → acceptable parameter windows for a quality target (confidence level + sample-size requirement); injection/welding templates | Hit-rate on a frozen validation set; output is an actionable recommendation |
-| **B3 IE evidence chain** | IE-flavoured SPC (standard time / cycle time / line-balance stability) · skill-constrained line balancing → staffing suggestions · operator-facing standard work sheets; benefits post to the ledger automatically | Balancing plans are shop-floor executable; benefits post automatically |
-| **B4 Data assets & edge** | Anonymous industry benchmark (opt-in metrics only, privacy gate; Cpk/OEE/defect-rate distributions) · ESP32 edge judging + offline backlog · connector expansion · lightweight tuning and prediction intervals | Metrics only, never raw data; no data loss while offline |
+| **B3 IE evidence chain** | IE-flavoured SPC (standard time / cycle time / line-balance stability) · operator-facing standard work sheets and team views · benefits post to the ledger automatically (skill-constrained balancing shipped in 4.4) | IE variation is judgeable; operator views usable; benefits post automatically |
+| **B4 Local data assets & edge** | Local process baselines / gauge health history / case library accumulation and search · ESP32 edge judging + offline backlog · connector expansion · lightweight tuning and prediction intervals | Assets thicken with use and stay searchable; no data loss while offline |
 
 > Vision online (invisible measurement, removing observation bias) is delivered by the Vision-expansion plugin; the main app only provides interfaces and the evidence format.
 
-> **After 4.6 (candidates)**: full English localisation · light/high-contrast themes and accessibility · auto-update · subscription & activation · mobile dashboard · multi-site collaboration.
+> Anonymous industry benchmarking needs server-side aggregation and privacy review; it is a separate server-stage candidate, not in this repo's near-term batches.
+
+> **After 4.6 (candidates)**: full English localisation · light/high-contrast themes and accessibility · auto-update · subscription & activation · mobile dashboard · multi-site collaboration · server stage (anonymous benchmarks / multi-client aggregation / factory-level dashboard).
 
 ---
 
@@ -270,7 +278,7 @@ Planning principles:
 
 ## Sidebar Evolution
 
-> No new tabs during v2.6.5 ~ v3.0.0 (deepening focus); v3.8.0 is conversation-first; v4.1.0 ~ v4.6.0 deepen existing capabilities and add no tabs.
+> No new tabs during v2.6.5 ~ v3.0.0 (deepening focus); v3.8.0 is conversation-first; v4.1.0 ~ v4.6.0 deepen existing capabilities and add no tabs in principle; the case workspace reuses Home first and a new tab requires explicit review.
 
 | Version | Tabs | Change |
 |---------|------|--------|
@@ -281,4 +289,4 @@ Planning principles:
 | v3.3.0 | 36 | +Time Series |
 | v3.8.0 | 36 + plugins | Vision tab moved out; plugin tabs get dynamic indices (≥37); QAM Harness is a chat window (not a tab) |
 | v4.0.0 | 37 + plugins | +Predictive Analytics (Tab 37); plugin tabs start at 38 |
-| v4.1.0 ~ v4.6.0 | 37 + plugins | No new tabs (evidence views / online scoring attach to existing tabs and dialogs; vision online stays in the plugin project) |
+| v4.1.0 ~ v4.6.0 | 37 + plugins | No new tabs in principle (case workspace reuses Home first; evidence views / online scoring attach to existing tabs and dialogs; vision online stays in the plugin project) |
