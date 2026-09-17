@@ -71,7 +71,8 @@ def analyze_factorial(
     ms_e = ss_error / df_error if df_error > 0 else 0
 
     ms_arr = ss_arr
-    f_arr = np.where(ms_e > 0, ms_arr / ms_e, 0.0)
+    # 完全拟合时 ms_e = 0：显式分支避免 0 除告警（np.where 会两个分支都求值）
+    f_arr = ms_arr / ms_e if ms_e > 0 else np.zeros_like(ms_arr)
     p_arr = 1 - stats.f.cdf(f_arr, 1, df_error)
 
     ms_factors = {factor: round(float(ms_arr[i]), 4) for i, factor in enumerate(factor_cols)}
