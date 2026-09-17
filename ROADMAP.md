@@ -76,6 +76,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 
 | 日期 | 版本 | 摘要 |
 |------|------|------|
+| 09-17 | v4.2.0-P1a | **已知值矩阵批次 1**：7 域 20 例（SPC 控制图+Nelson 8 规则 / 正态能力 / Cohen κ / 2² 因子 / KM+Crow-AMSAA / 样本 ACF / 回归+分类指标）；**发现并修复 2 处缺陷**——`classification_metrics` 数值标签混淆矩阵全 0、DOE 完全拟合除零告警；容差预设扩展 `rounded_6dp`/`rounded_4dp` |
 | 09-17 | v4.2.0-P0 | **契约与测试基座完成**：`core/evidence.py`（凭证 schema v1 + 数据指纹 + diff）· `core/improvement_case.py`（案例 schema v0）· `.qap` 1.6→1.7 案例段增量兼容 · `KNOWN_VALUES.md` + `tests/known_values.py` 已知值框架 · 4 个契约测试文件 / 40 例 |
 | 09-17 | v4.2.0-plan | **v4.2.0 分阶段开发方案**：P0 契约基座 → P1 已知值矩阵 → P2 算法深度 → P3 稳定性 → P4 凭证与方法文档 → P5 首个闭环切片 → P6 收尾；无新硬依赖（statsmodels 仅测试参考）；`.qap` 1.6 → 1.7 增量兼容 |
 | 09-17 | roadmap-rev | **方案复核修订（对照 GPT 观点）**：确立「改善案例为脊柱、双时态为机制」——v4.3 由存储优先改为案例优先（ImprovementCase → MeasurementEvent/插件数据源 → 标准版本 → 证据包）；v4.2 增加首个纵向闭环切片；技能约束线平衡由 v4.6 上移至 v4.4；案例关闭强制复测 + 统计判定；匿名基准降级为服务端阶段候选 |
@@ -209,7 +210,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | 阶段 | 交付 | 验收 |
 |------|------|------|
 | **P0 契约与测试基座** ✅ 2026-09-17 | 已知值规范 `KNOWN_VALUES.md` + 框架 `tests/known_values.py` · 判定凭证 schema v1 `core/evidence.py`（数据指纹 `pd-hash-v1` + 结论 diff）· 案例 schema v0 `core/improvement_case.py` · `.qap` 1.7 案例段（1.6 只读兼容） | 4 个契约测试文件 40 例通过；ruff 全库零告警；分层守卫通过 |
-| **P1 已知值验证矩阵**（B1） | NIST StRD / NIST/SEMATECH / 文献已知值覆盖 SPC · 能力 · MSA · DOE · 可靠性 · 时序/ML 关键算法；容差表随用例记录；自动进 CI 逐文件回归 | 每个关键算法 ≥1 已知值用例；CI 全绿；容差可审计 |
+| **P1 已知值验证矩阵**（B1）🚧 批次 1 ✅ 2026-09-17 | 7 域首批 20 例：SPC（Xbar-R / I-MR + Nelson 8 规则）· 正态能力（Cp/Cpk/Pp/Ppk/Cpm/PPM/合格率）· MSA（Cohen κ）· DOE（2² 效应 / SS / R²）· 可靠性（KM + Crow-AMSAA MLE）· 时序（样本 ACF）· ML（回归/分类指标）；容差预设增补 `rounded_6dp` / `rounded_4dp` | 批次 1 全绿；**发现并修复 2 处缺陷**（数值标签混淆矩阵全 0；DOE 完全拟合除零告警）；批次 2 待做：EWMA/CUSUM/Hotelling · Gage R&R · Weibull · ARIMA · CART/森林 |
 | **P2 算法深度**（B2） | 多元 SPC（MEWMA / 广义方差）· 变点检测（PELT，纯 numpy）· 自相关残差控制图 · 非正态能力 + Bootstrap 置信区间 · 可靠性区间 · ARIMA 自动选阶稳健性 | 与 statsmodels/scipy 参考实现交叉验证（仅测试期可选依赖）；自相关数据误报率显著下降 |
 | **P3 稳定性与大样本**（B3） | 大样本基准扩展（10 万 / 100 万行 SPC·MSA·ML）· 病态矩阵与极端值鲁棒性用例 · 性能基线刷新 | 基准入 CI（tolerance 内）；鲁棒性用例通过 |
 | **P4 判定凭证 + 方法文档**（B4） | 结论凭证写入分析记录（`analyses[idx]` / 快照）· 报告追溯码 · 同数据两次运行逐项 diff（报告复核模式）· guide.html「方法与参考」章节 | 重跑 diff 为空、改参 diff 可见；追溯码可解析；文档与代码同源 |

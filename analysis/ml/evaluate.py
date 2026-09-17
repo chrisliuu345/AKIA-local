@@ -63,9 +63,11 @@ def regression_metrics(y_true, y_pred, n_features: int | None = None) -> dict[st
 
 def classification_metrics(y_true, y_pred, y_score=None) -> dict[str, Any]:
     """分类指标 — 混淆矩阵 + weighted/macro 指标 + AUC（可选）。"""
-    y_true = np.asarray(y_true)
-    y_pred = np.asarray(y_pred)
-    labels = sorted({str(v) for v in y_true} | {str(v) for v in y_pred})
+    # 标签统一字符串化：此前 labels 为字符串而数组保留数值类型，
+    # 导致数值类别（0/1）的 confusion_matrix 因标签不匹配而全为 0。
+    y_true = np.asarray([str(v) for v in np.asarray(y_true).ravel()])
+    y_pred = np.asarray([str(v) for v in np.asarray(y_pred).ravel()])
+    labels = sorted(set(y_true) | set(y_pred))
     report = classification_report(y_true, y_pred, zero_division=0,
                                    output_dict=True)
     out: dict[str, Any] = {
