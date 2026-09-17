@@ -17,6 +17,7 @@
 | `closed_form` | 1e-9 | 1e-12 | 闭式解（均值 / 极差 / Cp / 回归系数等） |
 | `rounded_6dp` | 1e-9 | 5.1e-7 | 引擎输出四舍五入到 6 位小数 |
 | `rounded_4dp` | 1e-9 | 5.1e-5 | 引擎输出四舍五入到 4 位小数（能力指数等） |
+| `rounded_2dp` | 1e-9 | 5.1e-3 | 引擎输出四舍五入到 2 位小数（百分比等） |
 | `iterative` | 1e-6 | 1e-9 | 迭代求解（MLE / ARIMA / 优化） |
 | `bootstrap` | 1e-3 | 1e-3 | 随机模拟（Bootstrap / 蒙特卡洛；必须固定 seed） |
 
