@@ -51,6 +51,11 @@ _PLUGIN_TAB_START = max(INDEX_MAP.keys()) + 1
 # 五链贯通涉及的 Tab 索引（FMEA → CP → SPC → PPAP → 8D），需要注入项目上下文
 _CONTEXT_TAB_INDICES = {TAB_INDEX[key] for key in CHAIN_TABS}
 
+#: IE 工具 Tab — 工作表导入时分发跳过（IE 数据走「导入 IE 数据」）
+_IE_TAB_INDICES = frozenset({7, 8, 9, 10, 11, 21, 22})
+#: 消费 IE 数据对象（TimeObservation/Process/Resource/MaterialFlow）的 Tab
+_IE_IMPORT_TAB_INDICES = frozenset({7, 9, 10, 11})
+
 
 class MainWindow(QMainWindow):
     def __init__(self, splash=None):
@@ -609,8 +614,9 @@ class MainWindow(QMainWindow):
         if reset_scroll and getattr(self, "scroll_area", None) is not None:
             self.scroll_area.verticalScrollBar().setValue(0)
 
-    #: 不显示"未导入数据"空状态的 Tab（欢迎页/看板/监控/多产线/设备等文档型页面）
-    _EMPTY_STATE_SKIP = frozenset({0, 27, 33, 34, 35})
+    #: 不显示"未导入数据"空状态的 Tab（欢迎页/看板/监控等文档型页面，
+    #: 以及 8/21/22 自包含 IE 工具：手工录入或预设驱动）
+    _EMPTY_STATE_SKIP = frozenset({0, 8, 21, 22, 27, 33, 34, 35})
 
     def _update_tab_empty_state(self, index: int):
         """统一空状态：无数据的分析 Tab 显示"导入数据"遮罩，有数据则隐藏。"""
@@ -623,6 +629,9 @@ class MainWindow(QMainWindow):
             hide = getattr(tab, "_hide_empty_state", None)
             if callable(hide):
                 hide()
+        elif index in _IE_IMPORT_TAB_INDICES:
+            tab.show_empty_state(message="请先导入 IE 数据",
+                                 button_text="导入 IE 数据")
         else:
             tab.show_empty_state()
 
@@ -780,6 +789,8 @@ class MainWindow(QMainWindow):
                     t = self._lazy_load_tab(10)
                     if t is not None:
                         t.set_ie_data(ie_data["Resource"])
+                for idx in _IE_IMPORT_TAB_INDICES:
+                    self._update_tab_empty_state(idx)
 
                 parts = []
                 for obj_type, objects in ie_data.items():
@@ -869,8 +880,6 @@ class MainWindow(QMainWindow):
         """将导入的 Sheet 分配到各分析 Tab。
         worksheet_mode=True: 分配到除 IE 工具(7-11,21-22)外的所有 Tab。
         worksheet_mode=False: 分配到所有 Tab（含 IE）。"""
-        IE_INDICES = {7, 8, 9, 10, 11, 21, 22}
-
         sheet_map = {
             1:  ["spc", "控制图", "control chart"],
             2:  ["能力", "capability", "cpk", "ppk"],
@@ -897,7 +906,7 @@ class MainWindow(QMainWindow):
 
         all_indices = set(sheet_map.keys()) | {16, 17}
         for idx in all_indices:
-            if worksheet_mode and idx in IE_INDICES:
+            if worksheet_mode and idx in _IE_TAB_INDICES:
                 continue
             tab = self._lazy_load_tab(idx)
             if tab and hasattr(tab, 'set_raw_data'):
@@ -906,7 +915,7 @@ class MainWindow(QMainWindow):
 
         assigned = set()
         for tab_idx, keywords in sheet_map.items():
-            if worksheet_mode and tab_idx in IE_INDICES:
+            if worksheet_mode and tab_idx in _IE_TAB_INDICES:
                 continue
             tab = self._lazy_load_tab(tab_idx)
             if not tab or not hasattr(tab, 'sheet_combo'):
@@ -1300,7 +1309,9 @@ class MainWindow(QMainWindow):
         if hasattr(tab, 'analysis_completed'):
             tab.analysis_completed.connect(lambda tid=idx: self._on_analysis_finished(tid))
         if hasattr(tab, 'import_data_requested'):
-            tab.import_data_requested.connect(self._on_import_quality)
+            handler = (self._on_import_ie if idx in _IE_IMPORT_TAB_INDICES
+                       else self._on_import_quality)
+            tab.import_data_requested.connect(handler)
         if hasattr(tab, 'set_stream_source'):
             tab.set_stream_source(self.stream_bus)
         if hasattr(tab, 'send_to_time_study'):

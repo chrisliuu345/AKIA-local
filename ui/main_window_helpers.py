@@ -11,10 +11,23 @@ from __future__ import annotations
 from PySide6.QtWidgets import QMessageBox, QStackedWidget
 
 
+_IE_DATA_ATTRS = ("ie_observations", "ie_processes", "ie_resources", "ie_flows")
+
+
 def _tab_has_data(tab) -> bool:
-    """Tab 是否有可分析数据 — 不能用 not df 测试 DataFrame 真值 (恒抛 ValueError)"""
+    """Tab 是否有可分析数据 — 不能用 not df 测试 DataFrame 真值 (恒抛 ValueError)。
+
+    IE Tab 的数据存放在 ie_* 数据对象列表而非 df；不识别这些字段会导致
+    菜单导入 IE 数据后空状态遮罩仍显示"未导入"。
+    """
     df = getattr(tab, 'df', None)
-    return df is not None and len(df) != 0
+    if df is not None and len(df) != 0:
+        return True
+    for attr in _IE_DATA_ATTRS:
+        data = getattr(tab, attr, None)
+        if isinstance(data, (list, tuple)) and len(data) > 0:
+            return True
+    return False
 
 
 def _tab_is_runnable(tab) -> bool:
