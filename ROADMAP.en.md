@@ -76,6 +76,7 @@ Planning principles:
 
 | Date | Version | Summary |
 |------|---------|---------|
+| 09-17 | fix-ui | **Empty-state "Import data" button fix**: the overlay's `WA_TransparentForMouseEvents` also blocks mouse events for all children, so the button never received clicks; the attribute was removed and a real hit-test + mouse-click regression test added (`widgetAt` locates the button centre, then QTest clicks it) |
 | 09-17 | v4.2.0-P1a | **Known-value matrix batch 1**: 20 cases across 7 domains (SPC charts + all 8 Nelson rules / normal capability / Cohen κ / 2² factorial / KM + Crow-AMSAA / sample ACF / regression + classification metrics); **2 real defects found and fixed** — numeric-label confusion matrix all zeros, DOE perfect-fit divide-by-zero warning; tolerance presets extended with `rounded_6dp` / `rounded_4dp` |
 | 09-17 | v4.2.0-P0 | **Contracts & test base complete**: `core/evidence.py` (credential schema v1 + data fingerprint + diff) · `core/improvement_case.py` (case schema v0) · `.qap` 1.6 → 1.7 case-section compatibility · `KNOWN_VALUES.md` + `tests/known_values.py` known-value framework · 4 contract test files / 40 cases |
 | 09-17 | v4.2.0-plan | **v4.2.0 phased development plan**: P0 contracts → P1 known-value matrix → P2 algorithm depth → P3 stability → P4 credentials & method docs → P5 first closed-loop slice → P6 wrap-up; no new hard dependencies (statsmodels is a test-only reference); `.qap` 1.6 → 1.7 incremental compatibility |
