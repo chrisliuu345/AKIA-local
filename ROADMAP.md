@@ -76,6 +76,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 
 | 日期 | 版本 | 摘要 |
 |------|------|------|
+| 09-17 | v4.2.0-P1b | **已知值矩阵批次 2 完成**：+9 例——EWMA / CUSUM / Hotelling T² · Gage R&R（AIAG 均值-极差）· Weibull 2P-MLE（独立 brentq 解）· ARIMA(0,1,0) 随机游走 · CART 完美分裂；P1 合计 12 文件 / 29 例，7 域全覆盖 |
 | 09-17 | fix-ui | **空状态「导入数据」按钮无响应修复**：遮罩的 `WA_TransparentForMouseEvents` 会连同子控件一起屏蔽鼠标事件，按钮永远收不到点击；移除该属性并新增「真实命中 + 鼠标点击」回归测试（`widgetAt` 定位按钮中心后 QTest 点击） |
 | 09-17 | v4.2.0-P1a | **已知值矩阵批次 1**：7 域 20 例（SPC 控制图+Nelson 8 规则 / 正态能力 / Cohen κ / 2² 因子 / KM+Crow-AMSAA / 样本 ACF / 回归+分类指标）；**发现并修复 2 处缺陷**——`classification_metrics` 数值标签混淆矩阵全 0、DOE 完全拟合除零告警；容差预设扩展 `rounded_6dp`/`rounded_4dp` |
 | 09-17 | v4.2.0-P0 | **契约与测试基座完成**：`core/evidence.py`（凭证 schema v1 + 数据指纹 + diff）· `core/improvement_case.py`（案例 schema v0）· `.qap` 1.6→1.7 案例段增量兼容 · `KNOWN_VALUES.md` + `tests/known_values.py` 已知值框架 · 4 个契约测试文件 / 40 例 |
@@ -211,7 +212,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | 阶段 | 交付 | 验收 |
 |------|------|------|
 | **P0 契约与测试基座** ✅ 2026-09-17 | 已知值规范 `KNOWN_VALUES.md` + 框架 `tests/known_values.py` · 判定凭证 schema v1 `core/evidence.py`（数据指纹 `pd-hash-v1` + 结论 diff）· 案例 schema v0 `core/improvement_case.py` · `.qap` 1.7 案例段（1.6 只读兼容） | 4 个契约测试文件 40 例通过；ruff 全库零告警；分层守卫通过 |
-| **P1 已知值验证矩阵**（B1）🚧 批次 1 ✅ 2026-09-17 | 7 域首批 20 例：SPC（Xbar-R / I-MR + Nelson 8 规则）· 正态能力（Cp/Cpk/Pp/Ppk/Cpm/PPM/合格率）· MSA（Cohen κ）· DOE（2² 效应 / SS / R²）· 可靠性（KM + Crow-AMSAA MLE）· 时序（样本 ACF）· ML（回归/分类指标）；容差预设增补 `rounded_6dp` / `rounded_4dp` | 批次 1 全绿；**发现并修复 2 处缺陷**（数值标签混淆矩阵全 0；DOE 完全拟合除零告警）；批次 2 待做：EWMA/CUSUM/Hotelling · Gage R&R · Weibull · ARIMA · CART/森林 |
+| **P1 已知值验证矩阵**（B1）✅ 2026-09-17（批次 1+2） | 7 域 12 文件 29 例：SPC（Xbar-R / I-MR / EWMA / CUSUM / Hotelling T² + Nelson 8 规则）· 能力（Cp/Cpk/Pp/Ppk/Cpm/PPM）· MSA（Cohen κ / Gage R&R 均值-极差）· DOE（2² 效应/SS）· 可靠性（KM / Crow-AMSAA / Weibull 2P-MLE）· 时序（ACF / ARIMA 随机游走）· ML（回归分类指标 / CART） | 29 例全绿；**发现并修复 2 处缺陷**（数值标签混淆矩阵全 0；DOE 完全拟合除零告警）；更深算法（MEWMA / 非正态 / Weibull CI / 调参）归 P2 交叉验证 |
 | **P2 算法深度**（B2） | 多元 SPC（MEWMA / 广义方差）· 变点检测（PELT，纯 numpy）· 自相关残差控制图 · 非正态能力 + Bootstrap 置信区间 · 可靠性区间 · ARIMA 自动选阶稳健性 | 与 statsmodels/scipy 参考实现交叉验证（仅测试期可选依赖）；自相关数据误报率显著下降 |
 | **P3 稳定性与大样本**（B3） | 大样本基准扩展（10 万 / 100 万行 SPC·MSA·ML）· 病态矩阵与极端值鲁棒性用例 · 性能基线刷新 | 基准入 CI（tolerance 内）；鲁棒性用例通过 |
 | **P4 判定凭证 + 方法文档**（B4） | 结论凭证写入分析记录（`analyses[idx]` / 快照）· 报告追溯码 · 同数据两次运行逐项 diff（报告复核模式）· guide.html「方法与参考」章节 | 重跑 diff 为空、改参 diff 可见；追溯码可解析；文档与代码同源 |

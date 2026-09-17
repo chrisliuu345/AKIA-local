@@ -26,6 +26,7 @@ TOL_PRESETS: dict[str, tuple[float, float]] = {
     "closed_form": (1e-9, 1e-12),
     "rounded_6dp": (1e-9, 5.1e-7),
     "rounded_4dp": (1e-9, 5.1e-5),
+    "rounded_2dp": (1e-9, 5.1e-3),
     "iterative": (1e-6, 1e-9),
     "bootstrap": (1e-3, 1e-3),
 }
