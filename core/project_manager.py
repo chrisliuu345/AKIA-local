@@ -12,7 +12,9 @@ from PySide6.QtCore import QSettings
 
 import pandas as pd
 
-VERSION = "1.6"
+from core.improvement_case import CASE_SCHEMA_VERSION
+
+VERSION = "1.7"
 RECENT_MAX = 8
 
 
@@ -24,13 +26,15 @@ class ProjectManager:
                      analyses: dict[int, dict[str, Any]],
                      chart_bytes: dict[str, bytes],
                      annotations: str = "",
-                     project_context: dict[str, Any] | None = None) -> str:
+                     project_context: dict[str, Any] | None = None,
+                     cases: list[dict[str, Any]] | None = None) -> str:
         """保存项目为 .qap 文件。
 
         raw_data: {sheet_name: DataFrame}
         analyses: {tab_idx: {analysis_type, params, result}}
         chart_bytes: {label: PNG bytes}
         project_context: {project_name, characteristics, fmea_items, ...} (可选)
+        cases: 改善案例 schema v0 dict 列表 (可选；写入 cases.json)
         """
         if not path.endswith(".qap"):
             path += ".qap"
@@ -42,6 +46,8 @@ class ProjectManager:
             "analysis_count": len(analyses),
             "tab_indices": list(analyses.keys()),
             "has_context": project_context is not None,
+            "case_count": len(cases or []),
+            "has_cases": bool(cases),
         }
 
         with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -66,6 +72,12 @@ class ProjectManager:
                 zf.writestr("context.json",
                             json.dumps(_sanitize_for_json(project_context), indent=2, ensure_ascii=False, default=str))
 
+            if cases is not None:
+                zf.writestr("cases.json", json.dumps({
+                    "schema_version": CASE_SCHEMA_VERSION,
+                    "cases": _sanitize_for_json(cases),
+                }, indent=2, ensure_ascii=False, default=str))
+
             for label, png_data in chart_bytes.items():
                 zf.writestr(f"charts/{_safe_name(label)}.png", png_data)
 
@@ -86,6 +98,7 @@ class ProjectManager:
             "chart_bytes": {label: PNG bytes},
             "annotations": str,
             "project_context": dict | None,
+            "cases": [case dict, ...],   # schema v0；旧文件为 []
         }
         """
         if not os.path.exists(path):
@@ -97,6 +110,7 @@ class ProjectManager:
         manifest: dict = {}
         annotations = ""
         project_context = None
+        cases: list[dict] = []
 
         with zipfile.ZipFile(path, "r") as zf:
             for name in zf.namelist():
@@ -112,6 +126,12 @@ class ProjectManager:
                         analyses[int(k)] = v
                 elif name == "context.json":
                     project_context = json.loads(zf.read(name).decode("utf-8"))
+                elif name == "cases.json":
+                    payload = json.loads(zf.read(name).decode("utf-8"))
+                    if isinstance(payload, dict):
+                        cases = payload.get("cases") or []
+                    elif isinstance(payload, list):
+                        cases = payload
                 elif name.startswith("charts/") and name.endswith(".png"):
                     label = name[7:-4]
                     chart_bytes[label] = zf.read(name)
@@ -126,6 +146,7 @@ class ProjectManager:
             "chart_bytes": chart_bytes,
             "annotations": annotations,
             "project_context": project_context,
+            "cases": cases,
         }
 
     @staticmethod
