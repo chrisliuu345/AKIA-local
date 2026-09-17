@@ -4,6 +4,7 @@
 
 > Current: v4.1.0 Chart & UI experience unification (chart style layer / defect fixes / command palette / performance baseline) (✅ 2026-09-15 · source prerelease) | Next: **v4.2.0 Algorithm trust & depth (planned)**
 > Deepening line: **v4.2 Trust → v4.3 Case & evidence → v4.4 Closed loop → v4.5 Open → v4.6 Intelligence** (from analysis tool to a shop-floor improvement evidence chain) | Tests: 1708 pytest · 37 analysis tabs | Updated: 2026-09-17
+> In progress: **v4.2.0** (P0 ✅ contracts · P1 ✅ known-value matrix, 29 cases · UI wiring audit ✅ · next: **P2 algorithm depth**)
 
 > **Maintenance convention (from 2026-09-12)**: each version entry is one summary line plus key numbers; implementation details live in code/tests/user guide, not here.
 > This file was compressed from 1100+ lines to under 500; the expanded history is in git history (`git log -p -- ROADMAP.md`).
@@ -76,6 +77,7 @@ Planning principles:
 
 | Date | Version | Summary |
 |------|---------|---------|
+| 09-17 | v4.2.0-audit | **Full UI feature & wiring audit**: offscreen survey of 37+1 tabs plus receiver scan of every button/menu action (no zero-wiring); 4 gap classes fixed — Time Series/Predictive Analytics missing from worksheet routing · self-contained tools 29-32 blocked by the import overlay · manual/context tools 14/16/17/25/26 blocked (including the FMEA→Control Plan chain) · menu missing entries for 35/36/37; 3 routing-coverage regressions added (all analysis tabs / five-chain unblocked / self-contained tabs clean) |
 | 09-17 | fix-ie | **IE tab import wiring fixed**: (1) the empty-state blue button on every tab was connected to the worksheet importer, while worksheet routing skips IE tabs (7-11/21-22) → IE-import tabs (7/9/10/11) now open "Import IE data" and the button label matches; (2) `_tab_has_data` only looked at `df`, but IE data lives in `ie_*` lists → the overlay stayed after a menu IE import; it now recognises IE data and empty states refresh right after import; (3) tabs 8/21/22 are self-contained IE tools (manual/preset driven) and no longer get an import overlay; 6 wiring regression cases added |
 | 09-17 | fix-import | **Duplicate-header crash on real report import fixed**: `CO401-20220930.xls` has two "二维码" header columns → after `_apply_header` the frame carried duplicate labels → `df[col]` returned a DataFrame → `pd.to_numeric` raised TypeError; the parser now dedupes columns at `_analyze_frame` entry (`二维码.1`) and records renames in parse info; 4 regression cases added (including the real-world header structure); the real file imports as 722×77 → 589×77 |
 | 09-17 | v4.2.0-P1b | **Known-value matrix batch 2 complete**: +9 cases — EWMA / CUSUM / Hotelling T² · Gage R&R (AIAG average-range) · Weibull 2P-MLE (independent brentq solution) · ARIMA(0,1,0) random walk · CART perfect split; P1 totals 12 files / 29 cases, all 7 domains covered |
@@ -147,6 +149,7 @@ Planning principles:
 | Full English pack | i18n framework lands in v4.5.0; translation after | v4.5 / later |
 | Connector expansion (more PLC/CMM protocols) | Driven by site needs | v4.6.0 B4 |
 | Anonymous industry benchmark | Needs server-side aggregation + privacy review; not in this repo's near-term scope | Server stage |
+| FMEA / Control Plan Excel import | Both tables are manual / project-context / five-chain driven; workbook import is not mapped into their table model | Candidate (on demand) |
 
 ---
 
@@ -286,6 +289,7 @@ Planning principles:
 - **Layering**: `analysis/` must not import Qt; `core`/`config`/`output` must not import `ui`; `core/agent/` stays Qt-free
 - **Plugins**: interact only through `core/plugin_api.py`, API major-version compatible; untrusted plugins are never imported
 - **Docs**: keep README (zh/en), the in-app guide (guide.html) and this roadmap in sync
+- **New-tab checklist**: registry → worksheet routing (`sheet_map` / `all_indices`) → empty-state class (`_EMPTY_STATE_SKIP` or data-model check) → menu / command-palette entry → regression in `tests/test_tab_data_routing.py`
 
 ---
 

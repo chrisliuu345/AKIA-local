@@ -202,6 +202,7 @@ class TimeSeriesTab(BaseAnalysisTab):
     def set_data(self, df: pd.DataFrame, parsed_info: dict[str, Any] | None = None):
         self.df = df
         self.parsed_info = parsed_info or {}
+        self._hide_empty_state()
         cols = list(df.columns)
         self.time_col_combo.clear()
         self.value_col_combo.clear()
