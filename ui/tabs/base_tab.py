@@ -283,7 +283,8 @@ class BaseAnalysisTab(QWidget):
             img = QImage.fromData(buf.read())
             QApplication.clipboard().setImage(img)
 
-    def _setup_empty_state(self, icon: str = "", message: str = ""):
+    def _setup_empty_state(self, icon: str = "", message: str = "",
+                           button_text: str = "导入数据"):
         """创建空状态遮罩层 — 无数据时覆盖分析面板，中央提供可点击的导入按钮。"""
         tc = theme_colors()
         self._empty_overlay = QFrame(self)
@@ -312,7 +313,7 @@ class BaseAnalysisTab(QWidget):
         msg_lbl.setStyleSheet(f"color: {tc['text_secondary']}; background: transparent;")
         layout.addWidget(msg_lbl)
 
-        btn = QPushButton("导入数据")
+        btn = QPushButton(button_text or "导入数据")
         btn.setFont(QFont(get_ui_font(), 11, QFont.Bold))
         btn.setFixedSize(160, 40)
         btn.setCursor(Qt.PointingHandCursor)
@@ -323,6 +324,7 @@ class BaseAnalysisTab(QWidget):
         )
         btn.clicked.connect(self.import_data_requested.emit)
         layout.addWidget(btn, alignment=Qt.AlignCenter)
+        self._empty_button = btn
 
         self._empty_overlay.show()
 
@@ -365,14 +367,18 @@ class BaseAnalysisTab(QWidget):
         if self._empty_overlay:
             self._empty_overlay.hide()
 
-    def ensure_empty_state(self, message: str = ""):
+    def ensure_empty_state(self, message: str = "", button_text: str = "导入数据"):
         """按需创建统一空状态遮罩（无数据时提示导入）。"""
         if getattr(self, "_empty_overlay", None) is None:
-            self._setup_empty_state(message=message or "请先导入数据")
+            self._setup_empty_state(message=message or "请先导入数据",
+                                    button_text=button_text)
 
-    def show_empty_state(self, message: str = ""):
+    def show_empty_state(self, message: str = "", button_text: str = "导入数据"):
         """显示空状态遮罩（主窗口在切到无数据 Tab 时调用）。"""
-        self.ensure_empty_state(message)
+        self.ensure_empty_state(message, button_text)
+        button = getattr(self, "_empty_button", None)
+        if button is not None and button_text:
+            button.setText(button_text)
         if self._empty_overlay is not None:
             self._empty_overlay.setGeometry(self.rect())
             self._empty_overlay.show()
