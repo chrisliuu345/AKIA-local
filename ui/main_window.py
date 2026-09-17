@@ -383,7 +383,8 @@ class MainWindow(QMainWindow):
         analysis_menu = _pin(menubar.addMenu(i18n.tr("menu.analysis")))
         quality_sub = _pin(analysis_menu.addMenu(i18n.tr("sidebar.quality_tools")))
         for idx, key in [(1, "sidebar.spc"), (2, "sidebar.capability"), (3, "sidebar.msa"),
-                         (4, "sidebar.hypothesis"), (5, "sidebar.doe"), (6, "sidebar.regression")]:
+                         (4, "sidebar.hypothesis"), (5, "sidebar.doe"), (6, "sidebar.regression"),
+                         (36, "sidebar.time_series"), (37, "sidebar.predictive")]:
             a = QAction(i18n.tr(key), self)
             a.triggered.connect(lambda _, i=idx: self._switch_tab(i))
             quality_sub.addAction(a)
@@ -417,7 +418,7 @@ class MainWindow(QMainWindow):
         analysis_menu.addSeparator()
         for idx, key in [(26, "sidebar.sampling"), (28, "sidebar.data_tools_tab"),
                          (27, "sidebar.dashboard"), (33, "sidebar.monitor"),
-                         (34, "sidebar.multi_plant")]:
+                         (34, "sidebar.multi_plant"), (35, "sidebar.device")]:
             a = QAction(i18n.tr(key), self)
             a.triggered.connect(lambda _, i=idx: self._switch_tab(i))
             analysis_menu.addAction(a)
@@ -614,9 +615,15 @@ class MainWindow(QMainWindow):
         if reset_scroll and getattr(self, "scroll_area", None) is not None:
             self.scroll_area.verticalScrollBar().setValue(0)
 
-    #: 不显示"未导入数据"空状态的 Tab（欢迎页/看板/监控等文档型页面，
-    #: 以及 8/21/22 自包含 IE 工具：手工录入或预设驱动）
-    _EMPTY_STATE_SKIP = frozenset({0, 8, 21, 22, 27, 33, 34, 35})
+    #: 不显示"未导入数据"空状态的 Tab：
+    #: - 文档/监控型页面：0 / 27 / 33-35
+    #: - 自包含工具（手工录入 / 预设 / 项目上下文驱动，工作表导入非必需）：
+    #:   8 工作抽样 · 14 鱼骨图 · 16 FMEA · 17 控制计划 · 21 人机配合 ·
+    #:   22 标准作业组合票 · 25 分层审核 · 26 抽样 · 29 SMED · 30 8D ·
+    #:   31 TPM · 32 PPAP
+    _EMPTY_STATE_SKIP = frozenset({
+        0, 8, 14, 16, 17, 21, 22, 25, 26, 27, 29, 30, 31, 32, 33, 34, 35,
+    })
 
     def _update_tab_empty_state(self, index: int):
         """统一空状态：无数据的分析 Tab 显示"导入数据"遮罩，有数据则隐藏。"""
@@ -902,9 +909,11 @@ class MainWindow(QMainWindow):
             26: ["sampling", "抽样", "aql", "采样"],
             27: ["dashboard", "仪表盘", "dashboard", "汇总报告"],
             28: ["data_tools", "数据工具", "生成", "转换"],
+            36: ["时间序列", "时序", "time series", "timeseries"],
+            37: ["预测", "predict", "机器学习", "建模"],
         }
 
-        all_indices = set(sheet_map.keys()) | {16, 17}
+        all_indices = set(sheet_map.keys())
         for idx in all_indices:
             if worksheet_mode and idx in _IE_TAB_INDICES:
                 continue
