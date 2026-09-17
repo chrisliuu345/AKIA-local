@@ -76,6 +76,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 
 | 日期 | 版本 | 摘要 |
 |------|------|------|
+| 09-17 | fix-ui | **空状态「导入数据」按钮无响应修复**：遮罩的 `WA_TransparentForMouseEvents` 会连同子控件一起屏蔽鼠标事件，按钮永远收不到点击；移除该属性并新增「真实命中 + 鼠标点击」回归测试（`widgetAt` 定位按钮中心后 QTest 点击） |
 | 09-17 | v4.2.0-P1a | **已知值矩阵批次 1**：7 域 20 例（SPC 控制图+Nelson 8 规则 / 正态能力 / Cohen κ / 2² 因子 / KM+Crow-AMSAA / 样本 ACF / 回归+分类指标）；**发现并修复 2 处缺陷**——`classification_metrics` 数值标签混淆矩阵全 0、DOE 完全拟合除零告警；容差预设扩展 `rounded_6dp`/`rounded_4dp` |
 | 09-17 | v4.2.0-P0 | **契约与测试基座完成**：`core/evidence.py`（凭证 schema v1 + 数据指纹 + diff）· `core/improvement_case.py`（案例 schema v0）· `.qap` 1.6→1.7 案例段增量兼容 · `KNOWN_VALUES.md` + `tests/known_values.py` 已知值框架 · 4 个契约测试文件 / 40 例 |
 | 09-17 | v4.2.0-plan | **v4.2.0 分阶段开发方案**：P0 契约基座 → P1 已知值矩阵 → P2 算法深度 → P3 稳定性 → P4 凭证与方法文档 → P5 首个闭环切片 → P6 收尾；无新硬依赖（statsmodels 仅测试参考）；`.qap` 1.6 → 1.7 增量兼容 |
