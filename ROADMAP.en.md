@@ -2,7 +2,7 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> Current: v4.1.0 Chart & UI experience unification (chart style layer / defect fixes / command palette / performance baseline) (✅ 2026-09-15) | Next: **v4.2.0 Algorithm trust & depth (planned)**
+> Current: v4.1.0 Chart & UI experience unification (chart style layer / defect fixes / command palette / performance baseline) (✅ 2026-09-15 · source prerelease) | Next: **v4.2.0 Algorithm trust & depth (planned)**
 > Deepening line: **v4.2 Trust → v4.3 Case & evidence → v4.4 Closed loop → v4.5 Open → v4.6 Intelligence** (from analysis tool to a shop-floor improvement evidence chain) | Tests: 1708 pytest · 37 analysis tabs | Updated: 2026-09-17
 
 > **Maintenance convention (from 2026-09-12)**: each version entry is one summary line plus key numbers; implementation details live in code/tests/user guide, not here.
@@ -76,9 +76,10 @@ Planning principles:
 
 | Date | Version | Summary |
 |------|---------|---------|
+| 09-17 | v4.2.0-plan | **v4.2.0 phased development plan**: P0 contracts → P1 known-value matrix → P2 algorithm depth → P3 stability → P4 credentials & method docs → P5 first closed-loop slice → P6 wrap-up; no new hard dependencies (statsmodels is a test-only reference); `.qap` 1.6 → 1.7 incremental compatibility |
 | 09-17 | roadmap-rev | **Plan review revision (vs the GPT critique)**: established "improvement case as the spine, bitemporal as the mechanism" — v4.3 moves from storage-first to case-first (ImprovementCase → MeasurementEvent/plugin data sources → standard versions → evidence pack); v4.2 gains the first vertical closed-loop slice; skill-constrained line balancing moves from v4.6 up to v4.4; case closure now requires re-measurement + statistical verdict; anonymous benchmarking is demoted to a server-stage candidate |
 | 09-17 | roadmap | **v4.2–v4.6 deepening plan**: converged into the five-step line "trust → evidence → closed loop → open → intelligence"; four moat layers defined (bitemporal data model / judgement verification / exchange interfaces / data assets); new items: known-value matrix, change-point detection & residual control charts, conclusion credentials, bitemporal evidence ledger, desensitized evidence pack, alert→8D auto case, measurement-system online, sampling transfer state machine, benefit ledger & COPQ, MCP server, CLI·SDK, industry rule packs, process window, IE evidence chain, anonymous benchmark, edge SPC |
-| 09-15 | v4.1.0 | **Chart & UI experience unification released**: B1 `output/chart_style.py` unified style layer (dark/light themes + Okabe-Ito semantic colours + smart y-limits / violation markers / limit lines) migrated across both chart entry points; B2 all 8 audit findings cleared (auto-faceted boxplots, Pareto 80% line + bar labels, outside control-chart legend + rule annotations, capability stats card, diverging heatmap with masked diagonal…); B3 global command palette (Ctrl+K/Ctrl+P), stepwise batch analysis with progress/cancel (Ctrl+Shift+B), Toast wiring, unified empty state; B4 type modernisation (whole UP family + RUF013, 155 files), hotspot split (main_window/tools_ext → two helper modules), performance baseline in CI (cold start 2.2s / 1M import 14.0s / 5k chart 1.5s / 5k-row ML 1.5s); version 4.1.0 across all four ends; 124 files / 1708 passed / 2 skipped / 0 failed, ruff clean; **packaging pending** |
+| 09-15 | v4.1.0 | **Chart & UI experience unification released**: B1 `output/chart_style.py` unified style layer (dark/light themes + Okabe-Ito semantic colours + smart y-limits / violation markers / limit lines) migrated across both chart entry points; B2 all 8 audit findings cleared (auto-faceted boxplots, Pareto 80% line + bar labels, outside control-chart legend + rule annotations, capability stats card, diverging heatmap with masked diagonal…); B3 global command palette (Ctrl+K/Ctrl+P), stepwise batch analysis with progress/cancel (Ctrl+Shift+B), Toast wiring, unified empty state; B4 type modernisation (whole UP family + RUF013, 155 files), hotspot split (main_window/tools_ext → two helper modules), performance baseline in CI (cold start 2.2s / 1M import 14.0s / 5k chart 1.5s / 5k-row ML 1.5s); version 4.1.0 across all four ends; 124 files / 1708 passed / 2 skipped / 0 failed, ruff clean; **source prerelease (no installers)** |
 | 09-13 | v4.0.0 | **Predictive Analytics & ML released**: `analysis/ml/` (task detection + leak-proof Pipeline, CART pre/post pruning, Random Forests with OOB, HistGradientBoosting with optional XGBoost, pure-numpy MARS, SHAP explanation, AutoML ranking); new "Predictive Analytics" tab (37) + 6 agent tools (30 → 36) + `.qamodel` save/load/predict; version 4.0.0 across all four ends; 1665 passed / 2 skipped / 0 failed, ruff clean; Linux AppImage + .deb built, Windows installer produced by the Inno script on Windows |
 | 09-13 | v4.0.0-quality | **Full code-quality review**: ruff gate extended and driven to zero (T10/ISC/PIE/RUF012/RUF021/RUF034/RUF059/PLW1510/PLW2901/PLW0602); 12 real defects fixed (fishbone duplicate condition, loop-variable shadowing x2, bogus global declaration, redundant branches in SMED/cost/sampling/project manager, unused unpacking in DOE/regression/charts, startswith merged x3, explicit subprocess check); `ClassVar` annotations for class-level mutable constants; repo hygiene (untrack `test_quality.db` and stale compliance docx artifacts); full per-file regression 118 files green + packaging smoke passed |
 | 09-13 | v4.0.0-fix2 | **Shared scroll-area height fix (W58 recurrence)**: the `QStackedWidget` size hint now follows only the current page, so hidden tabs (parameter panels / data tables) no longer stretch the shared scroll area; switching tabs explicitly recomputes the range and scrolls to top (staged syncs at 0/120/260 ms to beat Qt's cached hints); canvas-less analysis pages record and restore their page height so switching back keeps the scroll range; 2 new regression cases |
@@ -122,7 +123,7 @@ Planning principles:
 - **Chart defect fixes (B2)**: all 8 audit findings cleared — auto-faceted multi-scale boxplots, Pareto 80% line with bar labels, outside control-chart legend with rule annotations, capability stats card with grade badge, diverging heatmap with masked diagonal, smart time-series y-limits, theme-coupled colours and font/grid unification
 - **UI experience (B3)**: global command palette (Ctrl+K / Ctrl+P across 37 tabs + plugins + 16 actions), stepwise batch analysis with progress and cancel (Ctrl+Shift+B), Toast wiring (analysis/export/batch), unified empty state (tabs without data show the import overlay)
 - **Quality & performance baseline (B4)**: complete type modernisation (whole UP family + RUF013 cleared), `main_window` / `tools_ext` hotspot split, `tools/benchmark.py` with four metrics gated in CI (tolerance ×4)
-- **Quality numbers**: 1708 passed / 2 skipped / 0 failed (124 files, per-file regression); extended ruff gate (incl. all UP rules) clean; **packaging pending**
+- **Quality numbers**: 1708 passed / 2 skipped / 0 failed (124 files, per-file regression); extended ruff gate (incl. all UP rules) clean; **source prerelease (no installers)**
 
 ---
 
@@ -132,7 +133,7 @@ Planning principles:
 |------|------|-------|
 | Manual review of proactive-suggestion accuracy (≥3.5/5) | Needs engineer scoring | User |
 | Vision acceptance on real footage (site video + labelled CSV, ≥85% agreement) | Needs site material | Plugin project |
-| Release artifacts (AppImage / .deb / Inno) | Scripts ready; build and upload to Releases on demand | Optional |
+| Release artifacts (AppImage / .deb / Inno) | Not built for v4.1.0; scripts ready for on-demand builds | Optional |
 | ImprovementCase object + evidence ledger | Bitemporal narrowed to measurements/standards/conclusions; see v4.3.0 | v4.3.0 |
 | Case workspace entry | Reuse Home first; adding a tab requires explicit review | v4.3.0 decision |
 | MCP server + native tool calling | Decides the AI-ecosystem position; see v4.5.0 | v4.5.0 |
@@ -190,7 +191,7 @@ Planning principles:
 ### v4.1.0 ✅ Released — Chart & UI Experience Unification (2026-09-15)
 
 > **Release status**: B1–B4 complete, version 4.1.0 across all four ends (settings / version_info / Inno / README·INSTALL·ROADMAP·guide);
-> full per-file regression 124 files green; extended ruff gate clean; performance baseline gated in CI; **Linux/Windows packaging deferred as planned**.
+> full per-file regression 124 files green; extended ruff gate clean; performance baseline gated in CI; **not packaged — released as a source prerelease (GitHub Source zip / tar.gz)**.
 
 | Batch | Deliverables | Acceptance |
 |-------|--------------|------------|
@@ -202,14 +203,20 @@ Planning principles:
 ### v4.2.0 — Algorithm Trust & Depth (planned)
 
 > Trust layer: first prove the maths is right, then prove how a judgement was made; and validate the case loop with a minimal vertical slice.
+> **Phase order**: P0 contracts → P1 known-value matrix → P2 algorithm depth → P3 stability → P4 conclusion credentials & method docs → P5 first closed-loop slice → P6 wrap-up; P1–P3 touch only `analysis/` + `tests/`, P4–P5 touch `core/` + `ui/`, so they can be scheduled in parallel (4–6 weeks total + 20% buffer).
 
-| Batch | Deliverables | Acceptance |
+| Phase | Deliverables | Acceptance |
 |-------|--------------|------------|
-| **B1 Known-value validation matrix** | NIST/literature known-value cases for SPC · MSA · DOE · reliability · time-series/ML algorithms, wired into the CI gate | ≥1 known-value case per critical algorithm, verified on every regression |
-| **B2 Algorithm depth** | Multivariate SPC (MEWMA / generalized variance) · change-point detection (PELT/Bayesian) · residual control charts for autocorrelated data · non-normal capability with uncertainty intervals · reliability intervals · robust ARIMA auto-ordering | Cross-validated against reference implementations; false-alarm rate on autocorrelated data drops materially |
-| **B3 Stability** | Large-sample benchmark suite · numerical stability for ill-conditioned matrices and extreme values | Benchmarks and robustness cases pass |
-| **B4 Conclusion credentials v1 + method docs** | Every conclusion carries rule version + parameters + data fingerprint + app version; two runs on the same data can be diffed (report review mode); new "methods & references" chapter in guide.html | Reports reviewable and conclusions replayable; docs traceable to code |
-| **B5 First closed-loop slice (v0)** | A lightweight case record inside `.qap` runs: baseline measurement → time study → line-balance bottleneck → improvement plan → re-measurement → paired test → conclusion → standard draft; manual/CSV data sources first, with the plugin data-source interface reserved | Single case demonstrable end to end; every step carries a timestamp and a data reference; works without the vision plugin |
+| **P0 Contracts & test base** (~3 days) | Known-value test convention (sources / tolerances / per-file naming) · conclusion-credential schema v1 (`rule_version` / `params` / `data_fingerprint` / `app_version` / `computed_at`) · `.qap` case-section schema v0 (manifest 1.6 → 1.7, old files read-only compatible) | Schema unit tests pass; layering guards pass (analysis Qt-free, core ui-free) |
+| **P1 Known-value matrix** (B1) | NIST StRD / NIST/SEMATECH / literature known values covering SPC · capability · MSA · DOE · reliability · time-series/ML algorithms; tolerance table recorded per case; wired into the per-file CI regression | ≥1 known-value case per critical algorithm; CI green; tolerances auditable |
+| **P2 Algorithm depth** (B2) | Multivariate SPC (MEWMA / generalized variance) · change-point detection (PELT, pure numpy) · residual control charts for autocorrelated data · non-normal capability + bootstrap CI · reliability intervals · robust ARIMA auto-ordering | Cross-validated against statsmodels/scipy (test-only optional deps); false alarms on autocorrelated data drop materially |
+| **P3 Stability & large samples** (B3) | Large-sample benchmarks (100k / 1M rows SPC·MSA·ML) · ill-conditioned matrix and extreme-value robustness cases · refreshed performance baseline | Benchmarks gated in CI (within tolerance); robustness cases pass |
+| **P4 Conclusion credentials + method docs** (B4) | Credentials written into analysis records (`analyses[idx]` / snapshots) · report traceability codes · two-run diff on the same data (report review mode) · guide.html "methods & references" chapter | Re-run diff empty, parameter-change diff visible; traceability code parseable; docs traceable to code |
+| **P5 First closed-loop slice** (B5) | Lightweight `.qap` case record v0 + Home workspace entry: baseline → time study → line-balance bottleneck → improvement plan → re-measurement → paired test → conclusion → standard draft; manual/CSV sources, plugin data-source interface reserved | Single-case E2E demo (offscreen E2E + manual script); every step timestamped and data-referenced; old `.qap` untouched |
+| **P6 Wrap-up** | Version 4.2.0 across all four ends · README / guide / roadmap sync · full per-file regression + ruff gate · release-mode decision (source prerelease or packaged) | `check_version.py` passes; all green; demo reproducible |
+
+**Key design decisions**: no new hard dependencies (PELT self-implemented; statsmodels as a dev-only reference) · credential and case schemas live in `core/` (Qt-free) · `.qap` stays backward compatible (reads 1.6, writes 1.7) · UI entry reuses Home, no new tab · the full MeasurementEvent contract lands in 4.3.0, with only the interface reserved here.
+**Risks & mitigations**: known-value sourcing/licensing (NIST public domain first, literature values cited) · PELT effort (fall back to binary segmentation if over time-box) · closed-loop slice scope creep (1.5-week time box, one case template only) · performance regressions (P3 baseline comparison, revert if out of bounds).
 
 ### v4.3.0 — Improvement Case & Evidence Ledger (planned)
 
