@@ -20,12 +20,21 @@ class BaseReportEngine:
             yield i, atype, params, result
 
     @staticmethod
-    def footers() -> tuple[str, str]:
+    def footers(trace: str = "") -> tuple[str, str]:
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        suffix = f"  |  {i18n.tr('report.trace_code')}: {trace}" if trace else ""
         return (
-            f"{i18n.tr('report.generated_time')}: {ts}  |  {APP_NAME} v{APP_VERSION}",
+            f"{i18n.tr('report.generated_time')}: {ts}  |  {APP_NAME} v{APP_VERSION}{suffix}",
             f"{i18n.tr('report.date')}: {datetime.now().strftime('%Y-%m-%d')}",
         )
+
+    @staticmethod
+    def credential_trace(analyses: list[dict]) -> str:
+        """由各分析记录内的凭证生成 12 位追溯码（无凭证时返回空串）。"""
+        from core.evidence import credential_trace_code
+
+        return credential_trace_code(
+            [(analysis or {}).get("credential") for analysis in analyses])
 
     @staticmethod
     def extract_conclusion(result: dict) -> str:

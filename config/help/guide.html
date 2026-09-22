@@ -115,6 +115,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
   <a href="#plugins">插件接口</a>
   <a href="#realtime">实时监控与看板</a>
   <a href="#hardware">硬件扩展</a>
+  <a href="#methods">方法与参考</a>
   <div class="grp">支持</div>
   <a href="#faq">常见问题</a>
   <a href="#support">技术支持</a>
@@ -528,6 +529,43 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
   <h2>技术支持</h2>
   <p>如有问题，请联系技术支持团队。</p>
   <p style="color:#98a2b3;font-size:13px">© 2026 QA-Tool. All rights reserved.</p>
+</section>
+
+<section class="card" id="methods">
+  <h2>方法与参考（v4.2.0 新增）</h2>
+  <p>本软件的关键算法均以公开文献 / 标准为依据实现，并由「已知值用例」在 CI 中持续验证
+  （规范见仓库根目录 <code>KNOWN_VALUES.md</code>：来源优先级 NIST StRD → NIST/SEMATECH e-Handbook →
+  标准与文献 → 参考实现交叉验证）。下表列出各模块的方法出处。</p>
+  <table>
+    <tr><th>模块</th><th>方法</th><th>参考</th></tr>
+    <tr><td class="k">SPC 控制图</td><td>XBar-R/S · I-MR · P/NP/C/U · 控制图常数（A2/D3/D4/d2/c4）</td><td>Montgomery《Introduction to Statistical Quality Control》；AIAG SPC 手册</td></tr>
+    <tr><td class="k">判异规则</td><td>Nelson 8 规则 / WECO 规则</td><td>Nelson (1984)《The Shewhart Control Chart — Tests for Special Causes》</td></tr>
+    <tr><td class="k">EWMA / CUSUM</td><td>指数加权移动平均、表格型累积和</td><td>Roberts (1959)；Montgomery SQC ch.9</td></tr>
+    <tr><td class="k">MEWMA（v4.2.0）</td><td>多元指数加权移动平均 T²，逐点精确 Σ_Z(i)；r=1 退化为 Hotelling 个体观测图</td><td>Lowry, Woodall, Champ &amp; Rigdon (1992), Technometrics 34(1)</td></tr>
+    <tr><td class="k">广义方差图（v4.2.0）</td><td>|S| 控制图，b1 / b2 渐近常数</td><td>Montgomery SQC ch.11；Anderson (1958)</td></tr>
+    <tr><td class="k">Hotelling T²</td><td>多元均值监控，Phase I 子组限与个体观测限</td><td>Hotelling (1947)；Montgomery ch.11（Tracy-Young-Mason 1992）</td></tr>
+    <tr><td class="k">变点检测（v4.2.0）</td><td>PELT 剪枝精确分割（均值 / 均值+方差两种代价）</td><td>Killick, Fearnhead &amp; Eckley (2012), JASA 107(500)；罚项标定参照 Zhang &amp; Siegmund (2007)</td></tr>
+    <tr><td class="k">残差控制图（v4.2.0）</td><td>ARIMA 白化残差 + I-MR（自相关数据误报治理）</td><td>Montgomery SQC ch.10（自相关过程监控）</td></tr>
+    <tr><td class="k">过程能力</td><td>Cp/Cpk/Pp/Ppk/Cpm、组内/组间（Between-Within）分解</td><td>AIAG SPC 手册；ISO 22514 系列</td></tr>
+    <tr><td class="k">非正态能力</td><td>Box-Cox 变换、Johnson 变换族、百分位法、Bootstrap 区间（v4.2.0）</td><td>Box &amp; Cox (1964)；Johnson (1949)；ISO 22514-2（百分位法需 n ≥ 1000 才有名义覆盖率）</td></tr>
+    <tr><td class="k">MSA</td><td>Gage R&amp;R（均值-极差 / ANOVA，交叉与嵌套）、Type 1、偏倚线性、属性一致性（Cohen κ）</td><td>AIAG MSA 参考手册；Cohen (1960)</td></tr>
+    <tr><td class="k">假设检验</td><td>t / ANOVA / 方差齐性（Levene、Bartlett）/ 非参数 / TOST 等价检验</td><td>Montgomery《Design and Analysis of Experiments》；NIST e-Handbook</td></tr>
+    <tr><td class="k">DOE</td><td>全因子 / 部分因子 / CCD / Box-Behnken / Plackett-Burman / 田口 / 混合设计</td><td>Montgomery DOE；Box &amp; Hunter</td></tr>
+    <tr><td class="k">可靠性</td><td>Weibull 2P/3P/4P MLE（Fisher 信息区间）、Kaplan-Meier、Cox、Crow-AMSAA、ALT（Arrhenius / 逆幂律 / Eyring）</td><td>MIL-HDBK-189 / IEC 61164；Kaplan &amp; Meier (1958)；Draper &amp; Smith（回归外推区间）</td></tr>
+    <tr><td class="k">时间序列</td><td>ARIMA（AIC 网格自动选阶）、指数平滑、季节分解、ACF/PACF</td><td>Box, Jenkins &amp; Reinsel《Time Series Analysis》</td></tr>
+    <tr><td class="k">机器学习</td><td>CART（预/后剪枝）、随机森林（OOB）、梯度提升（内置 HistGradientBoosting）、MARS、SHAP 解释</td><td>Breiman (1984/2001)；Friedman (2001)；Hastie 等《ESL》；Lundberg &amp; Lee (2017)</td></tr>
+  </table>
+
+  <h3>判定凭证与追溯码</h3>
+  <p>每次分析完成时，软件会为该结论记录一份<b>凭证</b>：规则/算法版本、判定参数、数据指纹
+  （<code>pd-hash-v1</code>，含列名、列序与每一个值）、产生结论的软件版本与时间。它回答的是
+  「这个结论当时是怎么算出来的」。</p>
+  <ul>
+    <li><b>追溯码</b>：报告页脚给出 12 位追溯码，由本次报告所依据的全部凭证压缩而成；凭证内容（版本 / 参数 / 数据 / 软件版本）任一变化，追溯码即改变，可用于报告复核与版本比对</li>
+    <li><b>复核模式</b>：同一份数据重跑同一分析时，软件逐项比较新旧凭证与结果，输出「无变化」或具体差异项（参数改了、数据换了、规则版本变了）</li>
+    <li><b>项目文件</b>：<code>.qap</code> 1.8 起在分析条目中保存凭证段；1.6 / 1.7 旧文件仍可正常打开（视为无凭证）</li>
+    <li><b>存储范围</b>：凭证只记录参数与指纹，不保存原始数据副本；原始数据仍由项目文件或数据源管理</li>
+  </ul>
 </section>
 
 </main>

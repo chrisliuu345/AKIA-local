@@ -1242,8 +1242,16 @@ class MainWindow(QMainWindow):
 
     def _store_analysis(self, idx: int, result: dict):
         """统一收纳分析结果（analyses + 会话历史 + 侧栏历史）。"""
+        previous = self.analyses.get(idx)
         self.analyses[idx] = result.copy()
         self.analyses[idx]["_completed_at"] = datetime.now().isoformat(timespec="seconds")
+        self.analyses[idx]["credential"] = self._make_analysis_credential(idx, result)
+        if previous and previous.get("credential"):
+            # 复核模式（v4.2.0 P4-3）：同一 Tab 重跑时自动逐项比对上次结论
+            from core.evidence import diff_analysis_records
+
+            self.analyses[idx]["rerun_diff"] = diff_analysis_records(previous,
+                                                                     self.analyses[idx])
         self.session_manager.add_analysis(
             result.get("analysis_type", "Unknown"),
             result.get("params", {}),
@@ -1251,6 +1259,47 @@ class MainWindow(QMainWindow):
         atype = result.get("analysis_type", "")
         key_res = self._summarize_result(result.get("result", {}))
         self.sidebar.add_history(idx, atype, key_res)
+
+    def _make_analysis_credential(self, idx: int, result: dict) -> dict:
+        """为该次分析生成结论凭证（规则版本 + 参数 + 数据指纹 + 软件版本）。
+
+        v4.2.0 P4：让"当时是怎么算的"随分析记录一起留存 —— 报告页脚追溯码、
+        `.qap` 快照与复核模式（同数据重跑 diff）都以此为单一事实源。
+        """
+        from core.evidence import make_credential
+
+        rule_version = str(result.get("rule_version")
+                           or result.get("analysis_type")
+                           or result.get("chart_type")
+                           or f"tab_{idx}")
+        return make_credential(
+            rule_version=rule_version,
+            params=result.get("params", {}) or {},
+            df=self._analysis_source_frame(idx),
+            algorithm=str(result.get("analysis_type", "")),
+        ).to_dict()
+
+    def _analysis_source_frame(self, idx: int):
+        """取该 Tab 用于分析的数据作为指纹来源；取不到则返回 None（no-data 指纹）。
+
+        优先 Tab 自身的数据框（分析真正作用的对象），退回当前导入数据的第一张表。
+        指纹属附加信息，任何取数异常都不应影响分析流程本身。
+        """
+        try:
+            tab = self._tab_cache.get(idx)
+            frame = getattr(tab, "df", None)
+            if isinstance(frame, pd.DataFrame) and not frame.empty:
+                return frame
+        except Exception:
+            pass
+        try:
+            raw = (self.current_data or {}).get("raw_data") or {}
+            for candidate in raw.values():
+                if isinstance(candidate, pd.DataFrame) and not candidate.empty:
+                    return candidate
+        except Exception:
+            pass
+        return None
 
     def _show_toast(self, message: str, toast_type: str = "info"):
         """统一轻提示（替代阻塞式弹窗）。"""

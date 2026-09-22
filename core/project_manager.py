@@ -14,7 +14,8 @@ import pandas as pd
 
 from core.improvement_case import CASE_SCHEMA_VERSION
 
-VERSION = "1.7"
+# 1.8：analyses 条目增加 credential（判定凭证）；1.6/1.7 只读兼容（无凭证字段）
+VERSION = "1.8"
 RECENT_MAX = 8
 
 
@@ -44,6 +45,8 @@ class ProjectManager:
             "created": datetime.now().isoformat(),
             "sheet_count": len(raw_data),
             "analysis_count": len(analyses),
+            "credential_count": sum(1 for a in analyses.values()
+                                    if isinstance(a, dict) and a.get("credential")),
             "tab_indices": list(analyses.keys()),
             "has_context": project_context is not None,
             "case_count": len(cases or []),
@@ -60,11 +63,14 @@ class ProjectManager:
 
             analyses_serializable = {}
             for idx, a in analyses.items():
-                analyses_serializable[str(idx)] = {
+                entry = {
                     "analysis_type": a.get("analysis_type", ""),
                     "params": a.get("params", {}),
                     "result": _sanitize_for_json(a.get("result", {})),
                 }
+                if a.get("credential"):
+                    entry["credential"] = _sanitize_for_json(a["credential"])
+                analyses_serializable[str(idx)] = entry
             zf.writestr("analyses.json",
                         json.dumps(analyses_serializable, indent=2, ensure_ascii=False, default=str))
 

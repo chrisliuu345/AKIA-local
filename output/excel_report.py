@@ -96,7 +96,7 @@ class ExcelReport(BaseReportEngine):
     def _write_summary(self, ws, analyses, title):
         self._merge_safe(ws, 0, 0, 0, 4, title, self.formats["title"])
         ws.set_row(0, 30)
-        footer_text, _ = self.footers()
+        footer_text, _ = self.footers(trace=self.credential_trace(analyses))
         self._merge_safe(ws, 1, 0, 1, 4, footer_text, self.formats["footer"])
 
         headers = [
