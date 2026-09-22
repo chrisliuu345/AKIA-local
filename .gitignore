@@ -29,3 +29,25 @@ data/
 analysis_report.pdf
 analysis_report.md
 chat_history.md
+
+# 本地环境与凭据（禁止入库：密钥/令牌请勿写入仓库任何文件）
+.venv/
+.env
+.env.*
+!.env.example
+*.token
+*.secret
+secrets/
+*.pem
+!.github/workflows/*.pem
+
+# 覆盖率与测试产物
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+tests/output/
+
+# 发布检查与基准历史（本地生成）
+tools/perf_history.json
+TEMP/release_payload_draft.json
