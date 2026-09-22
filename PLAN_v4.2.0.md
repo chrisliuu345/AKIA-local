@@ -112,7 +112,9 @@ Linux 发布形态为 **AppImage 单一格式**。
 - 已知限制：案例的**步骤数据仍需由各 Tab 或引擎产出后喂给工作流**（TimeStudy / LineBalance 的引擎类型尚未直接接入编排层），
   完整"在各 Tab 内一键推进下一步"的联动归 P6 或 v4.3.0 案例工作台。
 
-### P6 收尾（≈0.5 周）
+### P6 收尾（≈0.5 周）✅ 2026-09-22 完成（源码 prerelease）
+
+**P6 完成记录**：版本 4.2.0 四端一致（`config/settings.py` / `version_info.txt` / `packaging/QA-Tool-installer.iss` / README·README.en·INSTALL_LINUX·ROADMAP·ROADMAP.en·guide.html），`tools/check_version.py` 通过；文档同步（README 新增 MEWMA/广义方差/变点检测/残差图与改善案例工作台条目、工具数 36 → 37、测试数 1950；ROADMAP 新增 v4.2.0 发布条目与要点章节；guide 版本标签与安装表更新）；全量逐文件回归 157 文件 / 1950 例全绿 + ruff 零告警 + 性能基线 8 项通过；**发布方式：源码 prerelease**（GitHub Source zip/tar.gz，不打安装包；Linux 后续如需打包仅出 AppImage）。
 
 - 版本 4.2.0 四端一致：`config/settings.py` · `version_info.txt` · `packaging/QA-Tool-installer.iss` · README/INSTALL/ROADMAP/guide → `tools/check_version.py` 通过
 - 文档同步（中英）+ 全量逐文件回归 + ruff + 性能基线

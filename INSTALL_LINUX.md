@@ -18,20 +18,20 @@ AppImage 是单文件分发格式，无需安装，双击即可运行。
 
 ```bash
 # 1. 下载 AppImage
-# 从 GitHub Releases 下载 QA-Tool-4.1.0-x86_64.AppImage
+# 从 GitHub Releases 下载 QA-Tool-4.2.0-x86_64.AppImage
 
 # 2. 添加执行权限
-chmod +x QA-Tool-4.1.0-x86_64.AppImage
+chmod +x QA-Tool-4.2.0-x86_64.AppImage
 
 # 3. 运行
-./QA-Tool-4.1.0-x86_64.AppImage
+./QA-Tool-4.2.0-x86_64.AppImage
 ```
 
 **可选: 集成到系统菜单**
 
 ```bash
 # 移动到 /opt 目录
-sudo mv QA-Tool-4.1.0-x86_64.AppImage /opt/qa-tool.AppImage
+sudo mv QA-Tool-4.2.0-x86_64.AppImage /opt/qa-tool.AppImage
 
 # 创建桌面入口
 cat > ~/.local/share/applications/qa-tool.desktop << EOF
@@ -177,11 +177,11 @@ python main.py
 
 ## 版本信息
 
-- **当前版本**: v4.1.0
+- **当前版本**: v4.2.0
 - **Python**: 3.11+ (推荐 3.14)
 - **Qt**: PySide6 6.5+
 - **发布格式**: Linux 仅 AppImage；Windows 为 Inno Setup 安装包
-- **测试**: 1798 用例 / 144 文件逐文件执行通过（2026-09-22 实测，规则见 `PYTEST_RULES.md`）
+- **测试**: 1950 用例 / 157 文件逐文件执行通过（2026-09-22 实测，规则见 `PYTEST_RULES.md`）
 
 ## 技术支持
 

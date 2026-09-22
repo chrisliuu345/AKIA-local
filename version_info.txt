@@ -1,8 +1,8 @@
 # UTF-8
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(4, 1, 0, 0),
-    prodvers=(4, 1, 0, 0),
+    filevers=(4, 2, 0, 0),
+    prodvers=(4, 2, 0, 0),
     mask=0x3f,
     flags=0x0,
     OS=0x40004,
@@ -17,12 +17,12 @@ VSVersionInfo(
         [
           StringStruct(u'CompanyName', u'QA-Tool'),
           StringStruct(u'FileDescription', u'QA-Tool 质量分析工具'),
-          StringStruct(u'FileVersion', u'4.1.0'),
+          StringStruct(u'FileVersion', u'4.2.0'),
           StringStruct(u'InternalName', u'QA-Tool'),
           StringStruct(u'LegalCopyright', u'Copyright © 2026 QA-Tool'),
           StringStruct(u'OriginalFilename', u'QA-Tool.exe'),
           StringStruct(u'ProductName', u'QA-Tool'),
-          StringStruct(u'ProductVersion', u'4.1.0')
+          StringStruct(u'ProductVersion', u'4.2.0')
         ]
       )
     ]),
