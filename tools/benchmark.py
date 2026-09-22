@@ -18,13 +18,15 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
+_MPL_CACHE = str(Path(tempfile.gettempdir()) / "qa_tool_mplcache")
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-os.environ.setdefault("MPLCONFIGDIR", "/tmp/mplcache")
+os.environ.setdefault("MPLCONFIGDIR", _MPL_CACHE)
 
 BASELINE_PATH = Path(__file__).resolve().parent / "perf_baseline.json"
 METRIC_KEYS = ("cold_start_s", "import_1m_rows_s", "chart_render_5k_s",
@@ -142,7 +144,7 @@ def run_all(only=None, *, isolate: bool = True) -> dict:
             [sys.executable, str(Path(__file__).resolve()), "--run-one", key],
             capture_output=True, text=True, timeout=900,
             check=False,
-            env={**os.environ, "MPLCONFIGDIR": "/tmp/mplcache",
+            env={**os.environ, "MPLCONFIGDIR": _MPL_CACHE,
                  "QT_QPA_PLATFORM": "offscreen"})
         if proc.returncode != 0:
             raise SystemExit(f"[benchmark] {key} 执行失败:\n{proc.stderr[-1500:]}")

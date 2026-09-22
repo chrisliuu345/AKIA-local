@@ -9,6 +9,7 @@ v3.7.1 由 ui/font_config.py 下沉至此：config/core/output 层原先反向�
 """
 
 import sys
+import shutil
 import subprocess
 import logging
 from functools import lru_cache
@@ -49,9 +50,13 @@ def _detect_linux_ui_font() -> str:
         "AR PL UMing CN",
         "Droid Sans Fallback",
     ]
+    fc_list = shutil.which("fc-list")
+    if not fc_list:
+        logger.debug("fc-list not available, using fallback")
+        return "sans-serif"
     try:
         result = subprocess.run(
-            ["fc-list", ":lang=zh", "-f", "%{family}\n"],
+            [fc_list, ":lang=zh", "-f", "%{family}\n"],
             capture_output=True,
             text=True,
             timeout=3,

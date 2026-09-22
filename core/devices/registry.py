@@ -68,8 +68,8 @@ class DeviceRegistry:
                     with open(_CONFIG_PATH, encoding="utf-8") as f:
                         cfg = json.load(f)
                     return cfg.get("devices", [])
-            except Exception:
-                pass
+            except Exception as e:  # noqa: BLE001 - 配置损坏时按"无设备"启动
+                logger.warning("设备配置读取失败，按空配置启动: %s", e)
             return []
 
     def save_persistent(self) -> None:
