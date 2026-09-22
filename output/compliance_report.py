@@ -46,7 +46,7 @@ class ComplianceReportGenerator:
                         "standard": t.get("standard", ""),
                         "format": t.get("format", "docx"),
                     })
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - 模板加载失败：告警并跳过该模板
                     _logger.warning(f"加载合规模板 '{fname}' 失败: {e}")
                     continue
         return result

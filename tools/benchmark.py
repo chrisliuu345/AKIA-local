@@ -30,7 +30,8 @@ os.environ.setdefault("MPLCONFIGDIR", _MPL_CACHE)
 
 BASELINE_PATH = Path(__file__).resolve().parent / "perf_baseline.json"
 METRIC_KEYS = ("cold_start_s", "import_1m_rows_s", "chart_render_5k_s",
-               "ml_train_5k_s")
+               "ml_train_5k_s", "spc_100k_rows_s", "spc_1m_rows_s",
+               "msa_100k_rows_s", "ml_train_100k_rows_s")
 DEFAULT_TOLERANCE = 3.0
 
 
@@ -121,11 +122,91 @@ def measure_ml_train_5k() -> float:
     return _timed(_run)
 
 
+def measure_spc_100k_rows() -> float:
+    """10 万点 I-MR 控制图（含 Nelson 8 规则判异）。"""
+    def _run():
+        import numpy as np
+        import pandas as pd
+
+        from analysis.spc import imr
+
+        rng = np.random.default_rng(17)
+        imr.analyze(pd.Series(rng.normal(10, 0.2, 100_000)))
+
+    return _timed(_run)
+
+
+def measure_spc_1m_rows() -> float:
+    """100 万点 I-MR 控制图（大样本档，验证线性可扩展性）。"""
+    def _run():
+        import numpy as np
+        import pandas as pd
+
+        from analysis.spc import imr
+
+        rng = np.random.default_rng(19)
+        imr.analyze(pd.Series(rng.normal(10, 0.2, 1_000_000)))
+
+    return _timed(_run)
+
+
+def measure_msa_100k_rows() -> float:
+    """10 万行交叉 Gage R&R（100 零件 × 5 操作员 × 200 次测量）。"""
+    def _run():
+        import numpy as np
+        import pandas as pd
+
+        from analysis.msa import gage_rr
+
+        rng = np.random.default_rng(23)
+        parts = 100
+        operators = 5
+        replicates = 200
+        total = parts * operators * replicates
+        part_ids = np.tile(np.arange(parts), operators * replicates)
+        operator_ids = np.repeat(np.arange(operators), parts * replicates)
+        measurement = (rng.normal(10, 0.5, total)
+                       + part_ids * 0.1
+                       + operator_ids * 0.02)
+        frame = pd.DataFrame({
+            "part": part_ids,
+            "operator": [chr(65 + i) for i in operator_ids],
+            "meas": measurement,
+        })
+        gage_rr.analyze_crossed(frame, "meas", "part", "operator")
+
+    return _timed(_run)
+
+
+def measure_ml_train_100k_rows() -> float:
+    """10 万行 × 10 特征梯度提升训练 + 指标。"""
+    def _run():
+        import numpy as np
+        import pandas as pd
+
+        from analysis.ml import train
+
+        rng = np.random.default_rng(29)
+        n = 100_000
+        features = [f"x{i}" for i in range(10)]
+        frame = pd.DataFrame({name: rng.normal(size=n) for name in features})
+        frame["y"] = (2 * frame["x0"] - frame["x1"] + 0.5 * frame["x2"]
+                      + rng.normal(0, 0.3, n))
+        train.fit_pipeline(frame, "y", features, model="boosting",
+                           cv=3, test_size=0.2)
+
+    return _timed(_run)
+
+
 MEASURES = {
     "cold_start_s": measure_cold_start,
     "import_1m_rows_s": measure_import_1m_rows,
     "chart_render_5k_s": measure_chart_render_5k,
     "ml_train_5k_s": measure_ml_train_5k,
+    "spc_100k_rows_s": measure_spc_100k_rows,
+    "spc_1m_rows_s": measure_spc_1m_rows,
+    "msa_100k_rows_s": measure_msa_100k_rows,
+    "ml_train_100k_rows_s": measure_ml_train_100k_rows,
 }
 
 

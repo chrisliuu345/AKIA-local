@@ -47,20 +47,20 @@ def _find_cjk_fonts():
                     pdfmetrics.registerFont(TTFont(fname, font_path, subfontIndex=0))
                     try:
                         pdfmetrics.registerFont(TTFont(fname_bold, font_path, subfontIndex=1))
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - 粗体子字体注册失败：退回常规字重
                         fname_bold = fname
                 else:
                     pdfmetrics.registerFont(TTFont(fname, font_path))
                     fname_bold = fname
 
                 return fname, fname_bold
-            except Exception:
+            except Exception:  # noqa: BLE001 - 该字体文件不可用：尝试下一个候选字体
                 continue
 
     try:
         pdfmetrics.registerFont(UnicodeCIDFont("STSong-Light"))
         return "STSong-Light", "STSong-Light"
-    except Exception:
+    except Exception:  # noqa: BLE001 - 内置 CJK 字体不可用：退回 Helvetica（无中文）
         return "Helvetica", "Helvetica-Bold"
 
 
@@ -155,7 +155,7 @@ class PDFReport(BaseReportEngine):
                         img = Image(BytesIO(charts[chart_key]), width=14 * cm, height=9 * cm)
                         self.story.append(Spacer(1, 0.4 * cm))
                         self.story.append(img)
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - 单张图表嵌入失败：跳过该图不中断报告
                         pass
 
             self.story.append(Spacer(1, 0.6 * cm))

@@ -24,5 +24,5 @@ def detect_period(data: pd.Series) -> int | None:
             return None
         peaks.sort(key=lambda x: x[1], reverse=True)
         return peaks[0][0]
-    except Exception:
+    except Exception:  # noqa: BLE001 - 预处理失败：返回 None 由调用方判定
         return None
