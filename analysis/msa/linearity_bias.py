@@ -31,7 +31,7 @@ def analyze_bias(data: pd.Series, reference: float) -> dict[str, Any]:
         "std_bias": round(float(std_bias), 6),
         "t_statistic": round(float(t_stat), 4),
         "p_value": round(float(p_value), 6),
-        "is_significant": p_value < 0.05,
+        "is_significant": bool(p_value < 0.05),
         "interpretation": "偏倚显著" if p_value < 0.05 else "偏倚不显著",
         "bias_values": bias_values.tolist(),
     }

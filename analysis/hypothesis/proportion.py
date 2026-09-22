@@ -61,7 +61,7 @@ def chi_square_gof(
         "chi2_statistic": round(float(chi2), 4),
         "df": df,
         "p_value": round(float(p_value), 6),
-        "is_significant": p_value < 0.05,
+        "is_significant": bool(p_value < 0.05),
         "observed": obs.tolist(),
         "expected": exp.tolist(),
         "residuals": ((obs - exp) / np.sqrt(exp_safe)).tolist(),
@@ -106,7 +106,7 @@ def chi_square_independence(
         "df": dof,
         "p_value": round(float(p_value), 6),
         "cramers_v": round(float(cramers_v), 4),
-        "is_significant": p_value < 0.05,
+        "is_significant": bool(p_value < 0.05),
         "expected_freq": expected.tolist(),
     }
 
@@ -179,5 +179,5 @@ def two_proportion_test(
         "z_statistic": round(float(z_stat), 4),
         "p_value": round(float(p_value), 6),
         "ci_95": (round(float(ci[0]), 6), round(float(ci[1]), 6)),
-        "is_significant": p_value < 0.05,
+        "is_significant": bool(p_value < 0.05),
     }
