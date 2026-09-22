@@ -21,7 +21,10 @@ from PySide6.QtGui import QFont, QPixmap, QPainter, QColor, QIcon
 from config.settings import APP_NAME, APP_VERSION
 from ui.font_config import get_ui_font
 
-warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*invalid value encountered.*")
+# 数值退化告警（log(0)、除零等）出自第三方与算法层的边界样本：
+# 不静默丢弃，改用 "once" —— 每个位置只提示一次，避免刷屏又保留可见性
+warnings.filterwarnings("once", category=RuntimeWarning,
+                        message=".*invalid value encountered.*")
 _ensure_font()
 
 

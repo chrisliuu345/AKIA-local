@@ -152,7 +152,7 @@ def compare_distributions(
                 "ad_statistic": gof_result.get("tests", {}).get("anderson_darling", {}).get("statistic"),
                 "ks_p_value": gof_result.get("tests", {}).get("kolmogorov_smirnov", {}).get("p_value"),
             })
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 单个分布拟合失败：记入 comparisons 供用户查看
             comparisons.append({
                 "distribution": dist_name,
                 "error": str(e),
@@ -295,7 +295,7 @@ def _anderson_darling_test(data: np.ndarray, dist) -> dict[str, Any]:
             },
             "is_normal": result.statistic < result.critical_values[2],
         }
-    except Exception:
+    except Exception:  # noqa: BLE001 - Anderson-Darling 不可用：退回经验 CDF 路径
         sorted_data = np.sort(data)
         n = len(sorted_data)
         cdf_values = dist.cdf(sorted_data)
@@ -368,5 +368,5 @@ def _compute_log_likelihood(data: np.ndarray, distribution: str, params: dict[st
         log_pdf = dist.logpdf(data)
         log_pdf = np.where(np.isfinite(log_pdf), log_pdf, -1e10)
         return float(np.sum(log_pdf))
-    except Exception:
+    except Exception:  # noqa: BLE001 - 对数似然数值失败：按 0 处理（仅用于排序）
         return 0.0

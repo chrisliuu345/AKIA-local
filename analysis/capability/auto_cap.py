@@ -133,7 +133,7 @@ def _fit_all_distributions(data: np.ndarray) -> list[dict[str, Any]]:
                 "ks_statistic": float(ks_stat),
                 "ks_p_value": float(ks_p),
             })
-        except Exception:
+        except Exception:  # noqa: BLE001 - 分布拟合失败：跳过该候选分布继续比较
             continue
 
     return sorted(results, key=lambda x: x["aic"])

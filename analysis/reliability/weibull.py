@@ -112,7 +112,7 @@ class WeibullAnalyzer:
                     else:
                         out["warnings"].append(
                             "4P Weibull 拟合未显著改善 (AIC ≥ 2P)，采用 2P 结果")
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - 3P/4P 拟合失败：退回 2P 并记录 warning
                     out["warnings"].append(f"4P 拟合失败: {e}，采用 2P 结果")
             elif three_parameter and len(failure_only) >= 10:
                 try:
@@ -122,7 +122,7 @@ class WeibullAnalyzer:
                     else:
                         out["warnings"].append(
                             "3P Weibull 拟合未显著改善 (AIC ≥ 2P)，采用 2P 结果")
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - 3P/4P 拟合失败：退回 2P 并记录 warning
                     out["warnings"].append(f"3P 拟合失败: {e}，采用 2P 结果")
 
         if result:

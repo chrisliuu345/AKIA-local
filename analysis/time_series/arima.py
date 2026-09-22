@@ -90,7 +90,7 @@ def analyze(
     try:
         model = ARIMA(clean, order=best_order)
         fit = model.fit()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 拟合失败：返回结构化 error 供 UI 提示
         return {
             "chart_type": "ARIMA",
             "analysis_type": "time_series.arima",
@@ -101,7 +101,7 @@ def analyze(
 
     try:
         forecast_result = fit.get_forecast(steps=forecast_steps)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 预测索引不可用等：返回结构化 error
         return {
             "chart_type": "ARIMA",
             "analysis_type": "time_series.arima",
@@ -212,7 +212,7 @@ def _auto_select(
                         "bic": round(bic, 4),
                         "log_likelihood": round(float(fit.llf), 4),
                     })
-                except Exception:
+                except Exception:  # noqa: BLE001 - 网格试探：该阶数不收敛即跳过
                     continue
 
     if not candidates:

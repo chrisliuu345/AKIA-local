@@ -67,7 +67,7 @@ def analyze(
             decomposition = seasonal_decompose(
                 clean, model=model, period=period, extrapolate_trend="period"
             )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 分解失败：返回结构化错误
         return {
             "chart_type": "Seasonal Decomposition",
             "analysis_type": "time_series.seasonal_decomposition",

@@ -129,7 +129,7 @@ class PptxReport(BaseReportEngine):
                 img.top = img_top
                 img.width = Inches(w_in)
                 img.height = Inches(h_in)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 文本排版失败：退回默认文本框
                 note = slide.shapes.add_textbox(
                     Inches(0.55), Inches(3.2), Inches(12.2), Inches(0.5))
                 note.text_frame.paragraphs[0].add_run().text = "（图表数据不可用）"

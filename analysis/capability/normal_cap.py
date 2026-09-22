@@ -7,7 +7,11 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 from config.settings import CONTROL_CHART_CONSTANTS
-from analysis.capability._utils import get_capability_grade
+from analysis.capability._utils import (
+    degenerate_spread_error,
+    get_capability_grade,
+    spec_limit_error,
+)
 
 
 def analyze(
@@ -21,6 +25,21 @@ def analyze(
     n = len(clean)
     if n < 2:
         raise ValueError(f"数据量不足: {n}")
+
+    limit_error = spec_limit_error(usl, lsl)
+    spread_error = degenerate_spread_error(clean, usl, lsl)
+    if limit_error or spread_error:
+        return {
+            "chart_type": "Normal Capability",
+            "summary": {
+                "sample_size": n,
+                "mean": round(float(np.mean(clean)), 6),
+                "std_overall": round(float(np.std(clean, ddof=1)), 12),
+                "std_within": None,
+                "subgroup_size": subgroup_size,
+            },
+            "error": limit_error or spread_error,
+        }
 
     mean = float(np.mean(clean))
     std_overall = float(np.std(clean, ddof=1))

@@ -301,7 +301,7 @@ def _protect_secrets(values: dict) -> dict:
                 if encrypted:
                     out[f"{key}_enc"] = encrypted
                     continue
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 加密失败：告警后退回明文保存（不阻断）
                 logging.getLogger("QA-Tool.Settings").warning(
                     "敏感配置 %s 加密失败，按明文保存: %s", key, e)
         out[key] = value
@@ -331,7 +331,7 @@ def get_secret(key: str, default: str = "") -> str:
             value = decrypt_secret(encrypted)
             if value:
                 return value
-        except Exception:
+        except Exception:  # noqa: BLE001 - 加密失败：告警后退回明文保存（不阻断）
             pass
     return get_setting(key, default)
 
