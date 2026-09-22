@@ -146,7 +146,7 @@ def _auto_select_transform(data: np.ndarray) -> dict[str, Any]:
                 if score < best_score:
                     best_score = score
                     best_result = result
-        except Exception:
+        except Exception:  # noqa: BLE001 - 单组参数拟合失败：跳过并试探下一组
             continue
 
     if best_result is None:
@@ -174,7 +174,7 @@ def _fit_johnson(data: np.ndarray, jtype: str) -> dict[str, Any]:
 
     try:
         params = _estimate_params_moment(data, jtype)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 矩估计失败：退回恒等变换参数（transformed 仍可用）
         params = {"gamma": 0, "delta": 1, "xi": x_min, "lambda": x_range}
 
     transformed = np.array([transform_value(x, params, jtype) for x in data])

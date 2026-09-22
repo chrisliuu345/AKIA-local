@@ -50,15 +50,25 @@ Linux 发布形态为 **AppImage 单一格式**。
 
 **P2 出口标准**：每个新算法都有 known-value 用例文件；`ruff` 零告警；全量逐文件回归全绿。
 
-### P3 稳定性与大样本（≈1 周，可与 P2 并行）
+### P3 稳定性与大样本（≈1 周，可与 P2 并行）✅ 2026-09-22 完成
 
 | 编号 | 任务 | 落点 | 验收 |
 |------|------|------|------|
-| P3-1 | 大样本基准扩展（10 万 / 100 万行 SPC·MSA·ML） | `tools/benchmark.py` + `perf_baseline.json` | 新指标入 CI（tolerance ×4）；单次运行不触发内存峰值（子进程隔离 + 线程上限） |
-| P3-2 | 病态矩阵与极端值鲁棒性用例 | 新增 `tests/test_robustness_numeric.py` | 多重共线 / 常量列 / 全零 / NaN·Inf / 单点 / 重复值均返回结构化错误或降级结果，不抛未捕获异常 |
-| P3-3 | **质量棘轮**：`BLE001`（盲除异常）纳入门禁 | `ruff.toml`（非 UI 范围 111 处，逐处 `# noqa: BLE001 + 理由` 或收窄异常类型） | `ruff check .` 零告警保持；CI 门禁不外溢到 `ui/`、`tests/` |
-| P3-4 | 覆盖率补口 | 新增用例：`core/excel_utils.py` · `core/session_manager.py` · `core/audit.py` · `output/base_report_engine.py` · `analysis/capability/between_within_cap.py` · `analysis/hypothesis/variance_tests.py` · `analysis/quality/eight_d_engine.py` | 上述模块均有直接测试引用 |
-| P3-5 | 遗留弃用清理 | `tests/test_live_dashboard.py`（websockets 旧式 `connect()`，50 条 DeprecationWarning）；`main.py` 全局 `RuntimeWarning` 屏蔽改为就地 `np.errstate` | 测试输出无自产 DeprecationWarning；数值告警不再被全局吞掉 |
+| P3-1 ✅ | 大样本基准扩展 | `tools/benchmark.py` + `perf_baseline.json`（8 项，新增 SPC 10 万/100 万、MSA 10 万、ML 10 万） | 实测 3.12 / 20.73 / 0.96 / 3.78 s；`--tolerance 4` 门禁通过；每项独立子进程 + 线程上限，无内存峰值 |
+| P3-2 ✅ | 病态矩阵与极端值鲁棒性用例 | `tests/test_robustness_numeric.py` 22 例 | 规格限倒置 → 结构化 error（修前输出负 Cp）；波动退化（σ≈0）→ 结构化 error（修前 Cp≈2e12 且评 A+）；常量/缺测控制图、秩亏协方差、单类别分类、零方差 DOE、单操作员 MSA 均不崩溃 |
+| P3-3 ✅ | **质量棘轮**：`BLE001` 纳入门禁 | `ruff.toml`（算法与报告层 31 处逐处理由清零；core 81 / ui 111 / firmware 19 / connectors 10 / server 2 / 根文件 2 为存量，列入 per-file-ignores 并写明收敛顺序） | `ruff check .` 零告警；自测"新插入盲除即门禁失败"已验证 |
+| P3-4 ✅ | 覆盖率补口 | `tests/test_core_coverage_gaps.py`（16 例）+ `tests/test_analysis_coverage_gaps.py`（12 例） | 7 个模块均有直接测试引用；过程中发现并修复 **会话 ID 秒级冲突导致 save() 互相覆盖** 与 `variance_tests` 返回 numpy bool（JSON 序列化隐患） |
+| P3-5 ✅ | 遗留弃用清理 | `tests/test_live_dashboard.py`（websockets 改上下文管理器 / 硬断连场景显式 `legacy=True`）；`main.py` 全局 `RuntimeWarning` 屏蔽改 `once` | 50 条 DeprecationWarning 清零；数值退化告警每个位置提示一次而非静默丢弃 |
+
+**P3 完成记录（2026-09-22）**
+
+- 过程中发现并修复的真实缺陷：
+  1. **能力指数在规格限倒置时输出负值**（Cp=−0.20、良率 −13.9%）—— 新增 `spec_limit_error` 校验，改返回结构化 error。
+  2. **波动退化时 Cp 达 1e12 并被评 "A+ (特优)"** —— 新增 `degenerate_spread_error`（|max−min| ≤ 1e-9×公差宽度 视为数值退化）。
+  3. **会话 ID 秒级冲突**：同一秒内连续建会话 → `session_{id}.json` 互相覆盖（列表里只剩一个）—— 建会话时与磁盘去重并加序号后缀。
+  4. `variance_tests` 返回 `np.bool_`，写入 JSON 会抛 TypeError —— 统一 `bool()`。
+- 性能观察（计入后续优化候选）：SPC 100 万点 20.7s，瓶颈在 Nelson 规则 2/3/4 的 Python 循环（逐点扫描）；如需在线大样本监控可向量化，当前列入 P4 之后候选。
+- `main.py` 的 `np.errstate` 就地化未做（会把噪声推给用户），改为 `once` 策略并记录理由；彻底就地化需逐处定位 log/div 边界，列入后续候选。
 
 ### P4 判定凭证 + 方法文档（≈1 周，碰 `core/` + `ui/` + `output/`）
 

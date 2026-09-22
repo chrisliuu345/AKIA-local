@@ -18,7 +18,14 @@ class SessionManager:
         os.makedirs(self.sessions_dir, exist_ok=True)
 
     def create_session(self, name: str = "", file_path: str = "") -> str:
-        session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+        # 会话 ID 精确到秒；同一秒内连续创建会撞 ID 导致 save() 互相覆盖，
+        # 因此与磁盘上已有文件去重（首个仍保持 YYYYmmdd_HHMMSS 格式）
+        base_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+        session_id = base_id
+        suffix = 1
+        while os.path.exists(os.path.join(self.sessions_dir, f"session_{session_id}.json")):
+            suffix += 1
+            session_id = f"{base_id}_{suffix}"
         self.current_session = {
             "session_id": session_id,
             "name": name or f"分析会话_{session_id}",

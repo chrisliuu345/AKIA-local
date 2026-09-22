@@ -7,7 +7,11 @@ import warnings
 import numpy as np
 import pandas as pd
 from scipy import stats
-from analysis.capability._utils import get_capability_grade
+from analysis.capability._utils import (
+    degenerate_spread_error,
+    get_capability_grade,
+    spec_limit_error,
+)
 from analysis.capability.johnson_transform import (
     johnson_transform,
     transform_value as johnson_transform_value,
@@ -38,6 +42,23 @@ def analyze(
     n = len(clean)
     if n < 5:
         raise ValueError(f"数据量不足: {n}")
+
+    limit_error = spec_limit_error(usl, lsl)
+    spread_error = degenerate_spread_error(clean, usl, lsl)
+    if limit_error or spread_error:
+        return {
+            "chart_type": "Non-Normal Capability",
+            "method": method,
+            "transform_param": None,
+            "summary": {
+                "sample_size": n,
+                "original_mean": round(float(np.mean(clean)), 6),
+                "original_std": round(float(np.std(clean, ddof=1)), 12),
+                "skewness": None,
+                "kurtosis": None,
+            },
+            "error": limit_error or spread_error,
+        }
 
     if method == "percentile":
         return _analyze_percentile(clean, usl, lsl)
