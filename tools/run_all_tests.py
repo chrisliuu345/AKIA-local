@@ -43,7 +43,7 @@ def test(cat, desc):
             )()
             try:
                 fn()
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 冒烟脚本：逐项收集异常并记为 FAIL
                 tr.status = "FAIL"
                 tr.error = f"{type(e).__name__}: {e}"
             results.append(tr)

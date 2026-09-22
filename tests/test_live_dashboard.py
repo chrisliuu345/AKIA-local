@@ -93,20 +93,24 @@ def test_ws_broadcast(server):
 
 
 def test_50_concurrent_ws_connections(server):
+    import contextlib
+
     import websockets.sync.client as ws_client
 
     bus, _store, addr = server
     n = 50
-    clients = []
-    for _ in range(n):
-        try:
-            clients.append(ws_client.connect(f"ws://{addr}/ws/stream"))
-        except Exception as e:
-            pytest.fail(f"第 {len(clients)+1} 个连接失败: {e}")
+    # websockets 现代 API 要求 connect() 作为上下文管理器使用（否则弃用告警）
+    with contextlib.ExitStack() as stack:
+        clients = []
+        for _ in range(n):
+            try:
+                clients.append(stack.enter_context(
+                    ws_client.connect(f"ws://{addr}/ws/stream")))
+            except Exception as e:
+                pytest.fail(f"第 {len(clients)+1} 个连接失败: {e}")
 
-    ok_connected = len(clients)
-    assert ok_connected == n, f"只有 {ok_connected}/{n} 连接成功"
-    try:
+        ok_connected = len(clients)
+        assert ok_connected == n, f"只有 {ok_connected}/{n} 连接成功"
         bus.publish("line-01", [Sample("line-01", "CH0", 9.0, 100.0)])
         t0 = time.time()
         for i, ws in enumerate(clients):
@@ -120,12 +124,6 @@ def test_50_concurrent_ws_connections(server):
                     got = True
                     break
             assert got, f"第 {i} 个连接未收到广播"
-    finally:
-        for ws in clients:
-            try:
-                ws.close()
-            except Exception:
-                pass
 
 
 def test_dashboard_page_served(server):
@@ -186,7 +184,8 @@ def test_ws_abrupt_disconnect_then_continue(server):
     """B3: 客户端硬断连后服务照常广播, 新连接可继续收数。"""
     import websockets.sync.client as ws_client
     bus, _store, addr = server
-    ws = ws_client.connect(f"ws://{addr}/ws/stream")
+    # 硬断连场景需要直接连接（跳过上下文管理器的优雅关闭），显式声明 legacy
+    ws = ws_client.connect(f"ws://{addr}/ws/stream", legacy=True)
     import socket as _sock
     ws.socket.shutdown(_sock.SHUT_RDWR)
     ws.socket.close()  # 客户端硬断连(跳过 WS 关闭握手)

@@ -20,14 +20,14 @@ def variance_tests(*groups: pd.Series, confidence_level: float = 0.95) -> dict[s
     results["levene"] = {
         "statistic": round(float(lev_stat), 4),
         "p_value": round(float(lev_p), 6),
-        "equal_variance": lev_p > alpha,
+        "equal_variance": bool(lev_p > alpha),
     }
 
     bart_stat, bart_p = stats.bartlett(*clean_groups)
     results["bartlett"] = {
         "statistic": round(float(bart_stat), 4),
         "p_value": round(float(bart_p), 6),
-        "equal_variance": bart_p > alpha,
+        "equal_variance": bool(bart_p > alpha),
     }
 
     grouped = []

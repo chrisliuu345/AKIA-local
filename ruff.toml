@@ -13,6 +13,10 @@ select = [
     "T10", "ISC", "PIE",
     "RUF012", "RUF021", "RUF034", "RUF059",
     "PLW1510", "PLW2901", "PLW0602",
+    # 盲除异常棘轮（2026-09-22, v4.2.0 P3-3）：算法与报告层
+    # （analysis/output/config/tools）已逐处补理由清零，新代码再出现即门禁失败；
+    # core/ui 等存量目录见 [lint.per-file-ignores]，按 PLAN_v4.2.0.md 逐步收敛
+    "BLE001",
     # 类型现代化（2026-09-15 全量迁移：PEP 585/604 注解 + 弃用 typing 导入 + 隐式 Optional）
     "UP", "RUF013",
 ]
@@ -20,4 +24,18 @@ exclude = [".venv", "build", "dist"]
 
 [lint.per-file-ignores]
 # 测试桩类常用类级可变属性（如调用记录列表），属有意为之
-"tests/*.py" = ["RUF012"]
+"tests/*.py" = ["RUF012", "BLE001"]
+# 盲除异常存量（计数为 2026-09-22 实测）：core 81 · ui 111 · firmware 19 ·
+# connectors 10 · server 2 · 根文件 2
+# 收敛顺序：core/agent 与 core/streaming（含日志）→ core/devices → connectors/server → ui
+"core/*.py" = ["BLE001"]
+"core/**/*.py" = ["BLE001"]
+"ui/*.py" = ["BLE001"]
+"ui/**/*.py" = ["BLE001"]
+"connectors/*.py" = ["BLE001"]
+"connectors/**/*.py" = ["BLE001"]
+"server/*.py" = ["BLE001"]
+# 设备端固件脚本（MicroPython，硬件循环里需吞异常保持采集）
+"firmware/*.py" = ["BLE001"]
+"main.py" = ["BLE001"]
+"build_pyinstaller.py" = ["BLE001"]

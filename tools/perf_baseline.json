@@ -2,5 +2,9 @@
   "cold_start_s": 2.296,
   "import_1m_rows_s": 14.269,
   "chart_render_5k_s": 1.732,
-  "ml_train_5k_s": 1.588
+  "ml_train_5k_s": 1.588,
+  "spc_100k_rows_s": 3.292,
+  "spc_1m_rows_s": 21.956,
+  "msa_100k_rows_s": 1.044,
+  "ml_train_100k_rows_s": 3.936
 }

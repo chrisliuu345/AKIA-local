@@ -32,7 +32,7 @@ def _check_shap():
     try:
         import shap  # noqa: F401
         return True
-    except Exception:
+    except Exception:  # noqa: BLE001 - 可选依赖探测：导入失败即视为不可用
         return False
 
 
@@ -157,11 +157,11 @@ class RootCauseAnalyzer:
                 continue
             try:
                 rp = abs(sp_stats.pearsonr(xv[mask], yv[mask])[0])
-            except Exception:
+            except Exception:  # noqa: BLE001 - 常量/退化列相关系数无定义，按 0 处理
                 rp = 0.0
             try:
                 rs = abs(sp_stats.spearmanr(xv[mask], yv[mask])[0])
-            except Exception:
+            except Exception:  # noqa: BLE001 - 同上（秩相关退化情形）
                 rs = 0.0
             result[c] = float(max(rp if np.isfinite(rp) else 0.0,
                                   rs if np.isfinite(rs) else 0.0))

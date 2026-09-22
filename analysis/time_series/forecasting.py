@@ -189,7 +189,7 @@ def _run_model(
             }
         else:
             return None
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 单模型失败：记录 warning 并跳过
         import logging
         logging.getLogger(__name__).warning("Model %s failed: %s", model_name, e)
         return None

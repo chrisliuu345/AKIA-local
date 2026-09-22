@@ -89,7 +89,7 @@ def analyze(
             initialization_method="estimated",
         )
         fit = model.fit(optimized=True, remove_bias=False)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 平滑拟合失败：返回结构化错误
         return {
             "chart_type": "Exponential Smoothing",
             "analysis_type": "time_series.exponential_smoothing",
