@@ -532,7 +532,7 @@ def oc_curve(
                 pwr = power_one_way_anova(k, n, kwargs.get("f_squared", 0.25), kwargs.get("alpha", 0.05))
             else:
                 pwr = 0.0
-        except Exception:
+        except Exception:  # noqa: BLE001 - 功效数值计算失败：记 0 并继续
             pwr = 0.0
         power_values.append(round(pwr, 4))
 

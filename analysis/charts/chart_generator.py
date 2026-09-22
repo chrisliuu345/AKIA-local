@@ -483,7 +483,7 @@ def _build_contour(data: dict, options: dict) -> Figure:
     X, Y = np.meshgrid(xi, yi)
     try:
         Z = griddata((x_u, y_u), z_u, (X, Y), method="cubic")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 插值退化：退回线性插值
         Z = griddata((x_u, y_u), z_u, (X, Y), method="linear")
     contour = ax.contourf(X, Y, Z, levels=20, cmap="RdYlBu_r")
     fig.colorbar(contour, ax=ax, label=resp)
@@ -524,7 +524,7 @@ def _build_surface_3d(data: dict, options: dict) -> Figure:
     X, Y = np.meshgrid(xi, yi)
     try:
         Z = griddata((x_u, y_u), z_u, (X, Y), method="cubic")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 插值退化：退回线性插值
         Z = griddata((x_u, y_u), z_u, (X, Y), method="linear")
     surf = ax.plot_surface(X, Y, Z, cmap="RdYlBu_r", alpha=0.8, linewidth=0, antialiased=True)
     fig.colorbar(surf, ax=ax, shrink=0.5, aspect=10, label=resp)
