@@ -6,13 +6,22 @@ ARIMA 建模 — 手动定阶 + 网格搜索自动选阶 + 残差诊断 + 预测
   auto_select()   — 网格搜索自动选阶
 """
 
+import warnings
 from typing import Any
 
 import numpy as np
 import pandas as pd
-from statsmodels.tsa.arima.model import ARIMA
 from statsmodels.stats.diagnostic import acorr_ljungbox
 from statsmodels.stats.stattools import durbin_watson
+from statsmodels.tools.sm_exceptions import (
+    ConvergenceWarning as _SMConvergenceWarning,
+    EstimationWarning as _SMEstimationWarning,
+)
+from statsmodels.tools.sm_exceptions import ValueWarning as _SMValueWarning
+from statsmodels.tsa.arima.model import ARIMA
+
+# 网格搜索会大量试探不可行阶数，这些告警属预期噪声（选定模型的告警仍会正常抛出）
+_SEARCH_WARNINGS = (_SMConvergenceWarning, _SMEstimationWarning, _SMValueWarning)
 
 
 def analyze(
@@ -41,7 +50,9 @@ def analyze(
     Returns:
         ARIMA 分析结果字典
     """
-    clean = data.dropna().astype(float)
+    # 索引必须连续：带缺失值的序列 dropna 后索引有空洞，
+    # statsmodels 无法为其构建预测索引（get_forecast 抛 "No supported index"）
+    clean = data.dropna().astype(float).reset_index(drop=True)
     n = len(clean)
 
     if n < 10:
@@ -49,6 +60,13 @@ def analyze(
             "chart_type": "ARIMA",
             "analysis_type": "time_series.arima",
             "error": f"数据点不足: {n}（最少需要 10 个）",
+        }
+
+    if float(np.std(clean)) == 0.0:
+        return {
+            "chart_type": "ARIMA",
+            "analysis_type": "time_series.arima",
+            "error": "序列为常量（标准差=0），ARIMA 无可建模的时序结构",
         }
 
     candidates = []
@@ -81,7 +99,14 @@ def analyze(
 
     fitted = fit.fittedvalues
 
-    forecast_result = fit.get_forecast(steps=forecast_steps)
+    try:
+        forecast_result = fit.get_forecast(steps=forecast_steps)
+    except Exception as e:
+        return {
+            "chart_type": "ARIMA",
+            "analysis_type": "time_series.arima",
+            "error": f"ARIMA{best_order} 预测失败: {str(e)}",
+        }
     forecast_vals = forecast_result.predicted_mean
     conf_int = forecast_result.conf_int(alpha=1 - confidence_level)
 
@@ -161,16 +186,24 @@ def _auto_select(
 ) -> tuple[tuple[int, int, int] | None, list[dict]]:
     """内部网格搜索"""
     candidates = []
-    len(data)
+    n = len(data)
+    # 短序列上高阶模型无意义且易假收敛：按样本量收窄搜索空间
+    max_p = max(1, min(int(max_p), n // 5))
+    max_q = max(1, min(int(max_q), n // 5))
+    max_d = max(0, min(int(max_d), (n - 1) // 10))
 
     for d in range(max_d + 1):
         for p in range(max_p + 1):
             for q in range(max_q + 1):
                 if p == 0 and q == 0:
                     continue
+                if p + q + d + 1 >= n:          # 参数个数必须少于观测数
+                    continue
                 try:
-                    model = ARIMA(data, order=(p, d, q))
-                    fit = model.fit()
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore", _SEARCH_WARNINGS)
+                        model = ARIMA(data, order=(p, d, q))
+                        fit = model.fit()
                     aic = float(fit.aic)
                     bic = float(fit.bic)
                     candidates.append({

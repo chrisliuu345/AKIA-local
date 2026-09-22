@@ -12,6 +12,41 @@ from typing import Any
 from scipy import stats as sp_stats
 
 
+def _log_life_interval(
+    x: np.ndarray,
+    y: np.ndarray,
+    x0: float,
+    confidence: float = 0.95,
+) -> dict[str, float]:
+    """对数寿命回归在使用条件下的外推区间（Draper & Smith, ch.1）。
+
+    旧实现直接用 ``±1.96·se``（残差标准误），既忽略外推点距离 x0 的杠杆项，
+    也把"平均寿命的置信区间"与"单样本预测区间"混为一谈。此处分别给出:
+
+        se_mean = se·sqrt(1/n + (x0 − x̄)²/Sxx)            → 平均寿命 CI
+        se_pred = se·sqrt(1 + 1/n + (x0 − x̄)²/Sxx)        → 单样本 PI
+
+    自由度取 n−2，分位数用 t 而非固定 1.96。
+    """
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    n = x.size
+    slope, intercept, _r, _p, _se = sp_stats.linregress(x, y)
+    residuals = y - (slope * x + intercept)
+    dof = max(n - 2, 1)
+    se = float(np.sqrt(np.sum(residuals ** 2) / dof))
+    x_bar = float(np.mean(x))
+    sxx = float(np.sum((x - x_bar) ** 2))
+    lever = (x0 - x_bar) ** 2 / sxx if sxx > 0 else 0.0
+    t_crit = float(sp_stats.t.ppf(1 - (1 - confidence) / 2, dof))
+    return {
+        "se_log": se,
+        "half_mean": t_crit * se * math.sqrt(1.0 / n + lever),
+        "half_pred": t_crit * se * math.sqrt(1.0 + 1.0 / n + lever),
+        "dof": float(dof),
+    }
+
+
 class ALTEngine:
     """加速寿命试验分析: Arrhenius (温度) + 逆幂律 (电压/压力)"""
 
@@ -52,11 +87,12 @@ class ALTEngine:
         af = np.exp(Ea_fitted / k * (1.0 / T_use - 1.0 / np.mean(stress_temp)))
         life_pred = A_fitted * np.exp(Ea_fitted / (k * T_use))
 
-        y_pred = slope * x + intercept
-        residuals = y - y_pred
-        se = np.sqrt(np.sum(residuals ** 2) / (len(x) - 2))
-        life_low = np.exp(np.log(life_pred) - 1.96 * se)
-        life_high = np.exp(np.log(life_pred) + 1.96 * se)
+        interval = _log_life_interval(x, y, 1.0 / (k * T_use))
+        log_life = math.log(life_pred)
+        life_low = math.exp(log_life - interval["half_mean"])
+        life_high = math.exp(log_life + interval["half_mean"])
+        pred_low = math.exp(log_life - interval["half_pred"])
+        pred_high = math.exp(log_life + interval["half_pred"])
 
         return {
             "model": "Arrhenius",
@@ -67,6 +103,9 @@ class ALTEngine:
             "life_at_use": round(life_pred, 2),
             "life_95ci_low": round(life_low, 2),
             "life_95ci_high": round(life_high, 2),
+            "life_pred_95ci_low": round(pred_low, 2),
+            "life_pred_95ci_high": round(pred_high, 2),
+            "se_log_life": round(interval["se_log"], 4),
             "use_temperature_K": round(T_use, 2),
         }
 
@@ -99,10 +138,12 @@ class ALTEngine:
         af = (np.mean(stress) / use_stress) ** n_fitted
         life_pred = C_fitted * (use_stress ** (-n_fitted))
 
-        y_pred = -n_fitted * x + np.log(C_fitted)
-        se = np.sqrt(np.sum((y - y_pred) ** 2) / (len(x) - 2))
-        life_low = np.exp(np.log(life_pred) - 1.96 * se)
-        life_high = np.exp(np.log(life_pred) + 1.96 * se)
+        interval = _log_life_interval(x, y, math.log(use_stress))
+        log_life = math.log(life_pred)
+        life_low = math.exp(log_life - interval["half_mean"])
+        life_high = math.exp(log_life + interval["half_mean"])
+        pred_low = math.exp(log_life - interval["half_pred"])
+        pred_high = math.exp(log_life + interval["half_pred"])
 
         return {
             "model": "Inverse Power Law",
@@ -113,6 +154,9 @@ class ALTEngine:
             "life_at_use": round(life_pred, 2),
             "life_95ci_low": round(life_low, 2),
             "life_95ci_high": round(life_high, 2),
+            "life_pred_95ci_low": round(pred_low, 2),
+            "life_pred_95ci_high": round(pred_high, 2),
+            "se_log_life": round(interval["se_log"], 4),
             "use_stress": use_stress,
         }
 
@@ -149,11 +193,12 @@ class ALTEngine:
         life_stress = (A_fitted / np.mean(stress_temp)) * math.exp(B_fitted / np.mean(stress_temp))
         af = life_pred / life_stress if life_stress > 0 else float("inf")
 
-        y_pred = slope * x + intercept
-        residuals = y - y_pred
-        se = np.sqrt(np.sum(residuals ** 2) / (len(x) - 2))
-        life_low = math.exp(math.log(life_pred) - 1.96 * se)
-        life_high = math.exp(math.log(life_pred) + 1.96 * se)
+        interval = _log_life_interval(x, y, 1.0 / T_use)
+        log_life = math.log(life_pred)
+        life_low = math.exp(log_life - interval["half_mean"])
+        life_high = math.exp(log_life + interval["half_mean"])
+        pred_low = math.exp(log_life - interval["half_pred"])
+        pred_high = math.exp(log_life + interval["half_pred"])
 
         return {
             "model": "Eyring",
@@ -164,6 +209,9 @@ class ALTEngine:
             "life_at_use": round(life_pred, 2),
             "life_95ci_low": round(life_low, 2),
             "life_95ci_high": round(life_high, 2),
+            "life_pred_95ci_low": round(pred_low, 2),
+            "life_pred_95ci_high": round(pred_high, 2),
+            "se_log_life": round(interval["se_log"], 4),
             "use_temperature_K": round(T_use, 2),
         }
 
