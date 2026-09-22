@@ -25,17 +25,28 @@ Linux 发布形态为 **AppImage 单一格式**。
 
 ## 2. 任务分解
 
-### P2 算法深度（≈1.5 周，只碰 `analysis/` + `tests/`）
+### P2 算法深度（≈1.5 周，只碰 `analysis/` + `tests/`）✅ 2026-09-22 完成
 
 | 编号 | 任务 | 落点 | 验收 |
 |------|------|------|------|
-| P2-1 | **MEWMA 多元指数加权移动平均图** | 新增 `analysis/spc/mewma.py`（结构对齐 `hotelling.py`，判异复用 `_rules.py`） | 新增 `tests/test_known_values_spc_mewma.py`：NIST/文献已知值 ±1e-6；与 statsmodels 参考实现交叉验证（测试期可选依赖） |
-| P2-2 | **广义方差控制图** | 新增 `analysis/spc/gen_var.py` | 已知值用例 + 与 `hotelling.py` 共用协方差估计路径 |
-| P2-3 | **变点检测 PELT（纯 numpy）** | 新增 `analysis/spc/change_point.py` | 合成变点数据检出率 ≥95%、误报 ≤5%；超期则降级为二分分割 |
-| P2-4 | **自相关残差控制图** | 新增 `analysis/spc/residual_chart.py`（ARIMA 残差 → I-MR） | 自相关数据上误报率显著低于裸 I-MR（对照用例） |
-| P2-5 | **非正态能力 Bootstrap 置信区间** | 扩展 `analysis/capability/non_normal_cap.py` | 区间覆盖率蒙特卡洛检验（≥90% @95% CI）；固定随机种子保证可复现 |
-| P2-6 | **可靠性区间补强** | `analysis/reliability/weibull.py`（已有 Fisher 信息 CI）→ 补 KM/Cox ALT/RBD 区间 | 与 `lifelines` 参考值交叉验证（测试期） |
-| P2-7 | **ARIMA 自动选阶稳健性** | `analysis/time_series/arima.py` | 差分/季节场景不崩；候选网格失败可回退；已知值用例沿用 |
+| P2-1 ✅ | **MEWMA 多元指数加权移动平均图** | `analysis/spc/mewma.py`（逐点精确 Σ_Z(i) + `baseline_size` + `variance="steady_state"` 可选） | `tests/test_known_values_spc_mewma.py` 10 例：递推手算、闭式 Σ_Z、r=1 与 `hotelling.py` 逐点一致、越限率 0.00267 ≈ α |
+| P2-2 ✅ | **广义方差控制图** | `analysis/spc/gen_var.py`（b1/b2 闭式 + 合并协方差） | `tests/test_known_values_spc_genvar.py` 7 例：p=2,n=10 手算 b1=8/9、b2=2736/6561；方差放大子组被检出 |
+| P2-3 ✅ | **变点检测 PELT（纯 numpy）** | `analysis/spc/change_point.py`（mean / meanvar 两种代价，K=0 剪枝） | `tests/test_known_values_spc_change_point.py` 8 例：与暴力 DP 全局最优代价一致（多罚项）、5σ 漂移定位 ±2、纯噪声 0 误报 |
+| P2-4 ✅ | **自相关残差控制图** | `analysis/spc/residual_chart.py`（ARIMA 白化 → I-MR + 前后对照 + 降级路径） | `tests/test_known_values_spc_residual_chart.py` 6 例：AR(1) 原始 lag-1 自相关 >0.5、残差 <0.2、越限显著减少；常量/报错分支降级 |
+| P2-5 ✅ | **非正态能力 Bootstrap 置信区间** | `analysis/capability/non_normal_cap.py::bootstrap_capability_ci` | `tests/test_known_values_capability_bootstrap.py` 11 例：可复现、覆盖率 0.94（n=1500）、区间随样本收窄；**小样本精度告警**（n<1000 点估计偏高） |
+| P2-6 ✅ | **可靠性区间补强** | `analysis/reliability/weibull.py`（已有 Fisher CI 交叉验证）+ `analysis/reliability/alt.py`（外推区间修正） | `tests/test_known_values_reliability_intervals.py` 8 例：Weibull 与 lifelines 端点差 <1%、覆盖率 0.940/0.945；ALT CI 覆盖率 0.950（修正前忽略杠杆项）；KM CI 不变式 |
+| P2-7 ✅ | **ARIMA 自动选阶稳健性** | `analysis/time_series/arima.py` | `tests/test_known_values_ts_arima_robustness.py` 10 例：**修复含缺测序列崩溃**（`No supported index`）、常量序列结构化 error、搜索空间按样本量收窄、随机游走 d≥1、季节序列有限诊断 |
+
+**P2 完成记录（2026-09-22）**
+
+- 交付：4 个新 SPC 模块 + 3 处能力/可靠性/时序增强；新增 7 个 known-value 文件共 60 例，全量与定向回归全绿（`ruff` 零告警）。
+- 过程中发现并修复的真实缺陷：
+  1. **ARIMA 含缺测序列崩溃** —— `dropna()` 后索引空洞导致 `get_forecast` 抛 `No supported index is available`；已重置索引并补预测失败兜底。
+  2. **ALT 外推区间系统性过窄** —— 旧实现用 `±1.96·se` 忽略外推点杠杆项，与"平均寿命 CI / 单样本 PI"混用；改为带杠杆项的 t 区间，覆盖率由修复前不足升至 0.950。
+  3. **MEWMA 早期点低估** —— 稳态 Σ_Z 会压低前 20 余点 T²（实测均值 1.40 vs 理论 2.0）；改默认逐点精确 Σ_Z(i)，稳态形式保留为可选项。
+  4. **PELT 默认罚项过松** —— 固定种子标定显示 1.0σ̂²log n 时纯噪声 60 个误报/20 序列；改为 2.5σ̂²log n 后 0 误报且 1.5σ 漂移检出率不变（19/20）。
+- 已知限制（写入模块文档与返回值）：百分位法能力区间在 n<1000 时有系统偏差（`accuracy_warning` 字段提示）；RBD 为确定性网络模型，暂无区间传播（后续按需评估 Monte Carlo）。
+- **待接线**：按方案 P1–P3 只碰 `analysis/`+`tests/`，4 个新算法尚未进入 SPC Tab 与 Agent 工具（`core/agent/tools.py`）；建议在 P4 凭证接线时一并暴露，并补 Tab 路由回归。
 
 **P2 出口标准**：每个新算法都有 known-value 用例文件；`ruff` 零告警；全量逐文件回归全绿。
 
