@@ -36,7 +36,7 @@ def one_sample(data: pd.Series, pop_mean: float, alternative: str = "two-sided")
         "t_statistic": round(float(t_stat), 4),
         "p_value": round(float(p_value), 6),
         "ci_95": (round(float(ci[0]), 6), round(float(ci[1]), 6)),
-        "is_significant": p_value < 0.05,
+        "is_significant": bool(p_value < 0.05),
         "target_mean": pop_mean,
     }
 
@@ -89,7 +89,7 @@ def two_sample(
         "p_value": round(float(p_value), 6),
         "levene_statistic": round(float(lev_stat), 4),
         "levene_p_value": round(float(lev_p), 6),
-        "is_significant": p_value < 0.05,
+        "is_significant": bool(p_value < 0.05),
     }
 
 
@@ -120,5 +120,5 @@ def paired(before: pd.Series, after: pd.Series, alternative: str = "two-sided") 
         "std_difference": round(float(np.std(diff, ddof=1)), 6),
         "t_statistic": round(float(t_stat), 4),
         "p_value": round(float(p_value), 6),
-        "is_significant": p_value < 0.05,
+        "is_significant": bool(p_value < 0.05),
     }
