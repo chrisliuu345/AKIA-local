@@ -4,7 +4,7 @@
 
 > 当前: v4.1.0 图表与界面体验统一（图表风格层 / 缺陷修复 / 命令面板 / 性能基线）（✅ 2026-09-15 · 源码 prerelease）| 下一版: **v4.2.0 算法可信度与深度（规划）**
 > 深化主线: **v4.2 可信 → v4.3 案例与证据 → v4.4 闭环 → v4.5 开放 → v4.6 智能**（从分析工具到现场改善证据链）| 测试: 1798+ pytest · 37 个分析 Tab | 更新: 2026-09-22
-> 进行中: **v4.2.0**（P0 ✅ 契约基座 · P1 ✅ 已知值矩阵 29 例 · P2 ✅ 算法深度 60 例 · P3 ✅ 稳定性与大样本 · UI 接线审查 ✅ · 下一步 **P4 判定凭证与方法文档**）
+> 进行中: **v4.2.0**（P0 ✅ 契约基座 · P1 ✅ 已知值矩阵 29 例 · P2 ✅ 算法深度 60 例 · P3 ✅ 稳定性与大样本 · P4 ✅ 判定凭证与方法文档 · UI 接线审查 ✅ · 下一步 **P5 首个闭环切片**）
 
 > **维护约定（2026-09-12 起）**：每条版本记录只写「一行摘要 + 关键数据」；实现细节写进代码/测试/使用指南，本文不展开。
 > 本文件已由 1100+ 行压缩至 500 行内，展开版历史见 git 历史（`git log -p -- ROADMAP.md`）。
@@ -222,7 +222,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | **P1 已知值验证矩阵**（B1）✅ 2026-09-17（批次 1+2） | 7 域 12 文件 29 例：SPC（Xbar-R / I-MR / EWMA / CUSUM / Hotelling T² + Nelson 8 规则）· 能力（Cp/Cpk/Pp/Ppk/Cpm/PPM）· MSA（Cohen κ / Gage R&R 均值-极差）· DOE（2² 效应/SS）· 可靠性（KM / Crow-AMSAA / Weibull 2P-MLE）· 时序（ACF / ARIMA 随机游走）· ML（回归分类指标 / CART） | 29 例全绿；**发现并修复 2 处缺陷**（数值标签混淆矩阵全 0；DOE 完全拟合除零告警）；更深算法（MEWMA / 非正态 / Weibull CI / 调参）归 P2 交叉验证 |
 | **P2 算法深度**（B2）✅ 2026-09-22 | 多元 SPC：`analysis/spc/mewma.py`（Lowry 1992，**逐点精确 Σ_Z(i)**，`baseline_size` 区分 Phase I/II，可切稳态近似）· `analysis/spc/gen_var.py`（Montgomery b1/b2 广义方差图）· `analysis/spc/change_point.py`（PELT 纯 numpy，K=0 剪枝与全局最优等价）· `analysis/spc/residual_chart.py`（ARIMA 白化 + I-MR + 前后对照）· `analysis/capability/non_normal_cap.py::bootstrap_capability_ci`（向量化百分位 Bootstrap + 小样本精度告警）· 可靠性区间（Weibull CI 与 lifelines 交叉验证 · ALT 外推区间修正）· ARIMA 自动选阶稳健性（NaN 索引崩溃修复、常量/短序列守卫、搜索空间按样本量收窄） | 新增 7 个 known-value 文件 60 例：MEWMA 在 r=1 时与 `hotelling.py` 逐点一致、受限越限率 0.00267 ≈ α=0.0027；PELT 与暴力 DP 全局最优代价一致、纯噪声 0 误报；AR(1) 数据残差图越限显著低于原始 I-MR；Bootstrap CI 覆盖率 0.94（n=1500）；Weibull β/η 覆盖率 0.940/0.945 且与 lifelines 端点差 <1%；ALT 平均寿命 CI 覆盖率 0.950（旧实现忽略杠杆项）；含缺测序列的 ARIMA 不再崩溃 |
 | **P3 稳定性与大样本**（B3）✅ 2026-09-22 | 大样本基准扩展至 8 项（新增 `spc_100k_rows_s` / `spc_1m_rows_s` / `msa_100k_rows_s` / `ml_train_100k_rows_s`，实测 3.12s / 20.73s / 0.96s / 3.78s）· `tests/test_robustness_numeric.py` 22 例（规格限倒置 / 波动退化 / 常量与缺测控制图 / 秩亏协方差 / 单类别分类 / 零方差 DOE / 单操作员 MSA）· 覆盖率补口 `test_core_coverage_gaps.py` 16 例 + `test_analysis_coverage_gaps.py` 12 例（excel_utils / session_manager / audit / base_report_engine / between_within_cap / variance_tests / eight_d_engine）· **质量棘轮**：`BLE001`（盲除异常）纳入门禁，算法与报告层 31 处逐处理由清零 · 弃用清理（websockets 旧式连接 50 条告警清零；`main.py` 全局 RuntimeWarning 屏蔽改 `once`） | 基准入 CI 且 8 项全在 tolerance ×4 内；鲁棒性/覆盖补口用例全绿；`ruff check .` 零告警（含新启用的 BLE001）；全量逐文件回归 154 文件全通过 |
-| **P4 判定凭证 + 方法文档**（B4） | 结论凭证写入分析记录（`analyses[idx]` / 快照）· 报告追溯码 · 同数据两次运行逐项 diff（报告复核模式）· guide.html「方法与参考」章节 | 重跑 diff 为空、改参 diff 可见；追溯码可解析；文档与代码同源 |
+| **P4 判定凭证 + 方法文档**（B4）✅ 2026-09-22 | 结论凭证写入分析记录（`_store_analysis` → `core/evidence.make_credential`，指纹取该 Tab 实际分析数据，取不到降级 `no-data`）· 报告追溯码（`credential_trace` + PDF/Word/Excel 页脚 + i18n `report.trace_code`）· 复核模式（`diff_analysis_records` + 同 Tab 重跑自动比对 `rerun_diff`）· `.qap` 1.8 凭证段（1.6/1.7 只读兼容）· guide.html「方法与参考」（16 类方法出处 + 凭证语义） | 新增 18 例（`test_evidence_wiring.py` 15 + `.qap` 凭证 3）：同数据重跑 `identical=True`、改参差异可见、追溯码顺序无关且内容变化即变码、Excel 页脚可回读追溯码；ruff 零告警 |
 | **P5 首个改善闭环切片**（B5） | `.qap` 轻量 case 记录 v0 + Home 工作台入口：基线测量 → 时间研究 → 线平衡瓶颈 → 改善方案 → 复测 → 配对检验 → 结论 → 标准草稿；数据源手动/CSV，预留插件数据源接口 | 单案例端到端演示（离屏 E2E + 手动脚本）；每步挂时间戳与数据引用；旧 `.qap` 零破坏 |
 | **P6 收尾** | 版本 4.2.0 四端一致 · README / guide / 本路线图同步 · 全量逐文件回归 + ruff 门禁 · 发布方式决策（源码 prerelease 或打包） | `check_version.py` 通过；全绿；Demo 可复现 |
 

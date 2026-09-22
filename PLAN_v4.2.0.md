@@ -70,15 +70,24 @@ Linux 发布形态为 **AppImage 单一格式**。
 - 性能观察（计入后续优化候选）：SPC 100 万点 20.7s，瓶颈在 Nelson 规则 2/3/4 的 Python 循环（逐点扫描）；如需在线大样本监控可向量化，当前列入 P4 之后候选。
 - `main.py` 的 `np.errstate` 就地化未做（会把噪声推给用户），改为 `once` 策略并记录理由；彻底就地化需逐处定位 log/div 边界，列入后续候选。
 
-### P4 判定凭证 + 方法文档（≈1 周，碰 `core/` + `ui/` + `output/`）
+### P4 判定凭证 + 方法文档（≈1 周，碰 `core/` + `ui/` + `output/`）✅ 2026-09-22 完成
 
 | 编号 | 任务 | 落点 | 验收 |
 |------|------|------|------|
-| P4-1 | **分析记录写入凭证**（当前最大缺口） | `ui/main_window.py::_store_analysis` + 各 `analysis/*` 返回结构 | 每次分析产出的记录含数据指纹 + 规则版本 + 参数；`verify_dataframe` 可校验 |
-| P4-2 | 报告追溯码 | `output/pdf_report.py` · `word_report.py` · `excel_report.py` · `html_export.py` + `chart_engine` 脚注 | 报告页脚可解析出代码 → 凭证 |
-| P4-3 | 重跑复核模式 | 复用 `core/evidence.py::diff_credentials` | 同数据两次运行 diff 为空；改参数后 diff 可见具体项 |
-| P4-4 | guide.html「方法与参考」章节 | `config/help/guide.html` | 公式出处（NIST 优先）+ 已知值来源可溯源 |
-| P4-5 | `.qap` 凭证段（1.7 → 1.8，向后兼容） | `core/project_manager.py` / `core/project_context.py` | 1.6/1.7 旧文件可读；新文件写出凭证段 |
+| P4-1 ✅ | **分析记录写入凭证** | `_store_analysis` + `_analysis_source_frame` + `make_credential` | 记录含 rule_version / params / 数据指纹 / app_version；无数据记 `no-data`；取数异常不阻断分析 |
+| P4-2 ✅ | 报告追溯码 | `base_report_engine.footers(trace=…)` + `credential_trace`；Excel / PDF / Word 接入；`locales/zh.json` 增 `report.trace_code` | Excel 报告落盘后页脚可回读 12 位追溯码（测试断言） |
+| P4-3 ✅ | 重跑复核模式（核心） | `core/evidence.diff_analysis_records` + `_store_analysis` 自动写入 `rerun_diff` | 同数据重跑 `identical=True`；改参可见 `params` old/new；缺凭证 → `comparable=False` |
+| P4-4 ✅ | guide.html「方法与参考」 | `config/help/guide.html` 新增 `#methods` 章节 + 目录项 | 16 类方法出处（NIST/Montgomery/AIAG/Lowry/Killick/…）+ 凭证与追溯码语义；`test_help_guide` 全通过 |
+| P4-5 ✅ | `.qap` 凭证段（1.7 → 1.8） | `core/project_manager.py`（VERSION 1.8 / `credential_count` / 条目凭证） | 1.8 凭证往返一致；无凭证项目正常保存；手工 1.7 布局可读 |
+
+**P4 完成记录（2026-09-22）**
+
+- 交付：凭证闭环（分析记录 → 报告页脚 → `.qap` → 重跑 diff）+ 方法文档章节。
+- 设计取舍：① 指纹取该 Tab 实际分析数据，逐级降级（`tab.df` → 导入首表 → `no-data`），失败绝不阻断分析；
+  ② 追溯码由全部凭证内容压缩（顺序无关、内容变化即变码），不保存原始数据副本；
+  ③ `.qap` 1.8 只读兼容 1.6/1.7，旧文件在复核模式下显示"不可比较"而非报错。
+- 已知限制（已记入测试与文档）：**复核模式 UI 弹窗未做**（核心 diff 已可用并自动落档，对话框/复核视图归 P5–P6）；
+  HTML 导出未接追溯码（Excel/PDF/Word 已接）。
 
 ### P5 首个改善闭环切片（≈1.5 周，时间盒，超期即缩范围）
 
