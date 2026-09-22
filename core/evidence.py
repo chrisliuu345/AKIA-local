@@ -13,9 +13,11 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import math
 from dataclasses import dataclass, field, fields
 from datetime import date, datetime
+from collections.abc import Iterable
 from typing import Any
 
 import pandas as pd
@@ -163,4 +165,75 @@ def diff_credentials(old: ConclusionCredential,
         key: {"old": old_dict.get(key), "new": new_dict.get(key)}
         for key in sorted(set(old_dict) | set(new_dict))
         if old_dict.get(key) != new_dict.get(key)
+    }
+
+
+def credential_trace_code(
+    credentials: Iterable[dict[str, Any] | ConclusionCredential | None],
+) -> str:
+    """把一批结论凭证压缩为 12 位追溯码（无凭证返回空串）。
+
+    用于报告页脚：同一批凭证顺序无关（内部按字段排序），任一凭证的规则版本、
+    参数、数据指纹或软件版本变化都会改变追溯码 —— 即"报告可回指当时怎么算的"。
+    """
+    rows: list[tuple[str, str, str, str]] = []
+    for item in credentials:
+        if item is None:
+            continue
+        if isinstance(item, ConclusionCredential):
+            data: dict[str, Any] = item.to_dict()
+        elif isinstance(item, dict) and (item.get("rule_version")
+                                         or item.get("data_fingerprint")):
+            data = item
+        else:
+            # None / 空 dict 视为"该分析无凭证"，不参与追溯码
+            continue
+        rows.append((
+            str(data.get("rule_version", "")),
+            str(data.get("data_fingerprint", "")),
+            json.dumps(_jsonable(data.get("params", {})), sort_keys=True,
+                       ensure_ascii=False, default=str),
+            str(data.get("app_version", "")),
+        ))
+    if not rows:
+        return ""
+    digest = hashlib.sha256()
+    for row in sorted(rows):
+        digest.update("|".join(row).encode("utf-8"))
+        digest.update(b"\n")
+    return digest.hexdigest()[:12].upper()
+
+
+def diff_analysis_records(old: dict[str, Any], new: dict[str, Any]) -> dict[str, Any]:
+    """复核模式：比较两条分析记录（凭证 + 结果），用于"同数据重跑应一致"。
+
+    返回:
+        comparable          是否可比较（两条记录都带凭证）
+        identical           凭证与结果都无变化
+        credential_changes  逐字段差异（rule_version / params / 指纹 / 软件版本）
+        result_changed      结果 JSON 是否变化
+    """
+    old_credential = (old or {}).get("credential")
+    new_credential = (new or {}).get("credential")
+    if not old_credential or not new_credential:
+        return {
+            "comparable": False,
+            "identical": False,
+            "reason": "缺少凭证：旧记录或新记录未写入 credential",
+            "credential_changes": {},
+            "result_changed": False,
+        }
+
+    changes = diff_credentials(ConclusionCredential.from_dict(old_credential),
+                               ConclusionCredential.from_dict(new_credential))
+    old_result = json.dumps(_jsonable((old or {}).get("result", {})), sort_keys=True,
+                            ensure_ascii=False, default=str)
+    new_result = json.dumps(_jsonable((new or {}).get("result", {})), sort_keys=True,
+                            ensure_ascii=False, default=str)
+    return {
+        "comparable": True,
+        "identical": not changes and old_result == new_result,
+        "reason": "",
+        "credential_changes": changes,
+        "result_changed": old_result != new_result,
     }
