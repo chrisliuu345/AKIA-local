@@ -8,25 +8,25 @@
 
 ## 快速开始
 
-v4.1.0 提供 **两个官方版本**（均为免 Python 环境的离线运行包）：
+v4.2.0 提供 **两个官方版本**（均为免 Python 环境的离线运行包）：
 
 | 版本 | 安装文件 | 适用系统 | 安装方式 |
 |------|----------|----------|----------|
-| **Linux AppImage** | `QA-Tool-4.1.0-x86_64.AppImage` | 任意 x86_64 Linux（Debian / Ubuntu / elementary 等） | 免安装：赋予执行权限后直接运行 |
-| **Windows 安装包** | `QA-Tool-Setup-4.1.0.exe` | Windows 10/11（64 位） | 双击 Inno Setup 向导安装，开始菜单/桌面启动 |
+| **Linux AppImage** | `QA-Tool-4.2.0-x86_64.AppImage` | 任意 x86_64 Linux（Debian / Ubuntu / elementary 等） | 免安装：赋予执行权限后直接运行 |
+| **Windows 安装包** | `QA-Tool-Setup-4.2.0.exe` | Windows 10/11（64 位） | 双击 Inno Setup 向导安装，开始菜单/桌面启动 |
 
 > Linux 仅发布 **AppImage** 单一格式（不再构建 `.deb`）；Debian/Ubuntu/Fedora 等发行版通用。
 
 ### Linux（AppImage，免安装）
 
 ```bash
-chmod +x QA-Tool-4.1.0-x86_64.AppImage
-./QA-Tool-4.1.0-x86_64.AppImage
+chmod +x QA-Tool-4.2.0-x86_64.AppImage
+./QA-Tool-4.2.0-x86_64.AppImage
 ```
 
 ### Windows（安装包）
 
-从 [Releases](https://github.com/chrisliuu345/QA-Tool/releases) 下载 `QA-Tool-Setup-4.1.0.exe`，
+从 [Releases](https://github.com/chrisliuu345/QA-Tool/releases) 下载 `QA-Tool-Setup-4.2.0.exe`，
 双击按向导安装（Inno Setup 安装器，含开始菜单与桌面快捷方式）。
 
 ### 源码运行
@@ -50,7 +50,7 @@ python main.py
 
 | 模块 | 能力 |
 |------|------|
-| **SPC 控制图** | XBar-R/S · I-MR · P/NP/C/U · CUSUM · EWMA + Nelson 8 规则 |
+| **SPC 控制图** | XBar-R/S · I-MR · P/NP/C/U · CUSUM · EWMA · **MEWMA** · **广义方差 \|S\|** · Hotelling T² + Nelson 8 规则 · **变点检测（PELT）** · **ARIMA 残差图** |
 | **过程能力** | 正态 / 非正态 / Johnson / Sixpack · Cp/Cpk/Pp/Ppk |
 | **MSA 测量系统** | Gage R&R · EMP 方法 · 属性一致性 · Type 1 · 不确定度预算 |
 | **假设检验** | t 检验 · ANOVA · 正态性 · 非参数 · 等价检验 |
@@ -87,12 +87,13 @@ python main.py
 | **FMEA** | RPN=S×O×D · 风险着色 · PFMEA/DFMEA |
 | **PPAP** | 生产件批准程序 · 18 项检查清单 |
 | **控制计划** | FMEA → 控制计划 → SPC 五链贯通 |
+| **改善案例工作台** | 案例脊柱：基线测量 → 时间研究 → 线平衡瓶颈 → 改善方案 → 复测 → 配对检验 → 结论 → 标准草稿；每步留痕时间戳 · 数据引用 · 判定凭证 |
 
 ### AI 与报告
 
 | 模块 | 能力 |
 |------|------|
-| **QAM Harness** | AI Agent：36 个本地工具调用（SPC/能力/MSA/假设检验/DOE/回归/可靠性/时间序列/IE/成本/实时/五链/根因/机器学习）+ 离线工具模式 · BYOK 云供应商（OpenAI/Claude/Gemini/DeepSeek/Z.ai/KIMI + 自定义端点）· 密钥加密 + 云调用隐私门 · 知识库 RAG |
+| **QAM Harness** | AI Agent：37 个本地工具调用（SPC/能力/MSA/假设检验/DOE/回归/可靠性/时间序列/IE/成本/实时/五链/根因/机器学习）+ 离线工具模式 · BYOK 云供应商（OpenAI/Claude/Gemini/DeepSeek/Z.ai/KIMI + 自定义端点）· 密钥加密 + 云调用隐私门 · 知识库 RAG |
 | **插件接口 v2** | 外部插件独立开发/发布：pip entry point 或用户目录加载 · 贡献 Tab / Agent 工具 / 设置页 · 能力与依赖声明 · 信任模型（如独立项目 [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion)） |
 | **图表** | 15+ 种图表 · 深色主题 · 中文字体 |
 | **报告** | PDF / Word / Excel / HTML · 图表内联 |
@@ -171,4 +172,4 @@ tests/                 # 1500+ 测试
 
 ---
 
-*Python 3.14 + PySide6 · 1650+ 测试 · 37 个分析 Tab + 插件接口 v2*
+*Python 3.14 + PySide6 · 1950+ 测试 · 37 个分析 Tab + 插件接口 v2*
