@@ -17,7 +17,6 @@ ROOT = Path(__file__).resolve().parent.parent
 _APP_VERSION_RE = re.compile(r'^APP_VERSION\s*=\s*"([^"]+)"', re.MULTILINE)
 _ARTIFACT_RES = (
     re.compile(r"QA-Tool-(\d+\.\d+\.\d+)-x86_64\.AppImage"),
-    re.compile(r"qa-tool[_-](\d+\.\d+\.\d+)[-_]amd64\.deb"),
 )
 _DECL_RES = (
     r"\*\*当前版本\*\*:\s*v(\d+\.\d+\.\d+)",

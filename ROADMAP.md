@@ -141,7 +141,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 |----|------|------|
 | 主动建议准确率人工评审（≥3.5/5） | 需工程师人工评分 | 待用户 |
 | 视觉真机验收（现场视频 + 标注 CSV，一致性 ≥85%） | 需现场素材 | 插件项目 |
-| 发布包（AppImage / .deb / Inno） | v4.1.0 未打包；脚本就绪，后续按需构建 | 可选 |
+| 发布包（Linux AppImage / Windows Inno） | v4.1.0 未打包；脚本就绪，后续按需构建 | 可选 |
 | 改善案例对象 + 证据账本 | 双时态收窄至测量/标准/结论三类；见 v4.3.0 | v4.3.0 |
 | 案例工作台入口 | 优先复用 Home；确需新增 Tab 时单独评审 | v4.3.0 决策 |
 | MCP 服务 + 原生工具调用 | 决定 AI 生态位，见 v4.5.0 | v4.5.0 |
@@ -213,6 +213,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 
 > 信任层：先证明算得对，再证明当时是怎么算的；并以最小纵向切片验证案例闭环可行性。
 > **阶段顺序**：P0 契约基座 → P1 已知值矩阵 → P2 算法深度 → P3 稳定性 → P4 判定凭证与方法文档 → P5 首个闭环切片 → P6 收尾；P1–P3 只碰 `analysis/` + `tests/`，P4–P5 碰 `core/` + `ui/`，可并行排期（总计 4–6 周 + 20% 缓冲）。
+> **执行版任务分解**（落点文件 / 验收命令 / 排期 / 技术债清单）：见 `PLAN_v4.2.0.md`（2026-09-22）。
 
 | 阶段 | 交付 | 验收 |
 |------|------|------|
@@ -224,7 +225,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | **P5 首个改善闭环切片**（B5） | `.qap` 轻量 case 记录 v0 + Home 工作台入口：基线测量 → 时间研究 → 线平衡瓶颈 → 改善方案 → 复测 → 配对检验 → 结论 → 标准草稿；数据源手动/CSV，预留插件数据源接口 | 单案例端到端演示（离屏 E2E + 手动脚本）；每步挂时间戳与数据引用；旧 `.qap` 零破坏 |
 | **P6 收尾** | 版本 4.2.0 四端一致 · README / guide / 本路线图同步 · 全量逐文件回归 + ruff 门禁 · 发布方式决策（源码 prerelease 或打包） | `check_version.py` 通过；全绿；Demo 可复现 |
 
-**关键设计决策**：不新增硬依赖（PELT 自研；statsmodels 仅 dev 参考）· 凭证与案例 schema 放 `core/`（无 Qt）· `.qap` 增量兼容（1.6 可读，1.7 写出）· UI 入口复用 Home，不新增 Tab · 完整 MeasurementEvent 合同留到 4.3.0，本版只预留接口。
+**关键设计决策**：不新增硬依赖（PELT 自研；statsmodels 仅 dev 参考）· 凭证与案例 schema 放 `core/`（无 Qt）· `.qap` 增量兼容（1.6 可读，1.7 写出）· UI 入口复用 Home，不新增 Tab · 完整 MeasurementEvent 合同留到 4.3.0，本版只预留接口 · **Linux 发布只出 AppImage（2026-09-22 决定，`.deb` 构建链与 `packaging/deb/` 已移除）**。
 **风险与对策**：已知值来源与许可（NIST 公有领域优先，文献值记录出处）· PELT 工程量（超期降级为二分分割）· 闭环切片范围蔓延（时间盒 1.5 周，只做单案例单模板）· 性能回归（P3 基线对比，超限即回退）。
 
 ### v4.3.0 — 改善案例与证据账本（规划）
@@ -283,7 +284,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 ## 工程约定
 
 - **版本**：`config/settings.py::APP_VERSION` 为单一事实源；`tools/check_version.py` 校验 version_info / Inno / README / INSTALL / ROADMAP，CI 门禁
-- **构建**：PyInstaller onedir（`build_pyinstaller.py`）→ Inno（Windows）/ AppImage / .deb；`build/`、`dist/` 不入库
+- **构建**：PyInstaller onedir（`build_pyinstaller.py`）→ Inno（Windows）/ AppImage（**Linux 唯一发布格式**）；`build/`、`dist/` 不入库
 - **测试**：严禁 `pytest tests/` 批量（conftest 有拦截器），逐文件运行；GUI 测试 `QT_QPA_PLATFORM=offscreen`
 - **质量门禁**：ruff 零告警 + 相关回归 + 打包冒烟（发布版本必做）
 - **分层**：`analysis/` 禁 Qt；`core`/`config`/`output` 禁 import `ui`；`core/agent/` 保持无 Qt

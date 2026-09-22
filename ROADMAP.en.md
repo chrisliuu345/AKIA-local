@@ -141,7 +141,7 @@ Planning principles:
 |------|------|-------|
 | Manual review of proactive-suggestion accuracy (≥3.5/5) | Needs engineer scoring | User |
 | Vision acceptance on real footage (site video + labelled CSV, ≥85% agreement) | Needs site material | Plugin project |
-| Release artifacts (AppImage / .deb / Inno) | Not built for v4.1.0; scripts ready for on-demand builds | Optional |
+| Release artifacts (Linux AppImage / Windows Inno) | Not built for v4.1.0; scripts ready for on-demand builds | Optional |
 | ImprovementCase object + evidence ledger | Bitemporal narrowed to measurements/standards/conclusions; see v4.3.0 | v4.3.0 |
 | Case workspace entry | Reuse Home first; adding a tab requires explicit review | v4.3.0 decision |
 | MCP server + native tool calling | Decides the AI-ecosystem position; see v4.5.0 | v4.5.0 |
@@ -213,6 +213,7 @@ Planning principles:
 
 > Trust layer: first prove the maths is right, then prove how a judgement was made; and validate the case loop with a minimal vertical slice.
 > **Phase order**: P0 contracts → P1 known-value matrix → P2 algorithm depth → P3 stability → P4 conclusion credentials & method docs → P5 first closed-loop slice → P6 wrap-up; P1–P3 touch only `analysis/` + `tests/`, P4–P5 touch `core/` + `ui/`, so they can be scheduled in parallel (4–6 weeks total + 20% buffer).
+> **Execution breakdown** (target files / acceptance commands / schedule / tech-debt list): see `PLAN_v4.2.0.md` (2026-09-22).
 
 | Phase | Deliverables | Acceptance |
 |-------|--------------|------------|
@@ -224,7 +225,7 @@ Planning principles:
 | **P5 First closed-loop slice** (B5) | Lightweight `.qap` case record v0 + Home workspace entry: baseline → time study → line-balance bottleneck → improvement plan → re-measurement → paired test → conclusion → standard draft; manual/CSV sources, plugin data-source interface reserved | Single-case E2E demo (offscreen E2E + manual script); every step timestamped and data-referenced; old `.qap` untouched |
 | **P6 Wrap-up** | Version 4.2.0 across all four ends · README / guide / roadmap sync · full per-file regression + ruff gate · release-mode decision (source prerelease or packaged) | `check_version.py` passes; all green; demo reproducible |
 
-**Key design decisions**: no new hard dependencies (PELT self-implemented; statsmodels as a dev-only reference) · credential and case schemas live in `core/` (Qt-free) · `.qap` stays backward compatible (reads 1.6, writes 1.7) · UI entry reuses Home, no new tab · the full MeasurementEvent contract lands in 4.3.0, with only the interface reserved here.
+**Key design decisions**: no new hard dependencies (PELT self-implemented; statsmodels as a dev-only reference) · credential and case schemas live in `core/` (Qt-free) · `.qap` stays backward compatible (reads 1.6, writes 1.7) · UI entry reuses Home, no new tab · the full MeasurementEvent contract lands in 4.3.0, with only the interface reserved here · **Linux ships AppImage only (decided 2026-09-22; the `.deb` build chain and `packaging/deb/` were removed)**.
 **Risks & mitigations**: known-value sourcing/licensing (NIST public domain first, literature values cited) · PELT effort (fall back to binary segmentation if over time-box) · closed-loop slice scope creep (1.5-week time box, one case template only) · performance regressions (P3 baseline comparison, revert if out of bounds).
 
 ### v4.3.0 — Improvement Case & Evidence Ledger (planned)
@@ -283,7 +284,7 @@ Planning principles:
 ## Engineering Conventions
 
 - **Version**: `config/settings.py::APP_VERSION` is the single source of truth; `tools/check_version.py` validates version_info / Inno / README / INSTALL / ROADMAP in CI
-- **Build**: PyInstaller onedir (`build_pyinstaller.py`) → Inno (Windows) / AppImage / .deb; `build/` and `dist/` are not committed
+- **Build**: PyInstaller onedir (`build_pyinstaller.py`) → Inno (Windows) / AppImage (**sole Linux release format**); `build/` and `dist/` are not committed
 - **Tests**: never run `pytest tests/` in bulk (conftest blocks it); run file by file; GUI tests use `QT_QPA_PLATFORM=offscreen`
 - **Quality gates**: zero ruff warnings + relevant regression + packaging smoke (required for releases)
 - **Layering**: `analysis/` must not import Qt; `core`/`config`/`output` must not import `ui`; `core/agent/` stays Qt-free

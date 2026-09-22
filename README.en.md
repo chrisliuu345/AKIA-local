@@ -8,26 +8,20 @@
 
 ## Quick Start
 
-v4.1.0 ships **three official editions** (all standalone, no Python required, fully offline):
+v4.1.0 ships **two official editions** (all standalone, no Python required, fully offline):
 
 | Edition | Installer file | Systems | Install |
 |---------|----------------|---------|---------|
 | **Linux AppImage** | `QA-Tool-4.1.0-x86_64.AppImage` | Any x86_64 Linux (Debian / Ubuntu / elementary, …) | Portable: make executable and run |
-| **Linux .deb** | `qa-tool_4.1.0_amd64.deb` | Debian 13 / Ubuntu 22.04+ / derivatives | `sudo dpkg -i`, launch from the app menu |
 | **Windows installer** | `QA-Tool-Setup-4.1.0.exe` | Windows 10/11 (64-bit) | Run the Inno Setup wizard; menu/desktop shortcuts |
+
+> Linux ships **AppImage only** (`.deb` is no longer built); works across Debian/Ubuntu/Fedora and derivatives.
 
 ### Linux (AppImage, portable)
 
 ```bash
 chmod +x QA-Tool-4.1.0-x86_64.AppImage
 ./QA-Tool-4.1.0-x86_64.AppImage
-```
-
-### Linux (.deb, system integration)
-
-```bash
-sudo dpkg -i qa-tool_4.1.0_amd64.deb
-qa-tool
 ```
 
 ### Windows (installer)
@@ -124,7 +118,7 @@ Requires Python 3.11+
 | AI | Ollama · OpenAI-compatible API · TF-IDF RAG |
 | Hardware | pyserial · MicroPython (ESP32) |
 | Live Dashboard | FastAPI · uvicorn · websockets (optional: `pip install -r requirements-server.txt`) |
-| Build | PyInstaller (onedir) · Inno Setup · AppImage · .deb |
+| Build | PyInstaller (onedir) · Inno Setup · AppImage (sole Linux format) |
 
 ---
 
