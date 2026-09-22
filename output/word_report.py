@@ -60,7 +60,7 @@ class WordReport(BaseReportEngine):
         doc.add_heading(i18n.tr("report.overview"), level=1)
         overview = doc.add_paragraph()
         overview.add_run(i18n.tr("report.auto_generated")).font.size = Pt(10)
-        footer_text, _ = self.footers()
+        footer_text, _ = self.footers(trace=self.credential_trace(analyses))
         doc.add_paragraph(footer_text)
         doc.add_paragraph(f"{i18n.tr('report.analysis_modules')}: {len(analyses)}")
         doc.add_paragraph("")
