@@ -161,7 +161,7 @@ class PDFReport(BaseReportEngine):
             self.story.append(Spacer(1, 0.6 * cm))
 
         self.story.append(HRFlowable(width="100%", thickness=1, color=HexColor("#cccccc")))
-        footer_text, _ = self.footers()
+        footer_text, _ = self.footers(trace=self.credential_trace(analyses))
         self.story.append(Paragraph(footer_text, S["meta"]))
 
         if watermark:
