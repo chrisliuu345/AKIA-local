@@ -147,7 +147,6 @@ class DeviceMonitor:
 
     def _tick_loop(self):
         while not self._stop_event.is_set():
-            time.time()
             for device in list(self._attached.values()):
                 hb = self._heartbeats.get(device.device_id)
                 if not hb or not device.transport or not device.transport.is_open():
