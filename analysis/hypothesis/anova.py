@@ -51,7 +51,7 @@ def one_way(
         "level_stats": level_stats,
         "f_statistic": round(float(f_stat), 4),
         "p_value": round(float(p_value), 6),
-        "is_significant": p_value < 0.05,
+        "is_significant": bool(p_value < 0.05),
         "anova_table": {
             "source": ["Between", "Within", "Total"],
             "ss": [round(float(ss_between), 4), round(float(ss_within), 4), round(float(ss_total), 4)],

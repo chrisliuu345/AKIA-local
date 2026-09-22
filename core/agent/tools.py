@@ -285,11 +285,34 @@ def _series(ctx: AgentContext, sheet: str | None, column: str | None,
     return sheet_name, col, series
 
 
+def _multi_columns(frame: pd.DataFrame, columns) -> list[str]:
+    """解析多元控制图的变量列（list 或逗号/顿号分隔字符串）。
+
+    未指定时取前两个数值列；不足两个即报错（MEWMA / 广义方差图至少需 2 个变量）。
+    """
+    if isinstance(columns, (list, tuple)):
+        names = [str(c).strip() for c in columns if str(c).strip()]
+    elif columns:
+        normalized = str(columns).replace("，", ",").replace("、", ",")
+        names = [c.strip() for c in normalized.split(",") if c.strip()]
+    else:
+        names = []
+    if not names:
+        names = frame.select_dtypes(include="number").columns.tolist()[:2]
+    missing = [c for c in names if c not in frame.columns]
+    if missing:
+        raise ValueError(f"列不存在: {missing}")
+    if len(names) < 2:
+        raise ValueError("多元控制图需要至少 2 个数值列（用 columns 指定，如 'x,y'）")
+    return names
+
+
 def _chart_limits(result: dict) -> dict:
     """从各控制图引擎返回值中提取 CL/UCL/LCL 与判异点（结构因图型而异）。"""
     out: dict = {}
     for key in ("i_chart", "xbar_chart", "p_chart", "np_chart", "c_chart",
-                "u_chart", "cusum_chart", "ewma_chart"):
+                "u_chart", "cusum_chart", "ewma_chart", "mewma_chart",
+                "genvar_chart"):
         chart = result.get(key)
         if isinstance(chart, dict) and "cl" in chart:
             out = {
@@ -300,6 +323,12 @@ def _chart_limits(result: dict) -> dict:
             }
             break
     if not out:
+        nested = result.get("residual_chart")
+        if isinstance(nested, dict):
+            inner = _chart_limits(nested)
+            if inner.get("cl") is not None:
+                inner["chart"] = "residual"
+                return inner
         out = {"chart": result.get("chart_type", "?"), "cl": result.get("cl"),
                "ucl": result.get("ucl"), "lcl": result.get("lcl"),
                "violations": result.get("violations", [])}
@@ -375,20 +404,34 @@ def build_default_registry(ctx: AgentContext) -> ToolRegistry:
 
     # ---------------- 质量分析 ----------------
     @reg.tool("run_spc", "运行控制图",
-              "运行 SPC 控制图并返回控制限与判异点（Nelson 规则）",
-              {"chart_type": "imr/xbar_r/xbar_s/p_chart/np_chart/c_chart/u_chart/cusum/ewma",
+              "运行 SPC 控制图并返回控制限与判异点（Nelson 规则）；"
+              "多元图（mewma/gen_var）用 columns 指定变量列，residual 为 ARIMA 白化残差图",
+              {"chart_type": ("imr/xbar_r/xbar_s/p_chart/np_chart/c_chart/u_chart/"
+                              "cusum/ewma/mewma/gen_var/residual"),
                "sheet": "表名(可选)", "column": "测量列/不合格品数列",
                "subgroup_size": "子组大小(默认5)", "usl": "规格上限(可选)",
                "lsl": "规格下限(可选)", "sample_size": "NP 图样本量(可选)",
-               "sample_sizes_column": "P/U 图的样本量列(可选)"},
+               "sample_sizes_column": "P/U 图的样本量列(可选)",
+               "columns": "多元图变量列，逗号分隔（mewma/gen_var 用，可选）",
+               "lambda_": "MEWMA 平滑参数 r∈(0,1]，默认 0.1（可选）",
+               "subgroup_col": "广义方差图子组列（可选，缺省按 subgroup_size 切块）"},
               category="质量分析", returns="chart_type/cl/ucl/lcl/violations")
     def _run_spc(context: AgentContext, chart_type: str = "imr", sheet: str | None = None,
                  column: str | None = None, subgroup_size: int = 5, usl=None, lsl=None,
-                 sample_size=None, sample_sizes_column: str | None = None):
+                 sample_size=None, sample_sizes_column: str | None = None,
+                 columns=None, lambda_: float = 0.1, subgroup_col: str | None = None):
         kind = "numeric"
-        sheet_name, col, series = _series(context, sheet, column, kind)
         chart = str(chart_type or "imr").lower().strip()
         result: dict
+        multi_chart = chart in ("mewma", "mewma_chart", "gen_var", "genvar",
+                                "generalized_variance", "gv")
+        if multi_chart:
+            # 多元图按"列集合"分析，不要求单列参数
+            sheet_name = context.sheet_of(sheet)
+            col = ""
+            series = None
+        else:
+            sheet_name, col, series = _series(context, sheet, column, kind)
         if chart in ("imr", "i-mr", "i_mr"):
             from analysis.spc import imr
             result = imr.analyze(series)
@@ -404,6 +447,29 @@ def build_default_registry(ctx: AgentContext) -> ToolRegistry:
         elif chart in ("ewma",):
             from analysis.spc import ewma
             result = ewma.analyze(series)
+        elif chart in ("mewma", "mewma_chart"):
+            from analysis.spc.mewma import analyze as mewma_analyze
+
+            frame = context.frame(sheet_name)
+            cols = _multi_columns(frame, columns)
+            data = frame[cols].dropna()
+            if len(data) < len(cols) + 1:
+                raise ValueError(f"MEWMA 需要至少 {len(cols) + 1} 行完整数据，当前 {len(data)}")
+            result = mewma_analyze(data, cols, lambda_=float(lambda_ or 0.1))
+        elif chart in ("gen_var", "genvar", "generalized_variance", "gv"):
+            from analysis.spc.gen_var import analyze as genvar_analyze
+
+            frame = context.frame(sheet_name)
+            cols = _multi_columns(frame, columns)
+            if subgroup_col and str(subgroup_col) in frame.columns:
+                result = genvar_analyze(frame, cols, subgroup_col=str(subgroup_col))
+            else:
+                result = genvar_analyze(frame, cols,
+                                        subgroup_size=int(subgroup_size or 5))
+        elif chart in ("residual", "residual_chart", "arima_residual"):
+            from analysis.spc.residual_chart import analyze as residual_analyze
+
+            result = residual_analyze(series)
         elif chart in ("p_chart", "p", "p-chart"):
             from analysis.spc import p_chart
             df = context.frame(sheet_name)
@@ -432,18 +498,24 @@ def build_default_registry(ctx: AgentContext) -> ToolRegistry:
             result = u_chart.analyze(series, sizes.loc[series.index])
         else:
             raise ValueError(f"不支持的控制图类型 {chart_type}（可选 imr/xbar_r/"
-                             "xbar_s/p_chart/np_chart/c_chart/u_chart/cusum/ewma）")
+                             "xbar_s/p_chart/np_chart/c_chart/u_chart/cusum/ewma/"
+                             "mewma/gen_var/residual）")
 
         limits = _chart_limits(result)
         violations = limits.get("violations") or []
-        oos = int(((series > float(usl)).sum() if usl is not None else 0)
-                  + ((series < float(lsl)).sum() if lsl is not None else 0))
+        oos = 0
+        if series is not None:
+            oos = int(((series > float(usl)).sum() if usl is not None else 0)
+                      + ((series < float(lsl)).sum() if lsl is not None else 0))
         data = {"sheet": sheet_name, "column": col, "chart_type": chart,
                 "cl": limits.get("cl"), "ucl": limits.get("ucl"),
                 "lcl": limits.get("lcl"),
                 "violations": len(violations), "out_of_spec": oos,
                 "detail": limits}
-        lines = [f"控制图 {result.get('chart_type', chart)} — 表「{sheet_name}」列「{col}」",
+        target = ("多元变量 " + "/".join(columns if isinstance(columns, list)
+                                         else str(columns or "").split(","))
+                  if multi_chart else f"列「{col}」")
+        lines = [f"控制图 {result.get('chart_type', chart)} — 表「{sheet_name}」{target}",
                  (f"CL={_fmt(limits.get('cl'))} UCL={_fmt(limits.get('ucl'))} "
                  f"LCL={_fmt(limits.get('lcl'))}"),
                  f"判异点 {len(violations)} 个"
@@ -452,6 +524,35 @@ def build_default_registry(ctx: AgentContext) -> ToolRegistry:
         if not violations:
             lines.append("未检出判异点（过程受控）")
         return ToolResult("run_spc", data=data, text="\n".join(lines))
+
+    @reg.tool("detect_changepoints", "变点检测",
+              "PELT 变点检测（均值漂移 / 均值+方差同时变化），返回变点位置与分段统计",
+              {"sheet": "表名(可选)", "column": "测量列(可选)",
+               "model": "mean 或 meanvar（默认 mean）",
+               "penalty": "罚项 β(可选，缺省 2.5σ̂²log n)",
+               "min_size": "每段最少点数(默认2)"},
+              category="质量分析", returns="changepoints/segments/penalty")
+    def _detect_changepoints(context: AgentContext, sheet: str | None = None,
+                             column: str | None = None, model: str = "mean",
+                             penalty=None, min_size: int = 2):
+        sheet_name, col, series = _series(context, sheet, column, "numeric")
+        from analysis.spc.change_point import detect
+
+        result = detect(
+            series,
+            model=str(model or "mean").strip().lower(),
+            penalty=(None if penalty in (None, "", 0) else float(penalty)),
+            min_size=int(min_size or 2))
+        points = result["changepoints"]
+        lines = [(f"变点检测（{result['model']}）— 表「{sheet_name}」列「{col}」，"
+                  f"n={result['num_points']}，罚项 β={_fmt(result['penalty'])}"),
+                 f"检出变点 {result['num_changes']} 个"
+                 + (f"（新段起点索引，0 基）：{points}" if points else "")]
+        for segment in result["segments"][:5]:
+            lines.append(f"  段 {segment['start']}–{segment['end']}"
+                         f"（n={segment['n']}）均值 {_fmt(segment['mean'])}"
+                         f"，σ={_fmt(segment['std'])}")
+        return ToolResult("detect_changepoints", data=result, text="\n".join(lines))
 
     @reg.tool("run_capability", "过程能力分析",
               "计算 Cp/Cpk/Pp/Ppk、PPM 与能力评级（支持非正态变换）",

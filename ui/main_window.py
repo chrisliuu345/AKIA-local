@@ -442,6 +442,9 @@ class MainWindow(QMainWindow):
         tools_menu.addAction(settings_act)
         batch_act = QAction(i18n.tr("menu.batch"), self, triggered=self._on_batch_scheduler)
         tools_menu.addAction(batch_act)
+        self.case_workbench_act = QAction("改善案例工作台", self,
+                                          triggered=self._on_case_workbench)
+        tools_menu.addAction(self.case_workbench_act)
         tools_menu.addSeparator()
         clean_act = QAction(i18n.tr("sidebar.data_clean"), self, triggered=self._on_data_cleaner)
         tools_menu.addAction(clean_act)
@@ -476,6 +479,31 @@ class MainWindow(QMainWindow):
         about_action = QAction(i18n.tr("menu.about"), self)
         about_action.triggered.connect(self._on_about)
         help_menu.addAction(about_action)
+
+    def _on_case_workbench(self):
+        """改善案例工作台（v4.2.0 P5）：以当前导入数据建立案例并打开工作台。"""
+        from core.case_workflow import CaseWorkflow
+
+        raw = (self.current_data or {}).get("raw_data") or {}
+        frame = None
+        for candidate in raw.values():
+            if isinstance(candidate, pd.DataFrame) and not candidate.empty:
+                frame = candidate
+                break
+
+        source = str((self.current_data or {}).get("source", "") or "")
+        workflow = CaseWorkflow(title=f"改善案例 — {source.split('/')[-1]}" if source
+                                else "改善案例")
+        if frame is not None:
+            workflow.record_step(
+                "baseline", {"params": {"rows": int(len(frame))}},
+                data_ref=f"sheet:{next(iter(raw), 'Sheet1')}",
+                frame=frame, note="从当前导入数据建立基线")
+        self._last_case_workflow = workflow
+
+        from ui.dialogs.case_workflow_dialog import CaseWorkflowDialog
+
+        CaseWorkflowDialog(workflow, self).exec()
 
     def _on_llm_assist(self):
         """打开 QAM Harness（质量工程 AI Agent）对话窗口。"""
