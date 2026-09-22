@@ -3,50 +3,119 @@ name: CI
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
     branches: [main]
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
+# 取消同一分支上被新提交取代的运行，避免排队浪费时间
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
+env:
+  QT_QPA_PLATFORM: "offscreen"
+  MPLCONFIGDIR: "/tmp/mplcache"
+  OMP_NUM_THREADS: "2"
+  OPENBLAS_NUM_THREADS: "2"
+
+jobs:
+  lint:
+    name: 静态检查 + 版本一致性
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.14"
+          cache: pip
+      - name: 安装依赖（含可选看板依赖）
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -r requirements.txt -r dev-requirements.txt -r requirements-server.txt
+      - name: ruff 门禁
+        run: .venv/bin/python -m ruff check .
+      - name: 版本一致性门禁
+        run: .venv/bin/python tools/check_version.py
 
-      - name: Create venv and install dependencies
+  tests:
+    name: 全量逐文件回归
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+      - name: 安装依赖（含可选看板依赖）
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -r requirements.txt -r dev-requirements.txt -r requirements-server.txt
+      # CI 专用：runner 上没有 Secret Service，用 keyrings.alt 提供后端，
+      # 使"密钥环前缀 + Fernet 往返"这段平台代码在 CI 中真实被测（生产仍走系统密钥环）
+      - name: 提供密钥环后端（仅 CI）
+        run: |
+          .venv/bin/pip install keyrings.alt
+          echo "PYTHON_KEYRING_BACKEND=keyrings.alt.file.PlaintextKeyring" >> "$GITHUB_ENV"
+      - name: 逐文件执行（单文件一进程）
+        run: .venv/bin/python tools/run_tests.py --quiet
+      - name: 失败日志留存（仅失败时）
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-logs
+          path: /tmp/qa_tool_test_logs/
+          retention-days: 7
+
+  benchmark:
+    name: 性能基线
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+      - name: 安装依赖
         run: |
           python -m venv .venv
           .venv/bin/pip install --upgrade pip
           .venv/bin/pip install -r requirements.txt
-          .venv/bin/pip install -r dev-requirements.txt
+      - name: 性能基线（tolerance ×4）
+        run: .venv/bin/python tools/benchmark.py --tolerance 4
 
-      - name: Run ruff lint gate
+  package-appimage:
+    name: AppImage 打包冒烟（仅 tag）
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+      - name: 安装依赖与打包工具
         run: |
-          .venv/bin/python -m ruff check .
-
-      - name: Version consistency gate
+          python -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -r requirements.txt
+          .venv/bin/pip install pyinstaller
+          sudo apt-get update && sudo apt-get install -y file wget libfuse2
+      - name: 构建 AppImage
         run: |
-          .venv/bin/python tools/check_version.py
-
-      - name: Performance baseline (cold start / 1M import / chart / ML)
-        env:
-          QT_QPA_PLATFORM: "offscreen"
-          MPLCONFIGDIR: /tmp/mplcache
+          chmod +x build_appimage.sh
+          PATH="$PWD/.venv/bin:$PATH" ./build_appimage.sh
+      - name: 启动冒烟（离屏，10 秒内不崩溃即通过）
         run: |
-          .venv/bin/python tools/benchmark.py --tolerance 4
-
-      - name: Run tests (per-file, single-threaded)
-        env:
-          QT_QPA_PLATFORM: "offscreen"
-        run: |
-          FAILED=0
-          for f in tests/test_*.py; do
-            echo "::group:: $f"
-            .venv/bin/python -m pytest "$f" -v --tb=short || FAILED=1
-            echo "::endgroup::"
-          done
-          exit $FAILED
+          ls -lh build/*.AppImage
+          timeout 10 ./build/QA-Tool-*-x86_64.AppImage --appimage-extract-and-run || [ $? -eq 124 ]
+      - uses: actions/upload-artifact@v4
+        with:
+          name: QA-Tool-AppImage
+          path: build/QA-Tool-*-x86_64.AppImage
+          retention-days: 30

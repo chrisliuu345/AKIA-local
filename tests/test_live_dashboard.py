@@ -24,6 +24,7 @@ from server.app import start_thread, stop_thread
 PORT = 18765
 
 
+pytestmark = [pytest.mark.requires_socket, pytest.mark.requires_server]
 @pytest.fixture
 def server(tmp_path, _qt_application):
     bus = StreamBus()

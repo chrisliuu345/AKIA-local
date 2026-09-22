@@ -1,8 +1,10 @@
 """v2.6.1 安全校验回归测试: 密码策略 / DPAPI 凭据存储 / SQL 连接串脱敏"""
 
+import pytest
 
 # ── DPAPI 密码存储 ──
 
+@pytest.mark.requires_keyring
 def test_secret_store_roundtrip():
     import sys
     from core.secret_store import encrypt_secret, decrypt_secret

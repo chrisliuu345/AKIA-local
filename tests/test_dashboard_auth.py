@@ -23,6 +23,7 @@ from server.app import (
 TOKEN = "s3cret-token"
 
 
+pytestmark = [pytest.mark.requires_socket, pytest.mark.requires_server]
 def _free_port() -> int:
     """向系统申请一个空闲端口，避免固定端口在满载回归时被占用/冲突。"""
     with socket.socket() as s:

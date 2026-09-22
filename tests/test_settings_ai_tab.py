@@ -60,6 +60,7 @@ def test_agent_values_without_key_only_metadata(dialog):
     assert "llm_ollama_api_key" not in values        # 未填密钥不覆盖既有密钥
 
 
+@pytest.mark.requires_keyring
 def test_api_key_saved_encrypted_not_plaintext(dialog, isolated_config):
     from config.settings import get_secret, save_config
 
@@ -75,6 +76,7 @@ def test_api_key_saved_encrypted_not_plaintext(dialog, isolated_config):
     assert get_secret("llm_deepseek_api_key") == "sk-secret-abcdef123456"
 
 
+@pytest.mark.requires_keyring
 def test_clear_key_flag_writes_empty(dialog, isolated_config):
     from config.settings import save_config
 
