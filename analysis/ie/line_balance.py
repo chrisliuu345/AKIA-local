@@ -113,7 +113,7 @@ class LineBalanceEngine:
                 assigned.add(pick.process_id)
 
             if not members:
-                cands = ready(remaining) or [by_id[sorted(remaining)[0]]]
+                cands = ready(remaining) or [by_id[min(remaining)]]
                 pick = cands[0]
                 members.append(pick)
                 station_time = pick.cycle_time

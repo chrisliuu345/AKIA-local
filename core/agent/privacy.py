@@ -11,9 +11,12 @@
 """
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 
 from core.agent.providers import get_provider, needs_privacy_gate
+
+logger = logging.getLogger("QA-Tool.Privacy")
 
 ACK_KEY_TEMPLATE = "llm_privacy_ack_{provider}"
 MAX_PREVIEW_CHARS = 400          # 单个工具结果在预览中的截断长度
@@ -118,16 +121,16 @@ def grant_consent(provider_id: str, persist: bool = True) -> None:
     try:
         from config.settings import save_config
         save_config({ack_key(provider_id): True})
-    except Exception:
-        pass
+    except Exception as e:  # noqa: BLE001 - 写入失败仅降级为"下次再询问"，不阻断本次调用
+        logger.warning("隐私授权写入失败（%s）: %s", provider_id, e)
 
 
 def revoke_consent(provider_id: str) -> None:
     try:
         from config.settings import save_config
         save_config({ack_key(provider_id): False})
-    except Exception:
-        pass
+    except Exception as e:  # noqa: BLE001 - 撤销失败不阻断，重启后仍会重新弹出隐私门
+        logger.warning("隐私授权撤销写入失败（%s）: %s", provider_id, e)
 
 
 def needs_consent(provider_id: str, base_url: str = "") -> bool:
