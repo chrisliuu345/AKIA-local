@@ -7,7 +7,7 @@ build_pyinstaller.py — QA-Tool PyInstaller 构建脚本（跨平台, onedir �
     python build_pyinstaller.py --name qa-tool # 自定义产物名(Linux 用 qa-tool)
 
 产物布局:
-    onedir  → build/<name>.dist/<name>[.exe] + _internal/   (供 .iss / AppImage / deb 使用)
+    onedir  → build/<name>.dist/<name>[.exe] + _internal/   (供 .iss / AppImage 使用)
     onefile → dist/<name>[.exe]
 """
 
@@ -222,7 +222,7 @@ def _report(paths):
         elif path.is_file():
             print(f"\n  输出文件: {path}")
             print(f"  文件大小: {path.stat().st_size / (1024 * 1024):.1f} MB")
-    print("")
+    print()
 
 
 def main():

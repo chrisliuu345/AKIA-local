@@ -8,26 +8,20 @@
 
 ## 快速开始
 
-v4.1.0 提供 **三个官方版本**（均为免 Python 环境的离线运行包）：
+v4.1.0 提供 **两个官方版本**（均为免 Python 环境的离线运行包）：
 
 | 版本 | 安装文件 | 适用系统 | 安装方式 |
 |------|----------|----------|----------|
 | **Linux AppImage** | `QA-Tool-4.1.0-x86_64.AppImage` | 任意 x86_64 Linux（Debian / Ubuntu / elementary 等） | 免安装：赋予执行权限后直接运行 |
-| **Linux .deb** | `qa-tool_4.1.0_amd64.deb` | Debian 13 / Ubuntu 22.04+ / 衍生版 | `sudo dpkg -i` 安装，开始菜单启动 |
 | **Windows 安装包** | `QA-Tool-Setup-4.1.0.exe` | Windows 10/11（64 位） | 双击 Inno Setup 向导安装，开始菜单/桌面启动 |
+
+> Linux 仅发布 **AppImage** 单一格式（不再构建 `.deb`）；Debian/Ubuntu/Fedora 等发行版通用。
 
 ### Linux（AppImage，免安装）
 
 ```bash
 chmod +x QA-Tool-4.1.0-x86_64.AppImage
 ./QA-Tool-4.1.0-x86_64.AppImage
-```
-
-### Linux（.deb，系统集成）
-
-```bash
-sudo dpkg -i qa-tool_4.1.0_amd64.deb
-qa-tool
 ```
 
 ### Windows（安装包）
@@ -135,7 +129,7 @@ python main.py
 | AI | Ollama · OpenAI 兼容 API · TF-IDF RAG |
 | 硬件 | pyserial · MicroPython (ESP32) |
 | 实时看板 | FastAPI · uvicorn · websockets（需 `pip install -r requirements-server.txt`，可选） |
-| 构建 | PyInstaller (onedir) · Inno 安装器 · AppImage · .deb |
+| 构建 | PyInstaller (onedir) · Inno 安装器 · AppImage（Linux 唯一格式） |
 
 ---
 
