@@ -2,9 +2,9 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> Current: v4.1.0 Chart & UI experience unification (chart style layer / defect fixes / command palette / performance baseline) (✅ 2026-09-15 · source prerelease) | Next: **v4.2.0 Algorithm trust & depth (planned)**
-> Deepening line: **v4.2 Trust → v4.3 Case & evidence → v4.4 Closed loop → v4.5 Open → v4.6 Intelligence** (from analysis tool to a shop-floor improvement evidence chain) | Tests: 1798+ pytest · 37 analysis tabs | Updated: 2026-09-22
-> In progress: **v4.2.0** (P0 ✅ · P1 ✅ 29 cases · P2 ✅ algorithm depth, 60 cases + tool wiring · P3 ✅ stability & large samples · P4 ✅ credentials & method docs · P5 ✅ first closed-loop slice · UI wiring audit ✅ · next: **P6 wrap-up**)
+> Current: v4.2.0 Algorithm trust & depth (known-value matrix / multivariate SPC / changepoint detection / conclusion credentials / first improvement loop) (✅ 2026-09-22 · source prerelease) | Next: **v4.3.0 Improvement cases & evidence ledger (planned)**
+> Deepening line: **v4.2 Trust → v4.3 Case & evidence → v4.4 Closed loop → v4.5 Open → v4.6 Intelligence** (from analysis tool to a shop-floor improvement evidence chain) | Tests: 1950+ pytest · 37 analysis tabs | Updated: 2026-09-22
+> Status: **v4.2.0 P0–P6 complete** (P0 ✅ contracts · P1 ✅ 29 known-value cases · P2 ✅ algorithm depth, 60 cases + tool wiring · P3 ✅ stability & large samples · P4 ✅ credentials & method docs · P5 ✅ first closed-loop slice · P6 ✅ wrap-up); next up **v4.3.0 improvement cases & evidence ledger**
 
 > **Maintenance convention (from 2026-09-12)**: each version entry is one summary line plus key numbers; implementation details live in code/tests/user guide, not here.
 > This file was compressed from 1100+ lines to under 500; the expanded history is in git history (`git log -p -- ROADMAP.md`).
@@ -77,6 +77,7 @@ Planning principles:
 
 | Date | Version | Summary |
 |------|---------|---------|
+| 09-22 | **v4.2.0 released** | **Algorithm trust & depth (source prerelease)**: P0–P6 complete — known-value matrix 29 cases · algorithm depth 60 cases (MEWMA exact per-point Σ_z / generalized variance / PELT changepoints / ARIMA residual chart / non-normal bootstrap CI / reliability interval fix / ARIMA robustness) · benchmarks to 8 metrics + robustness contracts + BLE001 ratchet + coverage backfill · credential loop (analysis records → report trace code → `.qap` 1.8 → re-run diff) + guide "Methods & references" · first improvement closed loop (8-phase case spine + workbench entry) · version across all ends + full gates; full per-file regression **157 files / 1950 cases green**, ruff clean |
 | 09-22 | v4.2.0-P2 | **Algorithm depth delivered (7 files / 60 cases)**: MEWMA (Lowry 1992, exact per-point Σ_Z(i) + Phase I/II semantics + optional steady-state form; matches hotelling point-by-point at r=1) · generalized variance chart (Montgomery b1/b2) · PELT changepoint detection (pure numpy, equals brute-force DP optimum, default penalty 2.5σ̂²log n calibrated with fixed seeds) · ARIMA residual control chart (AR(1) false alarms drop markedly) · non-normal capability bootstrap CI (vectorised; small-sample accuracy warning: upward bias below n≈1000) · reliability intervals (Weibull CI cross-checked vs lifelines; **ALT extrapolation interval fixed** — the old form ignored the leverage term, coverage now 0.950) · ARIMA robustness (**crash on series with missing values fixed** — "No supported index"; constant/short-series guards; sample-size-bounded search) |
 | 09-17 | v4.2.0-audit | **Full UI feature & wiring audit**: offscreen survey of 37+1 tabs plus receiver scan of every button/menu action (no zero-wiring); 4 gap classes fixed — Time Series/Predictive Analytics missing from worksheet routing · self-contained tools 29-32 blocked by the import overlay · manual/context tools 14/16/17/25/26 blocked (including the FMEA→Control Plan chain) · menu missing entries for 35/36/37; 3 routing-coverage regressions added (all analysis tabs / five-chain unblocked / self-contained tabs clean) |
 | 09-17 | fix-ie | **IE tab import wiring fixed**: (1) the empty-state blue button on every tab was connected to the worksheet importer, while worksheet routing skips IE tabs (7-11/21-22) → IE-import tabs (7/9/10/11) now open "Import IE data" and the button label matches; (2) `_tab_has_data` only looked at `df`, but IE data lives in `ie_*` lists → the overlay stayed after a menu IE import; it now recognises IE data and empty states refresh right after import; (3) tabs 8/21/22 are self-contained IE tools (manual/preset driven) and no longer get an import overlay; 6 wiring regression cases added |
@@ -126,7 +127,17 @@ Planning principles:
 
 ---
 
-## Current Release: v4.1.0 Highlights
+## Current Release: v4.2.0 Highlights
+
+- **Trustworthy algorithms**: 29 known-value cases plus 60 algorithm-depth cases covering MEWMA, generalized variance, PELT changepoints, ARIMA residual charts and non-normal bootstrap CIs; the new algorithms are exposed through QAM Harness (`run_spc` chart types + `detect_changepoints`, 37 local tools)
+- **Traceable**: conclusion credentials (rule version + params + data fingerprint + app version) land in analysis records and `.qap` 1.8; reports carry a 12-digit trace code; re-runs produce an item-by-item diff; guide.html "Methods & references" documents 16 method families
+- **Closed-loop slice**: the improvement-case workbench drives an 8-phase spine (baseline → time study → line balance → improvement → re-measurement → paired test → conclusion → standard draft) with timestamps, data references and credentials per step
+- **Stability**: 8 benchmark metrics (SPC 100k/1M rows, MSA 100k, ML 100k) gated in CI; 22 degenerate-input contracts; `BLE001` blind-except gate enabled for the algorithm layer
+- **Release form**: Linux ships AppImage only; this release is a **source prerelease** (GitHub Source zip/tar.gz), no installers
+
+---
+
+## Previous Release: v4.1.0 Highlights (historical)
 
 - **Chart style layer (B1)**: `output/chart_style.py` as the single style source — dark/light themes, Okabe-Ito colour-blind-safe semantic palette (data/centre/control limit/spec/fit/violation), unified rcParams plus `smart_ylim` / `add_limit_lines` / `mark_violations` / `style_for_export`; chart_engine, chart_generator, heatmap and faceting all migrated
 - **Chart defect fixes (B2)**: all 8 audit findings cleared — auto-faceted multi-scale boxplots, Pareto 80% line with bar labels, outside control-chart legend with rule annotations, capability stats card with grade badge, diverging heatmap with masked diagonal, smart time-series y-limits, theme-coupled colours and font/grid unification

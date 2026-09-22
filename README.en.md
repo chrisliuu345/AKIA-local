@@ -8,25 +8,25 @@
 
 ## Quick Start
 
-v4.1.0 ships **two official editions** (all standalone, no Python required, fully offline):
+v4.2.0 ships **two official editions** (all standalone, no Python required, fully offline):
 
 | Edition | Installer file | Systems | Install |
 |---------|----------------|---------|---------|
-| **Linux AppImage** | `QA-Tool-4.1.0-x86_64.AppImage` | Any x86_64 Linux (Debian / Ubuntu / elementary, …) | Portable: make executable and run |
-| **Windows installer** | `QA-Tool-Setup-4.1.0.exe` | Windows 10/11 (64-bit) | Run the Inno Setup wizard; menu/desktop shortcuts |
+| **Linux AppImage** | `QA-Tool-4.2.0-x86_64.AppImage` | Any x86_64 Linux (Debian / Ubuntu / elementary, …) | Portable: make executable and run |
+| **Windows installer** | `QA-Tool-Setup-4.2.0.exe` | Windows 10/11 (64-bit) | Run the Inno Setup wizard; menu/desktop shortcuts |
 
 > Linux ships **AppImage only** (`.deb` is no longer built); works across Debian/Ubuntu/Fedora and derivatives.
 
 ### Linux (AppImage, portable)
 
 ```bash
-chmod +x QA-Tool-4.1.0-x86_64.AppImage
-./QA-Tool-4.1.0-x86_64.AppImage
+chmod +x QA-Tool-4.2.0-x86_64.AppImage
+./QA-Tool-4.2.0-x86_64.AppImage
 ```
 
 ### Windows (installer)
 
-Download `QA-Tool-Setup-4.1.0.exe` from
+Download `QA-Tool-Setup-4.2.0.exe` from
 [Releases](https://github.com/chrisliuu345/QA-Tool/releases) and run the Inno Setup wizard
 (start-menu and desktop shortcuts included).
 
@@ -51,7 +51,7 @@ Requires Python 3.11+
 
 | Module | Capabilities |
 |--------|-------------|
-| **SPC Control Charts** | XBar-R/S · I-MR · P/NP/C/U · CUSUM · EWMA + Nelson 8 rules |
+| **SPC Control Charts** | XBar-R/S · I-MR · P/NP/C/U · CUSUM · EWMA · **MEWMA** · **generalized variance \|S\|** · Hotelling T² + Nelson 8 rules · **changepoint detection (PELT)** · **ARIMA residual chart** |
 | **Capability** | Normal / Non-normal / Johnson / Sixpack · Cp/Cpk/Pp/Ppk |
 | **MSA** | Gage R&R · EMP Method · Attribute Agreement · Type 1 · Uncertainty Budget |
 | **Hypothesis Testing** | t-test · ANOVA · Normality · Non-parametric · Equivalence |
@@ -93,7 +93,7 @@ Requires Python 3.11+
 
 | Module | Capabilities |
 |--------|-------------|
-| **QAM Harness** | AI agent with 36 local tools (SPC/capability/MSA/hypothesis/DOE/regression/reliability/time-series/IE/cost/realtime/five-chain/root-cause/machine-learning) + offline tool mode · BYOK cloud providers (OpenAI/Claude/Gemini/DeepSeek/Z.ai/KIMI + custom endpoints) · encrypted keys + cloud privacy gate · Knowledge Base RAG |
+| **QAM Harness** | AI agent with 37 local tools (SPC/capability/MSA/hypothesis/DOE/regression/reliability/time-series/IE/cost/realtime/five-chain/root-cause/machine-learning) + offline tool mode · BYOK cloud providers (OpenAI/Claude/Gemini/DeepSeek/Z.ai/KIMI + custom endpoints) · encrypted keys + cloud privacy gate · Knowledge Base RAG |
 | **Plugin API v2** | External plugins developed/published separately: pip entry point or user dir · Tab / agent tools / settings contributions · dependency probing + trust model (e.g. [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion)) |
 | **Charts** | 15+ chart types · Dark theme · CJK fonts |
 | **Reports** | PDF / Word / Excel / HTML · Inline charts |
@@ -160,4 +160,4 @@ Proprietary commercial software. Unauthorized copying, modification, or distribu
 
 ---
 
-*Python 3.14 + PySide6 · 1650+ Tests · 37 Analysis Tabs + Plugin API v2*
+*Python 3.14 + PySide6 · 1950+ Tests · 37 Analysis Tabs + Plugin API v2*
