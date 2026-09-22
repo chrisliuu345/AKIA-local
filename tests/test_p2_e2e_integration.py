@@ -25,6 +25,7 @@ from core.agent.tools import AgentContext, build_default_registry
 from core.llm_client import LLMClient
 
 
+pytestmark = [pytest.mark.requires_socket]
 class _Handler(BaseHTTPRequestHandler):
     """按路径模拟四家 API 的流式响应，并记录全部请求。"""
 

@@ -31,6 +31,9 @@ chmod +x QA-Tool-4.2.0-x86_64.AppImage
 
 ### 源码运行
 
+> 依赖锁定：`requirements.lock` 是本机验证过的完整版本快照（CI 与发布门禁使用），
+> `requirements*.txt` 保留宽松约束便于升级。
+
 ```bash
 git clone https://github.com/chrisliuu345/QA-Tool.git
 cd QA-Tool
