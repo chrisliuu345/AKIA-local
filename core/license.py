@@ -27,7 +27,7 @@ class LicenseManager:
         import platform
         import hashlib
         raw = f"{platform.node()}|{platform.machine()}|{platform.processor()}"
-        return hashlib.md5(raw.encode()).hexdigest()[:32]
+        return hashlib.md5(raw.encode(), usedforsecurity=False).hexdigest()[:32]
 
     def verify(self) -> tuple[bool, LicenseStatus]:
         """验证许可证 — 始终返回有效"""

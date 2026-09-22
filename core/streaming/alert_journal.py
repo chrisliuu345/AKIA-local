@@ -7,10 +7,13 @@ JSONL 追加存储（每行一条），进程内写锁 + 原子追加，供桌�
 from __future__ import annotations
 
 import json
+import logging
 import threading
 import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
+
+logger = logging.getLogger("QA-Tool.AlertJournal")
 
 SEVERITY_INFO = "info"
 SEVERITY_WARNING = "warning"
@@ -118,8 +121,8 @@ class AlertJournal:
             self.path.parent.mkdir(parents=True, exist_ok=True)
             with open(self.path, "a", encoding="utf-8") as f:
                 f.write(line + "\n")
-        except OSError:
-            pass  # 留存失败不影响告警主流程
+        except OSError as e:  # 留存失败不影响告警主流程，但需留痕
+            logger.warning("告警日志追加失败（%s）: %s", self.path, e)
 
     def _rewrite(self) -> None:
         """确认状态变更后整体重写（文件通常远小于 5MB，代价可接受）。"""
@@ -127,11 +130,10 @@ class AlertJournal:
             self.path.parent.mkdir(parents=True, exist_ok=True)
             tmp = self.path.with_suffix(self.path.suffix + ".tmp")
             with open(tmp, "w", encoding="utf-8") as f:
-                for entry in self._entries:
-                    f.write(entry.to_json() + "\n")
+                f.writelines(entry.to_json() + "\n" for entry in self._entries)
             tmp.replace(self.path)
-        except OSError:
-            pass
+        except OSError as e:
+            logger.warning("告警日志重写失败（%s）: %s", self.path, e)
 
     # ---------- 查询 ----------
     def entries(self, limit: int | None = None, severity: str | None = None,

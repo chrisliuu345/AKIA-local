@@ -8,11 +8,14 @@
 SHAP 不可用时自动降级为 RandomForest feature_importances_。
 """
 
+import logging
 from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
 import pandas as pd
+
+logger = logging.getLogger("QA-Tool.RootCause")
 
 
 @dataclass
@@ -137,8 +140,8 @@ class RootCauseAnalyzer:
                 imp = np.abs(np.asarray(sv)).mean(axis=0)
                 if imp.shape[0] == len(X.columns) and np.isfinite(imp).all():
                     return imp, "shap"
-            except Exception:
-                pass
+            except Exception as e:  # noqa: BLE001 - SHAP 不可用时降级为 RF 重要性
+                logger.debug("SHAP 解释失败，降级为 RF feature_importances_: %s", e)
         return np.asarray(model.feature_importances_), "rf"
 
     def _compute_correlations(self, X: pd.DataFrame, y: pd.Series) -> dict[str, float]:
