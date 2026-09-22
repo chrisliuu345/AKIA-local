@@ -12,7 +12,7 @@ class SheetSplitter:
         for val, group in df.groupby(column):
             raw = str(val).replace("/", "_").replace("\\", "_")
             suffix = (
-                "_" + hashlib.md5(raw.encode("utf-8")).hexdigest()[:6]
+                "_" + hashlib.md5(raw.encode("utf-8"), usedforsecurity=False).hexdigest()[:6]
                 if len(raw) > 50
                 else ""
             )

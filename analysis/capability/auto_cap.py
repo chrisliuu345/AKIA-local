@@ -8,11 +8,14 @@
 - Edgeworth 近似能力指数
 """
 
+import logging
 from typing import Any
 import warnings
 import numpy as np
 import pandas as pd
 from scipy import stats
+
+logger = logging.getLogger("QA-Tool.AutoCap")
 
 
 DISTRIBUTIONS = {
@@ -180,8 +183,8 @@ def _select_transform(data: np.ndarray) -> dict[str, Any]:
                 "skewness": float(stats.skew(transformed)),
                 "kurtosis": float(stats.kurtosis(transformed)),
             }
-        except Exception:
-            pass
+        except Exception as e:  # noqa: BLE001 - 变换失败退回无变换（method=none）
+            logger.debug("Box-Cox 正偏变换失败，退回无变换: %s", e)
 
     if skewness < -0.5:
         try:
@@ -196,8 +199,8 @@ def _select_transform(data: np.ndarray) -> dict[str, Any]:
                 "skewness": float(stats.skew(transformed)),
                 "kurtosis": float(stats.kurtosis(transformed)),
             }
-        except Exception:
-            pass
+        except Exception as e:  # noqa: BLE001 - 变换失败退回无变换（method=none）
+            logger.debug("Box-Cox 反偏变换失败，退回无变换: %s", e)
 
     return {
         "method": "none",
