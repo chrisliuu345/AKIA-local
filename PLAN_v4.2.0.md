@@ -158,6 +158,9 @@ Linux 发布形态为 **AppImage 单一格式**。
 | `pathlib` 迁移（`PTH*`） | ≈250 处 | 低优先，禁止新增 `os.path` 用法 | 后续 |
 | 全局 `RuntimeWarning` 屏蔽 | `main.py:24` | 改为就地 `np.errstate` | P3-5 |
 | 全角标点告警（`RUF001/002/003`） | 4000+ | 中文语境噪声，不启用 | 不修 |
+| 环境相关用例的环境依赖表达 | 7 文件 32 例 | 已引入 `requires_socket/keyring/server` 标记 + 自动跳过（2026-09-22 工作流加固） | 已完成 |
+| CI 依赖缺口 / 无超时与并发控制 | CI 全量 | 已拆 job + 装可选依赖 + CI 专用密钥环后端 + timeout/concurrency/缓存（2026-09-22） | 已完成 |
+| 依赖未锁定 | requirements*.txt | 新增 `requirements.lock`（本机验证快照）；CI 仍按 lock 待切换 | 已完成（切换待观察） |
 
 ---
 

@@ -8,6 +8,7 @@ import threading
 
 import pytest
 
+
 from core.devices.protocol import encode_message, MessageType
 from core.devices.transport import TcpTransport, TransportError
 from core.devices.discovery import probe_network_device
@@ -20,6 +21,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "firmware"))
 import maixcam_server
 
 
+pytestmark = [pytest.mark.requires_socket]
 class _FakeMaixcamServer:
     """环回 JSON-lines 服务端：hello/ping/command 应答，模拟 maixcam。"""
 

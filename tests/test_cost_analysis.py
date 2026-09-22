@@ -19,6 +19,7 @@ from core.streaming.oee_live import LiveOEEComputer
 from core.storage.timeseries import TimeseriesStore
 
 
+pytestmark = [pytest.mark.requires_socket, pytest.mark.requires_server]
 def _plant():
     return PlantConfig(lines=[Line(
         name="L1", unit_cost=12.5, scrap_cost=20.0, downtime_cost_per_min=3.0,
