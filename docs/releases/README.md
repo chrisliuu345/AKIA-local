@@ -34,4 +34,5 @@
 
 ## 已有记录
 
-- `v4.2.0.md` — 算法可信度与深度（源码 prerelease，2026-09-22）
+- `v4.2.0.md` — 算法可信度与深度（2026-09-22 源码 prerelease；2026-09-23 追加
+  Linux AppImage 打包与 GitHub Release 交付，含 SHA256 与冒烟证据）

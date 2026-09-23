@@ -2,9 +2,9 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> Current: v4.2.0 Algorithm trust & depth (known-value matrix / multivariate SPC / changepoint detection / conclusion credentials / first improvement loop) (✅ 2026-09-22 · source prerelease) | Next: **v4.3.0 Improvement cases & evidence ledger (planned)**
-> Deepening line: **v4.2 Trust → v4.3 Case & evidence → v4.4 Closed loop → v4.5 Open → v4.6 Intelligence** (from analysis tool to a shop-floor improvement evidence chain) | Tests: 1950+ pytest · 37 analysis tabs | Updated: 2026-09-22
-> Status: **v4.2.0 P0–P6 complete** (P0 ✅ contracts · P1 ✅ 29 known-value cases · P2 ✅ algorithm depth, 60 cases + tool wiring · P3 ✅ stability & large samples · P4 ✅ credentials & method docs · P5 ✅ first closed-loop slice · P6 ✅ wrap-up); next up **v4.3.0 improvement cases & evidence ledger**
+> Current: v4.2.0 Algorithm trust & depth (known-value matrix / multivariate SPC / changepoint detection / conclusion credentials / first improvement loop) (✅ 2026-09-22 source · ✅ 2026-09-23 Linux AppImage + GitHub release) | Next: **v4.3.0 Improvement cases & evidence ledger (planned)**
+> Deepening line: **v4.2 Trust → v4.3 Case & evidence → v4.4 Closed loop → v4.5 Open → v4.6 Intelligence** (from analysis tool to a shop-floor improvement evidence chain) | Tests: 1950+ pytest · 37 analysis tabs | Updated: 2026-09-23
+> Status: **v4.2.0 P0–P6 complete and delivered** (P0 ✅ contracts · P1 ✅ 29 known-value cases · P2 ✅ algorithm depth, 60 cases + tool wiring · P3 ✅ stability & large samples · P4 ✅ credentials & method docs · P5 ✅ first closed-loop slice · P6 ✅ wrap-up · packaging ✅ Linux AppImage + GitHub release); next up **v4.3.0 improvement cases & evidence ledger**
 
 > **Maintenance convention (from 2026-09-12)**: each version entry is one summary line plus key numbers; implementation details live in code/tests/user guide, not here.
 > This file was compressed from 1100+ lines to under 500; the expanded history is in git history (`git log -p -- ROADMAP.md`).
@@ -17,7 +17,7 @@
 v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.1 ──→ v2.5 ──→ v2.6.0 ~ v2.6.5 ──→ v2.7.0
       ──→ v2.8.0 ──→ v2.9.0 ──→ v3.0.0 ──→ v3.1.0 ──→ v3.2.0 ──→ v3.3.0 ──→ v3.4.0 ──→ v3.5.0
       ──→ v3.6.0 (incl. 3.6.1) ──→ v3.7.0 (incl. review) ──→ v3.7.1 ──→ v3.7.2 ──→ v3.8.0 ──→ v4.0.0
-      ──→ v4.1.0 ✅ current ──→ v4.2.0 Trust (planned) ──→ v4.3.0 Case·evidence (planned) ──→ v4.4.0 Closed loop (planned)
+      ──→ v4.2.0 ✅ current (trust · AppImage published) ──→ v4.3.0 Case·evidence (planned) ──→ v4.4.0 Closed loop (planned)
       ──→ v4.5.0 Open (planned) ──→ v4.6.0 Intelligence (planned)
 ```
 
@@ -37,7 +37,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | 🔌 | [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion) | External vision plugin (video time study) built on Plugin API v2 |
 | ✅ | **v4.0.0** | **Predictive analytics & ML (CART / Random Forests / gradient boosting / MARS / AutoML + feature engineering / evaluation / SHAP / model deployment)** |
 | ✅ | **v4.1.0** | **Chart & UI experience unification (B1 style layer / B2 chart fixes / B3 command palette·batch progress·toasts·empty state / B4 quality & performance baseline)** |
-| 🚧 | v4.2.0 | Algorithm trust & depth (known-value validation matrix / multivariate SPC · change-point detection · residual control charts / conclusion credentials / first closed-loop slice) |
+| ✅ | **v4.2.0** | **Algorithm trust & depth (known-value validation matrix / multivariate SPC · change-point detection · residual control charts / conclusion credentials / first closed-loop slice) · Linux AppImage published** |
 | 🚧 | v4.3.0 | Improvement case & evidence ledger (ImprovementCase lifecycle / MeasurementEvent · plugin data sources / standard version records / evidence view · desensitized sharing) |
 | 🚧 | v4.4.0 | Closed-loop execution & effect verification (alert→8D auto case / measurement system online / sampling transfer / benefit ledger · COPQ / skill-constrained line balancing) |
 | 🚧 | v4.5.0 | Open ecosystem (MCP server · native tool calling / CLI · SDK quality gate / industry rule packs · plugin scaffold) |
@@ -55,7 +55,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | 1 | **Quality workflow integration** (FMEA→CP→SPC→PPAP→8D data chain) | Open gap | v2.8.0 ✅, ongoing |
 | 2 | **Real-time factory integration** (ESP32/MaixCAM native + PLC/CMM/gauge connectors + cloud dashboard) | Minitab needs paid Prolink | v3.7.0 ✅ |
 | 3 | **IE tool suite** (SMED/TPM/OEE/8D/FMEA/PPAP/Control Plan) | Minitab has no IE | v2.2.0 ✅ |
-| 4 | **QAM Harness** (BYOK agent: 36 tools + offline routing + privacy gate) | Copilot is cloud-only | v3.8.0 ✅ |
+| 4 | **QAM Harness** (BYOK agent: 37 tools + offline routing + privacy gate) | Copilot is cloud-only | v3.8.0 ✅ growing |
 | 5 | **Chinese-first + offline desktop** (GB/T built in) | Open gap | Throughout |
 | 6 | **Improvement cases & evidence system** (ImprovementCase spine + provenance/confidence grading + replayable conclusions + evidence-pack exchange) | Minitab / Datalyzer have none | v4.2.0–v4.3.0 |
 | 7 | **Open interface ecosystem** (MCP server + headless CLI/SDK + industry rule packs) | Open in the AI ecosystem; no de-facto plugin standard | v4.5.0 |
@@ -77,6 +77,7 @@ Planning principles:
 
 | Date | Version | Summary |
 |------|---------|---------|
+| 09-23 | **v4.2.0 packaged** | **Linux AppImage built + GitHub release delivered**: `build_appimage.sh` (PyInstaller onedir → AppDir → appimagetool) produces `QA-Tool-4.2.0-x86_64.AppImage` plus a `.sha256` checksum file; systems without FUSE launch it via `--appimage-extract-and-run`; README (zh/en) / ROADMAP (zh/en) / guide.html / `docs/releases/v4.2.0.md` now document the release form and verification steps; version stays 4.2.0 (`check_version.py` passes, no API change); the Windows installer is still built on Windows |
 | 09-22 | **v4.2.0 released** | **Algorithm trust & depth (source prerelease)**: P0–P6 complete — known-value matrix 29 cases · algorithm depth 60 cases (MEWMA exact per-point Σ_z / generalized variance / PELT changepoints / ARIMA residual chart / non-normal bootstrap CI / reliability interval fix / ARIMA robustness) · benchmarks to 8 metrics + robustness contracts + BLE001 ratchet + coverage backfill · credential loop (analysis records → report trace code → `.qap` 1.8 → re-run diff) + guide "Methods & references" · first improvement closed loop (8-phase case spine + workbench entry) · version across all ends + full gates; full per-file regression **157 files / 1950 cases green**, ruff clean |
 | 09-22 | v4.2.0-P2 | **Algorithm depth delivered (7 files / 60 cases)**: MEWMA (Lowry 1992, exact per-point Σ_Z(i) + Phase I/II semantics + optional steady-state form; matches hotelling point-by-point at r=1) · generalized variance chart (Montgomery b1/b2) · PELT changepoint detection (pure numpy, equals brute-force DP optimum, default penalty 2.5σ̂²log n calibrated with fixed seeds) · ARIMA residual control chart (AR(1) false alarms drop markedly) · non-normal capability bootstrap CI (vectorised; small-sample accuracy warning: upward bias below n≈1000) · reliability intervals (Weibull CI cross-checked vs lifelines; **ALT extrapolation interval fixed** — the old form ignored the leverage term, coverage now 0.950) · ARIMA robustness (**crash on series with missing values fixed** — "No supported index"; constant/short-series guards; sample-size-bounded search) |
 | 09-17 | v4.2.0-audit | **Full UI feature & wiring audit**: offscreen survey of 37+1 tabs plus receiver scan of every button/menu action (no zero-wiring); 4 gap classes fixed — Time Series/Predictive Analytics missing from worksheet routing · self-contained tools 29-32 blocked by the import overlay · manual/context tools 14/16/17/25/26 blocked (including the FMEA→Control Plan chain) · menu missing entries for 35/36/37; 3 routing-coverage regressions added (all analysis tabs / five-chain unblocked / self-contained tabs clean) |
@@ -133,7 +134,7 @@ Planning principles:
 - **Traceable**: conclusion credentials (rule version + params + data fingerprint + app version) land in analysis records and `.qap` 1.8; reports carry a 12-digit trace code; re-runs produce an item-by-item diff; guide.html "Methods & references" documents 16 method families
 - **Closed-loop slice**: the improvement-case workbench drives an 8-phase spine (baseline → time study → line balance → improvement → re-measurement → paired test → conclusion → standard draft) with timestamps, data references and credentials per step
 - **Stability**: 8 benchmark metrics (SPC 100k/1M rows, MSA 100k, ML 100k) gated in CI; 22 degenerate-input contracts; `BLE001` blind-except gate enabled for the algorithm layer
-- **Release form**: Linux ships AppImage only; this release is a **source prerelease** (GitHub Source zip/tar.gz), no installers
+- **Release form**: Linux ships AppImage only; the **`v4.2.0` GitHub release** delivers `QA-Tool-4.2.0-x86_64.AppImage` (with a `.sha256` checksum file) plus source zip/tar.gz; the Windows installer is built on Windows from `packaging/QA-Tool-installer.iss`
 
 ---
 
@@ -153,7 +154,7 @@ Planning principles:
 |------|------|-------|
 | Manual review of proactive-suggestion accuracy (≥3.5/5) | Needs engineer scoring | User |
 | Vision acceptance on real footage (site video + labelled CSV, ≥85% agreement) | Needs site material | Plugin project |
-| Release artifacts (Linux AppImage / Windows Inno) | Not built for v4.1.0; scripts ready for on-demand builds | Optional |
+| Release artifacts (Windows Inno) | v4.2.0 AppImage is published with the release; the Windows installer needs a Windows box (scripts and .iss are ready) | On demand |
 | ImprovementCase object + evidence ledger | Bitemporal narrowed to measurements/standards/conclusions; see v4.3.0 | v4.3.0 |
 | Case workspace entry | Reuse Home first; adding a tab requires explicit review | v4.3.0 decision |
 | MCP server + native tool calling | Decides the AI-ecosystem position; see v4.5.0 | v4.5.0 |
@@ -221,7 +222,7 @@ Planning principles:
 | **B3 UI experience** ✅ 2026-09-15 | Global command palette (Ctrl+K / Ctrl+P: 37 tabs + plugins + 16 common actions) · stepwise batch analysis with progress and cancel (Ctrl+Shift+B) · Toast wiring (analysis done / export / batch summary, suppressed per-tab during batches) · unified empty state (auto "import data" overlay for tabs without data, with a working button) | 15 new tests pass; main flows keyboard-accessible; batch analysis stays responsive and cancellable |
 | **B4 Quality & performance baseline** ✅ 2026-09-15 | Type modernisation complete (**whole UP family + RUF013 cleared**: PEP 585/604 annotations, deprecated typing imports, implicit Optional; 154 files) · hotspot split: `ui/main_window_helpers.py` (tab checks / current-page stack / LLM detection) + `core/agent/tool_helpers.py` (shared tool helpers), main_window 2295→2241 and tools_ext 1175→1061 · `tools/benchmark.py` with four metrics (cold start 2.2s / 1M-row import 14.0s / 5k-point chart 1.5s / 5k-row ML train 1.5s) + `perf_baseline.json` + CI step (tolerance ×4, subprocess isolation) | Benchmarks gated in CI; extended ruff gate (incl. all UP rules) clean; full regression green |
 
-### v4.2.0 — Algorithm Trust & Depth (planned)
+### v4.2.0 — Algorithm Trust & Depth (released)
 
 > Trust layer: first prove the maths is right, then prove how a judgement was made; and validate the case loop with a minimal vertical slice.
 > **Phase order**: P0 contracts → P1 known-value matrix → P2 algorithm depth → P3 stability → P4 conclusion credentials & method docs → P5 first closed-loop slice → P6 wrap-up; P1–P3 touch only `analysis/` + `tests/`, P4–P5 touch `core/` + `ui/`, so they can be scheduled in parallel (4–6 weeks total + 20% buffer).
@@ -235,7 +236,7 @@ Planning principles:
 | **P3 Stability & large samples** (B3) ✅ 2026-09-22 | Benchmark suite extended to 8 metrics (added `spc_100k_rows_s` / `spc_1m_rows_s` / `msa_100k_rows_s` / `ml_train_100k_rows_s`, measured 3.12s / 20.73s / 0.96s / 3.78s) · `tests/test_robustness_numeric.py` (22 cases: inverted limits, degenerate spread, constant/missing-value charts, rank-deficient covariance, single-class classification, zero-variance DOE, single-operator MSA) · coverage backfill `test_core_coverage_gaps.py` (16) + `test_analysis_coverage_gaps.py` (12) for excel_utils / session_manager / audit / base_report_engine / between_within_cap / variance_tests / eight_d_engine · **quality ratchet**: `BLE001` (blind except) now gated, 31 sites in the algorithm and reporting layers justified one by one · deprecation cleanup (websockets legacy connect: 50 warnings eliminated; `main.py` global RuntimeWarning suppression → `once`) | Benchmarks gated in CI and all 8 within tolerance ×4; robustness/coverage cases pass; `ruff check .` clean (with BLE001 enabled); full per-file regression across 154 files green |
 | **P4 Conclusion credentials + method docs** (B4) ✅ 2026-09-22 | Credentials written into analysis records (`_store_analysis` → `core/evidence.make_credential`; fingerprints the tab's actual data, degrading to `no-data`) · report traceability code (`credential_trace` + PDF/Word/Excel footers + i18n `report.trace_code`) · review mode (`diff_analysis_records` + automatic `rerun_diff` on re-run) · `.qap` 1.8 credential section (1.6/1.7 read-compatible) · guide.html "Methods & references" (16 method families with sources + credential semantics) | 18 new cases (`test_evidence_wiring.py` 15 + 3 `.qap` credential cases): identical re-run reports `identical=True`, parameter changes visible, trace code order-independent and content-sensitive, Excel footer carries a readable trace code; ruff clean |
 | **P5 First closed-loop slice** (B5) ✅ 2026-09-22 | `core/case_workflow.py`: case-spine orchestration over 8 phases (baseline → time study → line-balance bottleneck → improvement → re-measurement → paired test → conclusion → standard draft); every step records **timestamp + data reference + conclusion credential** (reusing P4), wired to the real paired t-test engine (`analysis.hypothesis.t_tests.paired`), with Markdown export and dict round-trip (`.qap` cases section); UI entry: Tools → "Improvement case workbench" + `ui/dialogs/case_workflow_dialog.py` (phase progress, trace preview, Markdown export), seeding the baseline from the currently imported data | `tests/test_case_workflow.py` (14 cases: full 8-phase chain, credential/reference/timestamp traceability, paired test both significant and null, Markdown/dict round-trip, legacy case compatibility, offscreen menu and entry verification); full per-file regression across 157 files green; ruff clean |
-| **P6 Wrap-up** | Version 4.2.0 across all four ends · README / guide / roadmap sync · full per-file regression + ruff gate · release-mode decision (source prerelease or packaged) | `check_version.py` passes; all green; demo reproducible |
+| **P6 Wrap-up** ✅ 2026-09-23 | Version 4.2.0 across all four ends · README / guide / roadmap sync · full per-file regression + ruff gate · release-mode decision and execution (09-22 source prerelease → 09-23 packaged: Linux AppImage build + GitHub release + `.sha256`) | `check_version.py` passes; all green; demo reproducible; `bash build_appimage.sh` output launches |
 
 **Key design decisions**: no new hard dependencies (PELT self-implemented; statsmodels as a dev-only reference) · credential and case schemas live in `core/` (Qt-free) · `.qap` stays backward compatible (reads 1.6, writes 1.7) · UI entry reuses Home, no new tab · the full MeasurementEvent contract lands in 4.3.0, with only the interface reserved here · **Linux ships AppImage only (decided 2026-09-22; the `.deb` build chain and `packaging/deb/` were removed)**.
 **Risks & mitigations**: known-value sourcing/licensing (NIST public domain first, literature values cited) · PELT effort (fall back to binary segmentation if over time-box) · closed-loop slice scope creep (1.5-week time box, one case template only) · performance regressions (P3 baseline comparison, revert if out of bounds).

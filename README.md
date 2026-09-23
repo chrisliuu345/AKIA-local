@@ -8,26 +8,33 @@
 
 ## 快速开始
 
-v4.2.0 提供 **两个官方版本**（均为免 Python 环境的离线运行包）：
+v4.2.0 提供免装 Python 环境的离线运行包；Linux 侧为 **AppImage**（已随 Release 发布），
+Windows 侧为 **Inno Setup 安装包**（需在 Windows 机器上构建）：
 
-| 版本 | 安装文件 | 适用系统 | 安装方式 |
-|------|----------|----------|----------|
-| **Linux AppImage** | `QA-Tool-4.2.0-x86_64.AppImage` | 任意 x86_64 Linux（Debian / Ubuntu / elementary 等） | 免安装：赋予执行权限后直接运行 |
-| **Windows 安装包** | `QA-Tool-Setup-4.2.0.exe` | Windows 10/11（64 位） | 双击 Inno Setup 向导安装，开始菜单/桌面启动 |
+| 版本 | 安装文件 | 适用系统 | 发布状态 | 安装方式 |
+|------|----------|----------|----------|----------|
+| **Linux AppImage** | `QA-Tool-4.2.0-x86_64.AppImage` | 任意 x86_64 Linux（Debian / Ubuntu / Fedora / elementary 等） | ✅ 随 [v4.2.0 Release](https://github.com/chrisliuu345/QA-Tool/releases/tag/v4.2.0) 提供（附 `.sha256` 校验文件） | 免安装：赋予执行权限后直接运行 |
+| **Windows 安装包** | `QA-Tool-Setup-4.2.0.exe` | Windows 10/11（64 位） | Windows 侧构建（`build_pyinstaller.py` + `packaging/QA-Tool-installer.iss`） | 双击 Inno Setup 向导安装，开始菜单/桌面启动 |
 
 > Linux 仅发布 **AppImage** 单一格式（不再构建 `.deb`）；Debian/Ubuntu/Fedora 等发行版通用。
 
 ### Linux（AppImage，免安装）
 
 ```bash
+# 从 v4.2.0 Release 下载 AppImage 与同名 .sha256 校验文件后
+sha256sum -c QA-Tool-4.2.0-x86_64.AppImage.sha256
 chmod +x QA-Tool-4.2.0-x86_64.AppImage
 ./QA-Tool-4.2.0-x86_64.AppImage
 ```
 
+> 无 FUSE 的环境（容器 / 精简发行版）追加 `--appimage-extract-and-run` 参数即可解包运行。
+> 从源码自行打包：`bash build_appimage.sh`（产物落在 `build/`）。
+
 ### Windows（安装包）
 
-从 [Releases](https://github.com/chrisliuu345/QA-Tool/releases) 下载 `QA-Tool-Setup-4.2.0.exe`，
-双击按向导安装（Inno Setup 安装器，含开始菜单与桌面快捷方式）。
+在 Windows 上执行 `python build_pyinstaller.py --onefile`，再用 Inno Setup 编译
+`packaging/QA-Tool-installer.iss`，产物 `QA-Tool-Setup-4.2.0.exe` 双击按向导安装
+（含开始菜单与桌面快捷方式）。
 
 ### 源码运行
 
@@ -156,14 +163,17 @@ analysis/              # 分析引擎 (14 模块)
 core/                  # 核心引擎
 ui/                    # PySide6 UI (37 个 Tab + 插件 Tab)
 output/                # 报告引擎
-tests/                 # 1500+ 测试
+tests/                 # 1950+ 测试
 ```
 
 ---
 
 ## 下载
 
-从 [Releases](https://github.com/chrisliuu345/QA-Tool/releases) 下载最新版本。
+从 [Releases](https://github.com/chrisliuu345/QA-Tool/releases) 下载最新版本：
+
+- `v4.2.0` — Linux AppImage（`QA-Tool-4.2.0-x86_64.AppImage` + `.sha256`）与源码包（zip / tar.gz）
+- 发布说明见 [`docs/releases/v4.2.0.md`](docs/releases/v4.2.0.md)
 
 ---
 
