@@ -155,23 +155,35 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
 </section>
 
 <section class="card" id="install">
-  <h2>安装包与启动（v4.2.0 两版）</h2>
-  <p>v4.2.0 提供两个官方版本，均免装 Python 环境、完全离线运行。Linux 侧只发布 AppImage 单一格式（不再构建 <code>.deb</code>）：</p>
+  <h2>安装包与启动（v4.2.0）</h2>
+  <p>v4.2.0 免装 Python 环境、完全离线运行。Linux 侧只发布 AppImage 单一格式（不再构建
+  <code>.deb</code>），已随 GitHub Release 提供下载；Windows 安装包在 Windows 侧用仓库内
+  <code>packaging/QA-Tool-installer.iss</code> 构建：</p>
   <table>
-    <tr><th>版本</th><th>安装文件</th><th>适用系统</th><th>安装 / 启动</th></tr>
+    <tr><th>版本</th><th>安装文件</th><th>适用系统</th><th>发布状态</th><th>安装 / 启动</th></tr>
     <tr>
       <td class="k">Linux AppImage</td>
       <td><code>QA-Tool-4.2.0-x86_64.AppImage</code></td>
       <td>任意 x86_64 Linux（Debian / Ubuntu / elementary 等）</td>
+      <td>✅ 随 <code>v4.2.0</code> Release 提供（附 <code>.sha256</code> 校验文件）</td>
       <td>免安装：<code>chmod +x</code> 后直接运行；可移动到 <code>/opt</code> 并自建桌面快捷方式</td>
     </tr>
     <tr>
       <td class="k">Windows 安装包</td>
       <td><code>QA-Tool-Setup-4.2.0.exe</code></td>
       <td>Windows 10/11（64 位）</td>
+      <td>Windows 侧构建（Linux 环境无法出包；构建脚本与 .iss 已就绪）</td>
       <td>双击运行 Inno Setup 向导，自动创建开始菜单/桌面快捷方式，支持卸载</td>
     </tr>
   </table>
+  <div class="note">
+    <b>下载与校验（Linux）：</b>
+    <pre class="tight"><code># 从 https://github.com/chrisliuu345/QA-Tool/releases/tag/v4.2.0 下载两个文件后
+sha256sum -c QA-Tool-4.2.0-x86_64.AppImage.sha256
+chmod +x QA-Tool-4.2.0-x86_64.AppImage
+./QA-Tool-4.2.0-x86_64.AppImage</code></pre>
+    无 FUSE 的容器环境可加 <code>--appimage-extract-and-run</code> 参数运行（解包到临时目录执行）。
+  </div>
 </section>
 
 <section class="card" id="ui">

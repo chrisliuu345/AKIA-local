@@ -8,26 +8,32 @@
 
 ## Quick Start
 
-v4.2.0 ships **two official editions** (all standalone, no Python required, fully offline):
+v4.2.0 ships standalone, fully offline packages — a **Linux AppImage** (published with the release)
+and a **Windows Inno Setup installer** (built on Windows):
 
-| Edition | Installer file | Systems | Install |
-|---------|----------------|---------|---------|
-| **Linux AppImage** | `QA-Tool-4.2.0-x86_64.AppImage` | Any x86_64 Linux (Debian / Ubuntu / elementary, …) | Portable: make executable and run |
-| **Windows installer** | `QA-Tool-Setup-4.2.0.exe` | Windows 10/11 (64-bit) | Run the Inno Setup wizard; menu/desktop shortcuts |
+| Edition | Installer file | Systems | Status | Install |
+|---------|----------------|---------|--------|---------|
+| **Linux AppImage** | `QA-Tool-4.2.0-x86_64.AppImage` | Any x86_64 Linux (Debian / Ubuntu / Fedora / elementary, …) | ✅ Ships with the [v4.2.0 release](https://github.com/chrisliuu345/QA-Tool/releases/tag/v4.2.0) (plus a `.sha256` checksum file) | Portable: make executable and run |
+| **Windows installer** | `QA-Tool-Setup-4.2.0.exe` | Windows 10/11 (64-bit) | Built on Windows (`build_pyinstaller.py` + `packaging/QA-Tool-installer.iss`) | Run the Inno Setup wizard; menu/desktop shortcuts |
 
 > Linux ships **AppImage only** (`.deb` is no longer built); works across Debian/Ubuntu/Fedora and derivatives.
 
 ### Linux (AppImage, portable)
 
 ```bash
+# download both files from the v4.2.0 release first
+sha256sum -c QA-Tool-4.2.0-x86_64.AppImage.sha256
 chmod +x QA-Tool-4.2.0-x86_64.AppImage
 ./QA-Tool-4.2.0-x86_64.AppImage
 ```
 
+> On systems without FUSE (containers / minimal distros) add `--appimage-extract-and-run`.
+> To build it yourself from source: `bash build_appimage.sh` (output lands in `build/`).
+
 ### Windows (installer)
 
-Download `QA-Tool-Setup-4.2.0.exe` from
-[Releases](https://github.com/chrisliuu345/QA-Tool/releases) and run the Inno Setup wizard
+On Windows run `python build_pyinstaller.py --onefile`, then compile
+`packaging/QA-Tool-installer.iss` with Inno Setup to produce `QA-Tool-Setup-4.2.0.exe`
 (start-menu and desktop shortcuts included).
 
 ### From Source
@@ -141,14 +147,17 @@ analysis/              # Analysis engines (14 modules)
 core/                  # Core Engines
 ui/                    # PySide6 UI (37 Tabs + plugin Tabs)
 output/                # Report Engine
-tests/                 # 1500+ Tests
+tests/                 # 1950+ Tests
 ```
 
 ---
 
 ## Download
 
-Download the latest version from [Releases](https://github.com/chrisliuu345/QA-Tool/releases).
+Download from [Releases](https://github.com/chrisliuu345/QA-Tool/releases):
+
+- `v4.2.0` — Linux AppImage (`QA-Tool-4.2.0-x86_64.AppImage` + `.sha256`) and source archives (zip / tar.gz)
+- Release notes: [`docs/releases/v4.2.0.md`](docs/releases/v4.2.0.md)
 
 ---
 
