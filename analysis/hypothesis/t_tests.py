@@ -107,7 +107,7 @@ def paired(before: pd.Series, after: pd.Series, alternative: str = "two-sided") 
     elif alternative == "less":
         p_value = p_value / 2 if t_stat < 0 else 1 - p_value / 2
 
-    diff = b.values - a.values
+    diff = b - a
 
     return {
         "test_type": "Paired t-Test",
