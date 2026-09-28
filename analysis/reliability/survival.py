@@ -102,13 +102,13 @@ def kaplan_meier_compare(
         两组 KM 结果 + Log-rank p 值
     """
     kmf_a = KaplanMeierFitter()
-    T_A = durations_A.dropna().astype(float)
-    E_A = event_observed_A.loc[T_A.index].astype(int)
+    T_A, E_A = sanitize_pairs(durations_A, event_observed_A)
+    E_A = E_A.astype(int)
     kmf_a.fit(T_A, event_observed=E_A, label=label_A)
 
     kmf_b = KaplanMeierFitter()
-    T_B = durations_B.dropna().astype(float)
-    E_B = event_observed_B.loc[T_B.index].astype(int)
+    T_B, E_B = sanitize_pairs(durations_B, event_observed_B)
+    E_B = E_B.astype(int)
     kmf_b.fit(T_B, event_observed=E_B, label=label_B)
 
     lr = _logrank_test(T_A, T_B, event_observed_A=E_A, event_observed_B=E_B)

@@ -9,7 +9,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from analysis._sanitize import sanitize_array
+from analysis._sanitize import sanitize_array, sanitize_pairs
 
 
 def analyze(
@@ -36,7 +36,13 @@ def analyze(
     """
     from scipy import stats as sp_stats
 
-    T = sanitize_array(failure_times)
+    # 删失标记必须与失效时间**按行对齐**：先成对净化，避免 reset_index 后错位
+    if censored is not None:
+        T, E = sanitize_pairs(failure_times, censored)
+        E = E.astype(int)
+    else:
+        T = sanitize_array(failure_times)
+        E = np.ones(len(T), dtype=int)
     n = len(T)
 
     if n < 5:
@@ -52,12 +58,7 @@ def analyze(
     if total_units <= 0:
         return {"analysis_type": "reliability.warranty", "error": "总出货量必须为正"}
 
-    if censored is not None:
-        E = censored.reindex(T.index, fill_value=0).astype(int)
-    else:
-        E = pd.Series(np.ones(n, dtype=int), index=T.index)
-
-    failures = T[E == 1].values
+    failures = T[E == 1]
     if len(failures) < 3:
         return {"analysis_type": "reliability.warranty", "error": "失效事件不足（至少3个）"}
 
