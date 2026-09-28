@@ -3,6 +3,12 @@
 
 xbar_r / xbar_s / imr 统一调用 check_all_nelson_rules()
 每条规则返回格式: {"point": int, "rule": int, "desc": str, "value": float}
+
+实现说明（2026-09-28 性能优化）：全部规则改为滑窗计数向量化实现。
+旧版逐窗口调用 ``np.all`` / ``np.sum``，100 万点 I-MR 会产生约 400 万次
+NumPy 调用（占单次分析 99% 的时间）；向量化后逐点语义保持不变
+（`tests/test_known_values_spc_control_charts.py` + `tests/test_robustness_numeric.py`
+对同一输入断言完全一致）。
 """
 
 import numpy as np
@@ -33,6 +39,23 @@ def _mk(point: int, rule: int, value: float, desc: str = "") -> dict:
     }
 
 
+def _window_counts(flags: np.ndarray, window: int) -> np.ndarray:
+    """长度 ``window`` 滑窗内 True 的个数（返回长度 n-window+1 的数组）。
+
+    用前缀和实现，避免逐窗口切片 + np.sum 的 O(n·window) Python 循环。
+    """
+    n = len(flags)
+    if n < window:
+        return np.empty(0, dtype=np.int64)
+    prefix = np.concatenate(([0], np.cumsum(flags, dtype=np.int64)))
+    return prefix[window:] - prefix[:-window]
+
+
+def _collect(starts, rule: int, offset: int, values: np.ndarray) -> list[dict]:
+    """把"窗口起始下标"批次转换为违规记录（offset = 窗口末点的 1-based 序号）。"""
+    return [_mk(int(start + offset), rule, values[start + offset - 1]) for start in starts]
+
+
 def _rule_1(values: np.ndarray, mean: float, sigma: float) -> list[dict]:
     mask = np.abs(values - mean) > 3 * sigma
     idx = np.where(mask)[0]
@@ -40,100 +63,59 @@ def _rule_1(values: np.ndarray, mean: float, sigma: float) -> list[dict]:
 
 
 def _rule_2(values: np.ndarray, mean: float) -> list[dict]:
-    violations = []
-    n = len(values)
-    if n < 9:
-        return violations
-    sign = np.sign(values - mean)
-    for i in range(n - 8):
-        if all(sign[i:i + 9] == 1) or all(sign[i:i + 9] == -1):
-            violations.append(_mk(i + 9, 2, values[i + 8]))
-    return violations
+    above = _window_counts(values > mean, 9)
+    below = _window_counts(values < mean, 9)
+    starts = np.where((above == 9) | (below == 9))[0]
+    return _collect(starts, 2, 9, values)
 
 
 def _rule_3(values: np.ndarray) -> list[dict]:
-    n = len(values)
-    if n < 6:
-        return []
-    all_diffs = np.diff(values)
-    violations = []
-    for i in range(n - 5):
-        segment = all_diffs[i:i + 5]
-        if np.all(segment > 0) or np.all(segment < 0):
-            violations.append(_mk(i + 6, 3, values[i + 5]))
-    return violations
+    diffs = np.diff(values)
+    rising = _window_counts(diffs > 0, 5)
+    falling = _window_counts(diffs < 0, 5)
+    starts = np.where((rising == 5) | (falling == 5))[0]
+    return _collect(starts, 3, 6, values)
 
 
 def _rule_4(values: np.ndarray, mean: float) -> list[dict]:
     """检测连续 14 点交替上下（锯齿模式）"""
-    n = len(values)
-    if n < 14:
-        return []
     diffs = np.diff(values)
     sign_product = diffs[:-1] * diffs[1:]
-    violations = []
-    for i in range(len(sign_product) - 11):
-        if np.all(sign_product[i:i + 12] < 0):
-            violations.append(_mk(i + 14, 4, values[i + 13]))
-    return violations
+    alternating = _window_counts(sign_product < 0, 12)
+    starts = np.where(alternating == 12)[0]
+    return _collect(starts, 4, 14, values)
 
 
 def _rule_5(values: np.ndarray, mean: float, sigma: float) -> list[dict]:
     """W18 fix: 超2σ的点中≥2点同侧（不要求全部3点同侧）"""
-    n = len(values)
-    if n < 3:
-        return []
-    violations = []
-    for i in range(n - 2):
-        w = values[i:i + 3]
-        above_2s = np.sum(w - mean > 2 * sigma)
-        below_2s = np.sum(mean - w > 2 * sigma)
-        if above_2s >= 2 or below_2s >= 2:
-            violations.append(_mk(i + 3, 5, values[i + 2]))
-    return violations
+    above = _window_counts(values - mean > 2 * sigma, 3)
+    below = _window_counts(mean - values > 2 * sigma, 3)
+    starts = np.where((above >= 2) | (below >= 2))[0]
+    return _collect(starts, 5, 3, values)
 
 
 def _rule_6(values: np.ndarray, mean: float, sigma: float) -> list[dict]:
-    n = len(values)
-    if n < 5:
-        return []
-    violations = []
-    for i in range(n - 4):
-        w = values[i:i + 5]
-        beyond_count = np.sum(np.abs(w - mean) > sigma)
-        if beyond_count >= 4:
-            above_count = np.sum(w > mean)
-            if above_count >= 4 or above_count <= 1:
-                violations.append(_mk(i + 5, 6, values[i + 4]))
-    return violations
+    beyond = _window_counts(np.abs(values - mean) > sigma, 5)
+    above = _window_counts(values > mean, 5)
+    starts = np.where((beyond >= 4) & ((above >= 4) | (above <= 1)))[0]
+    return _collect(starts, 6, 5, values)
 
 
 def _rule_7(values: np.ndarray, mean: float, sigma: float) -> list[dict]:
-    n = len(values)
-    if n < 15:
-        return []
-    violations = []
-    for i in range(n - 14):
-        w = values[i:i + 15]
-        within_count = np.sum(np.abs(w - mean) <= sigma)
-        if within_count >= 15:
-            violations.append(_mk(i + 15, 7, values[i + 14]))
-    return violations
+    within = _window_counts(np.abs(values - mean) <= sigma, 15)
+    starts = np.where(within == 15)[0]
+    return _collect(starts, 7, 15, values)
 
 
 def _rule_8(values: np.ndarray, mean: float, sigma: float) -> list[dict]:
     """检测连续 8 点均在中心线 ±1σ 外（不限定同侧）"""
-    n = len(values)
-    if n < 8:
-        return []
-    violations = []
-    i = 0
-    while i <= n - 8:
-        w = values[i:i + 8]
-        all_outside = np.all(np.abs(w - mean) > sigma)
-        if all_outside:
-            violations.append(_mk(i + 8, 8, values[i + 7]))
-            i += 8
-        else:
-            i += 1
-    return violations
+    outside = _window_counts(np.abs(values - mean) > sigma, 8)
+    candidates = np.where(outside == 8)[0]
+    # 与旧实现一致：报告一段后跳过整段（不重复报告重叠窗口）
+    starts: list[int] = []
+    next_allowed = 0
+    for start in candidates:
+        if start >= next_allowed:
+            starts.append(int(start))
+            next_allowed = int(start) + 8
+    return _collect(starts, 8, 8, values)
