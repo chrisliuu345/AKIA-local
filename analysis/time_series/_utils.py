@@ -3,6 +3,20 @@
 
 import pandas as pd
 
+from analysis._sanitize import sanitize_series
+
+
+def clean_series(data: pd.Series) -> pd.Series:
+    """时间序列入口净化 —— 统一走 ``analysis._sanitize.sanitize_series``。
+
+    为什么必须净化（2026-09-28 质量审查）：
+      1. ``dropna()`` 只处理 NaN，±inf 会穿透并进入 statsmodels，导致拟合产生全 NaN
+         残差，最终在 Ljung-Box 处抛 ``IndexError: index 0 is out of bounds``；
+      2. 去缺失后索引有空洞时，statsmodels 无法构建预测索引
+         （``ValueError: No supported index is available``）——必须 ``reset_index``。
+    """
+    return sanitize_series(data)
+
 
 def detect_period(data: pd.Series) -> int | None:
     """通过 ACF 峰值检测季节周期"""

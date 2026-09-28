@@ -210,3 +210,74 @@ class TestNumericalHygiene:
         assert np.isfinite(result["capability"]["ppk"])
         assert result["summary"]["skewness"] == pytest.approx(
             float(stats.skew(data.to_numpy())), abs=1e-6)
+
+
+class TestNonFiniteInputs:
+    """2026-09-28 质量审查：缺失值与非有限值（±inf）必须先净化再进算法。
+
+    旧实现只做 ``dropna()``，±inf 会穿透并在 scipy/statsmodels/matplotlib 内部
+    抛底层报错（如 "autodetected range ... is not finite"、"cannot convert float
+    NaN to integer"），用户无法判断是数据问题还是软件问题。
+    """
+
+    @staticmethod
+    def _series_with_bad_values() -> pd.Series:
+        rng = np.random.default_rng(17)
+        values = pd.Series(rng.normal(10.0, 1.0, 120))
+        values[[5, 60]] = np.inf
+        values[[3, 40, 99]] = np.nan
+        return values
+
+    def test_sanitize_series_drops_non_finite(self):
+        from analysis._sanitize import sanitize_series
+
+        cleaned = sanitize_series(self._series_with_bad_values())
+        assert len(cleaned) == 120 - 5
+        assert np.isfinite(cleaned.to_numpy()).all()
+        assert list(cleaned.index) == list(range(len(cleaned)))
+
+    def test_time_series_modules_accept_non_finite(self):
+        from analysis.spc import residual_chart
+        from analysis.time_series import acf_pacf, arima, exponential_smoothing, seasonal_decomposition
+
+        series = self._series_with_bad_values()
+        fitted = arima.analyze(series, order=(1, 0, 0), auto_select=False)
+        assert "error" not in fitted
+        for module in (exponential_smoothing, seasonal_decomposition):
+            result = module.analyze(series)
+            assert "error" not in result, result.get("error")
+        assert acf_pacf.compute_acf(series)["acf_values"]
+        assert "error" not in residual_chart.analyze(series, order=(1, 0, 0), auto_select=False)
+
+    def test_count_charts_accept_missing_and_infinite(self):
+        from analysis.spc import c_chart, np_chart, p_chart, u_chart
+
+        counts = pd.Series([10, 12, np.nan, 8, np.inf, 9, 10, 12, 7, 9, 11, 8])
+        samples = pd.Series([100] * 12, dtype=float)
+        assert c_chart.analyze(counts)["num_subgroups"] == 10
+        assert np_chart.analyze(counts, 100)["num_subgroups"] == 10
+        assert p_chart.analyze(counts, samples)["num_subgroups"] == 10
+        assert u_chart.analyze(counts, samples / 20)["num_subgroups"] == 10
+
+    def test_count_chart_reports_negative_values(self):
+        from analysis.spc import c_chart
+
+        with pytest.raises(ValueError, match="非负数"):
+            c_chart.analyze(pd.Series([1, -2, 3, 4]))
+
+    def test_capability_modules_accept_non_finite(self):
+        from analysis.capability import non_normal_cap, sixpack
+
+        series = self._series_with_bad_values()
+        assert "error" not in sixpack.analyze(series, usl=12.0, lsl=8.0)
+        assert "error" not in non_normal_cap.analyze(series, usl=12.0, lsl=8.0)
+
+    def test_hypothesis_and_reliability_accept_non_finite(self):
+        from analysis.hypothesis import t_tests, variance_tests
+        from analysis.reliability import survival
+
+        series = self._series_with_bad_values()
+        assert "error" not in t_tests.one_sample(series, 10.0)
+        assert "error" not in variance_tests.variance_tests(series, series * 1.05)
+        events = pd.Series([1] * len(series))
+        assert "error" not in survival.kaplan_meier(series, events)

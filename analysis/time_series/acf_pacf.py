@@ -15,6 +15,8 @@ from statsmodels.tsa.stattools import adfuller, acf, pacf
 from statsmodels.stats.diagnostic import acorr_ljungbox
 from statsmodels.stats.stattools import durbin_watson
 
+from ._utils import clean_series
+
 
 def check_stationarity(
     data: pd.Series,
@@ -30,7 +32,7 @@ def check_stationarity(
     Returns:
         包含 ADF 统计量、p 值、是否平稳等信息的字典
     """
-    clean = data.dropna().astype(float)
+    clean = clean_series(data)
     if len(clean) < 6:
         return {
             "adf_statistic": None,
@@ -76,7 +78,7 @@ def compute_acf(
     Returns:
         ACF 值、置信区间边界
     """
-    clean = data.dropna().astype(float)
+    clean = clean_series(data)
     max_lags = min(lags, len(clean) // 2 - 1)
     if max_lags < 1:
         max_lags = 1
@@ -111,7 +113,7 @@ def compute_pacf(
     Returns:
         PACF 值、置信区间边界
     """
-    clean = data.dropna().astype(float)
+    clean = clean_series(data)
     max_lags = min(lags, len(clean) // 2 - 1)
     if max_lags < 1:
         max_lags = 1
@@ -150,7 +152,7 @@ def analyze(
     Returns:
         完整分析结果字典
     """
-    clean = data.dropna().astype(float)
+    clean = clean_series(data)
     n = len(clean)
 
     if n < 6:

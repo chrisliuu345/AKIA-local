@@ -11,6 +11,7 @@ from typing import Any
 import pandas as pd
 
 from . import arima, exponential_smoothing
+from ._utils import clean_series
 
 
 def compare_models(
@@ -36,7 +37,7 @@ def compare_models(
     if models is None:
         models = ["arima", "holt_winters", "double_exp"]
 
-    clean = data.dropna().astype(float)
+    clean = clean_series(data)
     n = len(clean)
 
     if n < 10:

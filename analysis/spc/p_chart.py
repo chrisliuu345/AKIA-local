@@ -7,13 +7,15 @@ import numpy as np
 import pandas as pd
 
 
-def analyze(defectives: pd.Series, sample_sizes: pd.Series) -> dict[str, Any]:
-    n = len(defectives)
-    if n < 2:
-        raise ValueError(f"数据量不足: 需要至少 2 个子组, 当前 {n}")
+from ._validation import clean_pairs, require_min_subgroups, require_non_negative
 
-    d = defectives.values.astype(float)
-    ss = sample_sizes.values.astype(float)
+
+def analyze(defectives: pd.Series, sample_sizes: pd.Series) -> dict[str, Any]:
+    d, ss = clean_pairs(defectives, sample_sizes)
+    n = len(d)
+    require_min_subgroups(n)
+    require_non_negative(d, "不合格品数")
+    require_non_negative(ss, "样本量")
 
     if np.any(ss <= 0):
         raise ValueError("sample_sizes 必须全部为正数，检测到 ≤0 的值")
