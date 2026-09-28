@@ -5,11 +5,12 @@
 from typing import Any
 import numpy as np
 import pandas as pd
+from analysis._sanitize import sanitize_array, sanitize_pairs
 from scipy import stats
 
 
 def one_sample(data: pd.Series, pop_mean: float, alternative: str = "two-sided") -> dict[str, Any]:
-    clean = data.dropna().astype(float)
+    clean = sanitize_array(data)
     n = len(clean)
     if n < 2:
         raise ValueError(f"数据量不足: {n}")
@@ -54,8 +55,8 @@ def two_sample(
       - True: 强制等方差 (pooled)
       - False: 强制 Welch
     """
-    g1 = group1.dropna().astype(float)
-    g2 = group2.dropna().astype(float)
+    g1 = sanitize_array(group1)
+    g2 = sanitize_array(group2)
 
     if len(g1) < 2 or len(g2) < 2:
         raise ValueError("两组数据量均需 >= 2")
@@ -94,9 +95,7 @@ def two_sample(
 
 
 def paired(before: pd.Series, after: pd.Series, alternative: str = "two-sided") -> dict[str, Any]:
-    paired_df = pd.DataFrame({"before": before, "after": after}).dropna()
-    b = paired_df["before"].astype(float)
-    a = paired_df["after"].astype(float)
+    b, a = sanitize_pairs(before, after)
     common_len = len(b)
 
     if common_len < 2:

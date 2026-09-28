@@ -18,6 +18,7 @@ import pandas as pd
 
 from analysis.spc import imr
 from analysis.time_series import arima
+from analysis.time_series._utils import clean_series
 
 
 def analyze(
@@ -38,7 +39,7 @@ def analyze(
     Returns:
         分析结果字典；ARIMA 失败时降级为原始序列 I-MR（``fallback`` 说明原因）
     """
-    clean = pd.Series(data).dropna().astype(float).reset_index(drop=True)
+    clean = clean_series(data)
     if len(clean) < 10:
         raise ValueError(f"数据量不足: {len(clean)}，需要至少 10 点")
 

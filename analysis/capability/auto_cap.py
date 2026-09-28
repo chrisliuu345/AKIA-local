@@ -13,6 +13,7 @@ from typing import Any
 import warnings
 import numpy as np
 import pandas as pd
+from analysis._sanitize import sanitize_array
 from scipy import stats
 
 logger = logging.getLogger("QA-Tool.AutoCap")
@@ -45,7 +46,7 @@ def analyze(
     Returns:
         自动能力分析结果
     """
-    clean = data.dropna().values.astype(float)
+    clean = sanitize_array(data)
     n = len(clean)
 
     if n < 10:

@@ -6,13 +6,16 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from ._validation import clean_series, require_min_subgroups, require_non_negative
+
 
 def analyze(defectives: pd.Series, sample_size: int) -> dict[str, Any]:
-    n = len(defectives)
-    if n < 2:
-        raise ValueError(f"数据量不足: 需要至少 2 个子组, 当前 {n}")
-
-    d = defectives.values.astype(float)
+    if sample_size <= 0:
+        raise ValueError(f"sample_size 必须为正整数，当前 {sample_size}")
+    d = clean_series(defectives)
+    n = len(d)
+    require_min_subgroups(n)
+    require_non_negative(d, "不合格品数")
 
     p_bar = d.sum() / (n * sample_size)
     np_bar = d.mean()
