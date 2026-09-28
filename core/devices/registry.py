@@ -1,3 +1,4 @@
+import contextlib
 import json
 import logging
 import os
@@ -55,10 +56,8 @@ class DeviceRegistry:
     def stop_all(self) -> None:
         for dev in self._devices.values():
             if dev.transport:
-                try:
+                with contextlib.suppress(Exception):
                     dev.transport.close()
-                except Exception:
-                    pass
         self._devices.clear()
 
     def load_persistent(self) -> list[dict]:
@@ -68,7 +67,7 @@ class DeviceRegistry:
                     with open(_CONFIG_PATH, encoding="utf-8") as f:
                         cfg = json.load(f)
                     return cfg.get("devices", [])
-            except Exception as e:  # noqa: BLE001 - 配置损坏时按"无设备"启动
+            except Exception as e:  # 配置损坏时按"无设备"启动
                 logger.warning("设备配置读取失败，按空配置启动: %s", e)
             return []
 
@@ -98,10 +97,8 @@ class DeviceRegistry:
                     os.replace(tmp_path, _CONFIG_PATH)
                 finally:
                     if os.path.exists(tmp_path):
-                        try:
+                        with contextlib.suppress(OSError):
                             os.remove(tmp_path)
-                        except OSError:
-                            pass
             except Exception as e:
                 logger.warning("Failed to save device config: %s", e)
 

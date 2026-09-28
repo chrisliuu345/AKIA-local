@@ -1,5 +1,6 @@
 """FMEA 工作表 Tab — DFMEA/PFMEA 交互编辑 + RPN 自动计算 + 风险着色"""
 
+import contextlib
 from PySide6.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
@@ -235,24 +236,18 @@ class FMEATab(BaseAnalysisTab):
         elif col == 2:
             fmea.effect = text
         elif col == 3:
-            try:
+            with contextlib.suppress(ValueError):
                 fmea.severity = max(1, min(10, int(text)))
-            except ValueError:
-                pass
         elif col == 4:
             fmea.cause = text
         elif col == 5:
-            try:
+            with contextlib.suppress(ValueError):
                 fmea.occurrence = max(1, min(10, int(text)))
-            except ValueError:
-                pass
         elif col == 6:
             fmea.control = text
         elif col == 7:
-            try:
+            with contextlib.suppress(ValueError):
                 fmea.detection = max(1, min(10, int(text)))
-            except ValueError:
-                pass
         elif col == 8:
             pass
         elif col == 9:

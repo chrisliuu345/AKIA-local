@@ -23,6 +23,7 @@ Flash: copy this file to the board as main.py (esptool.py only installs
 MicroPython itself).  Set DEVICE_ID below or leave "" for auto (unique_id).
 """
 
+import contextlib
 import json
 import machine
 import time
@@ -112,10 +113,8 @@ def main():
     if REPL_MODE or uart is None:
         print("BOOT held: REPL mode, UART0 not taken")
         return
-    try:
+    with contextlib.suppress(Exception):
         announce()
-    except Exception:
-        pass
     buf = b""
     while True:
         try:
@@ -145,10 +144,8 @@ def main():
                                 "result": result,
                             })
         except Exception as e:
-            try:
+            with contextlib.suppress(Exception):
                 uart.write(("ERR " + repr(e) + "\n").encode("utf-8"))
-            except Exception:
-                pass
 
         time.sleep_ms(20)
 

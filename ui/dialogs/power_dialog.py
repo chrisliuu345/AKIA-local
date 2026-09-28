@@ -504,7 +504,7 @@ class PowerDialog(QDialog):
                 )
 
         except Exception as e:
-            self._show_result(f"计算失败: {str(e)}", error=True)
+            self._show_result(f"计算失败: {e!s}", error=True)
 
     def _calc_sample_size(self):
         """计算所需样本量"""
@@ -675,7 +675,7 @@ class PowerDialog(QDialog):
                 )
 
         except Exception as e:
-            self._show_result(f"计算失败: {str(e)}", error=True)
+            self._show_result(f"计算失败: {e!s}", error=True)
 
     def _plot_oc_curve(self):
         """绘制 OC 曲线"""
@@ -730,7 +730,7 @@ class PowerDialog(QDialog):
             plt.close(fig)
 
         except Exception as e:
-            self._show_result(f"绘制失败: {str(e)}", error=True)
+            self._show_result(f"绘制失败: {e!s}", error=True)
 
     def _show_result(self, text: str, error: bool = False):
         """显示结果文本"""

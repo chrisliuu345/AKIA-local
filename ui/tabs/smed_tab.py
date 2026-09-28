@@ -163,7 +163,6 @@ class SMEDTab(BaseAnalysisTab):
         fig, (ax_gantt, ax_compare) = plt.subplots(1, 2, figsize=(14, 7), dpi=100, gridspec_kw={'width_ratios': [1.5, 1]})
         fig.patch.set_facecolor('#181822')
 
-        y = 0
         colors_map = {'internal': '#e74c3c', 'external': '#3498db'}
         labels, colors_list, starts, widths_after = [], [], [], []
         for t in all_tasks:
@@ -171,7 +170,6 @@ class SMEDTab(BaseAnalysisTab):
             colors_list.append(colors_map.get(t.task_type, '#888'))
             starts.append(0)
             widths_after.append(max(t.improved_time, 0) if t.improved_time > 0 else t.time_sec)
-            y += 1
         y_positions = range(len(all_tasks))
         ax_gantt.barh(y_positions, widths_after, left=starts, height=0.6, color=colors_list, edgecolor='white', linewidth=0.3)
         for i, t in enumerate(all_tasks):

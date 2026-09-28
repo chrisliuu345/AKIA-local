@@ -121,7 +121,7 @@ def grant_consent(provider_id: str, persist: bool = True) -> None:
     try:
         from config.settings import save_config
         save_config({ack_key(provider_id): True})
-    except Exception as e:  # noqa: BLE001 - 写入失败仅降级为"下次再询问"，不阻断本次调用
+    except Exception as e:  # 写入失败仅降级为"下次再询问"，不阻断本次调用
         logger.warning("隐私授权写入失败（%s）: %s", provider_id, e)
 
 
@@ -129,7 +129,7 @@ def revoke_consent(provider_id: str) -> None:
     try:
         from config.settings import save_config
         save_config({ack_key(provider_id): False})
-    except Exception as e:  # noqa: BLE001 - 撤销失败不阻断，重启后仍会重新弹出隐私门
+    except Exception as e:  # 撤销失败不阻断，重启后仍会重新弹出隐私门
         logger.warning("隐私授权撤销写入失败（%s）: %s", provider_id, e)
 
 

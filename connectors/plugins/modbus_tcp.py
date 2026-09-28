@@ -7,6 +7,7 @@ config:
     registers: {"CH0": 0, "CH1": 1}   读数地址映射(0-based)
     count: int             每次读寄存器数, 默认 len(registers)
 """
+import contextlib
 from connectors.base import ConnectorBase
 
 PLUGIN = {"name": "modbus_tcp", "category": "plc",
@@ -53,8 +54,6 @@ class Connector(ConnectorBase):
 
     def close(self) -> None:
         if self._client:
-            try:
+            with contextlib.suppress(Exception):
                 self._client.close()
-            except Exception:
-                pass
             self._client = None

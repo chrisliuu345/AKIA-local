@@ -231,7 +231,7 @@ class DbConnectionDialog(QDialog):
         except Exception as e:
             self.conn_status.setText(i18n.tr("db.conn_failed"))
             self.conn_status.setStyleSheet("color: #e74c3c;")
-            QMessageBox.critical(self, i18n.tr("db.test_title"), f"{i18n.tr('db.conn_failed_msg')}\n{str(e)}")
+            QMessageBox.critical(self, i18n.tr("db.test_title"), f"{i18n.tr('db.conn_failed_msg')}\n{e!s}")
 
     def _load_table_list(self):
         self.table_list.clear()
@@ -272,7 +272,7 @@ class DbConnectionDialog(QDialog):
                 self.sql_loader.connect(config)
             except Exception as e:
                 QMessageBox.critical(self, i18n.tr("db.error"),
-                                     f"{i18n.tr('db.conn_failed_msg')}\n{str(e)}")
+                                     f"{i18n.tr('db.conn_failed_msg')}\n{e!s}")
                 return
 
         selected = []

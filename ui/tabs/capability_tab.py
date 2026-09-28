@@ -298,7 +298,7 @@ class CapabilityTab(BaseAnalysisTab):
         except Exception as e:
             self._clear_canvas()
             self.result_text.setStyleSheet("color: #e74c3c; font-weight: bold;")
-            self.result_text.setText(f"▎分析失败\n{str(e)}")
+            self.result_text.setText(f"▎分析失败\n{e!s}")
             return None
 
     def run_analysis(self) -> dict[str, Any]:

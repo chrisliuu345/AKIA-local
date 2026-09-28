@@ -290,13 +290,12 @@ def _calculate_cohen_kappa(df: pd.DataFrame, result_col: str, standard_col: str,
 def _kappa_interpretation(kappa: float) -> str:
     if kappa < 0:
         return "一致性极差"
-    elif kappa < 0.2:
+    if kappa < 0.2:
         return "轻微一致"
-    elif kappa < 0.4:
+    if kappa < 0.4:
         return "一般一致"
-    elif kappa < 0.6:
+    if kappa < 0.6:
         return "中等一致"
-    elif kappa < 0.8:
+    if kappa < 0.8:
         return "高度一致"
-    else:
-        return "几乎完全一致"
+    return "几乎完全一致"

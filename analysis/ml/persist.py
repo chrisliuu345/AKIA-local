@@ -57,7 +57,7 @@ def load_model(path) -> dict[str, Any]:
         payload = joblib.load(source)
     except ModelFileError:
         raise
-    except Exception as exc:  # noqa: BLE001 - 统一转换为可读错误
+    except Exception as exc:  # 统一转换为可读错误（下面直接 re-raise，BLE001 不再适用）
         raise ModelFileError(f"模型文件无法读取: {exc}") from exc
     if not isinstance(payload, dict) or payload.get("format") != FORMAT_NAME:
         raise ModelFileError("不是本工具生成的模型文件（缺少格式标记）")

@@ -71,7 +71,7 @@ def analyze(
         return {
             "chart_type": "Seasonal Decomposition",
             "analysis_type": "time_series.seasonal_decomposition",
-            "error": f"分解失败: {str(e)}",
+            "error": f"分解失败: {e!s}",
         }
 
     trend = decomposition.trend

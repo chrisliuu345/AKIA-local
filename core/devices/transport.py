@@ -1,3 +1,4 @@
+import contextlib
 import abc
 import logging
 import socket
@@ -65,10 +66,8 @@ class SerialTransport(Transport):
         if self._read_thread and self._read_thread.is_alive():
             self._read_thread.join(timeout=3)
         if self._serial and self._serial.is_open:
-            try:
+            with contextlib.suppress(Exception):
                 self._serial.close()
-            except Exception:
-                pass
         self._serial = None
         logger.info("SerialTransport closed %s", self._port)
 
@@ -182,10 +181,8 @@ class TcpTransport(Transport):
         if self._read_thread and self._read_thread.is_alive():
             self._read_thread.join(timeout=3)
         if self._sock:
-            try:
+            with contextlib.suppress(Exception):
                 self._sock.close()
-            except Exception:
-                pass
         self._sock = None
         logger.info("TcpTransport closed %s", self._address)
 

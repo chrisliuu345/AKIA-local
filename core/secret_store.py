@@ -126,9 +126,8 @@ def encrypt_secret(text: str) -> str:
     if sys.platform == "win32":
         encrypted = _encrypt_dpapi(data)
         return _PREFIX_DPAPI + base64.b64encode(encrypted).decode()
-    else:
-        encrypted = _encrypt_keyring_fernet(data)
-        return _PREFIX_KEYRING + base64.b64encode(encrypted).decode()
+    encrypted = _encrypt_keyring_fernet(data)
+    return _PREFIX_KEYRING + base64.b64encode(encrypted).decode()
 
 
 def decrypt_secret(stored: str) -> str:
@@ -141,14 +140,12 @@ def decrypt_secret(stored: str) -> str:
             raw = base64.b64decode(stored[len(_PREFIX_DPAPI):])
             if sys.platform == "win32":
                 return _decrypt_dpapi(raw).decode("utf-8")
-            else:
-                logger.warning("Cannot decrypt dpapi data on non-Windows platform")
-                return ""
-        elif stored.startswith(_PREFIX_KEYRING):
+            logger.warning("Cannot decrypt dpapi data on non-Windows platform")
+            return ""
+        if stored.startswith(_PREFIX_KEYRING):
             raw = base64.b64decode(stored[len(_PREFIX_KEYRING):])
             return _decrypt_keyring_fernet(raw).decode("utf-8")
-        else:
-            return base64.b64decode(stored).decode("utf-8")
+        return base64.b64decode(stored).decode("utf-8")
     except Exception as e:
         logger.warning(f"Decryption failed: {e}")
         return ""

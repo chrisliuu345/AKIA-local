@@ -180,7 +180,7 @@ class ImportDialog(QDialog):
                     f"{len(self.sheet_names)} 个工作表"
                 )
             except Exception as e:
-                self.status_label.setText(f"加载失败: {str(e)}")
+                self.status_label.setText(f"加载失败: {e!s}")
 
     def _detect_ie_format(self):
         try:
@@ -237,7 +237,7 @@ class ImportDialog(QDialog):
                     val = str(df.iloc[i, j]) if pd.notna(df.iloc[i, j]) else ""
                     self.preview_table.setItem(i, j, QTableWidgetItem(val[:50]))
         except Exception as e:
-            self.status_label.setText(f"预览失败: {str(e)}")
+            self.status_label.setText(f"预览失败: {e!s}")
 
     def _on_accept(self):
         self._error_message = ""
@@ -286,7 +286,7 @@ class ImportDialog(QDialog):
             )
             return False
         except Exception as e:
-            self._error_message = f"文件读取失败: {str(e)}"
+            self._error_message = f"文件读取失败: {e!s}"
             return False
 
     def _validate_ie(self) -> bool:
@@ -305,7 +305,7 @@ class ImportDialog(QDialog):
             self._error_message = IEDataParser.format_help()
             return False
         except Exception as e:
-            self._error_message = f"格式检测失败: {str(e)}"
+            self._error_message = f"格式检测失败: {e!s}"
             return False
 
     def get_selection(self) -> tuple[str, list]:

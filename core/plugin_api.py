@@ -58,7 +58,7 @@ def version_satisfies(required: str, current: str) -> bool:
             return False
         if op == "<" and not cur < target:
             return False
-        if op == "==" and not cur == target:
+        if op == "==" and cur != target:
             return False
     return True
 

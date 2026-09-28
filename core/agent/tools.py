@@ -10,6 +10,7 @@
 """
 from __future__ import annotations
 
+import contextlib
 import math
 import time
 from dataclasses import dataclass, field
@@ -244,10 +245,8 @@ class AgentContext:
             stations = sum(len(getattr(l, "stations", [])) for l in self.plant.lines)
             parts.append(f"产线 {len(self.plant.lines)} 条/{stations} 工位")
         if self.journal is not None:
-            try:
+            with contextlib.suppress(Exception):
                 parts.append(f"告警 {self.journal.unacked_count()} 条未确认")
-            except Exception:
-                pass
         if self.live_oee_snapshot:
             parts.append("实时 OEE 已接入")
         return " · ".join(parts)
@@ -670,45 +669,44 @@ def build_default_registry(ctx: AgentContext) -> ToolRegistry:
             return ToolResult("run_hypothesis_test", data=data,
                               text=f"One-Way ANOVA — {val} ~ {grp}: "
                                    f"p={_fmt(p_value, 4)}，{conclusion}")
+        sheet_name, col, series = _series(context, sheet, column)
+        if kind in ("t_1sample", "one_sample", "t1"):
+            from analysis.hypothesis import t_tests
+            if pop_mean is None:
+                raise ValueError("单样本 t 检验需要 pop_mean（原假设均值）")
+            result = t_tests.one_sample(series, float(pop_mean))
+        elif kind in ("t_2sample", "two_sample", "t2"):
+            from analysis.hypothesis import t_tests
+            if not second_column:
+                raise ValueError("双样本 t 检验需要 second_column")
+            df = context.frame(sheet_name)
+            if second_column not in df.columns:
+                raise ValueError(f"列 {second_column} 不存在")
+            series2 = pd.to_numeric(df[second_column], errors="coerce").dropna()
+            result = t_tests.two_sample(series, series2)
+        elif kind in ("t_paired", "paired"):
+            from analysis.hypothesis import t_tests
+            if not second_column:
+                raise ValueError("配对 t 检验需要 second_column")
+            df = context.frame(sheet_name)
+            if second_column not in df.columns:
+                raise ValueError(f"列 {second_column} 不存在")
+            series2 = pd.to_numeric(df[second_column], errors="coerce")
+            paired = pd.DataFrame({"a": series, "b": series2}).dropna()
+            result = t_tests.paired(paired["a"], paired["b"])
         else:
-            sheet_name, col, series = _series(context, sheet, column)
-            if kind in ("t_1sample", "one_sample", "t1"):
-                from analysis.hypothesis import t_tests
-                if pop_mean is None:
-                    raise ValueError("单样本 t 检验需要 pop_mean（原假设均值）")
-                result = t_tests.one_sample(series, float(pop_mean))
-            elif kind in ("t_2sample", "two_sample", "t2"):
-                from analysis.hypothesis import t_tests
-                if not second_column:
-                    raise ValueError("双样本 t 检验需要 second_column")
-                df = context.frame(sheet_name)
-                if second_column not in df.columns:
-                    raise ValueError(f"列 {second_column} 不存在")
-                series2 = pd.to_numeric(df[second_column], errors="coerce").dropna()
-                result = t_tests.two_sample(series, series2)
-            elif kind in ("t_paired", "paired"):
-                from analysis.hypothesis import t_tests
-                if not second_column:
-                    raise ValueError("配对 t 检验需要 second_column")
-                df = context.frame(sheet_name)
-                if second_column not in df.columns:
-                    raise ValueError(f"列 {second_column} 不存在")
-                series2 = pd.to_numeric(df[second_column], errors="coerce")
-                paired = pd.DataFrame({"a": series, "b": series2}).dropna()
-                result = t_tests.paired(paired["a"], paired["b"])
-            else:
-                from analysis.hypothesis import normality
-                result = normality.normality_test(series, float(confidence_level))
-                conclusion = result.get("overall_conclusion", "")
-                tests = result.get("tests", {}) or {}
-                sw = tests.get("shapiro_wilk", {}) if isinstance(tests, dict) else {}
-                p_value = sw.get("p_value") if isinstance(sw, dict) else None
-                data = {"sheet": sheet_name, "column": col, "test": "normality",
-                        "sample_size": result.get("sample_size"),
-                        "p_value": p_value, "conclusion": conclusion}
-                return ToolResult("run_hypothesis_test", data=data,
-                                  text=f"正态性检验 — 列「{col}」: {conclusion}"
-                                       f"（Shapiro-Wilk p={_fmt(p_value, 4)}）")
+            from analysis.hypothesis import normality
+            result = normality.normality_test(series, float(confidence_level))
+            conclusion = result.get("overall_conclusion", "")
+            tests = result.get("tests", {}) or {}
+            sw = tests.get("shapiro_wilk", {}) if isinstance(tests, dict) else {}
+            p_value = sw.get("p_value") if isinstance(sw, dict) else None
+            data = {"sheet": sheet_name, "column": col, "test": "normality",
+                    "sample_size": result.get("sample_size"),
+                    "p_value": p_value, "conclusion": conclusion}
+            return ToolResult("run_hypothesis_test", data=data,
+                              text=f"正态性检验 — 列「{col}」: {conclusion}"
+                                   f"（Shapiro-Wilk p={_fmt(p_value, 4)}）")
         p_value = result.get("p_value")
         conclusion = (result.get("conclusion")
                       or ("差异显著" if result.get("is_significant") else "差异不显著"))
@@ -875,10 +873,8 @@ def build_default_registry(ctx: AgentContext) -> ToolRegistry:
         eight_d = list(getattr(pctx, "eight_d_reports", []) or [])
         chars = list(getattr(pctx, "characteristics", []) or [])
         high_risk = []
-        try:
+        with contextlib.suppress(Exception):
             high_risk = pctx.get_high_risk_fmea_items()
-        except Exception:
-            pass
         data = {
             "characteristics": len(chars),
             "fmea_items": len(fmea),

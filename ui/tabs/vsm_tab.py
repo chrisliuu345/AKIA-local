@@ -252,8 +252,8 @@ class VSMTab(BaseAnalysisTab):
         )
         ax.text(98, 97, summary_text, ha="right", va="top", fontsize=9,
                 color=tc["text_primary"],
-                bbox=dict(boxstyle="round,pad=0.5", facecolor=tc["bg_body"],
-                          edgecolor=tc["accent"], linewidth=1.2))
+                bbox={"boxstyle": "round,pad=0.5", "facecolor": tc["bg_body"],
+                          "edgecolor": tc["accent"], "linewidth": 1.2})
 
         x0, x1 = 6, 84
         box_w = min(13.0, (x1 - x0) / n - 1.5)
@@ -284,8 +284,8 @@ class VSMTab(BaseAnalysisTab):
             if i < n - 1:
                 ax.annotate("", xy=(x + box_w + gap, y_box + box_h / 2),
                             xytext=(x + box_w, y_box + box_h / 2),
-                            arrowprops=dict(arrowstyle="->",
-                                            color=tc["text_secondary"], lw=1.2))
+                            arrowprops={"arrowstyle": "->",
+                                            "color": tc["text_secondary"], "lw": 1.2})
 
             if st["inv_qty"] > 0 and i < n - 1:
                 tri_cx = x + box_w + gap / 2

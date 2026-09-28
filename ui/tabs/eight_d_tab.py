@@ -53,7 +53,7 @@ class EightDTab(BaseAnalysisTab):
             item = QListWidgetItem(f"{code}: {label}")
             item.setData(Qt.UserRole, code)
             self.step_list.addItem(item)
-        self.step_list.currentRowChanged.connect(lambda r: self._stack.setCurrentIndex(r))
+        self.step_list.currentRowChanged.connect(self._stack.setCurrentIndex)
         ll.addWidget(self.step_list)
         for text, slot in [("导出 PDF", self._export_pdf), ("导出 Markdown", self._export_md)]:
             btn = QPushButton(text)

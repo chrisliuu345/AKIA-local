@@ -27,10 +27,9 @@ def analyze(
 
     if chart_type == "Laney P'":
         return laney_p_prime(defects_arr, sample_sizes_arr, alpha)
-    elif chart_type == "Laney U'":
+    if chart_type == "Laney U'":
         return laney_u_prime(defects_arr, sample_sizes_arr, alpha)
-    else:
-        raise ValueError(f"无效的图表类型: {chart_type}，支持 'Laney P'' 或 'Laney U''")
+    raise ValueError(f"无效的图表类型: {chart_type}，支持 'Laney P'' 或 'Laney U''")
 
 
 def laney_p_prime(

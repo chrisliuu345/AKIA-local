@@ -24,6 +24,7 @@ Flash: copy this file to the board as main.py (esptool.py only installs
 MicroPython itself).  Set DEVICE_ID below or leave "" for auto (unique_id).
 """
 
+import contextlib
 import json
 import machine
 import time
@@ -161,10 +162,8 @@ def main():
         announce()
         send_meta()
     except Exception as e:
-        try:
+        with contextlib.suppress(Exception):
             uart.write(("ERRMETA " + repr(e) + "\n").encode("utf-8"))
-        except Exception:
-            pass
     buf = b""
     last_stream = time.ticks_ms()
     while True:
@@ -197,10 +196,8 @@ def main():
                 })
                 last_stream = time.ticks_ms()
         except Exception as e:
-            try:
+            with contextlib.suppress(Exception):
                 uart.write(("ERR " + repr(e) + "\n").encode("utf-8"))
-            except Exception:
-                pass
 
         time.sleep_ms(50)
 

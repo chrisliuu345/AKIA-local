@@ -19,14 +19,29 @@ select = [
     "BLE001",
     # 类型现代化（2026-09-15 全量迁移：PEP 585/604 注解 + 弃用 typing 导入 + 隐式 Optional）
     "UP", "RUF013",
+    # 全量质量审查（2026-09-28，中间版本）新增棘轮 —— 全部清零后入闸：
+    #   RET505/RET506 return/raise 之后的多余 else（扁平化控制流）
+    #   SIM105 用 contextlib.suppress 表达"有意吞异常"，SIM113 用 enumerate 维护计数
+    #   SIM114 相同分支合并，SIM201 取反比较可读化
+    #   C408/C416/C420 冗余构造与推导式，PERF102 字典迭代改 .items()
+    #   PLW0108 冗余 lambda，PLW3301 嵌套 min/max
+    #   RUF010 f-string 显式类型转换
+    #   RUF100 冗余 noqa：强制"指令真实有效"，理由文本保留为普通注释
+    #   注：PERF401（手写 append 循环→推导式/extend）尚有 60 处存量，
+    #   2026-09-28 分批清理中，未入闸；新代码请直接用推导式
+    "RET505", "RET506", "RUF010", "RUF100",
+    "SIM105", "SIM113", "SIM114", "SIM201",
+    "C408", "C416", "C420", "PERF102", "PLW0108", "PLW3301",
 ]
 exclude = [".venv", "build", "dist"]
 
 [lint.per-file-ignores]
 # 测试桩类常用类级可变属性（如调用记录列表），属有意为之
 "tests/*.py" = ["RUF012", "BLE001"]
-# 盲除异常存量（计数为 2026-09-22 实测）：core 81 · ui 111 · firmware 19 ·
-# connectors 10 · server 2 · 根文件 2
+# 盲除异常存量（`rg -c 'except Exception'` 口径，2026-09-28 实测）：core 90 · ui 128 ·
+# firmware 14 · connectors 6 · server 1 · 根文件 2
+# 多数存量自带"为什么可以宽异常"的理由注释；2026-09-28 起这些目录里失效的
+# `# noqa: BLE001` 指令已降级为普通理由注释（RUF100 入闸，见 select 段注释）。
 # 收敛顺序：core/agent 与 core/streaming（含日志）→ core/devices → connectors/server → ui
 "core/*.py" = ["BLE001"]
 "core/**/*.py" = ["BLE001"]

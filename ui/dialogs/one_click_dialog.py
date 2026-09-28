@@ -28,7 +28,7 @@ class AnalyzeWorker(QThread):
         try:
             llm = LLMClient()
             analyzer = OneClickAnalyzer(llm_client=llm if llm.available else None)
-            analyzer.set_progress_callback(lambda msg, pct: self.progress_msg.emit(msg, pct))
+            analyzer.set_progress_callback(self.progress_msg.emit)
             result = analyzer.run(self.raw_data, self.selected)
             self.finished.emit(result)
         except Exception as e:

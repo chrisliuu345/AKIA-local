@@ -93,7 +93,7 @@ def analyze(
         return {
             "chart_type": "Exponential Smoothing",
             "analysis_type": "time_series.exponential_smoothing",
-            "error": f"模型拟合失败: {str(e)}",
+            "error": f"模型拟合失败: {e!s}",
         }
 
     fitted = fit.fittedvalues

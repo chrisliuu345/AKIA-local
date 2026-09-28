@@ -47,19 +47,19 @@ def make_estimator(task: str, backend: str = "auto",
                 "或改用 backend=sklearn / auto 使用内置 HistGradientBoosting")
         backend = "sklearn"
 
-    params = dict(learning_rate=float(learning_rate),
-                  max_iter=int(max_iter),
-                  max_depth=max_depth,
-                  min_samples_leaf=int(min_samples_leaf),
-                  l2_regularization=float(l2_regularization),
-                  random_state=int(random_state))
+    params = {"learning_rate": float(learning_rate),
+                  "max_iter": int(max_iter),
+                  "max_depth": max_depth,
+                  "min_samples_leaf": int(min_samples_leaf),
+                  "l2_regularization": float(l2_regularization),
+                  "random_state": int(random_state)}
     if backend == "xgboost":
         import xgboost as xgb
-        xgb_params = dict(n_estimators=int(max_iter),
-                          learning_rate=float(learning_rate),
-                          max_depth=int(max_depth) if max_depth else 6,
-                          reg_lambda=float(l2_regularization),
-                          random_state=int(random_state), verbosity=0)
+        xgb_params = {"n_estimators": int(max_iter),
+                          "learning_rate": float(learning_rate),
+                          "max_depth": int(max_depth) if max_depth else 6,
+                          "reg_lambda": float(l2_regularization),
+                          "random_state": int(random_state), "verbosity": 0}
         return (xgb.XGBClassifier(**xgb_params)
                 if task == TASK_CLASSIFICATION else xgb.XGBRegressor(**xgb_params))
     return (HistGradientBoostingClassifier(**params)

@@ -26,7 +26,7 @@ _SHORT_CASE = KnownValueCase(
 
 
 def _analyze(series: pd.Series, **kwargs) -> dict:
-    defaults = dict(max_p=2, max_d=2, max_q=2, forecast_steps=3)
+    defaults = {"max_p": 2, "max_d": 2, "max_q": 2, "forecast_steps": 3}
     defaults.update(kwargs)
     return arima.analyze(series, **defaults)
 

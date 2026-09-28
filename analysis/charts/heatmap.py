@@ -63,9 +63,9 @@ def _significance_stars(p_value: float) -> str:
     """将 p 值转换为显著性星号"""
     if p_value <= 0.001:
         return "***"
-    elif p_value <= 0.01:
+    if p_value <= 0.01:
         return "**"
-    elif p_value <= 0.05:
+    if p_value <= 0.05:
         return "*"
     return ""
 

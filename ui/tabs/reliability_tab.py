@@ -460,8 +460,8 @@ class ReliabilityTab(BaseAnalysisTab):
             )
             ax.text(0.5, 0.5, summary, transform=ax.transAxes,
                     fontsize=14, ha="center", va="center", fontfamily="monospace",
-                    bbox=dict(boxstyle="round", facecolor=tc["bg_body"],
-                              edgecolor=tc["border"], alpha=0.9))
+                    bbox={"boxstyle": "round", "facecolor": tc["bg_body"],
+                              "edgecolor": tc["border"], "alpha": 0.9})
 
         canvas = FigureCanvasQTAgg(fig)
         self.chart_layout.addWidget(canvas)
