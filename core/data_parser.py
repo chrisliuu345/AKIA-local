@@ -182,11 +182,34 @@ class DataParser:
     @classmethod
     def _numeric_like(cls, series: pd.Series) -> bool:
         """值优先判定：非空样本中 >=80% 可转数值（至少 2 个有效值）"""
-        non_empty = series[~series.map(cls._is_blank)]
+        non_empty = series[~cls._blank_mask(series)]
         if len(non_empty) < cls.NUMERIC_LIKE_MIN_VALUES:
             return False
         converted = pd.to_numeric(non_empty, errors="coerce")
         return float(converted.notna().mean()) >= cls.NUMERIC_LIKE_MIN_RATIO
+
+    @staticmethod
+    def _blank_mask(series: pd.Series) -> pd.Series:
+        """向量化空值掩码 — 与 ``_is_blank`` 逐格判定等价但无 Python 级逐格回调。
+
+        百万行 × 多列的 ``Series.map(_is_blank)`` 会产生数百万次 Python 调用
+        （实测占导入耗时 ~35%），这里改为 pandas 向量化字符串操作。
+        仅文本类列需要逐格判空；数值/布尔/时间列只可能是缺失。
+        """
+        mask = series.isna()
+        text = DataParser._text_view(series)
+        if text is None:
+            return mask
+        return mask | text.eq("") | text.str.lower().isin(("nan", "none", "null", "na"))
+
+    @staticmethod
+    def _text_view(series: pd.Series) -> pd.Series | None:
+        """文本列的 strip 视图；非文本列返回 None（时间/数值/布尔列不做文本匹配）。"""
+        if isinstance(series.dtype, pd.CategoricalDtype):
+            return series.astype(str).str.strip()
+        if pd.api.types.is_object_dtype(series) or pd.api.types.is_string_dtype(series):
+            return series.str.strip()
+        return None
 
     def _looks_datetime(self, sample: pd.Series) -> bool:
         """样本是否像日期/时间戳 — 名称含“时间/日期”的数值列（时长）不判为时间戳"""
@@ -206,11 +229,39 @@ class DataParser:
 
     @staticmethod
     def _clean_invalid_cells(df: pd.DataFrame) -> tuple[pd.DataFrame, int]:
-        invalid_mask = df.map(DataParser._is_invalid_cell)
+        invalid_mask = DataParser._invalid_mask(df)
         invalid_rows = invalid_mask.any(axis=1)
         cleaned = df[~invalid_rows].reset_index(drop=True)
         invalid_count = invalid_rows.sum()
         return cleaned, invalid_count
+
+    @staticmethod
+    def _invalid_mask(df: pd.DataFrame) -> pd.DataFrame:
+        """向量化非法单元格掩码 — 与 ``_is_invalid_cell`` 逐格判定等价。
+
+        旧实现 ``df.map(_is_invalid_cell)`` 在百万行表上产生千万级 Python 调用
+        （实测占导入耗时 ~55%）。这里按列分派：数值列只有 NaN 非法；文本列用
+        pandas 字符串向量化 + 原正则（语义与逐格 ``match`` 完全一致）。
+
+        注意按**位置**遍历：原始表头可能重名（如两个"二维码"），
+        ``df[col]`` 会返回 DataFrame 而不是 Series。
+        """
+        columns = []
+        for pos in range(df.shape[1]):
+            values = df.iloc[:, pos]
+            text = DataParser._text_view(values)
+            if text is None:
+                # 数值/布尔/时间列：只有缺失才算非法
+                columns.append(values.isna())
+            else:
+                columns.append(values.isna()
+                               | text.eq("")
+                               | text.str.match(DataParser.INVALID_PATTERNS).eq(True))
+        if not columns:
+            return pd.DataFrame(index=df.index)
+        mask = pd.concat(columns, axis=1, ignore_index=True)
+        mask.columns = df.columns
+        return mask
 
     def _detect_header_row(self, df: pd.DataFrame, n_scan: int = 20) -> int:
         """\u8868\u5934\u884c\u81ea\u52a8\u68c0\u6d4b\u2014\u2014\u57fa\u4e8e\u975e\u7a7a\u7387 + \u6570\u503c\u7387\u7a81\u53d8\u5b9a\u4f4d
