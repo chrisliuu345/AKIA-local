@@ -6,6 +6,10 @@ import numpy as np
 import pandas as pd
 from scipy import stats as sp_stats
 
+from core.log_util import get_logger
+
+_log = get_logger(__name__)
+
 
 class DataProfiler:
     """对工作簿数据进行全面画像分析，生成分析推荐"""
@@ -89,8 +93,8 @@ class DataProfiler:
                             warnings.simplefilter("ignore")
                             info["skewness"] = round(float(sp_stats.skew(non_null)), 3)
                             info["kurtosis"] = round(float(sp_stats.kurtosis(non_null)), 3)
-                    except Exception:
-                        pass
+                    except Exception as e:  # 偏度/峰度算不出（样本退化）→ 字段留空
+                        _log.debug("偏度/峰度计算失败: %s", e)
 
                 if len(non_null) >= 4:
                     iqr = float(np.percentile(non_null, 75) - np.percentile(non_null, 25))
@@ -102,8 +106,8 @@ class DataProfiler:
                     try:
                         _, p = sp_stats.shapiro(non_null.sample(min(n, 5000)) if n > 5000 else non_null)
                         info["normality_pvalue"] = round(float(p), 4)
-                    except Exception:
-                        pass
+                    except Exception as e:  # 正态性检验不可用 → 不做正态判定
+                        _log.debug("Shapiro-Wilk 检验失败: %s", e)
 
                 if info["normality_pvalue"] is not None:
                     if info["normality_pvalue"] >= 0.05:
@@ -405,8 +409,8 @@ class DataProfiler:
                                     continue
                                 if v is not None and not pd.isna(v) and abs(float(v)) > 0.95:
                                     correlated_pairs.append((valid[i], valid[j]))
-                except Exception:
-                    pass
+                except Exception as e:  # 相关系数矩阵不可用 → 跳过冗余列提示
+                    _log.debug("列相关性分析失败: %s", e)
             if len(correlated_pairs) <= 3 and correlated_pairs:
                 a, b = correlated_pairs[0]
                 issues.append(f"{sheet_name}: '{a}' 与 '{b}' 高度相关 (r>{0.95}), 可能存在冗余列")
@@ -432,6 +436,6 @@ def _clean_col_name(col) -> str:
     try:
         n = int(s)
         return f"列 {n + 1}"
-    except ValueError:
+    except ValueError:  # 列名不是纯数字：保持原名
         pass
     return s

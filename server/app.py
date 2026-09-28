@@ -246,7 +246,7 @@ def create_app(bus: StreamBus, store: TimeseriesStore | None = None,
             while True:
                 await ws.receive_text()  # 客户端心跳/测试周期，断连即抛异常
         except WebSocketDisconnect:
-            pass
+            pass  # 客户端主动断开属正常路径
         finally:
             task.cancel()
             unsub()

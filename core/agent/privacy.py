@@ -171,5 +171,5 @@ def set_cloud_enabled(enabled: bool) -> None:
     try:
         from config.settings import save_config
         save_config({"llm_cloud_enabled": bool(enabled)})
-    except Exception:
-        pass
+    except Exception as e:  # 配置不可写：本次开关不生效，但要让用户看到
+        logger.warning("云调用开关保存失败（%s）: %s", enabled, e)

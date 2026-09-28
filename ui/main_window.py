@@ -352,7 +352,7 @@ class MainWindow(QMainWindow):
                     ac = comply_menu.addAction(f"{t['name']} ({t['standard']})")
                     ac.setData(t["id"])
                     ac.triggered.connect(lambda checked, tid=t["id"]: self._on_export_compliance(tid))
-        except Exception:
+        except Exception:  # 合规报告模板不可用：菜单少一项，不影响其余菜单
             pass
 
         file_menu.addSeparator()
@@ -759,7 +759,7 @@ class MainWindow(QMainWindow):
                             s = pd.to_numeric(df.iloc[:, i], errors="coerce").dropna()
                             if len(s) > 0:
                                 num_cols.append(c)
-                        except (ValueError, TypeError):
+                        except (ValueError, TypeError):  # 非数值列：不参与校验
                             pass
                     num_cols = num_cols[:20]
                     if num_cols:
@@ -1317,14 +1317,14 @@ class MainWindow(QMainWindow):
             frame = getattr(tab, "df", None)
             if isinstance(frame, pd.DataFrame) and not frame.empty:
                 return frame
-        except Exception:
+        except Exception:  # 当前 Tab 取数失败 → 退回工作簿原始数据
             pass
         try:
             raw = (self.current_data or {}).get("raw_data") or {}
             for candidate in raw.values():
                 if isinstance(candidate, pd.DataFrame) and not candidate.empty:
                     return candidate
-        except Exception:
+        except Exception:  # 原始数据不可用 → 返回 None 由调用方兜底
             pass
         return None
 
