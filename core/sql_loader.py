@@ -3,6 +3,7 @@ SQL 数据库加载引擎 — SQLAlchemy 统一接入 MySQL/PostgreSQL/SQL Serve
 输出接口与 DataLoader 保持一致: {table_name: DataFrame}
 """
 
+import contextlib
 from typing import Any
 import re
 from urllib.parse import quote
@@ -138,10 +139,8 @@ class SqlLoader:
 
     def __del__(self):
         """析构时自动释放数据库连接"""
-        try:
+        with contextlib.suppress(Exception):
             self.disconnect()
-        except Exception:
-            pass
 
     def is_connected(self) -> bool:
         if not self.engine:

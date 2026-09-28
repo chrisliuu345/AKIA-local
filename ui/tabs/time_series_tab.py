@@ -249,7 +249,7 @@ class TimeSeriesTab(BaseAnalysisTab):
         except Exception as e:
             self._clear_canvas()
             self.result_text.setStyleSheet("color: #e74c3c; font-weight: bold;")
-            self.result_text.setText(f"分析失败: {str(e)}")
+            self.result_text.setText(f"分析失败: {e!s}")
 
     def run_analysis(self) -> dict[str, Any]:
         from analysis.time_series import acf_pacf, seasonal_decomposition, exponential_smoothing, arima, forecasting
@@ -389,4 +389,4 @@ class TimeSeriesTab(BaseAnalysisTab):
             self.set_chart_type(chart_type_name)
             self._switch_result_view(0)
         except Exception as e:
-            self.result_text.append(f"\n图表渲染失败: {str(e)}")
+            self.result_text.append(f"\n图表渲染失败: {e!s}")

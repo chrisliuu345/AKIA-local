@@ -156,7 +156,7 @@ class IEDataParser:
 
         best_keyword_score = 0.0
         best_keyword_field = None
-        for _cls_name, cls in OBJECT_CLASSES.items():
+        for cls in OBJECT_CLASSES.values():
             for field_name, aliases in cls.FIELD_ALIASES.items():
                 for alias in aliases:
                     al = alias.lower()

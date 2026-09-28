@@ -22,10 +22,9 @@ def get_ui_font() -> str:
     """返回 UI 主字体（Qt 字体族名称）"""
     if sys.platform == "win32":
         return "Microsoft YaHei"
-    elif sys.platform == "darwin":
+    if sys.platform == "darwin":
         return "PingFang SC"
-    else:
-        return _detect_linux_ui_font()
+    return _detect_linux_ui_font()
 
 
 @lru_cache(maxsize=1)
@@ -33,10 +32,9 @@ def get_mono_font() -> str:
     """返回等宽字体名称"""
     if sys.platform == "win32":
         return "Consolas"
-    elif sys.platform == "darwin":
+    if sys.platform == "darwin":
         return "Menlo"
-    else:
-        return "DejaVu Sans Mono"
+    return "DejaVu Sans Mono"
 
 
 def _detect_linux_ui_font() -> str:
@@ -77,22 +75,21 @@ def get_pdf_font_paths() -> list:
     """返回 PDF 导出的 CJK 字体搜索路径（按优先级排序）"""
     if sys.platform == "win32":
         return ["C:/Windows/Fonts"]
-    elif sys.platform == "darwin":
+    if sys.platform == "darwin":
         return [
             "/Library/Fonts/",
             "/System/Library/Fonts/",
             "/usr/local/share/fonts/",
         ]
-    else:
-        return [
-            "/usr/share/fonts/truetype/noto/",
-            "/usr/share/fonts/opentype/noto/",
-            "/usr/share/fonts/truetype/wqy/",
-            "/usr/share/fonts/truetype/",
-            "/usr/share/fonts/",
-            "/usr/local/share/fonts/",
-            "/usr/local/share/fonts/truetype/",
-        ]
+    return [
+        "/usr/share/fonts/truetype/noto/",
+        "/usr/share/fonts/opentype/noto/",
+        "/usr/share/fonts/truetype/wqy/",
+        "/usr/share/fonts/truetype/",
+        "/usr/share/fonts/",
+        "/usr/local/share/fonts/",
+        "/usr/local/share/fonts/truetype/",
+    ]
 
 
 def get_pdf_font_candidates() -> list:
@@ -106,20 +103,19 @@ def get_pdf_font_candidates() -> list:
             "NotoSansSC-Regular.ttf",
             "NotoSansSC-VF.ttf",
         ]
-    elif sys.platform == "darwin":
+    if sys.platform == "darwin":
         return [
             "PingFang.ttc",
             "STHeiti Medium.ttc",
             "Hiragino Sans GB.ttc",
             "NotoSansSC-Regular.otf",
         ]
-    else:
-        return [
-            "NotoSansCJK-Regular.ttc",
-            "NotoSansSC-Regular.otf",
-            "NotoSansSC-Regular.ttf",
-            "wqy-microhei.ttc",
-            "wqy-zenhei.ttc",
-            "NotoSansCJKsc-Regular.otf",
-            "SourceHanSansSC-Regular.otf",
-        ]
+    return [
+        "NotoSansCJK-Regular.ttc",
+        "NotoSansSC-Regular.otf",
+        "NotoSansSC-Regular.ttf",
+        "wqy-microhei.ttc",
+        "wqy-zenhei.ttc",
+        "NotoSansCJKsc-Regular.otf",
+        "SourceHanSansSC-Regular.otf",
+    ]

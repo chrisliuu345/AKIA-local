@@ -5,6 +5,7 @@ config:
     baud: int         默认 9600
     channel: str      通道名, 默认 "value"
 """
+import contextlib
 import re
 
 from connectors.base import ConnectorBase
@@ -49,8 +50,6 @@ class Connector(ConnectorBase):
 
     def close(self) -> None:
         if self._serial:
-            try:
+            with contextlib.suppress(Exception):
                 self._serial.close()
-            except Exception:
-                pass
             self._serial = None

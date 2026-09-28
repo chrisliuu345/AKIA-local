@@ -220,7 +220,7 @@ class RegressionTab(BaseAnalysisTab):
         except Exception as e:
             self._clear_canvas()
             self.result_text.setStyleSheet("color: #e74c3c; font-weight: bold;")
-            self.result_text.setText(f"{i18n.tr('reg.val_analysis_failed')}\n{str(e)}")
+            self.result_text.setText(f"{i18n.tr('reg.val_analysis_failed')}\n{e!s}")
 
     def validate_params(self) -> tuple:
         if self.df is None:
@@ -267,7 +267,7 @@ class RegressionTab(BaseAnalysisTab):
             pv_str = format_pvalue(pv) if isinstance(pv, (int, float)) else str(pv)
             text_lines.append(
                 f"{coef['term']:20s} {coef['estimate']:>12.4f} {coef['std_error']:>10.4f} "
-                f"{str(coef.get('t_value', '')):>10s} {pv_str:>10s}"
+                f"{coef.get('t_value', '')!s:>10s} {pv_str:>10s}"
             )
         text_lines.append("")
         anova = result.get("anova", {})

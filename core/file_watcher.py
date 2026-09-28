@@ -137,7 +137,7 @@ class FileMonitor(threading.Thread):
             self._run_count = getattr(self, "_run_count", 0) + 1
         except FileNotFoundError:
             payload["error"] = "文件不存在"
-        except Exception as exc:  # noqa: BLE001 — 监控线程兜底
+        except Exception as exc:  # 监控线程兜底：文件缺失/占用都不中断线程
             payload["error"] = str(exc)
         return payload
 

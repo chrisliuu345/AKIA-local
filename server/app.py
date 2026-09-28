@@ -6,6 +6,7 @@
 同进程数据源: 由主程序 `server.launcher` 以线程方式启动时共享 StreamBus +
 TimeseriesStore；独立 CLI 时自动构建 Mock 采集演示流。
 """
+import contextlib
 import argparse
 import asyncio
 import json
@@ -249,10 +250,8 @@ def create_app(bus: StreamBus, store: TimeseriesStore | None = None,
         finally:
             task.cancel()
             unsub()
-            try:
+            with contextlib.suppress(Exception):
                 await ws.close()
-            except Exception:
-                pass
 
     return app
 

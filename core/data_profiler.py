@@ -140,26 +140,26 @@ class DataProfiler:
         if tab_idx == 1:
             if len(numeric) >= 3:
                 return ("highly_recommended", 0.95)
-            elif len(numeric) >= 1:
+            if len(numeric) >= 1:
                 return ("recommended", 0.80)
             return ("optional", 0.40)
-        elif tab_idx == 2:
+        if tab_idx == 2:
             best = max(numeric, key=lambda c: c.get("normality_pvalue") or 0) if numeric else None
             has_spec = rec["params"].get("usl") is not None or rec["params"].get("lsl") is not None
             if best and has_spec:
                 return ("highly_recommended", 0.90)
-            elif best:
+            if best:
                 return ("recommended", 0.70)
             return ("optional", 0.30)
-        elif tab_idx == 3:
+        if tab_idx == 3:
             if len(identifiers) >= 2 and len(numeric) >= 1:
                 return ("recommended", 0.75)
             return ("optional", 0.35)
-        elif tab_idx == 4:
+        if tab_idx == 4:
             if len(numeric) >= 2:
                 return ("recommended", 0.70)
             return ("optional", 0.30)
-        elif tab_idx in (5, 6):
+        if tab_idx in (5, 6):
             if len(numeric) >= 3:
                 return ("recommended", 0.65)
             return ("optional", 0.25)

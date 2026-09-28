@@ -3,6 +3,7 @@
 单进程内的线程安全总线：采集线程 publish，图表/服务 subscriber 收回调，
 `recent()` 供新订阅方拿最近窗口（回填补齐）。
 """
+import contextlib
 import threading
 from collections import deque
 from collections.abc import Callable
@@ -24,10 +25,8 @@ class StreamBus:
             buf.extend(samples)
             subs = list(self._subs.get(topic, ())) + self._wild
         for cb in subs:
-            try:
+            with contextlib.suppress(Exception):
                 cb(samples)
-            except Exception:
-                pass
 
     def subscribe(self, topic: str | None, callback: Callable[[list[Sample]], None]) -> Callable[[], bool]:
         """返回 unsubscribe 函数。topic=None 表示订阅全部主题。"""

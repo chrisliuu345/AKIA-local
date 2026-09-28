@@ -19,11 +19,11 @@ def _compute_system_r(
     """内部辅助: 计算系统可靠度"""
     if structure == "series":
         return _series(reliabilities)
-    elif structure == "parallel":
+    if structure == "parallel":
         return _parallel(reliabilities)
-    elif structure == "mixed":
+    if structure == "mixed":
         return _mixed(reliabilities, parallel_groups)
-    elif structure == "k_out_of_n":
+    if structure == "k_out_of_n":
         return _k_out_of_n(reliabilities, k)
     return 0.0
 

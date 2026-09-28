@@ -1,5 +1,6 @@
 """SPS 控制图分析页 — 含图表嵌入
 """
+import contextlib
 import threading
 
 from typing import Any
@@ -465,10 +466,8 @@ class SPCTab(BaseAnalysisTab):
         """退出清理 — 由 MainWindow._shutdown_runtime() 统一调用"""
         if getattr(self, "_live_timer", None) is None:
             return
-        try:
+        with contextlib.suppress(Exception):
             self._live_teardown()
-        except Exception:
-            pass
 
     def _live_stop(self):
         self._live_teardown()
@@ -586,7 +585,7 @@ class SPCTab(BaseAnalysisTab):
         except Exception as e:
             self._clear_canvas()
             self.result_text.setStyleSheet("color: #e74c3c; font-weight: bold;")
-            self.result_text.setText(f"▎分析失败\n{str(e)}")
+            self.result_text.setText(f"▎分析失败\n{e!s}")
             return None
 
     def _get_hotelling_columns(self) -> list:

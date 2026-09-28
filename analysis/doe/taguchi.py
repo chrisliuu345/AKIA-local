@@ -102,16 +102,15 @@ def _select_array(num_factors: int, factor_levels: list[int]) -> str:
             if _ARRAYS[name]["cols"] >= num_factors:
                 return name
         raise ValueError("Too many 2-level factors (max 15)")
-    elif all_3:
+    if all_3:
         if num_factors <= 4:
             return "L9"
         raise ValueError("Too many 3-level factors (max 4 for available arrays)")
-    else:
-        n2 = sum(1 for l in factor_levels if l == 2)
-        n3 = sum(1 for l in factor_levels if l == 3)
-        if n2 <= 1 and n3 <= 7:
-            return "L18"
-        raise ValueError("Cannot accommodate mixed levels: " + str(n2) + "x2 + " + str(n3) + "x3")
+    n2 = sum(1 for l in factor_levels if l == 2)
+    n3 = sum(1 for l in factor_levels if l == 3)
+    if n2 <= 1 and n3 <= 7:
+        return "L18"
+    raise ValueError("Cannot accommodate mixed levels: " + str(n2) + "x2 + " + str(n3) + "x3")
 
 
 def _hadamard_sylvester(n: int) -> np.ndarray:
@@ -237,11 +236,11 @@ def compute_sn_ratio(values: np.ndarray, sn_type: str = "larger_is_better") -> f
         msd = np.mean(1.0 / (v ** 2))
         return -10.0 * np.log10(msd)
 
-    elif sn_type == "smaller_is_better":
+    if sn_type == "smaller_is_better":
         msd = np.mean(v ** 2)
         return -10.0 * np.log10(msd)
 
-    elif sn_type == "nominal_is_best":
+    if sn_type == "nominal_is_best":
         y_bar = np.mean(v)
         if n > 1:
             s2 = np.var(v, ddof=1)
@@ -251,7 +250,7 @@ def compute_sn_ratio(values: np.ndarray, sn_type: str = "larger_is_better") -> f
             return 10.0 * np.log10((y_bar ** 2) / s2)
         return float("inf") if y_bar != 0 else 0.0
 
-    elif sn_type == "nominal_is_best_ii":
+    if sn_type == "nominal_is_best_ii":
         if n > 1:
             s2 = np.var(v, ddof=1)
         else:
@@ -260,8 +259,7 @@ def compute_sn_ratio(values: np.ndarray, sn_type: str = "larger_is_better") -> f
             return -10.0 * np.log10(s2)
         return float("inf")
 
-    else:
-        raise ValueError("Unknown sn_type: " + sn_type)
+    raise ValueError("Unknown sn_type: " + sn_type)
 
 
 def response_table(
@@ -371,7 +369,7 @@ def _optimal_combination(resp_table: dict) -> dict[str, dict]:
 def _predicted_sn(resp_table: dict, grand_mean_sn: float) -> float:
     """Predict S/N at optimal combination using additive model."""
     prediction = grand_mean_sn
-    for _factor, data in resp_table.items():
+    for data in resp_table.values():
         best_avg = data["level_averages"][data["best_level"]]
         prediction += best_avg - grand_mean_sn
     return round(prediction, 6)

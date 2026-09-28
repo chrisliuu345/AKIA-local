@@ -9,6 +9,7 @@
 """
 from __future__ import annotations
 
+import contextlib
 import html
 import re
 
@@ -118,10 +119,8 @@ class QAMHarnessDialog(QDialog):
             self.llm = LLMClient.detect_available()
             saved_model = QSettings("QA-Tool", "LLM").value("model", "")
             if saved_model:
-                try:
+                with contextlib.suppress(Exception):
                     self.llm.set_model(saved_model, self.llm.provider)
-                except Exception:
-                    pass
         if engine is None:
             engine, self.agent_context = build_engine(parent, llm=self.llm)
         else:
@@ -479,10 +478,8 @@ class QAMHarnessDialog(QDialog):
             return
         if name == getattr(self.llm, "model", ""):
             return
-        try:
+        with contextlib.suppress(Exception):
             self.llm.set_model(name, self.llm.provider)
-        except Exception:
-            pass
         settings = QSettings("QA-Tool", "LLM")
         settings.setValue("model", name)
         settings.setValue("provider", self.llm.provider)
@@ -742,10 +739,8 @@ class QAMHarnessDialog(QDialog):
     def _clear_chat(self):
         self.chat_view.clear()
         self._history.clear()
-        try:
+        with contextlib.suppress(Exception):
             self.engine.conversation.clear()
-        except Exception:
-            pass
         self._current_ai_msg = ""
         self._streaming_started = False
         self._stream_anchor = None
@@ -762,17 +757,13 @@ class QAMHarnessDialog(QDialog):
                 signal = getattr(self.worker, signal_name, None)
                 if signal is None:
                     continue
-                try:
+                with contextlib.suppress(RuntimeError, TypeError, AttributeError):
                     signal.disconnect(slot)
-                except (RuntimeError, TypeError, AttributeError):
-                    pass
             request_stop = getattr(self.worker, "requestInterruption", None)
             if callable(request_stop):
                 request_stop()
-            try:
+            with contextlib.suppress(Exception):
                 self.llm.stop()
-            except Exception:
-                pass
             wait = getattr(self.worker, "wait", None)
             if callable(wait) and not wait(1500):
                 terminate = getattr(self.worker, "terminate", None)

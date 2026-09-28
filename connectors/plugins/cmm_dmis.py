@@ -7,6 +7,7 @@ config:
     axes: {"X": "X", "Y": "Y", "Z": "Z"}   轴映射(通道名→DMIS 关键字)
     baud: int                 默认 9600
 """
+import contextlib
 import re
 import time
 
@@ -16,7 +17,7 @@ PLUGIN = {"name": "cmm_dmis", "category": "cmm",
           "description": "三坐标测量机 DMIS 输出解析 — RS232/USB/文件"}
 
 try:
-    import serial  # noqa: F401  # pyserial 已在主依赖
+    import serial  # pyserial 已在主依赖，此处仅探测可用性
     AVAILABLE = True
 except ImportError:
     AVAILABLE = False
@@ -45,10 +46,8 @@ class Connector(ConnectorBase):
                                   errors="replace")
         # 串口/管道跳到末尾只读新增输出; 普通文件从头读
         if source == "tty":
-            try:
+            with contextlib.suppress(OSError, ValueError):
                 self._file_obj.seek(0, 2)
-            except (OSError, ValueError):
-                pass
 
     def poll(self) -> list:
         if not self._file_obj:
@@ -88,8 +87,6 @@ class Connector(ConnectorBase):
 
     def close(self) -> None:
         if self._file_obj:
-            try:
+            with contextlib.suppress(Exception):
                 self._file_obj.close()
-            except Exception:
-                pass
             self._file_obj = None
