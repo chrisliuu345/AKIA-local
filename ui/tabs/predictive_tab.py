@@ -44,7 +44,7 @@ class _TrainWorker(QThread):
     def run(self):
         try:
             self.done.emit(self._job())
-        except Exception as exc:  # noqa: BLE001 - 主线程统一展示错误
+        except Exception as exc:  # 主线程统一展示错误
             self.failed.emit(str(exc))
 
 
@@ -246,7 +246,7 @@ class PredictiveTab(BaseAnalysisTab):
         seed = int(self.seed_spin.value())
 
         def job() -> dict[str, Any]:
-            common = dict(task=task, cv=cv, test_size=test_size, random_state=seed)
+            common = {"task": task, "cv": cv, "test_size": test_size, "random_state": seed}
             if model == "tree":
                 return trees.analyze(df, target, features, auto_prune=True, **common)
             if model == "forest":
@@ -292,7 +292,7 @@ class PredictiveTab(BaseAnalysisTab):
             return None
         try:
             result = self._make_job()()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             self.status_label.setStyleSheet("color: #e74c3c;")
             self.status_label.setText(f"训练失败: {exc}")
             return None
@@ -427,7 +427,7 @@ class PredictiveTab(BaseAnalysisTab):
                     axes[1].grid(True, alpha=0.3)
             fig.tight_layout()
             self._render_figure(fig)
-        except Exception as exc:  # noqa: BLE001 - 图表失败不影响结果
+        except Exception as exc:  # 图表失败不影响结果
             self.status_label.setText(f"训练完成（图表渲染失败: {exc}）")
 
     # ---------------- 模型文件 ----------------
@@ -467,7 +467,7 @@ class PredictiveTab(BaseAnalysisTab):
             return None
         try:
             predictions = persist.predict_frame(self._model_bundle, self.df)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:  # 预测失败提示后返回空结果
             QMessageBox.warning(self, "预测失败", str(exc))
             return None
         self._loaded_predictions = predictions
@@ -488,7 +488,7 @@ class PredictiveTab(BaseAnalysisTab):
             return
         try:
             self.save_model_to(path)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:  # 保存失败提示后不中断
             QMessageBox.warning(self, "保存失败", str(exc))
 
     def _on_load_model(self):
@@ -498,7 +498,7 @@ class PredictiveTab(BaseAnalysisTab):
             return
         try:
             self.load_model_from(path)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:  # 加载失败提示后不中断
             QMessageBox.warning(self, "加载失败", str(exc))
 
     def _on_export_predictions(self):

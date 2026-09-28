@@ -84,15 +84,14 @@ def _estimate_within_sigma(data: np.ndarray, subgroup_size: int) -> float:
         mr_bar = np.mean(mr) if len(mr) > 0 else 0
         d2 = 1.128
         return mr_bar / d2 if d2 > 0 else 0
-    else:
-        n_subgroups = len(data) // subgroup_size
-        if n_subgroups < 1:
-            return float(np.std(data, ddof=1))
-        subgroups = data[:n_subgroups * subgroup_size].reshape(n_subgroups, subgroup_size)
-        ranges = np.max(subgroups, axis=1) - np.min(subgroups, axis=1)
-        r_bar = np.mean(ranges)
-        d2 = _get_d2(subgroup_size)
-        return r_bar / d2 if d2 > 0 else 0
+    n_subgroups = len(data) // subgroup_size
+    if n_subgroups < 1:
+        return float(np.std(data, ddof=1))
+    subgroups = data[:n_subgroups * subgroup_size].reshape(n_subgroups, subgroup_size)
+    ranges = np.max(subgroups, axis=1) - np.min(subgroups, axis=1)
+    r_bar = np.mean(ranges)
+    d2 = _get_d2(subgroup_size)
+    return r_bar / d2 if d2 > 0 else 0
 
 
 def _get_d2(n: int) -> float:
@@ -133,40 +132,39 @@ def _control_chart_data(data: np.ndarray, subgroup_size: int) -> dict[str, Any]:
                 "lcl": round(mr_lcl, 4),
             },
         }
-    else:
-        n_subgroups = n // subgroup_size
-        subgroups = data[:n_subgroups * subgroup_size].reshape(n_subgroups, subgroup_size)
-        x_bar = np.mean(subgroups, axis=1)
-        ranges = np.max(subgroups, axis=1) - np.min(subgroups, axis=1)
+    n_subgroups = n // subgroup_size
+    subgroups = data[:n_subgroups * subgroup_size].reshape(n_subgroups, subgroup_size)
+    x_bar = np.mean(subgroups, axis=1)
+    ranges = np.max(subgroups, axis=1) - np.min(subgroups, axis=1)
 
-        x_bar_mean = float(np.mean(x_bar))
-        r_bar = float(np.mean(ranges))
+    x_bar_mean = float(np.mean(x_bar))
+    r_bar = float(np.mean(ranges))
 
-        d2 = _get_d2(subgroup_size)
-        a2 = _get_a2(subgroup_size)
+    d2 = _get_d2(subgroup_size)
+    a2 = _get_a2(subgroup_size)
 
-        sigma = r_bar / d2 if d2 > 0 else 0
-        x_ucl = x_bar_mean + a2 * r_bar
-        x_lcl = x_bar_mean - a2 * r_bar
+    sigma = r_bar / d2 if d2 > 0 else 0
+    x_ucl = x_bar_mean + a2 * r_bar
+    x_lcl = x_bar_mean - a2 * r_bar
 
-        d4 = _get_d4(subgroup_size)
-        r_ucl = d4 * r_bar
+    d4 = _get_d4(subgroup_size)
+    r_ucl = d4 * r_bar
 
-        return {
-            "type": "Xbar-R",
-            "xbar": {
-                "data": [round(float(x), 4) for x in x_bar],
-                "center": round(x_bar_mean, 4),
-                "ucl": round(x_ucl, 4),
-                "lcl": round(x_lcl, 4),
-            },
-            "range": {
-                "data": [round(float(x), 4) for x in ranges],
-                "center": round(r_bar, 4),
-                "ucl": round(r_ucl, 4),
-                "lcl": 0,
-            },
-        }
+    return {
+        "type": "Xbar-R",
+        "xbar": {
+            "data": [round(float(x), 4) for x in x_bar],
+            "center": round(x_bar_mean, 4),
+            "ucl": round(x_ucl, 4),
+            "lcl": round(x_lcl, 4),
+        },
+        "range": {
+            "data": [round(float(x), 4) for x in ranges],
+            "center": round(r_bar, 4),
+            "ucl": round(r_ucl, 4),
+            "lcl": 0,
+        },
+    }
 
 
 def _get_a2(n: int) -> float:
@@ -287,14 +285,13 @@ def _capability_grade(cpk: float) -> str:
     """能力等级判定"""
     if cpk >= 1.67:
         return "A+ (优秀)"
-    elif cpk >= 1.33:
+    if cpk >= 1.33:
         return "A (良好)"
-    elif cpk >= 1.00:
+    if cpk >= 1.00:
         return "B (可接受)"
-    elif cpk >= 0.67:
+    if cpk >= 0.67:
         return "C (边缘)"
-    else:
-        return "D (差)"
+    return "D (差)"
 
 
 def _percent_defective_data(

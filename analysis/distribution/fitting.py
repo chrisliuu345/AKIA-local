@@ -260,21 +260,21 @@ def _get_scipy_dist(distribution: str, params: dict[str, float]):
     """获取 scipy 分布对象"""
     if distribution == "normal":
         return stats.norm(loc=params.get("mu", 0), scale=params.get("sigma", 1))
-    elif distribution == "lognormal":
+    if distribution == "lognormal":
         return stats.lognorm(
             s=params.get("shape", 1),
             loc=params.get("loc", 0),
             scale=params.get("scale", 1),
         )
-    elif distribution == "exponential":
+    if distribution == "exponential":
         return stats.expon(loc=params.get("loc", 0), scale=params.get("scale", 1))
-    elif distribution == "gamma":
+    if distribution == "gamma":
         return stats.gamma(
             a=params.get("a", 1),
             loc=params.get("loc", 0),
             scale=params.get("scale", 1),
         )
-    elif distribution == "weibull":
+    if distribution == "weibull":
         return stats.weibull_min(
             c=params.get("c", 1),
             loc=params.get("loc", 0),

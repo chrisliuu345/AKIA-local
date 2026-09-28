@@ -270,14 +270,13 @@ def _uncertainty_interpretation(u_expanded: float, tolerance: float | None) -> s
 
     if t_ratio < 0.1:
         return "不确定度极小，测量系统非常适合"
-    elif t_ratio < 0.3:
+    if t_ratio < 0.3:
         return "不确定度较小，测量系统适合"
-    elif t_ratio < 0.5:
+    if t_ratio < 0.5:
         return "不确定度适中，测量系统可接受"
-    elif t_ratio < 1.0:
+    if t_ratio < 1.0:
         return "不确定度较大，测量系统边缘"
-    else:
-        return "不确定度过大，测量系统不可接受"
+    return "不确定度过大，测量系统不可接受"
 
 
 def _grr_acceptance(grr_pct: float, ndc: int) -> dict[str, Any]:

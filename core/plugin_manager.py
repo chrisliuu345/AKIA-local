@@ -10,6 +10,7 @@
 """
 from __future__ import annotations
 
+import contextlib
 import importlib
 import importlib.metadata
 import importlib.util
@@ -258,10 +259,8 @@ class PluginManager:
             module = importlib.import_module(module_name)
         finally:
             if inserted:
-                try:
+                with contextlib.suppress(ValueError):
                     sys.path.remove(str(base_dir))
-                except ValueError:
-                    pass
         obj = getattr(module, cls_name) if cls_name else module
         if isinstance(obj, type):
             obj = obj()

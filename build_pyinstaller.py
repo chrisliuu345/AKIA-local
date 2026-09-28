@@ -171,7 +171,7 @@ def build(name: str, onefile: bool):
 
     for src_rel, dest_rel in DATA_DIRS + DATA_FILES:
         cmd.append("--add-data")
-        cmd.append(f"{str(PROJECT_DIR / src_rel)}{os.pathsep}{dest_rel}")
+        cmd.append(f"{PROJECT_DIR / src_rel!s}{os.pathsep}{dest_rel}")
 
     for imp in HIDDEN_IMPORTS:
         cmd.append("--hidden-import")

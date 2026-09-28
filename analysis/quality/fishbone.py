@@ -109,12 +109,12 @@ class FishboneEngine:
         colors = M6_COLORS[:n] if n <= len(M6_COLORS) else M6_COLORS * ((n // len(M6_COLORS)) + 1)
 
         ax.annotate("", xy=(8.5, 0), xytext=(-6, 0),
-                     arrowprops=dict(arrowstyle="->", color="#e1e2e6",
-                                     lw=3, connectionstyle="arc3,rad=0"))
+                     arrowprops={"arrowstyle": "->", "color": "#e1e2e6",
+                                     "lw": 3, "connectionstyle": "arc3,rad=0"})
         ax.text(9, 0, problem, fontsize=14, fontweight="bold",
                 color="#e1e2e6", ha="left", va="center",
-                bbox=dict(boxstyle="round,pad=0.5", facecolor="#363648",
-                          edgecolor="#4da6ff", linewidth=1.5))
+                bbox={"boxstyle": "round,pad=0.5", "facecolor": "#363648",
+                          "edgecolor": "#4da6ff", "linewidth": 1.5})
 
         spine_angles = np.linspace(15, 55, max(n, 1))
         for i, (bname, root) in enumerate(branches.items()):
@@ -133,7 +133,7 @@ class FishboneEngine:
             ey = y_dir * branch_len * np.sin(rad_angle)
 
             ax.annotate("", xy=(ex, ey), xytext=(bx, 0),
-                         arrowprops=dict(arrowstyle="->", color=color, lw=2.5))
+                         arrowprops={"arrowstyle": "->", "color": color, "lw": 2.5})
 
             ax.text(ex + 0.3, ey + 0.2 * y_dir, bname, fontsize=11,
                     fontweight="bold", color=color, ha="left", va="center")
@@ -151,14 +151,14 @@ class FishboneEngine:
                 if j % 2 == 0:
                     ax.annotate("", xy=(sx + spike_dx, sy + spike_dy),
                                 xytext=(sx, sy),
-                                arrowprops=dict(arrowstyle="-", color=color, lw=1, alpha=0.7))
+                                arrowprops={"arrowstyle": "-", "color": color, "lw": 1, "alpha": 0.7})
                     tx = sx + spike_dx * 1.5
                     ty = sy + spike_dy * 1.5
                     ha = "left" if spike_dx > 0 else "right"
                 else:
                     ax.annotate("", xy=(sx - spike_dx, sy - spike_dy),
                                 xytext=(sx, sy),
-                                arrowprops=dict(arrowstyle="-", color=color, lw=1, alpha=0.7))
+                                arrowprops={"arrowstyle": "-", "color": color, "lw": 1, "alpha": 0.7})
                     tx = sx - spike_dx * 1.5
                     ty = sy - spike_dy * 1.5
                     ha = "right" if sx - spike_dx * 1.5 < sx else "left"

@@ -134,9 +134,7 @@ class DataToolsTab(BaseAnalysisTab):
         n = self.gen_n.value()
         mu_val = self.gen_mu.value()
         sigma_val = self.gen_sigma.value()
-        if dist == "正态":
-            data = DataGenerator.generate(dist, n, mu=mu_val, sigma=sigma_val)
-        elif dist == "对数正态":
+        if dist == "正态" or dist == "对数正态":
             data = DataGenerator.generate(dist, n, mu=mu_val, sigma=sigma_val)
         elif dist == "指数":
             data = DataGenerator.generate(dist, n, scale=mu_val)

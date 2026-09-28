@@ -215,12 +215,11 @@ class _CauseSpike:
             x1, y1 = bl.line().x1(), bl.line().y1()
             x2, y2 = bl.line().x2(), bl.line().y2()
             return (x1 + self.t * (x2 - x1), y1 + self.t * (y2 - y1))
-        else:
-            pl = self.parent.label
-            pc = pl.center()
-            bw, _bh = pl.boundingRect().width(), pl.boundingRect().height()
-            side = self._side
-            return (pc.x() + side * bw * 0.5, pc.y())
+        pl = self.parent.label
+        pc = pl.center()
+        bw, _bh = pl.boundingRect().width(), pl.boundingRect().height()
+        side = self._side
+        return (pc.x() + side * bw * 0.5, pc.y())
 
     def _update_line(self):
         """线: 父锚点 → 当前标签框边缘"""
@@ -402,7 +401,7 @@ class FishboneCanvas(QGraphicsView):
         self._scene.addPath(path, QPen(Qt.NoPen), QBrush(MUTED_COLOR))
 
         pb = _ProblemBox(spine_x2 + 10, cy, problem)
-        pb._on_edited = lambda text: self.problem_edited.emit(text)
+        pb._on_edited = self.problem_edited.emit
         self._problem_box = pb
         self._scene.addItem(pb)
 

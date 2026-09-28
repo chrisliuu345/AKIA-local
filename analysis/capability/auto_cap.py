@@ -86,25 +86,7 @@ def _fit_all_distributions(data: np.ndarray) -> list[dict[str, Any]]:
             if dist_name == "normal":
                 params = scipy_dist.fit(data)
                 loglik = np.sum(scipy_dist.logpdf(data, *params))
-            elif dist_name == "lognormal":
-                positive_data = data[data > 0]
-                if len(positive_data) < len(data) * 0.9:
-                    continue
-                params = scipy_dist.fit(positive_data)
-                loglik = np.sum(scipy_dist.logpdf(positive_data, *params))
-            elif dist_name == "weibull":
-                positive_data = data[data > 0]
-                if len(positive_data) < len(data) * 0.9:
-                    continue
-                params = scipy_dist.fit(positive_data)
-                loglik = np.sum(scipy_dist.logpdf(positive_data, *params))
-            elif dist_name == "gamma":
-                positive_data = data[data > 0]
-                if len(positive_data) < len(data) * 0.9:
-                    continue
-                params = scipy_dist.fit(positive_data)
-                loglik = np.sum(scipy_dist.logpdf(positive_data, *params))
-            elif dist_name == "exponential":
+            elif dist_name in ("lognormal", "weibull", "gamma", "exponential"):
                 positive_data = data[data > 0]
                 if len(positive_data) < len(data) * 0.9:
                     continue
@@ -259,11 +241,10 @@ def _capability_grade(cpk: float) -> str:
     """能力等级判定"""
     if cpk >= 1.67:
         return "A+ (优秀)"
-    elif cpk >= 1.33:
+    if cpk >= 1.33:
         return "A (良好)"
-    elif cpk >= 1.00:
+    if cpk >= 1.00:
         return "B (可接受)"
-    elif cpk >= 0.67:
+    if cpk >= 0.67:
         return "C (边缘)"
-    else:
-        return "D (差)"
+    return "D (差)"

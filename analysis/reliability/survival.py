@@ -223,7 +223,7 @@ def cox_regression(
     except Exception as e:  # noqa: BLE001 - Cox 拟合失败：返回结构化错误（lifelines 异常类型不定）
         return {
             "analysis_type": "reliability.survival.cox",
-            "error": f"Cox 回归拟合失败: {str(e)}",
+            "error": f"Cox 回归拟合失败: {e!s}",
         }
 
     coefficients = {}

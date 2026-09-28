@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import threading
 import time
@@ -75,20 +76,16 @@ class DeviceMonitor:
             logger.warning("DeviceMonitor attach failed for %s: %s", device.device_id, e)
             return False
         if not is_network:
-            try:
+            with contextlib.suppress(TransportError):
                 transport.reset_board()
-            except TransportError:
-                pass
         device.transport = transport
         self._attached[device.device_id] = device
         self._heartbeats[device.device_id] = Heartbeat(PING_INTERVAL, PING_TIMEOUT)
-        try:
+        with contextlib.suppress(TransportError):
             transport.send(encode_message(
                 MessageType.HELLO,
                 device_id="pc_host", device_type="pc_host", fw_version="0.0",
             ))
-        except TransportError:
-            pass
         return True
 
     def detach(self, device: Device) -> None:
@@ -96,10 +93,8 @@ class DeviceMonitor:
         self._attached.pop(device_id, None)
         self._heartbeats.pop(device_id, None)
         if device.transport:
-            try:
+            with contextlib.suppress(Exception):
                 device.transport.close()
-            except Exception:
-                pass
             device.transport = None
 
     def _make_handler(self, device: Device):
@@ -117,11 +112,9 @@ class DeviceMonitor:
                     device.set_channels(msg.get("channels", []))
             elif mt == MessageType.PING:
                 if device.transport and device.transport.is_open():
-                    try:
+                    with contextlib.suppress(TransportError):
                         device.transport.send(encode_message(
                             MessageType.PONG, device_id=device.device_id))
-                    except TransportError:
-                        pass
             elif mt == MessageType.ACK:
                 if isinstance(device, Esp32OutputDevice):
                     device.record_ack(msg)
@@ -139,10 +132,8 @@ class DeviceMonitor:
         def on_error(exc: Exception):
             logger.warning("DeviceMonitor transport error on %s: %s", device.device_id, exc)
             if self._on_event:
-                try:
+                with contextlib.suppress(Exception):
                     self._on_event(device.device_id, "error", {"error": str(exc)})
-                except Exception:
-                    pass
         return on_error
 
     def _tick_loop(self):
@@ -152,10 +143,8 @@ class DeviceMonitor:
                 if not hb or not device.transport or not device.transport.is_open():
                     continue
                 if hb.is_timed_out() and self._on_event:
-                    try:
+                    with contextlib.suppress(Exception):
                         self._on_event(device.device_id, "timeout", {})
-                    except Exception:
-                        pass
                     continue
                 if hb.should_send_ping():
                     try:

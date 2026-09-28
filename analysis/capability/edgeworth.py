@@ -139,23 +139,21 @@ def _edgeworth_cap_index(
         z = (usl - mean) / std
         pp = _edgeworth_pp(z, skewness, kurtosis)
         return -np.log10(pp) / 3 if pp > 0 else float('inf')
-    else:
-        z = -(lsl - mean) / std
-        pp = _edgeworth_pp(z, skewness, kurtosis)
-        return -np.log10(pp) / 3 if pp > 0 else float('inf')
+    z = -(lsl - mean) / std
+    pp = _edgeworth_pp(z, skewness, kurtosis)
+    return -np.log10(pp) / 3 if pp > 0 else float('inf')
 
 
 def _edgeworth_interpretation(cpk: float) -> str:
     """Edgeworth 能力指数解释"""
     if cpk >= 2.0:
         return "优秀 — 过程能力远超要求"
-    elif cpk >= 1.67:
+    if cpk >= 1.67:
         return "优秀 — 过程能力充足"
-    elif cpk >= 1.33:
+    if cpk >= 1.33:
         return "良好 — 过程能力满足要求"
-    elif cpk >= 1.0:
+    if cpk >= 1.0:
         return "可接受 — 过程能力基本满足"
-    elif cpk >= 0.67:
+    if cpk >= 0.67:
         return "边缘 — 过程能力不足，需要改进"
-    else:
-        return "差 — 过程能力严重不足"
+    return "差 — 过程能力严重不足"

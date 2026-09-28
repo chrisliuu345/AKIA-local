@@ -1,6 +1,7 @@
 """v4.1.0 B3 — 统一空状态（无数据遮罩 / 导入按钮 / 有数据隐藏）。"""
 
 import os
+import contextlib
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -56,10 +57,9 @@ def test_empty_state_import_button_emits_signal(window):
     window._switch_tab(1)
     QApplication.processEvents()
     calls = []
-    try:                                   # 断开主窗口的真实导入动作，避免弹文件对话框
+    # 断开主窗口的真实导入动作，避免弹文件对话框
+    with contextlib.suppress(RuntimeError, TypeError):
         tab.import_data_requested.disconnect()
-    except (RuntimeError, TypeError):
-        pass
     tab.import_data_requested.connect(lambda: calls.append(1))
     buttons = tab._empty_overlay.findChildren(QPushButton)
     assert buttons, "空状态应包含导入按钮"
@@ -82,10 +82,9 @@ def test_empty_state_import_button_is_hit_testable(window):
     button = buttons[0]
 
     calls = []
-    try:                                   # 断开主窗口的真实导入动作，避免弹文件对话框
+    # 断开主窗口的真实导入动作，避免弹文件对话框
+    with contextlib.suppress(RuntimeError, TypeError):
         tab.import_data_requested.disconnect()
-    except (RuntimeError, TypeError):
-        pass
     tab.import_data_requested.connect(lambda: calls.append(1))
 
     center = button.mapToGlobal(button.rect().center())

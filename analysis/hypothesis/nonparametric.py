@@ -46,18 +46,17 @@ def wilcoxon_signed_rank(
             "n": n,
             "significant": p < 0.05,
         }
-    else:
-        clean = a[np.isfinite(a)]
-        if len(clean) < 5:
-            return {"error": f"样本量不足 ({len(clean)})"}
-        stat, p = sp_stats.wilcoxon(clean, alternative=alternative)
-        return {
-            "test": "Wilcoxon Signed-Rank (one-sample)",
-            "statistic": round(float(stat), 4),
-            "p_value": round(float(p), 6),
-            "n": len(clean),
-            "significant": p < 0.05,
-        }
+    clean = a[np.isfinite(a)]
+    if len(clean) < 5:
+        return {"error": f"样本量不足 ({len(clean)})"}
+    stat, p = sp_stats.wilcoxon(clean, alternative=alternative)
+    return {
+        "test": "Wilcoxon Signed-Rank (one-sample)",
+        "statistic": round(float(stat), 4),
+        "p_value": round(float(p), 6),
+        "n": len(clean),
+        "significant": p < 0.05,
+    }
 
 
 def kruskal_wallis(*groups: np.ndarray) -> dict[str, Any]:
@@ -148,7 +147,7 @@ def friedman_test(*groups: np.ndarray) -> dict[str, Any]:
     if len(clean_groups) == 2:
         stat, p = sp_stats.wilcoxon(clean_groups[0], clean_groups[1])
         data_matrix = np.column_stack(clean_groups)
-        ranks = np.apply_along_axis(lambda row: sp_stats.rankdata(row), 1, data_matrix)
+        ranks = np.apply_along_axis(sp_stats.rankdata, 1, data_matrix)
         mean_ranks = np.mean(ranks, axis=0)
 
         return {
@@ -166,7 +165,7 @@ def friedman_test(*groups: np.ndarray) -> dict[str, Any]:
     stat, p = sp_stats.friedmanchisquare(*clean_groups)
 
     data_matrix = np.column_stack(clean_groups)
-    ranks = np.apply_along_axis(lambda row: sp_stats.rankdata(row), 1, data_matrix)
+    ranks = np.apply_along_axis(sp_stats.rankdata, 1, data_matrix)
     mean_ranks = np.mean(ranks, axis=0)
 
     return {

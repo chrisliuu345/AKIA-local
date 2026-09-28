@@ -311,7 +311,7 @@ def _register_quality_tools(reg: ToolRegistry, ctx: AgentContext) -> None:
                       sheet: str | None = None):
         name, frame = _df(context, sheet)
         kind = str(method or "").lower()
-        kw = dict(alpha=float(alpha or 0.05))
+        kw = {"alpha": float(alpha or 0.05)}
         if kind.startswith("anova_two"):
             cols = _match_columns(frame, [column or "响应", factor_a or "因素A",
                                           factor_b or "因素B"])

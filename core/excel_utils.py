@@ -25,7 +25,7 @@ def read_excel_auto(file_path: str, **kwargs) -> Any:
         for eng in _XLS_ENGINES:
             try:
                 return pd.read_excel(file_path, engine=eng, **kwargs)
-            except Exception as e:  # noqa: PERF203
+            except Exception as e:  # 逐个引擎尝试：当前引擎不支持该文件时换下一个
                 last_err = e
         raise ValueError(
             f"无法读取 .xls 文件（calamine/xlrd 均失败）: {last_err}\n"

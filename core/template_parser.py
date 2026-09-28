@@ -2,6 +2,7 @@
 分析要求模板解析器 — 解析用户上传的分析要求文件（Excel/JSON格式）
 """
 
+import contextlib
 import json
 import logging
 import os
@@ -89,7 +90,7 @@ class TemplateParser:
         elif "analysis" in raw and isinstance(raw["analysis"], dict):
             analyses = [raw["analysis"]]
         else:
-            for _sheet_name, params in raw.items():
+            for params in raw.values():
                 if "analysis_type" in params or "analysis_type" in {k.lower() for k in params}:
                     normalized = {k.lower().replace(" ", "_"): v for k, v in params.items()}
                     analyses.append(normalized)
@@ -121,10 +122,8 @@ class TemplateParser:
         spec_fields = ["usl", "lsl", "target", "subgroup_size", "confidence_level"]
         for field in spec_fields:
             if field in normalized:
-                try:
+                with contextlib.suppress(ValueError, TypeError):
                     normalized[field] = float(normalized[field])
-                except (ValueError, TypeError):
-                    pass
 
         return normalized
 

@@ -12,17 +12,17 @@ class DataGenerator:
     def generate(dist: str, n: int, **params) -> np.ndarray:
         if dist == "正态":
             return np.random.normal(params.get("mu", 0), params.get("sigma", 1), n)
-        elif dist == "对数正态":
+        if dist == "对数正态":
             return np.random.lognormal(params.get("mu", 0), params.get("sigma", 0.5), n)
-        elif dist == "指数":
+        if dist == "指数":
             return np.random.exponential(params.get("scale", 1), n)
-        elif dist == "均匀":
+        if dist == "均匀":
             return np.random.uniform(params.get("low", 0), params.get("high", 1), n)
-        elif dist == "Weibull":
+        if dist == "Weibull":
             return params.get("scale", 1) * np.random.weibull(params.get("shape", 1.5), n)
-        elif dist == "二项":
+        if dist == "二项":
             return np.random.binomial(params.get("trials", 10), params.get("prob", 0.5), n)
-        elif dist == "泊松":
+        if dist == "泊松":
             return np.random.poisson(params.get("lam", 5), n)
         return np.zeros(n)
 

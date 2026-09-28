@@ -231,7 +231,7 @@ def main():
     try:
         return app.exec()
     except Exception as e:
-        QMessageBox.critical(None, "启动失败", f"程序启动异常:\n{str(e)}")
+        QMessageBox.critical(None, "启动失败", f"程序启动异常:\n{e!s}")
         return 1
 
 

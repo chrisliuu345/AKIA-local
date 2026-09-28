@@ -70,14 +70,13 @@ def inverse_transform(
 
     if johnson_type == "SU":
         return _inverse_su(transformed, params)
-    elif johnson_type == "SB":
+    if johnson_type == "SB":
         return _inverse_sb(transformed, params)
-    elif johnson_type == "SL":
+    if johnson_type == "SL":
         return _inverse_sl(transformed, params)
-    elif johnson_type == "LN":
+    if johnson_type == "LN":
         return _inverse_ln(transformed, params)
-    else:
-        raise ValueError(f"不支持的 Johnson 类型: {johnson_type}")
+    raise ValueError(f"不支持的 Johnson 类型: {johnson_type}")
 
 
 def transform_value(
@@ -107,7 +106,7 @@ def transform_value(
         z = (x - xi) / lam
         return gamma + delta * np.arcsinh(z)
 
-    elif johnson_type == "SB":
+    if johnson_type == "SB":
         if lam <= 0:
             return float("inf")
         z = (x - xi) / lam
@@ -115,20 +114,13 @@ def transform_value(
             return float("inf") if z <= 0 else float("-inf")
         return gamma + delta * np.log(z / (1 - z))
 
-    elif johnson_type == "SL":
+    if johnson_type == "SL" or johnson_type == "LN":
         z = x - xi
         if z <= 0:
             return float("-inf")
         return gamma + delta * np.log(z)
 
-    elif johnson_type == "LN":
-        z = x - xi
-        if z <= 0:
-            return float("-inf")
-        return gamma + delta * np.log(z)
-
-    else:
-        raise ValueError(f"不支持的 Johnson 类型: {johnson_type}")
+    raise ValueError(f"不支持的 Johnson 类型: {johnson_type}")
 
 
 def _auto_select_transform(data: np.ndarray) -> dict[str, Any]:
@@ -217,21 +209,21 @@ def _estimate_params_moment(data: np.ndarray, jtype: str) -> dict[str, float]:
         lam = max(std, 0.1)
         return {"gamma": gamma, "delta": delta, "xi": xi, "lambda": lam}
 
-    elif jtype == "SB":
+    if jtype == "SB":
         xi = data.min() - abs(std) * 0.1
         lam = (data.max() - data.min()) * 1.2
         delta = max(1.0, 2.0 / (1 + abs(skew)))
         gamma = 0.0
         return {"gamma": gamma, "delta": delta, "xi": xi, "lambda": lam}
 
-    elif jtype == "SL":
+    if jtype == "SL":
         xi = data.min() - abs(std) * 0.1
         delta = max(1.0, np.sqrt(np.log(1 + (std/mean)**2))) if mean != 0 else 1.0
         gamma = -skew * delta / 3 if abs(skew) < 10 else 0
         lam = max(std, 0.1)
         return {"gamma": gamma, "delta": delta, "xi": xi, "lambda": lam}
 
-    elif jtype == "LN":
+    if jtype == "LN":
         xi = 0.0
         lam = 1.0
         log_data = np.log(data[data > 0])
@@ -243,8 +235,7 @@ def _estimate_params_moment(data: np.ndarray, jtype: str) -> dict[str, float]:
             gamma = 0.0
         return {"gamma": gamma, "delta": delta, "xi": xi, "lambda": lam}
 
-    else:
-        raise ValueError(f"不支持的 Johnson 类型: {jtype}")
+    raise ValueError(f"不支持的 Johnson 类型: {jtype}")
 
 
 def _inverse_su(transformed: np.ndarray, params: dict[str, float]) -> np.ndarray:
