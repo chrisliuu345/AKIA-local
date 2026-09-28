@@ -26,7 +26,10 @@ def analyze(data: pd.Series, subgroup_size: int = 5) -> dict[str, Any]:
         zero_count = int(zero_s_mask.sum())
         valid_mask = ~zero_s_mask
         if valid_mask.sum() < 2:
-            raise ValueError(f"有效子组不足：{zero_count}个子组标准差为0，剩余有效子组<2")
+            raise ValueError(
+                f"有效子组不足：{zero_count} 个子组标准差为 0（其余不足 2 个）——"
+                "序列可能为常量、或量具分辨率低于过程波动；XBar-S 无法估计控制限"
+            )
         xbar = xbar[valid_mask]
         s = s[valid_mask]
         num_subgroups = len(s)

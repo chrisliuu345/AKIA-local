@@ -14,6 +14,8 @@ import pandas as pd
 from lifelines import KaplanMeierFitter, CoxPHFitter
 from lifelines.statistics import logrank_test as _logrank_test
 
+from analysis._sanitize import sanitize_pairs
+
 
 def kaplan_meier(
     durations: pd.Series,
@@ -35,8 +37,8 @@ def kaplan_meier(
     Returns:
         KM 分析结果字典
     """
-    T = durations.dropna().astype(float)
-    E = event_observed.loc[T.index].astype(int)
+    T, E = sanitize_pairs(durations, event_observed)
+    E = E.astype(int)
 
     if len(T) < 2:
         return {
@@ -151,10 +153,10 @@ def logrank_test(
     Returns:
         检验结果字典
     """
-    T_A = durations_A.dropna().astype(float)
-    E_A = event_observed_A.loc[T_A.index].astype(int)
-    T_B = durations_B.dropna().astype(float)
-    E_B = event_observed_B.loc[T_B.index].astype(int)
+    T_A, E_A = sanitize_pairs(durations_A, event_observed_A)
+    E_A = E_A.astype(int)
+    T_B, E_B = sanitize_pairs(durations_B, event_observed_B)
+    E_B = E_B.astype(int)
 
     if len(T_A) < 2 or len(T_B) < 2:
         return {

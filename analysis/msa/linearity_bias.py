@@ -5,11 +5,12 @@
 from typing import Any
 import numpy as np
 import pandas as pd
+from analysis._sanitize import sanitize_array
 from scipy import stats
 
 
 def analyze_bias(data: pd.Series, reference: float) -> dict[str, Any]:
-    clean = data.dropna().astype(float)
+    clean = sanitize_array(data)
     n = len(clean)
     if n < 2:
         raise ValueError(f"数据量不足: {n}")

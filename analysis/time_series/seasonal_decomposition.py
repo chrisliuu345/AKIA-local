@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from statsmodels.tsa.seasonal import seasonal_decompose, STL
 
-from ._utils import detect_period
+from ._utils import clean_series, detect_period
 
 
 def analyze(
@@ -32,7 +32,7 @@ def analyze(
     Returns:
         分解结果字典，含趋势、季节、残差分量
     """
-    clean = data.dropna().astype(float)
+    clean = clean_series(data)
     n = len(clean)
 
     if n < 4:
