@@ -127,7 +127,7 @@ class CapComparisonTab(BaseAnalysisTab):
                 s = pd.to_numeric(self.df[c], errors="coerce").dropna()
                 if len(s) > 0:
                     self.col_list.addItem(str(c))
-            except Exception:
+            except Exception:  # 非数值列：不加入可选列
                 pass
 
     def _apply_spec(self):

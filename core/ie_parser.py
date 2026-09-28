@@ -8,6 +8,9 @@ from typing import Any
 import pandas as pd
 
 from core.data_objects import OBJECT_CLASSES
+from core.log_util import get_logger
+
+_log = get_logger(__name__)
 
 
 _SHEET_KEYWORDS = {
@@ -177,8 +180,8 @@ class IEDataParser:
         try:
             parsed = pd.to_datetime(sample_values, errors="coerce")
             date_ratio = parsed.notna().sum() / n
-        except Exception:
-            pass
+        except Exception as e:  # 样例值无法整体解析日期 → 保持 date_ratio=0（不判为日期列）
+            _log.debug("样例日期识别失败: %s", e)
 
         if numeric_ratio >= 0.9:
             dtype_score = 0.3

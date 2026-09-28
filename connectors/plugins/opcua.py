@@ -40,7 +40,7 @@ class Connector(ConnectorBase):
             try:
                 value = self._client.get_node(node).read_value()
                 samples.append(self._sample(label, float(value)))
-            except Exception:
+            except Exception:  # 单节点读取失败：跳过该点，保留其余样本
                 pass
         return samples
 

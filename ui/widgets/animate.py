@@ -37,7 +37,7 @@ def _safe_stop(anim):
     try:
         if anim is not None and anim.state() == QPropertyAnimation.Running:
             anim.stop()
-    except (RuntimeError, AttributeError):
+    except (RuntimeError, AttributeError):  # 控件/C++ 对象已销毁：忽略
         pass
 
 

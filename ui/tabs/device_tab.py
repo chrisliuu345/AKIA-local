@@ -377,7 +377,7 @@ class DeviceTab(BaseAnalysisTab):
             try:
                 found = discover_devices(timeout=0.3)
                 self.update_devices.emit(found)
-            except Exception:
+            except Exception:  # 单轮设备发现失败：等下一轮重试
                 pass
             for _ in range(30):
                 if not self._discovery_running:

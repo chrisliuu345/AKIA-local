@@ -74,8 +74,8 @@ class DataLoader:
             try:
                 return pd.read_excel(file_path, sheet_name=sheet_name, dtype=str,
                                      engine="openpyxl").head(chunk_size)
-            except Exception:
-                pass
+            except Exception as e:  # 分块预览失败（如引擎不支持）→ 退回整表读取
+                _log.debug("分块预览失败，改读整表: %s", e)
         return pd.read_excel(file_path, sheet_name=sheet_name, dtype=str, engine="openpyxl")
 
     load_chunked = load_head

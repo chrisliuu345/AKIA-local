@@ -3,6 +3,7 @@ IE Quality Analyzer - 全局配置
 """
 
 import json
+import logging
 import os
 import shutil
 import sys
@@ -210,8 +211,9 @@ def _migrate_legacy_user_config(target: str) -> None:
         if parent:
             os.makedirs(parent, exist_ok=True)
         shutil.copy2(legacy, target)
-    except OSError:
-        pass
+    except OSError as e:  # 迁移失败不影响启动，但用户会丢旧配置，必须留痕
+        logging.getLogger("QA-Tool.Settings").warning(
+            "旧版 user_config.json 迁移失败（%s → %s）: %s", legacy, target, e)
 
 _defaults = {}
 _user_overrides = {}
@@ -290,8 +292,6 @@ def save_config(values: dict) -> None:
 def _protect_secrets(values: dict) -> dict:
     """敏感明文 → 加密存储（<key>_enc）。加密不可用时保留明文并告警，
     避免用户配置被静默丢弃。"""
-    import logging
-
     out = {}
     for key, value in values.items():
         if is_secret_key(key) and isinstance(value, str) and value:

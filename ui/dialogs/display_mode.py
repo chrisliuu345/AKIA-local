@@ -303,7 +303,7 @@ class DisplayModeWindow(QWidget):
             pm = QPixmap()
             if pm.loadFromData(buf.read()):
                 return pm
-        except Exception:
+        except Exception:  # 图形转像素失败：返回 None，调用方跳过该卡片
             pass
         return None
 
