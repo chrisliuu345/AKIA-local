@@ -53,6 +53,8 @@ class EightDTab(BaseAnalysisTab):
             item = QListWidgetItem(f"{code}: {label}")
             item.setData(Qt.UserRole, code)
             self.step_list.addItem(item)
+        # 先建堆叠容器再连接：直接绑定 setCurrentIndex 会立即求值 self._stack
+        self._stack = QStackedWidget()
         self.step_list.currentRowChanged.connect(self._stack.setCurrentIndex)
         ll.addWidget(self.step_list)
         for text, slot in [("导出 PDF", self._export_pdf), ("导出 Markdown", self._export_md)]:
@@ -83,7 +85,6 @@ class EightDTab(BaseAnalysisTab):
         ir.addWidget(self._w["customer"])
         rl.addLayout(ir)
 
-        self._stack = QStackedWidget()
         for i in range(8):
             self._stack.addWidget(self._build_step_page(i))
         rl.addWidget(self._stack, 1)
