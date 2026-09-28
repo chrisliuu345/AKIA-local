@@ -189,7 +189,7 @@ class RootCauseAnalyzer:
     def _compute_anomaly_linkage(self, df: pd.DataFrame,
                                  feature_cols: list[str],
                                  violation_rows: list[int]) -> dict[str, int]:
-        linkage = {c: 0 for c in feature_cols}
+        linkage = dict.fromkeys(feature_cols, 0)
         if not violation_rows:
             return linkage
 

@@ -6,6 +6,7 @@ config:
     topic: str    订阅主题 (如 plant/machine1/data)
     channels: [str]   解析载荷键名; 缺失时整条载荷取数值
 """
+import contextlib
 import json
 
 from connectors.base import ConnectorBase
@@ -53,17 +54,13 @@ class Connector(ConnectorBase):
         for ch in channels:
             if ch not in self._latest:
                 continue
-            try:
+            with contextlib.suppress(TypeError, ValueError):
                 samples.append(self._sample(ch, float(self._latest[ch])))
-            except (TypeError, ValueError):
-                pass
         return samples
 
     def close(self) -> None:
         if self._client:
             self._client.loop_stop()
-            try:
+            with contextlib.suppress(Exception):
                 self._client.disconnect()
-            except Exception:
-                pass
             self._client = None

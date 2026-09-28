@@ -619,7 +619,7 @@ def _build_radar(data: dict, options: dict) -> Figure:
         ax.text(0.5, 0.5, "至少需要 2 个数值列", ha="center", va="center", fontsize=14)
         return fig
     palette = _get_palette(options.get("palette", "专业蓝"))
-    fig, ax = plt.subplots(figsize=(8, 7), dpi=_dpi(), subplot_kw=dict(polar=True))
+    fig, ax = plt.subplots(figsize=(8, 7), dpi=_dpi(), subplot_kw={"polar": True})
     n = len(valid_cols)
     angles = np.linspace(0, 2 * np.pi, n, endpoint=False).tolist()
     angles += angles[:1]
@@ -859,8 +859,8 @@ def _build_qq(data: dict, options: dict) -> Figure:
 
     fig, ax = plt.subplots(figsize=(6, 6), dpi=_dpi())
     ax.scatter(theoretical, sample, s=8, alpha=0.6, color="#4da6ff", label="残差分位数")
-    mn = min(min(theoretical), min(sample))
-    mx = max(max(theoretical), max(sample))
+    mn = min(*theoretical, *sample)
+    mx = max(*theoretical, *sample)
     ax.plot([mn, mx], [mn, mx], color="#e74c3c", linewidth=1.2, linestyle="--", label="参考线")
     ax.set_xlabel("理论分位数", fontsize=FONT_SIZE_LABEL)
     ax.set_ylabel("样本分位数", fontsize=FONT_SIZE_LABEL)
@@ -979,11 +979,11 @@ def _build_rbd(data: dict, options: dict) -> Figure:
 
         if i < len(components) - 1:
             ax.annotate("", xy=(i + 1.1, 0.8), xytext=(i + 0.9, 0.8),
-                        arrowprops=dict(arrowstyle="->", color="#e1e2e6", lw=1.5))
+                        arrowprops={"arrowstyle": "->", "color": "#e1e2e6", "lw": 1.5})
 
     ax.text(0.5, -0.3, f"结构: {structure}  |  系统 R = {sys_r:.4f}",
             transform=ax.transAxes, fontsize=11, color="#e1e2e6",
-            bbox=dict(boxstyle="round,pad=0.3", facecolor="#262632", edgecolor="#3a3a48"))
+            bbox={"boxstyle": "round,pad=0.3", "facecolor": "#262632", "edgecolor": "#3a3a48"})
 
     fig.tight_layout()
     return fig

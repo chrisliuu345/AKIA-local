@@ -2,6 +2,7 @@
 QA-Tool — 主窗口
 """
 
+import contextlib
 import os
 from datetime import datetime
 from typing import Any
@@ -736,7 +737,7 @@ class MainWindow(QMainWindow):
                 except Exception as re:
                     import logging
                     logging.getLogger(__name__).exception("Sheet 分发失败")
-                    QMessageBox.critical(self, "路由失败", f"Sheet 分发异常:\n{str(re)}")
+                    QMessageBox.critical(self, "路由失败", f"Sheet 分发异常:\n{re!s}")
                 self.data_label.setText(f" {os.path.basename(file_path)} [{len(raw_data)} sheets]")
 
                 try:
@@ -775,7 +776,7 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 import logging
                 logging.getLogger(__name__).exception("导入工作表失败")
-                QMessageBox.critical(self, i18n.tr("msg.import_failed"), f"{i18n.tr('msg.cannot_load')}\n{str(e)}")
+                QMessageBox.critical(self, i18n.tr("msg.import_failed"), f"{i18n.tr('msg.cannot_load')}\n{e!s}")
                 self.status_label.setText(i18n.tr("status.failed"))
 
     def _on_import_ie(self):
@@ -840,7 +841,7 @@ class MainWindow(QMainWindow):
                 except Exception:
                     self.profile_result = {}
             except Exception as e:
-                QMessageBox.critical(self, "导入失败", f"无法加载 IE 数据:\n{str(e)}")
+                QMessageBox.critical(self, "导入失败", f"无法加载 IE 数据:\n{e!s}")
                 self.status_label.setText(i18n.tr("status.failed"))
 
     def _on_import_db(self):
@@ -856,10 +857,8 @@ class MainWindow(QMainWindow):
                     loader.connect(config)
                     raw_data = loader.load(table_names)
                 finally:
-                    try:
+                    with contextlib.suppress(Exception):
                         loader.disconnect()
-                    except Exception:
-                        pass
                 audit("import_db", "user",
                       f"数据库 {config.get('database', '')} 表数={len(raw_data)}")
 
@@ -888,7 +887,7 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 QMessageBox.critical(
                     self, "数据库导入失败",
-                    f"从数据库加载数据失败:\n{str(e)}"
+                    f"从数据库加载数据失败:\n{e!s}"
                 )
                 self.status_label.setText("数据库导入失败")
 
@@ -1334,7 +1333,7 @@ class MainWindow(QMainWindow):
         try:
             from ui.widgets.toast import Toast
             Toast.show(self, message, toast_type=toast_type, duration=2600)
-        except Exception:  # noqa: BLE001 - 提示失败不影响主流程
+        except Exception:  # 提示失败不影响主流程
             pass
 
     def _lazy_load_tab(self, idx: int):
@@ -2068,10 +2067,8 @@ class MainWindow(QMainWindow):
     def _restart_alert_engine(self):
         engine = getattr(self, "_alert_engine", None)
         if engine is not None:
-            try:
+            with contextlib.suppress(Exception):
                 engine.stop()
-            except Exception:
-                pass
             self._alert_engine = None
         self._start_alert_engine()
 

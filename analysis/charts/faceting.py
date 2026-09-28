@@ -134,9 +134,9 @@ def create_small_multiples(
         gvals = vals[groups == group]
         if kind == "箱线图":
             ax.boxplot(gvals, patch_artist=True, widths=0.5,
-                       boxprops=dict(facecolor=color, alpha=0.6),
-                       medianprops=dict(color=chart_style.semantic()["text"],
-                                        linewidth=1.5))
+                       boxprops={"facecolor": color, "alpha": 0.6},
+                       medianprops={"color": chart_style.semantic()["text"],
+                                        "linewidth": 1.5})
             ax.set_xticks([])
         else:
             if shared_edges is not None:

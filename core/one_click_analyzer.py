@@ -128,7 +128,7 @@ class OneClickAnalyzer:
         first_sheet = list(raw_data.values())[0] if raw_data else pd.DataFrame()
         num_cols = []
         sheets = profile_result.get("profile", {}).get("sheets", {})
-        for _sn, info in sheets.items():
+        for info in sheets.values():
             for col in info.get("columns", []):
                 if col.get("category") == "measurement":
                     num_cols.append(col.get("name", ""))

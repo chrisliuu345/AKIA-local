@@ -23,10 +23,10 @@ def make_estimator(task: str, n_estimators: int = DEFAULT_N_ESTIMATORS,
                    max_features: str = "sqrt", oob_score: bool = True,
                    random_state: int = 42):
     """按任务类型构建随机森林估计器（默认启用 OOB）。"""
-    params = dict(n_estimators=int(n_estimators), max_depth=max_depth,
-                  min_samples_leaf=int(min_samples_leaf),
-                  max_features=max_features, oob_score=bool(oob_score),
-                  n_jobs=-1, random_state=int(random_state))
+    params = {"n_estimators": int(n_estimators), "max_depth": max_depth,
+                  "min_samples_leaf": int(min_samples_leaf),
+                  "max_features": max_features, "oob_score": bool(oob_score),
+                  "n_jobs": -1, "random_state": int(random_state)}
     if task == TASK_CLASSIFICATION:
         return RandomForestClassifier(**params)
     return RandomForestRegressor(**params)

@@ -227,7 +227,7 @@ class PPAPTab(BaseAnalysisTab):
         """
         updated = []
 
-        for _idx, analysis in analyses.items():
+        for analysis in analyses.values():
             analysis_type = analysis.get("analysis_type", "")
             result = analysis.get("result", {})
 

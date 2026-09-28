@@ -40,7 +40,7 @@ def _wait_ready(url: str, headers: dict | None = None, timeout: float = 10.0):
             return urllib.request.urlopen(req, timeout=1)
         except urllib.error.HTTPError as e:
             return e          # 4xx 也算服务已就绪
-        except Exception as e:  # noqa: BLE001 - 连接未就绪
+        except Exception as e:  # 连接未就绪（服务仍在启动）
             last = e
             time.sleep(0.2)
     pytest.fail(f"server did not start: {last}")
@@ -132,7 +132,7 @@ def test_ws_rejects_without_token():
         try:
             with ws_client.connect(f"ws://127.0.0.1:{port}/ws/stream") as ws:
                 ws.recv(timeout=2)
-        except Exception:  # noqa: BLE001 - 不同 websockets 版本抛错类型不同
+        except Exception:  # 不同 websockets 版本抛错类型不同
             closed = True
         assert closed, "未授权 WS 连接必须被拒绝"
 

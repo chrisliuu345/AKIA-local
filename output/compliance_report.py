@@ -90,7 +90,6 @@ class ComplianceReportGenerator:
             return generate_pdf_report(selected, output_path,
                                        title=_fill_placeholders(template.get("name", ""), file_name),
                                        charts=charts or {})
-        else:
-            return WordReport().generate(selected, output_path,
-                                         title=_fill_placeholders(template.get("name", ""), file_name),
-                                         charts=charts or {})
+        return WordReport().generate(selected, output_path,
+                                     title=_fill_placeholders(template.get("name", ""), file_name),
+                                     charts=charts or {})
