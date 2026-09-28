@@ -15,6 +15,7 @@ Capability Sixpack — 六合图
 from typing import Any
 import numpy as np
 import pandas as pd
+from analysis._sanitize import sanitize_array
 from scipy import stats
 
 
@@ -38,7 +39,7 @@ def analyze(
     Returns:
         包含六图数据的字典
     """
-    clean = data.dropna().values.astype(float)
+    clean = sanitize_array(data)
     n = len(clean)
 
     if n < 5:

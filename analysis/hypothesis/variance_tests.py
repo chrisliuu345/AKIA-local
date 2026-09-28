@@ -6,10 +6,11 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from scipy import stats
+from analysis._sanitize import sanitize_array
 
 
 def variance_tests(*groups: pd.Series, confidence_level: float = 0.95) -> dict[str, Any]:
-    clean_groups = [g.dropna().astype(float).values for g in groups if len(g.dropna()) >= 2]
+    clean_groups = [arr for arr in (sanitize_array(g) for g in groups) if len(arr) >= 2]
     if len(clean_groups) < 2:
         raise ValueError("需要至少2个有效组")
 

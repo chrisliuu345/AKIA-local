@@ -5,6 +5,7 @@
 from typing import Any
 import numpy as np
 import pandas as pd
+from analysis._sanitize import sanitize_array
 from scipy import stats
 from config.settings import CONTROL_CHART_CONSTANTS
 from analysis.capability._utils import (
@@ -21,7 +22,7 @@ def analyze(
     target: float | None = None,
     subgroup_size: int = 5,
 ) -> dict[str, Any]:
-    clean = data.dropna().values.astype(float)
+    clean = sanitize_array(data)
     n = len(clean)
     if n < 2:
         raise ValueError(f"数据量不足: {n}")
