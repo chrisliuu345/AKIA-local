@@ -18,6 +18,8 @@ from statsmodels.tools.sm_exceptions import (
     EstimationWarning as _SMEstimationWarning,
 )
 from statsmodels.tools.sm_exceptions import ValueWarning as _SMValueWarning
+
+from ._utils import clean_series
 from statsmodels.tsa.arima.model import ARIMA
 
 # 网格搜索会大量试探不可行阶数，这些告警属预期噪声（选定模型的告警仍会正常抛出）
@@ -52,7 +54,7 @@ def analyze(
     """
     # 索引必须连续：带缺失值的序列 dropna 后索引有空洞，
     # statsmodels 无法为其构建预测索引（get_forecast 抛 "No supported index"）
-    clean = data.dropna().astype(float).reset_index(drop=True)
+    clean = clean_series(data)
     n = len(clean)
 
     if n < 10:
@@ -111,7 +113,15 @@ def analyze(
     conf_int = forecast_result.conf_int(alpha=1 - confidence_level)
 
     residuals = clean - fitted
-    resid_clean = residuals.dropna()
+    # 残差仍可能含 ±inf（数据净化后仍由拟合产生）：非有限值会穿透 dropna，
+    # 使 Ljung-Box 在空序列上抛 IndexError，因此在诊断前再次净化。
+    resid_clean = residuals.replace([np.inf, -np.inf], np.nan).dropna()
+    if len(resid_clean) < 8:
+        return {
+            "chart_type": "ARIMA",
+            "analysis_type": "time_series.arima",
+            "error": f"残差有效点不足（{len(resid_clean)} < 8），无法进行白噪声诊断",
+        }
 
     lb_lags = min(10, len(resid_clean) // 5)
     lb_lags = max(1, lb_lags)

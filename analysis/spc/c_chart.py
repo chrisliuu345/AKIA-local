@@ -6,16 +6,14 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from ._validation import clean_series, require_min_subgroups, require_non_negative
+
 
 def analyze(defects: pd.Series) -> dict[str, Any]:
-    n = len(defects)
-    if n < 2:
-        raise ValueError(f"数据量不足: 需要至少 2 个子组, 当前 {n}")
-
-    c = defects.values.astype(float)
-
-    if np.any(c < 0):
-        raise ValueError("缺陷数必须为非负数，检测到负值")
+    c = clean_series(defects)
+    n = len(c)
+    require_min_subgroups(n)
+    require_non_negative(c, "缺陷数")
 
     c_bar = c.mean()
 

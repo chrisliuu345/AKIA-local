@@ -7,13 +7,15 @@ import numpy as np
 import pandas as pd
 
 
-def analyze(defects: pd.Series, unit_sizes: pd.Series) -> dict[str, Any]:
-    n = len(defects)
-    if n < 2:
-        raise ValueError(f"数据量不足: 需要至少 2 个子组, 当前 {n}")
+from ._validation import clean_pairs, require_min_subgroups, require_non_negative
 
-    c = defects.values.astype(float)
-    u_sizes = unit_sizes.values.astype(float)
+
+def analyze(defects: pd.Series, unit_sizes: pd.Series) -> dict[str, Any]:
+    c, u_sizes = clean_pairs(defects, unit_sizes)
+    n = len(c)
+    require_min_subgroups(n)
+    require_non_negative(c, "缺陷数")
+    require_non_negative(u_sizes, "单位数")
 
     u = c / u_sizes
     u_bar = c.sum() / u_sizes.sum()

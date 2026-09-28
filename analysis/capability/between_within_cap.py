@@ -17,6 +17,7 @@ def analyze(
 ) -> dict[str, Any]:
     df = data.dropna(subset=[measurement_col, subgroup_col]).copy()
     df[measurement_col] = pd.to_numeric(df[measurement_col], errors="coerce")
+    df[measurement_col] = df[measurement_col].replace([np.inf, -np.inf], np.nan)
     df = df.dropna(subset=[measurement_col])
 
     if df.empty:
@@ -84,5 +85,4 @@ def _estimate_between_sigma(means: pd.Series, within_std: float, counts: pd.Seri
     variance_between = max((ms_between - within_std ** 2) / (grand_n / k), 0)
 
     return float(np.sqrt(variance_between))
-
 

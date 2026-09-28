@@ -7,6 +7,7 @@ Type 1 量具研究 — Cg/Cgk + 偏倚t检验
 from typing import Any
 import numpy as np
 import pandas as pd
+from analysis._sanitize import sanitize_array
 from scipy import stats
 
 
@@ -34,7 +35,7 @@ def analyze(
     Returns:
         分析结果字典
     """
-    clean = data.dropna().astype(float)
+    clean = sanitize_array(data)
     n = len(clean)
 
     if n < 5:

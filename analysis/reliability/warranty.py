@@ -9,6 +9,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from analysis._sanitize import sanitize_array
 
 
 def analyze(
@@ -35,7 +36,7 @@ def analyze(
     """
     from scipy import stats as sp_stats
 
-    T = failure_times.dropna().astype(float)
+    T = sanitize_array(failure_times)
     n = len(T)
 
     if n < 5:

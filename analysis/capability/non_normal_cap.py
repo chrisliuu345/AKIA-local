@@ -6,6 +6,7 @@ from typing import Any
 import warnings
 import numpy as np
 import pandas as pd
+from analysis._sanitize import sanitize_array
 from scipy import stats
 from analysis.capability._utils import (
     degenerate_spread_error,
@@ -38,7 +39,7 @@ def analyze(
     Returns:
         Dict包含能力指数和统计量
     """
-    clean = data.dropna().values.astype(float)
+    clean = sanitize_array(data)
     n = len(clean)
     if n < 5:
         raise ValueError(f"数据量不足: {n}")

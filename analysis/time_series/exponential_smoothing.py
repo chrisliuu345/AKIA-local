@@ -12,7 +12,7 @@ import pandas as pd
 from scipy import stats as sp_stats
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
-from ._utils import detect_period
+from ._utils import clean_series, detect_period
 
 
 def analyze(
@@ -37,7 +37,7 @@ def analyze(
     Returns:
         拟合结果 + 预测值 + 置信区间 + AIC/BIC
     """
-    clean = data.dropna().astype(float)
+    clean = clean_series(data)
     n = len(clean)
 
     if n < 4:
