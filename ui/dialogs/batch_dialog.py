@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, QTimer
 
-from core.batch_scheduler import BatchTask, BatchScheduler
+from core.batch_scheduler import BatchTask, BatchScheduler, run_task_headless
 from ui.theme import colors as theme_colors, BUTTON_SECONDARY, BUTTON_TOGGLE
 from ui.font_config import get_mono_font
 
@@ -18,7 +18,8 @@ from ui.font_config import get_mono_font
 class BatchDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.scheduler = BatchScheduler()
+        # 注入无 Qt 依赖的默认执行器：后台线程内载入数据源 → 跑分析 → 写报告
+        self.scheduler = BatchScheduler(execute_fn=run_task_headless)
         self._setup_ui()
         self._refresh_task_list()
         self._connect_signals()

@@ -151,7 +151,7 @@ class DeviceMonitor:
                         device.transport.send(encode_message(
                             MessageType.PING, device_id="pc_host"))
                         hb.sent_ping()
-                    except TransportError:
+                    except TransportError:  # 单次心跳丢失：交给超时判定，不退出循环
                         pass
             for _ in range(10):
                 if self._stop_event.is_set():

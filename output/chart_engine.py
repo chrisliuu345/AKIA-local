@@ -500,7 +500,7 @@ def create_capability_chart(
         cpk_value = float(cap.get("cpk", cap.get("ppk")))
         grade_color = (s["good"] if cpk_value >= 1.33
                        else s["warning"] if cpk_value >= 1.0 else s["bad"])
-    except (TypeError, ValueError, AttributeError):
+    except (TypeError, ValueError, AttributeError):  # cpk 缺失/非数值：等级色退回默认
         pass
     ax_stats.text(0.78, 0.56, str(grade) if grade else "-", fontsize=30,
                   fontweight="bold", color=grade_color, ha="center", va="center")
