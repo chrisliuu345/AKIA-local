@@ -11,6 +11,31 @@ from collections.abc import Callable
 
 from PySide6.QtCore import QObject, QTimer, QThread, Signal
 
+from core.log_util import get_logger
+
+_log = get_logger(__name__)
+
+# 模板分析类型 → 一键分析执行器类型（core.one_click_analyzer 的能力域）
+_ANALYSIS_TYPE_MAP = {
+    "xbar_r": "spc", "xbar_s": "spc", "imr": "spc",
+    "p_chart": "spc", "np_chart": "spc", "c_chart": "spc", "u_chart": "spc",
+    "cusum": "spc", "ewma": "spc",
+    "normal_capability": "capability", "non_normal_capability": "capability",
+    "between_within_capability": "capability",
+    "gage_rr_crossed": "msa", "gage_rr_nested": "msa",
+    "linearity_bias": "msa", "attribute_agreement": "msa",
+    "t_test_1sample": "hypothesis", "t_test_2sample": "hypothesis",
+    "t_test_paired": "hypothesis", "anova_oneway": "hypothesis",
+    "anova_twoway": "hypothesis", "normality_test": "hypothesis",
+    "variance_test": "hypothesis",
+    "linear_regression": "regression", "correlation_heatmap": "regression",
+    "factorial_design": "doe", "response_surface": "doe",
+    "doe_analysis": "doe", "box_behnken": "doe",
+}
+
+_OUTPUT_SUFFIX = {"docx": ".docx", "xlsx": ".xlsx", "pdf": ".pdf", "md": ".md",
+                  "markdown": ".md", "json": ".json"}
+
 
 @dataclass
 class BatchTask:
@@ -129,8 +154,9 @@ class BatchScheduler(QObject):
                         last_date = datetime.fromisoformat(task.last_run).date()
                         return last_date < now.date()
                     return True
-            except Exception:
-                pass
+            except Exception as e:  # 时间格式非法：该任务当日不触发，但必须留痕
+                _log.warning("批量任务 %s 的 target_time 解析失败（%r）: %s",
+                             getattr(task, "name", "?"), target_time, e)
         return False
 
     def _execute_task(self, task: BatchTask):
@@ -214,5 +240,121 @@ class BatchScheduler(QObject):
                 if not t.id:
                     t.id = uuid.uuid4().hex[:8]
                 self.tasks[t.id] = t
-        except Exception:
-            pass
+        except Exception as e:  # 配置损坏：不覆盖磁盘文件，已解析的任务保留
+            _log.warning("批量任务配置读取失败（%s），后续任务未加载: %s", self.TASKS_FILE, e)
+
+
+# ---------------------------------------------------------------- 默认执行器
+# 无 Qt 依赖，可在 _WorkerThread 中安全运行（不触碰任何 widget / matplotlib 画布）
+
+def _load_task_source(task: BatchTask) -> dict:
+    """读取任务数据源为 {sheet: DataFrame}（支持 xlsx/xls/xlsm/csv）。"""
+    import pandas as pd
+
+    path = (task.data_source or "").strip()
+    if not path:
+        raise FileNotFoundError("任务未配置数据源文件（data_source 为空）")
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"数据源不存在: {path}")
+    if path.lower().endswith(".csv"):
+        return {os.path.splitext(os.path.basename(path))[0]: pd.read_csv(path)}
+
+    from core.data_loader import DataLoader
+
+    loader = DataLoader()
+    raw = loader.load(path)
+    if task.sheet_filter:
+        keep = [s for s in raw if s in set(task.sheet_filter)]
+        raw = {s: raw[s] for s in keep} or raw
+    return raw
+
+
+def _selected_analysis_types(task: BatchTask) -> list[str]:
+    """任务里声明的模板分析类型 → 执行器类型（去重保序）；未声明则用默认组合。"""
+    selected: list[str] = []
+    for item in task.analyses or []:
+        atype = str((item or {}).get("analysis_type", "")).strip().lower()
+        mapped = _ANALYSIS_TYPE_MAP.get(atype)
+        if mapped and mapped not in selected:
+            selected.append(mapped)
+        elif atype in _ANALYSIS_TYPE_MAP.values() and atype not in selected:
+            selected.append(atype)
+    return selected or ["spc", "capability"]
+
+
+def _resolve_output_path(task: BatchTask) -> str:
+    """任务输出路径：显式配置优先，否则生成"数据源名_时间戳"同目录文件。"""
+    configured = (task.output_path or "").strip()
+    if configured:
+        return configured
+    stem = os.path.splitext(os.path.basename(task.data_source or "batch"))[0] or "batch"
+    fmt = (task.output_format or "docx").lower()
+    suffix = _OUTPUT_SUFFIX.get(fmt, ".docx")
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    base = os.path.dirname(os.path.abspath(task.data_source)) if task.data_source else os.getcwd()
+    return os.path.join(base, f"{stem}_{stamp}{suffix}")
+
+
+def _write_task_report(task: BatchTask, analyses: list[dict], output_path: str) -> str:
+    """按任务格式写出报告（docx/xlsx/pdf 走报告引擎，其余写 Markdown）。"""
+    fmt = (task.output_format or "docx").lower()
+    title = f"{task.name or '批量任务'} — 自动分析报告"
+    subtitle = f"数据源: {os.path.basename(task.data_source or '')}"
+    if fmt in {"docx", "pdf", "xlsx"}:
+        if fmt == "docx":
+            from output.word_report import WordReport
+
+            return WordReport().generate(analyses=analyses, output_path=output_path,
+                                         title=title, subtitle=subtitle)
+        if fmt == "pdf":
+            from output.pdf_report import PDFReport
+
+            return PDFReport().generate(analyses=analyses, output_path=output_path,
+                                        title=title, subtitle=subtitle)
+        from output.excel_report import ExcelReport
+
+        return ExcelReport().generate(analyses, output_path, title)
+
+    lines = [f"# {title}", "", f"- 数据源: {task.data_source}", f"- 任务: {task.name}", ""]
+    for i, analysis in enumerate(analyses, 1):
+        lines.append(f"## {i}. {analysis.get('analysis_type', '分析')}")
+        for key, value in (analysis.get("result") or {}).items():
+            lines.append(f"- {key}: {value}")
+        lines.append("")
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines))
+    return output_path
+
+
+def run_task_headless(task: BatchTask) -> str:
+    """默认任务执行器（无 Qt）—— 载入数据源 → 跑分析 → 写出报告，返回文件路径。
+
+    由 ``ui/dialogs/batch_dialog.py`` 注入给 ``BatchScheduler``；进程内后台线程执行，
+    因此这里**不得**创建任何 QWidget / matplotlib 画布。
+    """
+    from core.one_click_analyzer import OneClickAnalyzer
+
+    raw = _load_task_source(task)
+    selected = _selected_analysis_types(task)
+    analyzer = OneClickAnalyzer()
+    plan = analyzer.profile_and_recommend(raw)
+    results = analyzer.execute_analyses(raw, plan, selected)
+    failed = [r for r in results if not r.get("success")]
+    if failed and len(failed) == len(results):
+        raise RuntimeError("全部分析失败: " + "; ".join(str(r.get("error")) for r in failed[:3]))
+
+    payload = [
+        {
+            "analysis_type": r.get("analysis_type", "分析"),
+            "params": {"column": r.get("column", ""), "任务": task.name},
+            "result": r.get("summary") or {},
+            "conclusion": "成功" if r.get("success") else f"失败: {r.get('error')}",
+        }
+        for r in results
+    ]
+    output_path = _resolve_output_path(task)
+    parent = os.path.dirname(os.path.abspath(output_path))
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    written = _write_task_report(task, payload, output_path)
+    return written

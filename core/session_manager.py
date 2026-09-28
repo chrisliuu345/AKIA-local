@@ -7,6 +7,10 @@ import os
 from datetime import datetime
 from typing import Any
 
+from core.log_util import get_logger
+
+_log = get_logger(__name__)
+
 
 class SessionManager:
     """分析会话持久化管理"""
@@ -91,8 +95,8 @@ class SessionManager:
                             "file_name": data.get("file_name", ""),
                             "analysis_count": len(data.get("analyses", [])),
                         })
-                    except Exception:
-                        pass
+                    except Exception as e:  # 单个会话文件损坏不应影响列表（其余会话仍可恢复）
+                        _log.warning("跳过无法读取的会话文件 %s: %s", fname, e)
         sessions.sort(key=lambda x: x.get("created_at", ""), reverse=True)
         return sessions
 

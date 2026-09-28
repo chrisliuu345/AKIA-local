@@ -216,7 +216,7 @@ class BaseAnalysisTab(QWidget):
                     * self.current_figure.get_dpi())
             if natural > 200:
                 self.canvas.setMinimumHeight(natural)
-        except Exception:
+        except Exception:  # 高度同步失败不影响图表绘制
             pass
 
     def _sync_chart_page_height(self):
