@@ -23,6 +23,7 @@ Memory budget: stdlib only (socket/threading/json/time), ~80MB available on
 the 128MB board; do NOT import maix.nn in this server.
 """
 
+import contextlib
 import json
 import socket
 import threading
@@ -155,10 +156,8 @@ def handle_client(conn, addr):
         pass
     finally:
         stop_event.set()
-        try:
+        with contextlib.suppress(Exception):
             conn.close()
-        except Exception:
-            pass
 
 
 def main():

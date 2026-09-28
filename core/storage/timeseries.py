@@ -5,6 +5,7 @@
 v3.8.0-⑥ 新增保留策略: 原始点按分钟降采样到 measurements_1m（avg/min/max/
 count，幂等重算），再按保留期清理原始点与聚合点，长期趋势仍可查询。
 """
+import contextlib
 import sqlite3
 import threading
 import time
@@ -182,10 +183,8 @@ class TimeseriesStore:
 
     def close(self) -> None:
         with self._lock:
-            try:
+            with contextlib.suppress(sqlite3.Error):
                 self._conn.close()
-            except sqlite3.Error:
-                pass
 
 
 @dataclass

@@ -94,7 +94,7 @@ def analyze(
         return {
             "chart_type": "ARIMA",
             "analysis_type": "time_series.arima",
-            "error": f"ARIMA{best_order} 拟合失败: {str(e)}",
+            "error": f"ARIMA{best_order} 拟合失败: {e!s}",
         }
 
     fitted = fit.fittedvalues
@@ -105,7 +105,7 @@ def analyze(
         return {
             "chart_type": "ARIMA",
             "analysis_type": "time_series.arima",
-            "error": f"ARIMA{best_order} 预测失败: {str(e)}",
+            "error": f"ARIMA{best_order} 预测失败: {e!s}",
         }
     forecast_vals = forecast_result.predicted_mean
     conf_int = forecast_result.conf_int(alpha=1 - confidence_level)

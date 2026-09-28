@@ -63,7 +63,7 @@ class JournalEntry:
 
     @classmethod
     def from_dict(cls, data: dict) -> JournalEntry:
-        known = {f for f in cls.__dataclass_fields__}
+        known = set(cls.__dataclass_fields__)
         return cls(**{k: v for k, v in data.items() if k in known})
 
     def summary(self) -> str:

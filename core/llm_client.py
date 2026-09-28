@@ -9,6 +9,7 @@
 密钥与接口地址来自加密配置（config.settings）；环境变量仅作向后兼容回退。
 """
 
+import contextlib
 import json
 import os
 import threading
@@ -117,7 +118,7 @@ class LLMClient:
                 from config.settings import get_setting, save_config
                 if str(get_setting("llm_active_provider", "") or "").lower() != pid:
                     save_config({"llm_active_provider": pid})
-            except Exception:                      # noqa: BLE001 - 配置不可写时仍可用
+            except Exception:  # 配置不可写时仍可用
                 pass
             return cls.from_config(pid)
         return cls.from_config(preferred)
@@ -150,10 +151,8 @@ class LLMClient:
         self._stop_event.set()
         resp, self._resp = self._resp, None
         if resp is not None:
-            try:
+            with contextlib.suppress(Exception):
                 resp.close()
-            except Exception:
-                pass
 
     def _check_available(self) -> bool:
         if self.protocol == "ollama":
@@ -375,10 +374,8 @@ class LLMClient:
         """把底层异常翻译成可读中文（并脱敏密钥）。"""
         if isinstance(e, urllib.error.HTTPError):
             detail = ""
-            try:
+            with contextlib.suppress(Exception):
                 detail = e.read().decode("utf-8", "ignore")[:200]
-            except Exception:
-                pass
             mapping = {
                 400: "请求被拒绝（参数/模型名有误）",
                 401: "密钥无效或已过期",

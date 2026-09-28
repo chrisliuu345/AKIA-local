@@ -139,7 +139,7 @@ def _run_model(
                 "confidence_upper": r["confidence_upper"],
                 "fitted_values": r["fitted_values"],
             }
-        elif model_name == "holt_winters":
+        if model_name == "holt_winters":
             sp = seasonal_periods or 12
             label = "Additive" if seasonal == "additive" else "Multiplicative"
             r = exponential_smoothing.analyze(
@@ -157,7 +157,7 @@ def _run_model(
                 "confidence_upper": r["confidence_upper"],
                 "fitted_values": r["fitted_values"],
             }
-        elif model_name == "double_exp":
+        if model_name == "double_exp":
             r = exponential_smoothing.analyze(
                 data, method="double", forecast_steps=forecast_steps,
             )
@@ -172,7 +172,7 @@ def _run_model(
                 "confidence_upper": r["confidence_upper"],
                 "fitted_values": r["fitted_values"],
             }
-        elif model_name == "single_exp":
+        if model_name == "single_exp":
             r = exponential_smoothing.analyze(
                 data, method="single", forecast_steps=forecast_steps,
             )
@@ -187,8 +187,7 @@ def _run_model(
                 "confidence_upper": r["confidence_upper"],
                 "fitted_values": r["fitted_values"],
             }
-        else:
-            return None
+        return None
     except Exception as e:  # noqa: BLE001 - 单模型失败：记录 warning 并跳过
         import logging
         logging.getLogger(__name__).warning("Model %s failed: %s", model_name, e)

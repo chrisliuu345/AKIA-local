@@ -1,5 +1,6 @@
 """BaseAnalysisTab — 所有分析 Tab 的共享基类"""
 
+import contextlib
 from typing import Any
 from io import BytesIO
 import pandas as pd
@@ -43,10 +44,8 @@ class BaseAnalysisTab(QWidget):
                 w.setParent(None)
         import matplotlib.pyplot as plt
         if self.current_figure is not None:
-            try:
+            with contextlib.suppress(Exception):
                 plt.close(self.current_figure)
-            except Exception:
-                pass
         self.canvas = None
         self.current_figure = None
         self._chart_toolbar = None
@@ -68,10 +67,8 @@ class BaseAnalysisTab(QWidget):
                     w.setParent(None)
                     w.deleteLater()
             if self._chart_toolbar is not None:
-                try:
+                with contextlib.suppress(Exception):
                     self._chart_toolbar.hide()
-                except Exception:
-                    pass
                 self._chart_toolbar = None
 
         # 2) 新 canvas 置于第一行
@@ -91,10 +88,8 @@ class BaseAnalysisTab(QWidget):
         # 4) 释放旧图（先绘制新图再关闭，避免引用旧 figure 的绘制路径）
         if old is not None and old is not fig:
             import matplotlib.pyplot as plt
-            try:
+            with contextlib.suppress(Exception):
                 plt.close(old)
-            except Exception:
-                pass
 
     def _switch_result_view(self, idx: int):
         self.btn_view_chart.setChecked(idx == 0)
@@ -333,10 +328,8 @@ class BaseAnalysisTab(QWidget):
         隐藏页残留的最小高会把整个 QStackedWidget 撑高，其他 tab 被拉伸且需滚回顶部。
         切离本页时释放，回到本页时由 showEvent 重新应用（图表本身保留在内存，不重绘）。"""
         if getattr(self, 'canvas', None) is not None:
-            try:
+            with contextlib.suppress(Exception):
                 self.canvas.setMinimumHeight(0)
-            except Exception:
-                pass
         if getattr(self, 'chart_container', None) is not None:
             self.chart_container.setMinimumHeight(300)
         if getattr(self, 'result_stack', None) is not None:

@@ -27,8 +27,8 @@ def make_estimator(task: str, max_depth: int | None = None,
                    min_samples_leaf: int = 1, ccp_alpha: float = 0.0,
                    random_state: int = 42):
     """按任务类型构建决策树估计器。"""
-    params = dict(max_depth=max_depth, min_samples_leaf=int(min_samples_leaf),
-                  ccp_alpha=float(ccp_alpha), random_state=int(random_state))
+    params = {"max_depth": max_depth, "min_samples_leaf": int(min_samples_leaf),
+                  "ccp_alpha": float(ccp_alpha), "random_state": int(random_state)}
     if task == TASK_CLASSIFICATION:
         return DecisionTreeClassifier(**params)
     return DecisionTreeRegressor(**params)

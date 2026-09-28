@@ -4,6 +4,7 @@ config:
     endpoint: str    必填 (如 opc.tcp://192.168.1.5:4840)
     node_ids: {"CH0": "ns=2;i=1"}   节点映射
 """
+import contextlib
 from connectors.base import ConnectorBase
 
 PLUGIN = {"name": "opcua", "category": "plc",
@@ -45,8 +46,6 @@ class Connector(ConnectorBase):
 
     def close(self) -> None:
         if self._client:
-            try:
+            with contextlib.suppress(Exception):
                 self._client.disconnect()
-            except Exception:
-                pass
             self._client = None

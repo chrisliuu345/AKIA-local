@@ -132,7 +132,7 @@ class DataCleaner(QDialog):
 
         self.missing_col = QComboBox()
         self.missing_col.addItem("所有数值列")
-        self.missing_col.addItems([c for c in self.original_df.columns])
+        self.missing_col.addItems(list(self.original_df.columns))
         layout.addRow("目标列:", self.missing_col)
 
         btn = QPushButton("执行缺失值处理")
@@ -154,7 +154,7 @@ class DataCleaner(QDialog):
 
         self.outlier_col = QComboBox()
         self.outlier_col.addItem("所有数值列")
-        self.outlier_col.addItems([c for c in self.original_df.columns])
+        self.outlier_col.addItems(list(self.original_df.columns))
         layout.addRow("目标列:", self.outlier_col)
 
         btn = QPushButton("执行异常值处理")
@@ -169,7 +169,7 @@ class DataCleaner(QDialog):
 
         self.invalid_col = QComboBox()
         self.invalid_col.addItem("所有列")
-        self.invalid_col.addItems([c for c in self.original_df.columns])
+        self.invalid_col.addItems(list(self.original_df.columns))
         layout.addRow("检测范围:", self.invalid_col)
 
         self.invalid_label = QLabel("未检测")
@@ -212,7 +212,7 @@ class DataCleaner(QDialog):
         w = QWidget()
         layout = QFormLayout(w)
         self.drop_col = QComboBox()
-        self.drop_col.addItems([c for c in self.original_df.columns])
+        self.drop_col.addItems(list(self.original_df.columns))
         layout.addRow("删除列:", self.drop_col)
 
         btn_del = QPushButton("删除选中列")

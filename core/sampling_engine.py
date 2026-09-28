@@ -392,9 +392,8 @@ class SamplingEngine:
         results: list[int], ac: int, re: int
     ) -> tuple[str, int, int]:
         """序贯抽样判定: 返(decision, defects, inspected)"""
-        d, total = 0, 0
+        d = 0
         for i, r in enumerate(results, 1):
-            total += 1
             if r == 1:
                 d += 1
             if d >= re:

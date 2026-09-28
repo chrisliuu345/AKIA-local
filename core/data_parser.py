@@ -343,7 +343,7 @@ class DataParser:
 
     def _extract_spec_limits(self, df: pd.DataFrame) -> dict[str, dict[str, float]]:
         specs = {}
-        for col, _col_type in self.column_types.items():
+        for col in self.column_types.keys():
             col_lower = str(col).lower()
             spec = {}
             if any(kw in col_lower for kw in ["usl", "上规格", "上限"]):

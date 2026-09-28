@@ -95,7 +95,7 @@ class TestChainCapabilityToPpap:
         }
         # 模拟 PPAP 自动填充逻辑
         ppap_items = [None] * 18
-        for _idx, analysis in analyses.items():
+        for analysis in analyses.values():
             analysis_type = analysis.get("analysis_type", "")
             result = analysis.get("result", {})
             if "Capability" in analysis_type:
@@ -116,7 +116,7 @@ class TestChainCapabilityToPpap:
             }
         }
         ppap_items = [None] * 18
-        for _idx, analysis in analyses.items():
+        for analysis in analyses.values():
             analysis_type = analysis.get("analysis_type", "")
             result = analysis.get("result", {})
             if "R&R" in analysis_type:

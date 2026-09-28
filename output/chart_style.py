@@ -14,6 +14,8 @@
 
 from __future__ import annotations
 
+import contextlib
+
 from collections.abc import Sequence
 
 import matplotlib.pyplot as plt
@@ -298,10 +300,9 @@ def finalize_figure(fig, *, tight: bool = True, pad: float = 1.05) -> None:
     """收尾：统一图背景与边距。"""
     fig.patch.set_facecolor(semantic()["figure_bg"])
     if tight:
-        try:
+        # 特殊布局（colorbar / 3D）无法 tight_layout 时保持原样
+        with contextlib.suppress(Exception):
             fig.tight_layout(pad=pad)
-        except Exception:  # noqa: BLE001 - 特殊布局（colorbar/3D）
-            pass
 
 
 def style_for_export(fig, theme: str = THEME_LIGHT) -> None:

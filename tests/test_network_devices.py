@@ -2,6 +2,7 @@
 
 使用 127.0.0.1 环回 socket 模拟设备端，不依赖真实硬件。
 """
+import contextlib
 import json
 import socket
 import threading
@@ -69,10 +70,8 @@ class _FakeMaixcamServer:
                         continue
                     self._reply(conn, msg)
         finally:
-            try:
+            with contextlib.suppress(Exception):
                 conn.close()
-            except Exception:
-                pass
 
     def _reply(self, conn, msg):
         mtype = msg.get("type")
@@ -90,10 +89,8 @@ class _FakeMaixcamServer:
 
     def close(self):
         self._stop.set()
-        try:
+        with contextlib.suppress(Exception):
             self._srv.close()
-        except Exception:
-            pass
 
 
 @pytest.fixture()

@@ -110,7 +110,7 @@ def test_ingest_pipeline_end_to_end(tmp_path):
     store = TimeseriesStore(tmp_path / "pipe.db")
     bus = StreamBus()
     received = []
-    bus.subscribe("mock-01", lambda batch: received.extend(batch))
+    bus.subscribe("mock-01", received.extend)
     runner = IngestRunner(bus, store, [MockDriver(name="mock-01", rate_hz=200.0)],
                           poll_interval=0.01)
     runner.start()

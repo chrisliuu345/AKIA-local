@@ -365,7 +365,7 @@ class ChartTab(BaseAnalysisTab):
         except Exception as e:
             self._clear_canvas()
             self.result_text.setStyleSheet("color: #e74c3c; font-weight: bold;")
-            self.result_text.setText(f"{i18n.tr('chart_tab.analysis_failed')}\n{str(e)}")
+            self.result_text.setText(f"{i18n.tr('chart_tab.analysis_failed')}\n{e!s}")
 
     def refresh_texts(self):
         self.title_label.setText(i18n.tr("chart_tab.title"))

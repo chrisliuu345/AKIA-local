@@ -205,7 +205,7 @@ class DeviceTab(BaseAnalysisTab):
         super().__init__(parent)
         self._registry = DeviceRegistry(on_device_changed=self._on_device_state_changed)
         self._monitor = DeviceMonitor(
-            on_event=lambda did, ev, pl: self.monitor_event.emit(did, ev, pl)
+            on_event=self.monitor_event.emit
         )
         self._selected_device_id = None
         self._card_widgets: dict[str, DeviceCard] = {}

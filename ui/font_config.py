@@ -3,7 +3,7 @@
 保留本模块避免既有 UI 代码大面积改 import；新代码请直接使用 core.fonts。
 """
 
-from core.fonts import (  # noqa: F401
+from core.fonts import (
     get_ui_font,
     get_mono_font,
     get_pdf_font_paths,

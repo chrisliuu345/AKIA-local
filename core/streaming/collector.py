@@ -3,6 +3,7 @@
 单线程串行轮询所有驱动（每驱动错误隔离），poll_interval 控制延迟上限；
 验收: 设备→存储延迟 <500ms（Mock 高频下实测通常 <100ms）。
 """
+import contextlib
 import threading
 import time
 import logging
@@ -77,10 +78,8 @@ class IngestRunner:
         if self.health is not None:
             self.health.reset(name)
         try:
-            try:
+            with contextlib.suppress(Exception):
                 driver.close()
-            except Exception:
-                pass
             driver.open()
         except Exception as e:
             if self.health is not None:
@@ -130,10 +129,8 @@ class IngestRunner:
         state = self.health.get(name)
         if state is None or not state.last_error:
             return True
-        try:
+        with contextlib.suppress(Exception):
             driver.close()
-        except Exception:
-            pass
         try:
             driver.open()
         except Exception as e:
