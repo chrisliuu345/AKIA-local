@@ -281,8 +281,8 @@ class OneClickAnalyzer:
             try:
                 full = "".join(list(self.llm.generate(prompt)))
                 return full
-            except Exception:
-                pass
+            except Exception as e:  # LLM 不可用时退回本地模板结论，但要让用户知道来源不同
+                _log.warning("AI 结论生成失败，改用本地模板结论: %s", e)
 
         return self._fallback_synthesis(results, stats)
 

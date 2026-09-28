@@ -176,7 +176,7 @@ class LLMClient:
                     models = data.get("models", [])
                     if models:
                         return sorted(m["name"] for m in models)
-            except Exception:
+            except Exception:  # 本地 Ollama 未启动/接口变更：退回内置模型清单
                 pass
             return list(OLLAMA_MODELS)
         return list(self.spec.models)

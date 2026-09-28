@@ -137,17 +137,18 @@ class TemplateParser:
             return True
         if val.lower() in ("false", "no", "否"):
             return False
+        # 依次尝试 int → float → JSON → 原字符串（模板值类型自动推断，失败即下一种）
         try:
             return int(val)
-        except ValueError:
+        except ValueError:  # 非整数：尝试浮点
             pass
         try:
             return float(val)
-        except ValueError:
+        except ValueError:  # 非浮点：尝试 JSON 字面量
             pass
         if val.startswith(("[", "{")):
             try:
                 return json.loads(val)
-            except json.JSONDecodeError:
+            except json.JSONDecodeError:  # JSON 片段不合法：按普通字符串处理
                 pass
         return val

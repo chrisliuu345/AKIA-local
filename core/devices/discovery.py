@@ -50,7 +50,7 @@ def discover_devices(timeout: float = 0.5,
                     ser.setRTS(False)
                     time.sleep(0.2)
                     ser.reset_input_buffer()
-                except Exception:
+                except Exception:  # 部分系统/驱动不支持 DTR/RTS 翻转：跳过握手清理
                     pass
                 hello = encode_message(MessageType.HELLO, device_id="pc_discovery",
                                        device_type="pc_scanner", fw_version="0.0")

@@ -243,7 +243,7 @@ class DataParser:
                     try:
                         float(stripped)
                         numeric += 1
-                    except ValueError:
+                    except ValueError:  # 非数值内容：仅用于统计数值占比，不计入 numeric
                         pass
             ne_rate = non_empty / max(total, 1)
             num_rate = numeric / max(non_empty, 1) if non_empty > 0 else 0.0
