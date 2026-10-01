@@ -4,7 +4,12 @@
 
 from typing import Any
 import pandas as pd
-from scipy import stats
+
+
+def _scipy_stats():
+    """延迟导入 scipy.stats（约 0.6s）：冷启动不加载，真正校验时才引入。"""
+    from scipy import stats
+    return stats
 
 
 class DataValidator:
@@ -113,6 +118,7 @@ class DataValidator:
             data_max = float(data.max())
 
             is_constant = std < 1e-12 or std / (abs(mean) + 1e-9) < 1e-8
+            stats = _scipy_stats()
             if is_constant:
                 skew_val, kurtosis_val = 0.0, 0.0
             else:
@@ -124,7 +130,9 @@ class DataValidator:
 
             _statistic, p_value = stats.shapiro(data) if len(data) <= 5000 else (None, None)
             if len(data) > 5000 and not is_constant and std > 0:
-                _statistic, p_value = stats.kstest(data, lambda x, m=mean, s=std: stats.norm.cdf(x, loc=m, scale=s))
+                _statistic, p_value = stats.kstest(
+                    data,
+                    lambda x, m=mean, s=std, st=stats: st.norm.cdf(x, loc=m, scale=s))
 
             self.stats[col] = {
                 "count": len(data),
@@ -148,6 +156,7 @@ class DataValidator:
         n = len(clean)
         if n < 3:
             return {"is_normal": False, "reason": "数据量不足 (n<3)"}
+        stats = _scipy_stats()
 
         if n <= 5000:
             stat, p = stats.shapiro(clean)
@@ -174,6 +183,7 @@ class DataValidator:
         clean_groups = [g.dropna() for g in groups if len(g.dropna()) >= 2]
         if len(clean_groups) < 2:
             return {"equal_variance": False, "reason": "有效组数不足"}
+        stats = _scipy_stats()
 
         stat, p = stats.levene(*clean_groups)
         return {

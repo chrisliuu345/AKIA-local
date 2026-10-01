@@ -131,7 +131,7 @@ def test_dashboard_page_served(server):
     _bus, _store, addr = server
     raw = urllib.request.urlopen(f"http://{addr}/", timeout=3).read()
     text = raw.decode("utf-8")
-    assert "QA-Tool 实时 SPC 云看板" in text
+    assert "AKIA 实时 SPC 云看板" in text
     assert "ws://" in text
     # B1 回归: 图表对象必须缓存 ch 字段（v3.8.0 起同时缓存 dev/spec/view）
     assert "charts[key] = c;" in text, "图表对象未入缓存"

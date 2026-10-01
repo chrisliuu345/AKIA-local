@@ -12,6 +12,9 @@ from collections.abc import Callable
 from PySide6.QtCore import QObject, QTimer, QThread, Signal
 
 from core.log_util import get_logger
+from core.legacy import legacy_home_dir, migrate_legacy_file
+
+_DEFAULT_TASKS_FILE = os.path.join(os.path.expanduser("~"), ".akia_batch", "tasks.json")
 
 _log = get_logger(__name__)
 
@@ -80,10 +83,12 @@ class BatchScheduler(QObject):
     task_completed = Signal(str, bool, str)
     log_message = Signal(str)
 
-    TASKS_FILE = os.path.join(os.path.expanduser("~"), ".qa_tool_batch", "tasks.json")
+    TASKS_FILE = _DEFAULT_TASKS_FILE
 
     def __init__(self, execute_fn: Callable | None = None, parent=None):
         super().__init__(parent)
+        if self.TASKS_FILE == _DEFAULT_TASKS_FILE:   # 自定义路径（测试）不搬迁
+            migrate_legacy_file(legacy_home_dir("batch") / "tasks.json", self.TASKS_FILE)
         self.tasks: dict[str, BatchTask] = {}
         self._timer = QTimer(self)
         self._timer.timeout.connect(self._check_schedule)

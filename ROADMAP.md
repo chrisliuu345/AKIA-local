@@ -1,4 +1,4 @@
-# QA-Tool 发展路线图
+# AKIA 发展路线图
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
@@ -34,7 +34,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | ✅ | v3.7.1 | 五链贯通修复 + 数据语义与工程一致性加固 |
 | ✅ | v3.7.2 | 实时监控对标优化 8 项 |
 | ✅ | **v3.8.0** | **Industrial AI Agent（QAM Harness + 插件接口 v2；视觉迁至独立插件项目）** |
-| 🔌 | [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion) | 视觉插件独立仓库（视频时间研究），基于插件接口 v2 |
+| 🔌 | [AKIA-Vision-expansion](https://github.com/chrisliuu345/AKIA-Vision-expansion) | 视觉插件独立仓库（视频时间研究），基于插件接口 v2 |
 | ✅ | **v4.0.0** | **预测分析与机器学习（CART / 随机森林 / 梯度提升 / MARS / AutoML + 特征工程 / 评估 / SHAP 解释 / 模型部署）** |
 | ✅ | **v4.1.0** | **图表与界面体验统一（B1 风格层 / B2 缺陷修复 / B3 命令面板·批量进度·Toast·空状态 / B4 质量与性能基线）** |
 | ✅ | **v4.2.0** | **算法可信度与深度（已知值验证矩阵 / 多元 SPC·变点检测·残差控制图 / 判定凭证 / 首个闭环切片）· Linux AppImage 已发布** |
@@ -78,7 +78,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | 日期 | 版本 | 摘要 |
 |------|------|------|
 | 09-28 | **中间质量审查（无版本号）** | **全量代码质量审查 + 算法优化（源码更新，版本号保持 4.2.0）**：**P1 静态棘轮扩容**——11 条规则（RET505/506 · RUF010/RUF100 · SIM105/113/114/201 · C408/416/420 · PERF102 · PLW0108 · PLW3301）清零入闸，修复 2 处死代码（`sampling_engine` 只写不读的 total、`smed_tab` 甘特 y 计数），100 文件清理 · **P2 静默失败治理**——审计写入失败计数 + warning、会话/调度/一键分析/配置迁移补日志，31 处 pass-only 异常全部带理由；**修复批量调度必然失败**（对话框未注入执行器 → 新增无 Qt 默认执行器 `run_task_headless`，数据源→分析→docx/pdf/xlsx/Markdown 报告） · **P3 数值鲁棒性**——新增 `analysis/_sanitize.py` + `spc/_validation.py`，±inf/缺失值统一净化，修复 6 类底层报错（指数平滑 No supported index · 计数四图 NaN/inf 转换崩溃 · 残差图 Ljung-Box 空序列 IndexError · 能力六合图 range not finite） · **P4 性能**——Nelson 判异向量化（2100 项等价性对照 0 差异）→ **SPC 100 万点 21.96s → 1.62s（13.5×）**；解析逐格回调向量化 → **百万行导入 14.27s → 5.19s（2.7×）**，`perf_baseline.json` 同步收紧锁定收益 |
-| 09-23 | **v4.2.0 打包发布** | **Linux AppImage 构建 + GitHub Release 交付**：`build_appimage.sh`（PyInstaller onedir → AppDir → appimagetool）产出 `QA-Tool-4.2.0-x86_64.AppImage` + `.sha256` 校验文件；无 FUSE 环境以 `--appimage-extract-and-run` 启动；README(中英) / ROADMAP(中英) / guide.html / `docs/releases/v4.2.0.md` 同步发布形态与校验步骤；版本号保持 4.2.0（`check_version.py` 通过、API 不变），Windows 安装包仍在 Windows 侧构建 |
+| 09-23 | **v4.2.0 打包发布** | **Linux AppImage 构建 + GitHub Release 交付**：`build_appimage.sh`（PyInstaller onedir → AppDir → appimagetool）产出历史资产 `QA-Tool-4.2.0-x86_64.AppImage` + `.sha256` 校验文件（更名后新产物为 `AKIA-*`）；无 FUSE 环境以 `--appimage-extract-and-run` 启动；README(中英) / ROADMAP(中英) / guide.html / `docs/releases/v4.2.0.md` 同步发布形态与校验步骤；版本号保持 4.2.0（`check_version.py` 通过、API 不变），Windows 安装包仍在 Windows 侧构建 |
 | 09-22 | **v4.2.0 发布** | **算法可信度与深度（源码 prerelease）**：P0–P6 全部完成 —— 已知值矩阵 29 例 · 算法深度 60 例（MEWMA 逐点精确 Σ_z / 广义方差 / PELT 变点 / ARIMA 残差图 / 非正态 Bootstrap 区间 / 可靠性区间修正 / ARIMA 稳健性）· 基准扩至 8 项 + 鲁棒性契约 + BLE001 棘轮 + 覆盖率补口 · 判定凭证闭环（分析记录 → 报告追溯码 → `.qap` 1.8 → 重跑 diff）+ guide「方法与参考」· 首个改善闭环切片（案例脊柱 8 阶段 + 工作台入口）· 版本四端一致 + 全量门禁；全量逐文件回归 **157 文件 / 1950 例全绿**，ruff 零告警 |
 | 09-22 | v4.2.0-P2 | **算法深度完成（7 文件 / 60 例）**：MEWMA（Lowry 1992，逐点精确 Σ_Z(i) + Phase I/II 口径 + 稳态近似可选；r=1 与 hotelling 逐点一致）· 广义方差图（Montgomery b1/b2）· PELT 变点检测（纯 numpy，与暴力 DP 全局最优一致，默认罚项 2.5σ̂²log n 经固定种子标定）· ARIMA 残差控制图（AR(1) 误报大幅下降）· 非正态能力 Bootstrap 区间（向量化，小样本精度告警：n<1000 时点估计偏高）· 可靠性区间（Weibull CI 与 lifelines 交叉验证；**ALT 外推区间修正**——旧实现忽略杠杆项，修正后覆盖率 0.950）· ARIMA 稳健性（**修复含缺测序列崩溃** No supported index；常量/短序列守卫；搜索空间按样本量收窄） |
 | 09-17 | v4.2.0-audit | **UI 功能与接线全面审查**：37+1 Tab 离屏普查 + 全部按钮/菜单动作接收者扫描（无零接线）；修复 4 类缺口——时间序列/预测分析未接入工作簿路由 · 29-32 自包含工具被导入遮罩挡住 · 14/16/17/25/26 手工/上下文工具被挡住（含 FMEA→控制计划五链）· 菜单缺 35/36/37 入口；新增 3 例路由覆盖回归（分析 Tab 全覆盖 / 五链不被挡 / 自包含无遮罩） |
@@ -131,11 +131,15 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 
 ## 当前版本 v4.2.0 要点
 
+- **品牌更名**：自本版起产品更名为 **AKIA（AKIM IE/Quality analyzer-local）**，仓库迁至
+  [chrisliuu345/AKIA-local](https://github.com/chrisliuu345/AKIA-local)；v4.2.0 已发布的
+  Linux AppImage 资产保留历史文件名 `QA-Tool-4.2.0-x86_64.AppImage`，自下一版起统一 `AKIA-*`
+
 - **算法可信**：已知值矩阵 29 例（P1）+ 算法深度 60 例（P2）—— MEWMA、广义方差、PELT 变点检测、ARIMA 残差控制图、非正态能力 Bootstrap 区间；新算法已接入 QAM Harness（`run_spc` 新图型 + `detect_changepoints`，共 37 个本地工具）
 - **可追溯**：判定凭证（规则版本 + 参数 + 数据指纹 + 软件版本）写入分析记录与 `.qap` 1.8；报告页脚 12 位追溯码；同数据重跑自动逐项 diff；guide.html「方法与参考」列出 16 类方法出处
 - **闭环切片**：改善案例工作台（工具 → 改善案例工作台）以 8 阶段脊柱串联基线 → 时间研究 → 线平衡 → 改善 → 复测 → 配对检验 → 结论 → 标准草稿，每步留痕时间戳/数据引用/凭证
 - **稳定性**：性能基准 8 项（SPC 10 万/100 万行、MSA 10 万行、ML 10 万行）入 CI；22 例退化输入契约；`BLE001` 盲除异常门禁自算法层启用
-- **发布形态**：Linux 仅 AppImage；本版已交付 **`v4.2.0` GitHub Release** —— `QA-Tool-4.2.0-x86_64.AppImage`（附 `.sha256` 校验文件）+ 源码 zip/tar.gz；Windows 安装包在 Windows 侧由 `packaging/QA-Tool-installer.iss` 构建
+- **发布形态**：Linux 仅 AppImage；本版已交付 **`v4.2.0` GitHub Release** —— 历史资产名 `QA-Tool-4.2.0-x86_64.AppImage`（附 `.sha256` 校验文件）+ 源码 zip/tar.gz；Windows 安装包在 Windows 侧由 `packaging/AKIA-installer.iss` 构建
 
 ---
 
@@ -273,7 +277,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 |------|------|------|
 | **B1 MCP 服务** | 工具注册表暴露为 MCP server：Claude Desktop / Cursor / AI IDE 可直接调用 SPC · 能力 · MSA · DOE · ML 引擎；默认只读 + 权限模型 | 外部 MCP 客户端一条指令完成真实分析 |
 | **B2 原生工具调用** | JSON Schema 工具调用 + 流式输出替代提示词正则解析（保留降级路径）；工具路由与并行调用增强 | 工具命中率/稳定性提升；旧路径仍可用 |
-| **B3 CLI 质量门禁 + SDK** | `qatool check --spec quality.yaml`（Cpk / 判异 / 抽样合规）· headless 报告导出 · `qa-tool-core` 本地 Python SDK | 一条命令出 CI 判定；企业系统可嵌入调用 |
+| **B3 CLI 质量门禁 + SDK** | `akia check --spec quality.yaml`（Cpk / 判异 / 抽样合规）· headless 报告导出 · `akia-core` 本地 Python SDK | 一条命令出 CI 判定；企业系统可嵌入调用 |
 | **B4 规则包与插件生态** | 行业规则包（IATF / ISO 13485 / IPC / HACCP：判异策略 + 抽样 + 报告模板 + 术语 + 告警规则）· 插件脚手架 CLI + 索引 + 兼容矩阵 + 2 示例插件 · i18n 框架 | 第三方 30 分钟跑通插件；规则包可导入导出 |
 
 ### v4.6.0 — 智能在线化与数据资产（规划）

@@ -1,4 +1,4 @@
-# QA-Tool 开发/测试依赖
+# AKIA 开发/测试依赖
 # 安装: pip install -r requirements.txt -r dev-requirements.txt
 
 pytest>=7.0.0

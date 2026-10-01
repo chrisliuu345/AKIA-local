@@ -1,4 +1,4 @@
-"""QA-Tool 插件接口 v2（v3.8.1）— 主应用只提供接口，不内置具体能力插件。
+"""AKIA 插件接口 v2（v3.8.1）— 主应用只提供接口，不内置具体能力插件。
 
 贡献点:
   - Tab: `create_tab(host, parent)`
@@ -8,8 +8,8 @@
 
 分发方式:
   - 随包 `plugins/<id>/plugin.json`（目录式）或 `plugins/<name>.py`（旧式单文件）
-  - 用户目录 `~/.qa_tool_plugins/`
-  - pip 包 entry point `qa_tool.plugins`
+  - 用户目录 `~/.akia_plugins/`
+  - pip 包 entry point `akia.plugins`
 
 安全: 插件即本机 Python 代码。随包插件默认信任；用户目录 / pip 插件首次需显式信任，
 未信任只解析 manifest、不导入不执行。
@@ -21,7 +21,9 @@ from dataclasses import dataclass, field, replace
 from typing import Any
 
 PLUGIN_API_VERSION = "2.0"
-PLUGIN_ENTRY_POINT_GROUP = "qa_tool.plugins"
+PLUGIN_ENTRY_POINT_GROUP = "akia.plugins"
+#: 旧品牌 entry point 组 — 兼容期仍会被扫描（第三方插件可继续用旧组发布）
+LEGACY_PLUGIN_ENTRY_POINT_GROUP = "qa_tool.plugins"
 CAPABILITIES = ("tab", "agent_tools", "settings")
 
 _ID_RE = re.compile(r"^[a-z][a-z0-9_]{1,31}$")
@@ -186,7 +188,7 @@ class PluginToolRegistry:
         return self.prefixed(name) in self._registry
 
 
-class IQAToolPlugin:
+class IAKIAPlugin:
     """插件基类 v2 — 至少声明 manifest；按 capabilities 实现对应方法。"""
 
     manifest: PluginManifest = PluginManifest(id="plugin", name="插件")
@@ -212,7 +214,7 @@ class IQAToolPlugin:
 
 
 class IPlugin:
-    """旧式插件接口（v1）— 保留兼容；核心属性与 IQAToolPlugin 对齐。"""
+    """旧式插件接口（v1）— 保留兼容；核心属性与 IAKIAPlugin 对齐。"""
 
     name: str = "Unnamed"
     version: str = "0.1"
@@ -237,3 +239,7 @@ def manifest_from_legacy(instance: IPlugin, plugin_id: str) -> PluginManifest:
         icon=str(getattr(instance, "icon", "🔌")),
         capabilities=("tab",),
     )
+
+
+#: 旧类名别名 — 第三方插件（如 Vision-expansion）仍可按旧名导入
+IQAToolPlugin = IAKIAPlugin

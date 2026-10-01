@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>QA-Tool 使用指南</title>
+<title>AKIA 使用指南</title>
 <style>
 :root{
   --brand:#1b5faa; --brand-dark:#144780; --text:#333; --muted:#666;
@@ -82,7 +82,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
 <body>
 
 <header class="top">
-  <span class="logo">QA-Tool 使用指南</span>
+  <span class="logo">AKIA 使用指南</span>
   <span class="tag">v4.2.0</span>
   <span class="tag">Windows / Linux</span>
   <span class="meta">质量工程（QE）· 工业工程（IE）· 离线分析</span>
@@ -125,7 +125,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
 
 <section class="card" id="intro">
   <h2>产品简介</h2>
-  <p>QA-Tool 是一款面向质量工程（QE）与工业工程（IE）的专业分析工具，基于 Python + PySide6 构建，
+  <p>AKIA 是一款面向质量工程（QE）与工业工程（IE）的专业分析工具，基于 Python + PySide6 构建，
   完全离线运行，无需联网或账号登录。提供 37 个分析模块、QAM Harness 智能洞察、完整报告输出，
   并支持 ESP32 硬件数据采集。</p>
   <h3>核心能力</h3>
@@ -158,19 +158,19 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
   <h2>安装包与启动（v4.2.0）</h2>
   <p>v4.2.0 免装 Python 环境、完全离线运行。Linux 侧只发布 AppImage 单一格式（不再构建
   <code>.deb</code>），已随 GitHub Release 提供下载；Windows 安装包在 Windows 侧用仓库内
-  <code>packaging/QA-Tool-installer.iss</code> 构建：</p>
+  <code>packaging/AKIA-installer.iss</code> 构建：</p>
   <table>
     <tr><th>版本</th><th>安装文件</th><th>适用系统</th><th>发布状态</th><th>安装 / 启动</th></tr>
     <tr>
       <td class="k">Linux AppImage</td>
-      <td><code>QA-Tool-4.2.0-x86_64.AppImage</code></td>
+      <td><code>QA-Tool-4.2.0-x86_64.AppImage</code>（v4.2.0 历史资产名）</td>
       <td>任意 x86_64 Linux（Debian / Ubuntu / elementary 等）</td>
       <td>✅ 随 <code>v4.2.0</code> Release 提供（附 <code>.sha256</code> 校验文件）</td>
       <td>免安装：<code>chmod +x</code> 后直接运行；可移动到 <code>/opt</code> 并自建桌面快捷方式</td>
     </tr>
     <tr>
       <td class="k">Windows 安装包</td>
-      <td><code>QA-Tool-Setup-4.2.0.exe</code></td>
+      <td><code>AKIA-Setup-4.2.0.exe</code></td>
       <td>Windows 10/11（64 位）</td>
       <td>Windows 侧构建（Linux 环境无法出包；构建脚本与 .iss 已就绪）</td>
       <td>双击运行 Inno Setup 向导，自动创建开始菜单/桌面快捷方式，支持卸载</td>
@@ -178,7 +178,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
   </table>
   <div class="note">
     <b>下载与校验（Linux）：</b>
-    <pre class="tight"><code># 从 https://github.com/chrisliuu345/QA-Tool/releases/tag/v4.2.0 下载两个文件后
+    <pre class="tight"><code># 从 https://github.com/chrisliuu345/AKIA-local/releases/tag/v4.2.0 下载两个文件后
 sha256sum -c QA-Tool-4.2.0-x86_64.AppImage.sha256
 chmod +x QA-Tool-4.2.0-x86_64.AppImage
 ./QA-Tool-4.2.0-x86_64.AppImage</code></pre>
@@ -188,7 +188,7 @@ chmod +x QA-Tool-4.2.0-x86_64.AppImage
 
 <section class="card" id="ui">
   <h2>界面导览</h2>
-  <p>QA-Tool 采用<b>侧边栏 + 主面板</b>布局：左侧为功能导航，右侧为分析区域。可按 <code>Ctrl+B</code>
+  <p>AKIA 采用<b>侧边栏 + 主面板</b>布局：左侧为功能导航，右侧为分析区域。可按 <code>Ctrl+B</code>
   折叠/展开侧边栏；<code>F11</code> 进入大屏显示模式（适合车间展示看板）。</p>
   <table>
     <tr><th>区域</th><th>说明</th></tr>
@@ -466,7 +466,7 @@ chmod +x QA-Tool-4.2.0-x86_64.AppImage
 <section class="card" id="plugins">
   <h2>插件接口（v3.8.0 新增 · API v2）</h2>
   <p>主应用只提供插件接口 v2，不内置具体能力插件；外部插件可独立开发与发布，
-  通过 pip entry point <code>qa_tool.plugins</code> 或 <code>~/.qa_tool_plugins/</code>
+  通过 pip entry point <code>akia.plugins</code> 或 <code>~/.akia_plugins/</code>
   目录加载。</p>
   <ul>
     <li><b>贡献点</b>: Tab（侧栏「插件」分类）· QAM Harness Agent 工具
@@ -475,11 +475,11 @@ chmod +x QA-Tool-4.2.0-x86_64.AppImage
       可选依赖 / 能力项）；缺依赖时只显示「不可用 + 安装指引」，不导入不崩溃</li>
     <li><b>信任模型</b>: 随包插件默认信任；用户目录与 pip 插件首次需在
       「设置 → 插件」信任后才执行</li>
-    <li><b>首个外部插件</b>: <a href="https://github.com/chrisliuu345/QA-Tool-Vision-expansion">
-      <code>QA-Tool-Vision-expansion</code></a>（视频时间研究：
+    <li><b>首个外部插件</b>: <a href="https://github.com/chrisliuu345/AKIA-Vision-expansion">
+      <code>AKIA-Vision-expansion</code></a>（视频时间研究：
       动作识别 / 作业周期 / 标准工时），独立仓库与独立可选依赖，
       安装后自动出现在侧栏「插件」分类与 QAM Harness 工具列表</li>
-    <li><b>开发</b>: 实现 <code>core.plugin_api.IQAToolPlugin</code>，
+    <li><b>开发</b>: 实现 <code>core.plugin_api.IAKIAPlugin</code>，
       参考 <code>plugins/example_plugin.py</code>；API 2.x 向后兼容</li>
   </ul>
 </section>
@@ -540,7 +540,7 @@ chmod +x QA-Tool-4.2.0-x86_64.AppImage
 <section class="card" id="support">
   <h2>技术支持</h2>
   <p>如有问题，请联系技术支持团队。</p>
-  <p style="color:#98a2b3;font-size:13px">© 2026 QA-Tool. All rights reserved.</p>
+  <p style="color:#98a2b3;font-size:13px">© 2026 AKIA. All rights reserved.</p>
 </section>
 
 <section class="card" id="methods">
@@ -582,7 +582,7 @@ chmod +x QA-Tool-4.2.0-x86_64.AppImage
 
 </main>
 </div>
-<footer>QA-Tool v4.2.0 · 本指南随软件离线分发（config/help/guide.html）· 菜单「帮助 → 使用指南」或按 F1 打开</footer>
+<footer>AKIA v4.2.0 · 本指南随软件离线分发（config/help/guide.html）· 菜单「帮助 → 使用指南」或按 F1 打开</footer>
 
 </body>
 </html>

@@ -1,7 +1,7 @@
-#define MyAppName "QA-Tool"
+#define MyAppName "AKIA"
 #define MyAppVersion "4.2.0"
-#define MyAppPublisher "QA-Tool"
-#define MyAppExeName "QA-Tool.exe"
+#define MyAppPublisher "AKIM"
+#define MyAppExeName "AKIA.exe"
 
 [Setup]
 AppId={{A7D3E5F1-9C2B-4B6E-8F0A-1D2C3E4F5A6B}
@@ -15,7 +15,7 @@ DisableProgramGroupPage=yes
 PrivilegesRequired=admin
 ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=..\dist
-OutputBaseFilename=QA-Tool-Setup-{#MyAppVersion}
+OutputBaseFilename=AKIA-Setup-{#MyAppVersion}
 SetupIconFile=..\assets\logo.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
 UninstallDisplayName={#MyAppName} {#MyAppVersion}
@@ -36,7 +36,7 @@ Name: "desktopicon"; Description: "创建桌面快捷方式"; GroupDescription: 
 Name: "startmenu"; Description: "创建开始菜单快捷方式"; GroupDescription: "附加任务:"; Flags: unchecked
 
 [Files]
-Source: "..\build\QA-Tool.dist\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
+Source: "..\build\AKIA.dist\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
 
 [Icons]
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon; IconFilename: "{app}\{#MyAppExeName}"
@@ -79,7 +79,7 @@ var
 begin
   if CurStep = ssPostInstall then
   begin
-    { 公共默认配置（运行时用户配置落在 %APPDATA%\QA-Tool\user_config.json）}
+    { 公共默认配置（运行时用户配置落在 %APPDATA%\AKIA\user_config.json）}
     F := ExpandConstant('{app}\_internal\user_config.default.json');
     if not Esp32Check.Checked then
     begin

@@ -85,7 +85,7 @@ class SerialTransport(Transport):
     def reset_board(self) -> None:
         """Hard-reset the attached board into normal boot mode.
 
-        Wire mapping observed on the QA-Tool ESP32 DevKit:
+        Wire mapping observed on the AKIA ESP32 DevKit:
         RTS = EN (reset), DTR = GPIO0 (BOOT).
         Hold reset (RTS True) with GPIO0 high (DTR False), then release.
         """

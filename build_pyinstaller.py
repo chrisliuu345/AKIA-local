@@ -1,10 +1,10 @@
 """
-build_pyinstaller.py — QA-Tool PyInstaller 构建脚本（跨平台, onedir 默认）
+build_pyinstaller.py — AKIA PyInstaller 构建脚本（跨平台, onedir 默认）
 
 用法:
     python build_pyinstaller.py                # onedir 独立目录模式(默认)
     python build_pyinstaller.py --onefile      # 单文件模式
-    python build_pyinstaller.py --name qa-tool # 自定义产物名(Linux 用 qa-tool)
+    python build_pyinstaller.py --name akia # 自定义产物名(Linux 用 akia)
 
 产物布局:
     onedir  → build/<name>.dist/<name>[.exe] + _internal/   (供 .iss / AppImage 使用)
@@ -45,10 +45,13 @@ DATA_DIRS = [
 ]
 
 DATA_FILES = [
-    ("logo.png", "logo.png"),
+    # 注意: --add-data 的目标一律按"目录"处理，写成同名文件名会生成
+    # _internal/logo.png/logo.png（冻结版按 __file__ 解析路径时读到目录，
+    # logo 与默认配置都会静默丢失）。目标写 "." 才会落到 _internal/ 根下。
+    ("logo.png", "."),
     # 仅打包公共默认配置；本机 user_config.json（可能含设备列表/告警密码）
     # 严禁进入安装包，运行时由 config.settings 叠加用户文件
-    ("user_config.default.json", "user_config.default.json"),
+    ("user_config.default.json", "."),
 ]
 
 HIDDEN_IMPORTS = [
@@ -75,7 +78,7 @@ EXCLUDES = [
     "PySide6.QtQuick",
     "PySide6.QtQml",
     "PySide6.Qt3D",
-    # 外部插件依赖（如独立项目 QA-Tool-Vision-expansion 的 opencv/mediapipe，
+    # 外部插件依赖（如独立项目 AKIA-Vision-expansion 的 opencv/mediapipe，
     # 体积约 200MB）：主应用不内置视觉能力，默认不打包，插件按需在运行环境安装。
     "cv2",
     "mediapipe",
@@ -118,13 +121,13 @@ VSVersionInfo(
       StringTable(
         u'080404b0',
         [
-          StringStruct(u'CompanyName', u'QA-Tool'),
-          StringStruct(u'FileDescription', u'QA-Tool 质量分析工具'),
+          StringStruct(u'CompanyName', u'AKIM'),
+          StringStruct(u'FileDescription', u'AKIA · AKIM IE/Quality analyzer-local'),
           StringStruct(u'FileVersion', u'{version}'),
-          StringStruct(u'InternalName', u'QA-Tool'),
-          StringStruct(u'LegalCopyright', u'Copyright \\u00a9 2026 QA-Tool'),
-          StringStruct(u'OriginalFilename', u'QA-Tool.exe'),
-          StringStruct(u'ProductName', u'QA-Tool'),
+          StringStruct(u'InternalName', u'AKIA'),
+          StringStruct(u'LegalCopyright', u'Copyright \\u00a9 2026 AKIM'),
+          StringStruct(u'OriginalFilename', u'AKIA.exe'),
+          StringStruct(u'ProductName', u'AKIA'),
           StringStruct(u'ProductVersion', u'{version}')
         ]
       )
@@ -227,15 +230,15 @@ def _report(paths):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="QA-Tool PyInstaller 构建脚本（跨平台, onedir 默认）",
+        description="AKIA PyInstaller 构建脚本（跨平台, onedir 默认）",
     )
     parser.add_argument("--onefile", action="store_true", help="构建单文件可执行程序")
     parser.add_argument("--name", default=None,
-                        help="产物名称 (默认: Windows QA-Tool / 其他 qa-tool)")
+                        help="产物名称 (默认: Windows AKIA / 其他 akia)")
     parser.add_argument("--clean-only", action="store_true", help="仅清理旧构建目录")
 
     args = parser.parse_args()
-    name = args.name or ("QA-Tool" if sys.platform == "win32" else "qa-tool")
+    name = args.name or ("AKIA" if sys.platform == "win32" else "akia")
 
     if not ENTRY_POINT.exists():
         print(f"[error] 入口文件不存在: {ENTRY_POINT}")

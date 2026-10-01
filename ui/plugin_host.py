@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 
-logger = logging.getLogger("QA-Tool.Plugin")
+logger = logging.getLogger("AKIA.Plugin")
 
 
 class PluginHost:

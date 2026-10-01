@@ -13,6 +13,7 @@ from PySide6.QtCore import QSettings
 import pandas as pd
 
 from core.improvement_case import CASE_SCHEMA_VERSION
+from core.legacy import legacy_home_dir, migrate_legacy_dir
 
 # 1.8：analyses 条目增加 credential（判定凭证）；1.6/1.7 只读兼容（无凭证字段）
 VERSION = "1.8"
@@ -20,7 +21,7 @@ RECENT_MAX = 8
 
 
 class ProjectManager:
-    """QA-Tool 项目文件 (.qap) 管理器"""
+    """AKIA 项目文件 (.qap) 管理器"""
 
     @staticmethod
     def save_project(path: str, raw_data: dict[str, pd.DataFrame],
@@ -167,7 +168,7 @@ class ProjectManager:
 
     @staticmethod
     def recent_projects() -> list[dict[str, str]]:
-        settings = QSettings("QA-Tool", "RecentProjects")
+        settings = QSettings("AKIA", "RecentProjects")
         raw = settings.value("list", "[]")
         try:
             return json.loads(raw)
@@ -180,7 +181,7 @@ class ProjectManager:
         recent = [r for r in recent if r.get("path") != path]
         recent.insert(0, {"path": path, "name": name, "opened": datetime.now().isoformat()})
         recent = recent[:RECENT_MAX]
-        settings = QSettings("QA-Tool", "RecentProjects")
+        settings = QSettings("AKIA", "RecentProjects")
         settings.setValue("list", json.dumps(recent, ensure_ascii=False))
 
 
@@ -208,8 +209,16 @@ def _sanitize_for_json(obj: Any) -> Any:
     return obj
 
 
-SHARED_DIR = os.path.join(os.path.expanduser("~"), ".qa_tool_shared")
+_DEFAULT_SHARED_DIR = os.path.join(os.path.expanduser("~"), ".akia_shared")
+SHARED_DIR = _DEFAULT_SHARED_DIR
 PUBLIC_DEPT = "公共"
+
+
+def _ensure_shared_dir() -> None:
+    """共享目录首次使用时迁移旧品牌数据（保留旧目录）。"""
+    if SHARED_DIR != _DEFAULT_SHARED_DIR:   # 测试/自定义目录不做旧数据搬迁
+        return
+    migrate_legacy_dir(legacy_home_dir("shared"), SHARED_DIR)
 
 
 class SharedProjectManager:
@@ -221,6 +230,7 @@ class SharedProjectManager:
                     department: str, annotations: str = "",
                     project_context: dict[str, Any] | None = None) -> str:
         """保存项目到共享目录"""
+        _ensure_shared_dir()
         dept_norm = (department or PUBLIC_DEPT).replace("\\", "/")
         safe_dept = os.path.basename(dept_norm)
         dept_dir = os.path.join(SHARED_DIR, safe_dept)
@@ -238,6 +248,7 @@ class SharedProjectManager:
     @staticmethod
     def list_shared(department: str = "", role: str = "") -> list[dict[str, str]]:
         """列出共享项目。admin 看到全部；其他人看到本部门+公共。"""
+        _ensure_shared_dir()
         projects = []
         if not os.path.exists(SHARED_DIR):
             return projects

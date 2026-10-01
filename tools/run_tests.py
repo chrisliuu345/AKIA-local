@@ -9,7 +9,7 @@
 2. 限制 BLAS/OpenMP 线程数（``--max-as-gb`` 可额外限制地址空间，但**默认关闭**：
    RLIMIT_AS 约束的是虚拟地址空间，numpy/Qt 常映射 20–40 GB 虚拟内存，实测 12 GB 上限
    会让 test_devices 直接 MemoryError；如确需限制请给足余量，例如 ``--max-as-gb 32``）
-3. 失败日志集中留存（默认 ``/tmp/qa_tool_test_logs/``，便于 CI 上传产物）
+3. 失败日志集中留存（默认 ``/tmp/akia_test_logs/``，便于 CI 上传产物）
 
 用法::
 
@@ -32,7 +32,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 TESTS_DIR = ROOT / "tests"
-LOG_DIR = Path(os.environ.get("QA_TOOL_TEST_LOG_DIR", "/tmp/qa_tool_test_logs"))
+LOG_DIR = Path(
+    os.environ.get("AKIA_TEST_LOG_DIR")
+    or os.environ.get("QA_TOOL_TEST_LOG_DIR")   # 旧变量兼容
+    or "/tmp/akia_test_logs"
+)
 
 
 def _test_files(pattern: str | None) -> list[Path]:
@@ -42,7 +46,7 @@ def _test_files(pattern: str | None) -> list[Path]:
 def _child_env() -> dict[str, str]:
     env = dict(os.environ)
     env.setdefault("QT_QPA_PLATFORM", "offscreen")
-    cache = Path(env.get("TMPDIR", "/tmp")) / "qa_tool_mplcache"
+    cache = Path(env.get("TMPDIR", "/tmp")) / "akia_mplcache"
     cache.mkdir(parents=True, exist_ok=True)
     env.setdefault("MPLCONFIGDIR", str(cache))
     for key in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",

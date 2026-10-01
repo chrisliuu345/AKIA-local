@@ -12,7 +12,7 @@ python tools/run_tests.py --timeout 600   # 单文件超时保护
 ```
 
 脚本为每个文件拉起独立子进程，默认把 BLAS 线程数限为 2，日志写到
-`/tmp/qa_tool_test_logs/`（CI 失败时作为 artifact 上传）。
+`/tmp/akia_test_logs/`（CI 失败时作为 artifact 上传）。
 
 > `--max-as-gb` 会限制**虚拟地址空间**（非 RSS）：numpy/Qt 常映射 20–40 GB 虚拟内存，
 > 给小了会直接 MemoryError（实测 12 GB 会让 `test_devices` 失败）。默认不限制，
@@ -26,7 +26,7 @@ PySide6 + scipy + numpy 并发初始化触发线程死锁，导致系统无响�
 
 - `tests/conftest.py`: **一次传入多个 `.py` 文件参数即中断**（`pytest.exit`）；
   无文件参数且收集数 > 30（目录批量）同样中断
-- 绕过方式: `QA_TOOL_ALLOW_BATCH=1`（仅在明确知道风险时使用；Windows 仍可能冻机）
+- 绕过方式: `AKIA_ALLOW_BATCH=1`（仅在明确知道风险时使用；Windows 仍可能冻机）
 
 ## 环境能力标记（2026-09-22 新增）
 

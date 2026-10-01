@@ -1,4 +1,4 @@
-# QA-Tool Linux 安装指南
+# AKIA Linux 安装指南
 
 ## 系统要求
 
@@ -19,6 +19,7 @@ AppImage 是单文件分发格式，无需安装，双击即可运行。
 ```bash
 # 1. 下载 AppImage
 # 从 GitHub Releases 下载 QA-Tool-4.2.0-x86_64.AppImage
+# （v4.2.0 历史资产名；自下一版起产物名为 AKIA-<版本>-x86_64.AppImage）
 
 # 2. 添加执行权限
 chmod +x QA-Tool-4.2.0-x86_64.AppImage
@@ -31,14 +32,14 @@ chmod +x QA-Tool-4.2.0-x86_64.AppImage
 
 ```bash
 # 移动到 /opt 目录
-sudo mv QA-Tool-4.2.0-x86_64.AppImage /opt/qa-tool.AppImage
+sudo mv QA-Tool-4.2.0-x86_64.AppImage /opt/akia.AppImage
 
 # 创建桌面入口
-cat > ~/.local/share/applications/qa-tool.desktop << EOF
+cat > ~/.local/share/applications/akia.desktop << EOF
 [Desktop Entry]
-Name=QA-Tool
-Exec=/opt/qa-tool.AppImage
-Icon=qa-tool
+Name=AKIA
+Exec=/opt/akia.AppImage
+Icon=akia
 Type=Application
 Categories=Development;Science;
 EOF
@@ -51,8 +52,8 @@ update-desktop-database ~/.local/share/applications/
 
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/chrisliuu345/QA-Tool.git
-cd QA-Tool
+git clone https://github.com/chrisliuu345/AKIA-local.git
+cd AKIA-local
 
 # 2. 安装依赖
 pip install -r requirements.txt
@@ -136,7 +137,7 @@ sudo dnf install file wget
 chmod +x build_appimage.sh
 ./build_appimage.sh
 
-# 输出: build/QA-Tool-<版本>-x86_64.AppImage
+# 输出: build/AKIA-<版本>-x86_64.AppImage
 ```
 
 ## 故障排除
@@ -185,5 +186,5 @@ python main.py
 
 ## 技术支持
 
-- GitHub: https://github.com/chrisliuu345/QA-Tool
-- Issues: https://github.com/chrisliuu345/QA-Tool/issues
+- GitHub: https://github.com/chrisliuu345/AKIA-local
+- Issues: https://github.com/chrisliuu345/AKIA-local/issues

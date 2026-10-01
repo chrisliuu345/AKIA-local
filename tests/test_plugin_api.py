@@ -54,10 +54,10 @@ def _write_plugin(root: Path, plugin_id: str, *, api_version="2.0",
     impl = f'''
 from PySide6.QtWidgets import QLabel
 from core.agent.tools import ToolResult
-from core.plugin_api import IQAToolPlugin, PluginManifest
+from core.plugin_api import IAKIAPlugin, PluginManifest
 
 
-class Plugin(IQAToolPlugin):
+class Plugin(IAKIAPlugin):
     manifest = PluginManifest(
         id="{plugin_id}", name="插件 {plugin_id}", version="1.2",
         entry="{plugin_id}_impl:Plugin",
@@ -109,7 +109,7 @@ def test_user_plugin_requires_trust_then_registers(tmp_path, monkeypatch,
                                                    isolated_config):
     plugin_root = tmp_path / "plugins"
     _write_plugin(plugin_root, "demoplug")
-    monkeypatch.setenv("QA_TOOL_PLUGIN_DIRS", str(plugin_root))
+    monkeypatch.setenv("AKIA_PLUGIN_DIRS", str(plugin_root))
 
     manager = PluginManager()
     manager.discover()
@@ -133,7 +133,7 @@ def test_user_plugin_requires_trust_then_registers(tmp_path, monkeypatch,
 def test_unavailable_plugin_reports_reason(tmp_path, monkeypatch, isolated_config):
     plugin_root = tmp_path / "plugins"
     _write_plugin(plugin_root, "noplug", available=False)
-    monkeypatch.setenv("QA_TOOL_PLUGIN_DIRS", str(plugin_root))
+    monkeypatch.setenv("AKIA_PLUGIN_DIRS", str(plugin_root))
 
     manager = PluginManager()
     manager.discover()
@@ -147,8 +147,8 @@ def test_unavailable_plugin_reports_reason(tmp_path, monkeypatch, isolated_confi
 def test_api_version_and_app_version_gates(tmp_path, monkeypatch, isolated_config):
     plugin_root = tmp_path / "plugins"
     _write_plugin(plugin_root, "badapi", api_version="9.0")
-    _write_plugin(plugin_root, "badver", requires={"qa_tool": ">=99.0"})
-    monkeypatch.setenv("QA_TOOL_PLUGIN_DIRS", str(plugin_root))
+    _write_plugin(plugin_root, "badver", requires={"akia": ">=99.0"})
+    monkeypatch.setenv("AKIA_PLUGIN_DIRS", str(plugin_root))
 
     manager = PluginManager()
     manager.discover()

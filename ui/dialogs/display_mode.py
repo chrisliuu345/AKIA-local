@@ -121,7 +121,7 @@ class DisplayModeWindow(QWidget):
         root.setSpacing(14)
 
         top = QHBoxLayout()
-        title = QLabel("QA-Tool · " + i18n.tr("display.title"))
+        title = QLabel("AKIA · " + i18n.tr("display.title"))
         title.setFont(FONT_18B)
         title.setStyleSheet(f"color: {ACCENT}; background: transparent;")
         top.addWidget(title)

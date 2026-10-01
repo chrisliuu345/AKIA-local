@@ -125,7 +125,7 @@ def test_webhook_handler_posts(monkeypatch):
     from core.streaming.alerts import AlertEvent
     handler(AlertEvent("d", "c", "oos", "超规格上界", 42.0, 123.0))
     payload = json.loads(captured["data"])
-    assert payload["event"] == "qa-tool-alert"
+    assert payload["event"] == "akia-alert"
     assert payload["channel"] == "c" and payload["value"] == 42.0
     assert payload["kind"] == "oos"
     assert captured["headers"] == "application/json"

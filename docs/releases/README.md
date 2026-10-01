@@ -16,7 +16,7 @@
 
 ## 交付物
 - GitHub Source zip / tar.gz（tag `vX.Y.Z`，标记 pre-release）
-- （如打包）QA-Tool-X.Y.Z-x86_64.AppImage
+- （如打包）AKIA-X.Y.Z-x86_64.AppImage
 
 ## 要点
 - …

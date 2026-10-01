@@ -15,7 +15,7 @@
     {"type": "heading", "text": "4. 审计追踪"},
     {"type": "para", "text": "数据文件: {{file_name}}"},
     {"type": "para", "text": "分析时间: {{timestamp}}"},
-    {"type": "para", "text": "软件版本: QA-Tool v{{version}}"},
+    {"type": "para", "text": "软件版本: AKIA v{{version}}"},
     {"type": "para", "text": "电子签名:"},
     {"type": "signature", "roles": ["分析师", "质量经理", "QA负责人"]}
   ]

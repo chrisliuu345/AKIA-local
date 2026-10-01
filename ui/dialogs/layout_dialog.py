@@ -18,7 +18,7 @@ class LayoutDialog(QDialog):
         self.setWindowTitle(i18n.tr("dashboard.layout"))
         self.setMinimumSize(360, 420)
         self._items = list(items or [])
-        self._settings = settings or QSettings("QA-Tool", "Dashboard")
+        self._settings = settings or QSettings("AKIA", "Dashboard")
 
         layout = QVBoxLayout(self)
         hint = QLabel(i18n.tr("dashboard.layout_hint"))

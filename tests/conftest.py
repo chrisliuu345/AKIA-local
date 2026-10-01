@@ -44,8 +44,8 @@ def _keyring_available() -> bool:
     try:
         from core.secret_store import decrypt_secret, encrypt_secret
 
-        token = encrypt_secret("qa-tool-probe")
-        return decrypt_secret(token) == "qa-tool-probe"
+        token = encrypt_secret("akia-probe")
+        return decrypt_secret(token) == "akia-probe"
     except Exception:
         return False
 
@@ -76,7 +76,8 @@ def pytest_collection_modifyitems(config, items):
             if item.get_closest_marker(marker_name) and not check():
                 item.add_marker(pytest.mark.skip(reason=reason))
 
-    if os.environ.get("QA_TOOL_ALLOW_BATCH") == "1":
+    if (os.environ.get("AKIA_ALLOW_BATCH") == "1"
+            or os.environ.get("QA_TOOL_ALLOW_BATCH") == "1"):
         return
 
     # 只允许"显式指定单个文件"（如 pytest tests/test_xxx.py）
@@ -86,7 +87,8 @@ def pytest_collection_modifyitems(config, items):
             f"\n⛔ 一次传入了 {len(file_args)} 个测试文件：PySide6 + scipy + numpy 在同一进程"
             "内并发初始化会死锁甚至 OOM（2026-09-22 实测）。\n"
             "   正确用法：逐文件执行，或用封装脚本 python tools/run_tests.py\n"
-            "   如确需合并运行：QA_TOOL_ALLOW_BATCH=1 pytest ...\n",
+            "   如确需合并运行：AKIA_ALLOW_BATCH=1 pytest ...\n"
+            "   （旧变量 QA_TOOL_ALLOW_BATCH=1 仍兼容）\n",
             returncode=1,
         )
     if file_args:
@@ -103,6 +105,7 @@ def pytest_collection_modifyitems(config, items):
         f"     python tools/run_tests.py         # 逐文件全量（推荐）\n"
         f"\n"
         f"   如确需批量运行，设置环境变量：\n"
-        f"     $env:QA_TOOL_ALLOW_BATCH=1; pytest tests/\n"
+        f"     $env:AKIA_ALLOW_BATCH=1; pytest tests/\n"
+        f"     # 旧变量 QA_TOOL_ALLOW_BATCH=1 仍兼容\n"
     )
     pytest.exit(msg, returncode=1)

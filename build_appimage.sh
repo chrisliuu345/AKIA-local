@@ -1,5 +1,5 @@
 #!/bin/bash
-# build_appimage.sh — QA-Tool AppImage 构建脚本
+# build_appimage.sh — AKIA AppImage 构建脚本
 #
 # 用法:
 #   chmod +x build_appimage.sh
@@ -14,15 +14,15 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-APP_NAME="QA-Tool"
-BIN_NAME="qa-tool"
+APP_NAME="AKIA"
+BIN_NAME="akia"
 APP_VERSION=$(python -c "import sys; sys.path.insert(0, '${SCRIPT_DIR}'); from config.settings import APP_VERSION; print(APP_VERSION)")
 BUILD_DIR="${SCRIPT_DIR}/build"
 APPDIR_DIR="${BUILD_DIR}/AppDir"
 DIST_DIR="${BUILD_DIR}/${BIN_NAME}.dist"
 
 echo "=========================================="
-echo "  QA-Tool AppImage 构建"
+echo "  AKIA AppImage 构建"
 echo "  版本: ${APP_VERSION}"
 echo "=========================================="
 
@@ -58,18 +58,18 @@ cat > "${APPDIR_DIR}/AppRun" << 'EOF'
 SELF=$(readlink -f "$0")
 HERE=${SELF%/*}
 export PATH="${HERE}/usr/bin/:${PATH}"
-exec "${HERE}/usr/bin/qa-tool" "$@"
+exec "${HERE}/usr/bin/akia" "$@"
 EOF
 chmod +x "${APPDIR_DIR}/AppRun"
 
 # 复制桌面文件
-cp "${SCRIPT_DIR}/packaging/qa-tool.desktop" "${APPDIR_DIR}/usr/share/applications/"
-cp "${SCRIPT_DIR}/packaging/qa-tool.desktop" "${APPDIR_DIR}/qa-tool.desktop"
+cp "${SCRIPT_DIR}/packaging/akia.desktop" "${APPDIR_DIR}/usr/share/applications/"
+cp "${SCRIPT_DIR}/packaging/akia.desktop" "${APPDIR_DIR}/akia.desktop"
 
 # 复制图标
 if [ -f "${SCRIPT_DIR}/assets/logo.png" ]; then
-    cp "${SCRIPT_DIR}/assets/logo.png" "${APPDIR_DIR}/usr/share/icons/hicolor/256x256/apps/qa-tool.png"
-    cp "${SCRIPT_DIR}/assets/logo.png" "${APPDIR_DIR}/qa-tool.png"
+    cp "${SCRIPT_DIR}/assets/logo.png" "${APPDIR_DIR}/usr/share/icons/hicolor/256x256/apps/akia.png"
+    cp "${SCRIPT_DIR}/assets/logo.png" "${APPDIR_DIR}/akia.png"
 fi
 
 # ── 步骤 4: 下载 appimagetool ──────────────────────────────

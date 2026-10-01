@@ -1,5 +1,5 @@
 """
-IE Quality Analyzer - 全局配置
+AKIA（AKIM IE/Quality analyzer-local）— 全局配置
 """
 
 import json
@@ -10,9 +10,15 @@ import sys
 
 from core.fonts import get_ui_font
 
-APP_NAME = "QA-Tool"
+APP_NAME = "AKIA"
+APP_FULL_NAME = "AKIM IE/Quality analyzer-local"
+APP_SLUG = "akia"
 APP_VERSION = "4.2.0"
-ORGANIZATION = "QA-Tool"
+ORGANIZATION = "AKIA"
+
+# 旧品牌标识（仅用于一次性数据迁移，勿在新代码中引用）
+LEGACY_APP_NAME = "QA-Tool"
+LEGACY_APP_SLUG = "qa-tool"
 
 NELSON_RULES = {
     1: "一点超出3σ控制限",
@@ -181,39 +187,59 @@ def _default_user_config_path() -> str:
     - 源码运行: 仓库根 ``user_config.json``（保持既有行为与测试隔离方式）
     - 打包运行: 平台用户目录 —— AppImage 只读挂载 / Program Files 无写权限，
       安装目录不可写，必须落到用户可写位置
-    - ``QA_TOOL_USER_CONFIG`` 环境变量优先（便携版/多实例）
+    - ``AKIA_USER_CONFIG`` 环境变量优先（便携版/多实例），
+      旧 ``QA_TOOL_USER_CONFIG`` 作为回退继续生效
     """
-    override = os.environ.get("QA_TOOL_USER_CONFIG")
+    override = (os.environ.get("AKIA_USER_CONFIG")
+                or os.environ.get("QA_TOOL_USER_CONFIG"))
     if override:
         return override
     if not getattr(sys, "frozen", False):
         return os.path.abspath(os.path.join(_CONFIG_DIR, "..", "user_config.json"))
     if sys.platform == "win32":
         base = os.environ.get("APPDATA") or os.path.expanduser("~")
-        return os.path.join(base, "QA-Tool", "user_config.json")
+        return os.path.join(base, APP_NAME, "user_config.json")
     base = os.environ.get("XDG_CONFIG_HOME") or os.path.join(
         os.path.expanduser("~"), ".config")
-    return os.path.join(base, "QA-Tool", "user_config.json")
+    return os.path.join(base, APP_NAME, "user_config.json")
 
 
 _USER_CONFIG_PATH = _default_user_config_path()
 
 
 def _migrate_legacy_user_config(target: str) -> None:
-    """打包版首次启动时，把旧版安装目录内的 user_config.json 迁移到用户目录。"""
-    legacy = os.path.abspath(os.path.join(_CONFIG_DIR, "..", "user_config.json"))
-    if os.path.abspath(target) == legacy or os.path.exists(target):
+    """打包版首次启动时，把旧版（QA-Tool）用户配置迁移到 AKIA 目录。
+
+    迁移源按优先级:
+      1. 旧版安装目录内的 user_config.json
+      2. 旧品牌平台目录 ``~/.config/QA-Tool`` / ``%APPDATA%\\QA-Tool``
+    """
+    if os.path.exists(target):
         return
-    if not os.path.exists(legacy):
+    legacy_candidates = [
+        os.path.abspath(os.path.join(_CONFIG_DIR, "..", "user_config.json")),
+    ]
+    if sys.platform == "win32":
+        base = os.environ.get("APPDATA") or os.path.expanduser("~")
+    else:
+        base = os.environ.get("XDG_CONFIG_HOME") or os.path.join(
+            os.path.expanduser("~"), ".config")
+    legacy_candidates.append(os.path.join(base, LEGACY_APP_NAME, "user_config.json"))
+
+    for legacy in legacy_candidates:
+        if os.path.abspath(target) == legacy or not os.path.exists(legacy):
+            continue
+        try:
+            parent = os.path.dirname(target)
+            if parent:
+                os.makedirs(parent, exist_ok=True)
+            shutil.copy2(legacy, target)
+            logging.getLogger(f"{APP_NAME}.Settings").info(
+                "已把旧版用户配置迁移到 %s（源: %s）", target, legacy)
+        except OSError as e:  # 迁移失败不影响启动，但用户会丢旧配置，必须留痕
+            logging.getLogger(f"{APP_NAME}.Settings").warning(
+                "旧版 user_config.json 迁移失败（%s → %s）: %s", legacy, target, e)
         return
-    try:
-        parent = os.path.dirname(target)
-        if parent:
-            os.makedirs(parent, exist_ok=True)
-        shutil.copy2(legacy, target)
-    except OSError as e:  # 迁移失败不影响启动，但用户会丢旧配置，必须留痕
-        logging.getLogger("QA-Tool.Settings").warning(
-            "旧版 user_config.json 迁移失败（%s → %s）: %s", legacy, target, e)
 
 _defaults = {}
 _user_overrides = {}
@@ -302,7 +328,7 @@ def _protect_secrets(values: dict) -> dict:
                     out[f"{key}_enc"] = encrypted
                     continue
             except Exception as e:  # noqa: BLE001 - 加密失败：告警后退回明文保存（不阻断）
-                logging.getLogger("QA-Tool.Settings").warning(
+                logging.getLogger("AKIA.Settings").warning(
                     "敏感配置 %s 加密失败，按明文保存: %s", key, e)
         out[key] = value
     return out
