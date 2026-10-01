@@ -8,6 +8,7 @@ from datetime import datetime
 from typing import Any
 
 from core.log_util import get_logger
+from core.legacy import legacy_home_dir, migrate_legacy_dir
 
 _log = get_logger(__name__)
 
@@ -16,10 +17,16 @@ class SessionManager:
     """分析会话持久化管理"""
 
     def __init__(self, default_dir: str = ""):
-        self.sessions_dir = default_dir or os.path.join(os.path.expanduser("~"), ".qa_tool_sessions")
+        if not default_dir:
+            legacy = legacy_home_dir("sessions")
+            migrate_legacy_dir(legacy, os.path.join(os.path.expanduser("~"), ".akia_sessions"))
+        self.sessions_dir = default_dir or os.path.join(os.path.expanduser("~"), ".akia_sessions")
         self.current_session: dict[str, Any] = {}
         self.history: list[dict[str, Any]] = []
-        os.makedirs(self.sessions_dir, exist_ok=True)
+        try:
+            os.makedirs(self.sessions_dir, exist_ok=True)
+        except OSError as e:  # 只读 HOME（受限环境）不阻断启动，保存时会再次报错
+            _log.warning("会话目录不可写（%s）: %s", self.sessions_dir, e)
 
     def create_session(self, name: str = "", file_path: str = "") -> str:
         # 会话 ID 精确到秒；同一秒内连续创建会撞 ID 导致 save() 互相覆盖，

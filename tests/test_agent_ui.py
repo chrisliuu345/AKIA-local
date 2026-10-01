@@ -140,7 +140,7 @@ def test_model_name_is_free_text_input(dialog):
     assert not hasattr(dialog, "model_combo")
     assert "完全自定义" in dialog.model_edit.placeholderText()
 
-    settings = QSettings("QA-Tool", "LLM")
+    settings = QSettings("AKIA", "LLM")
     old_model = settings.value("model", None)
     old_provider = settings.value("provider", None)
     try:

@@ -8,35 +8,37 @@ import config.settings as settings
 
 
 def test_source_run_uses_repo_root(monkeypatch):
-    monkeypatch.delenv("QA_TOOL_USER_CONFIG", raising=False)
+    monkeypatch.delenv("AKIA_USER_CONFIG", raising=False)
     monkeypatch.delattr(sys, "frozen", raising=False)
     path = settings._default_user_config_path()
     assert path.endswith("user_config.json")
     assert not path.endswith("user_config.default.json")
-    assert os.path.basename(os.path.dirname(path)) == "QA-Tool"
+    expected = os.path.abspath(
+        os.path.join(settings._CONFIG_DIR, "..", "user_config.json"))
+    assert path == expected
 
 
 def test_frozen_linux_uses_xdg_dir(monkeypatch, tmp_path):
-    monkeypatch.delenv("QA_TOOL_USER_CONFIG", raising=False)
+    monkeypatch.delenv("AKIA_USER_CONFIG", raising=False)
     monkeypatch.setattr(sys, "frozen", True, raising=False)
     monkeypatch.setattr(sys, "platform", "linux")
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
     path = settings._default_user_config_path()
-    assert path == str(tmp_path / "QA-Tool" / "user_config.json")
+    assert path == str(tmp_path / "AKIA" / "user_config.json")
 
 
 def test_frozen_windows_uses_appdata(monkeypatch, tmp_path):
-    monkeypatch.delenv("QA_TOOL_USER_CONFIG", raising=False)
+    monkeypatch.delenv("AKIA_USER_CONFIG", raising=False)
     monkeypatch.setattr(sys, "frozen", True, raising=False)
     monkeypatch.setattr(sys, "platform", "win32")
     monkeypatch.setenv("APPDATA", str(tmp_path))
     path = settings._default_user_config_path()
-    assert path == str(tmp_path / "QA-Tool" / "user_config.json")
+    assert path == str(tmp_path / "AKIA" / "user_config.json")
 
 
 def test_env_override_wins(monkeypatch, tmp_path):
     target = tmp_path / "portable.json"
-    monkeypatch.setenv("QA_TOOL_USER_CONFIG", str(target))
+    monkeypatch.setenv("AKIA_USER_CONFIG", str(target))
     assert settings._default_user_config_path() == str(target)
 
 

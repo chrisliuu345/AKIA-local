@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 
 from core.agent.providers import get_provider, needs_privacy_gate
 
-logger = logging.getLogger("QA-Tool.Privacy")
+logger = logging.getLogger("AKIA.Privacy")
 
 ACK_KEY_TEMPLATE = "llm_privacy_ack_{provider}"
 MAX_PREVIEW_CHARS = 400          # 单个工具结果在预览中的截断长度

@@ -24,7 +24,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-_MPL_CACHE = str(Path(tempfile.gettempdir()) / "qa_tool_mplcache")
+_MPL_CACHE = str(Path(tempfile.gettempdir()) / "akia_mplcache")
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 os.environ.setdefault("MPLCONFIGDIR", _MPL_CACHE)
 
@@ -252,7 +252,7 @@ def compare(results: dict, baseline: dict, tolerance: float) -> list:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="QA-Tool 性能基准")
+    parser = argparse.ArgumentParser(description="AKIA 性能基准")
     parser.add_argument("--update-baseline", action="store_true")
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--tolerance", type=float, default=DEFAULT_TOLERANCE)

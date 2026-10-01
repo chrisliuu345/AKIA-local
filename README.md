@@ -1,8 +1,13 @@
-# QA-Tool
+# AKIA
 
-> 个人订阅级AI桌面工业分析平台，融合 SPC + MSA + DOE + IE + 可靠性 + AI 分析
+> **AKIA（AKIM IE/Quality analyzer-local）**——个人订阅级 AI 桌面工业分析平台，
+> 融合 SPC + MSA + DOE + IE + 可靠性 + AI 分析
 
 [中文](README.md) | [English](README.en.md)
+
+> **命名说明**：自 v4.2.0 起产品更名为 **AKIA（AKIM IE/Quality analyzer-local）**。
+> v4.2.0 Release 中的 Linux AppImage 资产仍沿用旧文件名 `QA-Tool-4.2.0-x86_64.AppImage`
+> （GitHub 资产无法追溯改名），自下一版起统一为 `AKIA-*`。
 
 ---
 
@@ -13,8 +18,8 @@ Windows 侧为 **Inno Setup 安装包**（需在 Windows 机器上构建）：
 
 | 版本 | 安装文件 | 适用系统 | 发布状态 | 安装方式 |
 |------|----------|----------|----------|----------|
-| **Linux AppImage** | `QA-Tool-4.2.0-x86_64.AppImage` | 任意 x86_64 Linux（Debian / Ubuntu / Fedora / elementary 等） | ✅ 随 [v4.2.0 Release](https://github.com/chrisliuu345/QA-Tool/releases/tag/v4.2.0) 提供（附 `.sha256` 校验文件） | 免安装：赋予执行权限后直接运行 |
-| **Windows 安装包** | `QA-Tool-Setup-4.2.0.exe` | Windows 10/11（64 位） | Windows 侧构建（`build_pyinstaller.py` + `packaging/QA-Tool-installer.iss`） | 双击 Inno Setup 向导安装，开始菜单/桌面启动 |
+| **Linux AppImage** | `QA-Tool-4.2.0-x86_64.AppImage`（v4.2.0 历史资产名） | 任意 x86_64 Linux（Debian / Ubuntu / Fedora / elementary 等） | ✅ 随 [v4.2.0 Release](https://github.com/chrisliuu345/AKIA-local/releases/tag/v4.2.0) 提供（附 `.sha256` 校验文件） | 免安装：赋予执行权限后直接运行 |
+| **Windows 安装包** | `AKIA-Setup-4.2.0.exe` | Windows 10/11（64 位） | Windows 侧构建（`build_pyinstaller.py` + `packaging/AKIA-installer.iss`） | 双击 Inno Setup 向导安装，开始菜单/桌面启动 |
 
 > Linux 仅发布 **AppImage** 单一格式（不再构建 `.deb`）；Debian/Ubuntu/Fedora 等发行版通用。
 
@@ -33,7 +38,7 @@ chmod +x QA-Tool-4.2.0-x86_64.AppImage
 ### Windows（安装包）
 
 在 Windows 上执行 `python build_pyinstaller.py --onefile`，再用 Inno Setup 编译
-`packaging/QA-Tool-installer.iss`，产物 `QA-Tool-Setup-4.2.0.exe` 双击按向导安装
+`packaging/AKIA-installer.iss`，产物 `AKIA-Setup-4.2.0.exe` 双击按向导安装
 （含开始菜单与桌面快捷方式）。
 
 ### 源码运行
@@ -42,8 +47,8 @@ chmod +x QA-Tool-4.2.0-x86_64.AppImage
 > `requirements*.txt` 保留宽松约束便于升级。
 
 ```bash
-git clone https://github.com/chrisliuu345/QA-Tool.git
-cd QA-Tool
+git clone https://github.com/chrisliuu345/AKIA-local.git
+cd AKIA-local
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -104,7 +109,7 @@ python main.py
 | 模块 | 能力 |
 |------|------|
 | **QAM Harness** | AI Agent：37 个本地工具调用（SPC/能力/MSA/假设检验/DOE/回归/可靠性/时间序列/IE/成本/实时/五链/根因/机器学习）+ 离线工具模式 · BYOK 云供应商（OpenAI/Claude/Gemini/DeepSeek/Z.ai/KIMI + 自定义端点）· 密钥加密 + 云调用隐私门 · 知识库 RAG |
-| **插件接口 v2** | 外部插件独立开发/发布：pip entry point 或用户目录加载 · 贡献 Tab / Agent 工具 / 设置页 · 能力与依赖声明 · 信任模型（如独立项目 [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion)） |
+| **插件接口 v2** | 外部插件独立开发/发布：pip entry point 或用户目录加载 · 贡献 Tab / Agent 工具 / 设置页 · 能力与依赖声明 · 信任模型（如独立项目 [AKIA-Vision-expansion](https://github.com/chrisliuu345/AKIA-Vision-expansion)） |
 | **图表** | 15+ 种图表 · 深色主题 · 中文字体 |
 | **报告** | PDF / Word / Excel / HTML · 图表内联 |
 
@@ -170,9 +175,9 @@ tests/                 # 1950+ 测试
 
 ## 下载
 
-从 [Releases](https://github.com/chrisliuu345/QA-Tool/releases) 下载最新版本：
+从 [Releases](https://github.com/chrisliuu345/AKIA-local/releases) 下载最新版本：
 
-- `v4.2.0` — Linux AppImage（`QA-Tool-4.2.0-x86_64.AppImage` + `.sha256`）与源码包（zip / tar.gz）
+- `v4.2.0` — Linux AppImage（历史资产名 `QA-Tool-4.2.0-x86_64.AppImage` + `.sha256`）与源码包（zip / tar.gz）
 - 发布说明见 [`docs/releases/v4.2.0.md`](docs/releases/v4.2.0.md)
 
 ---
@@ -181,7 +186,7 @@ tests/                 # 1950+ 测试
 
 闭源商业软件，未经授权不得复制、修改或分发。
 
-© 2026 QA-Tool. All rights reserved.
+© 2026 AKIA. All rights reserved.
 
 ---
 

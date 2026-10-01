@@ -96,7 +96,7 @@ class DesktopHandler(QObject):
         from core.streaming.alert_journal import severity_label
 
         self.alert.emit(
-            f"[QA-Tool·{severity_label(e.severity)}] {e.device}/{e.channel} 异常",
+            f"[AKIA·{severity_label(e.severity)}] {e.device}/{e.channel} 异常",
             f"{e.desc} · 当前值 {e.value:.3f}")
 
 
@@ -195,8 +195,8 @@ def make_email_handler(host: str, port: int, user: str, password: str,
         msg = MIMEText(
             f"{e.device}/{e.channel} {e.desc}\n"
             f"值: {e.value:.3f}\n时间: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(e.ts))}")
-        msg["Subject"] = f"QA-Tool 告警 {e.device}/{e.channel}"
-        msg["From"] = formataddr(("QA-Tool", from_addr or user))
+        msg["Subject"] = f"AKIA 告警 {e.device}/{e.channel}"
+        msg["From"] = formataddr(("AKIA", from_addr or user))
         msg["To"] = to
         with smtplib.SMTP(host, port, timeout=timeout) as s:
             if use_tls:
@@ -210,7 +210,7 @@ def make_email_handler(host: str, port: int, user: str, password: str,
 def make_webhook_handler(url: str, timeout: float = 5.0):
     def notify(e: AlertEvent):
         payload = json.dumps({
-            "event": "qa-tool-alert", "device": e.device, "channel": e.channel,
+            "event": "akia-alert", "device": e.device, "channel": e.channel,
             "kind": e.kind, "desc": e.desc, "value": e.value, "ts": e.ts,
             "severity": e.severity, "id": e.id,
         }, ensure_ascii=False).encode("utf-8")

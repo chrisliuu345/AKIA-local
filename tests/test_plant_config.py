@@ -2,6 +2,7 @@
 """
 import json
 import os
+from pathlib import Path
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -117,8 +118,8 @@ def test_reload_in_place_keeps_identity(tmp_path):
 def test_default_plant_path_points_inside_repo():
     """v3.7.2 修复: 旧版多算一层 parent，配置被读写到仓库上一级目录。"""
     path = default_plant_path()
-    assert path.parent.name == "data"
-    assert path.parent.parent.name == "QA-Tool"
+    root = Path(__file__).resolve().parent.parent
+    assert path == root / "data" / "plant.json"
     assert legacy_plant_path() != path
 
 

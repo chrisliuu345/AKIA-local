@@ -1,5 +1,5 @@
 """
-QA-Tool — 主入口
+AKIA — 主入口
 """
 
 import sys
@@ -12,127 +12,29 @@ matplotlib.use("QtAgg")
 
 import warnings
 
-from output.chart_engine import _ensure_font
+from PySide6.QtWidgets import QApplication, QMessageBox
+from PySide6.QtCore import QTimer
+from PySide6.QtGui import QFont, QIcon
 
-from PySide6.QtWidgets import QApplication, QMessageBox, QSplashScreen
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont, QPixmap, QPainter, QColor, QIcon
-
-from config.settings import APP_NAME, APP_VERSION
+from config.settings import APP_NAME, APP_VERSION, ORGANIZATION
 from ui.font_config import get_ui_font
 
 # 数值退化告警（log(0)、除零等）出自第三方与算法层的边界样本：
 # 不静默丢弃，改用 "once" —— 每个位置只提示一次，避免刷屏又保留可见性
 warnings.filterwarnings("once", category=RuntimeWarning,
                         message=".*invalid value encountered.*")
-_ensure_font()
 
 
 LOGO_PATH = os.path.join(os.path.dirname(__file__), "logo.png")
 
-COLOR_UPPER = "#0d2847"
-COLOR_LOWER = "#4da6ff"
-COLOR_BAR_BG = "#0a1e38"
-COLOR_BAR_FILL = "#ffffff"
-
-_SPLASH_LOGICAL_W = 300
-_SPLASH_LOGICAL_H = 200
-_SPLASH_SPLIT_RATIO = 0.81
-
-
-def _get_screen_dpr():
-    """获取主屏幕的 devicePixelRatio"""
-    try:
-        from PySide6.QtGui import QGuiApplication
-        screen = QGuiApplication.primaryScreen()
-        if screen:
-            return screen.devicePixelRatio()
-    except Exception:
-        pass
-    return 1.0
-
-
-def _create_splash_canvas() -> QPixmap:
-    """创建双色 splash 画布（自适应 DPI）"""
-    dpr = _get_screen_dpr()
-    w = int(_SPLASH_LOGICAL_W * dpr)
-    h = int(_SPLASH_LOGICAL_H * dpr)
-    split_y = int(h * _SPLASH_SPLIT_RATIO)
-    max(2, int(3 * dpr))
-    margin_x = int(14 * dpr)
-    margin_top = int(28 * dpr)
-    margin_bottom = int(10 * dpr)
-    font_size = max(7, int(9 * dpr))
-
-    pm = QPixmap(w, h)
-    pm.fill(QColor(COLOR_LOWER))
-
-    painter = QPainter(pm)
-    painter.setRenderHint(QPainter.SmoothPixmapTransform)
-    painter.setRenderHint(QPainter.Antialiasing)
-
-    painter.setPen(Qt.NoPen)
-    painter.setBrush(QColor(COLOR_UPPER))
-    painter.drawRect(0, 0, w, split_y)
-
-    if os.path.exists(LOGO_PATH):
-        logo = QPixmap(LOGO_PATH)
-        if not logo.isNull():
-            max_h = split_y - margin_top - margin_bottom
-            max_w = w - margin_x * 2
-            scaled = logo.scaled(max_w, max_h, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-            x = (w - scaled.width()) // 2
-            y = (split_y - scaled.height()) // 2
-            painter.drawPixmap(x, y, scaled)
-
-    painter.setPen(QColor(COLOR_UPPER))
-    font = QFont(get_ui_font(), -1, QFont.Bold)
-    font.setPixelSize(font_size)
-    painter.setFont(font)
-    text_rect = Qt.AlignRight | Qt.AlignVCenter
-    painter.drawText(0, split_y, w - int(16 * dpr), h - split_y, text_rect, "IE-Quality Analysis Tool")
-
-    painter.end()
-    return pm
-
-
-def _update_splash(splash: QSplashScreen, pct: int, base: QPixmap = None):
-    """更新进度条（位于两色交接处）"""
-    global _splash_base
-    if base is not None:
-        _splash_base = base
-    if _splash_base is None:
-        return
-    pm = QPixmap(_splash_base)
-    painter = QPainter(pm)
-
-    w = pm.width()
-    h = pm.height()
-    dpr = _get_screen_dpr()
-    split_y = int(h * _SPLASH_SPLIT_RATIO)
-    bar_h = max(2, int(3 * dpr))
-    bar_y = split_y - bar_h // 2
-    fill_w = int(w * pct / 100)
-
-    painter.setPen(Qt.NoPen)
-    painter.setBrush(QColor(COLOR_BAR_BG))
-    painter.drawRect(0, bar_y, w, bar_h)
-
-    if fill_w > 0:
-        painter.setBrush(QColor(COLOR_BAR_FILL))
-        painter.drawRect(0, bar_y, fill_w, bar_h)
-
-    painter.end()
-    splash.setPixmap(pm)
-
-
-_splash_base: QPixmap = None
-
-
 def main():
     app = QApplication(sys.argv)
     app.setApplicationName(APP_NAME)
-    app.setOrganizationName("QA-Tool")
+    app.setOrganizationName(ORGANIZATION)
+
+    # 旧品牌（QA-Tool）QSettings 数据一次性迁移：窗口布局 / 最近项目 / 公式 / LLM 等
+    from core.settings_migration import migrate_legacy_qsettings
+    migrate_legacy_qsettings()
 
     if os.path.exists(LOGO_PATH):
         app.setWindowIcon(QIcon(LOGO_PATH))
@@ -194,34 +96,24 @@ def main():
         QProgressBar::chunk { background-color: #1b5faa; border-radius: 3px; }
     """)
 
-    global _splash_base
-    _splash_base = _create_splash_canvas()
-    splash = QSplashScreen(_splash_base)
-    splash.show()
-    splash.raise_()
-    app.processEvents()
-
-    import threading
-    def _warmup():
-        import scipy.stats  # noqa: F401
-        import statsmodels  # noqa: F401
-        import seaborn      # noqa: F401
-    threading.Thread(target=_warmup, daemon=True).start()
-
-    steps = [5, 10, 20, 28, 35, 42, 48, 55, 62, 70, 78, 85, 92, 97, 100]
-
-    for pct in steps:
-        _update_splash(splash, pct)
-        app.processEvents()
-
-        if pct == 28:
-            from ui.main_window import MainWindow
-        elif pct == 70:
-            window = MainWindow(splash=splash)
-
-    splash.close()
+    # 自本版起取消加载界面：启动后直接构建并显示主界面
+    from ui.main_window import MainWindow
+    window = MainWindow()
     window.show()
     app.processEvents()
+
+    # 重依赖预热移到首帧之后：不占用首屏等待时间
+    def _warm_background():
+        from output.chart_engine import _ensure_font
+        _ensure_font()
+        import threading
+
+        def _warm_modules():
+            import scipy.stats  # noqa: F401
+            import statsmodels  # noqa: F401
+            import seaborn      # noqa: F401
+        threading.Thread(target=_warm_modules, daemon=True).start()
+    QTimer.singleShot(600, _warm_background)
 
     if os.path.exists(LOGO_PATH):
         window.setWindowIcon(QIcon(LOGO_PATH))

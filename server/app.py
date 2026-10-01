@@ -1,4 +1,4 @@
-"""QA-Tool 实时 SPC 云看板 — FastAPI + WebSocket 独立服务。
+"""AKIA 实时 SPC 云看板 — FastAPI + WebSocket 独立服务。
 
 用法:
     python -m server.app [--port 8765] [--host 127.0.0.1]
@@ -61,7 +61,7 @@ def create_app(bus: StreamBus, store: TimeseriesStore | None = None,
     from fastapi import FastAPI, WebSocket, WebSocketDisconnect
     from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 
-    app = FastAPI(title="QA-Tool 实时看板", docs_url=None, redoc_url=None)
+    app = FastAPI(title="AKIA 实时看板", docs_url=None, redoc_url=None)
 
     def _authorized(request) -> bool:
         """v3.8.0 可选鉴权: Bearer 头或 ?token= 查询参数。未配置 token 时全放行。"""
@@ -268,7 +268,7 @@ def start_thread(bus: StreamBus, store: TimeseriesStore | None = None,
     cfg = uvicorn.Config(app, host=host, port=port, log_level="warning")
     server = uvicorn.Server(cfg)
     thread = threading.Thread(target=server.run, daemon=True,
-                              name="qa-tool-live-dashboard")
+                              name="akia-live-dashboard")
     thread.stop_server = lambda: setattr(server, "should_exit", True)  # 供外部停止
     thread.start()
     return thread
@@ -285,7 +285,7 @@ def stop_thread(thread, timeout: float = 5.0) -> None:
 if __name__ == "__main__":
     import uvicorn
 
-    parser = argparse.ArgumentParser(description="QA-Tool 实时看板服务")
+    parser = argparse.ArgumentParser(description="AKIA 实时看板服务")
     parser.add_argument("--host", default=DEFAULT_HOST)
     parser.add_argument("--port", type=int, default=DEFAULT_PORT)
     parser.add_argument("--token", default="",
@@ -304,6 +304,6 @@ if __name__ == "__main__":
         return runner
 
     _demo_source()
-    print(f"QA-Tool 实时看板: http://{args.host}:{args.port}")
+    print(f"AKIA 实时看板: http://{args.host}:{args.port}")
     uvicorn.run(create_app(bus, store, auth_token=token), host=args.host,
                 port=args.port, log_level="warning")

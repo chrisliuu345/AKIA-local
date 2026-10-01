@@ -1,10 +1,10 @@
 [Desktop Entry]
 Type=Application
-Name=QA-Tool
-GenericName=Quality Analysis Tool
-Comment=工业工程与质量分析工具
-Exec=/opt/qa-tool/bin/qa-tool %F
-Icon=qa-tool
+Name=AKIA
+GenericName=IE/Quality Analyzer
+Comment=AKIM 工业工程与质量分析工具（本地版）
+Exec=/opt/akia/bin/akia %F
+Icon=akia
 Categories=Development;Science;Education;
 MimeType=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;text/csv;
 Terminal=false

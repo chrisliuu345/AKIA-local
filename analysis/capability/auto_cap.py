@@ -16,7 +16,7 @@ import pandas as pd
 from analysis._sanitize import sanitize_array
 from scipy import stats
 
-logger = logging.getLogger("QA-Tool.AutoCap")
+logger = logging.getLogger("AKIA.AutoCap")
 
 
 DISTRIBUTIONS = {

@@ -1,5 +1,5 @@
 """
-QA-Tool — 主窗口
+AKIA — 主窗口
 """
 
 import contextlib
@@ -11,7 +11,7 @@ import pandas as pd
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QMessageBox, QFileDialog,
-    QPushButton, QApplication, QFrame,
+    QPushButton, QFrame,
     QScrollArea,
 )
 from PySide6.QtCore import (
@@ -40,8 +40,6 @@ from ui.widgets.elided_label import ElidedLabel
 from ui.welcome_page import WelcomePage
 from ui.dialogs.import_dialog import ImportDialog
 from ui.dialogs.settings_dialog import SettingsDialog
-from ui.dialogs.db_connection_dialog import DbConnectionDialog
-from core.sql_loader import SqlLoader
 from core.plugin_manager import PluginManager
 from ui.main_window_helpers import (
     _CurrentPageStack, _resolve_llm_client, _tab_has_data, _tab_is_runnable,
@@ -59,7 +57,7 @@ _IE_IMPORT_TAB_INDICES = frozenset({7, 9, 10, 11})
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, splash=None):
+    def __init__(self):
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} v{APP_VERSION}")
         self.resize(1300, 880)
@@ -69,13 +67,6 @@ class MainWindow(QMainWindow):
         if os.path.exists(logo_path):
             self.setWindowIcon(QIcon(logo_path))
 
-        def _step(pct, msg):
-            if splash:
-                from main import _update_splash, _splash_base
-                _update_splash(splash, pct, _splash_base)
-                QApplication.processEvents()
-
-        _step(71, "初始化数据加载器...")
         self.data_loader = DataLoader()
         self.data_parser = DataParser()
         self.data_profiler = DataProfiler()
@@ -88,20 +79,15 @@ class MainWindow(QMainWindow):
         self.analyses: dict[int, dict[str, Any]] = {}
         self.project_context = ProjectContext()
 
-        _step(73, "构建界面布局...")
         self._setup_ui()
         self._menu_refs: list = []
 
-        _step(76, "初始化菜单栏...")
         self._setup_menu()
 
-        _step(78, "初始化状态栏...")
         self._setup_statusbar()
 
-        _step(80, "连接信号与路由...")
         self._connect_signals()
 
-        _step(83, "恢复窗口布局...")
         self._restore_window_state()
         self.setAcceptDrops(True)
 
@@ -129,7 +115,6 @@ class MainWindow(QMainWindow):
                 tooltip=record.description,
             )
 
-        _step(85, "主窗口初始化完成")
         self._start_alert_engine()
         self._start_streaming_runtime()
 
@@ -547,7 +532,7 @@ class MainWindow(QMainWindow):
         if not self.analyses:
             QMessageBox.warning(self, "无数据", "请先导入数据并运行分析")
             return
-        path, _ = QFileDialog.getSaveFileName(self, "导出 HTML 报告", "qa_report.html", "HTML 报告 (*.html)")
+        path, _ = QFileDialog.getSaveFileName(self, "导出 HTML 报告", "akia_report.html", "HTML 报告 (*.html)")
         if not path:
             return
         try:
@@ -845,6 +830,9 @@ class MainWindow(QMainWindow):
                 self.status_label.setText(i18n.tr("status.failed"))
 
     def _on_import_db(self):
+        # 延迟导入：数据库驱动（sqlalchemy）不进入冷启动路径
+        from core.sql_loader import SqlLoader
+        from ui.dialogs.db_connection_dialog import DbConnectionDialog
         dialog = DbConnectionDialog(self)
         if dialog.exec():
             config, table_names = dialog.get_selection()
@@ -1547,7 +1535,7 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "无数据", "请先导入数据并运行分析")
             return
         path, _ = QFileDialog.getSaveFileName(
-            self, "保存项目", "QA_Project.qap", "QA-Tool 项目 (*.qap)"
+            self, "保存项目", "AKIA_Project.qap", "AKIA 项目 (*.qap)"
         )
         if not path:
             return
@@ -1615,7 +1603,7 @@ class MainWindow(QMainWindow):
 
     def _on_load_project(self):
         path, _ = QFileDialog.getOpenFileName(
-            self, "打开项目", "", "QA-Tool 项目 (*.qap)"
+            self, "打开项目", "", "AKIA 项目 (*.qap)"
         )
         if not path:
             return
@@ -1874,7 +1862,7 @@ class MainWindow(QMainWindow):
         return ""
 
     def _restore_window_state(self):
-        settings = QSettings("QA-Tool", "MainWindow")
+        settings = QSettings("AKIA", "MainWindow")
         geo = settings.value("geometry")
         state = settings.value("windowState")
         if geo:
@@ -1888,7 +1876,7 @@ class MainWindow(QMainWindow):
         apply_dark_palette()
 
     def closeEvent(self, event):
-        settings = QSettings("QA-Tool", "MainWindow")
+        settings = QSettings("AKIA", "MainWindow")
         settings.setValue("geometry", self.saveGeometry())
         settings.setValue("windowState", self.saveState())
         settings.setValue("sidebarCollapsed", not self.sidebar.isVisible())
@@ -1983,7 +1971,7 @@ class MainWindow(QMainWindow):
         from core.project_manager import SharedProjectManager
         dept = "公共"
         path, _ = QFileDialog.getSaveFileName(
-            self, "保存到共享目录", "QA_Shared.qap", "QA-Tool 项目 (*.qap)"
+            self, "保存到共享目录", "AKIA_Shared.qap", "AKIA 项目 (*.qap)"
         )
         if not path:
             return
@@ -2294,6 +2282,7 @@ class MainWindow(QMainWindow):
         )
         msg_box.setText(
             f"<h2>{APP_NAME} v{APP_VERSION}</h2>"
+            f"<p>AKIM IE/Quality analyzer-local</p>"
             f"<p>AI 工业质量 + IE 分析平台</p>"
             f"<p>25+ 质量分析 · 5 IE 工具 · AI 根因分析 · 知识库 RAG</p>"
             f"<p>企业特性: .qap 项目文件 · SQL 直连 · 批量调度 · 多用户协同</p>"

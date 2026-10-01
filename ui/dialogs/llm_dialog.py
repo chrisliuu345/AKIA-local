@@ -117,7 +117,7 @@ class QAMHarnessDialog(QDialog):
         if self.llm is None:
             # 任意云供应商已配置密钥即自动选中（与主窗口连接检测同源）
             self.llm = LLMClient.detect_available()
-            saved_model = QSettings("QA-Tool", "LLM").value("model", "")
+            saved_model = QSettings("AKIA", "LLM").value("model", "")
             if saved_model:
                 with contextlib.suppress(Exception):
                     self.llm.set_model(saved_model, self.llm.provider)
@@ -460,7 +460,7 @@ class QAMHarnessDialog(QDialog):
         from core.agent.providers import get_provider
 
         pid = self.llm.provider
-        settings = QSettings("QA-Tool", "LLM")
+        settings = QSettings("AKIA", "LLM")
         saved_model = str(settings.value("model", "") or "")
         saved_provider = str(settings.value("provider", "") or "")
         name = saved_model if saved_model and saved_provider == pid else ""
@@ -480,7 +480,7 @@ class QAMHarnessDialog(QDialog):
             return
         with contextlib.suppress(Exception):
             self.llm.set_model(name, self.llm.provider)
-        settings = QSettings("QA-Tool", "LLM")
+        settings = QSettings("AKIA", "LLM")
         settings.setValue("model", name)
         settings.setValue("provider", self.llm.provider)
         self._update_status()
