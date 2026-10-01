@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 _APP_VERSION_RE = re.compile(r'^APP_VERSION\s*=\s*"([^"]+)"', re.MULTILINE)
 _ARTIFACT_RES = (
-    re.compile(r"QA-Tool-(\d+\.\d+\.\d+)-x86_64\.AppImage"),
+    re.compile(r"AKIA-(\d+\.\d+\.\d+)-x86_64\.AppImage"),
 )
 _DECL_RES = (
     r"\*\*当前版本\*\*:\s*v(\d+\.\d+\.\d+)",
@@ -62,16 +62,16 @@ def check_build_script(problems: list) -> None:
 
 def check_installer(version: str, problems: list) -> None:
     """Inno Setup 安装器版本（Windows 打包，手动构建也需要同步）"""
-    path = ROOT / "packaging" / "QA-Tool-installer.iss"
+    path = ROOT / "packaging" / "AKIA-installer.iss"
     if not path.exists():
-        problems.append("packaging/QA-Tool-installer.iss: 文件不存在")
+        problems.append("packaging/AKIA-installer.iss: 文件不存在")
         return
     found = re.search(r'#define\s+MyAppVersion\s+"([^"]+)"',
                       path.read_text(encoding="utf-8"))
     if not found or found.group(1) != version:
         current = found.group(1) if found else "未声明"
         problems.append(
-            f"packaging/QA-Tool-installer.iss: MyAppVersion {current} != {version}")
+            f"packaging/AKIA-installer.iss: MyAppVersion {current} != {version}")
 
 
 def check_version_claims(rel_path: str, version: str, problems: list) -> None:

@@ -1,16 +1,18 @@
 """
-图表类型图库面板 — 可折叠分类网格，替代纯下拉框
+图表类型图库面板 — 浮层下拉网格，替代纯下拉框
 
-默认折叠为一行标题，展开后按类别分组的图块网格（点击即选图表类型）。
+折叠态为一行标题（当前类型 + 展开按钮）；点击展开后在按钮下方弹出浮层，
+按类别分组展示全部图表类型。浮层是独立窗口，不受父容器高度限制：
+窄列里也能完整展示所有图标选项，不会被压缩重叠（屏幕放不下时才内部滚动）。
 """
 
 
-from PySide6.QtCore import Qt, Signal, QSize
+from PySide6.QtCore import Qt, Signal, QSize, QPoint
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QGridLayout,
+    QGridLayout, QFrame, QScrollArea,
 )
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QGuiApplication
 
 from ui.font_config import get_ui_font
 from ui.widgets.chart_icons import get_chart_icon
@@ -25,6 +27,9 @@ GALLERY_GROUPS: list[tuple[str, list[str]]] = [
 ]
 
 _ICON_SIZE = QSize(22, 22)
+_TILE_WIDTH = 152
+_TILE_HEIGHT = 44
+_COLUMNS = 3
 
 _SELECTED_QSS = """
     QPushButton {
@@ -47,6 +52,16 @@ _TILE_QSS = """
     }
     QPushButton:hover { background: #2f2f3d; border-color: #4a4a58; }
 """
+
+
+class _PopupPanel(QFrame):
+    """浮层面板：Esc / 点击外部关闭时通知宿主同步展开状态。"""
+
+    closed = Signal()
+
+    def hideEvent(self, event):
+        super().hideEvent(event)
+        self.closed.emit()
 
 
 class ChartGallery(QWidget):
@@ -97,13 +112,29 @@ class ChartGallery(QWidget):
 
         layout.addLayout(header)
 
-        self._body = QWidget()
+        # 浮层：独立顶层窗口，展开时不受父容器高度约束
+        self._body = _PopupPanel(self, Qt.Popup)
+        self._body.setObjectName("chartGalleryPopup")
+        self._body.setStyleSheet(
+            "QFrame#chartGalleryPopup { background: #22222e;"
+            " border: 1px solid #3a3a48; border-radius: 8px; }")
         self._body.setVisible(False)
-        self._groups_layout = QVBoxLayout(self._body)
+        self._body.closed.connect(self._on_popup_closed)
+
+        outer = QVBoxLayout(self._body)
+        outer.setContentsMargins(10, 10, 10, 10)
+        self._scroll = QScrollArea(self._body)
+        self._scroll.setWidgetResizable(True)
+        self._scroll.setFrameShape(QFrame.NoFrame)
+        self._scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        outer.addWidget(self._scroll)
+
+        self._content = QWidget()
+        self._groups_layout = QVBoxLayout(self._content)
         self._groups_layout.setContentsMargins(2, 2, 2, 2)
         self._groups_layout.setSpacing(8)
+        self._scroll.setWidget(self._content)
         self._build_groups()
-        layout.addWidget(self._body)
 
     def _build_groups(self):
         known = set(self._chart_types)
@@ -126,6 +157,9 @@ class ChartGallery(QWidget):
             grid = QGridLayout()
             grid.setContentsMargins(0, 0, 0, 0)
             grid.setSpacing(6)
+            for col in range(_COLUMNS):
+                grid.setColumnMinimumWidth(col, _TILE_WIDTH)
+            grid.setColumnStretch(_COLUMNS, 1)  # 余量留在右侧，图块保持左对齐
             for idx, name in enumerate(tiles):
                 btn = QPushButton(f"  {name}")
                 icon = get_chart_icon(name)
@@ -133,11 +167,11 @@ class ChartGallery(QWidget):
                     btn.setIcon(icon)
                     btn.setIconSize(_ICON_SIZE)
                 btn.setFont(QFont(get_ui_font(), 11))
-                btn.setMinimumHeight(52)
+                btn.setFixedSize(_TILE_WIDTH, _TILE_HEIGHT)
                 btn.setCursor(Qt.PointingHandCursor)
                 btn.setStyleSheet(_TILE_QSS)
                 btn.clicked.connect(lambda _=False, t=name: self._on_tile_clicked(t))
-                grid.addWidget(btn, idx // 2, idx % 2)
+                grid.addWidget(btn, idx // _COLUMNS, idx % _COLUMNS)
                 self._tile_buttons[name] = btn
             self._groups_layout.addLayout(grid)
 
@@ -163,14 +197,42 @@ class ChartGallery(QWidget):
             self.expand()
 
     def expand(self):
+        if self._expanded:
+            return
         self._expanded = True
-        self._body.setVisible(True)
         self._toggle_btn.setText("收起")
+        size = self._popup_size()
+        anchor = self.mapToGlobal(QPoint(0, self.height() + 2))
+        screen = QGuiApplication.screenAt(anchor) or QGuiApplication.primaryScreen()
+        if screen is None:
+            self._body.resize(size)
+            self._body.move(anchor)
+        else:
+            avail = screen.availableGeometry()
+            w = min(size.width(), avail.width() - 16)
+            h = min(size.height(), avail.height() - 16)
+            x = min(max(anchor.x(), avail.left() + 8), avail.right() - w - 8)
+            y = anchor.y()
+            if y + h > avail.bottom() - 8:
+                y = max(avail.top() + 8, anchor.y() - self.height() - h - 4)
+            self._body.setGeometry(x, y, w, h)
+        self._body.show()
+        self._body.raise_()
 
     def collapse(self):
         self._expanded = False
-        self._body.setVisible(False)
+        self._body.hide()
         self._toggle_btn.setText("展开")
 
     def is_expanded(self) -> bool:
         return self._expanded
+
+    def _on_popup_closed(self):
+        self._expanded = False
+        self._toggle_btn.setText("展开")
+
+    def _popup_size(self) -> QSize:
+        """浮层自然尺寸：完整容纳全部图块（屏幕放不下时才由内部滚动兜底）。"""
+        self._content.adjustSize()
+        hint = self._content.sizeHint()
+        return QSize(hint.width() + 32, hint.height() + 32)

@@ -1,4 +1,4 @@
-"""ESP32 sensor input device firmware for QA-Tool v2.5b (JSON-lines over UART0).
+"""ESP32 sensor input device firmware for AKIA v2.5b (JSON-lines over UART0).
 
 Protocol (see core/devices/protocol.py):
   PC -> device : {"type":"hello","device_id":...,"device_type":...,"fw_version":...}

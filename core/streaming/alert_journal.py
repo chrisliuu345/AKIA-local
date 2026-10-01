@@ -13,7 +13,7 @@ import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
-logger = logging.getLogger("QA-Tool.AlertJournal")
+logger = logging.getLogger("AKIA.AlertJournal")
 
 SEVERITY_INFO = "info"
 SEVERITY_WARNING = "warning"

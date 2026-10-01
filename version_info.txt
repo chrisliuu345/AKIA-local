@@ -15,13 +15,13 @@ VSVersionInfo(
       StringTable(
         u'080404b0',
         [
-          StringStruct(u'CompanyName', u'QA-Tool'),
-          StringStruct(u'FileDescription', u'QA-Tool 质量分析工具'),
+          StringStruct(u'CompanyName', u'AKIM'),
+          StringStruct(u'FileDescription', u'AKIA · AKIM IE/Quality analyzer-local'),
           StringStruct(u'FileVersion', u'4.2.0'),
-          StringStruct(u'InternalName', u'QA-Tool'),
-          StringStruct(u'LegalCopyright', u'Copyright © 2026 QA-Tool'),
-          StringStruct(u'OriginalFilename', u'QA-Tool.exe'),
-          StringStruct(u'ProductName', u'QA-Tool'),
+          StringStruct(u'InternalName', u'AKIA'),
+          StringStruct(u'LegalCopyright', u'Copyright © 2026 AKIM'),
+          StringStruct(u'OriginalFilename', u'AKIA.exe'),
+          StringStruct(u'ProductName', u'AKIA'),
           StringStruct(u'ProductVersion', u'4.2.0')
         ]
       )

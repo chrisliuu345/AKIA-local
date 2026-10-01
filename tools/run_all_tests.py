@@ -1,5 +1,5 @@
 """
-QA-Tool 全面测试脚本 v3 — 模块化脚本测试，避免 GUI segfault（遗留工具）
+AKIA 全面测试脚本 v3 — 模块化脚本测试，避免 GUI segfault（遗留工具）
 
 由 tests/ 迁移至 tools/（v3.7.1）：它不是 pytest 用例（不匹配 test_*.py），
 保留用于无 pytest 环境的一次性全量冒烟；正式回归请使用 tests/ 下的
@@ -75,7 +75,7 @@ def T01_settings():
         CAPABILITY_GRADES,
     )
 
-    assert APP_NAME == "QA-Tool"
+    assert APP_NAME == "AKIA"
     assert ".xlsx" in SUPPORTED_EXCEL_EXTENSIONS
     assert len(NELSON_RULES) == 8
     assert 2 in CONTROL_CHART_CONSTANTS
@@ -704,7 +704,7 @@ total = len(results)
 
 report_path = os.path.join(OUTPUT_DIR, "test_report.md")
 with open(report_path, "w", encoding="utf-8") as f:
-    f.write("# QA-Tool 全面测试报告\n\n")
+    f.write("# AKIA 全面测试报告\n\n")
     f.write(f"> 生成时间: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M')}\n")
     f.write("> 测试数据: `公司仪器测试数据.xlsx` + SQLite\n")
     f.write("> Python: 3.14.6\n\n")

@@ -30,7 +30,7 @@ def _anim_off():
 
 @pytest.fixture(autouse=True)
 def _dash_settings():
-    s = QSettings("QA-Tool", "Dashboard")
+    s = QSettings("AKIA", "Dashboard")
     keys = ("order", "hidden", "auto_refresh")
     saved = {k: s.value(k) for k in keys}
     for k in keys:

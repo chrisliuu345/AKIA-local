@@ -67,7 +67,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pytest-logs
-          path: /tmp/qa_tool_test_logs/
+          path: /tmp/akia_test_logs/
           retention-days: 7
 
   benchmark:
@@ -113,9 +113,9 @@ jobs:
       - name: 启动冒烟（离屏，10 秒内不崩溃即通过）
         run: |
           ls -lh build/*.AppImage
-          timeout 10 ./build/QA-Tool-*-x86_64.AppImage --appimage-extract-and-run || [ $? -eq 124 ]
+          timeout 10 ./build/AKIA-*-x86_64.AppImage --appimage-extract-and-run || [ $? -eq 124 ]
       - uses: actions/upload-artifact@v4
         with:
-          name: QA-Tool-AppImage
-          path: build/QA-Tool-*-x86_64.AppImage
+          name: AKIA-AppImage
+          path: build/AKIA-*-x86_64.AppImage
           retention-days: 30

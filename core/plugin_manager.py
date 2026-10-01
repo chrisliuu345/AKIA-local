@@ -2,8 +2,8 @@
 
 发现顺序:
   1. 随包 `plugins/`（目录式 `plugin.json` 或旧式单文件 `.py`）— 默认信任
-  2. 用户目录 `~/.qa_tool_plugins/`（可用 `QA_TOOL_PLUGIN_DIRS` 覆盖，os.pathsep 分隔）
-  3. pip entry point 组 `qa_tool.plugins`
+  2. 用户目录 `~/.akia_plugins/`（可用 `AKIA_PLUGIN_DIRS` 覆盖，os.pathsep 分隔）
+  3. pip entry point 组 `akia.plugins`
 
 未信任插件只登记 manifest、不导入代码；在「设置 → 插件」中信任后重新扫描生效。
 主应用只依赖本接口，不感知任何具体插件（如机器视觉）。
@@ -24,7 +24,8 @@ from typing import Any
 
 from core.plugin_api import (
     IPlugin,
-    IQAToolPlugin,
+    IAKIAPlugin,
+    LEGACY_PLUGIN_ENTRY_POINT_GROUP,
     PLUGIN_API_VERSION,
     PLUGIN_ENTRY_POINT_GROUP,
     PluginError,
@@ -35,7 +36,7 @@ from core.plugin_api import (
     version_satisfies,
 )
 
-_log = logging.getLogger("QA-Tool.Plugin")
+_log = logging.getLogger("AKIA.Plugin")
 
 
 @dataclass
@@ -82,7 +83,7 @@ class PluginRecord:
         }
 
 
-class LegacyPluginAdapter(IQAToolPlugin):
+class LegacyPluginAdapter(IAKIAPlugin):
     """把旧式 IPlugin（依赖 create_tab(parent)）适配到 v2 接口。"""
 
     def __init__(self, legacy: IPlugin, manifest: PluginManifest):
@@ -99,10 +100,13 @@ class LegacyPluginAdapter(IQAToolPlugin):
 
 
 def _user_plugin_dirs() -> list[Path]:
-    env = os.environ.get("QA_TOOL_PLUGIN_DIRS", "").strip()
+    from core.legacy import env_first
+
+    env = env_first("AKIA_PLUGIN_DIRS", "QA_TOOL_PLUGIN_DIRS")
     if env:
         return [Path(p) for p in env.split(os.pathsep) if p.strip()]
-    return [Path.home() / ".qa_tool_plugins"]
+    # 新目录优先 + 旧目录回退（兼容期两个目录都会被扫描）
+    return [Path.home() / ".akia_plugins", Path.home() / ".qa_tool_plugins"]
 
 
 class PluginManager:
@@ -214,7 +218,8 @@ class PluginManager:
                 f"插件 API {manifest.api_version} 与主程序 "
                 f"{PLUGIN_API_VERSION} 不兼容")
             return
-        required = str((manifest.requires or {}).get("qa_tool", ""))
+        requires = manifest.requires or {}
+        required = str(requires.get("akia") or requires.get("qa_tool") or "")
         try:
             from config.settings import APP_VERSION
         except Exception:
@@ -264,16 +269,17 @@ class PluginManager:
         obj = getattr(module, cls_name) if cls_name else module
         if isinstance(obj, type):
             obj = obj()
-        if not isinstance(obj, IQAToolPlugin):
-            raise PluginError(f"{entry} 未返回 IQAToolPlugin 实例")
+        if not isinstance(obj, IAKIAPlugin):
+            raise PluginError(f"{entry} 未返回 IAKIAPlugin 实例")
         return obj
 
     def _scan_entry_points(self):
-        try:
-            entries = importlib.metadata.entry_points(group=PLUGIN_ENTRY_POINT_GROUP)
-        except Exception as e:                      # 老版本/环境异常
-            _log.debug("entry_points 读取失败: %s", e)
-            return
+        entries = []
+        for group in (PLUGIN_ENTRY_POINT_GROUP, LEGACY_PLUGIN_ENTRY_POINT_GROUP):
+            try:
+                entries.extend(importlib.metadata.entry_points(group=group))
+            except Exception as e:                  # 老版本/环境异常
+                _log.debug("entry_points 读取失败(%s): %s", group, e)
         for ep in entries:
             plugin_id = ep.name.strip().lower()
             if plugin_id in self._records:
@@ -316,7 +322,7 @@ class PluginManager:
 
     def _probe(self, record: PluginRecord):
         instance = record.instance
-        if not isinstance(instance, IQAToolPlugin):
+        if not isinstance(instance, IAKIAPlugin):
             record.available = True
             return
         try:
@@ -408,5 +414,5 @@ class PluginManager:
         return added
 
 
-__all__ = ["IPlugin", "IQAToolPlugin", "PluginManager", "PluginRecord",
+__all__ = ["IPlugin", "IAKIAPlugin", "PluginManager", "PluginRecord",
            "LegacyPluginAdapter"]

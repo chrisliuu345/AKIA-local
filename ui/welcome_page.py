@@ -1,22 +1,27 @@
 """欢迎/首页 — 暗色渐变背景 + 卡片式快速入口 + 最近项目"""
 
+import os
+
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QScrollArea,
 )
 from PySide6.QtCore import Signal, Qt, QPointF
 from PySide6.QtGui import (
-    QFont, QColor, QPainter, QLinearGradient, QRadialGradient, QPen,
+    QFont, QColor, QPainter, QLinearGradient, QRadialGradient, QPen, QPixmap,
 )
 from ui.theme import colors as theme_colors
 from ui.widgets.elided_label import ElidedLabel
 from ui.font_config import get_ui_font
 
 from core.i18n import i18n
-from config.settings import APP_VERSION
+from config.settings import APP_FULL_NAME, APP_VERSION
 
 
 class WelcomePage(QWidget):
+    #: 首页大 logo 的逻辑高度（宽字标按比例缩放）
+    _LOGO_HEIGHT = 64
+
     import_data_clicked = Signal()
     import_ie_clicked = Signal()
     import_template_clicked = Signal()
@@ -33,6 +38,46 @@ class WelcomePage(QWidget):
         self._recent_items = items or []
         self._rebuild_recent_section()
 
+    def _wordmark_pixmap(self) -> QPixmap:
+        """首页大 logo：透明背景字标；深色变体缺失时逐级回退。"""
+        root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        pixmap = QPixmap()
+        for rel in ("assets/logo_wordmark_light.png",
+                    "assets/logo_wordmark.png",
+                    "logo.png"):
+            path = os.path.join(root, rel)
+            if not os.path.exists(path):
+                continue
+            candidate = QPixmap(path)
+            if not candidate.isNull():
+                pixmap = candidate
+                break
+        if pixmap.isNull():
+            return pixmap
+        dpr = self.devicePixelRatioF() or 1.0
+        scaled = pixmap.scaledToHeight(
+            max(1, int(self._LOGO_HEIGHT * dpr)), Qt.SmoothTransformation)
+        scaled.setDevicePixelRatio(dpr)
+        return scaled
+
+    def _hero_center(self) -> tuple[float, float]:
+        """背景同心圆 / 光晕的圆心（logo 与之同心对齐）。"""
+        return self.width() / 2.0, min(self.height() * 0.18, 180.0)
+
+    def _sync_header_alignment(self) -> None:
+        """调整 header 上边距，使 logo 中心与同心圆圆心重合。"""
+        layout = getattr(self, "_header_layout", None)
+        if layout is None:
+            return
+        _, cy = self._hero_center()
+        logo_h = self.logo_label.sizeHint().height() or self._LOGO_HEIGHT
+        top = max(8, int(round(cy - logo_h / 2.0)))
+        layout.setContentsMargins(60, top, 60, 18)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._sync_header_alignment()
+
     def _setup_ui(self):
         tc = theme_colors()
         layout = QVBoxLayout(self)
@@ -40,19 +85,22 @@ class WelcomePage(QWidget):
         layout.setSpacing(0)
 
         header = QFrame()
-        header.setStyleSheet("QFrame { background: transparent; padding: 42px 60px 18px 60px; }")
+        header.setStyleSheet("QFrame { background: transparent; }")
         header_layout = QVBoxLayout(header)
+        header_layout.setContentsMargins(60, 42, 60, 18)
         header_layout.setSpacing(4)
+        self._header_layout = header_layout
 
-        title_font = QFont(get_ui_font(), 36, QFont.Bold)
-        title_font.setLetterSpacing(QFont.AbsoluteSpacing, 3)
-        self.title_label = QLabel(i18n.tr("welcome.title"))
-        self.title_label.setFont(title_font)
-        self.title_label.setAlignment(Qt.AlignCenter)
-        self.title_label.setStyleSheet("color: #ffffff; background: transparent;")
-        header_layout.addWidget(self.title_label)
+        # 大标题改为透明背景 logo（深色界面使用提亮变体，保证可见性）
+        self.logo_label = QLabel()
+        self.logo_label.setObjectName("welcomeLogo")
+        self.logo_label.setAlignment(Qt.AlignCenter)
+        self.logo_label.setStyleSheet("background: transparent;")
+        self.logo_label.setAccessibleName(i18n.tr("welcome.title"))
+        self.logo_label.setPixmap(self._wordmark_pixmap())
+        header_layout.addWidget(self.logo_label)
 
-        self.subtitle_label = QLabel("AI 工业质量 + IE 分析平台")
+        self.subtitle_label = QLabel(APP_FULL_NAME)
         self.subtitle_label.setFont(QFont(get_ui_font(), 12))
         self.subtitle_label.setAlignment(Qt.AlignCenter)
         self.subtitle_label.setStyleSheet(
@@ -60,6 +108,7 @@ class WelcomePage(QWidget):
         header_layout.addWidget(self.subtitle_label)
 
         layout.addWidget(header)
+        self._sync_header_alignment()
 
         divider = QFrame()
         divider.setFixedHeight(2)
@@ -251,7 +300,7 @@ class WelcomePage(QWidget):
         grad.setColorAt(1.0, QColor(tc["bg_body"]))
         painter.fillRect(self.rect(), grad)
 
-        cx, cy = w / 2.0, min(h * 0.18, 180.0)
+        cx, cy = self._hero_center()
         glow = QRadialGradient(QPointF(cx, cy), max(w * 0.28, 220.0))
         glow_core = QColor(tc["accent"])
         glow_core.setAlpha(30)
@@ -273,4 +322,6 @@ class WelcomePage(QWidget):
         super().paintEvent(event)
 
     def refresh_texts(self):
-        self.title_label.setText(i18n.tr("welcome.title"))
+        self.logo_label.setPixmap(self._wordmark_pixmap())
+        self.logo_label.setAccessibleName(i18n.tr("welcome.title"))
+        self._sync_header_alignment()

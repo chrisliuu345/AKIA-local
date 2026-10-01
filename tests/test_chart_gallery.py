@@ -5,6 +5,7 @@
 import time
 
 import pytest
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QWidget
 
 from ui.widgets.chart_gallery import ChartGallery, GALLERY_GROUPS
@@ -22,11 +23,28 @@ class TestChartGallery:
         assert gallery.is_expanded() is False
         assert gallery._body.isHidden() is True
 
-    def test_body_is_plain_widget_no_scroll(self, gallery):
-        # 展开体为普通 QWidget（非滚动区）：内容随展开向下生长全部显示
+    def test_body_is_popup_panel(self, gallery):
+        # 展开体为独立浮层（Qt.Popup）：不占父布局高度，不受配置列高度限制
         assert isinstance(gallery._body, QWidget)
-        assert not hasattr(gallery, "_body_scroll")
-        assert gallery._body.maximumHeight() > 2000  # 无 230px 内部滚动上限
+        assert gallery._body.isWindow() is True
+        assert bool(gallery._body.windowFlags() & Qt.Popup)
+        assert gallery._body.isHidden() is True
+
+    def test_popup_tiles_keep_full_size(self, gallery):
+        # 固定三列、固定宽度：窄配置列展开也不会压缩图标选项
+        gallery.expand()
+        app = QApplication.instance()
+        app.processEvents()
+        assert gallery._body.sizeHint().width() >= 3 * 152
+        rects = []
+        for btn in gallery._tile_buttons.values():
+            assert btn.size().width() == 152
+            assert btn.size().height() == 44
+            assert btn.size().width() >= btn.sizeHint().width()
+            rects.append(btn.geometry())
+        for i, r1 in enumerate(rects):
+            for r2 in rects[i + 1:]:
+                assert not r1.intersects(r2)
 
     def test_all_types_have_tiles(self, gallery):
         assert set(gallery._tile_buttons) == set(CHART_TYPES)

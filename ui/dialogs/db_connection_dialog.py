@@ -45,7 +45,7 @@ def _unobscure(text: str) -> str:
 
 
 def _load_saved_configs() -> dict[str, dict]:
-    settings = QSettings("QA-Tool", "DBConnections")
+    settings = QSettings("AKIA", "DBConnections")
     raw = settings.value("connections", "[]")
     try:
         return {c["name"]: c for c in json.loads(raw)}
@@ -54,7 +54,7 @@ def _load_saved_configs() -> dict[str, dict]:
 
 
 def _save_configs(configs: dict[str, dict]):
-    settings = QSettings("QA-Tool", "DBConnections")
+    settings = QSettings("AKIA", "DBConnections")
     settings.setValue("connections", json.dumps(list(configs.values()), ensure_ascii=False))
 
 

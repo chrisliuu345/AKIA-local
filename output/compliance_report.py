@@ -11,7 +11,7 @@ from output.base_report_engine import BaseReportEngine
 from output.word_report import WordReport
 from output.pdf_report import generate_pdf_report
 
-_logger = logging.getLogger("QA-Tool.Compliance")
+_logger = logging.getLogger("AKIA.Compliance")
 
 TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), "..", "config", "templates")
 

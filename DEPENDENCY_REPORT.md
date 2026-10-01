@@ -1,4 +1,4 @@
-# QA-Tool 依赖项分析报告
+# AKIA 依赖项分析报告
 
 ## 系统环境
 - **Python版本**: 3.14.0 (64-bit)
@@ -144,7 +144,7 @@ python -c "import PySide6; import scipy; import pandas; import numpy; import mat
 
 ### 第10步: 运行测试
 ```bash
-cd D:\projects\QA-Tool
+cd D:\projects\AKIA
 python -m pytest tests/ -v --tb=short
 ```
 

@@ -1,4 +1,4 @@
-"""QA-Tool 暗色主题 — 全局色彩、调色板、按钮样式、字体常量"""
+"""AKIA 暗色主题 — 全局色彩、调色板、按钮样式、字体常量"""
 
 from PySide6.QtGui import QPalette, QColor, QFont
 from PySide6.QtWidgets import QApplication

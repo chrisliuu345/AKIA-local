@@ -483,7 +483,7 @@ class PredictiveTab(BaseAnalysisTab):
         if self.df is None:
             return
         path, _ = QFileDialog.getSaveFileName(self, "保存模型", "model.qamodel",
-                                              "QA-Tool 模型 (*.qamodel)")
+                                              "AKIA 模型 (*.qamodel)")
         if not path:
             return
         try:
@@ -493,7 +493,7 @@ class PredictiveTab(BaseAnalysisTab):
 
     def _on_load_model(self):
         path, _ = QFileDialog.getOpenFileName(self, "加载模型", "",
-                                              "QA-Tool 模型 (*.qamodel)")
+                                              "AKIA 模型 (*.qamodel)")
         if not path:
             return
         try:

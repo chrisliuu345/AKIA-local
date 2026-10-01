@@ -134,7 +134,7 @@ class TestBaseReportEngine:
 
     def test_footers_contain_app_identity(self):
         first, second = BaseReportEngine.footers()
-        assert "QA-Tool" in first
+        assert "AKIA" in first
         assert "v4." in first
         assert len(second) > 0
 

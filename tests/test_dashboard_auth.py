@@ -87,7 +87,7 @@ def test_dashboard_config_blocks_lan_without_token(monkeypatch):
 def test_http_requires_token_when_configured():
     bus = StreamBus()
     store = TimeseriesStore(os.path.join(os.environ.get("TMPDIR", "/tmp"),
-                                         "qa_auth.db"))
+                                         "akia_auth.db"))
     port = _free_port()
     thread = start_thread(bus, store, host="127.0.0.1", port=port,
                           auth_token=TOKEN)
@@ -121,7 +121,7 @@ def test_ws_rejects_without_token():
 
     bus = StreamBus()
     store = TimeseriesStore(os.path.join(os.environ.get("TMPDIR", "/tmp"),
-                                         "qa_auth_ws.db"))
+                                         "akia_auth_ws.db"))
     port = _free_port()
     thread = start_thread(bus, store, host="127.0.0.1", port=port,
                           auth_token=TOKEN)

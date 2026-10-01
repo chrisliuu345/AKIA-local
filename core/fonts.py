@@ -14,7 +14,7 @@ import subprocess
 import logging
 from functools import lru_cache
 
-logger = logging.getLogger("QA-Tool.FontConfig")
+logger = logging.getLogger("AKIA.FontConfig")
 
 
 @lru_cache(maxsize=1)

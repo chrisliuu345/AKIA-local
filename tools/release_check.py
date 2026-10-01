@@ -32,7 +32,7 @@ def _run(title: str, cmd: list[str]) -> tuple[bool, str]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="QA-Tool 发布门禁")
+    parser = argparse.ArgumentParser(description="AKIA 发布门禁")
     parser.add_argument("--skip-tests", action="store_true", help="跳过逐文件回归")
     parser.add_argument("--skip-benchmark", action="store_true", help="跳过性能基线")
     parser.add_argument("--with-appimage", action="store_true",

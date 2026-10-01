@@ -1,4 +1,4 @@
-"""MaixCAM TCP bridge server for QA-Tool v2.6.2 (JSON-lines over TCP :9000).
+"""MaixCAM TCP bridge server for AKIA v2.6.2 (JSON-lines over TCP :9000).
 
 Protocol (same JSON-lines grammar as firmware/esp32_out.py, see
 core/devices/protocol.py):
@@ -15,9 +15,9 @@ Command grammar (phase 1, pure software — memory red line: no maix.nn):
   stream:off    -> stop the recognition stream
 
 Deploy (WiFi, SSH root@<ip>):
-  scp firmware/maixcam_server.py root@<ip>:/root/qa_tool_server.py
-  python /root/qa_tool_server.py            # foreground test
-  nohup python /root/qa_tool_server.py >/root/qa_tool_server.log 2>&1 &
+  scp firmware/maixcam_server.py root@<ip>:/root/akia_server.py
+  python /root/akia_server.py            # foreground test
+  nohup python /root/akia_server.py >/root/akia_server.log 2>&1 &
 
 Memory budget: stdlib only (socket/threading/json/time), ~80MB available on
 the 128MB board; do NOT import maix.nn in this server.
@@ -165,7 +165,7 @@ def main():
     srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     srv.bind((HOST, PORT))
     srv.listen(2)
-    print(f"qa_tool_server listening on {HOST}:{PORT} as {DEVICE_ID}")
+    print(f"akia_server listening on {HOST}:{PORT} as {DEVICE_ID}")
     while True:
         conn, addr = srv.accept()
         threading.Thread(

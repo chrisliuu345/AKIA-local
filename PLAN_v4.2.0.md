@@ -1,4 +1,4 @@
-# QA-Tool v4.2.0 开发方案（执行版）
+# AKIA v4.2.0 开发方案（执行版）
 
 > 依据 `ROADMAP.md`「v4.2.0 — 算法可信度与深度」，把 P2–P6 拆成可直接排期的任务：
 > 每项含**落点文件 / 验收方式 / 风险**。本文只描述执行路径，版本语义与设计决策仍以路线图为准。
@@ -114,9 +114,9 @@ Linux 发布形态为 **AppImage 单一格式**。
 
 ### P6 收尾（≈0.5 周）✅ 2026-09-22 完成（源码 prerelease）
 
-**P6 完成记录**：版本 4.2.0 四端一致（`config/settings.py` / `version_info.txt` / `packaging/QA-Tool-installer.iss` / README·README.en·INSTALL_LINUX·ROADMAP·ROADMAP.en·guide.html），`tools/check_version.py` 通过；文档同步（README 新增 MEWMA/广义方差/变点检测/残差图与改善案例工作台条目、工具数 36 → 37、测试数 1950；ROADMAP 新增 v4.2.0 发布条目与要点章节；guide 版本标签与安装表更新）；全量逐文件回归 157 文件 / 1950 例全绿 + ruff 零告警 + 性能基线 8 项通过；**发布方式：源码 prerelease**（GitHub Source zip/tar.gz，不打安装包；Linux 后续如需打包仅出 AppImage）。
+**P6 完成记录**：版本 4.2.0 四端一致（`config/settings.py` / `version_info.txt` / `packaging/AKIA-installer.iss` / README·README.en·INSTALL_LINUX·ROADMAP·ROADMAP.en·guide.html），`tools/check_version.py` 通过；文档同步（README 新增 MEWMA/广义方差/变点检测/残差图与改善案例工作台条目、工具数 36 → 37、测试数 1950；ROADMAP 新增 v4.2.0 发布条目与要点章节；guide 版本标签与安装表更新）；全量逐文件回归 157 文件 / 1950 例全绿 + ruff 零告警 + 性能基线 8 项通过；**发布方式：源码 prerelease**（GitHub Source zip/tar.gz，不打安装包；Linux 后续如需打包仅出 AppImage）。
 
-- 版本 4.2.0 四端一致：`config/settings.py` · `version_info.txt` · `packaging/QA-Tool-installer.iss` · README/INSTALL/ROADMAP/guide → `tools/check_version.py` 通过
+- 版本 4.2.0 四端一致：`config/settings.py` · `version_info.txt` · `packaging/AKIA-installer.iss` · README/INSTALL/ROADMAP/guide → `tools/check_version.py` 通过
 - 文档同步（中英）+ 全量逐文件回归 + ruff + 性能基线
 - **发布形态**：Linux 仅 `build_appimage.sh` 产出 AppImage；Windows 安装包在 Windows 侧由 Inno 脚本构建
 

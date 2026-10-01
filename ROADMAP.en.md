@@ -1,4 +1,4 @@
-# QA-Tool Roadmap
+# AKIA Roadmap
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
@@ -34,7 +34,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | ✅ | v3.7.1 | Five-chain fixes + data-semantics and engineering-consistency hardening |
 | ✅ | v3.7.2 | Realtime-monitoring benchmark polish, 8 items |
 | ✅ | **v3.8.0** | **Industrial AI Agent (QAM Harness + Plugin API v2; vision moved to an external plugin)** |
-| 🔌 | [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion) | External vision plugin (video time study) built on Plugin API v2 |
+| 🔌 | [AKIA-Vision-expansion](https://github.com/chrisliuu345/AKIA-Vision-expansion) | External vision plugin (video time study) built on Plugin API v2 |
 | ✅ | **v4.0.0** | **Predictive analytics & ML (CART / Random Forests / gradient boosting / MARS / AutoML + feature engineering / evaluation / SHAP / model deployment)** |
 | ✅ | **v4.1.0** | **Chart & UI experience unification (B1 style layer / B2 chart fixes / B3 command palette·batch progress·toasts·empty state / B4 quality & performance baseline)** |
 | ✅ | **v4.2.0** | **Algorithm trust & depth (known-value validation matrix / multivariate SPC · change-point detection · residual control charts / conclusion credentials / first closed-loop slice) · Linux AppImage published** |
@@ -78,7 +78,7 @@ Planning principles:
 | Date | Version | Summary |
 |------|---------|---------|
 | 09-28 | **Intermediate quality review (no version bump)** | **Full code-quality review + algorithm optimisation (source only, version stays 4.2.0)**: **P1 static ratchet** — 11 rule sets (RET505/506 · RUF010/RUF100 · SIM105/113/114/201 · C408/416/420 · PERF102 · PLW0108 · PLW3301) cleared and gated, two dead counters removed (`sampling_engine` write-only `total`, `smed_tab` gantt `y`), 100 files touched · **P2 silent-failure governance** — audit write failures are counted and warned, session/scheduler/one-click/config-migration paths log again, all 31 pass-only handlers now carry a reason; **batch scheduling fixed** (dialog never injected an executor → new Qt-free `run_task_headless`: source → analyses → docx/pdf/xlsx/Markdown report) · **P3 numeric robustness** — new `analysis/_sanitize.py` + `spc/_validation.py`, ±inf/missing values normalised at every analysis entry, six classes of low-level errors fixed (exponential smoothing "No supported index" · count charts NaN/inf conversion · residual chart Ljung-Box IndexError · capability sixpack range-not-finite) · **P4 performance** — vectorised Nelson rules (2100-case equivalence check, 0 diffs) → **SPC 1M points 21.96s → 1.62s (13.5×)**; vectorised per-cell parsing callbacks → **1M-row import 14.27s → 5.19s (2.7×)**, `perf_baseline.json` tightened to lock the gains |
-| 09-23 | **v4.2.0 packaged** | **Linux AppImage built + GitHub release delivered**: `build_appimage.sh` (PyInstaller onedir → AppDir → appimagetool) produces `QA-Tool-4.2.0-x86_64.AppImage` plus a `.sha256` checksum file; systems without FUSE launch it via `--appimage-extract-and-run`; README (zh/en) / ROADMAP (zh/en) / guide.html / `docs/releases/v4.2.0.md` now document the release form and verification steps; version stays 4.2.0 (`check_version.py` passes, no API change); the Windows installer is still built on Windows |
+| 09-23 | **v4.2.0 packaged** | **Linux AppImage built + GitHub release delivered**: the historical asset `QA-Tool-4.2.0-x86_64.AppImage` (built by `build_appimage.sh`: PyInstaller onedir → AppDir → appimagetool) plus a `.sha256` checksum file; systems without FUSE launch it via `--appimage-extract-and-run`; README (zh/en) / ROADMAP (zh/en) / guide.html / `docs/releases/v4.2.0.md` now document the release form and verification steps; version stays 4.2.0 (`check_version.py` passes, no API change); the Windows installer is still built on Windows |
 | 09-22 | **v4.2.0 released** | **Algorithm trust & depth (source prerelease)**: P0–P6 complete — known-value matrix 29 cases · algorithm depth 60 cases (MEWMA exact per-point Σ_z / generalized variance / PELT changepoints / ARIMA residual chart / non-normal bootstrap CI / reliability interval fix / ARIMA robustness) · benchmarks to 8 metrics + robustness contracts + BLE001 ratchet + coverage backfill · credential loop (analysis records → report trace code → `.qap` 1.8 → re-run diff) + guide "Methods & references" · first improvement closed loop (8-phase case spine + workbench entry) · version across all ends + full gates; full per-file regression **157 files / 1950 cases green**, ruff clean |
 | 09-22 | v4.2.0-P2 | **Algorithm depth delivered (7 files / 60 cases)**: MEWMA (Lowry 1992, exact per-point Σ_Z(i) + Phase I/II semantics + optional steady-state form; matches hotelling point-by-point at r=1) · generalized variance chart (Montgomery b1/b2) · PELT changepoint detection (pure numpy, equals brute-force DP optimum, default penalty 2.5σ̂²log n calibrated with fixed seeds) · ARIMA residual control chart (AR(1) false alarms drop markedly) · non-normal capability bootstrap CI (vectorised; small-sample accuracy warning: upward bias below n≈1000) · reliability intervals (Weibull CI cross-checked vs lifelines; **ALT extrapolation interval fixed** — the old form ignored the leverage term, coverage now 0.950) · ARIMA robustness (**crash on series with missing values fixed** — "No supported index"; constant/short-series guards; sample-size-bounded search) |
 | 09-17 | v4.2.0-audit | **Full UI feature & wiring audit**: offscreen survey of 37+1 tabs plus receiver scan of every button/menu action (no zero-wiring); 4 gap classes fixed — Time Series/Predictive Analytics missing from worksheet routing · self-contained tools 29-32 blocked by the import overlay · manual/context tools 14/16/17/25/26 blocked (including the FMEA→Control Plan chain) · menu missing entries for 35/36/37; 3 routing-coverage regressions added (all analysis tabs / five-chain unblocked / self-contained tabs clean) |
@@ -131,11 +131,16 @@ Planning principles:
 
 ## Current Release: v4.2.0 Highlights
 
+- **Renamed**: the product is now **AKIA (AKIM IE/Quality analyzer-local)** and the repository
+  moved to [chrisliuu345/AKIA-local](https://github.com/chrisliuu345/AKIA-local); the published
+  v4.2.0 Linux AppImage keeps its historical asset name `QA-Tool-4.2.0-x86_64.AppImage`,
+  later releases use `AKIA-*`
+
 - **Trustworthy algorithms**: 29 known-value cases plus 60 algorithm-depth cases covering MEWMA, generalized variance, PELT changepoints, ARIMA residual charts and non-normal bootstrap CIs; the new algorithms are exposed through QAM Harness (`run_spc` chart types + `detect_changepoints`, 37 local tools)
 - **Traceable**: conclusion credentials (rule version + params + data fingerprint + app version) land in analysis records and `.qap` 1.8; reports carry a 12-digit trace code; re-runs produce an item-by-item diff; guide.html "Methods & references" documents 16 method families
 - **Closed-loop slice**: the improvement-case workbench drives an 8-phase spine (baseline → time study → line balance → improvement → re-measurement → paired test → conclusion → standard draft) with timestamps, data references and credentials per step
 - **Stability**: 8 benchmark metrics (SPC 100k/1M rows, MSA 100k, ML 100k) gated in CI; 22 degenerate-input contracts; `BLE001` blind-except gate enabled for the algorithm layer
-- **Release form**: Linux ships AppImage only; the **`v4.2.0` GitHub release** delivers `QA-Tool-4.2.0-x86_64.AppImage` (with a `.sha256` checksum file) plus source zip/tar.gz; the Windows installer is built on Windows from `packaging/QA-Tool-installer.iss`
+- **Release form**: Linux ships AppImage only; the **`v4.2.0` GitHub release** delivers the historical asset `QA-Tool-4.2.0-x86_64.AppImage` (with a `.sha256` checksum file) plus source zip/tar.gz; the Windows installer is built on Windows from `packaging/AKIA-installer.iss`
 
 ---
 
@@ -273,7 +278,7 @@ Planning principles:
 |-------|--------------|------------|
 | **B1 MCP server** | Tool registry exposed as an MCP server: Claude Desktop / Cursor / AI IDEs can call SPC · capability · MSA · DOE · ML engines directly; read-only by default + permission model | An external MCP client completes a real analysis in one instruction |
 | **B2 Native tool calling** | JSON-Schema tool calling + streaming replaces prompt/regex parsing (fallback kept); better routing and parallel calls | Higher tool hit-rate and stability; the legacy path still works |
-| **B3 CLI quality gate + SDK** | `qatool check --spec quality.yaml` (Cpk / rule violations / sampling compliance) · headless report export · `qa-tool-core` local Python SDK | One command yields a CI verdict; embeddable in enterprise systems |
+| **B3 CLI quality gate + SDK** | `akia check --spec quality.yaml` (Cpk / rule violations / sampling compliance) · headless report export · `akia-core` local Python SDK | One command yields a CI verdict; embeddable in enterprise systems |
 | **B4 Rule packs & plugin ecosystem** | Industry rule packs (IATF / ISO 13485 / IPC / HACCP: judgement rules + sampling + report templates + terminology + alert rules) · plugin scaffold CLI + index + compatibility matrix + 2 sample plugins · i18n framework | A third party ships a plugin in 30 minutes; rule packs import/export cleanly |
 
 ### v4.6.0 — Intelligent Online & Data Assets (planned)

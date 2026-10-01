@@ -1,8 +1,13 @@
-# QA-Tool
+# AKIA
 
-> Personal subscription quality engineering desktop tool (Minitab-like), integrating SPC + MSA + DOE + IE + Reliability + AI Analytics
+> **AKIA (AKIM IE/Quality analyzer-local)** — a personal-subscription quality engineering
+> desktop tool (Minitab-like), integrating SPC + MSA + DOE + IE + Reliability + AI Analytics
 
 [中文](README.md) | [English](README.en.md)
+
+> **Naming note**: as of v4.2.0 the product is renamed **AKIA (AKIM IE/Quality analyzer-local)**.
+> The v4.2.0 Linux AppImage asset keeps its original file name `QA-Tool-4.2.0-x86_64.AppImage`
+> (published GitHub assets cannot be renamed); later releases use `AKIA-*`.
 
 ---
 
@@ -13,8 +18,8 @@ and a **Windows Inno Setup installer** (built on Windows):
 
 | Edition | Installer file | Systems | Status | Install |
 |---------|----------------|---------|--------|---------|
-| **Linux AppImage** | `QA-Tool-4.2.0-x86_64.AppImage` | Any x86_64 Linux (Debian / Ubuntu / Fedora / elementary, …) | ✅ Ships with the [v4.2.0 release](https://github.com/chrisliuu345/QA-Tool/releases/tag/v4.2.0) (plus a `.sha256` checksum file) | Portable: make executable and run |
-| **Windows installer** | `QA-Tool-Setup-4.2.0.exe` | Windows 10/11 (64-bit) | Built on Windows (`build_pyinstaller.py` + `packaging/QA-Tool-installer.iss`) | Run the Inno Setup wizard; menu/desktop shortcuts |
+| **Linux AppImage** | `QA-Tool-4.2.0-x86_64.AppImage` (historical v4.2.0 asset name) | Any x86_64 Linux (Debian / Ubuntu / Fedora / elementary, …) | ✅ Ships with the [v4.2.0 release](https://github.com/chrisliuu345/AKIA-local/releases/tag/v4.2.0) (plus a `.sha256` checksum file) | Portable: make executable and run |
+| **Windows installer** | `AKIA-Setup-4.2.0.exe` | Windows 10/11 (64-bit) | Built on Windows (`build_pyinstaller.py` + `packaging/AKIA-installer.iss`) | Run the Inno Setup wizard; menu/desktop shortcuts |
 
 > Linux ships **AppImage only** (`.deb` is no longer built); works across Debian/Ubuntu/Fedora and derivatives.
 
@@ -33,14 +38,14 @@ chmod +x QA-Tool-4.2.0-x86_64.AppImage
 ### Windows (installer)
 
 On Windows run `python build_pyinstaller.py --onefile`, then compile
-`packaging/QA-Tool-installer.iss` with Inno Setup to produce `QA-Tool-Setup-4.2.0.exe`
+`packaging/AKIA-installer.iss` with Inno Setup to produce `AKIA-Setup-4.2.0.exe`
 (start-menu and desktop shortcuts included).
 
 ### From Source
 
 ```bash
-git clone https://github.com/chrisliuu345/QA-Tool.git
-cd QA-Tool
+git clone https://github.com/chrisliuu345/AKIA-local.git
+cd AKIA-local
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -100,7 +105,7 @@ Requires Python 3.11+
 | Module | Capabilities |
 |--------|-------------|
 | **QAM Harness** | AI agent with 37 local tools (SPC/capability/MSA/hypothesis/DOE/regression/reliability/time-series/IE/cost/realtime/five-chain/root-cause/machine-learning) + offline tool mode · BYOK cloud providers (OpenAI/Claude/Gemini/DeepSeek/Z.ai/KIMI + custom endpoints) · encrypted keys + cloud privacy gate · Knowledge Base RAG |
-| **Plugin API v2** | External plugins developed/published separately: pip entry point or user dir · Tab / agent tools / settings contributions · dependency probing + trust model (e.g. [QA-Tool-Vision-expansion](https://github.com/chrisliuu345/QA-Tool-Vision-expansion)) |
+| **Plugin API v2** | External plugins developed/published separately: pip entry point or user dir · Tab / agent tools / settings contributions · dependency probing + trust model (e.g. [AKIA-Vision-expansion](https://github.com/chrisliuu345/AKIA-Vision-expansion)) |
 | **Charts** | 15+ chart types · Dark theme · CJK fonts |
 | **Reports** | PDF / Word / Excel / HTML · Inline charts |
 
@@ -154,9 +159,9 @@ tests/                 # 1950+ Tests
 
 ## Download
 
-Download from [Releases](https://github.com/chrisliuu345/QA-Tool/releases):
+Download from [Releases](https://github.com/chrisliuu345/AKIA-local/releases):
 
-- `v4.2.0` — Linux AppImage (`QA-Tool-4.2.0-x86_64.AppImage` + `.sha256`) and source archives (zip / tar.gz)
+- `v4.2.0` — Linux AppImage (historical asset name `QA-Tool-4.2.0-x86_64.AppImage` + `.sha256`) and source archives (zip / tar.gz)
 - Release notes: [`docs/releases/v4.2.0.md`](docs/releases/v4.2.0.md)
 
 ---
@@ -165,7 +170,7 @@ Download from [Releases](https://github.com/chrisliuu345/QA-Tool/releases):
 
 Proprietary commercial software. Unauthorized copying, modification, or distribution is prohibited.
 
-© 2026 QA-Tool. All rights reserved.
+© 2026 AKIA. All rights reserved.
 
 ---
 
