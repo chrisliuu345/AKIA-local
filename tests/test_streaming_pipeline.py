@@ -152,4 +152,5 @@ def test_status_latency_report():
 
 def test_default_store_path():
     p = default_store_path()
-    assert "QA-Tool" in str(p) and p.name == "timeseries.db"
+    # 与仓库目录名解耦：只校验落在 <repo>/data/timeseries.db
+    assert p.name == "timeseries.db" and p.parent.name == "data"

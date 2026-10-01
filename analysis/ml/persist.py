@@ -1,6 +1,6 @@
 """模型持久化 — .qamodel（joblib + 元数据）。
 
-安全边界: 只接受本工具写出的格式标记（format="qa-tool-model"）；
+安全边界: 只接受本工具写出的格式标记（format="akia-model"）；
 模型文件本质是 pickle，仍应只加载自己生成的文件。
 """
 
@@ -16,7 +16,10 @@ import pandas as pd
 from config.settings import APP_VERSION
 
 MODEL_EXT = ".qamodel"
-FORMAT_NAME = "qa-tool-model"
+FORMAT_NAME = "akia-model"
+#: 旧品牌格式标记 — 只读兼容，避免既有 .qamodel 模型失效
+LEGACY_FORMAT_NAMES = ("qa-tool-model",)
+_ACCEPTED_FORMATS = (FORMAT_NAME, *LEGACY_FORMAT_NAMES)
 FORMAT_VERSION = 1
 
 
@@ -59,7 +62,7 @@ def load_model(path) -> dict[str, Any]:
         raise
     except Exception as exc:  # 统一转换为可读错误（下面直接 re-raise，BLE001 不再适用）
         raise ModelFileError(f"模型文件无法读取: {exc}") from exc
-    if not isinstance(payload, dict) or payload.get("format") != FORMAT_NAME:
+    if not isinstance(payload, dict) or payload.get("format") not in _ACCEPTED_FORMATS:
         raise ModelFileError("不是本工具生成的模型文件（缺少格式标记）")
     for key in ("pipeline", "task", "features"):
         if key not in payload:
@@ -76,7 +79,7 @@ def model_info(path) -> dict[str, Any]:
 def predict_frame(bundle: dict[str, Any], df: pd.DataFrame,
                   proba: bool = True) -> pd.DataFrame:
     """用模型对数据表预测，返回含「预测值」（分类含「预测概率」）的表。"""
-    if bundle.get("format") != FORMAT_NAME:
+    if bundle.get("format") not in _ACCEPTED_FORMATS:
         raise ModelFileError("模型对象无效（请先用 load_model 读取）")
     missing = [c for c in bundle["features"] if c not in df.columns]
     if missing:

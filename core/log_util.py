@@ -6,7 +6,7 @@ import sys
 _configured = set()
 
 
-def get_logger(name: str = "QA-Tool") -> logging.Logger:
+def get_logger(name: str = "AKIA") -> logging.Logger:
     logger = logging.getLogger(name)
     if name not in _configured:
         logger.setLevel(logging.WARNING)

@@ -2,7 +2,7 @@
 
 - 左侧: 已保存公式列表 (选中加载编辑)
 - 右侧: 名称 + 表达式 + 实时求值预览 + 可用变量列表 (双击插入)
-- QSettings("QA-Tool", "Formulas") 持久化 {name: expr}
+- QSettings("AKIA", "Formulas") 持久化 {name: expr}
 """
 
 from PySide6.QtWidgets import (
@@ -27,7 +27,7 @@ class FormulaDialog(QDialog):
         self._analyses = analyses or {}
         self._df = df
         self._editing_name = None
-        self._settings = QSettings("QA-Tool", "Formulas")
+        self._settings = QSettings("AKIA", "Formulas")
         self._setup_ui()
         self._load_formulas()
 
@@ -207,7 +207,7 @@ class FormulaDialog(QDialog):
     @staticmethod
     def load_formulas(settings: QSettings = None) -> dict:
         """静态读取已保存公式 {name: expr} — 供 Dashboard 渲染"""
-        s = settings or QSettings("QA-Tool", "Formulas")
+        s = settings or QSettings("AKIA", "Formulas")
         formulas = s.value("formulas", {})
         return formulas if isinstance(formulas, dict) else {}
 

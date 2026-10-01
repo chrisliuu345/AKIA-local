@@ -1008,6 +1008,6 @@ def build_default_registry(ctx: AgentContext) -> ToolRegistry:
         manager.register_agent_tools(reg, ctx)
     except Exception:
         import logging
-        logging.getLogger("QA-Tool.Agent").debug("插件工具注册失败", exc_info=True)
+        logging.getLogger("AKIA.Agent").debug("插件工具注册失败", exc_info=True)
 
     return reg

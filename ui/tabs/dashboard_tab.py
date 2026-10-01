@@ -117,7 +117,7 @@ class DashboardTab(BaseAnalysisTab):
         self._last_fp = ""
         self._df_cache = None
         self._df_cache_key = None
-        self._settings = QSettings("QA-Tool", "Dashboard")
+        self._settings = QSettings("AKIA", "Dashboard")
         self._timer = QTimer(self)
         self._timer.setInterval(_REFRESH_INTERVAL_MS)
         self._timer.timeout.connect(self._poll_refresh)

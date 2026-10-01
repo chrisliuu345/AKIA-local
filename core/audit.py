@@ -10,13 +10,28 @@ import logging
 import os
 from datetime import datetime
 
+from core.legacy import legacy_home_dir, migrate_legacy_file
+
 logger = logging.getLogger(__name__)
 
-LOG_FILE = os.path.join(os.path.expanduser("~"), ".qa_tool_audit.log")
+_DEFAULT_LOG_FILE = os.path.join(os.path.expanduser("~"), ".akia_audit.log")
+LOG_FILE = _DEFAULT_LOG_FILE
 _MAX_LOG_SIZE = 5 * 1024 * 1024
 
 # 写入失败计数（不做 global 声明，避免跨模块状态误用）
 _stats = {"write_failures": 0}
+_legacy_migrated = False
+
+
+def _migrate_legacy_log() -> None:
+    """首次写入前把旧品牌审计日志复制过来（保留旧文件）。"""
+    global _legacy_migrated
+    if _legacy_migrated:
+        return
+    _legacy_migrated = True
+    if LOG_FILE != _DEFAULT_LOG_FILE:   # 测试/自定义路径不做旧日志搬迁
+        return
+    migrate_legacy_file(legacy_home_dir("audit.log"), LOG_FILE)
 
 
 def write_failures() -> int:
@@ -39,6 +54,7 @@ def _rotate_if_needed():
 def audit(action: str, operator: str, detail: str = ""):
     """写入一条审计记录。内部吞异常，不影响主流程；失败计入 write_failures()。"""
     try:
+        _migrate_legacy_log()
         _rotate_if_needed()
         with open(LOG_FILE, "a", encoding="utf-8") as f:
             f.write(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] {operator}: {action} {detail}\n")

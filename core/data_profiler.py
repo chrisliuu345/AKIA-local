@@ -4,9 +4,15 @@ from typing import Any
 import warnings
 import numpy as np
 import pandas as pd
-from scipy import stats as sp_stats
 
 from core.log_util import get_logger
+
+
+def _scipy_stats():
+    """延迟导入 scipy.stats（约 0.7s）：冷启动不加载，正式分析时才引入。"""
+    from scipy import stats
+    return stats
+
 
 _log = get_logger(__name__)
 
@@ -53,6 +59,7 @@ class DataProfiler:
         }
 
     def _profile_columns(self, df: pd.DataFrame) -> list[dict[str, Any]]:
+        sp_stats = _scipy_stats()
         result = []
         for col in df.columns:
             series = pd.to_numeric(df[col], errors="coerce")

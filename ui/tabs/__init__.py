@@ -1,4 +1,4 @@
-"""QA-Tool 分析 Tab 统一入口"""
+"""AKIA 分析 Tab 统一入口"""
 from ui.tabs.spc_tab import SPCTab
 from ui.tabs.capability_tab import CapabilityTab
 from ui.tabs.msa_tab import MSATab

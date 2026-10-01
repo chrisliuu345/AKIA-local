@@ -20,7 +20,7 @@ DEVICE_LIMIT = 8
 
 def discover_devices(timeout: float = 0.5,
                      cancel_check=None) -> list[DeviceInfo]:
-    """扫描串口并识别 QA-Tool 设备。
+    """扫描串口并识别 AKIA 设备。
 
     timeout: 每个端口的读窗口（至少 4s，覆盖板子 boot 流）。
     cancel_check: 可选回调 `() -> bool`，返回 True 时立即停止扫描

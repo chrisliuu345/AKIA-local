@@ -44,7 +44,7 @@ class I18n:
                         self._translations = loaded
             except Exception:
                 import logging
-                logging.getLogger("QA-Tool").warning(
+                logging.getLogger("AKIA").warning(
                     f"加载语言文件失败: {path}")
 
 

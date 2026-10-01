@@ -204,7 +204,7 @@ class AgentEngine:
             grant_consent(pid)
 
     def _system_prompt(self) -> str:
-        return ("你是 QA-Tool 的 QAM Harness —— 面向质量工程（QE）与工业工程（IE）的"
+        return ("你是 AKIA 的 QAM Harness —— 面向质量工程（QE）与工业工程（IE）的"
                 "本地分析助手，运行在用户电脑上，可调用软件内的分析工具。\n\n"
                 + TOOL_PROTOCOL.format(tools=self.registry.describe()))
 

@@ -15,7 +15,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-logger = logging.getLogger("QA-Tool.RootCause")
+logger = logging.getLogger("AKIA.RootCause")
 
 
 @dataclass

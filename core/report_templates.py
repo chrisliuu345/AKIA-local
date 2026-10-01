@@ -45,7 +45,7 @@ td,th{{border:1px solid #ddd;padding:6px;text-align:center}}th{{background:#1b5f
 <h1>质量日报</h1><p>日期: $date | 产品: $product | 部门: $department</p>
 <h2>关键指标</h2><div class="kpi">$kpi_cards</div>
 <h2>分析摘要</h2>$summary_table
-<div class="footer"><p>QA-Tool v$version · 自动生成于 $timestamp</p></div></body></html>""",
+<div class="footer"><p>AKIA v$version · 自动生成于 $timestamp</p></div></body></html>""",
 
         "monthly_spc": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>月度SPC报告</title>
 <style>body{{font-family:'{font_family}',sans-serif;max-width:900px;margin:auto;padding:20px;color:#333}}
@@ -55,7 +55,7 @@ td,th{{border:1px solid #ddd;padding:6px}}th{{background:#1b5faa;color:#fff}}.wa
 <h2>过程能力汇总</h2>$capability_table
 <h2>SPC违规统计</h2>$spc_violations
 <h2>MSA评估</h2>$msa_summary
-<div class="footer"><p>QA-Tool v$version · $timestamp</p></div></body></html>""",
+<div class="footer"><p>AKIA v$version · $timestamp</p></div></body></html>""",
 
         "audit": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>审核报告</title>
 <style>body{{font-family:'{font_family}',sans-serif;max-width:800px;margin:auto;padding:20px;color:#333}}
@@ -65,14 +65,14 @@ td,th{{border:1px solid #ddd;padding:6px}}th{{background:#1b5faa;color:#fff}}
 <h1>LPA分层过程审核报告</h1><p>审核日期: $date | 审核员: $auditor</p>
 <h2>审核结果</h2>$audit_table
 <h2>不符合项</h2>$nc_list
-<div class="footer"><p>QA-Tool v$version · $timestamp</p></div></body></html>""",
+<div class="footer"><p>AKIA v$version · $timestamp</p></div></body></html>""",
 
         "8d": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>8D报告</title>
 <style>body{{font-family:'{font_family}',sans-serif;max-width:800px;margin:auto;padding:20px;color:#333}}
 h1{{color:#1b5faa}}h2{{color:#555;border-bottom:1px solid #ddd}}.step{{margin:10px 0;padding:10px;background:#f8f9fa;border-radius:6px}}
 .step h3{{margin:0;color:#1b5faa}}</style></head><body>
 <h1>8D问题解决报告</h1><p>$title_info</p>$steps_html
-<div class="footer"><p>QA-Tool v$version · $timestamp</p></div></body></html>""",
+<div class="footer"><p>AKIA v$version · $timestamp</p></div></body></html>""",
 
         "ppap": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>PPAP提交</title>
 <style>body{{font-family:'{font_family}',sans-serif;max-width:900px;margin:auto;padding:20px;color:#333}}
@@ -81,7 +81,7 @@ td,th{{border:1px solid #ddd;padding:6px;text-align:center}}th{{background:#1b5f
 .done{{background:#d4edda}}.pending{{background:#fff3cd}}.na{{background:#e2e3e5}}</style></head><body>
 <h1>PPAP生产件批准</h1><p>$ppap_info</p><h2>提交状态</h2>$items_table
 <h2>尺寸报告</h2>$dim_table
-<div class="footer"><p>QA-Tool v$version · $timestamp</p></div></body></html>""",
+<div class="footer"><p>AKIA v$version · $timestamp</p></div></body></html>""",
     }
     
     for key, info in TEMPLATES.items():

@@ -63,7 +63,7 @@ def test_version_numbers_correspond():
         "构建脚本应从 config.settings 导入版本号"
     assert 'APP_VERSION = "' not in build, "构建脚本不应硬编码版本号"
 
-    iss = (ROOT / "packaging" / "QA-Tool-installer.iss").read_text(encoding="utf-8")
+    iss = (ROOT / "packaging" / "AKIA-installer.iss").read_text(encoding="utf-8")
     assert f'MyAppVersion "{APP_VERSION}"' in iss
 
     guide = GUIDE.read_text(encoding="utf-8")

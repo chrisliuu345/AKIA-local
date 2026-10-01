@@ -18,7 +18,7 @@
     {"type": "heading", "text": "6. 回归分析"},
     {"type": "analysis", "category": "regression"},
     {"type": "heading", "text": "7. 审计追踪"},
-    {"type": "para", "text": "本报告由 QA-Tool 自动生成。所有分析数据来源于原始测量数据，未经人工修改。"},
+    {"type": "para", "text": "本报告由 AKIA 自动生成。所有分析数据来源于原始测量数据，未经人工修改。"},
     {"type": "heading", "text": "8. 批准"},
     {"type": "signature", "roles": ["编制", "审核", "批准"]}
   ]

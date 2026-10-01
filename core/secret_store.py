@@ -14,10 +14,28 @@ import base64
 import logging
 import sys
 
-logger = logging.getLogger("QA-Tool.SecretStore")
+logger = logging.getLogger("AKIA.SecretStore")
 
 _PREFIX_DPAPI = "dpapi:"
 _PREFIX_KEYRING = "keyring:"
+
+#: 旧品牌 keyring 服务名（仅用于读取迁移）
+_LEGACY_SERVICE_NAME = "qa-tool"
+_SERVICE_NAME = "akia"
+_KEY_NAME = "master-key"
+
+
+def _keyring_master_key(keyring) -> str | None:
+    """读取主密钥：新服务优先；旧服务存在时迁移到新服务后返回。"""
+    key = keyring.get_password(_SERVICE_NAME, _KEY_NAME)
+    if key is not None:
+        return key
+    legacy = keyring.get_password(_LEGACY_SERVICE_NAME, _KEY_NAME)
+    if legacy:
+        keyring.set_password(_SERVICE_NAME, _KEY_NAME, legacy)
+        logger.info("已把旧版 keyring 主密钥迁移到服务名 %s", _SERVICE_NAME)
+        return legacy
+    return None
 
 
 def _encrypt_dpapi(data: bytes) -> bytes:
@@ -83,13 +101,10 @@ def _encrypt_keyring_fernet(data: bytes) -> bytes:
     except ImportError:
         raise RuntimeError("keyring package required on Linux/macOS") from None
 
-    SERVICE_NAME = "qa-tool"
-    KEY_NAME = "master-key"
-
-    key = keyring.get_password(SERVICE_NAME, KEY_NAME)
+    key = _keyring_master_key(keyring)
     if key is None:
         key = base64.urlsafe_b64encode(os.urandom(32)).decode()
-        keyring.set_password(SERVICE_NAME, KEY_NAME, key)
+        keyring.set_password(_SERVICE_NAME, _KEY_NAME, key)
 
     from cryptography.fernet import Fernet
     f = Fernet(key.encode() if isinstance(key, str) else key)
@@ -105,10 +120,7 @@ def _decrypt_keyring_fernet(data: bytes) -> bytes:
 
     from cryptography.fernet import Fernet
 
-    SERVICE_NAME = "qa-tool"
-    KEY_NAME = "master-key"
-
-    key = keyring.get_password(SERVICE_NAME, KEY_NAME)
+    key = _keyring_master_key(keyring)
     if key is None:
         raise RuntimeError("No encryption key found in keyring")
 
