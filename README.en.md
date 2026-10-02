@@ -8,12 +8,15 @@
 > **Naming note**: as of v4.2.0 the product is renamed **AKIA (AKIM IE/Quality analyzer-local)**.
 > The v4.2.0 Linux AppImage asset keeps its original file name `QA-Tool-4.2.0-x86_64.AppImage`
 > (published GitHub assets cannot be renamed); later releases use `AKIA-*`.
+>
+> **Release form**: the current source version is **v4.2.1** (quality hardening + UX fixes,
+> **source-only patch**); the latest installers remain **v4.2.0** (see the table below).
 
 ---
 
 ## Quick Start
 
-v4.2.0 ships standalone, fully offline packages — a **Linux AppImage** (published with the release)
+The latest installers are v4.2.0, shipping standalone, fully offline packages — a **Linux AppImage** (published with the release)
 and a **Windows Inno Setup installer** (built on Windows):
 
 | Edition | Installer file | Systems | Status | Install |
@@ -152,7 +155,7 @@ analysis/              # Analysis engines (14 modules)
 core/                  # Core Engines
 ui/                    # PySide6 UI (37 Tabs + plugin Tabs)
 output/                # Report Engine
-tests/                 # 1950+ Tests
+tests/                 # 1970+ Tests
 ```
 
 ---
@@ -161,8 +164,10 @@ tests/                 # 1950+ Tests
 
 Download from [Releases](https://github.com/chrisliuu345/AKIA-local/releases):
 
-- `v4.2.0` — Linux AppImage (historical asset name `QA-Tool-4.2.0-x86_64.AppImage` + `.sha256`) and source archives (zip / tar.gz)
-- Release notes: [`docs/releases/v4.2.0.md`](docs/releases/v4.2.0.md)
+- `v4.2.1` (current) — **source-only patch** (quality hardening + branding/UX/startup fixes);
+  source zip / tar.gz only, no new installers — notes: [`docs/releases/v4.2.1.md`](docs/releases/v4.2.1.md)
+- `v4.2.0` — Linux AppImage (historical asset name `QA-Tool-4.2.0-x86_64.AppImage` + `.sha256`) and source archives (zip / tar.gz) —
+  notes: [`docs/releases/v4.2.0.md`](docs/releases/v4.2.0.md)
 
 ---
 
