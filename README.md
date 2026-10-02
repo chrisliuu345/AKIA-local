@@ -8,12 +8,15 @@
 > **命名说明**：自 v4.2.0 起产品更名为 **AKIA（AKIM IE/Quality analyzer-local）**。
 > v4.2.0 Release 中的 Linux AppImage 资产仍沿用旧文件名 `QA-Tool-4.2.0-x86_64.AppImage`
 > （GitHub 资产无法追溯改名），自下一版起统一为 `AKIA-*`。
+>
+> **发布形态**：当前源码版本为 **v4.2.1**（质量加固与体验修复，**仅源码补丁**）；
+> 最新安装包仍为 **v4.2.0**（见下表）。
 
 ---
 
 ## 快速开始
 
-v4.2.0 提供免装 Python 环境的离线运行包；Linux 侧为 **AppImage**（已随 Release 发布），
+最新安装包为 v4.2.0，提供免装 Python 环境的离线运行包；Linux 侧为 **AppImage**（已随 Release 发布），
 Windows 侧为 **Inno Setup 安装包**（需在 Windows 机器上构建）：
 
 | 版本 | 安装文件 | 适用系统 | 发布状态 | 安装方式 |
@@ -168,7 +171,7 @@ analysis/              # 分析引擎 (14 模块)
 core/                  # 核心引擎
 ui/                    # PySide6 UI (37 个 Tab + 插件 Tab)
 output/                # 报告引擎
-tests/                 # 1950+ 测试
+tests/                 # 1970+ 测试
 ```
 
 ---
@@ -177,8 +180,10 @@ tests/                 # 1950+ 测试
 
 从 [Releases](https://github.com/chrisliuu345/AKIA-local/releases) 下载最新版本：
 
-- `v4.2.0` — Linux AppImage（历史资产名 `QA-Tool-4.2.0-x86_64.AppImage` + `.sha256`）与源码包（zip / tar.gz）
-- 发布说明见 [`docs/releases/v4.2.0.md`](docs/releases/v4.2.0.md)
+- `v4.2.1`（当前）— **源码补丁**（质量加固 + 品牌/体验/启动修复），仅源码 zip / tar.gz，无新安装包；
+  发布说明见 [`docs/releases/v4.2.1.md`](docs/releases/v4.2.1.md)
+- `v4.2.0` — Linux AppImage（历史资产名 `QA-Tool-4.2.0-x86_64.AppImage` + `.sha256`）与源码包（zip / tar.gz）；
+  发布说明见 [`docs/releases/v4.2.0.md`](docs/releases/v4.2.0.md)
 
 ---
 

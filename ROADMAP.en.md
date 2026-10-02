@@ -2,9 +2,9 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> Current: v4.2.0 Algorithm trust & depth (known-value matrix / multivariate SPC / changepoint detection / conclusion credentials / first improvement loop) (✅ 2026-09-22 source · ✅ 2026-09-23 Linux AppImage + GitHub release) | Next: **v4.3.0 Improvement cases & evidence ledger (planned)**
-> Deepening line: **v4.2 Trust → v4.3 Case & evidence → v4.4 Closed loop → v4.5 Open → v4.6 Intelligence** (from analysis tool to a shop-floor improvement evidence chain) | Tests: 1960+ pytest · 37 analysis tabs | Updated: 2026-09-28
-> Status: **v4.2.0 P0–P6 complete and delivered** (P0 ✅ contracts · P1 ✅ 29 known-value cases · P2 ✅ algorithm depth, 60 cases + tool wiring · P3 ✅ stability & large samples · P4 ✅ credentials & method docs · P5 ✅ first closed-loop slice · P6 ✅ wrap-up · packaging ✅ Linux AppImage + GitHub release); **2026-09-28 an intermediate quality review + algorithm optimisation landed (no version bump, still 4.2.0)**; next up **v4.3.0 improvement cases & evidence ledger**
+> Current: v4.2.1 Quality hardening & UX fixes (static ratchet / silent-failure governance / numeric robustness / SPC & import vectorisation; AKIA rename wrap-up + new icon + chart-type popup selector + splash removal) (✅ 2026-10-02 source-only patch, no new installers) | Latest installers: v4.2.0 Linux AppImage | Next: **v4.3.0 Improvement cases & evidence ledger (planned)**
+> Deepening line: **v4.2 Trust → v4.3 Case & evidence → v4.4 Closed loop → v4.5 Open → v4.6 Intelligence** (from analysis tool to a shop-floor improvement evidence chain) | Tests: 1970+ pytest · 37 analysis tabs | Updated: 2026-10-02
+> Status: **v4.2.1 source-only patch delivered** (P1 ✅ 11 static rule sets gated · P2 ✅ silent-failure governance + batch scheduler fix · P3 ✅ numeric robustness · P4 ✅ SPC 1M rows 21.96s→1.62s, 1M-row import 14.27s→5.19s · P5 ✅ regression fixes · branding ✅ AKIA rename wrap-up + legacy data migration layer · UX ✅ new icon + chart-type popup selector + splash removal, cold-start benchmark 2.10s→1.06s); v4.2.0 installers stay downloadable, this release is source-only; next up **v4.3.0 improvement cases & evidence ledger**
 
 > **Maintenance convention (from 2026-09-12)**: each version entry is one summary line plus key numbers; implementation details live in code/tests/user guide, not here.
 > This file was compressed from 1100+ lines to under 500; the expanded history is in git history (`git log -p -- ROADMAP.md`).
@@ -17,8 +17,8 @@
 v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.1 ──→ v2.5 ──→ v2.6.0 ~ v2.6.5 ──→ v2.7.0
       ──→ v2.8.0 ──→ v2.9.0 ──→ v3.0.0 ──→ v3.1.0 ──→ v3.2.0 ──→ v3.3.0 ──→ v3.4.0 ──→ v3.5.0
       ──→ v3.6.0 (incl. 3.6.1) ──→ v3.7.0 (incl. review) ──→ v3.7.1 ──→ v3.7.2 ──→ v3.8.0 ──→ v4.0.0
-      ──→ v4.2.0 ✅ current (trust · AppImage published) ──→ v4.3.0 Case·evidence (planned) ──→ v4.4.0 Closed loop (planned)
-      ──→ v4.5.0 Open (planned) ──→ v4.6.0 Intelligence (planned)
+      ──→ v4.2.0 ✅ (trust · AppImage published) ──→ v4.2.1 ✅ current (quality hardening · source-only)
+      ──→ v4.3.0 Case·evidence (planned) ──→ v4.4.0 Closed loop (planned) ──→ v4.5.0 Open (planned) ──→ v4.6.0 Intelligence (planned)
 ```
 
 | Status | Version | Theme |
@@ -38,6 +38,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | ✅ | **v4.0.0** | **Predictive analytics & ML (CART / Random Forests / gradient boosting / MARS / AutoML + feature engineering / evaluation / SHAP / model deployment)** |
 | ✅ | **v4.1.0** | **Chart & UI experience unification (B1 style layer / B2 chart fixes / B3 command palette·batch progress·toasts·empty state / B4 quality & performance baseline)** |
 | ✅ | **v4.2.0** | **Algorithm trust & depth (known-value validation matrix / multivariate SPC · change-point detection · residual control charts / conclusion credentials / first closed-loop slice) · Linux AppImage published** |
+| ✅ | **v4.2.1** | **Quality hardening & UX fixes (P1–P5: static ratchet / silent-failure governance / numeric robustness / SPC & import vectorisation; AKIA rename wrap-up · new icon · chart-type popup selector · splash removal) · source-only patch** |
 | 🚧 | v4.3.0 | Improvement case & evidence ledger (ImprovementCase lifecycle / MeasurementEvent · plugin data sources / standard version records / evidence view · desensitized sharing) |
 | 🚧 | v4.4.0 | Closed-loop execution & effect verification (alert→8D auto case / measurement system online / sampling transfer / benefit ledger · COPQ / skill-constrained line balancing) |
 | 🚧 | v4.5.0 | Open ecosystem (MCP server · native tool calling / CLI · SDK quality gate / industry rule packs · plugin scaffold) |
@@ -77,7 +78,9 @@ Planning principles:
 
 | Date | Version | Summary |
 |------|---------|---------|
-| 09-28 | **Intermediate quality review (no version bump)** | **Full code-quality review + algorithm optimisation (source only, version stays 4.2.0)**: **P1 static ratchet** — 11 rule sets (RET505/506 · RUF010/RUF100 · SIM105/113/114/201 · C408/416/420 · PERF102 · PLW0108 · PLW3301) cleared and gated, two dead counters removed (`sampling_engine` write-only `total`, `smed_tab` gantt `y`), 100 files touched · **P2 silent-failure governance** — audit write failures are counted and warned, session/scheduler/one-click/config-migration paths log again, all 31 pass-only handlers now carry a reason; **batch scheduling fixed** (dialog never injected an executor → new Qt-free `run_task_headless`: source → analyses → docx/pdf/xlsx/Markdown report) · **P3 numeric robustness** — new `analysis/_sanitize.py` + `spc/_validation.py`, ±inf/missing values normalised at every analysis entry, six classes of low-level errors fixed (exponential smoothing "No supported index" · count charts NaN/inf conversion · residual chart Ljung-Box IndexError · capability sixpack range-not-finite) · **P4 performance** — vectorised Nelson rules (2100-case equivalence check, 0 diffs) → **SPC 1M points 21.96s → 1.62s (13.5×)**; vectorised per-cell parsing callbacks → **1M-row import 14.27s → 5.19s (2.7×)**, `perf_baseline.json` tightened to lock the gains |
+| 10-02 | **v4.2.1 released (source-only patch)** | **Quality hardening & UX fixes, source only**: the GitHub release ships Source zip / tar.gz (tag `v4.2.1`) and no new AppImage / installers (the latest installers remain v4.2.0); `check_version.py` consistent across all ends (settings / version_info / Inno / docs); full per-file regression **159 files / 1917 passed / 56 skipped / 0 failed**; all 8 benchmark metrics pass (cold start 1.06s vs baseline 2.101s) |
+| 10-01 | **Branding & UX wrap-up** | **AKIA rename wrap-up + legacy migration layer** (one-shot migration of QSettings / user config / keyring / `.qamodel` / plugin dirs, with 7 migration tests) · **new app icon** (layered porcelain, 1024 / 256 / ICO sizes, reproducible via `tools/generate_logo.py`) · **fixed** the PyInstaller `--add-data` destination that kept frozen builds from finding the logo / default config · **fixed** the general chart-type selector as a popup panel (Qt.Popup, three fixed columns, no more clipping or squeezing in the narrow config column) · **startup** splash removed — the main window shows immediately (lazy `scipy.stats` / `sqlalchemy` imports + deferred warm-up; cold start 2.10s→1.19s, end-to-end 3.3s→1.35s) |
+| 09-28 | **v4.2.1 quality hardening (P1–P5)** | **Full code-quality review + algorithm optimisation (shipped as the v4.2.1 patch)**: **P1 static ratchet** — 11 rule sets (RET505/506 · RUF010/RUF100 · SIM105/113/114/201 · C408/416/420 · PERF102 · PLW0108 · PLW3301) cleared and gated, two dead counters removed (`sampling_engine` write-only `total`, `smed_tab` gantt `y`), 100 files touched · **P2 silent-failure governance** — audit write failures are counted and warned, session/scheduler/one-click/config-migration paths log again, all 31 pass-only handlers now carry a reason; **batch scheduling fixed** (dialog never injected an executor → new Qt-free `run_task_headless`: source → analyses → docx/pdf/xlsx/Markdown report) · **P3 numeric robustness** — new `analysis/_sanitize.py` + `spc/_validation.py`, ±inf/missing values normalised at every analysis entry, six classes of low-level errors fixed (exponential smoothing "No supported index" · count charts NaN/inf conversion · residual chart Ljung-Box IndexError · capability sixpack range-not-finite) · **P4 performance** — vectorised Nelson rules (2100-case equivalence check, 0 diffs) → **SPC 1M points 21.96s → 1.62s (13.5×)**; vectorised per-cell parsing callbacks → **1M-row import 14.27s → 5.19s (2.7×)**, `perf_baseline.json` tightened to lock the gains |
 | 09-23 | **v4.2.0 packaged** | **Linux AppImage built + GitHub release delivered**: the historical asset `QA-Tool-4.2.0-x86_64.AppImage` (built by `build_appimage.sh`: PyInstaller onedir → AppDir → appimagetool) plus a `.sha256` checksum file; systems without FUSE launch it via `--appimage-extract-and-run`; README (zh/en) / ROADMAP (zh/en) / guide.html / `docs/releases/v4.2.0.md` now document the release form and verification steps; version stays 4.2.0 (`check_version.py` passes, no API change); the Windows installer is still built on Windows |
 | 09-22 | **v4.2.0 released** | **Algorithm trust & depth (source prerelease)**: P0–P6 complete — known-value matrix 29 cases · algorithm depth 60 cases (MEWMA exact per-point Σ_z / generalized variance / PELT changepoints / ARIMA residual chart / non-normal bootstrap CI / reliability interval fix / ARIMA robustness) · benchmarks to 8 metrics + robustness contracts + BLE001 ratchet + coverage backfill · credential loop (analysis records → report trace code → `.qap` 1.8 → re-run diff) + guide "Methods & references" · first improvement closed loop (8-phase case spine + workbench entry) · version across all ends + full gates; full per-file regression **157 files / 1950 cases green**, ruff clean |
 | 09-22 | v4.2.0-P2 | **Algorithm depth delivered (7 files / 60 cases)**: MEWMA (Lowry 1992, exact per-point Σ_Z(i) + Phase I/II semantics + optional steady-state form; matches hotelling point-by-point at r=1) · generalized variance chart (Montgomery b1/b2) · PELT changepoint detection (pure numpy, equals brute-force DP optimum, default penalty 2.5σ̂²log n calibrated with fixed seeds) · ARIMA residual control chart (AR(1) false alarms drop markedly) · non-normal capability bootstrap CI (vectorised; small-sample accuracy warning: upward bias below n≈1000) · reliability intervals (Weibull CI cross-checked vs lifelines; **ALT extrapolation interval fixed** — the old form ignored the leverage term, coverage now 0.950) · ARIMA robustness (**crash on series with missing values fixed** — "No supported index"; constant/short-series guards; sample-size-bounded search) |
@@ -129,7 +132,26 @@ Planning principles:
 
 ---
 
-## Current Release: v4.2.0 Highlights
+## Current Release: v4.2.1 Highlights (source-only patch)
+
+- **Release form**: **source only** (GitHub Source zip / tar.gz, tag `v4.2.1`) — no new AppImage or
+  installers are produced; the latest installers remain v4.2.0 (Linux AppImage published; the
+  Windows Inno installer is built on a Windows box)
+- **Quality hardening (P1–P5)**: 11 static rule sets gated + dead code removed · silent-failure
+  governance (31 pass-only handlers annotated, batch-scheduler executor fixed) · numeric robustness
+  (±inf / missing values normalised at every entry, six classes of low-level errors fixed) ·
+  vectorisation (**SPC 1M rows 21.96s→1.62s, 1M-row import 14.27s→5.19s**) · regression fix-up
+- **Branding & UX**: AKIA rename wrap-up (one-shot legacy migration: QSettings / user config /
+  keyring / `.qamodel` / plugin dirs) · new icon (layered lighting + reproducible
+  `tools/generate_logo.py`) · chart-type selector as a popup panel (no more clipping or squeezing) ·
+  splash removed, cold-start benchmark **2.10s→1.06s** (end-to-end 3.3s→1.35s)
+- **Gates**: version consistency passed · ruff clean · per-file regression 159 files / 1917 passed /
+  56 skipped / 0 failed · all 8 benchmark metrics pass (cold start 1.06s vs baseline 2.101s, tolerance ×4)
+- **Release notes**: [`docs/releases/v4.2.1.md`](docs/releases/v4.2.1.md)
+
+---
+
+## Previous Release: v4.2.0 Highlights (historical)
 
 - **Renamed**: the product is now **AKIA (AKIM IE/Quality analyzer-local)** and the repository
   moved to [chrisliuu345/AKIA-local](https://github.com/chrisliuu345/AKIA-local); the published
@@ -144,7 +166,7 @@ Planning principles:
 
 ---
 
-## Previous Release: v4.1.0 Highlights (historical)
+## Earlier Release: v4.1.0 Highlights (historical)
 
 - **Chart style layer (B1)**: `output/chart_style.py` as the single style source — dark/light themes, Okabe-Ito colour-blind-safe semantic palette (data/centre/control limit/spec/fit/violation), unified rcParams plus `smart_ylim` / `add_limit_lines` / `mark_violations` / `style_for_export`; chart_engine, chart_generator, heatmap and faceting all migrated
 - **Chart defect fixes (B2)**: all 8 audit findings cleared — auto-faceted multi-scale boxplots, Pareto 80% line with bar labels, outside control-chart legend with rule annotations, capability stats card with grade badge, diverging heatmap with masked diagonal, smart time-series y-limits, theme-coupled colours and font/grid unification
@@ -160,7 +182,7 @@ Planning principles:
 |------|------|-------|
 | Manual review of proactive-suggestion accuracy (≥3.5/5) | Needs engineer scoring | User |
 | Vision acceptance on real footage (site video + labelled CSV, ≥85% agreement) | Needs site material | Plugin project |
-| Release artifacts (Windows Inno) | v4.2.0 AppImage is published with the release; the Windows installer needs a Windows box (scripts and .iss are ready) | On demand |
+| Release artifacts (Windows Inno) | Latest installers are v4.2.0 (Linux AppImage published); v4.2.1 is source-only; the Windows installer needs a Windows box (scripts and .iss are ready) | On demand |
 | ImprovementCase object + evidence ledger | Bitemporal narrowed to measurements/standards/conclusions; see v4.3.0 | v4.3.0 |
 | Case workspace entry | Reuse Home first; adding a tab requires explicit review | v4.3.0 decision |
 | MCP server + native tool calling | Decides the AI-ecosystem position; see v4.5.0 | v4.5.0 |
