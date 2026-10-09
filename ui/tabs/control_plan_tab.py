@@ -3,7 +3,7 @@
 from PySide6.QtWidgets import (
     QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTableWidget, QTableWidgetItem, QHeaderView,
-    QFileDialog, QMessageBox,
+    QFileDialog, QMessageBox, QInputDialog,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
@@ -63,6 +63,13 @@ class ControlPlanTab(BaseAnalysisTab):
         toolbar.addWidget(self.btn_gen_spc)
 
         toolbar.addStretch()
+
+        self.btn_standard = QPushButton("保存标准版本")
+        self.btn_standard.setStyleSheet(BUTTON_SECONDARY)
+        self.btn_standard.setCursor(Qt.PointingHandCursor)
+        self.btn_standard.setToolTip("为控制计划条目记录带变更原因的标准版本")
+        self.btn_standard.clicked.connect(self._save_standard_version)
+        toolbar.addWidget(self.btn_standard)
 
         self.btn_export = QPushButton("导出Excel")
         self.btn_export.setStyleSheet(BUTTON_PRIMARY_STRETCH)
@@ -134,10 +141,27 @@ class ControlPlanTab(BaseAnalysisTab):
                 rows.append(padded)
         return rows
 
-    def _sync_context(self):
+    def _sync_context(self, change_reason: str = "控制计划条目更新"):
         """将当前行写入项目上下文（唯一事实源）"""
         if self._project_context is not None:
-            self._project_context.set_control_plan(self.rows_as_dicts())
+            self._project_context.set_control_plan(
+                self.rows_as_dicts(), change_reason=change_reason, changed_by="user")
+
+    def _save_standard_version(self):
+        if self._project_context is None:
+            QMessageBox.warning(self, "无项目上下文", "请先保存/加载一个 .qap 项目")
+            return
+        reason, ok = QInputDialog.getText(self, "保存控制计划标准", "变更原因:")
+        if not ok or not str(reason or "").strip():
+            return
+        before = len(self._project_context.standards)
+        self._sync_context(change_reason=str(reason).strip())
+        created = len(self._project_context.standards) - before
+        if created:
+            QMessageBox.information(self, "标准已记录",
+                                    f"新增 {created} 条控制计划标准版本")
+        else:
+            QMessageBox.information(self, "标准未变化", "条目与现行版本一致")
 
     def load_from_context(self):
         """从项目上下文恢复行（打开 .qap 后调用）"""

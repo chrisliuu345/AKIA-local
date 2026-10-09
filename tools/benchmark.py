@@ -31,7 +31,8 @@ os.environ.setdefault("MPLCONFIGDIR", _MPL_CACHE)
 BASELINE_PATH = Path(__file__).resolve().parent / "perf_baseline.json"
 METRIC_KEYS = ("cold_start_s", "import_1m_rows_s", "chart_render_5k_s",
                "ml_train_5k_s", "spc_100k_rows_s", "spc_1m_rows_s",
-               "msa_100k_rows_s", "ml_train_100k_rows_s")
+               "msa_100k_rows_s", "ml_train_100k_rows_s",
+               "evidence_append_1k_s", "case_open_1k_events_s")
 DEFAULT_TOLERANCE = 3.0
 
 
@@ -198,6 +199,41 @@ def measure_ml_train_100k_rows() -> float:
     return _timed(_run)
 
 
+def measure_evidence_append_1k() -> float:
+    """1000 条证据事件追加耗时（内存账本；预算 <1ms/条）。"""
+    def _run():
+        from core.evidence_ledger import EvidenceLedger
+
+        ledger = EvidenceLedger()
+        for index in range(1000):
+            ledger.append("case_step", actor="benchmark",
+                          object_refs=[f"case:C{index % 10}"],
+                          payload={"index": index})
+
+    return _timed(_run)
+
+
+def measure_case_open_1k_events() -> float:
+    """加载并校验 1000 条事件的证据视图路径耗时。"""
+    from core.evidence_ledger import EvidenceLedger
+
+    ledger = EvidenceLedger()
+    for index in range(1000):
+        ledger.append("case_step", actor="benchmark",
+                      object_refs=[f"case:C{index % 10}"], payload={"index": index})
+    payload = ledger.to_jsonl()
+
+    def _run():
+        loaded = EvidenceLedger.from_jsonl(payload)
+        result = loaded.verify()
+        if not result["ok"]:
+            raise RuntimeError(result["reason"])
+        loaded.events_for("case:C1")
+        loaded.export_manifest()
+
+    return _timed(_run)
+
+
 MEASURES = {
     "cold_start_s": measure_cold_start,
     "import_1m_rows_s": measure_import_1m_rows,
@@ -207,6 +243,8 @@ MEASURES = {
     "spc_1m_rows_s": measure_spc_1m_rows,
     "msa_100k_rows_s": measure_msa_100k_rows,
     "ml_train_100k_rows_s": measure_ml_train_100k_rows,
+    "evidence_append_1k_s": measure_evidence_append_1k,
+    "case_open_1k_events_s": measure_case_open_1k_events,
 }
 
 

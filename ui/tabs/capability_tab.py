@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QDoubleSpinBox, QSpinBox, QGroupBox, QFormLayout,
     QTableWidget, QTableWidgetItem, QTextEdit, QSplitter, QHeaderView,
-    QFrame, QStackedWidget,
+    QFrame, QStackedWidget, QInputDialog, QMessageBox,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
@@ -26,8 +26,31 @@ from output.chart_engine import create_capability_chart
 class CapabilityTab(BaseAnalysisTab):
 
     def __init__(self, parent=None):
+        self._project_context = None
+        self.standard_object_ref = ""
         super().__init__(parent)
         self._setup_ui()
+
+    def set_project_context(self, ctx):
+        self._project_context = ctx
+        self._apply_context_standard()
+
+    def _apply_context_standard(self):
+        """当前测量列存在标准版本时，回填其规格限。"""
+        ctx = self._project_context
+        col = self.col_combo.currentText().strip() if hasattr(self, "col_combo") else ""
+        if ctx is None or not col:
+            return
+        record = ctx.standards.current(col)
+        if record is None:
+            return
+        payload = record.payload
+        for widget, key in ((self.usl_spin, "usl"), (self.lsl_spin, "lsl"),
+                            (self.target_spin, "target")):
+            value = payload.get(key)
+            if value is not None:
+                widget.setValue(float(value))
+        self.standard_object_ref = col
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
@@ -54,6 +77,7 @@ class CapabilityTab(BaseAnalysisTab):
         config_layout.addRow("分析方法:", self.method_combo)
 
         self.col_combo = QComboBox()
+        self.col_combo.currentTextChanged.connect(lambda *_: self._apply_context_standard())
         config_layout.addRow("测量列:", self.col_combo)
 
         self.sheet_combo = QComboBox()
@@ -146,6 +170,14 @@ class CapabilityTab(BaseAnalysisTab):
         self.save_png_btn.setStyleSheet(BUTTON_SECONDARY)
         self.save_png_btn.clicked.connect(self._on_save_png)
         config_layout.addRow(self.save_png_btn)
+
+        self.standard_btn = QPushButton("保存规格限为标准")
+        self.standard_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.standard_btn.setMinimumHeight(40)
+        self.standard_btn.setCursor(Qt.PointingHandCursor)
+        self.standard_btn.setStyleSheet(BUTTON_SECONDARY)
+        self.standard_btn.clicked.connect(self.save_specification_standard)
+        config_layout.addRow(self.standard_btn)
 
         self.export_btn = QPushButton(i18n.tr("cap.export_btn"))
         self.export_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
@@ -354,6 +386,42 @@ class CapabilityTab(BaseAnalysisTab):
             "chart_data": result,
         }
         return self.current_result
+
+    def save_specification_standard(self, reason: str = ""):
+        """把当前 USL/LSL/目标值记录为规格限标准版本（B3-2）。"""
+        ctx = self._project_context
+        if ctx is None:
+            QMessageBox.warning(self, "无项目上下文", "请先保存/加载一个 .qap 项目")
+            return None
+        col = self.col_combo.currentText().strip()
+        usl, lsl = self.usl_spin.value(), self.lsl_spin.value()
+        if not col:
+            QMessageBox.warning(self, "缺少对象", "请先选择测量列")
+            return None
+        if usl <= lsl:
+            QMessageBox.warning(self, "规格限无效", f"USL ({usl}) 必须大于 LSL ({lsl})")
+            return None
+        text = str(reason or "").strip()
+        if not text:
+            text, ok = QInputDialog.getText(self, "保存规格限标准", "变更原因:")
+            if not ok:
+                return None
+            text = str(text or "").strip()
+        if not text:
+            QMessageBox.warning(self, "缺少原因", "标准变更必须填写原因")
+            return None
+        before = len(ctx.standards)
+        record = ctx.record_specification(
+            col, usl=usl, lsl=lsl, target=self.target_spin.value(),
+            change_reason=text, changed_by="user")
+        self.standard_object_ref = col
+        if len(ctx.standards) == before:
+            QMessageBox.information(self, "标准未变化", "与现行版本一致，未产生新版本")
+        else:
+            QMessageBox.information(
+                self, "标准已记录",
+                f"{col}: USL={usl} / LSL={lsl} · 版本 {record.record_id}")
+        return record
 
     def display_result(self, analysis: dict[str, Any] | None = None):
         if analysis is None:

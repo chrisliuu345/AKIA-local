@@ -28,6 +28,7 @@ class WelcomePage(QWidget):
     diagnose_clicked = Signal()
     new_analysis_clicked = Signal()
     open_project_clicked = Signal()
+    case_center_clicked = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -146,6 +147,7 @@ class WelcomePage(QWidget):
             ("", "最近项目", "打开最近使用的 .qap 项目", self.open_project_clicked, None),
             ("", "新建分析", "直接跳转到 SPC 分析模块", self.new_analysis_clicked, None),
             ("", i18n.tr("sidebar.diagnose"), "一键智能诊断数据质量", self.diagnose_clicked, None),
+            ("", "改善案例", "案例中心 · 证据链 · 改善闭环", self.case_center_clicked, None),
         ]
 
         for _, title, desc, signal, _perm in card_defs:
@@ -192,8 +194,8 @@ class WelcomePage(QWidget):
         tc = theme_colors()
         card = QFrame()
         card.setCursor(Qt.PointingHandCursor)
-        card.setMinimumWidth(140)
-        card.setMaximumWidth(180)
+        card.setMinimumWidth(118)
+        card.setMaximumWidth(160)
         card.setMinimumHeight(100)
         card.setStyleSheet(
             f"QFrame {{"

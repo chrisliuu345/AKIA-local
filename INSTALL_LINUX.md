@@ -12,8 +12,8 @@
 > **Linux 只发布 AppImage 一种格式**（自 v4.2.0 起不再构建 `.deb`），所有发行版通用；
 > 需要系统集成可按下文自建 `.desktop` 入口。
 >
-> **v4.2.1 为源码补丁，不产出新安装包**：下列 AppImage 仍为 v4.2.0 已发布资产，
-> 需要补丁内容请从源码运行（或自行 `bash build_appimage.sh` 重建）。
+> **v4.3.0 提供 Linux AppImage**：`AKIA-4.3.0-x86_64.AppImage`（自本版起产物统一为
+> `AKIA-*` 命名，附 `.sha256` 校验文件）。
 
 ### 方式 1: AppImage（唯一官方格式）
 
@@ -21,21 +21,20 @@ AppImage 是单文件分发格式，无需安装，双击即可运行。
 
 ```bash
 # 1. 下载 AppImage
-# 从 GitHub Releases 下载 QA-Tool-4.2.0-x86_64.AppImage
-# （v4.2.0 历史资产名；自下一版起产物名为 AKIA-<版本>-x86_64.AppImage）
+# 从 GitHub Releases 下载 AKIA-4.3.0-x86_64.AppImage
 
 # 2. 添加执行权限
-chmod +x QA-Tool-4.2.0-x86_64.AppImage
+chmod +x AKIA-4.3.0-x86_64.AppImage
 
 # 3. 运行
-./QA-Tool-4.2.0-x86_64.AppImage
+./AKIA-4.3.0-x86_64.AppImage
 ```
 
 **可选: 集成到系统菜单**
 
 ```bash
 # 移动到 /opt 目录
-sudo mv QA-Tool-4.2.0-x86_64.AppImage /opt/akia.AppImage
+sudo mv AKIA-4.3.0-x86_64.AppImage /opt/akia.AppImage
 
 # 创建桌面入口
 cat > ~/.local/share/applications/akia.desktop << EOF
@@ -181,11 +180,11 @@ python main.py
 
 ## 版本信息
 
-- **当前版本**: v4.2.1（源码补丁；最新安装包为 v4.2.0）
+- **当前版本**: v4.3.0（改善案例与证据账本；Linux AppImage `AKIA-4.3.0-x86_64.AppImage`）
 - **Python**: 3.11+ (推荐 3.14)
 - **Qt**: PySide6 6.5+
-- **发布格式**: Linux 仅 AppImage（v4.2.0 已发布）；v4.2.1 仅源码；Windows 为 Inno Setup 安装包（Windows 侧构建）
-- **测试**: 159 文件逐文件执行，1917 通过 / 56 跳过 / 0 失败（2026-10-01 实测，规则见 `PYTEST_RULES.md`）
+- **发布格式**: Linux 仅 AppImage（v4.3.0）；Windows 为 Inno Setup 安装包（Windows 侧构建）
+- **测试**: 178 文件逐文件执行，2184 通过 / 56 跳过 / 0 失败（2026-10-09 实测，规则见 `PYTEST_RULES.md`）
 
 ## 技术支持
 
