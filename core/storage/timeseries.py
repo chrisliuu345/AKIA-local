@@ -81,6 +81,18 @@ class TimeseriesStore:
             rows = self._conn.execute(sql, args).fetchall()
         return [Sample(r[0], r[1], r[3], r[2]) for r in rows]
 
+    def query_ref(self, raw_ref: str, limit: int = 100000) -> list[Sample]:
+        """按 MeasurementEvent 的 ``timeseries://`` raw_ref 回读样本。"""
+        from core.measurement_event import parse_timeseries_ref
+
+        ref = parse_timeseries_ref(raw_ref)
+        samples = self.query(ref["device"], ref["channel"] or None,
+                             since_ts=ref["since_ts"], limit=limit)
+        until = ref["until_ts"]
+        if until is not None:
+            samples = [sample for sample in samples if sample.ts <= until]
+        return samples
+
     def count(self, device: str | None = None) -> int:
         sql = "SELECT COUNT(*) FROM measurements"
         args: list = []

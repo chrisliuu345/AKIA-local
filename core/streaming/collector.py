@@ -21,7 +21,7 @@ class IngestRunner:
                  raw_retention_s: float | None = None,
                  rollup_retention_s: float | None = None,
                  maintain_interval_s: float = 300.0, health=None,
-                 auto_reconnect: bool = True):
+                 auto_reconnect: bool = True, event_sink=None):
         self.bus = bus
         self.store = store
         self.drivers = drivers
@@ -31,6 +31,7 @@ class IngestRunner:
         self.maintain_interval_s = max(1.0, float(maintain_interval_s))
         self.health = health                 # connectors.health.HealthRegistry | None
         self.auto_reconnect = auto_reconnect
+        self.event_sink = event_sink         # Callable[[list[MeasurementEvent]], None] | None
         self.status = StreamingStatus()
         self.last_maintenance: dict | None = None
         self._stop = threading.Event()
@@ -114,10 +115,31 @@ class IngestRunner:
                     self.bus.publish(d.name, samples)
                     self.store.insert_samples(samples)
                     self.status.report(samples)
+                    self._emit_measurement_events(d, samples)
             self._maybe_maintain(started)
             interval = self.poll_interval - (time.time() - started)
             if interval > 0:
                 time.sleep(interval)
+
+    def _emit_measurement_events(self, driver, samples) -> None:
+        """把一轮 poll 样本转为批量 MeasurementEvent（O(通道数)）并交给 sink。
+
+        sink 异常不阻断采集主链路；事件仅存摘要与 raw_ref，不复制原始数据。
+        """
+        if self.event_sink is None or not samples:
+            return
+        try:
+            from core.measurement_event import MeasurementEvent
+
+            name = self._driver_name(driver)
+            events = MeasurementEvent.events_from_samples(
+                samples, source_kind="connector",
+                source_id=name, source_name=name)
+            if events:
+                self.event_sink(events)
+        except Exception:  # 事件旁路失败不得影响采集/入库主链路
+            logger.exception("measurement event sink failed: %s",
+                             self._driver_name(driver))
 
     def _maybe_reconnect(self, driver, name: str) -> bool:
         """退避到期后的自动重连 — 仅在上一轮失败且未恢复时执行。

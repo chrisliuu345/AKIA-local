@@ -2,9 +2,9 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> Current: v4.2.1 Quality hardening & UX fixes (static ratchet / silent-failure governance / numeric robustness / SPC & import vectorisation; AKIA rename wrap-up + new icon + chart-type popup selector + splash removal) (✅ 2026-10-02 source-only patch, no new installers) | Latest installers: v4.2.0 Linux AppImage | Next: **v4.3.0 Improvement cases & evidence ledger (planned)**
-> Deepening line: **v4.2 Trust → v4.3 Case & evidence → v4.4 Closed loop → v4.5 Open → v4.6 Intelligence** (from analysis tool to a shop-floor improvement evidence chain) | Tests: 1970+ pytest · 37 analysis tabs | Updated: 2026-10-02
-> Status: **v4.2.1 source-only patch delivered** (P1 ✅ 11 static rule sets gated · P2 ✅ silent-failure governance + batch scheduler fix · P3 ✅ numeric robustness · P4 ✅ SPC 1M rows 21.96s→1.62s, 1M-row import 14.27s→5.19s · P5 ✅ regression fixes · branding ✅ AKIA rename wrap-up + legacy data migration layer · UX ✅ new icon + chart-type popup selector + splash removal, cold-start benchmark 2.10s→1.06s); v4.2.0 installers stay downloadable, this release is source-only; next up **v4.3.0 improvement cases & evidence ledger**
+> Current: v4.3.0 Improvement cases & evidence ledger (case lifecycle / measurement channels / standard version records / evidence ledger & exchange v1 / lazy-tab startup hardening) (✅ 2026-10-09 release: source + Linux AppImage `AKIA-4.3.0-x86_64.AppImage`) | Latest installers: v4.3.0 Linux AppImage | Next: **v4.4.0 Closed-loop execution & effect verification (planned)**
+> Deepening line: **v4.2 Trust → v4.3 Case & evidence → v4.4 Closed loop → v4.5 Open → v4.6 Intelligence** (from analysis tool to a shop-floor improvement evidence chain) | Tests: 2184 passed · 37 analysis tabs | Updated: 2026-10-09
+> Status: **v4.3.0 released** (B0 ✅ contracts · B1 ✅ case lifecycle & persistence · B2 ✅ measurement channels & plugin data sources · B3 ✅ standard version records · B4 ✅ evidence ledger & exchange v1 · B5 ✅ integration & quality wrap-up · B6 ✅ release wrap-up & Linux AppImage); `.qap` 1.9 (1.6–1.8 read-compatible) · full per-file regression 178 files / 2184 passed / 0 failed · all 10 benchmark metrics pass · missing matplotlib/seaborn no longer blocks the main window; next up **v4.4.0 Closed-loop execution & effect verification**
 
 > **Maintenance convention (from 2026-09-12)**: each version entry is one summary line plus key numbers; implementation details live in code/tests/user guide, not here.
 > This file was compressed from 1100+ lines to under 500; the expanded history is in git history (`git log -p -- ROADMAP.md`).
@@ -17,8 +17,8 @@
 v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.1 ──→ v2.5 ──→ v2.6.0 ~ v2.6.5 ──→ v2.7.0
       ──→ v2.8.0 ──→ v2.9.0 ──→ v3.0.0 ──→ v3.1.0 ──→ v3.2.0 ──→ v3.3.0 ──→ v3.4.0 ──→ v3.5.0
       ──→ v3.6.0 (incl. 3.6.1) ──→ v3.7.0 (incl. review) ──→ v3.7.1 ──→ v3.7.2 ──→ v3.8.0 ──→ v4.0.0
-      ──→ v4.2.0 ✅ (trust · AppImage published) ──→ v4.2.1 ✅ current (quality hardening · source-only)
-      ──→ v4.3.0 Case·evidence (planned) ──→ v4.4.0 Closed loop (planned) ──→ v4.5.0 Open (planned) ──→ v4.6.0 Intelligence (planned)
+      ──→ v4.2.0 ✅ (trust · AppImage published) ──→ v4.2.1 ✅ (quality hardening · source-only)
+      ──→ v4.3.0 ✅ current (case·evidence · source + AppImage) ──→ v4.4.0 Closed loop (planned) ──→ v4.5.0 Open (planned) ──→ v4.6.0 Intelligence (planned)
 ```
 
 | Status | Version | Theme |
@@ -39,7 +39,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | ✅ | **v4.1.0** | **Chart & UI experience unification (B1 style layer / B2 chart fixes / B3 command palette·batch progress·toasts·empty state / B4 quality & performance baseline)** |
 | ✅ | **v4.2.0** | **Algorithm trust & depth (known-value validation matrix / multivariate SPC · change-point detection · residual control charts / conclusion credentials / first closed-loop slice) · Linux AppImage published** |
 | ✅ | **v4.2.1** | **Quality hardening & UX fixes (P1–P5: static ratchet / silent-failure governance / numeric robustness / SPC & import vectorisation; AKIA rename wrap-up · new icon · chart-type popup selector · splash removal) · source-only patch** |
-| 🚧 | v4.3.0 | Improvement case & evidence ledger (ImprovementCase lifecycle / MeasurementEvent · plugin data sources / standard version records / evidence view · desensitized sharing) |
+| ✅ | **v4.3.0** | **Improvement cases & evidence ledger (B0–B6: case lifecycle / measurement channels + plugin data sources / standard version records / evidence ledger & exchange v1 / lazy-tab startup hardening) · `.qap` 1.9 · +263 tests · source + Linux AppImage published** |
 | 🚧 | v4.4.0 | Closed-loop execution & effect verification (alert→8D auto case / measurement system online / sampling transfer / benefit ledger · COPQ / skill-constrained line balancing) |
 | 🚧 | v4.5.0 | Open ecosystem (MCP server · native tool calling / CLI · SDK quality gate / industry rule packs · plugin scaffold) |
 | 🚧 | v4.6.0 | Intelligent online & local data assets (model governance · online scoring / process window recommendation / IE evidence chain / local assets · edge SPC) |
@@ -78,6 +78,7 @@ Planning principles:
 
 | Date | Version | Summary |
 |------|---------|---------|
+| 10-09 | **v4.3.0 released** | **Improvement cases & evidence ledger (B0–B6)**: case lifecycle v1 (closure gated by re-measurement + statistical verdict) + CaseWorkflow 8-phase workbench · measurement channels + Plugin API 2.1 `data_source` (5s timeout / bad-data isolation / source enforcement) · standard version records with as-of restore · sha256 evidence ledger + independently verifiable evidence packs + desensitised share packs + 12-digit report trace codes · `.qap` 1.9 (1.6–1.8 read-compatible) · lazy-tab isolation + dependency notice pages so missing matplotlib no longer blocks the main window; full per-file regression **178 files / 2184 passed / 56 skipped / 0 failed**, all 10 benchmark metrics pass (cold start 0.997s vs baseline 2.101s); first release with the unified Linux AppImage name `AKIA-4.3.0-x86_64.AppImage` + `.sha256` |
 | 10-02 | **v4.2.1 released (source-only patch)** | **Quality hardening & UX fixes, source only**: the GitHub release ships Source zip / tar.gz (tag `v4.2.1`) and no new AppImage / installers (the latest installers remain v4.2.0); `check_version.py` consistent across all ends (settings / version_info / Inno / docs); full per-file regression **159 files / 1917 passed / 56 skipped / 0 failed**; all 8 benchmark metrics pass (cold start 1.06s vs baseline 2.101s) |
 | 10-01 | **Branding & UX wrap-up** | **AKIA rename wrap-up + legacy migration layer** (one-shot migration of QSettings / user config / keyring / `.qamodel` / plugin dirs, with 7 migration tests) · **new app icon** (layered porcelain, 1024 / 256 / ICO sizes, reproducible via `tools/generate_logo.py`) · **fixed** the PyInstaller `--add-data` destination that kept frozen builds from finding the logo / default config · **fixed** the general chart-type selector as a popup panel (Qt.Popup, three fixed columns, no more clipping or squeezing in the narrow config column) · **startup** splash removed — the main window shows immediately (lazy `scipy.stats` / `sqlalchemy` imports + deferred warm-up; cold start 2.10s→1.19s, end-to-end 3.3s→1.35s) |
 | 09-28 | **v4.2.1 quality hardening (P1–P5)** | **Full code-quality review + algorithm optimisation (shipped as the v4.2.1 patch)**: **P1 static ratchet** — 11 rule sets (RET505/506 · RUF010/RUF100 · SIM105/113/114/201 · C408/416/420 · PERF102 · PLW0108 · PLW3301) cleared and gated, two dead counters removed (`sampling_engine` write-only `total`, `smed_tab` gantt `y`), 100 files touched · **P2 silent-failure governance** — audit write failures are counted and warned, session/scheduler/one-click/config-migration paths log again, all 31 pass-only handlers now carry a reason; **batch scheduling fixed** (dialog never injected an executor → new Qt-free `run_task_headless`: source → analyses → docx/pdf/xlsx/Markdown report) · **P3 numeric robustness** — new `analysis/_sanitize.py` + `spc/_validation.py`, ±inf/missing values normalised at every analysis entry, six classes of low-level errors fixed (exponential smoothing "No supported index" · count charts NaN/inf conversion · residual chart Ljung-Box IndexError · capability sixpack range-not-finite) · **P4 performance** — vectorised Nelson rules (2100-case equivalence check, 0 diffs) → **SPC 1M points 21.96s → 1.62s (13.5×)**; vectorised per-cell parsing callbacks → **1M-row import 14.27s → 5.19s (2.7×)**, `perf_baseline.json` tightened to lock the gains |
@@ -132,7 +133,31 @@ Planning principles:
 
 ---
 
-## Current Release: v4.2.1 Highlights (source-only patch)
+## Current Release: v4.3.0 Highlights (improvement cases & evidence ledger)
+
+- **Release form**: source + Linux AppImage `AKIA-4.3.0-x86_64.AppImage` (with a `.sha256`
+  checksum file, tag `v4.3.0`); the Windows installer is built on Windows (scripts and `.iss` ready)
+- **Case as the spine**: `ImprovementCase` v1 state machine (closure gated by re-measurement +
+  evidence-backed statistical verdict) · `CaseWorkflow` 8-phase workbench · cases persisted across
+  the main window save / load / share paths (G1/G2 fixes)
+- **Measurement & plugins**: connector bypass collection + `MeasurementStore` (idempotent / 2000-entry
+  FIFO / JSONL recovery) · Plugin API 2.1 `data_source` (5s timeout, bad-data isolation, forced
+  `plugin/<id>` provenance)
+- **Standards replayable**: spec limits / control limits / standard times / work combinations /
+  control-plan entries versioned with change reasons and a timeline; as-of restore; credentials
+  follow the standard version
+- **Evidence verifiable**: sha256 hash chain over every action (tail corruption recovery) ·
+  evidence packs hashed per file and independently verifiable · desensitised share packs
+  (parametric synthesis + leak scan) · 12-digit trace code in HTML reports
+- **Startup hardening**: lazy-tab isolation + dependency notice pages; missing matplotlib / seaborn
+  no longer blocks the main window, missing core dependencies produce an actionable message
+- **Gates**: version consistency passed · ruff clean · per-file regression 178 files / 2184 passed /
+  56 skipped / 0 failed · all 10 benchmark metrics pass (cold start 0.997s vs baseline 2.101s, ×4 tolerance)
+- **Release notes**: [`docs/releases/v4.3.0.md`](docs/releases/v4.3.0.md)
+
+---
+
+## Previous Release: v4.2.1 Highlights (source-only patch, historical)
 
 - **Release form**: **source only** (GitHub Source zip / tar.gz, tag `v4.2.1`) — no new AppImage or
   installers are produced; the latest installers remain v4.2.0 (Linux AppImage published; the
@@ -182,9 +207,9 @@ Planning principles:
 |------|------|-------|
 | Manual review of proactive-suggestion accuracy (≥3.5/5) | Needs engineer scoring | User |
 | Vision acceptance on real footage (site video + labelled CSV, ≥85% agreement) | Needs site material | Plugin project |
-| Release artifacts (Windows Inno) | Latest installers are v4.2.0 (Linux AppImage published); v4.2.1 is source-only; the Windows installer needs a Windows box (scripts and .iss are ready) | On demand |
-| ImprovementCase object + evidence ledger | Bitemporal narrowed to measurements/standards/conclusions; see v4.3.0 | v4.3.0 |
-| Case workspace entry | Reuse Home first; adding a tab requires explicit review | v4.3.0 decision |
+| Release artifacts (Windows Inno) | Latest installers are v4.3.0 (Linux AppImage published); the Windows installer needs a Windows box (scripts and .iss are ready) | On demand |
+| ImprovementCase object + evidence ledger | ✅ Delivered in v4.3.0 (B0–B6) | Done |
+| Case workspace entry | ✅ Delivered in v4.3.0 (Home card + workbench) | Done |
 | MCP server + native tool calling | Decides the AI-ecosystem position; see v4.5.0 | v4.5.0 |
 | Alert→8D auto case / measurement system online / skill-constrained balancing | Reuses alert · MSA · connector-health · line-balance engines | v4.4.0 |
 | Full English pack | i18n framework lands in v4.5.0; translation after | v4.5 / later |
@@ -272,6 +297,8 @@ Planning principles:
 ### v4.3.0 — Improvement Case & Evidence Ledger (planned)
 
 > Data-model layer (the most important step): establish the case spine first, then let time, provenance and confidence serve it; bitemporal covers only measurements / standards / conclusions, not the whole database.
+> **Execution plan** (Chinese): [`PLAN_v4.3.0.md`](PLAN_v4.3.0.md) (2026-10-03).
+> **Progress (2026-10-08)**: B0 ✅ contracts (MeasurementEvent / StandardRecord / EvidenceLedger / time semantics / `.qap` 1.9) · B1 ✅ case lifecycle & persistence (ImprovementCase v1 closure gate · case center · actionable workbench · window/shared-project save & restore) · B2 ✅ measurement channels & plugin data sources (connector sink · `query_ref` readback · MeasurementStore + `.qap` `measurements.jsonl` · plugin API 2.1 `data_source` with timeout/bad-data isolation · four-channel workbench intake) · B3 ✅ standard version records (spec/control limits · standard time · work combination · control-plan rows with change reasons · as-of replay · credential `standard_ref` · Tools → standard history timeline) · B4 ✅ evidence ledger & exchange v1 (hash-chain wiring for all actions · evidence view with fingerprint recheck & trace lookup · independently verifiable `.qap` evidence pack · desensitized share pack with leak scan · HTML trace code) · B5 ✅ integration & quality wrap-up (`tools/demo_v43_case.py` one-command E2E · 10 ledger/import performance baselines · migration guide & help section · optional matplotlib at startup); B6 release in progress. Quality: full per-file regression 178 files / 2180 passed / 56 skipped / 0 failed (544.7s) · ruff clean · 10 performance baselines pass (cold start 1.258s).
 
 | Batch | Deliverables | Acceptance |
 |-------|--------------|------------|
