@@ -18,6 +18,8 @@ import json
 import logging
 import os
 import sys
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FuturesTimeoutError
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -37,6 +39,9 @@ from core.plugin_api import (
 )
 
 _log = logging.getLogger("AKIA.Plugin")
+
+#: 插件数据源单次采集超时（秒）；超时线程无法强杀，但调用方立即放行
+PLUGIN_MEASUREMENT_TIMEOUT_S = 5.0
 
 
 @dataclass
@@ -377,6 +382,66 @@ class PluginManager:
     def settings_plugins(self) -> list[PluginRecord]:
         return [r for r in self._records.values()
                 if r.trusted and r.available and r.supports("settings")]
+
+    def data_source_plugins(self) -> list[PluginRecord]:
+        """声明 ``data_source`` 能力且已信任/可用的插件（v2.1）。"""
+        return [r for r in self._records.values()
+                if r.trusted and r.available and r.supports("data_source")]
+
+    def collect_measurements(self, context=None, timeout_s: float | None = None) -> list:
+        """逐个数据源插件采集 MeasurementEvent（坏数据/异常/超时隔离）。
+
+        事件来源被强制覆盖为 ``plugin/<插件 id>``，插件无法伪装成连接器或手工数据。
+        """
+        from core.measurement_event import MeasurementEvent
+
+        timeout = float(PLUGIN_MEASUREMENT_TIMEOUT_S if timeout_s is None else timeout_s)
+        collected: list = []
+        for record in self.data_source_plugins():
+            raw = self._call_data_source(record, context, timeout)
+            if raw is None:
+                continue
+            record.error = ""
+            if not isinstance(raw, (list, tuple)):
+                record.error = ("provide_measurements 必须返回列表，实际 "
+                                f"{type(raw).__name__}")
+                _log.warning("插件 %s 数据源返回类型非法: %s", record.id, record.error)
+                continue
+            for item in raw:
+                try:
+                    event = (item if isinstance(item, MeasurementEvent)
+                             else MeasurementEvent.from_dict(item))
+                except (TypeError, ValueError) as exc:
+                    record.error = f"测量事件无效: {exc}"
+                    _log.warning("插件 %s 测量事件无效: %s", record.id, exc)
+                    continue
+                event.source_kind = "plugin"
+                event.source_id = record.id
+                event.source_name = record.name
+                if event.raw_ref.startswith(("inline://", "manual://")):
+                    event.raw_ref = f"plugin://{record.id}/{event.event_id}"
+                collected.append(event)
+        return collected
+
+    def _call_data_source(self, record: PluginRecord, context, timeout_s: float):
+        provider = getattr(record.instance, "provide_measurements", None)
+        if not callable(provider):
+            return []
+        executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="akia-datasource")
+        future = executor.submit(provider, context)
+        try:
+            return future.result(timeout=timeout_s)
+        except FuturesTimeoutError:
+            record.error = f"provide_measurements 超时（>{timeout_s:g}s）"
+            future.cancel()
+            _log.warning("插件 %s 数据源超时", record.id)
+            return None
+        except Exception as exc:
+            record.error = f"provide_measurements 失败: {exc}"
+            _log.warning("插件 %s 数据源失败: %s", record.id, exc)
+            return None
+        finally:
+            executor.shutdown(wait=False)
 
     def status_report(self) -> list[dict]:
         return [r.to_dict() for r in self._records.values()]

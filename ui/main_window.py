@@ -29,6 +29,9 @@ from core.i18n import i18n
 from core.data_profiler import DataProfiler
 from core.project_manager import ProjectManager
 from core.project_context import ProjectContext
+from core.measurement_store import MeasurementStore
+from core.evidence_ledger import EvidenceLedger
+from core.time_utils import now_iso
 from core.audit import audit
 from core.streaming.bus import StreamBus
 
@@ -48,7 +51,8 @@ from ui.main_window_helpers import (
 _PLUGIN_TAB_START = max(INDEX_MAP.keys()) + 1
 
 # 五链贯通涉及的 Tab 索引（FMEA → CP → SPC → PPAP → 8D），需要注入项目上下文
-_CONTEXT_TAB_INDICES = {TAB_INDEX[key] for key in CHAIN_TABS}
+_CONTEXT_TAB_INDICES = {TAB_INDEX[key] for key in (
+    *CHAIN_TABS, "capability", "time_study", "std_work_combo")}
 
 #: IE 工具 Tab — 工作表导入时分发跳过（IE 数据走「导入 IE 数据」）
 _IE_TAB_INDICES = frozenset({7, 8, 9, 10, 11, 21, 22})
@@ -78,6 +82,15 @@ class MainWindow(QMainWindow):
         self.profile_result: dict[str, Any] = {}
         self.analyses: dict[int, dict[str, Any]] = {}
         self.project_context = ProjectContext()
+        self.case_workflows: list = []
+        self._last_case_workflow = None
+        self.measurement_store = MeasurementStore()
+        self.measurement_capture = False
+        self._chart_dependency_warned = False
+        self.ledger = EvidenceLedger()
+        self._ledger_failures = 0
+        self.measurement_store.event_sink = self._on_measurement_event
+        self.project_context.event_sink = self._on_standard_event
 
         self._setup_ui()
         self._menu_refs: list = []
@@ -431,6 +444,15 @@ class MainWindow(QMainWindow):
         self.case_workbench_act = QAction("改善案例工作台", self,
                                           triggered=self._on_case_workbench)
         tools_menu.addAction(self.case_workbench_act)
+        self.case_center_act = QAction("改善案例中心", self,
+                                       triggered=self._on_case_center)
+        tools_menu.addAction(self.case_center_act)
+        self.standard_history_act = QAction("标准版本记录", self,
+                                            triggered=self._on_standard_history)
+        tools_menu.addAction(self.standard_history_act)
+        self.evidence_view_act = QAction("证据视图", self,
+                                         triggered=self._on_evidence_view)
+        tools_menu.addAction(self.evidence_view_act)
         tools_menu.addSeparator()
         clean_act = QAction(i18n.tr("sidebar.data_clean"), self, triggered=self._on_data_cleaner)
         tools_menu.addAction(clean_act)
@@ -466,30 +488,79 @@ class MainWindow(QMainWindow):
         about_action.triggered.connect(self._on_about)
         help_menu.addAction(about_action)
 
-    def _on_case_workbench(self):
-        """改善案例工作台（v4.2.0 P5）：以当前导入数据建立案例并打开工作台。"""
+    def _default_case_frame(self):
+        """当前导入数据中的第一张非空表 → (DataFrame, 表名)。"""
+        raw = (self.current_data or {}).get("raw_data") or {}
+        for name, candidate in raw.items():
+            if isinstance(candidate, pd.DataFrame) and not candidate.empty:
+                return candidate, str(name)
+        return None, "Sheet1"
+
+    def _register_case_workflow(self, workflow):
+        """登记案例到当前项目并返回（保存 .qap 时统一落盘）。"""
+        self.case_workflows.append(workflow)
+        self._last_case_workflow = workflow
+        return workflow
+
+    def _create_case_from_current_data(self, title: str = ""):
+        """以当前导入数据建立案例基线。"""
         from core.case_workflow import CaseWorkflow
 
-        raw = (self.current_data or {}).get("raw_data") or {}
-        frame = None
-        for candidate in raw.values():
-            if isinstance(candidate, pd.DataFrame) and not candidate.empty:
-                frame = candidate
-                break
-
         source = str((self.current_data or {}).get("source", "") or "")
-        workflow = CaseWorkflow(title=f"改善案例 — {source.split('/')[-1]}" if source
-                                else "改善案例")
+        default_title = (f"改善案例 — {os.path.basename(source)}" if source
+                         else "改善案例")
+        workflow = CaseWorkflow(title=title or default_title, ledger=self.ledger)
+        frame, sheet_name = self._default_case_frame()
         if frame is not None:
             workflow.record_step(
                 "baseline", {"params": {"rows": int(len(frame))}},
-                data_ref=f"sheet:{next(iter(raw), 'Sheet1')}",
+                data_ref=f"sheet:{sheet_name}",
                 frame=frame, note="从当前导入数据建立基线")
-        self._last_case_workflow = workflow
+        return self._register_case_workflow(workflow)
 
+    def _open_case_workflow_dialog(self, workflow):
         from ui.dialogs.case_workflow_dialog import CaseWorkflowDialog
 
         CaseWorkflowDialog(workflow, self).exec()
+
+    def _on_case_workbench(self):
+        """改善案例工作台（v4.2.0 P5）：以当前导入数据建立案例并打开工作台。"""
+        workflow = self._create_case_from_current_data()
+        self._open_case_workflow_dialog(workflow)
+
+    def _on_case_center(self):
+        """改善案例中心（v4.3.0 B1-4）：查看/新建/打开当前项目的案例。"""
+        from ui.dialogs.case_center_dialog import CaseCenterDialog
+
+        dialog = CaseCenterDialog(self.case_workflows, self,
+                                  create_callback=self._create_case_from_current_data)
+        if dialog.exec() == CaseCenterDialog.Accepted:
+            workflow = dialog.selected_workflow()
+            if workflow is not None:
+                self._last_case_workflow = workflow
+                self._open_case_workflow_dialog(workflow)
+
+    def _on_standard_history(self):
+        """标准版本时间线（B3）：对象 / 生效区间 / 变更原因 / 变更人。"""
+        from ui.dialogs.standard_history_dialog import StandardHistoryDialog
+
+        registry = getattr(self.project_context, "standards", None)
+        if registry is None or not len(registry):
+            QMessageBox.information(self, "标准版本记录", "当前项目尚无标准版本记录")
+            return
+        StandardHistoryDialog(registry, self).exec()
+
+    def _on_evidence_view(self):
+        """证据视图（B4-2）：结论 → 凭证 → 账本事件 → 原始引用。"""
+        from ui.dialogs.evidence_view_dialog import EvidenceViewDialog
+
+        dialog = EvidenceViewDialog(
+            self.analyses, self.ledger, parent=self,
+            registry=getattr(self.project_context, "standards", None),
+            measurements=self.measurement_store,
+            frame_provider=self._analysis_source_frame,
+            ledger_failures=self._ledger_failures)
+        dialog.exec()
 
     def _on_llm_assist(self):
         """打开 QAM Harness（质量工程 AI Agent）对话窗口。"""
@@ -539,6 +610,9 @@ class MainWindow(QMainWindow):
             from output.html_export import export_html
             charts = self._collect_charts(list(self.analyses.keys()))
             export_html(list(self.analyses.values()), charts=charts, output_path=path)
+            audit("export", "user", f"HTML 报告 {os.path.basename(path)}")
+            self._record_report_exported("html", path,
+                                         analyses=list(self.analyses.values()))
             self.status_label.setText("HTML 报告已导出")
             QMessageBox.information(self, "导出完成", "HTML 报告已导出")
         except Exception as e:
@@ -566,6 +640,7 @@ class MainWindow(QMainWindow):
         self.welcome_page.new_analysis_clicked.connect(lambda: self._switch_tab(1))
         self.welcome_page.diagnose_clicked.connect(self._on_diagnose)
         self.welcome_page.open_project_clicked.connect(self._on_load_project)
+        self.welcome_page.case_center_clicked.connect(self._on_case_center)
 
     def _switch_tab(self, index: int):
         if 0 <= index < self.stack.count():
@@ -711,6 +786,7 @@ class MainWindow(QMainWindow):
                 raw_data = self.data_loader.load(file_path)
                 audit("import_data", "user",
                       f"质量数据 {os.path.basename(file_path)}")
+                self._record_data_imported(file_path, raw_data, kind="quality")
                 self.current_data = {
                     "file_path": file_path,
                     "raw_data": raw_data,
@@ -773,6 +849,7 @@ class MainWindow(QMainWindow):
                 raw_data = self.data_loader.load(file_path)
                 audit("import_data", "user",
                       f"IE 数据 {os.path.basename(file_path)}")
+                self._record_data_imported(file_path, raw_data, kind="ie")
                 ie_data = self.data_loader.load_ie_data()
 
                 if not ie_data:
@@ -849,6 +926,8 @@ class MainWindow(QMainWindow):
                         loader.disconnect()
                 audit("import_db", "user",
                       f"数据库 {config.get('database', '')} 表数={len(raw_data)}")
+                self._record_data_imported(
+                    f"db:{config.get('database', '')}", raw_data, kind="database")
 
                 self.current_data = {
                     "source": "database",
@@ -1274,6 +1353,19 @@ class MainWindow(QMainWindow):
         atype = result.get("analysis_type", "")
         key_res = self._summarize_result(result.get("result", {}))
         self.sidebar.add_history(idx, atype, key_res)
+        credential = self.analyses[idx].get("credential") or {}
+        params = credential.get("params") or {}
+        rerun = self.analyses[idx].get("rerun_diff") or {}
+        self._ledger_append(
+            "analysis_run",
+            object_refs=[f"tab:{idx}", credential.get("data_fingerprint", "")],
+            payload={"tab": idx, "analysis_type": atype,
+                     "rule_version": credential.get("rule_version", ""),
+                     "data_fingerprint": credential.get("data_fingerprint", ""),
+                     "standard_ref": params.get("standard_ref", ""),
+                     "standard_as_of": params.get("standard_as_of", ""),
+                     "rerun_identical": rerun.get("identical"),
+                     "completed_at": self.analyses[idx]["_completed_at"]})
 
     def _make_analysis_credential(self, idx: int, result: dict) -> dict:
         """为该次分析生成结论凭证（规则版本 + 参数 + 数据指纹 + 软件版本）。
@@ -1287,12 +1379,49 @@ class MainWindow(QMainWindow):
                            or result.get("analysis_type")
                            or result.get("chart_type")
                            or f"tab_{idx}")
+        params = dict(result.get("params", {}) or {})
+        params.update(self._standard_context_for(idx, result))
         return make_credential(
             rule_version=rule_version,
-            params=result.get("params", {}) or {},
+            params=params,
             df=self._analysis_source_frame(idx),
             algorithm=str(result.get("analysis_type", "")),
         ).to_dict()
+
+    def _standard_context_for(self, idx: int, result: dict) -> dict:
+        """解析该次分析适用的标准版本引用（B3-5），供凭证与 as-of 复判使用。"""
+        from core.standard_record import resolve_standard_context
+
+        try:
+            registry = self.project_context.standards
+        except AttributeError:
+            return {}
+        if registry is None or not len(registry):
+            return {}
+        params = result.get("params", {}) or {}
+        refs: list[str] = []
+        for key in ("standard_ref", "characteristic_id", "column", "process_id"):
+            value = params.get(key)
+            if value:
+                refs.append(str(value))
+        tab = self._tab_cache.get(idx)
+        for attr in ("standard_object_ref", "characteristic_id"):
+            value = getattr(tab, attr, "")
+            if value:
+                refs.append(str(value))
+        resolved = resolve_standard_context(registry, refs)
+        if resolved:
+            return resolved
+        # 兜底：仅当分析数据中恰好一个列名能匹配到标准时才引用，避免张冠李戴
+        frame = self._analysis_source_frame(idx)
+        if frame is None:
+            return {}
+        matches = [str(column) for column in frame.columns
+                   if registry.current(str(column))
+                   or registry.as_of(str(column), now_iso())]
+        if len(matches) == 1:
+            return resolve_standard_context(registry, matches)
+        return {}
 
     def _analysis_source_frame(self, idx: int):
         """取该 Tab 用于分析的数据作为指纹来源；取不到则返回 None（no-data 指纹）。
@@ -1357,6 +1486,9 @@ class MainWindow(QMainWindow):
             mod = importlib.import_module(module_path)
             cls = getattr(mod, class_name)
             tab = cls()
+        except ImportError as exc:
+            self._handle_tab_dependency_error(idx, class_name, module_path, exc)
+            return None
         except Exception:
             import logging
             logging.getLogger(__name__).exception(
@@ -1374,6 +1506,74 @@ class MainWindow(QMainWindow):
 
         self._connect_tab_signals(idx, tab)
         return tab
+
+    def _handle_tab_dependency_error(self, idx: int, class_name: str,
+                                     module_path: str, exc: ImportError):
+        """缺依赖导致 Tab 加载失败：展示可操作提示，不打印异常堆栈。"""
+        import logging
+
+        from ui.runtime_deps import (
+            CHART_DEPENDENCIES, broken_chart_dependencies,
+            chart_dependency_hint, missing_chart_dependencies,
+        )
+
+        top = (getattr(exc, "name", "") or "").split(".")[0]
+        missing = missing_chart_dependencies()
+        if not missing:
+            if top in CHART_DEPENDENCIES:
+                missing = [top]  # 装了一半：find_spec 成功但 import 失败
+            elif not top:
+                missing = broken_chart_dependencies()
+
+        if missing:
+            title = "缺少图表依赖"
+            hint = chart_dependency_hint(missing)
+            if not self._chart_dependency_warned:
+                self._chart_dependency_warned = True
+                QMessageBox.warning(self, title, hint)
+        else:
+            title = "缺少运行依赖"
+            name = getattr(exc, "name", None) or str(exc) or class_name
+            hint = (
+                f"该功能依赖的组件不可用: {name}\n"
+                "安装完整依赖后重新点击该功能即可（无需重启）：\n"
+                "  pip install -r requirements.txt"
+            )
+            logging.getLogger(__name__).warning(
+                "懒加载 Tab 依赖缺失: idx=%s %s from %s -> %s",
+                idx, class_name, module_path, exc,
+            )
+
+        self._install_dependency_notice(idx, title, hint)
+        self.statusBar().showMessage(hint.splitlines()[0], 15000)
+
+    def _install_dependency_notice(self, idx: int, title: str, message: str):
+        """把空白占位页替换为依赖提示页，避免切换后"点了没反应"。"""
+        from PySide6.QtWidgets import QLabel, QVBoxLayout
+
+        page = QWidget()
+        page.setObjectName(f"dependency_notice_{idx}")
+        layout = QVBoxLayout(page)
+        layout.setContentsMargins(48, 48, 48, 48)
+        layout.addStretch(1)
+        title_label = QLabel(title)
+        title_label.setFont(QFont(get_ui_font(), 15, QFont.Bold))
+        title_label.setAlignment(Qt.AlignCenter)
+        message_label = QLabel(message)
+        message_label.setAlignment(Qt.AlignCenter)
+        message_label.setWordWrap(True)
+        message_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        layout.addWidget(title_label)
+        layout.addWidget(message_label)
+        layout.addStretch(1)
+
+        old = self.stack.widget(idx)
+        self.stack.insertWidget(idx, page)
+        if old:
+            self.stack.removeWidget(old)
+            if old.objectName().startswith(("placeholder", "dependency_notice")):
+                old.deleteLater()
+        return page
 
     def _connect_tab_signals(self, idx: int, tab):
         """为新创建的 Tab 建立信号连接"""
@@ -1458,6 +1658,7 @@ class MainWindow(QMainWindow):
                 self.status_label.setText(f"{i18n.tr('status.exported')}{file_path}")
                 audit("export", "user",
                       f"单Tab导出 {fmt} {os.path.basename(file_path)}")
+                self._record_report_exported(fmt, file_path, analyses=[result])
                 self._show_toast(f"已导出：{os.path.basename(file_path)}", "success")
                 QMessageBox.information(self, i18n.tr("msg.export_complete"), f"{i18n.tr('msg.export_saved')}\n{file_path}")
             except Exception as e:
@@ -1496,6 +1697,7 @@ class MainWindow(QMainWindow):
                 self.status_label.setText(f"{i18n.tr('status.exported')}{file_path}")
                 audit("export", "user",
                       f"汇总导出 {fmt} {os.path.basename(file_path)}")
+                self._record_report_exported(fmt, file_path, analyses=analyses_list)
                 self._show_toast(f"已导出：{os.path.basename(file_path)}", "success")
                 QMessageBox.information(self, i18n.tr("msg.export_complete"), f"{i18n.tr('msg.export_saved')}\n{file_path}")
             except Exception as e:
@@ -1524,6 +1726,8 @@ class MainWindow(QMainWindow):
                 self.status_label.setText(f"{i18n.tr('status.exported')}{file_path}")
                 audit("export", "user",
                       f"合规报告 {template_id} {os.path.basename(file_path)}")
+                self._record_report_exported(
+                    fmt, file_path, analyses=list(self.analyses.values()))
                 self._show_toast(f"已导出：{os.path.basename(file_path)}", "success")
                 QMessageBox.information(self, i18n.tr("msg.export_complete"),
                                         f"{i18n.tr('msg.export_saved')}\n{file_path}")
@@ -1548,6 +1752,11 @@ class MainWindow(QMainWindow):
             ProjectManager.save_project(
                 path, raw, self.analyses, charts, "",
                 project_context=self.project_context.to_dict() if self.project_context else None,
+                cases=[workflow.to_dict() for workflow in self.case_workflows],
+                standards=(self.project_context.standards.to_dict()
+                           if self.project_context else None),
+                measurements=self.measurement_store.to_dicts(),
+                evidence_events=self.ledger,
             )
             self.status_label.setText(f"项目已保存: {path}")
             recent = ProjectManager.recent_projects()
@@ -1580,6 +1789,15 @@ class MainWindow(QMainWindow):
             self.project_context = PC.from_dict(ctx_dict)
         else:
             self.project_context = ProjectContext()
+        self.project_context.event_sink = self._on_standard_event
+        standards_payload = project.get("standards")
+        if standards_payload and not len(self.project_context.standards):
+            from core.standard_record import StandardRegistry
+            self.project_context.standards = StandardRegistry.from_dict(standards_payload)
+        self._restore_ledger(project.get("evidence_events") or [],
+                             project.get("evidence_errors") or [])
+        self._restore_case_workflows(project.get("cases") or [])
+        self._restore_measurement_store(project.get("measurements") or [])
         for idx in _CONTEXT_TAB_INDICES:
             tab = self._tab_cache.get(idx)
             if tab and hasattr(tab, 'set_project_context'):
@@ -1601,6 +1819,117 @@ class MainWindow(QMainWindow):
         if success_msg:
             QMessageBox.information(self, "加载完成", success_msg)
 
+    def _restore_case_workflows(self, entries: list):
+        """从 .qap cases 段恢复案例；单条损坏不影响项目其余内容。"""
+        from core.case_workflow import CaseWorkflow
+
+        restored = []
+        for entry in entries or []:
+            try:
+                restored.append(CaseWorkflow.from_dict(entry, ledger=self.ledger))
+            except Exception:  # 单条案例损坏 → 跳过并留痕，不阻断项目加载
+                import logging
+                logging.getLogger(__name__).warning(
+                    "跳过无法恢复的改善案例: %r", entry, exc_info=True)
+        self.case_workflows = restored
+        self._last_case_workflow = restored[-1] if restored else None
+
+    # ------------------------------------------------------------ 证据账本（B4）
+    def _ledger_append(self, event_type: str, *, actor: str = "user",
+                       object_refs: list[str] | None = None,
+                       payload: dict | None = None):
+        """写入证据账本；失败只计数/留痕，绝不阻断业务动作。"""
+        try:
+            return self.ledger.append(event_type, actor=actor,
+                                      object_refs=object_refs or [],
+                                      payload=payload or {})
+        except Exception:  # 记账失败不得影响导入/分析/导出等主流程
+            import logging
+            self._ledger_failures += 1
+            logging.getLogger(__name__).warning(
+                "证据账本写入失败（累计 %d 次）", self._ledger_failures,
+                exc_info=True)
+            return None
+
+    def _on_measurement_event(self, event):
+        self._ledger_append(
+            "measurement_recorded", actor="system",
+            object_refs=[event.event_id,
+                         event.characteristic_id or event.channel or event.device],
+            payload={"source_kind": event.source_kind, "source_id": event.source_id,
+                     "channel": event.channel, "n": event.summary.get("n", 0),
+                     "fingerprint": event.fingerprint, "raw_ref": event.raw_ref,
+                     "ts_start": event.ts_start, "ts_end": event.ts_end})
+
+    def _on_standard_event(self, event_type: str, object_refs: list[str],
+                           payload: dict) -> None:
+        self._ledger_append(event_type, object_refs=object_refs, payload=payload)
+
+    def _on_alert_event(self, entry) -> None:
+        self._ledger_append(
+            "alert_ack", object_refs=[f"alert:{entry.id}", entry.device],
+            payload={"device": entry.device, "channel": entry.channel,
+                     "kind": entry.kind, "severity": entry.severity,
+                     "ack_by": entry.ack_by})
+
+    def _record_data_imported(self, source: str, raw_data: dict,
+                              kind: str = "file") -> None:
+        sheets = len(raw_data or {})
+        rows = sum(len(df) for df in (raw_data or {}).values()
+                   if hasattr(df, "__len__"))
+        self._ledger_append("data_imported", object_refs=[str(source)],
+                            payload={"source": str(source), "kind": kind,
+                                     "sheets": sheets, "rows": int(rows)})
+
+    def _record_report_exported(self, fmt: str, file_path: str,
+                                analyses=None) -> None:
+        from core.evidence import credential_trace_code
+
+        records = analyses if analyses is not None else list(self.analyses.values())
+        trace = credential_trace_code(
+            [(record or {}).get("credential") for record in records])
+        refs = [os.path.basename(file_path)]
+        if trace:
+            refs.append(f"trace:{trace}")
+        self._ledger_append("report_exported", object_refs=refs,
+                            payload={"format": fmt,
+                                     "file": os.path.basename(file_path),
+                                     "trace": trace})
+
+    def _restore_ledger(self, events: list, errors: list | None = None) -> None:
+        try:
+            self.ledger = EvidenceLedger.from_events(events or [])
+        except (TypeError, ValueError):
+            import logging
+            logging.getLogger(__name__).warning(
+                "证据账本恢复失败，回退为空账本", exc_info=True)
+            self.ledger = EvidenceLedger()
+        self._ledger_failures = len(errors or [])
+        chain = self.ledger.verify()
+        if not chain.get("ok"):
+            import logging
+            logging.getLogger(__name__).warning(
+                "证据账本链校验失败: %s", chain.get("reason", ""))
+
+    def _restore_measurement_store(self, entries: list):
+        """从 .qap measurements 段恢复测量事件；单条损坏跳过并留痕。"""
+        store = MeasurementStore()
+        for entry in entries or []:
+            try:
+                store.add(entry)
+            except (TypeError, ValueError):
+                import logging
+                logging.getLogger(__name__).warning(
+                    "跳过无法恢复的测量事件: %r", entry, exc_info=True)
+        store.event_sink = self._on_measurement_event
+        self.measurement_store = store
+
+    def _on_stream_measurements(self, events):
+        """连接器采集旁路：仅在测量采集开启时写入项目事件集合。"""
+        if not getattr(self, "measurement_capture", False):
+            return
+        self.measurement_store.extend(events)
+
     def _on_load_project(self):
         path, _ = QFileDialog.getOpenFileName(
             self, "打开项目", "", "AKIA 项目 (*.qap)"
@@ -1612,7 +1941,10 @@ class MainWindow(QMainWindow):
             project = ProjectManager.load_project(path)
             self._apply_loaded_project(
                 project, path,
-                success_msg=f"已恢复 {len(project['raw_data'])} 个数据表、{len(self.analyses)} 个分析结果",
+                success_msg=(
+                    f"已恢复 {len(project['raw_data'])} 个数据表、"
+                    f"{len(self.analyses)} 个分析结果、"
+                    f"{len(self.case_workflows)} 个改善案例"),
             )
         except Exception as e:
             QMessageBox.critical(self, "加载失败", str(e))
@@ -1823,6 +2155,9 @@ class MainWindow(QMainWindow):
                 self.statusBar().showMessage(
                     f"数据清洗已完成，已更新 {len(updated)} 个分析模块", 5000
                 )
+                self._ledger_append(
+                    "data_edited", object_refs=[f"tab:{idx}"],
+                    payload={"action": "data_cleaner", "updated_tabs": len(updated)})
 
     def _on_data_clean_wizard(self):
         if not self.current_data:
@@ -1842,6 +2177,9 @@ class MainWindow(QMainWindow):
             self._route_sheets_to_tabs(raw, worksheet_mode=False)
             audit("data_clean", "user",
                   f"清洗 {first_key}")
+            self._ledger_append(
+                "data_edited", object_refs=[str(first_key)],
+                payload={"action": "data_clean_wizard", "sheet": str(first_key)})
             self.statusBar().showMessage("数据清洗向导完成", 5000)
 
     def _summarize_result(self, result: dict) -> str:
@@ -1980,7 +2318,15 @@ class MainWindow(QMainWindow):
             charts = {}
             for label, buf in self._collect_charts(list(self.analyses.keys())).items():
                 charts[label] = buf.getvalue() if hasattr(buf, 'getvalue') else buf
-            SharedProjectManager.save_shared(path, raw, self.analyses, charts, dept)
+            SharedProjectManager.save_shared(
+                path, raw, self.analyses, charts, dept,
+                project_context=(self.project_context.to_dict()
+                                 if self.project_context else None),
+                cases=[workflow.to_dict() for workflow in self.case_workflows],
+                standards=(self.project_context.standards.to_dict()
+                           if self.project_context else None),
+                measurements=self.measurement_store.to_dicts(),
+                evidence_events=self.ledger)
             audit("share_project", "user",
                   f"保存 {os.path.basename(path)}")
             self.status_label.setText("共享项目已保存")
@@ -2004,16 +2350,9 @@ class MainWindow(QMainWindow):
             proj = projects[idx]
             try:
                 loaded = SharedProjectManager.load_shared(proj['path'])
-                raw_data = loaded["raw_data"]
-                self.current_data = {"file_path": proj['path'], "raw_data": raw_data,
-                    "metadata": {"sheet_names": list(raw_data.keys()), "total_rows": sum(len(df) for df in raw_data.values())}}
-                self.data_loader.raw_data = raw_data
-                self.data_loader.metadata = self.current_data["metadata"]
-                self._route_sheets_to_tabs(raw_data)
-                self.analyses = loaded["analyses"]
-                self.data_label.setText(proj['name'])
-                self.status_label.setText(f"共享项目已加载: {len(raw_data)} sheets")
-                self._notify_dashboard()
+                self._apply_loaded_project(
+                    loaded, proj['path'],
+                    status_msg=f"共享项目已加载: {len(loaded['raw_data'])} sheets")
             except Exception as e:
                 QMessageBox.critical(self, "加载失败", str(e))
 
@@ -2141,6 +2480,7 @@ class MainWindow(QMainWindow):
             from core.streaming.alert_journal import AlertJournal
             journal = AlertJournal()
             self._alert_journal = journal
+        journal.event_sink = self._on_alert_event
         return journal
 
     def _get_downtime_tracker(self):
@@ -2193,6 +2533,7 @@ class MainWindow(QMainWindow):
                 raw_retention_s=raw_days * 86400 or None,
                 rollup_retention_s=rollup_days * 86400 or None,
                 health=health,
+                event_sink=self._on_stream_measurements,
             )
             runner.start()
             self._connector_health = health
@@ -2316,6 +2657,7 @@ class MainWindow(QMainWindow):
             audit("import_data",
                   "user",
                   f"拖拽导入 {os.path.basename(file_path)}")
+            self._record_data_imported(file_path, raw_data, kind="file")
             self.current_data = {"file_path": file_path, "raw_data": raw_data}
             self.data_label.setText(os.path.basename(file_path))
             self._route_sheets_to_tabs(raw_data, worksheet_mode=True)

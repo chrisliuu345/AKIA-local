@@ -1,5 +1,5 @@
 #define MyAppName "AKIA"
-#define MyAppVersion "4.2.1"
+#define MyAppVersion "4.3.0"
 #define MyAppPublisher "AKIM"
 #define MyAppExeName "AKIA.exe"
 

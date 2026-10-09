@@ -169,6 +169,11 @@ class SPCTab(BaseAnalysisTab):
 
         self.chart_type_combo.currentTextChanged.connect(self._on_chart_type_changed)
 
+        self.standard_btn = QPushButton("保存规格限/控制限为标准")
+        self.standard_btn.setCursor(Qt.PointingHandCursor)
+        self.standard_btn.clicked.connect(self.save_standard)
+        config_layout.addRow(self.standard_btn)
+
         self.live_group = QGroupBox(i18n.tr("spc.live_group"))
         live_layout = QFormLayout(self.live_group)
         live_layout.setContentsMargins(10, 10, 10, 10)
@@ -568,6 +573,64 @@ class SPCTab(BaseAnalysisTab):
             if len(data) < subgroup_size * 2:
                 return False, f"子组分析需要至少 {subgroup_size * 2} 行数据，当前有效数据 {len(data)} 行"
         return True, ""
+
+    def save_standard(self, reason: str = ""):
+        """把当前规格限/控制限记录为标准版本（B3-2）。"""
+        from PySide6.QtWidgets import QInputDialog, QMessageBox
+
+        ctx = self._project_context
+        if ctx is None:
+            QMessageBox.warning(self, "无项目上下文", "请先保存/加载一个 .qap 项目")
+            return []
+        result = self.current_result or {}
+        params = result.get("params", {}) or {}
+        col = str(params.get("column") or self.col_combo.currentText()).strip()
+        chart_type = str(params.get("chart_type")
+                         or self.chart_type_combo.currentText()).strip()
+        if not col:
+            QMessageBox.warning(self, "缺少对象", "请先选择分析列并运行一次分析")
+            return []
+        text = str(reason or "").strip()
+        if not text:
+            text, ok = QInputDialog.getText(self, "保存标准", "变更原因:")
+            if not ok:
+                return []
+            text = str(text or "").strip()
+        if not text:
+            QMessageBox.warning(self, "缺少原因", "标准变更必须填写原因")
+            return []
+
+        created = []
+        if self.spec_check.isChecked():
+            before = len(ctx.standards)
+            record = ctx.record_specification(
+                col, usl=self.usl_spin.value(), lsl=self.lsl_spin.value(),
+                target=None, change_reason=text, changed_by="user")
+            if len(ctx.standards) > before:
+                created.append(record)
+        charts = (result.get("result") or {}) if isinstance(result, dict) else {}
+        for chart in charts.values():
+            if not isinstance(chart, dict) or "ucl" not in chart or "lcl" not in chart:
+                continue
+            before = len(ctx.standards)
+            record = ctx.record_control_limit(
+                f"{col}:{chart_type}", cl=chart.get("cl"), ucl=chart.get("ucl"),
+                lcl=chart.get("lcl"), chart_type=chart_type,
+                subgroup_size=params.get("subgroup_size"),
+                change_reason=text, changed_by="user")
+            if len(ctx.standards) > before:
+                created.append(record)
+            break
+        self.standard_object_ref = col
+        if created:
+            QMessageBox.information(
+                self, "标准已记录",
+                "\n".join(f"{r.object_type}: {r.object_ref} · {r.record_id}"
+                          for r in created))
+        else:
+            QMessageBox.information(self, "标准未变化",
+                                    "与现行版本一致，或未启用规格限且无控制限结果")
+        return created
 
     def run_and_display(self) -> dict[str, Any]:
         valid, msg = self.validate_params()

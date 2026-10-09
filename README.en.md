@@ -7,32 +7,33 @@
 
 > **Naming note**: as of v4.2.0 the product is renamed **AKIA (AKIM IE/Quality analyzer-local)**.
 > The v4.2.0 Linux AppImage asset keeps its original file name `QA-Tool-4.2.0-x86_64.AppImage`
-> (published GitHub assets cannot be renamed); later releases use `AKIA-*`.
+> (published GitHub assets cannot be renamed); releases from v4.3.0 use `AKIA-*`.
 >
-> **Release form**: the current source version is **v4.2.1** (quality hardening + UX fixes,
-> **source-only patch**); the latest installers remain **v4.2.0** (see the table below).
+> **Release form**: current version **v4.3.0 — improvement cases & evidence ledger** — source plus a
+> Linux AppImage (`AKIA-4.3.0-x86_64.AppImage` with a `.sha256` checksum file); the Windows installer
+> is built on Windows.
 
 ---
 
 ## Quick Start
 
-The latest installers are v4.2.0, shipping standalone, fully offline packages — a **Linux AppImage** (published with the release)
+The latest release is v4.3.0, shipping standalone, fully offline packages — a **Linux AppImage** (published with the release)
 and a **Windows Inno Setup installer** (built on Windows):
 
 | Edition | Installer file | Systems | Status | Install |
 |---------|----------------|---------|--------|---------|
-| **Linux AppImage** | `QA-Tool-4.2.0-x86_64.AppImage` (historical v4.2.0 asset name) | Any x86_64 Linux (Debian / Ubuntu / Fedora / elementary, …) | ✅ Ships with the [v4.2.0 release](https://github.com/chrisliuu345/AKIA-local/releases/tag/v4.2.0) (plus a `.sha256` checksum file) | Portable: make executable and run |
-| **Windows installer** | `AKIA-Setup-4.2.0.exe` | Windows 10/11 (64-bit) | Built on Windows (`build_pyinstaller.py` + `packaging/AKIA-installer.iss`) | Run the Inno Setup wizard; menu/desktop shortcuts |
+| **Linux AppImage** | `AKIA-4.3.0-x86_64.AppImage` | Any x86_64 Linux (Debian / Ubuntu / Fedora / elementary, …) | ✅ Ships with the [v4.3.0 release](https://github.com/chrisliuu345/AKIA-local/releases/tag/v4.3.0) (plus a `.sha256` checksum file) | Portable: make executable and run |
+| **Windows installer** | `AKIA-Setup-4.3.0.exe` | Windows 10/11 (64-bit) | Built on Windows (`build_pyinstaller.py` + `packaging/AKIA-installer.iss`) | Run the Inno Setup wizard; menu/desktop shortcuts |
 
 > Linux ships **AppImage only** (`.deb` is no longer built); works across Debian/Ubuntu/Fedora and derivatives.
 
 ### Linux (AppImage, portable)
 
 ```bash
-# download both files from the v4.2.0 release first
-sha256sum -c QA-Tool-4.2.0-x86_64.AppImage.sha256
-chmod +x QA-Tool-4.2.0-x86_64.AppImage
-./QA-Tool-4.2.0-x86_64.AppImage
+# download both files from the v4.3.0 release first
+sha256sum -c AKIA-4.3.0-x86_64.AppImage.sha256
+chmod +x AKIA-4.3.0-x86_64.AppImage
+./AKIA-4.3.0-x86_64.AppImage
 ```
 
 > On systems without FUSE (containers / minimal distros) add `--appimage-extract-and-run`.
@@ -41,7 +42,7 @@ chmod +x QA-Tool-4.2.0-x86_64.AppImage
 ### Windows (installer)
 
 On Windows run `python build_pyinstaller.py --onefile`, then compile
-`packaging/AKIA-installer.iss` with Inno Setup to produce `AKIA-Setup-4.2.0.exe`
+`packaging/AKIA-installer.iss` with Inno Setup to produce `AKIA-Setup-4.3.0.exe`
 (start-menu and desktop shortcuts included).
 
 ### From Source
@@ -56,6 +57,10 @@ python main.py
 ```
 
 Requires Python 3.11+
+
+> **Optional chart dependencies**: missing matplotlib / seaborn no longer blocks the
+> main window or data/analysis/evidence features; chart tabs show an install hint
+> (`pip install matplotlib seaborn`). See `requirements.txt` for the full set.
 
 ---
 
@@ -108,7 +113,7 @@ Requires Python 3.11+
 | Module | Capabilities |
 |--------|-------------|
 | **QAM Harness** | AI agent with 37 local tools (SPC/capability/MSA/hypothesis/DOE/regression/reliability/time-series/IE/cost/realtime/five-chain/root-cause/machine-learning) + offline tool mode · BYOK cloud providers (OpenAI/Claude/Gemini/DeepSeek/Z.ai/KIMI + custom endpoints) · encrypted keys + cloud privacy gate · Knowledge Base RAG |
-| **Plugin API v2** | External plugins developed/published separately: pip entry point or user dir · Tab / agent tools / settings contributions · dependency probing + trust model (e.g. [AKIA-Vision-expansion](https://github.com/chrisliuu345/AKIA-Vision-expansion)) |
+| **Plugin API v2.1** | External plugins developed/published separately: pip entry point or user dir · Tab / agent tools / settings / **measurement data source (`data_source`)** contributions · dependency probing + trust/timeout/bad-data isolation (e.g. [AKIA-Vision-expansion](https://github.com/chrisliuu345/AKIA-Vision-expansion); contract & example: [plugin data source contract](docs/plugin-data-source.md)) |
 | **Charts** | 15+ chart types · Dark theme · CJK fonts |
 | **Reports** | PDF / Word / Excel / HTML · Inline charts |
 
@@ -164,10 +169,23 @@ tests/                 # 1970+ Tests
 
 Download from [Releases](https://github.com/chrisliuu345/AKIA-local/releases):
 
-- `v4.2.1` (current) — **source-only patch** (quality hardening + branding/UX/startup fixes);
+- `v4.3.0` (current) — **improvement cases & evidence ledger** (B0–B6): case lifecycle /
+  measurement channels / standard version records / evidence ledger & exchange v1;
+  Linux AppImage `AKIA-4.3.0-x86_64.AppImage` plus source archives (zip / tar.gz) —
+  notes: [`docs/releases/v4.3.0.md`](docs/releases/v4.3.0.md)
+- `v4.2.1` — **source-only patch** (quality hardening + branding/UX/startup fixes);
   source zip / tar.gz only, no new installers — notes: [`docs/releases/v4.2.1.md`](docs/releases/v4.2.1.md)
 - `v4.2.0` — Linux AppImage (historical asset name `QA-Tool-4.2.0-x86_64.AppImage` + `.sha256`) and source archives (zip / tar.gz) —
   notes: [`docs/releases/v4.2.0.md`](docs/releases/v4.2.0.md)
+
+---
+
+## Developer Docs
+
+- [Plugin data source contract (API 2.1)](docs/plugin-data-source.md)
+- [v4.3.0 migration guide](docs/migration/v4.3.0.md)
+- [v4.3.0 release notes](docs/releases/v4.3.0.md)
+- End-to-end evidence-chain demo: `python tools/demo_v43_case.py --output TEMP/demo_v43`
 
 ---
 
@@ -179,4 +197,4 @@ Proprietary commercial software. Unauthorized copying, modification, or distribu
 
 ---
 
-*Python 3.14 + PySide6 · 1950+ Tests · 37 Analysis Tabs + Plugin API v2*
+*Python 3.14 + PySide6 · 2180+ Tests · 37 Analysis Tabs + Plugin API v2.1*
