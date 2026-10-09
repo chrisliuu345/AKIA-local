@@ -4,10 +4,12 @@
 支持五链贯通：FMEA → CP → SPC → PPAP → 8D。
 """
 
+import contextlib
 from dataclasses import dataclass, field
 from typing import Any
 from datetime import datetime
 from config.settings import RPN_HIGH
+from core.standard_record import StandardRecord, StandardRegistry
 
 
 @dataclass
@@ -60,6 +62,8 @@ class ProjectContext:
 
     analysis_snapshots: dict[str, dict[str, Any]] = field(default_factory=dict)
     chart_options: dict[str, dict[str, Any]] = field(default_factory=dict)
+    standards: StandardRegistry = field(default_factory=StandardRegistry)
+    event_sink: Any = field(default=None, repr=False, compare=False)
 
     def add_characteristic(self, qc: QualityCharacteristic):
         """添加质量特性"""
@@ -94,10 +98,173 @@ class ProjectContext:
         self.fmea_items = items
         self.updated_at = datetime.now().isoformat()
 
-    def set_control_plan(self, rows: list[dict]):
-        """设置控制计划行"""
+    @staticmethod
+    def _cp_row_key(row: Any, index: int) -> str:
+        if isinstance(row, dict):
+            key = (f"{row.get('工序编号', '')}|"
+                   f"{row.get('特性(产品/过程)', '')}").strip("|")
+        elif isinstance(row, (list, tuple)):
+            values = [str(row[0]) if len(row) > 0 else "",
+                      str(row[2]) if len(row) > 2 else ""]
+            key = "|".join(values).strip("|")
+        else:
+            key = ""
+        return key or f"CP-{index + 1:03d}"
+
+    def set_control_plan(self, rows: list[dict], change_reason: str = "控制计划条目更新",
+                         changed_by: str = "user"):
+        """设置控制计划行，并按条目差异记录标准版本（新增/修改/移除）。"""
+        before_ids = {record.record_id for record in self.standards.records}
+        rows = list(rows or [])
+        new_map: dict[str, Any] = {}
+        for index, row in enumerate(rows):
+            key = self._cp_row_key(row, index)
+            if key in new_map:
+                key = f"{key}#{index + 1}"
+            new_map[key] = row
+        old_map: dict[str, Any] = {}
+        for index, row in enumerate(self.control_plan_rows):
+            key = self._cp_row_key(row, index)
+            if key in old_map:
+                key = f"{key}#{index + 1}"
+            old_map[key] = row
+        for key, row in new_map.items():
+            if old_map.get(key) != row:
+                self.standards.record_change(
+                    "control_plan_row", key, {"row": row, "removed": False},
+                    change_reason=change_reason, changed_by=changed_by)
+        for key, row in old_map.items():
+            if key not in new_map:
+                self.standards.record_change(
+                    "control_plan_row", key, {"row": row, "removed": True},
+                    change_reason=change_reason, changed_by=changed_by)
+        self._emit_new_records(before_ids)
         self.control_plan_rows = rows
         self.updated_at = datetime.now().isoformat()
+
+    # ---------------------------------------------------------------- 标准版本
+    def record_specification(self, characteristic_id: str, *, usl: float | None,
+                             lsl: float | None, target: float | None = None,
+                             unit: str | None = None, change_reason: str,
+                             changed_by: str = "", source_case_id: str = "") -> StandardRecord:
+        """记录规格限版本；若质量特性存在则同步更新其当前值。"""
+        ref = str(characteristic_id or "").strip()
+        if not ref:
+            raise ValueError("规格限标准必须提供特性 ID / 列名")
+        qc = self.get_characteristic(ref)
+        payload: dict[str, Any] = {
+            "usl": usl, "lsl": lsl, "target": target,
+            "unit": unit if unit is not None else (qc.unit if qc else ""),
+        }
+        if qc is not None:
+            qc.usl = None if usl is None else float(usl)
+            qc.lsl = None if lsl is None else float(lsl)
+            if target is not None:
+                qc.target = float(target)
+            payload["name"] = qc.name
+            payload["process"] = qc.process
+        before = len(self.standards)
+        record = self.standards.record_change(
+            "spec_limit", ref, payload, change_reason=change_reason,
+            changed_by=changed_by, source_case_id=source_case_id)
+        if len(self.standards) > before:
+            self._emit_standard(record, change_reason, changed_by)
+        self.updated_at = datetime.now().isoformat()
+        return record
+
+    def record_control_limit(self, object_ref: str, *, cl: float | None,
+                             ucl: float | None, lcl: float | None,
+                             chart_type: str = "", subgroup_size: int | None = None,
+                             change_reason: str, changed_by: str = "") -> StandardRecord:
+        ref = str(object_ref or "").strip()
+        if not ref:
+            raise ValueError("控制限标准必须提供对象引用")
+        before = len(self.standards)
+        record = self.standards.record_change(
+            "control_limit", ref,
+            {"cl": cl, "ucl": ucl, "lcl": lcl, "chart_type": chart_type,
+             "subgroup_size": subgroup_size},
+            change_reason=change_reason, changed_by=changed_by)
+        if len(self.standards) > before:
+            self._emit_standard(record, change_reason, changed_by)
+        self.updated_at = datetime.now().isoformat()
+        return record
+
+    def record_standard_time(self, object_ref: str, *, standard_time_s: float,
+                             normal_time_s: float | None = None,
+                             allowance_pct: float | None = None,
+                             rating: float | None = None,
+                             cycles: int | None = None, operator: str = "",
+                             change_reason: str, changed_by: str = "",
+                             source_case_id: str = "") -> StandardRecord:
+        ref = str(object_ref or "").strip()
+        if not ref:
+            raise ValueError("标准工时必须提供工序引用")
+        before = len(self.standards)
+        record = self.standards.record_change(
+            "standard_time", ref,
+            {"standard_time_s": float(standard_time_s),
+             "normal_time_s": normal_time_s, "allowance_pct": allowance_pct,
+             "rating": rating, "cycles": cycles, "operator": operator},
+            change_reason=change_reason, changed_by=changed_by,
+            source_case_id=source_case_id)
+        if len(self.standards) > before:
+            self._emit_standard(record, change_reason, changed_by)
+        self.updated_at = datetime.now().isoformat()
+        return record
+
+    def record_work_combination(self, object_ref: str, payload: dict[str, Any], *,
+                                change_reason: str, changed_by: str = "",
+                                source_case_id: str = "") -> StandardRecord:
+        ref = str(object_ref or "").strip()
+        if not ref:
+            raise ValueError("作业组合票必须提供对象引用")
+        before = len(self.standards)
+        record = self.standards.record_change(
+            "work_combination", ref, payload, change_reason=change_reason,
+            changed_by=changed_by, source_case_id=source_case_id)
+        if len(self.standards) > before:
+            self._emit_standard(record, change_reason, changed_by)
+        self.updated_at = datetime.now().isoformat()
+        return record
+
+    def standard_as_of(self, object_ref: str, ts: str) -> StandardRecord | None:
+        return self.standards.as_of(object_ref, ts)
+
+    def _emit_standard(self, record: StandardRecord, change_reason: str,
+                       changed_by: str) -> None:
+        sink = self.event_sink
+        if not callable(sink):
+            return
+        with contextlib.suppress(Exception):  # 账本旁路失败不得阻断标准写入
+            sink("standard_changed", [record.object_ref, record.record_id], {
+                "object_type": record.object_type,
+                "record_id": record.record_id,
+                "object_ref": record.object_ref,
+                "change_reason": change_reason or record.change_reason,
+                "changed_by": changed_by,
+                "valid_from": record.valid_from,
+                "fingerprint": record.fingerprint,
+            })
+
+    def _emit_new_records(self, before_ids: set[str]) -> None:
+        """控制计划批量写入后，把本轮新增版本逐条写入账本（不重复记账）。"""
+        sink = self.event_sink
+        if not callable(sink):
+            return
+        for record in self.standards.records:
+            if record.record_id in before_ids:
+                continue
+            with contextlib.suppress(Exception):
+                sink("standard_changed", [record.object_ref, record.record_id], {
+                    "object_type": record.object_type,
+                    "record_id": record.record_id,
+                    "object_ref": record.object_ref,
+                    "change_reason": record.change_reason,
+                    "changed_by": record.changed_by,
+                    "valid_from": record.valid_from,
+                    "fingerprint": record.fingerprint,
+                })
 
     def set_ppap_report(self, report: dict[str, Any]):
         """设置 PPAP 报告状态"""
@@ -163,11 +330,19 @@ class ProjectContext:
             "eight_d_reports": self.eight_d_reports,
             "analysis_snapshots": self.analysis_snapshots,
             "chart_options": self.chart_options,
+            "standards": self.standards.to_dict(),
         }
 
     @classmethod
     def from_dict(cls, d: dict) -> "ProjectContext":
         chars = [QualityCharacteristic.from_dict(qc) for qc in d.get("characteristics", [])]
+        from core.standard_record import migrate_legacy_context
+
+        standards_payload = d.get("standards")
+        if standards_payload:
+            standards = StandardRegistry.from_dict(standards_payload)
+        else:
+            standards = migrate_legacy_context(d)
         return cls(
             project_name=d.get("project_name", ""),
             created_at=d.get("created_at", ""),
@@ -179,4 +354,5 @@ class ProjectContext:
             eight_d_reports=d.get("eight_d_reports", []),
             analysis_snapshots=d.get("analysis_snapshots", {}),
             chart_options=d.get("chart_options", {}),
+            standards=standards,
         )

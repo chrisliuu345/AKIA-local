@@ -86,6 +86,7 @@ class AlertJournal:
         self.max_entries = max(1, int(max_entries))
         self._lock = threading.Lock()
         self._entries: list[JournalEntry] = []
+        self.event_sink = None      # Callable[[JournalEntry], None] | None
         self._load()
 
     # ---------- 读写 ----------
@@ -173,6 +174,11 @@ class AlertJournal:
         from core.audit import audit
         audit("alert_ack", operator,
               f"{entry.device}/{entry.channel} {entry.kind} id={entry.id} {note}")
+        if callable(self.event_sink):
+            try:
+                self.event_sink(entry)
+            except Exception:  # 证据账本旁路失败不得影响告警确认
+                logger.warning("告警确认事件写入失败: %s", entry.id)
         return True
 
     def ack_all(self, operator: str = "user", severity: str | None = None) -> int:

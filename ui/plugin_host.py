@@ -61,3 +61,53 @@ class PluginHost:
         window = self._main_window
         if window is not None and hasattr(window, "_switch_tab"):
             window._switch_tab(int(index))
+
+    # ------------------------------------------------------------ 数据源（v2.1）
+    def measurement_events(self) -> list[dict]:
+        """当前项目的测量事件（只读快照）。"""
+        store = getattr(self._main_window, "measurement_store", None)
+        return store.to_dicts() if store is not None else []
+
+    def submit_measurements(self, events, plugin_id: str = "") -> list[str]:
+        """受控注入测量事件：先整体校验，再幂等写入项目集合。
+
+        插件异步推送（如视觉流）应使用本方法；返回值新增/更新的事件 ID。
+        """
+        from core.measurement_event import MeasurementEvent
+
+        store = getattr(self._main_window, "measurement_store", None)
+        if store is None:
+            raise RuntimeError("主窗口未启用测量事件集合")
+        items = list(events) if isinstance(events, (list, tuple)) else [events]
+        normalized = []
+        for index, item in enumerate(items):
+            try:
+                event = (item if isinstance(item, MeasurementEvent)
+                         else MeasurementEvent.from_dict(item))
+            except (TypeError, ValueError) as exc:
+                raise ValueError(f"第 {index + 1} 条测量事件无效: {exc}") from exc
+            if plugin_id:
+                event.source_kind = "plugin"
+                event.source_id = str(plugin_id)
+                if event.raw_ref.startswith(("inline://", "manual://")):
+                    event.raw_ref = f"plugin://{plugin_id}/{event.event_id}"
+            normalized.append(event)
+        return [store.add(event).event_id for event in normalized]
+
+    def connector_topics(self) -> list[str]:
+        bus = getattr(self._main_window, "stream_bus", None)
+        return bus.topics() if bus is not None else []
+
+    def recent_measurements(self, topic: str, n: int = 1000) -> list:
+        """把连接器总线最近样本转为 MeasurementEvent（不写库）。"""
+        from core.measurement_event import MeasurementEvent
+
+        bus = getattr(self._main_window, "stream_bus", None)
+        if bus is None:
+            return []
+        samples = bus.recent(str(topic), int(n))
+        if not samples:
+            return []
+        return MeasurementEvent.events_from_samples(
+            samples, source_kind="connector",
+            source_id=str(topic), source_name=str(topic))

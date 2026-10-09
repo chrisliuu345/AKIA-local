@@ -19,7 +19,12 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt, matplotlib.patches as mpatches
 from ui.tabs.base_tab import BaseAnalysisTab
-from ui.theme import BUTTON_PRIMARY_STRETCH, FONT_18B, FONT_10
+from ui.theme import (
+    BUTTON_PRIMARY_STRETCH,
+    BUTTON_SECONDARY,
+    FONT_10,
+    FONT_18B,
+)
 from ui.theme import colors as theme_colors
 
 C_W = "#4da6ff"
@@ -35,10 +40,16 @@ PRESETS = {
 
 class StdWorkComboTab(BaseAnalysisTab):
     def __init__(self, p=None):
+        self._project_context = None
+        self.standard_object_ref = "作业组合票"
+        self._last_combination: dict | None = None
         super().__init__(p)
         self._ready = False
         self._setup_ui()
         self._ready = True
+
+    def set_project_context(self, ctx):
+        self._project_context = ctx
 
     def _setup_ui(self):
         tc = theme_colors()
@@ -71,6 +82,12 @@ class StdWorkComboTab(BaseAnalysisTab):
         self.btn_run.setCursor(Qt.PointingHandCursor)
         self.btn_run.clicked.connect(self._run)
         tb.addWidget(self.btn_run)
+        self.btn_standard = QPushButton("保存组合票为标准")
+        self.btn_standard.setStyleSheet(BUTTON_SECONDARY)
+        self.btn_standard.setCursor(Qt.PointingHandCursor)
+        self.btn_standard.setToolTip("把当前作业组合票记录为标准版本")
+        self.btn_standard.clicked.connect(self.save_work_combination_standard)
+        tb.addWidget(self.btn_standard)
         layout.addLayout(tb)
         self.stats_lbl = QLabel("")
         self.stats_lbl.setFont(FONT_10)
@@ -153,6 +170,14 @@ class StdWorkComboTab(BaseAnalysisTab):
         total_walk = sum(r[3] for r in rows)
         total = total_man + total_auto + total_walk
         slack = max(0, takt - total)
+        self._last_combination = {
+            "steps": [{"name": name, "manual_s": man,
+                       "auto_s": auto, "walk_s": walk}
+                      for name, man, auto, walk in rows],
+            "total_manual_s": total_man, "total_auto_s": total_auto,
+            "total_walk_s": total_walk, "total_s": total,
+            "takt_s": takt, "slack_s": slack,
+        }
         self.stats_lbl.setText(
             f"手动: {total_man}s | 自动: {total_auto}s | 步行: {total_walk}s | 合计: {total}s | 余力: {slack}s ({(1 - total / takt) * 100:.0f}%)"
         )
@@ -233,3 +258,34 @@ class StdWorkComboTab(BaseAnalysisTab):
         self.current_figure = fig
         self._add_chart_toolbar()
         self.analysis_completed.emit()
+
+    def save_work_combination_standard(self, reason: str = ""):
+        """把当前作业组合票记录为标准版本（B3-3）。"""
+        from PySide6.QtWidgets import QInputDialog, QMessageBox
+
+        ctx = self._project_context
+        if ctx is None:
+            QMessageBox.warning(self, "无项目上下文", "请先保存/加载一个 .qap 项目")
+            return None
+        if not self._last_combination:
+            QMessageBox.warning(self, "无组合票", "请先生成组合票")
+            return None
+        text = str(reason or "").strip()
+        if not text:
+            text, ok = QInputDialog.getText(self, "保存作业组合票", "变更原因:")
+            if not ok:
+                return None
+            text = str(text or "").strip()
+        if not text:
+            QMessageBox.warning(self, "缺少原因", "标准变更必须填写原因")
+            return None
+        before = len(ctx.standards)
+        record = ctx.record_work_combination(
+            self.standard_object_ref, dict(self._last_combination),
+            change_reason=text, changed_by="user")
+        if len(ctx.standards) > before:
+            QMessageBox.information(self, "标准已记录",
+                                    f"作业组合票版本 {record.record_id}")
+        else:
+            QMessageBox.information(self, "标准未变化", "与现行版本一致")
+        return record

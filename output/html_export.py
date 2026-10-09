@@ -7,6 +7,8 @@ from datetime import datetime
 
 from config.settings import APP_VERSION, CHART_COLORS
 from core.fonts import get_ui_font
+from core.i18n import i18n
+from output.base_report_engine import BaseReportEngine
 
 
 def _fig_to_base64(fig) -> str:
@@ -38,6 +40,8 @@ def export_html(analyses: list[dict], charts: dict[str, bytes] | None = None,
 
     safe_title = _html.escape(title)
     font_family = get_ui_font()
+    trace = BaseReportEngine.credential_trace(analyses)
+    trace_text = (f" · {i18n.tr('report.trace_code')}: {trace}" if trace else "")
     html_doc = f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head><meta charset="utf-8"><title>{safe_title}</title>
@@ -52,7 +56,7 @@ h3{{color:#a0a3ae}}.summary{{background:#262632;padding:12px;border-radius:8px;m
 <p>生成时间: {datetime.now().strftime("%Y-%m-%d %H:%M")} | 分析项目: {len(items)} 项 | AKIA v{APP_VERSION}</p>
 {"".join(f'<div class="summary"><b>{i["type"]}:</b> {i["summary"]}</div>' for i in items)}
 {img_tags}
-<div class="footer"><p>AKIA v{APP_VERSION} · 自包含离线报告</p></div>
+<div class="footer"><p>AKIA v{APP_VERSION} · 自包含离线报告{trace_text}</p></div>
 </body></html>"""
 
     if output_path:

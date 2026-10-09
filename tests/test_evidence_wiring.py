@@ -180,3 +180,22 @@ class TestReportTrace:
         footer = str(summary.cell(row=2, column=1).value or "")
         assert "追溯码" in footer
         assert credential_trace_code([credential]) in footer
+
+    def test_html_report_writes_trace_code(self, tmp_path):
+        from output.html_export import export_html
+
+        frame = pd.DataFrame({"x": [1.0, 2.0, 3.0]})
+        credential = make_credential(rule_version="cap@1", params={"usl": 10},
+                                     df=frame).to_dict()
+        analyses = [{
+            "analysis_type": "正态过程能力",
+            "params": {"usl": 10},
+            "result": {"summary": {"cpk": 1.2}},
+            "credential": credential,
+        }]
+        target = tmp_path / "report.html"
+        html_doc = export_html(analyses, output_path=str(target))
+        trace = credential_trace_code([credential])
+        assert "追溯码" in html_doc
+        assert trace in html_doc
+        assert trace in target.read_text(encoding="utf-8")

@@ -13,7 +13,7 @@ from core.fonts import get_ui_font
 APP_NAME = "AKIA"
 APP_FULL_NAME = "AKIM IE/Quality analyzer-local"
 APP_SLUG = "akia"
-APP_VERSION = "4.2.1"
+APP_VERSION = "4.3.0"
 ORGANIZATION = "AKIA"
 
 # 旧品牌标识（仅用于一次性数据迁移，勿在新代码中引用）

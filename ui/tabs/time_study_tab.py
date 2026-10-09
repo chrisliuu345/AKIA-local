@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QDoubleSpinBox, QGroupBox, QFormLayout,
     QTableWidget, QTableWidgetItem, QSplitter, QHeaderView,
-    QStackedWidget, QMessageBox,
+    QStackedWidget, QMessageBox, QInputDialog,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
@@ -28,8 +28,13 @@ class TimeStudyTab(BaseAnalysisTab):
 
     def __init__(self, parent=None):
         self.ie_observations: list[TimeObservation] = []
+        self._project_context = None
+        self.standard_object_ref = ""
         super().__init__(parent)
         self._setup_ui()
+
+    def set_project_context(self, ctx):
+        self._project_context = ctx
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
@@ -91,6 +96,13 @@ class TimeStudyTab(BaseAnalysisTab):
         self.btn_analyze.setFont(QFont(get_ui_font(), 12, QFont.Bold))
         self.btn_analyze.clicked.connect(self._on_one_click_analyze)
         config_layout.addRow(self.btn_analyze)
+
+        self.btn_standard = QPushButton("保存标准工时")
+        self.btn_standard.setStyleSheet(BUTTON_SECONDARY)
+        self.btn_standard.setCursor(Qt.PointingHandCursor)
+        self.btn_standard.setToolTip("把本次时间研究的标准工时记录为标准版本")
+        self.btn_standard.clicked.connect(self.save_standard_time)
+        config_layout.addRow(self.btn_standard)
 
         top_layout.addWidget(config_group)
 
@@ -248,6 +260,51 @@ class TimeStudyTab(BaseAnalysisTab):
         self.result_table.resizeColumnsToContents()
 
         self._draw_chart(results, summary)
+
+    def save_standard_time(self, reason: str = ""):
+        """把当前时间研究结果逐工序记录为标准工时版本（B3-3）。"""
+        ctx = self._project_context
+        if ctx is None:
+            QMessageBox.warning(self, "无项目上下文", "请先保存/加载一个 .qap 项目")
+            return []
+        result = self.current_result or {}
+        inner = result.get("result", {}) if isinstance(result, dict) else {}
+        studies = inner.get("results", []) if isinstance(inner, dict) else []
+        if not studies:
+            QMessageBox.warning(self, "无研究结果", "请先运行时间研究")
+            return []
+        text = str(reason or "").strip()
+        if not text:
+            text, ok = QInputDialog.getText(self, "保存标准工时", "变更原因:")
+            if not ok:
+                return []
+            text = str(text or "").strip()
+        if not text:
+            QMessageBox.warning(self, "缺少原因", "标准变更必须填写原因")
+            return []
+        created = []
+        for index, study in enumerate(studies):
+            standard = study.get("standard_time")
+            if standard is None:
+                continue
+            ref = str(study.get("process_id") or f"工序-{index + 1}")
+            before = len(ctx.standards)
+            record = ctx.record_standard_time(
+                ref, standard_time_s=float(standard),
+                normal_time_s=study.get("normal_time"),
+                allowance_pct=study.get("allowance_pct"),
+                rating=study.get("rating"), cycles=study.get("cycles"),
+                operator=str(study.get("operator", "")),
+                change_reason=text, changed_by="user")
+            if len(ctx.standards) > before:
+                created.append(record)
+        self.standard_object_ref = str(studies[0].get("process_id") or "工序-1")
+        if created:
+            QMessageBox.information(self, "标准已记录",
+                                    f"新增 {len(created)} 条标准工时版本")
+        else:
+            QMessageBox.information(self, "标准未变化", "与现行版本一致")
+        return created
 
     def _draw_chart(self, results: list, summary: dict[str, Any]):
         self._clear_canvas()

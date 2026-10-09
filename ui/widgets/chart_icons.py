@@ -8,18 +8,31 @@
 from io import BytesIO
 from collections.abc import Callable
 
-from matplotlib.patches import Rectangle
 from PySide6.QtGui import QIcon, QPixmap
 
 _BLUE = "#4da6ff"
 _WHITE = "#e1e2e6"
 _ICON_PX = 120
 
+#: 运行时由 _ensure_matplotlib() 绑定；模块导入阶段不触碰 matplotlib，
+#: 缺包时本模块仍可导入，图标退化为空 QIcon（按钮纯文字）。
+Rectangle = None
 
-def _new_fig():
+
+def _ensure_matplotlib():
+    """延迟加载 matplotlib 并绑定 Rectangle；缺包时抛 ImportError。"""
+    global Rectangle
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    if Rectangle is None:
+        from matplotlib.patches import Rectangle as _Rectangle
+        Rectangle = _Rectangle
+    return plt
+
+
+def _new_fig():
+    plt = _ensure_matplotlib()
     fig = plt.figure(figsize=(_ICON_PX / 100, _ICON_PX / 100), dpi=100)
     fig.patch.set_alpha(0.0)
     ax = fig.add_axes([0, 0, 1, 1])
@@ -32,7 +45,7 @@ def _new_fig():
 def _finish(fig):
     buf = BytesIO()
     fig.savefig(buf, format="png", transparent=True, dpi=100)
-    import matplotlib.pyplot as plt
+    plt = _ensure_matplotlib()
     plt.close(fig)
     buf.seek(0)
     pm = QPixmap()
@@ -228,7 +241,10 @@ _CACHE: dict[str, QIcon] = {}
 
 
 def _icon_for(chart_type: str) -> QIcon:
-    import matplotlib.pyplot as plt
+    try:
+        plt = _ensure_matplotlib()
+    except ImportError:  # 未安装 matplotlib：退化为纯文字按钮
+        return QIcon()
     fig, ax = _new_fig()
     try:
         _DRAW_FUNCS[chart_type](ax)

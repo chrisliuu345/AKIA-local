@@ -1,9 +1,10 @@
-"""AKIA 插件接口 v2（v3.8.1）— 主应用只提供接口，不内置具体能力插件。
+"""AKIA 插件接口 v2.1（v3.8.1 / v4.3.0）— 主应用只提供接口，不内置具体能力插件。
 
 贡献点:
   - Tab: `create_tab(host, parent)`
   - Agent 工具: `register_agent_tools(registry, context)`
   - 设置页: `create_settings_page(host, parent)`
+  - 数据源: `provide_measurements(context)` 返回 MeasurementEvent 列表（v2.1）
   - 能力/依赖声明: manifest + `is_available()`
 
 分发方式:
@@ -20,11 +21,11 @@ import re
 from dataclasses import dataclass, field, replace
 from typing import Any
 
-PLUGIN_API_VERSION = "2.0"
+PLUGIN_API_VERSION = "2.1"
 PLUGIN_ENTRY_POINT_GROUP = "akia.plugins"
 #: 旧品牌 entry point 组 — 兼容期仍会被扫描（第三方插件可继续用旧组发布）
 LEGACY_PLUGIN_ENTRY_POINT_GROUP = "qa_tool.plugins"
-CAPABILITIES = ("tab", "agent_tools", "settings")
+CAPABILITIES = ("tab", "agent_tools", "settings", "data_source")
 
 _ID_RE = re.compile(r"^[a-z][a-z0-9_]{1,31}$")
 
@@ -205,6 +206,14 @@ class IAKIAPlugin:
 
     def create_settings_page(self, host, parent=None):
         return None
+
+    def provide_measurements(self, context=None):
+        """数据源能力（v2.1）：返回 MeasurementEvent 列表（或可反序列化 dict）。
+
+        主程序会强制覆盖事件来源为 ``plugin/<本插件 id>``；空列表表示本次无数据。
+        兼容说明：v2.0 插件不实现本方法，默认返回空列表，不受影响。
+        """
+        return []
 
     def on_load(self, host):
         pass
