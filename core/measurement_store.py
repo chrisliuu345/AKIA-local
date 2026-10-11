@@ -92,10 +92,18 @@ class MeasurementStore:
     @classmethod
     def from_jsonl(cls, text: str, *, max_events: int = DEFAULT_MAX_EVENTS) -> MeasurementStore:
         raw = str(text or "")
-        recovered = bool(raw) and not raw.endswith("\n")
         lines = raw.splitlines()
-        if recovered and lines:
-            lines = lines[:-1]
+        # 与账本同款容错：仅当"无尾随换行且最后一行 JSON 无法解析"才判定为
+        # 崩溃残留半行；完整但缺尾随换行的文件不得丢事件（v4.3.1 修复）
+        recovered = False
+        if raw and not raw.endswith("\n") and lines:
+            tail = lines[-1].strip()
+            if tail:
+                try:
+                    json.loads(tail)
+                except json.JSONDecodeError:
+                    recovered = True
+                    lines = lines[:-1]
         store = cls(max_events=max_events)
         for index, line in enumerate(lines, start=1):
             stripped = line.strip()

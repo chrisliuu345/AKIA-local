@@ -188,10 +188,19 @@ class EvidenceLedger:
     @classmethod
     def from_jsonl(cls, text: str, path: str = "") -> EvidenceLedger:
         raw = str(text or "")
-        recovered = bool(raw) and not raw.endswith("\n")
         lines = raw.splitlines()
-        if recovered and lines:
-            lines = lines[:-1]
+        # 尾行截断恢复：仅当"无尾随换行且最后一行 JSON 无法解析"时才判定为
+        # 崩溃残留半行。完整但缺尾随换行的文件（外部工具产出/编辑过）不得
+        # 丢事件——旧实现无条件丢弃尾行会把合法事件一并删掉并重写文件。
+        recovered = False
+        if raw and not raw.endswith("\n") and lines:
+            tail = lines[-1].strip()
+            if tail:
+                try:
+                    json.loads(tail)
+                except json.JSONDecodeError:
+                    recovered = True
+                    lines = lines[:-1]
         events: list[EvidenceEvent] = []
         errors: list[str] = []
         for index, line in enumerate(lines, start=1):
@@ -220,7 +229,8 @@ class EvidenceLedger:
             return ledger
         ledger = cls.from_jsonl(target.read_text(encoding="utf-8"), path=str(target))
         if ledger.recovered_truncation and not ledger.load_errors:
-            # 崩溃遗留的半行 JSON 已在内存中丢弃，同步重写干净文件
+            # 崩溃遗留的半行 JSON 已在内存中丢弃，同步重写干净文件；
+            # 未发生截断的完整文件不做任何改写
             target.write_text(ledger.to_jsonl(), encoding="utf-8")
         return ledger
 

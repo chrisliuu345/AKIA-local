@@ -119,9 +119,12 @@ class TestRegistryAppend:
 
     def test_duplicate_id_rejected(self):
         registry = StandardRegistry()
-        registry.append(_record("S1"))
+        first = registry.append(_record("S1"))
         with pytest.raises(ValueError, match="重复"):
             registry.append(_record("S1", ref="QC-002"))
+        # 追加失败必须原子：现行版本保持开放，不出现"已关闭且无新版"的损坏状态
+        assert first.is_open() is True
+        assert registry.current("QC-001") is first
 
     def test_registry_rejects_non_record(self):
         with pytest.raises(TypeError):

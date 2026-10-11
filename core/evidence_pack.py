@@ -54,7 +54,10 @@ def export_evidence_pack(dest: str, *, case: dict[str, Any] | None = None,
 
     entries: dict[str, bytes] = {}
     raw_case = case or {}
-    nested_case = raw_case.get("case") if isinstance(raw_case, dict) else None
+    if not isinstance(raw_case, dict):
+        raw_case = {}
+    nested_case = raw_case.get("case")
+    nested_case = nested_case if isinstance(nested_case, dict) else None
     case_id = str((nested_case or {}).get("id") or raw_case.get("id") or "")
     entries["case.json"] = _json_bytes(raw_case)
     if case_markdown:
@@ -150,7 +153,8 @@ def verify_evidence_pack(path: str) -> dict[str, Any]:
                 chain = ledger.verify()
                 if not chain.get("ok"):
                     problems.append("账本校验失败: " + str(chain.get("reason", "")))
-    except (OSError, zipfile.BadZipFile, ValueError) as exc:
+    except (OSError, zipfile.BadZipFile, ValueError, TypeError,
+            AttributeError) as exc:  # manifest 结构异常也按"无法读取"返回
         return {"ok": False, "problems": [f"证据包无法读取: {exc}"],
                 "manifest": manifest, "ledger_chain": chain}
     return {"ok": not problems, "problems": problems,
