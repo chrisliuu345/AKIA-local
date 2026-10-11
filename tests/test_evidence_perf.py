@@ -51,3 +51,22 @@ class TestLedgerPerformance:
                       payload={"sheets": 3, "rows": 1_000_000})
         elapsed = time.perf_counter() - start
         assert elapsed < 0.005, f"单条导入事件 {elapsed * 1000:.2f}ms 超出预算"
+
+    def test_share_pack_scan_bounded_for_large_table(self, tmp_path):
+        """泄漏扫描对 2 万行唯一值表必须有界（v4.3.0 逐候选项实现为分钟级）。"""
+        import numpy as np
+        import pandas as pd
+
+        from core.share_pack import build_share_pack
+
+        count = 20000
+        rng = np.random.default_rng(0)
+        raw = {"S": pd.DataFrame({
+            "serial": [f"SN-{index:08d}-{int(extra)}"
+                       for index, extra in enumerate(rng.integers(1000, 9999, count))],
+        })}
+        start = time.perf_counter()
+        result = build_share_pack(str(tmp_path / "big-share"), raw_data=raw)
+        elapsed = time.perf_counter() - start
+        assert result["scan"]["ok"] is True
+        assert elapsed < 30.0, f"2 万行分享包导出 {elapsed:.1f}s 超出预算"

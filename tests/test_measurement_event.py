@@ -144,6 +144,17 @@ class TestDataFrameAdapter:
         assert event.fingerprint == fingerprint_dataframe(self._frame())
         assert event.raw_ref.startswith("dataframe://")
 
+    def test_unsorted_time_column_uses_min_max(self):
+        """行序不等于时间序的乱序文件：取全窗口最早/最晚，不拒绝。"""
+        frame = pd.DataFrame({
+            "x": [1.0, 2.0, 3.0],
+            "t": ["2026-10-01T10:03:00+08:00", "2026-10-01T10:00:00+08:00",
+                  "2026-10-01T10:02:00+08:00"],
+        })
+        event = MeasurementEvent.from_dataframe(frame, column="x", ts_column="t")
+        assert event.ts_start == "2026-10-01T10:00:00+08:00"
+        assert event.ts_end == "2026-10-01T10:03:00+08:00"
+
     def test_auto_picks_numeric_column(self):
         event = MeasurementEvent.from_dataframe(self._frame().drop(columns="t"))
         assert event.channel == "x"

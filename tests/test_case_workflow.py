@@ -222,3 +222,12 @@ class TestWorkspaceEntry:
             assert window._last_case_workflow is workflow
         finally:
             window.close()
+
+
+class TestCaseId:
+    def test_same_second_creation_does_not_collide(self):
+        """同一秒内连续创建案例不得撞号（旧实现 CASE-时间戳 会重复）。"""
+        first = CaseWorkflow("案例A")
+        second = CaseWorkflow("案例B")
+        assert first.case.id != second.case.id
+        assert first.case.id.startswith("CASE-")

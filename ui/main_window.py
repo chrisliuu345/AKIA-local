@@ -1798,6 +1798,12 @@ class MainWindow(QMainWindow):
                              project.get("evidence_errors") or [])
         self._restore_case_workflows(project.get("cases") or [])
         self._restore_measurement_store(project.get("measurements") or [])
+        evidence_errors = project.get("evidence_errors") or []
+        measurement_errors = project.get("measurement_errors") or []
+        if evidence_errors or measurement_errors:
+            self.statusBar().showMessage(
+                f"项目加载警告：账本 {len(evidence_errors)} 条 / 测量 "
+                f"{len(measurement_errors)} 条记录解析失败（已跳过并留痕）", 20000)
         for idx in _CONTEXT_TAB_INDICES:
             tab = self._tab_cache.get(idx)
             if tab and hasattr(tab, 'set_project_context'):
@@ -1904,7 +1910,14 @@ class MainWindow(QMainWindow):
             logging.getLogger(__name__).warning(
                 "证据账本恢复失败，回退为空账本", exc_info=True)
             self.ledger = EvidenceLedger()
-        self._ledger_failures = len(errors or [])
+        # 写入失败计数只统计本会话的追加失败；加载期解析错误由 ledger.verify()
+        # 在证据视图中以"链校验失败"呈现（若解析错误在，后续追加会被账本拒绝
+        # 并计入写入失败，语义不再混叠）
+        self._ledger_failures = 0
+        if errors:
+            import logging
+            logging.getLogger(__name__).warning(
+                "证据账本存在 %d 条解析错误: %s", len(errors), errors[:3])
         chain = self.ledger.verify()
         if not chain.get("ok"):
             import logging
