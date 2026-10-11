@@ -166,6 +166,18 @@ class TestRecovery:
         assert not path.read_text(encoding="utf-8").endswith('"case_')
         assert len(loaded) == 3
 
+    def test_complete_file_without_trailing_newline_keeps_all_events(self, tmp_path):
+        """完整 JSONL 仅缺尾随换行时不得丢尾行，也不得改写文件。"""
+        path = tmp_path / "events.jsonl"
+        _ledger(path=str(path))
+        text = path.read_text(encoding="utf-8").rstrip("\n")
+        path.write_text(text, encoding="utf-8")
+        loaded = EvidenceLedger.load_file(path)
+        assert loaded.recovered_truncation is False
+        assert len(loaded) == 3
+        assert loaded.verify()["ok"] is True
+        assert path.read_text(encoding="utf-8") == text
+
     def test_malformed_middle_line_blocks_append(self, tmp_path):
         path = tmp_path / "events.jsonl"
         _ledger(path=str(path))

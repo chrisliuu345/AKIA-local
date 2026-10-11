@@ -121,17 +121,23 @@ class TestCasePersistence:
             "QC-1", usl=10.1, lsl=9.9, change_reason="共享初始版本")
         measurements = MeasurementStore([
             MeasurementEvent.from_manual(1.0, characteristic_id="QC-1")])
+        from core.evidence_ledger import EvidenceLedger
+
+        ledger = EvidenceLedger()
+        ledger.append("case_created", object_refs=[f"case:{workflow.case.id}"],
+                      payload={"title": "共享案例"})
         pm.SharedProjectManager.save_shared(
             "shared.qap", {"S": pd.DataFrame({"x": [1.0]})}, {}, {},
             "公共", "", project_context=context.to_dict(),
             cases=[workflow.to_dict()], standards=context.standards.to_dict(),
-            measurements=measurements.to_dicts())
+            measurements=measurements.to_dicts(), evidence_events=ledger)
         loaded = pm.SharedProjectManager.load_shared(
             str(tmp_path / "shared" / "公共" / "shared.qap"))
         assert loaded["cases"][0]["case"]["id"] == workflow.case.id
         assert loaded["project_context"]["project_name"] == "共享项目"
         assert loaded["standards"]["records"][0]["record_id"] == standard.record_id
         assert loaded["manifest"]["measurement_count"] == 1
+        assert loaded["evidence_events"][0]["type"] == "case_created"
 
 
 class TestCaseCenterUi:
@@ -225,6 +231,40 @@ class TestCaseCenterUi:
             phases = [step["phase"] for step in dialog.workflow.case.steps]
             assert phases == ["paired_test"]
             assert dialog.workflow.case.steps[0]["result"]["p_value"] < 0.01
+        finally:
+            dialog.close()
+
+    def test_workbench_pair_test_drops_rows_pairwise(self, monkeypatch):
+        """两列缺失位置不同时按行成对剔除，不按位错配（v4.3.1 修复）。"""
+        pytest.importorskip("PySide6")
+        from PySide6.QtWidgets import QInputDialog, QWidget
+
+        from ui.dialogs.case_workflow_dialog import CaseWorkflowDialog
+
+        class _Host(QWidget):
+            def __init__(self):
+                super().__init__()
+                self.current_data = {"raw_data": {"S": pd.DataFrame({
+                    "before": [32.0, None, 33.0, 30.0],
+                    "after": [28.0, 27.0, None, 26.0]})}}
+                self.analyses = {}
+
+        answers = iter([("before", True), ("after", True)])
+        monkeypatch.setattr(QInputDialog, "getItem",
+                            staticmethod(lambda *a, **k: next(answers)))
+        dialog = CaseWorkflowDialog(CaseWorkflow(title="配对缺失"), _Host())
+        captured = {}
+
+        def _capture(before, after, data_ref="", measurement_refs=None):
+            captured["before"] = [float(v) for v in before]
+            captured["after"] = [float(v) for v in after]
+            return {"phase": "paired_test"}
+
+        monkeypatch.setattr(dialog.workflow, "run_paired_test", _capture)
+        try:
+            dialog._on_paired_test()
+            assert captured["before"] == [32.0, 30.0]
+            assert captured["after"] == [28.0, 26.0]
         finally:
             dialog.close()
 

@@ -333,8 +333,10 @@ class MeasurementEvent:
                 raise ValueError(f"时间列不存在: {ts_name}")
             stamps = pd.to_datetime(df[ts_name], errors="coerce").dropna()
             if not stamps.empty:
-                ts_start = _stamp_to_iso(stamps.iloc[0])
-                ts_end = _stamp_to_iso(stamps.iloc[-1])
+                # 批量事件取全窗口最早/最晚时间：行序不等于时间序的乱序文件
+                # 不应因 ts_end < ts_start 被拒绝
+                ts_start = _stamp_to_iso(stamps.min())
+                ts_end = _stamp_to_iso(stamps.max())
 
         fingerprint = fingerprint_dataframe(df)
         return cls(

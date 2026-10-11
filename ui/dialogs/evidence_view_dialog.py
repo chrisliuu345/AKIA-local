@@ -27,6 +27,7 @@ class EvidenceViewDialog(QDialog):
         self.ledger_failures = int(ledger_failures or 0)
         self._fingerprint_result = ""
         self._verify_result = None
+        self._chain_cache: dict | None = None
         self.setWindowTitle("证据视图")
         self.resize(1080, 680)
         self._build_ui()
@@ -123,8 +124,7 @@ class EvidenceViewDialog(QDialog):
             return
         params = cred.params or {}
         trace = credential_trace_code([credential])
-        chain = self._verify_result or (self.ledger.verify() if self.ledger is not None
-                                        else {"ok": None, "reason": "无账本"})
+        chain = self._chain_result()
         chain_color = "#2ecc71" if chain.get("ok") else "#e74c3c"
         chain_text = ("账本链校验通过" if chain.get("ok")
                       else f"账本链校验失败：{chain.get('reason', '')}")
@@ -189,11 +189,22 @@ class EvidenceViewDialog(QDialog):
         self.event_table.resizeColumnsToContents()
 
     # ------------------------------------------------------------ 动作
+    def _chain_result(self) -> dict:
+        """账本链校验结果：会话内缓存，避免每次切换结论都全量重算。"""
+        if self._verify_result is not None:
+            return self._verify_result
+        if self.ledger is None:
+            return {"ok": None, "reason": "无账本"}
+        if self._chain_cache is None:
+            self._chain_cache = self.ledger.verify()
+        return self._chain_cache
+
     def _verify_chain(self):
         if self.ledger is None:
             QMessageBox.information(self, "账本校验", "当前项目没有证据账本")
             return
         self._verify_result = self.ledger.verify()
+        self._chain_cache = self._verify_result
         self._show_selected()
         QMessageBox.information(
             self, "账本校验",

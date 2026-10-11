@@ -328,7 +328,8 @@ class SharedProjectManager:
                     project_context: dict[str, Any] | None = None,
                     cases: list[dict[str, Any]] | None = None,
                     standards: Any = None,
-                    measurements: Any = None) -> str:
+                    measurements: Any = None,
+                    evidence_events: Any = None) -> str:
         """保存项目到共享目录"""
         _ensure_shared_dir()
         dept_norm = (department or PUBLIC_DEPT).replace("\\", "/")
@@ -346,7 +347,7 @@ class SharedProjectManager:
         return ProjectManager.save_project(
             full_path, raw_data, analyses, chart_bytes, annotations,
             project_context, cases=cases, standards=standards,
-            measurements=measurements)
+            measurements=measurements, evidence_events=evidence_events)
 
     @staticmethod
     def list_shared(department: str = "", role: str = "") -> list[dict[str, str]]:

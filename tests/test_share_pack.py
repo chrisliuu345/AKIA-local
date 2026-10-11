@@ -127,6 +127,24 @@ class TestLeakScan:
         scan = scan_share_pack(path, raw_data=raw, forbidden=["某公司"])
         assert scan["ok"] is True
 
+    def test_large_file_numeric_detection_via_token_scan(self, tmp_path):
+        """超过子串扫描字节上限的文件仍通过数字 token 通道检出原始值。"""
+        raw = {"S": pd.DataFrame({"x": [123456.789123]})}
+        filler = "x" * 1_100_000
+        path = self._fake_pack(tmp_path, f"start {filler} value=123456.789123 end")
+        scan = scan_share_pack(path, raw_data=raw)
+        assert scan["ok"] is False
+        assert any(item["kind"] == "original" for item in scan["findings"])
+
+    def test_scan_reports_candidate_metadata(self, tmp_path):
+        raw = _raw(50)
+        path = self._fake_pack(tmp_path, "clean generic content")
+        scan = scan_share_pack(path, raw_data=raw)
+        assert scan["ok"] is True
+        assert scan["candidates_total"] >= 1
+        assert scan["candidates_numeric"] >= 0 and scan["candidates_text"] >= 1
+        assert scan["capped"] is False
+
     def test_bad_zip_reported(self, tmp_path):
         target = tmp_path / "bad.zip"
         target.write_text("not a zip", encoding="utf-8")

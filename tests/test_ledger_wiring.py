@@ -116,6 +116,36 @@ class TestPersistenceAndIsolation:
         assert main_window._ledger_append("case_created") is None
         assert main_window._ledger_failures == 1
 
+    def test_save_shared_includes_all_segments(self, main_window, tmp_path,
+                                               monkeypatch):
+        """共享保存必须与项目保存同段位（案例/标准/测量/账本），不得抛错。"""
+        from PySide6.QtWidgets import QFileDialog, QMessageBox
+
+        from core import project_manager as pm
+
+        monkeypatch.setattr(pm, "SHARED_DIR", str(tmp_path / "shared"))
+        main_window._record_data_imported(
+            "/tmp/a.xlsx", {"S": pd.DataFrame({"x": [1]})})
+        main_window._create_case_from_current_data()
+        main_window.project_context.record_specification(
+            "cycle", usl=33.0, lsl=31.0, change_reason="共享初始版本")
+        monkeypatch.setattr(
+            QFileDialog, "getSaveFileName",
+            staticmethod(lambda *a, **k: (str(tmp_path / "shared.qap"), "")))
+        monkeypatch.setattr(QMessageBox, "information",
+                            staticmethod(lambda *a, **k: None))
+
+        def _fail(*args, **kwargs):
+            raise AssertionError(f"共享保存出现错误弹窗: {args[2:]}")
+
+        monkeypatch.setattr(QMessageBox, "critical", staticmethod(_fail))
+        main_window._on_save_shared()
+        loaded = pm.ProjectManager.load_project(
+            str(tmp_path / "shared" / "公共" / "shared.qap"))
+        assert loaded["manifest"]["evidence_event_count"] >= 1
+        assert loaded["cases"]
+        assert loaded["standards"]["records"]
+
 
 class TestMenuEntry:
     def test_tools_menu_has_evidence_view(self, main_window):

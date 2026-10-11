@@ -154,7 +154,11 @@ class StandardRegistry:
 
     # ------------------------------------------------------------ 写入
     def append(self, record: StandardRecord) -> StandardRecord:
-        """追加新版本：自动关闭同一对象的开放记录；区间重叠则拒绝。"""
+        """追加新版本：自动关闭同一对象的开放记录；区间重叠则拒绝。
+
+        全部校验先于任何状态变更（原子性）：失败时现行版本保持开放，
+        不会出现"旧版本已关闭、新版本未加入"的损坏注册表状态。
+        """
         if not isinstance(record, StandardRecord):
             raise TypeError("append 仅接受 StandardRecord")
         previous = self.current(record.object_ref)
@@ -169,9 +173,10 @@ class StandardRegistry:
                 raise ValueError(
                     f"新版本 valid_from ({record.valid_from}) 必须晚于现行版本 "
                     f"({previous.valid_from})")
+        self._assert_no_overlap(record, replaces=previous)
+        if previous is not None:
             previous.valid_to = record.valid_from
             record.supersedes = record.supersedes or previous.record_id
-        self._assert_no_overlap(record)
         self.records.append(record)
         return record
 
@@ -181,7 +186,10 @@ class StandardRegistry:
         self._assert_no_overlap(record)
         self.records.append(record)
 
-    def _assert_no_overlap(self, record: StandardRecord) -> None:
+    def _assert_no_overlap(self, record: StandardRecord, *,
+                           replaces: StandardRecord | None = None) -> None:
+        """区间冲突校验；``replaces`` 为即将被本条记录关闭的现行版本，
+        其有效区间按"在 ``record.valid_from`` 关闭"参与比较（不实际改写）。"""
         start = parse_iso(record.valid_from)
         end = parse_iso(record.valid_to) if record.valid_to else None
         if any(existing.record_id == record.record_id for existing in self.records):
@@ -194,7 +202,10 @@ class StandardRegistry:
                     f"对象 {record.object_ref} 类型冲突: "
                     f"{existing.object_type} vs {record.object_type}")
             ex_start = parse_iso(existing.valid_from)
-            ex_end = parse_iso(existing.valid_to) if existing.valid_to else None
+            if existing is replaces:
+                ex_end = start
+            else:
+                ex_end = parse_iso(existing.valid_to) if existing.valid_to else None
             overlaps = (end is None or ex_start < end) and (ex_end is None or start < ex_end)
             if overlaps:
                 raise ValueError(
