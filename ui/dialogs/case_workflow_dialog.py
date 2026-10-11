@@ -316,14 +316,15 @@ class CaseWorkflowDialog(QDialog):
         if before_col == after_col:
             QMessageBox.warning(self, "无法配对检验", "改善前列与复测列不能相同")
             return
-        before = frame[numeric_map[before_col]].dropna().reset_index(drop=True)
-        after = frame[numeric_map[after_col]].dropna().reset_index(drop=True)
-        count = min(len(before), len(after))
-        if count < 2:
+        # 成对删除缺失值：两列任一侧缺失即整行剔除，保证配对来自同一行
+        # （旧实现两列各自 dropna 后按位对齐，缺失位置不同会错配配对）
+        pair_frame = pd.DataFrame({
+            "before": frame[numeric_map[before_col]],
+            "after": frame[numeric_map[after_col]],
+        }).dropna().reset_index(drop=True)
+        if len(pair_frame) < 2:
             QMessageBox.warning(self, "配对检验失败", "有效配对数据不足 2 对")
             return
-        pair_frame = pd.DataFrame({"before": before.iloc[:count],
-                                   "after": after.iloc[:count]})
         event_ids = []
         try:
             event = MeasurementEvent.from_dataframe(
@@ -335,7 +336,7 @@ class CaseWorkflowDialog(QDialog):
             event_ids = []
         try:
             self.workflow.run_paired_test(
-                before.iloc[:count], after.iloc[:count],
+                pair_frame["before"], pair_frame["after"],
                 data_ref=f"sheet:{sheet}:{before_col}/{after_col}",
                 measurement_refs=event_ids)
         except (ValueError, TypeError) as exc:

@@ -18,8 +18,7 @@ import json
 import logging
 import os
 import sys
-from concurrent.futures import ThreadPoolExecutor
-from concurrent.futures import TimeoutError as FuturesTimeoutError
+import threading
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -427,21 +426,37 @@ class PluginManager:
         provider = getattr(record.instance, "provide_measurements", None)
         if not callable(provider):
             return []
-        executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="akia-datasource")
-        future = executor.submit(provider, context)
-        try:
-            return future.result(timeout=timeout_s)
-        except FuturesTimeoutError:
+        # 守护线程 + 事件等待：插件挂死时既不拖住调用方，也不阻塞主程序退出。
+        # （ThreadPoolExecutor 的工作线程会在解释器退出时被 join，被挂死的插件
+        # 会导致程序关不掉；这里改为一次性守护线程，超时后随进程回收。）
+        box: dict[str, Any] = {}
+        done = threading.Event()
+
+        def _run() -> None:
+            try:
+                box["result"] = provider(context)
+            except BaseException as exc:  # 插件任意异常都在调用方统一报告
+                box["error"] = exc
+            finally:
+                done.set()
+
+        worker = threading.Thread(target=_run,
+                                  name=f"akia-datasource-{record.id}",
+                                  daemon=True)
+        worker.start()
+        if not done.wait(timeout_s):
             record.error = f"provide_measurements 超时（>{timeout_s:g}s）"
-            future.cancel()
             _log.warning("插件 %s 数据源超时", record.id)
             return None
-        except Exception as exc:
+        error = box.get("error")
+        if error is not None:
+            if not isinstance(error, Exception):
+                raise error  # KeyboardInterrupt / SystemExit 等按原语义上抛
+            exc = error
             record.error = f"provide_measurements 失败: {exc}"
             _log.warning("插件 %s 数据源失败: %s", record.id, exc)
             return None
-        finally:
-            executor.shutdown(wait=False)
+        return box.get("result")
 
     def status_report(self) -> list[dict]:
         return [r.to_dict() for r in self._records.values()]

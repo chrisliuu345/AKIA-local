@@ -141,6 +141,16 @@ class TestVerify:
         verify = verify_evidence_pack(str(target))
         assert verify["ok"] is False
 
+    def test_malformed_manifest_reported_not_crash(self, tmp_path):
+        """manifest 结构异常（files 非映射）应返回结构化错误而非抛异常。"""
+        target = tmp_path / "bad-manifest.zip"
+        with zipfile.ZipFile(target, "w") as archive:
+            archive.writestr("manifest.json",
+                             json.dumps({"schema_version": "1", "files": ["x"]}))
+        verify = verify_evidence_pack(str(target))
+        assert verify["ok"] is False
+        assert verify["problems"]
+
 
 def test_manifest_is_valid_json(tmp_path):
     result = export_evidence_pack(str(tmp_path / "m.zip"), case=_case(),

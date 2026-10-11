@@ -20,6 +20,7 @@
 
 from __future__ import annotations
 
+import uuid
 from datetime import datetime
 from typing import Any
 
@@ -29,6 +30,12 @@ from core.evidence import make_credential
 from core.improvement_case import CASE_PHASES, ImprovementCase
 
 CASE_WORKFLOW_SCHEMA_VERSION = "1"
+
+
+def _new_case_id() -> str:
+    """案例号：本地时区时间 + 4 位随机后缀（同秒连续创建不撞号）。"""
+    return f"CASE-{datetime.now().astimezone():%Y%m%d-%H%M%S}-{uuid.uuid4().hex[:4]}"
+
 
 PHASES: tuple[str, ...] = (
     "baseline", "time_study", "line_balance", "improvement",
@@ -77,7 +84,7 @@ class CaseWorkflow:
         if not str(title or "").strip():
             raise ValueError("案例标题不能为空")
         self.case = ImprovementCase(
-            id=case_id or f"CASE-{datetime.now():%Y%m%d-%H%M%S}",
+            id=case_id or _new_case_id(),
             title=str(title), owner=str(owner or ""), product=str(product or ""))
         self.product = str(product or "")
         self.owner = str(owner or "")

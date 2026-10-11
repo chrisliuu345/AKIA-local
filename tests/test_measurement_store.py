@@ -70,6 +70,14 @@ class TestSerialization:
         assert restored.recovered_truncation is True
         assert len(restored) == 1
 
+    def test_complete_jsonl_without_trailing_newline_keeps_events(self):
+        """完整 JSONL 仅缺尾随换行时不得丢尾行。"""
+        store = MeasurementStore([_event(1.0)])
+        text = store.to_jsonl().rstrip("\n")
+        restored = MeasurementStore.from_jsonl(text)
+        assert restored.recovered_truncation is False
+        assert len(restored) == 1
+
     def test_malformed_line_recorded(self):
         store = MeasurementStore([_event(1.0)])
         lines = store.to_jsonl().splitlines()
