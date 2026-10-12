@@ -54,7 +54,7 @@ class TestQapEvidenceSections:
             project = ProjectManager.load_project(path)
 
             manifest = project["manifest"]
-            assert manifest["version"] == "1.9"
+            assert manifest["version"] == "2.0"
             assert manifest["has_standards"] is True
             assert manifest["standard_count"] == 1
             assert manifest["has_evidence"] is True

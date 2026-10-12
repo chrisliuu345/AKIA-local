@@ -108,7 +108,11 @@ class TestEventValidation:
         for name in ("data_imported", "measurement_recorded", "standard_changed",
                      "analysis_run", "case_created", "case_step", "case_closed",
                      "case_reopened", "report_exported", "alert_ack",
-                     "data_edited", "share_pack_exported"):
+                     "data_edited", "share_pack_exported",
+                     "sampling_plan_selected", "lot_inspected",
+                     "sampling_transfer_changed", "alert_case_opened",
+                     "gauge_drift_alerted", "benefit_recorded",
+                     "benefit_recomputed"):
             assert name in EVENT_TYPES
 
     def test_custom_event_id_and_at(self):
