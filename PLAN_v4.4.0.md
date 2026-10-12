@@ -6,7 +6,8 @@
 > 设计决策仍以路线图为准，本文只描述执行路径。
 >
 > 探索日期：2026-10-12（HEAD `b8228bb`，v4.3.0 + 10-11 质量审查修复）。
-> **执行进度（2026-10-12）**：B0–B8 全部待开工；先冻结 B0 契约，再写功能。
+> **执行进度（2026-10-12）**：B0 ✅ 契约基座与 `.qap` 2.0（含抽样表重建，发现并修复
+> v4.3.0 遗留缺陷）；B1–B8 待开工；B0 契约已冻结，功能批次可开工。
 
 **基线（v4.3.0 发布 + 审查修复后实测）**：178 个测试文件 / 2194 通过 / 56 跳过 /
 0 失败（514.2s）；ruff 全库零告警；性能基线 10 项通过；`.qap` 1.9（1.6–1.8 只读兼容）；
@@ -189,7 +190,7 @@ SchedulePlan    assignments[{process_id, operator, start_s, end_s}]
 
 ## 4. 批次任务分解（B0–B8）
 
-### B0 契约基座与 `.qap` 2.0（4–6 人日）← 最先做，冻结后才允许写功能
+### B0 契约基座与 `.qap` 2.0（4–6 人日）✅ 2026-10-12 ← 最先做，冻结后才允许写功能
 
 | 编号 | 任务 | 落点 | 验收 |
 |------|------|------|------|
@@ -198,6 +199,34 @@ SchedulePlan    assignments[{process_id, operator, start_s, end_s}]
 | B0-3 | 加严/放宽 AQL 表与转移规则纯函数（确定性） | `core/sampling_engine.py` | 转移书全覆盖：同输入序列 → 同状态轨迹（含边界：连续计数、严重不合格） |
 | B0-4 | `.qap` 2.0：四段读写 + 1.6–1.9 只读兼容 + manifest 计数 | `core/project_manager.py` | 兼容矩阵测试（1.6/1.7/1.8/1.9/2.0 五档） |
 | B0-5 | 时间/分层守卫扩围：四个新模块进 `test_timezone_guard` 与分层扫描 | `tests/test_timezone_guard.py`、`tests/test_layering.py` | 守卫测试通过（无时区构造=0） |
+
+**B0 完成记录（2026-10-12）**：
+
+1. 四域契约落地：`core/sampling_plan.py`（LotRecord / SamplingDecision /
+   TransferState / TransferDecision）· `core/gauge_study.py`（GaugeStudyPolicy /
+   GaugeRollingState + 重复性/偏倚纯函数）· `core/benefit_ledger.py`
+   （BenefitRecord / BenefitLedger，防重复键 + 置信门禁 + COPQ 分区 + ROI）·
+   `core/skill_matrix.py`（SkillMatrix / SchedulePlan）。
+2. 账本事件类型 +7（sampling_plan_selected / lot_inspected /
+   sampling_transfer_changed / alert_case_opened / gauge_drift_alerted /
+   benefit_recorded / benefit_recomputed）；标准域新增对象类型 `sampling_plan`。
+3. **抽样表重建（本批最大发现）**：审查中发现 v4.3.0 及以前 `_NORMAL_TABLE`
+   与标准原表不符——A~H 行数字格整体错位、J/K 行完全相同（约 95% 格子与标准
+   不一致）、箭头（↓/↑）语义未实现、检验水平参数被静默忽略、加严/放宽表缺失。
+   已以 GB/T 2828.1-2003（= ISO 2859-1:1999）原文数据重建三张主表（21 AQL 列 ×
+   16 字码），实现箭头解析、7 档检验水平（S-1~III）与转移规则纯函数
+   （`SamplingEngine.evaluate_transfer`，阈值按本方案 §3.1 冻结）。
+   四重交叉验证：随包知识库节选 55 格逐格一致；2-A 全部 152 个数字格的 n·AQL
+   落入接收数对应 R5 带心 ±6%（5–95% 区间 [0.94, 1.04]）；2-B 满足带心 ×1.6
+   设计关系（中位 1.56）；2-C 与行业确认值一致（AQL2.5：K→5/6、L→6/7）。
+4. `.qap` 2.0：新增 `sampling.json` / `gauge_studies.json` / `benefits.json` /
+   `skills.json` 四段（1.6~1.9 只读兼容），manifest 增段位计数；
+   `SharedProjectManager.save_shared` 同步透传（避免 v4.3.0 式接线遗漏）。
+5. 验证：新增 6 个测试文件 / +75 例；**全量逐文件回归 184 文件 / 2269 通过 /
+   56 跳过 / 0 失败（507.8s）**；ruff 零告警；时间守卫扩围 4 个新模块。
+   已知边界：抽样表数据为行业工具的坐标级提取值 + 四重交叉验证（非购买版标准
+   原文），B3 前建议人工抽查若干格；旧表纠错属**用户可见行为变更**（AQL 查表与
+   计量型抽样的字码/样本量将变化，方向为修正）。
 
 ### B1 告警自动立案 8D（8–10 人日）
 

@@ -21,7 +21,7 @@ from core.time_utils import now_iso, parse_iso
 
 STANDARD_SCHEMA_VERSION = "1"
 OBJECT_TYPES = ("spec_limit", "control_limit", "standard_time",
-                "work_combination", "control_plan_row")
+                "work_combination", "control_plan_row", "sampling_plan")
 ORIGINS = ("manual", "migration", "case")
 
 

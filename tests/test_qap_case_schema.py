@@ -29,7 +29,7 @@ class TestQapCaseRoundtrip:
             ProjectManager.save_project(path, raw, {}, {}, cases=_sample_cases())
             project = ProjectManager.load_project(path)
 
-            assert project["manifest"]["version"] == VERSION == "1.9"
+            assert project["manifest"]["version"] == VERSION == "2.0"
             assert project["manifest"]["case_count"] == 2
             assert project["manifest"]["has_cases"] is True
             assert [case["id"] for case in project["cases"]] == ["CASE-001", "CASE-002"]
