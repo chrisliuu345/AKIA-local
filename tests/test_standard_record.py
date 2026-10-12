@@ -86,7 +86,7 @@ class TestRecordValidation:
     def test_expected_object_types_declared(self):
         assert set(OBJECT_TYPES) == {
             "spec_limit", "control_limit", "standard_time",
-            "work_combination", "control_plan_row"}
+            "work_combination", "control_plan_row", "sampling_plan"}
 
 
 class TestRegistryAppend:

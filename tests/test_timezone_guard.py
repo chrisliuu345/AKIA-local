@@ -23,6 +23,10 @@ GUARDED = [
     ROOT / "core" / "share_pack.py",
     ROOT / "core" / "standard_record.py",
     ROOT / "core" / "case_workflow.py",
+    ROOT / "core" / "sampling_plan.py",
+    ROOT / "core" / "gauge_study.py",
+    ROOT / "core" / "benefit_ledger.py",
+    ROOT / "core" / "skill_matrix.py",
 ]
 
 #: datetime.now() 后必须紧跟 .astimezone(...)；utcnow/today 属于无时区构造

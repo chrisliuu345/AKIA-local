@@ -38,6 +38,14 @@ EVENT_TYPES = (
     "alert_ack",
     "data_edited",
     "share_pack_exported",
+    # v4.4.0 B0：抽样 / 自动立案 / 量具漂移 / 收益域
+    "sampling_plan_selected",
+    "lot_inspected",
+    "sampling_transfer_changed",
+    "alert_case_opened",
+    "gauge_drift_alerted",
+    "benefit_recorded",
+    "benefit_recomputed",
 )
 
 
