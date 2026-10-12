@@ -15,10 +15,31 @@ import pandas as pd
 from core.improvement_case import CASE_SCHEMA_VERSION
 from core.legacy import legacy_home_dir, migrate_legacy_dir
 
-# 1.9：新增 standards.json（标准版本）与 evidence/events.jsonl（证据账本）；
-# 1.6/1.7/1.8 只读兼容（无对应段时按空处理）
-VERSION = "1.9"
+# 2.0：新增 sampling.json / gauge_studies.json / benefits.json / skills.json（v4.4.0 B0）；
+# 1.6~1.9 只读兼容（无对应段时按空处理）
+VERSION = "2.0"
 RECENT_MAX = 8
+
+
+def _payload_segment(value: Any, name: str) -> dict[str, Any] | None:
+    """可选段载荷归一化：None → None；带 to_dict() 的对象直接用；dict 原样。"""
+    if value is None:
+        return None
+    if hasattr(value, "to_dict"):
+        payload = value.to_dict()
+    elif isinstance(value, dict):
+        payload = value
+    else:
+        raise TypeError(f"{name} 需为 dict 或带 to_dict() 的对象")
+    return _sanitize_for_json(payload)
+
+
+def _count_items(payload: dict[str, Any] | None, key: str) -> int:
+    """段载荷中的条目计数（非列表或缺失按 0）。"""
+    if not isinstance(payload, dict):
+        return 0
+    items = payload.get(key) or []
+    return len(items) if isinstance(items, list) else 0
 
 
 class ProjectManager:
@@ -33,7 +54,11 @@ class ProjectManager:
                      cases: list[dict[str, Any]] | None = None,
                      standards: Any = None,
                      evidence_events: Any = None,
-                     measurements: Any = None) -> str:
+                     measurements: Any = None,
+                     sampling: Any = None,
+                     gauge_studies: Any = None,
+                     benefits: Any = None,
+                     skills: Any = None) -> str:
         """保存项目为 .qap 文件。
 
         raw_data: {sheet_name: DataFrame}
@@ -45,6 +70,10 @@ class ProjectManager:
         evidence_events: EvidenceLedger | list[dict] (可选；写入 evidence/events.jsonl)
         measurements: MeasurementStore | list[MeasurementEvent | dict] (可选；
                       写入 measurements.jsonl)
+        sampling: 抽样域载荷 dict | 带 to_dict() 的对象（可选；写入 sampling.json）
+        gauge_studies: 量具在线研究载荷（可选；写入 gauge_studies.json）
+        benefits: 收益账本载荷（可选；写入 benefits.json）
+        skills: 技能矩阵载荷（可选；写入 skills.json）
         """
         if not path.endswith(".qap"):
             path += ".qap"
@@ -76,6 +105,11 @@ class ProjectManager:
         else:
             raise TypeError("measurements 需为 MeasurementStore 或 list")
 
+        sampling_payload = _payload_segment(sampling, "sampling")
+        gauge_payload = _payload_segment(gauge_studies, "gauge_studies")
+        benefits_payload = _payload_segment(benefits, "benefits")
+        skills_payload = _payload_segment(skills, "skills")
+
         manifest = {
             "version": VERSION,
             "created": datetime.now().isoformat(),
@@ -93,6 +127,14 @@ class ProjectManager:
             "has_evidence": bool(evidence_payload),
             "measurement_count": len(measurement_payload or []),
             "has_measurements": bool(measurement_payload),
+            "has_sampling": sampling_payload is not None,
+            "sampling_lot_count": _count_items(sampling_payload, "lots"),
+            "has_gauge_studies": gauge_payload is not None,
+            "gauge_study_count": _count_items(gauge_payload, "studies"),
+            "has_benefits": benefits_payload is not None,
+            "benefit_count": _count_items(benefits_payload, "records"),
+            "has_skills": skills_payload is not None,
+            "skill_entry_count": _count_items(skills_payload, "entries"),
         }
 
         with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -145,6 +187,14 @@ class ProjectManager:
                     for event in measurement_payload)
                 zf.writestr("measurements.jsonl", lines)
 
+            for segment, payload in (("sampling.json", sampling_payload),
+                                     ("gauge_studies.json", gauge_payload),
+                                     ("benefits.json", benefits_payload),
+                                     ("skills.json", skills_payload)):
+                if payload is not None:
+                    zf.writestr(segment, json.dumps(
+                        payload, indent=2, ensure_ascii=False, default=str))
+
             for label, png_data in chart_bytes.items():
                 zf.writestr(f"charts/{_safe_name(label)}.png", png_data)
 
@@ -173,6 +223,10 @@ class ProjectManager:
             "measurements": [event dict, ...],  # 测量事件；旧文件为 []
             "measurement_recovered": bool,
             "measurement_errors": [str, ...],
+            "sampling": dict | None,       # 抽样域（方案/批/转移状态）；旧文件为 None
+            "gauge_studies": dict | None,  # 量具在线研究；旧文件为 None
+            "benefits": dict | None,       # 收益账本；旧文件为 None
+            "skills": dict | None,         # 技能矩阵；旧文件为 None
         }
         """
         if not os.path.exists(path):
@@ -192,6 +246,10 @@ class ProjectManager:
         measurements: list[dict] = []
         measurement_recovered = False
         measurement_errors: list[str] = []
+        sampling = None
+        gauge_studies = None
+        benefits = None
+        skills = None
 
         with zipfile.ZipFile(path, "r") as zf:
             for name in zf.namelist():
@@ -229,6 +287,14 @@ class ProjectManager:
                     measurements = store.to_dicts()
                     measurement_recovered = store.recovered_truncation
                     measurement_errors = list(store.load_errors)
+                elif name == "sampling.json":
+                    sampling = json.loads(zf.read(name).decode("utf-8"))
+                elif name == "gauge_studies.json":
+                    gauge_studies = json.loads(zf.read(name).decode("utf-8"))
+                elif name == "benefits.json":
+                    benefits = json.loads(zf.read(name).decode("utf-8"))
+                elif name == "skills.json":
+                    skills = json.loads(zf.read(name).decode("utf-8"))
                 elif name.startswith("charts/") and name.endswith(".png"):
                     label = name[7:-4]
                     chart_bytes[label] = zf.read(name)
@@ -251,6 +317,10 @@ class ProjectManager:
             "measurements": measurements,
             "measurement_recovered": measurement_recovered,
             "measurement_errors": measurement_errors,
+            "sampling": sampling,
+            "gauge_studies": gauge_studies,
+            "benefits": benefits,
+            "skills": skills,
         }
 
     @staticmethod
@@ -329,7 +399,11 @@ class SharedProjectManager:
                     cases: list[dict[str, Any]] | None = None,
                     standards: Any = None,
                     measurements: Any = None,
-                    evidence_events: Any = None) -> str:
+                    evidence_events: Any = None,
+                    sampling: Any = None,
+                    gauge_studies: Any = None,
+                    benefits: Any = None,
+                    skills: Any = None) -> str:
         """保存项目到共享目录"""
         _ensure_shared_dir()
         dept_norm = (department or PUBLIC_DEPT).replace("\\", "/")
@@ -347,7 +421,9 @@ class SharedProjectManager:
         return ProjectManager.save_project(
             full_path, raw_data, analyses, chart_bytes, annotations,
             project_context, cases=cases, standards=standards,
-            measurements=measurements, evidence_events=evidence_events)
+            measurements=measurements, evidence_events=evidence_events,
+            sampling=sampling, gauge_studies=gauge_studies,
+            benefits=benefits, skills=skills)
 
     @staticmethod
     def list_shared(department: str = "", role: str = "") -> list[dict[str, str]]:
