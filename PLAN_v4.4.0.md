@@ -6,8 +6,9 @@
 > 设计决策仍以路线图为准，本文只描述执行路径。
 >
 > 探索日期：2026-10-12（HEAD `b8228bb`，v4.3.0 + 10-11 质量审查修复）。
-> **执行进度（2026-10-12）**：B0 ✅ 契约基座与 `.qap` 2.0（含抽样表重建，发现并修复
-> v4.3.0 遗留缺陷）；B1–B8 待开工；B0 契约已冻结，功能批次可开工。
+> **执行进度（2026-10-13）**：B0 ✅ 契约基座与 `.qap` 2.0（含抽样表重建，发现并修复
+> v4.3.0 遗留缺陷）；B1 ✅ 告警自动立案 8D（critical 同步立案 / 30 分钟冷却合并 /
+> D6 数据门禁 / 案例中心与告警中心入口）；B2–B8 待开工。
 
 **基线（v4.3.0 发布 + 审查修复后实测）**：178 个测试文件 / 2194 通过 / 56 跳过 /
 0 失败（514.2s）；ruff 全库零告警；性能基线 10 项通过；`.qap` 1.9（1.6–1.8 只读兼容）；
@@ -228,7 +229,7 @@ SchedulePlan    assignments[{process_id, operator, start_s, end_s}]
    原文），B3 前建议人工抽查若干格；旧表纠错属**用户可见行为变更**（AQL 查表与
    计量型抽样的字码/样本量将变化，方向为修正）。
 
-### B1 告警自动立案 8D（8–10 人日）
+### B1 告警自动立案 8D（8–10 人日）✅ 2026-10-13
 
 | 编号 | 任务 | 落点 | 验收 |
 |------|------|------|------|
@@ -236,6 +237,29 @@ SchedulePlan    assignments[{process_id, operator, start_s, end_s}]
 | B1-2 | 去重与冷却：同 rule_key 30 分钟合并为同案步骤；一案一号 | `core/alert_case.py` | 连发 3 条告警 → 1 案例 + 3 步骤；跨窗口 → 新案例 |
 | B1-3 | D6 数据门禁与 8D 报告联动：D6 关联 `measurement_refs`+统计判定；草稿进入 8D Tab 可编辑 | `ui/tabs/eight_d_tab.py`、`core/case_workflow.py` | D6 无数据不能关闭案例；8D 报告与案例步骤双向可见 |
 | B1-4 | 入口与通知：案例中心显示"自动立案"徽标；告警中心可一键打开案例 | `ui/dialogs/case_center_dialog.py`、`ui/dialogs/alert_center_dialog.py` | 离屏冒烟：critical 演示点 → 立案 → 打开工作台 |
+
+**B1 完成记录（2026-10-13）**：
+
+1. `core/alert_case.py`（无 Qt；告警对象按鸭子类型读取）：`AlertSnapshot` / `AlertCaseLink` /
+   `AlertCasePolicy` / `AlertCaseOrchestrator` + 8D 草稿生成——D1 预填（date_started）、
+   D2 由快照 + ProjectContext 特性/FMEA 生成、D3/D4 留空待填（按 §3.2 口径）；
+   同 rule_key 30 分钟冷却合并为同案步骤、跨窗新开、一案一号（Link 记录
+   alert→case 映射）；`rebuild()` 支持项目重载后去重延续；`alert_case_opened`
+   入证据账本（含 alert/case/report 三类对象引用）。
+2. 告警引擎挂钩：`AlertEvent` 增 `usl`/`lsl`（快照用，位置参数兼容）；
+   `AlertEngine.alert_hook` 在触发点同步回调（异常隔离，不影响通知/留存）；
+   主窗口经 Qt 信号回主线程提示"已自动立案"（≤1 分钟立案 = 同步，无轮询延迟）。
+3. D6 数据门禁：`ImprovementCase.evidence_required`（v1 增量字段，默认 False，旧文件
+   兼容）——自动立案案例关闭必须带复测数据引用（verify 步骤 measurement_refs 非空），
+   纯文字不接受；普通案例行为不变（回归覆盖）。8D 双向可见：案例 `report_refs` ↔
+   草稿 `case_id`；8D Tab 新增 `load_report()` 载入草稿可编辑（保存走幂等 upsert，
+   ID 绑定不漂移）；案例工作台新增「打开 8D 草稿」入口。
+4. UI 入口：案例中心新增「来源」列（自动立案 / 手动）；告警中心新增「打开改善案例」
+   按钮（按 alert_id 定位，未关联给提示；通过 `case_resolver` 注入，对话框保持解耦）。
+5. 验证：新增 2 个测试文件 / +26 例（策略与快照校验、冷却合并与跨窗、重启重建、
+   D6 门禁、引擎钩子隔离、离屏 UI 冒烟：立案→状态栏→案例中心徽标→告警中心打开→
+   8D 草稿装载与保存往返）；**全量逐文件回归 186 文件 / 2295 通过 / 56 跳过 /
+   0 失败（510.4s）**；ruff 零告警。
 
 ### B2 测量系统在线化（8–10 人日）
 

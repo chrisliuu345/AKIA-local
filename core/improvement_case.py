@@ -98,6 +98,8 @@ class ImprovementCase:
     closed_at: str = ""
     close_reason: str = ""
     reopen_count: int = 0
+    #: D6 数据门禁（v4.4.0 B1）：验证阶段必须带复测数据引用（measurement_refs）
+    evidence_required: bool = False
     reopen_history: list[dict[str, Any]] = field(default_factory=list)
     schema_version: str = CASE_SCHEMA_VERSION
 
@@ -124,6 +126,7 @@ class ImprovementCase:
         self.id = str(self.id)
         self.created_at = str(self.created_at or now_iso())
         self.updated_at = str(self.updated_at or self.created_at)
+        self.evidence_required = bool(self.evidence_required)
 
     # ---------------------------------------------------------------- 步骤
     def add_step(self, phase: str, ref: str = "", note: str = "", *,
@@ -203,6 +206,13 @@ class ImprovementCase:
             problems.append(f"当前状态 {self.status} 不允许关闭（需先激活）")
         if not self.has_statistical_verification():
             problems.append("verify 阶段缺少带统计判定的结论证据")
+        if self.evidence_required:
+            has_refs = any(
+                (step.get("measurement_refs") or [])
+                for step in self.verification_steps())
+            if not has_refs:
+                problems.append(
+                    "D6 门禁：验证阶段缺少复测数据引用（measurement_refs）")
         return {"ok": not problems, "missing_stages": missing, "problems": problems}
 
     # ---------------------------------------------------------------- 生命周期
@@ -297,6 +307,7 @@ class ImprovementCase:
             "closed_at": self.closed_at,
             "close_reason": self.close_reason,
             "reopen_count": int(self.reopen_count),
+            "evidence_required": bool(self.evidence_required),
             "reopen_history": [dict(item) for item in self.reopen_history],
         }
 

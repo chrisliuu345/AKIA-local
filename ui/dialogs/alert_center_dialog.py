@@ -32,9 +32,12 @@ _SEVERITY_ITEMS = (
 class AlertCenterDialog(QDialog):
     """告警中心 — 只读展示 + 确认 + 导出。"""
 
-    def __init__(self, journal, parent=None, auto_refresh_ms: int = 5000):
+    def __init__(self, journal, parent=None, auto_refresh_ms: int = 5000,
+                 case_resolver=None, open_case=None):
         super().__init__(parent)
         self.journal = journal
+        self.case_resolver = case_resolver     # alert_id -> case_id | None
+        self.open_case = open_case             # case_id -> None（打开案例工作台）
         self.setWindowTitle(i18n.tr("alert_center.title"))
         self.resize(980, 520)
         self._setup_ui()
@@ -89,6 +92,11 @@ class AlertCenterDialog(QDialog):
             btn.setStyleSheet(BUTTON_SECONDARY)
             btn.clicked.connect(slot)
             btn_bar.addWidget(btn)
+        self.case_btn = QPushButton("打开改善案例")
+        self.case_btn.setStyleSheet(BUTTON_SECONDARY)
+        self.case_btn.setToolTip("打开该告警自动立案的改善案例（v4.4.0 B1）")
+        self.case_btn.clicked.connect(self._on_open_case)
+        btn_bar.addWidget(self.case_btn)
         btn_bar.addStretch()
         close_btn = QPushButton(i18n.tr("alert_center.close"))
         close_btn.setStyleSheet(BUTTON_PRIMARY_STRETCH)
@@ -161,6 +169,21 @@ class AlertCenterDialog(QDialog):
         done = self.journal.ack_all("user", severity=severity)
         self.refresh()
         self.count_label.setText(i18n.tr("alert_center.acked").format(n=done))
+
+    def _on_open_case(self):
+        ids = self._selected_ids()
+        if not ids:
+            QMessageBox.information(self, self.windowTitle(),
+                                    i18n.tr("alert_center.select_hint"))
+            return
+        if not callable(self.case_resolver) or not callable(self.open_case):
+            QMessageBox.information(self, "改善案例", "当前入口未接入案例定位")
+            return
+        case_id = self.case_resolver(ids[0])
+        if not case_id:
+            QMessageBox.information(self, "改善案例", "该告警未关联自动立案案例")
+            return
+        self.open_case(case_id)
 
     def _on_export(self):
         path, _ = QFileDialog.getSaveFileName(
