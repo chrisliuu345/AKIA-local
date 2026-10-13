@@ -1,9 +1,12 @@
 """8D 问题解决 Tab — D1-D8 stepper + 鱼骨图/FMEA 嵌入"""
 
+from dataclasses import fields
+
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTextEdit, QLineEdit, QListWidget, QListWidgetItem, QStackedWidget,
-    QTableWidget, QHeaderView, QMessageBox, QCheckBox, QFileDialog,
+    QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QCheckBox,
+    QFileDialog,
 )
 from PySide6.QtCore import Qt
 
@@ -27,6 +30,9 @@ class EightDTab(BaseAnalysisTab):
         self._project_context = None
         super().__init__(parent)
         self.report = EightDReport()
+        self._report_id = ""
+        self._auto_draft = False
+        self._case_id = ""
         self._w = {}
         self._setup_ui()
 
@@ -347,9 +353,95 @@ class EightDTab(BaseAnalysisTab):
         if self._project_context is None:
             return
         report = self.report.to_dict()
-        report["id"] = report.get("title") or "8D"
+        report_id = self._report_id or report.get("title") or "8D"
+        report["id"] = report_id
+        if self._auto_draft:
+            report["auto"] = True
+        if self._case_id:
+            report["case_id"] = self._case_id
         self._project_context.upsert_eight_d_report(
-            report, report_id=report["id"])
+            report, report_id=report_id)
+
+    # ------------------------------------------------------------ 报告装载（v4.4.0 B1）
+    @staticmethod
+    def _step_from_dict(step_cls, data):
+        if not isinstance(data, dict):
+            return step_cls()
+        allowed = {f.name for f in fields(step_cls)}
+        return step_cls(**{k: v for k, v in data.items() if k in allowed})
+
+    def load_report(self, report: dict) -> None:
+        """载入 8D 报告（含自动立案草稿）到界面。
+
+        绑定报告 ID（``id`` / ``auto`` / ``case_id``），此后保存走幂等
+        upsert，不会因标题变化生成重复报告。
+        """
+        if not isinstance(report, dict):
+            raise ValueError("8D 报告必须为 dict")
+        steps = report.get("steps") or {}
+        self.report = EightDReport(
+            title=str(report.get("title") or ""),
+            product=str(report.get("product") or ""),
+            customer=str(report.get("customer") or ""),
+            created_at=str(report.get("created_at") or ""),
+            d1=self._step_from_dict(D1Step, steps.get("D1")),
+            d2=self._step_from_dict(D2Step, steps.get("D2")),
+            d3=self._step_from_dict(D3Step, steps.get("D3")),
+            d4=self._step_from_dict(D4Step, steps.get("D4")),
+            d5=self._step_from_dict(D5Step, steps.get("D5")),
+            d6=self._step_from_dict(D6Step, steps.get("D6")),
+            d7=self._step_from_dict(D7Step, steps.get("D7")),
+            d8=self._step_from_dict(D8Step, steps.get("D8")),
+        )
+        self._report_id = str(report.get("id") or "").strip()
+        self._auto_draft = bool(report.get("auto"))
+        self._case_id = str(report.get("case_id") or "").strip()
+        self._populate_widgets()
+
+    def _populate_widgets(self) -> None:
+        """把 self.report 写回界面控件（D1–D8 + 表头）。"""
+        report = self.report
+
+        def set_text(key, value):
+            widget = self._w.get(key)
+            if widget is None:
+                return
+            if hasattr(widget, "setPlainText"):
+                widget.setPlainText(str(value or ""))
+            elif hasattr(widget, "setText"):
+                widget.setText(str(value or ""))
+
+        set_text("title", report.title)
+        set_text("product", report.product)
+        set_text("customer", report.customer)
+        set_text("d1_leader", report.d1.team_leader)
+        set_text("d1_members", report.d1.members)
+        set_text("d2_statement", report.d2.problem_statement)
+        for key in ("what", "where", "when", "who", "why", "how", "how_many"):
+            set_text(f"d2_{key}", getattr(report.d2, key))
+        set_text("d3_ica", report.d3.ica_description)
+        set_text("d3_date", report.d3.implementation_date)
+        checkbox = self._w.get("d3_verified")
+        if isinstance(checkbox, QCheckBox):
+            checkbox.setChecked(bool(report.d3.verified))
+        set_text("d4_root", report.d4.root_cause)
+        set_text("d4_5why", report.d4.five_why)
+        table = self._w.get("d5_table")
+        if isinstance(table, QTableWidget):
+            table.setRowCount(len(report.d5.pca_items))
+            for row, item in enumerate(report.d5.pca_items):
+                if not isinstance(item, dict):
+                    continue
+                for column, key in enumerate(("action", "responsible", "due_date")):
+                    table.setItem(row, column,
+                                  QTableWidgetItem(str(item.get(key) or "")))
+        set_text("d5_verify", report.d5.verification_method)
+        set_text("d6_impl", report.d6.implementation_notes)
+        set_text("d6_valid", report.d6.validation_result)
+        set_text("d7_prev", report.d7.preventive_actions)
+        set_text("d7_std", report.d7.standards_updated)
+        set_text("d8_recog", report.d8.recognition_notes)
+        set_text("d8_date", report.d8.closure_date)
 
     def _import_from_fmea(self):
         """从 FMEA 导入失效原因到 D4 鱼骨图（数据源：项目上下文）"""
