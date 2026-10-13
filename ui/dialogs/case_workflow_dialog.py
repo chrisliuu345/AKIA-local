@@ -86,13 +86,15 @@ class CaseWorkflowDialog(QDialog):
         self.evidence_button = QPushButton("查看证据", self)
         self.evidence_pack_button = QPushButton("导出证据包", self)
         self.share_pack_button = QPushButton("导出脱敏分享包", self)
+        self.report_button = QPushButton("打开 8D 草稿", self)
         for button in (self.evidence_button, self.evidence_pack_button,
-                       self.share_pack_button):
+                       self.share_pack_button, self.report_button):
             row.addWidget(button)
         row.addStretch()
         self.evidence_button.clicked.connect(self._on_view_evidence)
         self.evidence_pack_button.clicked.connect(self._on_export_evidence_pack)
         self.share_pack_button.clicked.connect(self._on_export_share_pack)
+        self.report_button.clicked.connect(self._on_open_report)
         return row
 
     # ------------------------------------------------------------ 渲染
@@ -117,6 +119,9 @@ class CaseWorkflowDialog(QDialog):
         self.record_button.setEnabled(has_data)
         self.analysis_button.setEnabled(has_analysis)
         self.pair_button.setEnabled(has_data)
+        self.report_button.setEnabled(
+            bool(self.workflow.case.report_refs)
+            and callable(getattr(self.host, "open_eight_d_report", None)))
 
     # ------------------------------------------------------------ 数据访问
     def _current_frame(self):
@@ -375,6 +380,17 @@ class CaseWorkflowDialog(QDialog):
         self.refresh()
 
     # ------------------------------------------------------------ 证据与交换（B4）
+    def _on_open_report(self):
+        refs = [str(item) for item in (self.workflow.case.report_refs or [])]
+        opener = getattr(self.host, "open_eight_d_report", None)
+        if not refs:
+            QMessageBox.information(self, "8D 报告", "该案例暂无关联的 8D 报告")
+            return
+        if not callable(opener):
+            QMessageBox.information(self, "8D 报告", "当前入口未接入 8D 报告打开")
+            return
+        opener(refs[-1])
+
     def _on_view_evidence(self):
         from ui.dialogs.evidence_view_dialog import EvidenceViewDialog
 

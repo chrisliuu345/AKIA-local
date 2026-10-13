@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
     QScrollArea,
 )
 from PySide6.QtCore import (
-    Qt, QSettings, QPropertyAnimation, QEasingCurve, QUrl, QTimer,
+    Qt, QSettings, QPropertyAnimation, QEasingCurve, QUrl, QTimer, Signal,
 )
 from PySide6.QtGui import QAction, QIcon, QFont, QPixmap, QDragEnterEvent, QDropEvent, QDesktopServices
 
@@ -31,6 +31,7 @@ from core.project_manager import ProjectManager
 from core.project_context import ProjectContext
 from core.measurement_store import MeasurementStore
 from core.evidence_ledger import EvidenceLedger
+from core.alert_case import AlertCaseOrchestrator
 from core.time_utils import now_iso
 from core.audit import audit
 from core.streaming.bus import StreamBus
@@ -61,6 +62,9 @@ _IE_IMPORT_TAB_INDICES = frozenset({7, 9, 10, 11})
 
 
 class MainWindow(QMainWindow):
+    #: 告警自动立案通知（采集线程 emit → 主线程槽显示）
+    alert_case_opened = Signal(str, str, str)  # case_id, title, rule_key
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} v{APP_VERSION}")
@@ -91,6 +95,13 @@ class MainWindow(QMainWindow):
         self._ledger_failures = 0
         self.measurement_store.event_sink = self._on_measurement_event
         self.project_context.event_sink = self._on_standard_event
+        self.alert_case_orchestrator = AlertCaseOrchestrator(
+            ledger=self.ledger,
+            context=self.project_context,
+            create_case=self._create_alert_case,
+            case_lookup=self._find_case_by_id,
+        )
+        self.alert_case_opened.connect(self._on_alert_case_opened_ui)
 
         self._setup_ui()
         self._menu_refs: list = []
@@ -539,6 +550,70 @@ class MainWindow(QMainWindow):
             if workflow is not None:
                 self._last_case_workflow = workflow
                 self._open_case_workflow_dialog(workflow)
+
+    # ------------------------------------------------------------ 告警自动立案（v4.4.0 B1）
+    def _create_alert_case(self, title: str, product: str = "",
+                           owner: str = ""):
+        """orchestrator 的案例工厂：创建并登记（保存 .qap 时统一落盘）。"""
+        from core.case_workflow import CaseWorkflow
+
+        workflow = CaseWorkflow(title=title, product=product, owner=owner,
+                                ledger=self.ledger)
+        return self._register_case_workflow(workflow)
+
+    def _find_case_by_id(self, case_id: str):
+        target = str(case_id or "").strip()
+        for workflow in self.case_workflows:
+            if getattr(workflow.case, "id", "") == target:
+                return workflow
+        return None
+
+    def _on_live_alert(self, event) -> None:
+        """告警引擎钩子（采集线程内）：按策略立案/合并；UI 通知经信号回主线程。"""
+        try:
+            decision = self.alert_case_orchestrator.handle(event)
+        except Exception:  # 立案失败不得影响告警通知/留存主链路
+            import logging
+            logging.getLogger(__name__).exception("告警自动立案失败")
+            return
+        if decision.action == "opened":
+            self.alert_case_opened.emit(decision.case_id, decision.title,
+                                        decision.rule_key)
+
+    def _on_alert_case_opened_ui(self, case_id: str, title: str,
+                                 rule_key: str) -> None:
+        self.statusBar().showMessage(
+            f"已自动立案: {title}（{case_id}）", 15000)
+
+    def _open_case_by_id(self, case_id: str) -> bool:
+        workflow = self._find_case_by_id(case_id)
+        if workflow is None:
+            QMessageBox.information(self, "改善案例", f"未找到案例 {case_id}")
+            return False
+        self._last_case_workflow = workflow
+        self._open_case_workflow_dialog(workflow)
+        return True
+
+    def open_eight_d_report(self, report_id: str) -> bool:
+        """打开项目上下文中的 8D 报告并载入 8D Tab（含自动立案草稿）。"""
+        report = None
+        for item in list(getattr(self.project_context, "eight_d_reports", []) or []):
+            if not isinstance(item, dict):
+                continue
+            key = str(item.get("id") or item.get("title") or "")
+            if key == str(report_id or "").strip():
+                report = item
+                break
+        if report is None:
+            QMessageBox.information(self, "8D 报告", f"未找到 8D 报告 {report_id}")
+            return False
+        tab = self._lazy_load_tab(TAB_INDEX["eight_d"])
+        if tab is None or not hasattr(tab, "load_report"):
+            return False
+        tab.set_project_context(self.project_context)
+        tab.load_report(report)
+        self._switch_tab(TAB_INDEX["eight_d"])
+        return True
 
     def _on_standard_history(self):
         """标准版本时间线（B3）：对象 / 生效区间 / 变更原因 / 变更人。"""
@@ -1839,6 +1914,9 @@ class MainWindow(QMainWindow):
                     "跳过无法恢复的改善案例: %r", entry, exc_info=True)
         self.case_workflows = restored
         self._last_case_workflow = restored[-1] if restored else None
+        orchestrator = getattr(self, "alert_case_orchestrator", None)
+        if orchestrator is not None:
+            orchestrator.rebuild(restored)
 
     # ------------------------------------------------------------ 证据账本（B4）
     def _ledger_append(self, event_type: str, *, actor: str = "user",
@@ -2480,6 +2558,8 @@ class MainWindow(QMainWindow):
             }
             self._alert_engine = AlertEngine(
                 self.stream_bus, rules, [desktop] + build_default_handlers(settings))
+            # v4.4.0 B1：critical 告警自动立案（钩子在采集线程内同步回调）
+            self._alert_engine.alert_hook = self._on_live_alert
             self._alert_engine.start()
             self._alert_journal = journal
         except Exception:
@@ -2566,7 +2646,10 @@ class MainWindow(QMainWindow):
     def _on_alert_center(self):
         """告警中心（v3.8.0-③）— 等级筛选 / 确认 / 导出。"""
         from ui.dialogs.alert_center_dialog import AlertCenterDialog
-        dlg = AlertCenterDialog(self._get_alert_journal(), self)
+        dlg = AlertCenterDialog(
+            self._get_alert_journal(), self,
+            case_resolver=self.alert_case_orchestrator.case_for_alert,
+            open_case=self._open_case_by_id)
         dlg.exec()
 
     def _on_diagnose(self):

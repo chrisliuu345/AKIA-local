@@ -37,9 +37,9 @@ class CaseCenterDialog(QDialog):
         layout.addWidget(hint)
 
         self.table = QTableWidget(self)
-        self.table.setColumnCount(6)
+        self.table.setColumnCount(7)
         self.table.setHorizontalHeaderLabels(
-            ["案例号", "标题", "状态", "阶段进度", "负责人", "更新时间"])
+            ["案例号", "标题", "状态", "来源", "阶段进度", "负责人", "更新时间"])
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setSelectionMode(QTableWidget.SingleSelection)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
@@ -69,10 +69,12 @@ class CaseCenterDialog(QDialog):
         self.table.setRowCount(len(self.workflows))
         for row, workflow in enumerate(self.workflows):
             done = len(PHASES) - len(workflow.missing_phases())
+            source = "自动立案" if "auto_alert" in (workflow.case.tags or []) else "手动"
             values = [
                 workflow.case.id,
                 workflow.case.title,
                 STATUS_LABELS.get(workflow.case.status, workflow.case.status),
+                source,
                 f"{done}/{len(PHASES)}",
                 workflow.owner or workflow.case.owner or "-",
                 workflow.case.updated_at,
