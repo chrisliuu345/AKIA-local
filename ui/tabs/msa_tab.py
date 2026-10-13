@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QDoubleSpinBox, QGroupBox, QFormLayout,
     QTableWidget, QTextEdit, QSplitter, QHeaderView,
-    QFrame, QMenu, QStackedWidget,
+    QFrame, QMenu, QMessageBox, QStackedWidget,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
@@ -26,6 +26,8 @@ from output.chart_engine import create_histogram
 class MSATab(BaseAnalysisTab):
 
     def __init__(self, parent=None):
+        self._gauge_monitor = None
+        self._gauge_submit = None
         super().__init__(parent)
         self._setup_ui()
 
@@ -55,6 +57,13 @@ class MSATab(BaseAnalysisTab):
 
         self.measure_col = QComboBox()
         config_layout.addRow("测量列:", self.measure_col)
+
+        self.gauge_online_btn = QPushButton("量具在线监控")
+        self.gauge_online_btn.setStyleSheet(BUTTON_SECONDARY)
+        self.gauge_online_btn.setToolTip(
+            "标准件重复性/偏倚滚动监控与 MPC 图（v4.4.0 B2）")
+        self.gauge_online_btn.clicked.connect(self._open_gauge_online)
+        config_layout.addRow(self.gauge_online_btn)
 
         self.sheet_combo = QComboBox()
         self.sheet_combo.setMinimumWidth(140)
@@ -184,6 +193,23 @@ class MSATab(BaseAnalysisTab):
         splitter.setStretchFactor(1, 2)
 
         layout.addWidget(splitter)
+
+    # ------------------------------------------------------------ 量具在线（v4.4.0 B2）
+    def set_gauge_context(self, monitor, submit_measurement=None):
+        """接入主窗口的量具监控器与测量管线（四通道统一入口）。"""
+        self._gauge_monitor = monitor
+        self._gauge_submit = submit_measurement
+
+    def _open_gauge_online(self):
+        if self._gauge_monitor is None:
+            QMessageBox.warning(self, "量具在线监控",
+                                "未接入量具监控（请从主界面进入后使用）")
+            return
+        from ui.dialogs.gauge_online_dialog import GaugeOnlineDialog
+
+        dialog = GaugeOnlineDialog(self._gauge_monitor, self,
+                                   submit_measurement=self._gauge_submit)
+        dialog.exec()
 
     def set_data(self, df: pd.DataFrame, parsed_info: dict[str, Any]):
         self.df = df
