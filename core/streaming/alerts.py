@@ -51,6 +51,8 @@ class AlertEvent:
     ts: float
     severity: str = SEVERITY_WARNING
     id: str = ""
+    usl: float | None = None   # 规则规格限（v4.4.0 B1：快照用，可空）
+    lsl: float | None = None
 
     def __post_init__(self):
         if not self.id:
@@ -112,6 +114,9 @@ class AlertEngine:
         self.debounce: bool = True
         self.last_event: AlertEvent | None = None
         self.journal = None            # AlertJournal | None（留存 + 确认）
+        #: 立案钩子（v4.4.0 B1）：每条触发事件同步回调（采集线程内），
+        #: 由主窗口转发给 AlertCaseOrchestrator；异常隔离不影响告警主链路
+        self.alert_hook = None
         # 通知通道(邮件/webhook)可能阻塞 — 脱离采集线程
         self._executor = ThreadPoolExecutor(max_workers=2)
         self._pending: list = []
@@ -159,8 +164,15 @@ class AlertEngine:
         event = AlertEvent(
             device, channel, ev.kind, ev.desc, ev.value, time.time(),
             severity=classify_severity(ev.kind, rule, ev.value),
+            usl=rule.usl if rule is not None else None,
+            lsl=rule.lsl if rule is not None else None,
         )
         self.last_event = event
+        if callable(self.alert_hook):
+            try:
+                self.alert_hook(event)
+            except Exception:  # 立案失败不得影响告警通知/留存
+                logger.exception("alert hook failed: %s/%s", device, channel)
         for h in self.handlers:
             try:
                 self._pending.append(self._executor.submit(self._dispatch, h, event))
