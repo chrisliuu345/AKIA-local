@@ -8,7 +8,8 @@
 > 探索日期：2026-10-12（HEAD `b8228bb`，v4.3.0 + 10-11 质量审查修复）。
 > **执行进度（2026-10-13）**：B0 ✅ 契约基座与 `.qap` 2.0（含抽样表重建，发现并修复
 > v4.3.0 遗留缺陷）；B1 ✅ 告警自动立案 8D（critical 同步立案 / 30 分钟冷却合并 /
-> D6 数据门禁 / 案例中心与告警中心入口）；B2–B8 待开工。
+> D6 数据门禁 / 案例中心与告警中心入口）；B2 ✅ 测量系统在线化（滚动重复性/偏倚 /
+> MPC 判异 / 健康分与漂移提示 / `.qap` 持久化）；B3–B8 待开工。
 
 **基线（v4.3.0 发布 + 审查修复后实测）**：178 个测试文件 / 2194 通过 / 56 跳过 /
 0 失败（514.2s）；ruff 全库零告警；性能基线 10 项通过；`.qap` 1.9（1.6–1.8 只读兼容）；
@@ -261,7 +262,7 @@ SchedulePlan    assignments[{process_id, operator, start_s, end_s}]
    8D 草稿装载与保存往返）；**全量逐文件回归 186 文件 / 2295 通过 / 56 跳过 /
    0 失败（510.4s）**；ruff 零告警。
 
-### B2 测量系统在线化（8–10 人日）
+### B2 测量系统在线化（8–10 人日）✅ 2026-10-13
 
 | 编号 | 任务 | 落点 | 验收 |
 |------|------|------|------|
@@ -269,6 +270,33 @@ SchedulePlan    assignments[{process_id, operator, start_s, end_s}]
 | B2-2 | 测量过程控制图：偏倚序列接 LiveSPC(I-MR)，判异即漂移 | `core/gauge_study.py`（复用 `core/streaming/live_spc.py`） | 注入 3σ 漂移 → 判异；`.qap` 往返保持状态 |
 | B2-3 | 量具健康分与漂移提示：ok/watch/drift + 状态栏/告警中心提示重做研究 | `core/gauge_study.py`、`ui/main_window.py` | 健康分分级正确；提示不重复轰炸（冷却） |
 | B2-4 | 接线与持久化：`.qap` gauge 段 + 项目加载恢复 + 案例引用（标准件事件进凭证） | `core/project_manager.py`、`ui/main_window.py` | 往返测试 + 案例 `measurement_refs` 指向 gauge 事件 |
+
+**B2 完成记录（2026-10-13）**：
+
+1. `core/gauge_study.py` 扩容 `GaugeMonitor`（无 Qt）：MeasurementEvent 四通道统一
+   摄入（device:channel / characteristic_id / channel 三路匹配；invalid 与无内联值
+   事件跳过）→ 滚动窗口重复性/偏倚 → 偏倚序列接 LiveSPC(I-MR)（MPC 图，窗口 30，
+   ≥10 点预热后才采信控制图判异）→ 漂移规则（bias_limit / ucl / lcl）→ 健康分
+   （覆盖率 0.2 / 偏倚 0.5 / 稳定性 0.3 加权，权重见 `HEALTH_WEIGHTS`）→
+   状态 ok/watch/drift + 提示冷却（1 小时）；事件 ID 追踪供案例引用；
+   `to_dict/from_dict` 重载时按偏倚历史重放 MPC 图（判定链延续）。
+2. 主窗口接线：`_on_measurement_event` 同步增量摄入（异常隔离，不影响测量写入）；
+   漂移提示三件套 = 账本 `gauge_drift_alerted` 事件 + 告警中心 JournalEntry
+   （kind=gauge_drift）+ 主线程状态栏（Qt 信号，采集线程安全）；
+   `_submit_gauge_measurement` 统一走 MeasurementStore（账本/监控/持久化同源）。
+3. UI：MSA Tab 新增「量具在线监控」对话框——策略列表/表单（量具 ID、参考值、
+   窗口、偏倚限、MPC 参考限、启用开关）、滚动状态与健康分、偏倚历史表、
+   MPC 控制图（matplotlib 缺失时降级为文字提示，数值判定不受影响）；
+   懒加载接线（`set_gauge_context`）。
+4. 持久化：`.qap` `gauge_studies.json` 段随项目保存/加载（项目保存与共享保存
+   均接线）；窗口原始值不持久化（重载后重新累积），摘要与偏倚历史保留（边界已注明）。
+5. 验证：新增 2 个测试文件 / +26 例（滚动统计与窗口滑动、偏倚限与 watch 区、
+   MPC 3σ 跳变判异、预热门槛、健康分三因子、冷却窗口、持久化重放续判、
+   四通道匹配与坏事件跳过、离屏 UI：录入管线/漂移提示三件套与冷却/项目往返恢复/
+   MSA 入口/对话框表单校验/案例引用 gauge 事件）；**全量逐文件回归 188 文件 /
+   2321 通过 / 56 跳过 / 0 失败（516.4s）**；ruff 零告警。
+   已知边界：MPC 预热不足（<10 点）不因控制图触发漂移（仅偏倚限判定）；
+   窗口原始值不持久化。
 
 ### B3 可信抽样（10–12 人日）
 

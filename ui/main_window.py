@@ -32,6 +32,7 @@ from core.project_context import ProjectContext
 from core.measurement_store import MeasurementStore
 from core.evidence_ledger import EvidenceLedger
 from core.alert_case import AlertCaseOrchestrator
+from core.gauge_study import GaugeMonitor
 from core.time_utils import now_iso
 from core.audit import audit
 from core.streaming.bus import StreamBus
@@ -64,6 +65,8 @@ _IE_IMPORT_TAB_INDICES = frozenset({7, 9, 10, 11})
 class MainWindow(QMainWindow):
     #: 告警自动立案通知（采集线程 emit → 主线程槽显示）
     alert_case_opened = Signal(str, str, str)  # case_id, title, rule_key
+    #: 量具漂移通知（采集线程 emit → 主线程槽显示；v4.4.0 B2）
+    gauge_drift_alerted = Signal(str, str)     # gauge_id, reasons
 
     def __init__(self):
         super().__init__()
@@ -102,6 +105,9 @@ class MainWindow(QMainWindow):
             case_lookup=self._find_case_by_id,
         )
         self.alert_case_opened.connect(self._on_alert_case_opened_ui)
+        self.gauge_monitor = GaugeMonitor()
+        self._last_gauge_outcome: dict = {}
+        self.gauge_drift_alerted.connect(self._on_gauge_drift_ui)
 
         self._setup_ui()
         self._menu_refs: list = []
@@ -1580,6 +1586,9 @@ class MainWindow(QMainWindow):
             old.deleteLater()
 
         self._connect_tab_signals(idx, tab)
+        if hasattr(tab, "set_gauge_context"):
+            tab.set_gauge_context(self.gauge_monitor,
+                                  self._submit_gauge_measurement)
         return tab
 
     def _handle_tab_dependency_error(self, idx: int, class_name: str,
@@ -1832,6 +1841,7 @@ class MainWindow(QMainWindow):
                            if self.project_context else None),
                 measurements=self.measurement_store.to_dicts(),
                 evidence_events=self.ledger,
+                gauge_studies=self.gauge_monitor.to_dict(),
             )
             self.status_label.setText(f"项目已保存: {path}")
             recent = ProjectManager.recent_projects()
@@ -1873,6 +1883,12 @@ class MainWindow(QMainWindow):
                              project.get("evidence_errors") or [])
         self._restore_case_workflows(project.get("cases") or [])
         self._restore_measurement_store(project.get("measurements") or [])
+        self.gauge_monitor = GaugeMonitor.from_dict(project.get("gauge_studies"))
+        self._last_gauge_outcome = {}
+        msa_tab = self._tab_cache.get(TAB_INDEX["msa"])
+        if msa_tab is not None and hasattr(msa_tab, "set_gauge_context"):
+            msa_tab.set_gauge_context(self.gauge_monitor,
+                                      self._submit_gauge_measurement)
         evidence_errors = project.get("evidence_errors") or []
         measurement_errors = project.get("measurement_errors") or []
         if evidence_errors or measurement_errors:
@@ -1944,6 +1960,59 @@ class MainWindow(QMainWindow):
                      "channel": event.channel, "n": event.summary.get("n", 0),
                      "fingerprint": event.fingerprint, "raw_ref": event.raw_ref,
                      "ts_start": event.ts_start, "ts_end": event.ts_end})
+        try:
+            outcome = self.gauge_monitor.ingest_event(event)
+        except Exception:  # 量具监控失败不得影响测量写入主链路
+            import logging
+            logging.getLogger(__name__).exception("量具在线监控摄入失败")
+            return
+        if outcome is None:
+            return
+        self._last_gauge_outcome[outcome.gauge_id] = outcome
+        if outcome.prompt:
+            self._handle_gauge_drift(outcome)
+
+    # ------------------------------------------------------------ 量具在线（v4.4.0 B2）
+    def _handle_gauge_drift(self, outcome) -> None:
+        """漂移提示：账本事件 + 告警中心留存 + 主线程状态栏（带冷却）。"""
+        self.gauge_monitor.note_prompted(outcome.gauge_id)
+        reasons = "；".join(outcome.drift_reasons[:3]) or "偏倚/控制图超限"
+        refs = [f"gauge:{outcome.gauge_id}"]
+        if outcome.event_id:
+            refs.append(f"measurement:{outcome.event_id}")
+        self._ledger_append(
+            "gauge_drift_alerted", actor="system", object_refs=refs,
+            payload={"gauge_id": outcome.gauge_id, "bias": outcome.bias,
+                     "repeatability_sigma": outcome.repeatability_sigma,
+                     "health_score": outcome.health_score,
+                     "reasons": outcome.drift_reasons})
+        try:
+            import time as _time
+
+            from core.streaming.alert_journal import JournalEntry
+
+            self._get_alert_journal().record(JournalEntry(
+                id=f"GAUGE-{outcome.gauge_id}-{int(_time.time())}",
+                ts=_time.time(), device=outcome.gauge_id, channel="bias",
+                kind="gauge_drift", severity="warning",
+                desc=f"量具漂移: {reasons}", value=float(outcome.bias)))
+        except Exception:  # 留存失败不影响提示
+            import logging
+            logging.getLogger(__name__).exception("量具漂移写入告警日志失败")
+        self.gauge_drift_alerted.emit(outcome.gauge_id, reasons)
+
+    def _on_gauge_drift_ui(self, gauge_id: str, reasons: str) -> None:
+        self.statusBar().showMessage(
+            f"量具漂移提示：{gauge_id} — {reasons}（建议重做测量系统研究）", 20000)
+
+    def _submit_gauge_measurement(self, gauge_id: str, value: float):
+        """量具测量录入（统一走 MeasurementStore：账本/监控/持久化同源）。"""
+        from core.measurement_event import MeasurementEvent
+
+        event = MeasurementEvent.from_manual(
+            float(value), characteristic_id=str(gauge_id))
+        self.measurement_store.add(event)
+        return self._last_gauge_outcome.get(str(gauge_id))
 
     def _on_standard_event(self, event_type: str, object_refs: list[str],
                            payload: dict) -> None:
@@ -2417,7 +2486,8 @@ class MainWindow(QMainWindow):
                 standards=(self.project_context.standards.to_dict()
                            if self.project_context else None),
                 measurements=self.measurement_store.to_dicts(),
-                evidence_events=self.ledger)
+                evidence_events=self.ledger,
+                gauge_studies=self.gauge_monitor.to_dict())
             audit("share_project", "user",
                   f"保存 {os.path.basename(path)}")
             self.status_label.setText("共享项目已保存")
