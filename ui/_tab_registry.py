@@ -69,6 +69,7 @@ TAB_INDEX = {
     "pareto": 15,
     "fmea": 16,
     "control_plan": 17,
+    "sampling": 26,
     "eight_d": 30,
     "ppap": 32,
     "predictive": 37,

@@ -33,6 +33,7 @@ from core.measurement_store import MeasurementStore
 from core.evidence_ledger import EvidenceLedger
 from core.alert_case import AlertCaseOrchestrator
 from core.gauge_study import GaugeMonitor
+from core.sampling_state import SamplingStateManager
 from core.time_utils import now_iso
 from core.audit import audit
 from core.streaming.bus import StreamBus
@@ -108,6 +109,8 @@ class MainWindow(QMainWindow):
         self.gauge_monitor = GaugeMonitor()
         self._last_gauge_outcome: dict = {}
         self.gauge_drift_alerted.connect(self._on_gauge_drift_ui)
+        self.sampling_manager = SamplingStateManager(
+            ledger=self.ledger, standards=self.project_context.standards)
 
         self._setup_ui()
         self._menu_refs: list = []
@@ -1589,6 +1592,8 @@ class MainWindow(QMainWindow):
         if hasattr(tab, "set_gauge_context"):
             tab.set_gauge_context(self.gauge_monitor,
                                   self._submit_gauge_measurement)
+        if hasattr(tab, "set_sampling_context"):
+            tab.set_sampling_context(self.sampling_manager)
         return tab
 
     def _handle_tab_dependency_error(self, idx: int, class_name: str,
@@ -1842,6 +1847,7 @@ class MainWindow(QMainWindow):
                 measurements=self.measurement_store.to_dicts(),
                 evidence_events=self.ledger,
                 gauge_studies=self.gauge_monitor.to_dict(),
+                sampling=self.sampling_manager.to_dict(),
             )
             self.status_label.setText(f"项目已保存: {path}")
             recent = ProjectManager.recent_projects()
@@ -1889,6 +1895,12 @@ class MainWindow(QMainWindow):
         if msa_tab is not None and hasattr(msa_tab, "set_gauge_context"):
             msa_tab.set_gauge_context(self.gauge_monitor,
                                       self._submit_gauge_measurement)
+        self.sampling_manager = SamplingStateManager.from_dict(
+            project.get("sampling"), ledger=self.ledger,
+            standards=self.project_context.standards)
+        sampling_tab = self._tab_cache.get(TAB_INDEX["sampling"])
+        if sampling_tab is not None and hasattr(sampling_tab, "set_sampling_context"):
+            sampling_tab.set_sampling_context(self.sampling_manager)
         evidence_errors = project.get("evidence_errors") or []
         measurement_errors = project.get("measurement_errors") or []
         if evidence_errors or measurement_errors:
@@ -2487,7 +2499,8 @@ class MainWindow(QMainWindow):
                            if self.project_context else None),
                 measurements=self.measurement_store.to_dicts(),
                 evidence_events=self.ledger,
-                gauge_studies=self.gauge_monitor.to_dict())
+                gauge_studies=self.gauge_monitor.to_dict(),
+                sampling=self.sampling_manager.to_dict())
             audit("share_project", "user",
                   f"保存 {os.path.basename(path)}")
             self.status_label.setText("共享项目已保存")
