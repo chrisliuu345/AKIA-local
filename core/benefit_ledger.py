@@ -14,11 +14,12 @@
 from __future__ import annotations
 
 import hashlib
+import contextlib
 import json
 import re
 import uuid
 from dataclasses import dataclass, field, fields
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 from core.evidence import _jsonable
@@ -54,20 +55,69 @@ def _to_float(value: Any, name: str) -> float:
 
 
 def double_count_key(case_id: str, month: str, basis: dict[str, Any],
-                     category: str = "") -> str:
-    """防重复计入键：案例 + 月份 + 计量口径（标准引用/单位/单价）的稳定哈希。"""
+                     category: str = "", ledger_kind: str = "") -> str:
+    """防重复计入键：案例 + 月份 + 类别/分区 + 计量口径（单位/单价）的稳定哈希。
+
+    v4.4.0 B4 语义加固：**不含标准版本字段**——标准升版不得打开第二条入账窗口
+    （防"换口径重复计入"）；同案同月同类别同单位单价一律视为重复。
+    """
     payload = {
         "case_id": str(case_id or "").strip(),
         "month": str(month or "").strip(),
         "category": str(category or "").strip(),
-        "standard_ref": str((basis or {}).get("standard_ref") or ""),
-        "standard_as_of": str((basis or {}).get("standard_as_of") or ""),
+        "ledger_kind": str(ledger_kind or "").strip(),
         "unit": str((basis or {}).get("unit") or ""),
         "unit_cost": (basis or {}).get("unit_cost"),
     }
     text = json.dumps(payload, sort_keys=True, ensure_ascii=False,
                       separators=(",", ":"), default=str)
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
+
+
+def month_bounds(month: str) -> tuple[datetime, datetime]:
+    """``YYYY-MM`` → (月初, 月末) 本地时区 aware datetime。"""
+    text = str(month or "").strip()
+    match = _MONTH_RE.match(text)
+    if not match:
+        raise ValueError(f"月份格式必须为 YYYY-MM: {month!r}")
+    start = datetime(int(text[:4]), int(text[5:7]), 1).astimezone()
+    if int(text[5:7]) == 12:
+        following = datetime(int(text[:4]) + 1, 1, 1).astimezone()
+    else:
+        following = datetime(int(text[:4]), int(text[5:7]) + 1, 1).astimezone()
+    return start, following - timedelta(seconds=1)
+
+
+def resolve_standard_basis(registry, refs, at: str = "") -> dict[str, str]:
+    """从案例标准引用解析入账口径的 (standard_ref, standard_as_of)。
+
+    候选引用可为对象引用或记录 ID；取 ``at``（默认现在）时刻生效版本，
+    无匹配返回空 dict（入账仍可进行，只是不携带标准口径）。
+    """
+    if registry is None:
+        return {}
+    moment = str(at or "").strip() or now_iso()
+    for raw in refs or []:
+        target = str(raw or "").strip()
+        if not target:
+            continue
+        record = None
+        as_of = getattr(registry, "as_of", None)
+        current = getattr(registry, "current", None)
+        if callable(as_of):
+            record = as_of(target, moment)
+        if record is None and callable(current):
+            record = current(target)
+        if record is None:
+            record = next((item for item in getattr(registry, "records", [])
+                           if getattr(item, "record_id", "") == target), None)
+        if record is not None:
+            return {
+                "standard_ref": str(getattr(record, "record_id", "")),
+                "standard_as_of": str(getattr(record, "valid_from", "")),
+                "standard_object_ref": str(getattr(record, "object_ref", "")),
+            }
+    return {}
 
 
 @dataclass
@@ -124,7 +174,7 @@ class BenefitRecord:
         self.computed_at = parse_iso(
             self.computed_at or now_iso(), "computed_at").isoformat(timespec="seconds")
         expected_key = double_count_key(self.case_id, self.month, self.basis,
-                                        self.category)
+                                        self.category, self.ledger_kind)
         if self.double_count_key and self.double_count_key != expected_key:
             raise ValueError("double_count_key 与口径不一致（请留空由系统计算）")
         self.double_count_key = expected_key
@@ -219,12 +269,32 @@ class BenefitLedger:
         target = str(month or "").strip()
         return [r for r in self.records if r.month == target]
 
-    def summary(self) -> dict[str, Any]:
+    def cost_breakdown(self, month: str = "") -> dict[str, float]:
+        """COPQ 四类分项（仅置信门槛内的记录）；``month`` 为空统计全部。"""
+        breakdown = dict.fromkeys(("预防", "鉴定", "内部失败", "外部失败"), 0.0)
+        target = str(month or "").strip()
+        for record in self.records:
+            if target and record.month != target:
+                continue
+            if record.ledger_kind != "cost_of_quality":
+                continue
+            if not record.admits_to_summary:
+                continue
+            if record.category in breakdown:
+                breakdown[record.category] += record.amount
+        return breakdown
+
+    def summary(self, month: str = "") -> dict[str, Any]:
         """汇总（仅置信门槛内的记录）：改善收益 / COPQ 分区、待完善清单。"""
         improvement = 0.0
         copq = 0.0
         pending: list[str] = []
+        target = str(month or "").strip()
+        count = 0
         for record in self.records:
+            if target and record.month != target:
+                continue
+            count += 1
             if not record.admits_to_summary:
                 pending.append(record.record_id)
                 continue
@@ -237,8 +307,77 @@ class BenefitLedger:
             "copq_total": copq,
             "roi": (improvement / copq) if copq > 0 else None,
             "pending_records": pending,
-            "count": len(self.records),
+            "pending_count": len(pending),
+            "copq_breakdown": self.cost_breakdown(target),
+            "count": count,
         }
+
+    # ------------------------------------------------------------ 月度复算（B4-1）
+    def recompute_month(self, month: str, *, standards=None, now: str = "",
+                        event_sink=None) -> dict[str, Any]:
+        """按当时标准版本复算指定月（历史月冻结，当月口径前移）。
+
+        - **历史月不追溯改写**：`month` 早于当前月直接返回
+          ``frozen=True``，记录与金额保持不变（复算只做快照）；
+        - **当月复算**：对每条记录按"现在生效"的标准版本刷新
+          ``basis.standard_as_of/standard_ref``（金额由案例测量口径给出，
+          不因版本变化改数），并回传 ``benefit_recomputed`` 事件供账本留痕；
+        - 返回 {month, frozen, updates, summary}。
+        """
+        target = str(month or "").strip()
+        month_bounds(target)  # 格式校验
+        # "现在"取真实毫秒精度：同一秒内的标准升版（valid_from +1ms 位移）
+        # 也能被覆盖（now_iso 只有秒级精度，补零会落在新版生效点之前）
+        if str(now or "").strip():
+            moment = parse_iso(str(now).strip(), "now").isoformat(
+                timespec="milliseconds")
+        else:
+            moment = datetime.now().astimezone().isoformat(
+                timespec="milliseconds")
+        current_month = parse_iso(moment, "now").strftime("%Y-%m")
+        frozen = target < current_month
+        updates: list[dict[str, Any]] = []
+        if not frozen:
+            for record in self.for_month(target):
+                ref = str(record.basis.get("standard_ref") or "")
+                if standards is None or not ref:
+                    continue
+                anchor = next((item for item in getattr(standards, "records", [])
+                               if getattr(item, "record_id", "") == ref), None)
+                if anchor is None:
+                    continue
+                effective = None
+                as_of = getattr(standards, "as_of", None)
+                current = getattr(standards, "current", None)
+                if callable(as_of):
+                    effective = as_of(str(anchor.object_ref), moment)
+                if effective is None and callable(current):
+                    effective = current(str(anchor.object_ref))
+                if (effective is None
+                        or effective.valid_from == record.basis.get("standard_as_of")):
+                    continue
+                old_as_of = str(record.basis.get("standard_as_of") or "")
+                record.basis["standard_as_of"] = effective.valid_from
+                record.basis["standard_ref"] = effective.record_id
+                record.computed_at = parse_iso(
+                    moment, "now").isoformat(timespec="seconds")
+                update = {
+                    "record_id": record.record_id, "case_id": record.case_id,
+                    "old_as_of": old_as_of, "new_as_of": effective.valid_from,
+                    "standard_ref": effective.record_id, "amount": record.amount,
+                }
+                updates.append(update)
+                if callable(event_sink):
+                    with contextlib.suppress(Exception):  # 记账失败不阻断复算
+                        event_sink(
+                            "benefit_recomputed",
+                            [f"benefit:{record.record_id}",
+                             f"case:{record.case_id}"],
+                            {"month": target, **update,
+                             "confidence": record.confidence,
+                             "category": record.category})
+        return {"month": target, "frozen": frozen, "updates": updates,
+                "summary": self.summary(target)}
 
     def to_dicts(self) -> list[dict[str, Any]]:
         return [record.to_dict() for record in self.records]
@@ -262,6 +401,54 @@ class BenefitLedger:
         return cls([BenefitRecord.from_dict(item) for item in raw])
 
 
+def record_case_benefit(ledger: BenefitLedger, case, *, month: str,
+                        baseline_value: float = 0.0, new_value: float = 0.0,
+                        quantity: float = 0.0, unit_cost: float = 0.0,
+                        category: str = "改善收益",
+                        ledger_kind: str = "improvement",
+                        confidence: str = "B", unit: str = "",
+                        currency: str = "", note: str = "",
+                        source: str = "case_close", standards=None,
+                        evidence_refs=None, event_sink=None) -> BenefitRecord:
+    """案例收益入账（B4-4）：自动携带案例标准引用解析出的口径版本。
+
+    ``case`` 接受 ``ImprovementCase``（读取 ``id`` / ``standard_refs``）；
+    入账即写 ``benefit_recorded`` 事件（经 ``event_sink`` 注入账本）。
+    """
+    case_id = str(getattr(case, "id", "") or "").strip()
+    if not case_id:
+        raise ValueError("案例缺少 id，无法入账收益")
+    basis = {
+        "baseline_value": float(baseline_value),
+        "new_value": float(new_value),
+        "quantity": float(quantity),
+        "unit_cost": float(unit_cost),
+        "unit": str(unit or ""),
+        "currency": str(currency or ""),
+    }
+    basis.update(resolve_standard_basis(
+        standards, getattr(case, "standard_refs", []) or []))
+    refs = [str(item) for item in (evidence_refs or []) if str(item)]
+    if f"case:{case_id}" not in refs:
+        refs.insert(0, f"case:{case_id}")
+    record = ledger.add(BenefitRecord(
+        case_id=case_id, month=month, ledger_kind=ledger_kind,
+        category=category, basis=basis, confidence=confidence,
+        evidence_refs=refs, source=source, note=note))
+    if callable(event_sink):
+        with contextlib.suppress(Exception):  # 记账失败不阻断入账
+            event_sink(
+                "benefit_recorded",
+                [f"case:{case_id}", f"benefit:{record.record_id}"],
+                {"month": month, "category": category,
+                 "ledger_kind": ledger_kind, "confidence": confidence,
+                 "amount": record.amount,
+                 "standard_ref": basis.get("standard_ref", ""),
+                 "standard_as_of": basis.get("standard_as_of", ""),
+                 "double_count_key": record.double_count_key})
+    return record
+
+
 __all__ = [
     "BENEFIT_SCHEMA_VERSION",
     "LEDGER_KINDS",
@@ -272,5 +459,8 @@ __all__ = [
     "BenefitRecord",
     "BenefitLedger",
     "double_count_key",
+    "month_bounds",
     "new_benefit_id",
+    "record_case_benefit",
+    "resolve_standard_basis",
 ]
