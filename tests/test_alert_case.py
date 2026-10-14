@@ -144,7 +144,9 @@ class TestOpenCase:
 
     def test_8d_draft_prefilled(self):
         orchestrator, _ledger, context, workflows = _setup()
-        orchestrator.handle(_alert(id="ALERT-8D"))
+        alert = _alert(id="ALERT-8D")
+        orchestrator.handle(alert)
+        expected_date = datetime.fromtimestamp(alert.ts).strftime("%Y-%m-%d")
         assert len(context.eight_d_reports) == 1
         report = context.eight_d_reports[0]
         assert report["id"] == f"{ALERT_REPORT_PREFIX}ALERT-8D"
@@ -157,7 +159,7 @@ class TestOpenCase:
         assert d2["where"] == "line1/cycle"
         assert report["steps"]["D3"]["ica_description"] == ""
         assert report["steps"]["D4"]["root_cause"] == ""
-        assert report["steps"]["D1"]["date_started"] == "2026-10-13"
+        assert report["steps"]["D1"]["date_started"] == expected_date
 
     def test_context_evidence_linked(self):
         orchestrator, _ledger, context, workflows = _setup()
