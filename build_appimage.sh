@@ -88,9 +88,14 @@ echo ""
 echo "[5/5] 打包 AppImage..."
 OUTPUT_FILE="${BUILD_DIR}/${APP_NAME}-${APP_VERSION}-x86_64.AppImage"
 # 无 FUSE 的环境（容器/CI）用 --appimage-extract-and-run 直接解包运行
+# 判定 FUSE 是否真正可用：仅有 /dev/fuse 但缺 libfuse.so.2 时
+# appimagetool 仍会以 "dlopen(): error loading libfuse.so.2" 失败（v4.4.0 构建实测）。
 APPIMAGETOOL_ARGS=()
 if [ ! -e /dev/fuse ]; then
     echo "  未检测到 /dev/fuse → 使用 --appimage-extract-and-run"
+    APPIMAGETOOL_ARGS=(--appimage-extract-and-run)
+elif ! ldconfig -p 2>/dev/null | grep -q 'libfuse\.so\.2'; then
+    echo "  缺少 libfuse.so.2（/dev/fuse 存在但 FUSE 运行库缺失）→ 使用 --appimage-extract-and-run"
     APPIMAGETOOL_ARGS=(--appimage-extract-and-run)
 fi
 ARCH=x86_64 "${APPIMAGETOOL}" "${APPIMAGETOOL_ARGS[@]}" "${APPDIR_DIR}" "${OUTPUT_FILE}"

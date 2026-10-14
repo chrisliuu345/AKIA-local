@@ -2,9 +2,9 @@
 
 > [中文](ROADMAP.md) | [English](ROADMAP.en.md)
 
-> Current: v4.3.0 Improvement cases & evidence ledger (case lifecycle / measurement channels / standard version records / evidence ledger & exchange v1 / lazy-tab startup hardening) (✅ 2026-10-09 release: source + Linux AppImage `AKIA-4.3.0-x86_64.AppImage`) | Latest installers: v4.3.0 Linux AppImage | Next: **v4.4.0 Closed-loop execution & effect verification (planned)**
+> Current: v4.4.0 Closed-loop execution & effect verification (alert→8D auto case / measurement system online / trustworthy sampling / benefit ledger & COPQ / skill-constrained line balancing / sampling transparency / integration & quality wrap-up) (✅ 2026-10-14 release: source + Linux AppImage `AKIA-4.4.0-x86_64.AppImage`) | Latest installers: v4.4.0 Linux AppImage | Next: **v4.5.0 Open ecosystem & AI infrastructure (planned)**
 > Deepening line: **v4.2 Trust → v4.3 Case & evidence → v4.4 Closed loop → v4.5 Open → v4.6 Intelligence** (from analysis tool to a shop-floor improvement evidence chain) | Tests: 2418 passed · 37 analysis tabs | Updated: 2026-10-14
-> Status: **v4.3.0 released** (B0 ✅ contracts · B1 ✅ case lifecycle & persistence · B2 ✅ measurement channels & plugin data sources · B3 ✅ standard version records · B4 ✅ evidence ledger & exchange v1 · B5 ✅ integration & quality wrap-up · B6 ✅ release wrap-up & Linux AppImage); `.qap` 1.9 (1.6–1.8 read-compatible) · full per-file regression 178 files / 2194 passed / 0 failed · all 10 benchmark metrics pass · missing matplotlib/seaborn no longer blocks the main window; next up **v4.4.0 Closed-loop execution & effect verification** (plan decomposed → `PLAN_v4.4.0.md`; **B0 ✅ contract base & `.qap` 2.0 + sampling-table rebuild**; **B1 ✅ alert-to-8D auto case**; **B2 ✅ measurement system online**; **B3 ✅ trustworthy sampling**; **B4 ✅ benefit ledger & COPQ**; **B5 ✅ skill-constrained line balancing**; **B6 ✅ sampling-transparency wrap-up**; **B7 ✅ integration, performance & quality wrap-up**; B8 release wrap-up in progress)
+> Status: **v4.4.0 released** (B0 ✅ contract base & `.qap` 2.0 + sampling-table rebuild · B1 ✅ alert-to-8D auto case · B2 ✅ measurement system online · B3 ✅ trustworthy sampling · B4 ✅ benefit ledger & COPQ · B5 ✅ skill-constrained line balancing · B6 ✅ sampling-transparency wrap-up · B7 ✅ integration, performance & quality wrap-up · B8 ✅ release wrap-up & Linux AppImage); `.qap` 2.0 (1.6–1.9 read-compatible) · full per-file regression 198 files / 2418 passed / 56 skipped / 0 failed · all 13 benchmark metrics pass; next up **v4.5.0 Open ecosystem & AI infrastructure** (planned)
 
 > **Maintenance convention (from 2026-09-12)**: each version entry is one summary line plus key numbers; implementation details live in code/tests/user guide, not here.
 > This file was compressed from 1100+ lines to under 500; the expanded history is in git history (`git log -p -- ROADMAP.md`).
@@ -18,7 +18,8 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
       ──→ v2.8.0 ──→ v2.9.0 ──→ v3.0.0 ──→ v3.1.0 ──→ v3.2.0 ──→ v3.3.0 ──→ v3.4.0 ──→ v3.5.0
       ──→ v3.6.0 (incl. 3.6.1) ──→ v3.7.0 (incl. review) ──→ v3.7.1 ──→ v3.7.2 ──→ v3.8.0 ──→ v4.0.0
       ──→ v4.2.0 ✅ (trust · AppImage published) ──→ v4.2.1 ✅ (quality hardening · source-only)
-      ──→ v4.3.0 ✅ current (case·evidence · source + AppImage) ──→ v4.4.0 Closed loop (planned) ──→ v4.5.0 Open (planned) ──→ v4.6.0 Intelligence (planned)
+      ──→ v4.3.0 ✅ (case·evidence · source + AppImage) ──→ v4.4.0 ✅ current (closed loop · source + AppImage)
+      ──→ v4.5.0 Open (planned) ──→ v4.6.0 Intelligence (planned)
 ```
 
 | Status | Version | Theme |
@@ -40,7 +41,7 @@ v2.0 ──→ v2.1 ──→ v2.2 ──→ v2.3 ──→ v2.4 ──→ v2.4.
 | ✅ | **v4.2.0** | **Algorithm trust & depth (known-value validation matrix / multivariate SPC · change-point detection · residual control charts / conclusion credentials / first closed-loop slice) · Linux AppImage published** |
 | ✅ | **v4.2.1** | **Quality hardening & UX fixes (P1–P5: static ratchet / silent-failure governance / numeric robustness / SPC & import vectorisation; AKIA rename wrap-up · new icon · chart-type popup selector · splash removal) · source-only patch** |
 | ✅ | **v4.3.0** | **Improvement cases & evidence ledger (B0–B6: case lifecycle / measurement channels + plugin data sources / standard version records / evidence ledger & exchange v1 / lazy-tab startup hardening) · `.qap` 1.9 · +263 tests · source + Linux AppImage published** |
-| 🚧 | v4.4.0 | Closed-loop execution & effect verification (alert→8D auto case / measurement system online / trustworthy sampling / benefit ledger · COPQ / skill-constrained line balancing) |
+| ✅ | **v4.4.0** | **Closed-loop execution & effect verification (B0–B8: alert→8D auto case / measurement system online / trustworthy sampling / benefit ledger · COPQ / skill-constrained line balancing / sampling transparency / integration & quality wrap-up) · `.qap` 2.0 · +224 tests · source + Linux AppImage published** |
 | 🚧 | v4.5.0 | Open ecosystem (MCP server · native tool calling / CLI · SDK quality gate / industry rule packs · plugin scaffold) |
 | 🚧 | v4.6.0 | Intelligent online & local data assets (model governance · online scoring / process window recommendation / IE evidence chain / local assets · edge SPC) |
 
@@ -78,6 +79,7 @@ Planning principles:
 
 | Date | Version | Summary |
 |------|---------|---------|
+| 10-14 | **v4.4.0 released** | **Closed-loop execution & effect verification (B0–B8)**: contract base (sampling / gauge / benefit / skill domains + `.qap` 2.0 + sampling-table rebuild) · alert→8D auto case (synchronous opening / cooldown merge / D6 data gate) · measurement system online (rolling repeatability & bias + MPC detection + health score & drift alerts) · trustworthy sampling (transfer state machine + deterministic sampling + scheme trail in the evidence ledger + lot-inspection panel) · benefit ledger & COPQ (monthly recompute / confidence gate / ROI) · skill-constrained line balancing (executable roster + infeasibility detail) · sampling transparency (chart/trend/profiler unified "sampling decision" labels, reproducible) · integration & quality wrap-up (eight-link E2E demo / institutionalised menu smoke / control-plan throttling / all multi-chart control limits recorded / 13-metric benchmark baseline / migration handbook); **release notes** `docs/releases/v4.4.0.md`; full per-file regression **198 files / 2418 passed / 56 skipped / 0 failed**; ruff clean; Linux AppImage `AKIA-4.4.0-x86_64.AppImage` + `.sha256` |
 | 10-14 | v4.4.0-B7 | **Integration, performance & quality wrap-up done**: eight-link end-to-end demo `tools/demo_v44_case.py` (alert → case-merge → tightened sampling → gauge drift → skill roster infeasible → feasible after training → paired re-measurement verdict → closure gate → benefit booking + monthly recompute → independently verified evidence pack; one command, exit code 0) · menu smoke institutionalised (every leaf action in the menu bar, ≥40, actually triggered; only 3 actions with external side effects are explicitly skipped with reasons and the skip list is validated against the menu so it cannot rot; tab-switch actions verified via spy) · control-plan per-cell edits throttled into one version every 1.5s (batch operations bypass) · SPC multi-chart control limits **all** recorded (XBar-R sub-chart as `col:XBar-R:r_chart`, primary ref kept backward-compatible) · `measurement_capture` stays off by default (decision annotated + migration handbook §4-7) · benchmark baseline grows by 3 metrics (benefit recompute 10k = 1.626s / gauge rolling 100k = 0.416s, 13 total) · new `docs/migration/v4.4.0.md` (compatibility matrix / corrective changes / seven decision records / FAQ); B7 adds 2 test files / +4 cases; full per-file regression **198 files / 2418 passed / 56 skipped / 0 failed**; ruff clean |
 | 10-14 | v4.4.0-B6 | **Sampling-transparency wrap-up done**: new `core/sampling_note.py` with a unified "sampling decision" contract (layer chart/trend/profiler · method systematic/stride/seeded_random/head/none · source/sample counts · seed · forced-kept count · label text; fully validated + dict round-trip) · chart 300-point smart thinning and trend 1000-point thinning now both go through deterministic `thin_indices` (violations / endpoints / extremes kept, labelled in the UI title) · large-table normality test no longer skipped: >5000 rows are sampled with a fixed seed (42) and the decision is recorded in `normality_sample(_note)` (reproducible across runs) · profiler head-sample explicitly labelled · diagnosis dialog shows the per-table sampling note and per-column tooltip; +1 test file / +14 cases; ruff clean |
 | 10-14 | v4.4.0-B5 | **Skill-constrained line balancing (case template #2) done**: skill-matrix contract extended (per-process minimum level + `skill-hash-v1` fingerprint) with an editor inside the line-balance tab (no new tab) · constraint solver `schedule_with_skills` (one operator per station / skill compatibility / headcount and equipment-concurrency caps; infeasibility reported in detail instead of silent degradation; the original LPT path is untouched and its tests stay green; identical inputs produce byte-identical output) · roster results attach to case baseline + re-measurement (credential carries the skill fingerprint, headcount requirement, unmet list) · `.qap` skills segment round-trip (incl. requirements) with tab re-wiring · synthetic end-to-end demo `tools/demo_skill_balance.py` (baseline: 3 infeasibility findings → after training 2 operators + one extra press: feasible, exit code 0) · +2 test files / +23 cases; full per-file regression **195 files / 2400 passed / 56 skipped / 0 failed**; ruff clean (no product defects; two wrong test expectations corrected during the batch) |
@@ -88,7 +90,7 @@ Planning principles:
 | 10-12 | v4.4.0-B0 | **Contract base done + sampling-table rebuild (v4.3.0 carry-over defect found and fixed)**: contracts for the sampling / gauge / benefit / skill domains (`core/sampling_plan.py` · `gauge_study.py` · `benefit_ledger.py` · `skill_matrix.py`) · ledger event types +7 · new `sampling_plan` standard object · `.qap` 2.0 (four incremental segments, 1.6–1.9 read-compatible; shared save forwards them); **the legacy AQL table did not match the standard** (shifted numeric cells in rows A–H, rows J/K identical, no arrow semantics, inspection level ignored, tightened/reduced tables missing) — rebuilt from GB/T 2828.1-2003 source data with four-way cross-validation (KB excerpt 55/55 cells, R5 band centres, tightened ×1.6 relation, reduced industry-confirmed values), plus arrow resolution, all 7 inspection levels and pure transfer-rule functions; +6 test files / +75 cases; full per-file regression **184 files / 2269 passed / 56 skipped / 0 failed**; ruff clean |
 | 10-12 | v4.4.0-plan | **v4.4.0 execution plan (B0–B8)**: contract base (sampling / gauge / benefit / skill schemas + `.qap` 2.0 + ledger event types) → alert→8D auto case → measurement system online → trustworthy sampling (transfer state machine / lot history / scheme trail / decisions in the ledger) → benefit ledger & COPQ → skill-constrained line balancing → sampling-transparency wrap-up → integration & quality wrap-up (incl. v4.3.0 review carry-overs) → release wrap-up; 55–70 person-days total (~12 weeks solo), regression recorded per batch; no feature work before B0 is frozen |
 | 10-11 | roadmap-rev | **Trustworthy sampling scheduled**: v4.4.0 B3 expanded into trustworthy sampling — transfer state machine + lot history + scheme trail (incl. manual-override reasons) + sampling decisions in the evidence ledger (method / seed / AQL / sample size / selected-row fingerprint) + method choice; new **B6 sampling-transparency wrap-up** (chart / trend / profiler implicit thinning unified into a sampling-decision record + reproducibility fixes); v4.5.0 rule packs and CLI gate explicitly cover sampling strategies and compliance; minimal reproducibility fix listed as an on-demand candidate |
-| 10-09 | **v4.3.0 released** | **Improvement cases & evidence ledger (B0–B6)**: case lifecycle v1 (closure gated by re-measurement + statistical verdict) + CaseWorkflow 8-phase workbench · measurement channels + Plugin API 2.1 `data_source` (5s timeout / bad-data isolation / source enforcement) · standard version records with as-of restore · sha256 evidence ledger + independently verifiable evidence packs + desensitised share packs + 12-digit report trace codes · `.qap` 1.9 (1.6–1.8 read-compatible) · lazy-tab isolation + dependency notice pages so missing matplotlib no longer blocks the main window; full per-file regression **178 files / 2184 passed / 56 skipped / 0 failed**, all 10 benchmark metrics pass (cold start 0.997s vs baseline 2.101s); first release with the unified Linux AppImage name `AKIA-4.3.0-x86_64.AppImage` + `.sha256` |
+| 10-09 | **v4.3.0 released** | **Improvement cases & evidence ledger (B0–B6)**: case lifecycle v1 (closure gated by re-measurement + statistical verdict) + CaseWorkflow 8-phase workbench · measurement channels + Plugin API 2.1 `data_source` (5s timeout / bad-data isolation / source enforcement) · standard version records with as-of restore · sha256 evidence ledger + independently verifiable evidence packs + desensitised share packs + 12-digit report trace codes · `.qap` 1.9 (1.6–1.8 read-compatible) · lazy-tab isolation + dependency notice pages so missing matplotlib no longer blocks the main window; full per-file regression **178 files / 2184 passed / 56 skipped / 0 failed**, all 10 benchmark metrics pass (cold start 0.997s vs baseline 2.101s); first release with the unified Linux AppImage name (`AKIA-*`, x86_64) + `.sha256` |
 | 10-02 | **v4.2.1 released (source-only patch)** | **Quality hardening & UX fixes, source only**: the GitHub release ships Source zip / tar.gz (tag `v4.2.1`) and no new AppImage / installers (the latest installers remain v4.2.0); `check_version.py` consistent across all ends (settings / version_info / Inno / docs); full per-file regression **159 files / 1917 passed / 56 skipped / 0 failed**; all 8 benchmark metrics pass (cold start 1.06s vs baseline 2.101s) |
 | 10-01 | **Branding & UX wrap-up** | **AKIA rename wrap-up + legacy migration layer** (one-shot migration of QSettings / user config / keyring / `.qamodel` / plugin dirs, with 7 migration tests) · **new app icon** (layered porcelain, 1024 / 256 / ICO sizes, reproducible via `tools/generate_logo.py`) · **fixed** the PyInstaller `--add-data` destination that kept frozen builds from finding the logo / default config · **fixed** the general chart-type selector as a popup panel (Qt.Popup, three fixed columns, no more clipping or squeezing in the narrow config column) · **startup** splash removed — the main window shows immediately (lazy `scipy.stats` / `sqlalchemy` imports + deferred warm-up; cold start 2.10s→1.19s, end-to-end 3.3s→1.35s) |
 | 09-28 | **v4.2.1 quality hardening (P1–P5)** | **Full code-quality review + algorithm optimisation (shipped as the v4.2.1 patch)**: **P1 static ratchet** — 11 rule sets (RET505/506 · RUF010/RUF100 · SIM105/113/114/201 · C408/416/420 · PERF102 · PLW0108 · PLW3301) cleared and gated, two dead counters removed (`sampling_engine` write-only `total`, `smed_tab` gantt `y`), 100 files touched · **P2 silent-failure governance** — audit write failures are counted and warned, session/scheduler/one-click/config-migration paths log again, all 31 pass-only handlers now carry a reason; **batch scheduling fixed** (dialog never injected an executor → new Qt-free `run_task_headless`: source → analyses → docx/pdf/xlsx/Markdown report) · **P3 numeric robustness** — new `analysis/_sanitize.py` + `spc/_validation.py`, ±inf/missing values normalised at every analysis entry, six classes of low-level errors fixed (exponential smoothing "No supported index" · count charts NaN/inf conversion · residual chart Ljung-Box IndexError · capability sixpack range-not-finite) · **P4 performance** — vectorised Nelson rules (2100-case equivalence check, 0 diffs) → **SPC 1M points 21.96s → 1.62s (13.5×)**; vectorised per-cell parsing callbacks → **1M-row import 14.27s → 5.19s (2.7×)**, `perf_baseline.json` tightened to lock the gains |
@@ -143,9 +145,36 @@ Planning principles:
 
 ---
 
-## Current Release: v4.3.0 Highlights (improvement cases & evidence ledger)
+## Current Release: v4.4.0 Highlights (closed-loop execution & effect verification)
 
-- **Release form**: source + Linux AppImage `AKIA-4.3.0-x86_64.AppImage` (with a `.sha256`
+- **Release form**: source + Linux AppImage `AKIA-4.4.0-x86_64.AppImage` (with a `.sha256`
+  checksum file, tag `v4.4.0`); the Windows installer is built on Windows (scripts and `.iss` ready)
+- **Alert→8D auto case**: critical alerts open a case synchronously (no polling delay) · same-rule
+  30-minute cooldown merges into the same case / a new window opens a new one · D6 data gate
+  (closure needs re-measurement refs) · 8D draft and case visible from both sides
+- **Measurement system online**: unified four-channel MeasurementEvent intake → rolling repeatability
+  and bias → MPC detection → health score and drift alerts (ledger + alert centre + status bar);
+  `.qap gauge_studies` round-trip with detection continuing after reload
+- **Trustworthy sampling**: GB/T 2828.1 transfer state machine (table rebuilt from the standard,
+  arrow resolution, 7 inspection levels) · deterministic sampling (seed + sampled-row fingerprint) ·
+  scheme trail in the evidence ledger (three event types) · "lot inspection (transfer)" panel
+- **Benefit ledger & COPQ**: monthly recompute (historical months frozen, double-count protection) ·
+  confidence gate (C-grade visible but not counted) · COPQ four-category breakdown + ROI; answers
+  "how much did this improvement save"
+- **Skill-constrained line balancing**: skill matrix + headcount / equipment-concurrency caps produce
+  an executable roster; infeasibility is reported in detail instead of silently degrading
+- **Sampling transparency**: chart / trend / profiler sampling unified into a labelled "sampling
+  decision" record, fully reproducible; no unlabelled sampling
+- **Gates**: version consistency passed · ruff clean · per-file regression 198 files / 2418 passed /
+  56 skipped / 0 failed · all **13** benchmark metrics pass; eight-link end-to-end demo
+  `tools/demo_v44_case.py` exits 0
+- **Release notes**: [`docs/releases/v4.4.0.md`](docs/releases/v4.4.0.md)
+
+---
+
+## Previous Release: v4.3.0 Highlights (improvement cases & evidence ledger, historical)
+
+- **Release form**: source + Linux AppImage (x86_64, with a `.sha256`
   checksum file, tag `v4.3.0`); the Windows installer is built on Windows (scripts and `.iss` ready)
 - **Case as the spine**: `ImprovementCase` v1 state machine (closure gated by re-measurement +
   evidence-backed statistical verdict) · `CaseWorkflow` 8-phase workbench · cases persisted across
@@ -167,7 +196,7 @@ Planning principles:
 
 ---
 
-## Previous Release: v4.2.1 Highlights (source-only patch, historical)
+## Earlier Release: v4.2.1 Highlights (source-only patch, historical)
 
 - **Release form**: **source only** (GitHub Source zip / tar.gz, tag `v4.2.1`) — no new AppImage or
   installers are produced; the latest installers remain v4.2.0 (Linux AppImage published; the
@@ -305,7 +334,7 @@ Planning principles:
 **Key design decisions**: no new hard dependencies (PELT self-implemented; statsmodels as a dev-only reference) · credential and case schemas live in `core/` (Qt-free) · `.qap` stays backward compatible (reads 1.6, writes 1.7) · UI entry reuses Home, no new tab · the full MeasurementEvent contract lands in 4.3.0, with only the interface reserved here · **Linux ships AppImage only (decided 2026-09-22; the `.deb` build chain and `packaging/deb/` were removed)**.
 **Risks & mitigations**: known-value sourcing/licensing (NIST public domain first, literature values cited) · PELT effort (fall back to binary segmentation if over time-box) · closed-loop slice scope creep (1.5-week time box, one case template only) · performance regressions (P3 baseline comparison, revert if out of bounds).
 
-### v4.3.0 — Improvement Case & Evidence Ledger (planned)
+### v4.3.0 — Improvement Case & Evidence Ledger (✅ 2026-10-09 released)
 
 > Data-model layer (the most important step): establish the case spine first, then let time, provenance and confidence serve it; bitemporal covers only measurements / standards / conclusions, not the whole database.
 > **Execution plan** (Chinese): [`PLAN_v4.3.0.md`](PLAN_v4.3.0.md) (2026-10-03).
@@ -318,7 +347,7 @@ Planning principles:
 | **B3 Standard version records** | Spec limits / control limits / standard time / standard work combination sheets / control-plan rows gain `valid_from / valid_to / change_reason` with automatic change history; bitemporal applies only to measurements / standards / conclusions | Any historical lot restores the standard then in force; "who changed what, when and why" is answerable |
 | **B4 Evidence view & exchange v1** | Conclusion credentials (rule version + parameters + data fingerprint + event refs) join the ledger; structured append-only audit events (data edits / alert acks / 8D actions / report exports); report traceability code + evidence-chain view; `.qap` evidence-pack export + desensitized share pack (synthetic data + statistical-equivalence statement) | Conclusions replayable; every number in a report points back to events; the share pack has no raw values and can be reviewed independently |
 
-### v4.4.0 — Closed-Loop Execution & Effect Verification (planned)
+### v4.4.0 — Closed-Loop Execution & Effect Verification (✅ 2026-10-14 released)
 
 > Closed-loop layer: quality and IE improvement actions both land on cases; closing a case requires data-verified effects, not paperwork.
 
