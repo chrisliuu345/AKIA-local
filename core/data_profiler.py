@@ -16,6 +16,30 @@ def _scipy_stats():
 
 _log = get_logger(__name__)
 
+#: 大样本正态检验的固定抽样规模与种子（v4.4.0 B6：可复现，不再直接跳过）
+NORMALITY_SAMPLE_MAX = 5000
+NORMALITY_SAMPLE_SEED = 42
+
+
+def _normality_sample(non_null: pd.Series, info: dict[str, Any]) -> pd.Series:
+    """Shapiro-Wilk 输入样本：≤5000 全量；大样本用固定种子抽样并留痕。
+
+    抽样决定写入 ``info["normality_sample"]`` 与说明文本
+    ``info["normality_sample_note"]``（与 `core.sampling_note` 同口径）。
+    """
+    from core.sampling_note import seeded_sample_indices
+
+    total = int(len(non_null))
+    if total <= NORMALITY_SAMPLE_MAX:
+        return non_null
+    indices, note = seeded_sample_indices(
+        total, NORMALITY_SAMPLE_MAX, seed=NORMALITY_SAMPLE_SEED,
+        layer="profiler", detail="大样本正态检验抽样（Shapiro-Wilk）")
+    info["normality_sample"] = {"n": len(indices),
+                                "of": total, "seed": NORMALITY_SAMPLE_SEED}
+    info["normality_sample_note"] = note.label()
+    return non_null.iloc[indices]
+
 
 class DataProfiler:
     """对工作簿数据进行全面画像分析，生成分析推荐"""
@@ -32,6 +56,17 @@ class DataProfiler:
             if df.empty:
                 continue
             sample = df.head(self.sample_size) if len(df) > self.sample_size else df
+            sampling_note = ""
+            sampling_decision = None
+            if len(df) > self.sample_size:
+                from core.sampling_note import SamplingNote
+
+                note = SamplingNote(
+                    layer="profiler", method="head", source_count=len(df),
+                    sampled_count=len(sample),
+                    detail=f"画像预览抽样（前 {self.sample_size} 行截断，确定性）")
+                sampling_note = note.label()
+                sampling_decision = note.to_dict()
             total_rows += len(df)
             cols = self._profile_columns(sample)
             recs = self._generate_recommendations(sample, sn, cols)
@@ -46,6 +81,8 @@ class DataProfiler:
                 "recommendations": recs,
                 "issues": issues,
                 "health": health,
+                "sampling_note": sampling_note,
+                "sampling_decision": sampling_decision,
             }
 
         return {
@@ -109,9 +146,9 @@ class DataProfiler:
                     hi = float(np.percentile(non_null, 75) + 1.5 * iqr)
                     info["outlier_count"] = int(((non_null < lo) | (non_null > hi)).sum())
 
-                if n >= 8 and n <= 5000:
+                if n >= 8:
                     try:
-                        _, p = sp_stats.shapiro(non_null.sample(min(n, 5000)) if n > 5000 else non_null)
+                        _, p = sp_stats.shapiro(_normality_sample(non_null, info))
                         info["normality_pvalue"] = round(float(p), 4)
                     except Exception as e:  # 正态性检验不可用 → 不做正态判定
                         _log.debug("Shapiro-Wilk 检验失败: %s", e)

@@ -8,7 +8,8 @@
 > 探索日期：2026-10-12（HEAD `b8228bb`，v4.3.0 + 10-11 质量审查修复）。
 > **执行进度（2026-10-14）**：B0 ✅ 契约基座与 `.qap` 2.0（含抽样表重建，发现并修复
 > v4.3.0 遗留缺陷）；B1 ✅ 告警自动立案 8D；B2 ✅ 测量系统在线化；B3 ✅ 可信抽样；
-> B4 ✅ 收益账本与 COPQ；B5 ✅ 技能约束线平衡（案例模板 #2）；B6–B8 待开工。
+> B4 ✅ 收益账本与 COPQ；B5 ✅ 技能约束线平衡（案例模板 #2）；B6 ✅ 抽样透明化收口；
+> B7 ✅ 集成、性能与质量收口；B8 发布收尾进行中。
 
 **基线（v4.3.0 发布 + 审查修复后实测）**：178 个测试文件 / 2194 通过 / 56 跳过 /
 0 失败（514.2s）；ruff 全库零告警；性能基线 10 项通过；`.qap` 1.9（1.6–1.8 只读兼容）；
@@ -416,7 +417,7 @@ SchedulePlan    assignments[{process_id, operator, start_s, end_s}]
 7. 过程记录（无产品缺陷）：初版测试两处预期写错（合格性判定场景、takt=10 时
    4 工位/2 人必然不可行），核对后修正测试预期而非改动产品逻辑。
 
-### B6 抽样透明化收口（4–5 人日）
+### B6 抽样透明化收口（4–5 人日）✅ 2026-10-14
 
 | 编号 | 任务 | 落点 | 验收 |
 |------|------|------|------|
@@ -424,7 +425,30 @@ SchedulePlan    assignments[{process_id, operator, start_s, end_s}]
 | B6-2 | 展示层接线：图表 300 点、趋势 1000 点、画像大表正态检验口径——界面显式标注 + 可复现 | `output/chart_engine.py`、`ui/tabs/trend_tab.py`、`core/data_profiler.py` | 任一展示抽样有标注；同参数可复现；无未标注抽样 |
 | B6-3 | 画像大表正态检验策略修复：>5000 行改为固定种子抽样（记录种子）而不是跳过 | `core/data_profiler.py` | >5000 行有 `normality_pvalue` 且重跑一致 |
 
-### B7 集成、性能与质量收口（5–6 人日）
+**B6 完成记录（2026-10-14）**：
+
+1. 抽样决定契约（B6-1）：新 `core/sampling_note.py`（无 Qt）——
+   `SamplingNote`（层 `chart`/`trend`/`profiler`；方法
+   `systematic`/`stride`/`seeded_random`/`head`/`none`；源规模 / 样本规模 /
+   种子 / 是否可复现 / 强制保留点数 / 说明文本，全量校验 + dict 往返）；
+   `thin_indices()` 等距抽稀索引（确定性；`keep` 索引映射到最近槽位强制保留）；
+   `seeded_sample_indices()` 固定种子无放回随机抽样；`label()` 统一生成
+   界面说明文本——**任一抽样都可复现、都有标注**。
+2. 展示层接线（B6-2）：图表 300 点智能系统抽样改走 `thin_indices`
+   （判异点全部保留的语义不变，说明文本由契约统一生成）；趋势图 1000 点
+   等距抽稀有界收紧（端点 / 极值保留，标题带抽样说明）；画像每条表新增
+   `sampling_note` / `sampling_decision`（>5000 行预览截断的 head 抽样，
+   显式标注"前 N 行截断，确定性"）。诊断对话框显示表级抽样说明，
+   分布列悬停显示列级正态抽样说明。
+3. 画像大表正态检验（B6-3）：新增 `NORMALITY_SAMPLE_MAX = 5000` /
+   `NORMALITY_SAMPLE_SEED = 42`——超过 5000 行的列不再跳过正态检验，
+   改为固定种子抽样并留痕（列 info `normality_sample` /
+   `normality_sample_note`；>5000 行有 `normality_pvalue` 且重跑一致）。
+4. 验证：新增 `tests/test_sampling_note.py`（14 例：契约校验 / label 文本 /
+   序列化往返 / 等距与种子确定性 / 图表与趋势接线 / 画像 head 与正态抽样 /
+   趋势标题标注）；时间语义守卫（B0-5 棘轮）扩容收录 `sampling_note.py`。
+
+### B7 集成、性能与质量收口（5–6 人日）✅ 2026-10-14
 
 | 编号 | 任务 | 落点 | 验收 |
 |------|------|------|------|
@@ -432,6 +456,36 @@ SchedulePlan    assignments[{process_id, operator, start_s, end_s}]
 | B7-2 | v4.3.0 审查遗留：主窗口菜单动作离屏冒烟清单制度化（每个菜单动作至少一次真实命中） | 新 `tests/test_menu_smoke.py` | 清单覆盖 100% 菜单动作；`_on_save_shared` 类接线回归不再靠运气 |
 | B7-3 | 审查遗留小项：控制计划版本节流（合并窗口/显式保存语义）、SPC 多图控制限全记录、`measurement_capture` 决策落地（默认维持关闭 + 注释与文档） | `ui/tabs/control_plan_tab.py`、`ui/tabs/spc_tab.py`、`ui/main_window.py` | 逐格编辑不再产生版本洪峰；XBar-R 的 X/R 图控制限均入库；决策写入迁移手册 |
 | B7-4 | 性能基线扩容（抽样 1M / 收益复算 1 万条 / 量具滚动 10 万点）+ 迁移手册 | `tools/benchmark.py`、`docs/migration/v4.4.0.md` | 基线 13 项通过；迁移手册含 1.9→2.0 与决策记录 |
+
+**B7 完成记录（2026-10-14）**：
+
+1. 八链路集成演示（B7-1）：新 `tools/demo_v44_case.py`——告警 → 自动立案
+   （含同案续报合并）→ 抽样转移（加严）→ 量具漂移判定 → 技能约束排班
+   （不可行 → 培训后可行）→ 复测 + 配对统计判定 → 案例关闭（D6 数据门禁）
+   → 收益入账与月度复算；另导出证据包（独立校验）与案例 Markdown、
+   `summary.json` 链路清单。一条命令退出码 0，输出可粘贴证据；
+   `tests/test_demo_v44.py` 以子进程回归并对 9 个链路断言逐项校验。
+2. 菜单冒烟制度化（B7-2）：新 `tests/test_menu_smoke.py`——递归收集菜单栏
+   全部叶动作（≥40 个），统一桩掉弹窗 / 文件对话框 / 系统打开后**逐个真实
+   触发**；仅 3 个有外部副作用的动作显式登记跳过原因（退出 / 实时看板 /
+   显示模式），且跳过名单必须仍存在于菜单（防名单腐化）；Tab 跳转类动作
+   以 spy 验证真实命中。`_on_save_shared` 类接线盲区从此有端到端回归。
+3. 审查遗留小项（B7-3）：
+   - 控制计划逐格编辑 **1.5s 节流**（单发 QTimer，静默合并落一个带原因的
+     版本；批量操作直通，`_sync_context` 先停表）——不再产生版本洪峰；
+   - SPC 多图控制限**全部**入标准：XBar-R 的均值图沿用既有对象引用
+     `列:XBar-R`（向后兼容），子图用 `列:XBar-R:r_chart` 区分；
+   - `measurement_capture` 维持默认关闭并落地决策注释（PLAN §8-7：
+     长时采集会撑大 `.qap` 与证据账本，案例按窗口显式采集；迁移手册记录）。
+4. 性能与迁移（B7-4）：`tools/benchmark.py` 新增 3 项并实测入库——
+   `sampling_1m_rows_s` 0.793s（B3 已加）、`benefit_recompute_10k_s` 1.626s、
+   `gauge_rolling_100k_s` 0.416s，**基线 13 项**；`tools/perf_baseline.json`
+   更新；新 `docs/migration/v4.4.0.md`（兼容矩阵 / 升级步骤 / §3 修正性行为
+   变更 / §4 七项决策落地 / 速查与 FAQ）。
+5. 验证：B6+B7 合计新增 3 个测试文件 / +18 例（`test_sampling_note.py` 14、
+   `test_demo_v44.py` 1、`test_menu_smoke.py` 1、`test_standard_wiring.py` +2）；
+   **全量逐文件回归 198 文件 / 2418 通过 / 56 跳过 / 0 失败（624.7s）**；
+   ruff 零告警；八链路演示退出码 0；过程无产品缺陷。
 
 ### B8 版本收尾与发布（2–3 人日）
 
