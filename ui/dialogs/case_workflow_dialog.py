@@ -106,8 +106,17 @@ class CaseWorkflowDialog(QDialog):
         missing = "、".join(PHASE_LABELS[p] for p in self.workflow.missing_phases()) or "无"
         gate = self.workflow.case.closure_check()
         gate_text = "可关闭" if gate["ok"] else "；".join(gate["problems"])
+        benefit_line = ""
+        provider = getattr(self.host, "case_benefit_summary", None)
+        if callable(provider):
+            try:
+                benefit_line = str(provider(self.workflow.case.id) or "")
+            except Exception:  # 摘要失败不影响工作台渲染
+                benefit_line = ""
         return (f"{progress}\n\n待补阶段：{missing}\n"
-                f"关闭门禁：{gate_text}\n\n"
+                f"关闭门禁：{gate_text}\n"
+                + (f"累计收益：{benefit_line}\n" if benefit_line else "")
+                + "\n"
                 + self.workflow.to_markdown())
 
     def refresh(self):
@@ -377,6 +386,32 @@ class CaseWorkflowDialog(QDialog):
         except ValueError as exc:
             QMessageBox.warning(self, "关闭失败", str(exc))
             return
+        self.refresh()
+        self._offer_benefit_entry()
+
+    def _offer_benefit_entry(self) -> None:
+        """关闭后登记收益（可编辑/复核）；C 级只登记不计入汇总（B4-4）。"""
+        recorder = getattr(self.host, "record_case_benefit", None)
+        if not callable(recorder):
+            return
+        from ui.dialogs.benefit_entry_dialog import BenefitEntryDialog
+
+        dialog = BenefitEntryDialog(self)
+        if dialog.exec() != QDialog.Accepted:
+            QMessageBox.information(
+                self, "收益入账",
+                "案例已关闭；未登记收益（可稍后在「工具 → 收益账本」补录）")
+            return
+        try:
+            record = recorder(self.workflow, dialog.draft())
+        except ValueError as exc:
+            QMessageBox.warning(self, "收益入账失败", str(exc))
+            return
+        text = (f"收益已入账：{record.amount:,.2f}"
+                f"（{record.category} / 置信 {record.confidence}）")
+        if not record.admits_to_summary:
+            text += "\nC 级仅登记待完善，不计入汇总。"
+        QMessageBox.information(self, "收益入账", text)
         self.refresh()
 
     # ------------------------------------------------------------ 证据与交换（B4）
