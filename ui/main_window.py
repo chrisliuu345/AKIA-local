@@ -37,6 +37,7 @@ from core.benefit_ledger import (
     record_case_benefit as core_record_case_benefit,
 )
 from core.gauge_study import GaugeMonitor
+from core.skill_matrix import SkillMatrix
 from core.sampling_state import SamplingStateManager
 from core.time_utils import now_iso
 from core.audit import audit
@@ -116,6 +117,7 @@ class MainWindow(QMainWindow):
         self.sampling_manager = SamplingStateManager(
             ledger=self.ledger, standards=self.project_context.standards)
         self.benefit_ledger = BenefitLedger()
+        self.skill_matrix = SkillMatrix()
 
         self._setup_ui()
         self._menu_refs: list = []
@@ -672,6 +674,42 @@ class MainWindow(QMainWindow):
         dialog = BenefitLedgerDialog(self.benefit_ledger, self,
                                      recompute=self.recompute_benefits)
         dialog.exec()
+
+    # ------------------------------------------------------------ 技能矩阵（v4.4.0 B5）
+    def save_skill_matrix(self, matrix) -> None:
+        """保存技能矩阵（对话框回调）并同步已加载的线平衡页签。"""
+        if not isinstance(matrix, SkillMatrix):
+            raise TypeError("save_skill_matrix 仅接受 SkillMatrix")
+        self.skill_matrix = matrix
+        tab = self._tab_cache.get(TAB_INDEX["line_balance"])
+        if tab is not None and hasattr(tab, "set_skill_context"):
+            tab.set_skill_context(self.skill_matrix, self.save_skill_matrix,
+                                  self.record_skill_balance_step)
+
+    def record_skill_balance_step(self, phase: str, result: dict, frame=None):
+        """把技能约束排班结果记入案例（基线/复测）；凭证含技能矩阵指纹。"""
+        key = str(phase or "").strip().lower()
+        if key not in ("baseline", "re_measure", "remeasure"):
+            raise ValueError(f"不支持的案例阶段: {phase!r}")
+        workflow = self._last_case_workflow
+        if workflow is None:
+            # 技能排班即基线：新建空案例直接记技能步骤（不叠加"当前数据"基线）
+            from core.case_workflow import CaseWorkflow
+
+            source = str((self.current_data or {}).get("source", "") or "")
+            title = (f"改善案例 — {os.path.basename(source)}" if source
+                     else "改善案例")
+            workflow = self._register_case_workflow(
+                CaseWorkflow(title=title, ledger=self.ledger))
+        constraints = result.get("constraints") or {}
+        step = workflow.record_step(
+            key, result=result, frame=frame, rule_version="skills-lpt@1",
+            analysis_type="技能约束线平衡",
+            params={"skill_fingerprint": self.skill_matrix.fingerprint(),
+                    "headcount_required": constraints.get("headcount_required"),
+                    "unmet": list(result.get("unmet") or [])},
+            note="技能约束线平衡（含技能矩阵指纹）")
+        return step
 
     def _on_standard_history(self):
         """标准版本时间线（B3）：对象 / 生效区间 / 变更原因 / 变更人。"""
@@ -1643,6 +1681,9 @@ class MainWindow(QMainWindow):
                                   self._submit_gauge_measurement)
         if hasattr(tab, "set_sampling_context"):
             tab.set_sampling_context(self.sampling_manager)
+        if hasattr(tab, "set_skill_context"):
+            tab.set_skill_context(self.skill_matrix, self.save_skill_matrix,
+                                  self.record_skill_balance_step)
         return tab
 
     def _handle_tab_dependency_error(self, idx: int, class_name: str,
@@ -1898,6 +1939,7 @@ class MainWindow(QMainWindow):
                 gauge_studies=self.gauge_monitor.to_dict(),
                 sampling=self.sampling_manager.to_dict(),
                 benefits=self.benefit_ledger.to_dict(),
+                skills=self.skill_matrix.to_dict(),
             )
             self.status_label.setText(f"项目已保存: {path}")
             recent = ProjectManager.recent_projects()
@@ -1949,6 +1991,11 @@ class MainWindow(QMainWindow):
             project.get("sampling"), ledger=self.ledger,
             standards=self.project_context.standards)
         self.benefit_ledger = BenefitLedger.from_dict(project.get("benefits"))
+        self.skill_matrix = SkillMatrix.from_dict(project.get("skills"))
+        line_tab = self._tab_cache.get(TAB_INDEX["line_balance"])
+        if line_tab is not None and hasattr(line_tab, "set_skill_context"):
+            line_tab.set_skill_context(self.skill_matrix, self.save_skill_matrix,
+                                       self.record_skill_balance_step)
         sampling_tab = self._tab_cache.get(TAB_INDEX["sampling"])
         if sampling_tab is not None and hasattr(sampling_tab, "set_sampling_context"):
             sampling_tab.set_sampling_context(self.sampling_manager)
@@ -2552,7 +2599,8 @@ class MainWindow(QMainWindow):
                 evidence_events=self.ledger,
                 gauge_studies=self.gauge_monitor.to_dict(),
                 sampling=self.sampling_manager.to_dict(),
-                benefits=self.benefit_ledger.to_dict())
+                benefits=self.benefit_ledger.to_dict(),
+                skills=self.skill_matrix.to_dict())
             audit("share_project", "user",
                   f"保存 {os.path.basename(path)}")
             self.status_label.setText("共享项目已保存")
