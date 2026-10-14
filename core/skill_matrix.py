@@ -11,6 +11,8 @@ B5 在此契约上实现约束求解与案例模板接线；本模块先冻结�
 
 from __future__ import annotations
 
+import hashlib
+import json
 from dataclasses import dataclass, field, fields
 from typing import Any
 
@@ -23,10 +25,48 @@ MAX_SKILL_LEVEL = 5
 
 
 @dataclass
+class ProcessSkillReq:
+    """工序技能要求（PLAN §3.5：并入线平衡约束面板）。"""
+
+    process_id: str
+    min_level: int = 1
+    schema_version: str = SKILL_SCHEMA_VERSION
+
+    def __post_init__(self) -> None:
+        if self.schema_version != SKILL_SCHEMA_VERSION:
+            raise ValueError(f"不支持的工序技能要求 schema 版本: {self.schema_version}")
+        self.process_id = str(self.process_id or "").strip()
+        if not self.process_id:
+            raise ValueError("工序技能要求必须提供 process_id")
+        self.min_level = int(self.min_level)
+        if not MIN_SKILL_LEVEL <= self.min_level <= MAX_SKILL_LEVEL:
+            raise ValueError(
+                f"最低技能等级必须为 {MIN_SKILL_LEVEL}~{MAX_SKILL_LEVEL}: "
+                f"{self.min_level}")
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"schema_version": self.schema_version,
+                "process_id": self.process_id, "min_level": self.min_level}
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any] | None) -> ProcessSkillReq | None:
+        if data is None:
+            return None
+        if not isinstance(data, dict):
+            raise ValueError("工序技能要求必须为 dict")
+        schema = str(data.get("schema_version") or SKILL_SCHEMA_VERSION)
+        if schema != SKILL_SCHEMA_VERSION:
+            raise ValueError(f"不支持的工序技能要求 schema 版本: {schema}")
+        allowed = {f.name for f in fields(cls)}
+        return cls(**{k: v for k, v in data.items() if k in allowed})
+
+
+@dataclass
 class SkillMatrix:
-    """技能矩阵（同一 (人员, 工序) 只允许一条记录）。"""
+    """技能矩阵（同一 (人员, 工序) 只允许一条记录）+ 工序技能要求。"""
 
     entries: list[dict[str, Any]] = field(default_factory=list)
+    requirements: list[dict[str, Any]] = field(default_factory=list)
     updated_at: str = ""
     schema_version: str = SKILL_SCHEMA_VERSION
 
@@ -61,6 +101,19 @@ class SkillMatrix:
             normalized.append({"operator": operator, "process_id": process_id,
                                "level": level, "updated_at": updated})
         self.entries = normalized
+        normalized_reqs: list[dict[str, Any]] = []
+        seen_reqs: set[str] = set()
+        for index, item in enumerate(self.requirements or [], start=1):
+            if not isinstance(item, dict):
+                raise ValueError(f"第 {index} 条工序技能要求必须为 dict")
+            req = ProcessSkillReq(
+                process_id=item.get("process_id", ""),
+                min_level=item.get("min_level", 1))
+            if req.process_id in seen_reqs:
+                raise ValueError(f"工序技能要求重复: {req.process_id}")
+            seen_reqs.add(req.process_id)
+            normalized_reqs.append(req.to_dict())
+        self.requirements = normalized_reqs
         self.updated_at = parse_iso(
             self.updated_at or now_iso(), "updated_at").isoformat(timespec="seconds")
 
@@ -84,6 +137,22 @@ class SkillMatrix:
         return [item["process_id"] for item in self.entries
                 if item["operator"] == target]
 
+    def min_level_for(self, process_id: str) -> int | None:
+        """工序最低技能等级；未设置返回 None。"""
+        target = str(process_id or "").strip()
+        for item in self.requirements:
+            if item["process_id"] == target:
+                return int(item["min_level"])
+        return None
+
+    def fingerprint(self) -> str:
+        """技能矩阵指纹（凭证参数用）：entries + requirements 的稳定哈希。"""
+        canonical = json.dumps(
+            {"entries": self.entries, "requirements": self.requirements},
+            sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+        digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+        return f"skill-hash-v1:{digest}"
+
     def __len__(self) -> int:
         return len(self.entries)
 
@@ -92,6 +161,7 @@ class SkillMatrix:
         return {
             "schema_version": self.schema_version,
             "entries": [dict(item) for item in self.entries],
+            "requirements": [dict(item) for item in self.requirements],
             "updated_at": self.updated_at,
         }
 
@@ -187,6 +257,7 @@ __all__ = [
     "SKILL_SCHEMA_VERSION",
     "MIN_SKILL_LEVEL",
     "MAX_SKILL_LEVEL",
+    "ProcessSkillReq",
     "SkillMatrix",
     "SchedulePlan",
 ]
