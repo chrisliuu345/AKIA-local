@@ -9,5 +9,7 @@
   "ml_train_100k_rows_s": 4.081,
   "evidence_append_1k_s": 0.525,
   "case_open_1k_events_s": 0.021,
-  "sampling_1m_rows_s": 0.793
+  "sampling_1m_rows_s": 0.793,
+  "benefit_recompute_10k_s": 1.626,
+  "gauge_rolling_100k_s": 0.416
 }

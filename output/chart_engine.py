@@ -45,35 +45,22 @@ def _smart_thin(data: list, violations: list,
     Returns:
         (thinned_data, x_labels, was_thinned, sample_note)
     """
-    n = len(data)
-    if n <= max_points:
-        return data, list(range(1, n + 1)), False, ""
+    from core.sampling_note import thin_indices
 
-    violation_indices = set()
+    n = len(data)
+    violation_indices = []
     for v in (violations or []):
         pt = v.get("point", 0) - 1
         if 0 <= pt < n:
-            violation_indices.add(pt)
-
-    step = n / max_points
-    sampled = []
-    for i in range(max_points):
-        idx = int(i * step)
-        sampled.append(idx)
-
-    for vi in sorted(violation_indices):
-        if vi not in sampled:
-            closest = min(range(len(sampled)),
-                          key=lambda j: abs(sampled[j] - vi))
-            sampled[closest] = vi
-
-    sampled = sorted(set(sampled))
+            violation_indices.append(pt)
+    sampled, note = thin_indices(
+        n, max_points, keep=violation_indices, layer="chart",
+        method="systematic", detail="图表智能系统抽样，判异点全部保留")
+    if note.method == "none":
+        return data, list(range(1, n + 1)), False, ""
     thinned = [data[i] for i in sampled]
     x_labels = [i + 1 for i in sampled]
-    info = (f"（原始 {n} 点，"
-            f"图表智能系统抽样至 {len(thinned)} 点，"
-            f"判异点已全部保留）")
-    return thinned, x_labels, True, info
+    return thinned, x_labels, True, note.label()
 
 
 def _violation_annotations(violations: list[dict[str, Any]],

@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (
     QTableWidget, QTableWidgetItem, QHeaderView,
     QFileDialog, QMessageBox, QInputDialog,
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFont
 
 from ui.tabs.base_tab import BaseAnalysisTab
@@ -25,7 +25,14 @@ class ControlPlanTab(BaseAnalysisTab):
     def __init__(self, parent=None):
         self._rows: list = []
         self._project_context = None
+        self._pending_reason = ""
         super().__init__(parent)
+        # 单元格逐格提交 → 单个"编辑批次"只落一个标准版本（B7-3 节流）：
+        # 连续编辑在 1.5s 静默后合并同步；批量操作（重建/导入/显式保存）直通。
+        self._sync_timer = QTimer(self)
+        self._sync_timer.setSingleShot(True)
+        self._sync_timer.setInterval(1500)
+        self._sync_timer.timeout.connect(self._flush_pending_sync)
         self._setup_ui()
         self._new_default()
 
@@ -141,8 +148,21 @@ class ControlPlanTab(BaseAnalysisTab):
                 rows.append(padded)
         return rows
 
+    def _schedule_sync(self, change_reason: str = "控制计划条目编辑（自动保存）") -> None:
+        """登记一次待同步（节流）：连续编辑合并为一条版本。"""
+        self._pending_reason = change_reason
+        self._sync_timer.start()
+
+    def _flush_pending_sync(self) -> None:
+        if not self._pending_reason:
+            return
+        reason, self._pending_reason = self._pending_reason, ""
+        self._sync_context(change_reason=reason)
+
     def _sync_context(self, change_reason: str = "控制计划条目更新"):
         """将当前行写入项目上下文（唯一事实源）"""
+        self._sync_timer.stop()
+        self._pending_reason = ""
         if self._project_context is not None:
             self._project_context.set_control_plan(
                 self.rows_as_dicts(), change_reason=change_reason, changed_by="user")
@@ -197,7 +217,7 @@ class ControlPlanTab(BaseAnalysisTab):
             while len(self._rows) <= row:
                 self._rows.append([""] * len(CP_HEADERS))
             self._rows[row][col] = item.text().strip()
-            self._sync_context()
+            self._schedule_sync()
 
     def _generate_spc_list(self):
         """从控制计划生成 SPC 监控清单"""

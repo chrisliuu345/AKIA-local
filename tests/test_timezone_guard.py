@@ -27,6 +27,7 @@ GUARDED = [
     ROOT / "core" / "gauge_study.py",
     ROOT / "core" / "benefit_ledger.py",
     ROOT / "core" / "skill_matrix.py",
+    ROOT / "core" / "sampling_note.py",
 ]
 
 #: datetime.now() 后必须紧跟 .astimezone(...)；utcnow/today 属于无时区构造
