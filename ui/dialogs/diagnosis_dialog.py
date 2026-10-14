@@ -205,6 +205,12 @@ class DiagnosisDialog(QDialog):
         hdr.addStretch()
         layout.addLayout(hdr)
 
+        if sheet.get("sampling_note"):
+            note_label = QLabel(f"抽样说明: {sheet['sampling_note']}")
+            note_label.setFont(QFont(get_ui_font(), 9))
+            note_label.setStyleSheet(f"color: {tc['text_secondary']};")
+            layout.addWidget(note_label)
+
         cols = sheet.get("columns", [])
         if cols:
             grid = QGridLayout()
@@ -238,6 +244,8 @@ class DiagnosisDialog(QDialog):
                         lbl.setStyleSheet("color: #e74c3c; padding: 1px 4px;")
                     if j == 5:
                         dist = c.get("distribution", "-")
+                        if c.get("normality_sample_note"):
+                            lbl.setToolTip(str(c["normality_sample_note"]))
                         if dist == "normal":
                             lbl.setStyleSheet(
                                 "color: #27ae60; font-weight: bold; padding: 1px 4px;"

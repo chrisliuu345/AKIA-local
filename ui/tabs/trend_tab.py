@@ -171,22 +171,17 @@ class TrendTab(BaseAnalysisTab):
 
             d_plot, v_plot = d, v
             if len(d) > MAX_POINTS:
-                step = max(1, len(d) // MAX_POINTS)
-                sampled_idx = list(range(0, len(d), step))
+                from core.sampling_note import thin_indices
+
                 min_i = int(np.argmin(v))
                 max_i = int(np.argmax(v))
-                if min_i not in sampled_idx:
-                    sampled_idx.append(min_i)
-                if max_i not in sampled_idx:
-                    sampled_idx.append(max_i)
-                if 0 not in sampled_idx:
-                    sampled_idx.append(0)
-                if len(d) - 1 not in sampled_idx:
-                    sampled_idx.append(len(d) - 1)
-                sampled_idx = sorted(set(sampled_idx))
+                sampled_idx, sampling_note = thin_indices(
+                    len(d), MAX_POINTS,
+                    keep=(min_i, max_i, 0, len(d) - 1), layer="trend",
+                    method="stride", detail="趋势图等距抽稀（端点/极值保留）")
                 d_plot, v_plot = d[sampled_idx], v[sampled_idx]
                 if j == 0:
-                    sampled_note = f" (采样 {len(d_plot)}/{len(d)})"
+                    sampled_note = " " + sampling_note.label()
 
             ax.plot(
                 d_plot,
