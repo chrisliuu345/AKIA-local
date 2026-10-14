@@ -7,6 +7,7 @@
 from typing import Any
 
 from core.data_objects import Process
+from core.skill_matrix import SchedulePlan
 
 
 class LineBalanceEngine:
@@ -132,3 +133,105 @@ class LineBalanceEngine:
             })
 
         return stations
+
+    # ------------------------------------------------------------ 技能约束排班（v4.4.0 B5）
+    @staticmethod
+    def schedule_with_skills(processes: list[Process], takt: float | None,
+                             skill_matrix, *, headcount: int | None = None,
+                             equipment_parallel: dict[str, int] | None = None
+                             ) -> SchedulePlan:
+        """在 LPT 平衡结果上做技能约束工位指派（可执行排班，不破坏原 LPT）。
+
+        判定规则（保守口径，已在 PLAN §3.5 冻结）：
+
+        - 工位内每个工序：矩阵为该工序设置了最低等级 → 需 level ≥ 最低等级；
+          未设置最低等级 → 需该操作员有任意录入（level ≥ 1）；未录入 = 不具备；
+        - 一人一工位；``headcount`` 缺省取矩阵中的人员数；
+        - ``equipment_parallel``：各设备类并发上限；并行产线下并发需求
+          = 各工位对该设备使用次数之和，超限记 ``unmet``；
+        - 不可行不静默降级：可行的工位照常指派，问题逐条进 ``unmet``。
+
+        时间窗为单件作业窗口（并行工位）：``[0, 工位合计工时]``。
+        ``plan_ref`` = 技能矩阵指纹（``skill-hash-v1``），供案例凭证引用。
+        """
+        base = LineBalanceEngine().analyze(processes, takt)
+        if base.get("error"):
+            raise ValueError(base["error"])
+        stations = base["stations"]
+        by_id = {p.process_id: p for p in processes if p.cycle_time and p.cycle_time > 0}
+        unmet: list[str] = []
+        operators = sorted({str(item.get("operator") or "")
+                            for item in getattr(skill_matrix, "entries", []) or []
+                            if str(item.get("operator") or "").strip()})
+        available = operators[:int(headcount)] if headcount else list(operators)
+        constraints: dict[str, Any] = {
+            "takt_s": base["takt"],
+            "headcount_required": len(stations),
+            "headcount_available": (int(headcount) if headcount else len(operators)),
+        }
+        assignments: list[dict[str, Any]] = []
+        if not operators:
+            unmet.append("技能矩阵为空：请先录入人员技能后再排班")
+        else:
+            if headcount and int(headcount) < len(stations):
+                unmet.append(
+                    f"可用人数不足：需要 {len(stations)} 人（工位数），"
+                    f"仅 {int(headcount)} 人")
+            used: set[str] = set()
+            for station in stations:
+                process_ids = list(station["process_ids"])
+                eligible: list[tuple[str, int, int]] = []
+                for operator in available:
+                    if operator in used:
+                        continue
+                    levels: list[int] = []
+                    qualified = True
+                    for pid in process_ids:
+                        level = skill_matrix.level_of(operator, pid) or 0
+                        need = skill_matrix.min_level_for(pid)
+                        if level < (need if need is not None else 1):
+                            qualified = False
+                            break
+                        levels.append(level)
+                    if qualified:
+                        eligible.append((operator, min(levels), sum(levels)))
+                if not eligible:
+                    remaining = [op for op in available if op not in used]
+                    if not remaining:
+                        unmet.append(
+                            f"工位 {station['station_id']} 无剩余人员可派"
+                            f"（已用 {len(used)} 人）")
+                    else:
+                        unmet.append(
+                            f"工位 {station['station_id']} 无可派人员"
+                            f"（工序 {'、'.join(process_ids)} 技能不满足）")
+                    continue
+                eligible.sort(key=lambda item: (-item[2], item[0]))
+                operator = eligible[0][0]
+                used.add(operator)
+                end_s = float(round(station["total_time"], 3))
+                for pid in process_ids:
+                    assignments.append({
+                        "process_id": pid, "operator": operator,
+                        "start_s": 0.0, "end_s": end_s})
+        equipment_usage: dict[str, int] = {}
+        for station in stations:
+            for pid in station["process_ids"]:
+                equipment = str(getattr(by_id.get(pid), "equipment", "") or "").strip()
+                if equipment:
+                    equipment_usage[equipment] = equipment_usage.get(equipment, 0) + 1
+        if equipment_parallel:
+            for equipment, capacity in equipment_parallel.items():
+                demand = equipment_usage.get(str(equipment), 0)
+                if demand > int(capacity):
+                    unmet.append(
+                        f"设备「{equipment}」并发需求 {demand} 超出上限 {capacity}")
+            constraints["equipment_parallel"] = {
+                str(k): int(v) for k, v in equipment_parallel.items()}
+        constraints["equipment_concurrent"] = equipment_usage
+        balance_rate = base["balanced"]["balance_rate"]
+        return SchedulePlan(
+            assignments=assignments, constraints=constraints,
+            balance_rate_before=balance_rate,
+            balance_rate_after=(balance_rate if not unmet else None),
+            unmet=unmet, plan_ref=skill_matrix.fingerprint())

@@ -58,6 +58,7 @@ TAB_INDEX = {
     "home": 0,
     "spc": 1,
     "capability": 2,
+    "line_balance": 9,
     "time_study": 7,
     "std_work_combo": 22,
     "msa": 3,

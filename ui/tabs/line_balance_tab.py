@@ -7,7 +7,7 @@ from typing import Any
 from PySide6.QtWidgets import (
     QFrame,
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QDoubleSpinBox, QGroupBox, QFormLayout,
+    QDoubleSpinBox, QGroupBox, QFormLayout, QSpinBox,
     QTableWidget, QTableWidgetItem, QSplitter, QHeaderView,
     QStackedWidget, QMessageBox,
 )
@@ -24,12 +24,17 @@ from ui.theme import colors as theme_colors
 from ui.font_config import get_ui_font
 from core.data_objects import Process
 from analysis.ie.line_balance import LineBalanceEngine
+from core.skill_matrix import SkillMatrix
 
 
 class LineBalanceTab(BaseAnalysisTab):
 
     def __init__(self, parent=None):
         self.ie_processes: list[Process] = []
+        self._skill_matrix: SkillMatrix | None = None
+        self._skill_saver = None
+        self._skill_record_step = None
+        self._last_skill_plan = None
         super().__init__(parent)
         self._setup_ui()
 
@@ -68,6 +73,51 @@ class LineBalanceTab(BaseAnalysisTab):
         self.btn_analyze.setFont(QFont(get_ui_font(), 12, QFont.Bold))
         self.btn_analyze.clicked.connect(self._on_one_click_analyze)
         config_layout.addRow(self.btn_analyze)
+
+        self.headcount_spin = QSpinBox()
+        self.headcount_spin.setRange(0, 999)
+        self.headcount_spin.setValue(0)
+        self.headcount_spin.setSuffix(" 人")
+        self.headcount_spin.setSpecialValueText(" 自动 (矩阵人数)")
+        config_layout.addRow("可用人数:", self.headcount_spin)
+
+        skills_row = QHBoxLayout()
+        self.btn_skill_matrix = QPushButton("技能矩阵…")
+        self.btn_skill_matrix.setStyleSheet(BUTTON_SECONDARY)
+        self.btn_skill_matrix.setToolTip("人员×工序熟练度 + 工序最低等级（v4.4.0 B5）")
+        self.btn_skill_matrix.clicked.connect(self._open_skill_matrix)
+        self.btn_skill_schedule = QPushButton("技能约束排班")
+        self.btn_skill_schedule.setStyleSheet(BUTTON_SECONDARY)
+        self.btn_skill_schedule.clicked.connect(self._run_skill_schedule)
+        skills_row.addWidget(self.btn_skill_matrix)
+        skills_row.addWidget(self.btn_skill_schedule)
+        config_layout.addRow(skills_row)
+
+        case_row = QHBoxLayout()
+        self.btn_skill_baseline = QPushButton("记入案例（基线）")
+        self.btn_skill_baseline.setStyleSheet(BUTTON_SECONDARY)
+        self.btn_skill_baseline.clicked.connect(
+            lambda: self._record_skill_result("baseline"))
+        self.btn_skill_remeasure = QPushButton("记入案例（复测）")
+        self.btn_skill_remeasure.setStyleSheet(BUTTON_SECONDARY)
+        self.btn_skill_remeasure.clicked.connect(
+            lambda: self._record_skill_result("re_measure"))
+        case_row.addWidget(self.btn_skill_baseline)
+        case_row.addWidget(self.btn_skill_remeasure)
+        config_layout.addRow(case_row)
+
+        self.skill_status_label = QLabel("技能矩阵: 未接入")
+        self.skill_status_label.setStyleSheet("color: #9aa4b2; font-size: 11px;")
+        self.skill_status_label.setWordWrap(True)
+        config_layout.addRow(self.skill_status_label)
+
+        self.skill_result_table = QTableWidget(0, 4)
+        self.skill_result_table.setHorizontalHeaderLabels(
+            ["工序", "操作员", "开始(s)", "结束(s)"])
+        self.skill_result_table.setMaximumHeight(150)
+        self.skill_result_table.horizontalHeader().setSectionResizeMode(
+            QHeaderView.Stretch)
+        config_layout.addRow(self.skill_result_table)
 
         top_layout.addWidget(config_group)
 
@@ -168,6 +218,115 @@ class LineBalanceTab(BaseAnalysisTab):
             f"工序: {len(processes)} 个 | 含CT: {with_ct} 个 | "
             f"ΣCT: {sum(p.cycle_time for p in processes):.1f}s"
         )
+
+    # ------------------------------------------------------------ 技能约束（v4.4.0 B5）
+    def set_skill_context(self, matrix, save_callback=None, record_step=None):
+        """接入技能矩阵、保存回调与"记入案例"回调。"""
+        self._skill_matrix = matrix
+        self._skill_saver = save_callback
+        self._skill_record_step = record_step
+        self._refresh_skill_status()
+
+    def _refresh_skill_status(self) -> None:
+        matrix = self._skill_matrix
+        if matrix is None:
+            self.skill_status_label.setText("技能矩阵: 未接入")
+            return
+        if not len(matrix):
+            self.skill_status_label.setText(
+                "技能矩阵: 空（点击「技能矩阵…」录入人员技能与工序要求）")
+            return
+        self.skill_status_label.setText(
+            f"技能矩阵: {len(matrix)} 条 · 工序要求 {len(matrix.requirements)} 条"
+            f" · 指纹 {matrix.fingerprint()[:20]}…")
+
+    def _open_skill_matrix(self):
+        if not callable(self._skill_saver):
+            QMessageBox.information(self, "技能矩阵",
+                                    "未接入主窗口，无法保存技能矩阵")
+            return
+        from ui.dialogs.skill_matrix_dialog import SkillMatrixDialog
+
+        dialog = SkillMatrixDialog(self._skill_matrix or SkillMatrix(), self,
+                                   on_save=self._skill_saver)
+        dialog.exec()
+        self._refresh_skill_status()
+
+    def _run_skill_schedule(self):
+        if not self.ie_processes:
+            QMessageBox.warning(self, "无数据", "请先导入包含工序表的 Excel 文件")
+            return
+        matrix = self._skill_matrix
+        if matrix is None or not len(matrix):
+            QMessageBox.warning(self, "技能矩阵", "请先录入技能矩阵再排班")
+            return
+        takt = self.takt_spin.value() if self.takt_spin.value() > 0 else None
+        try:
+            plan = LineBalanceEngine.schedule_with_skills(
+                self.ie_processes, takt, matrix,
+                headcount=self.headcount_spin.value() or None)
+        except ValueError as exc:
+            QMessageBox.warning(self, "排班失败", str(exc))
+            return
+        self._last_skill_plan = plan
+        self.current_result = {
+            "analysis_type": "技能约束线平衡",
+            "params": {"takt": plan.constraints.get("takt_s"),
+                       "skill_fingerprint": plan.plan_ref,
+                       "headcount_required": plan.constraints.get(
+                           "headcount_required")},
+            "result": plan.to_dict(),
+        }
+        table = self.skill_result_table
+        table.setRowCount(len(plan.assignments))
+        for row, item in enumerate(plan.assignments):
+            values = (item["process_id"], item["operator"],
+                      f"{item['start_s']:.1f}", f"{item['end_s']:.1f}")
+            for column, value in enumerate(values):
+                table.setItem(row, column, QTableWidgetItem(str(value)))
+        rate_before = plan.balance_rate_before
+        rate_after = plan.balance_rate_after
+        self.skill_status_label.setText(
+            f"排班: 工位 {plan.constraints.get('headcount_required')} · "
+            f"平衡率 {rate_before:.2%} → "
+            + (f"{rate_after:.2%}" if rate_after is not None else "不可行")
+            + (f" · 不可行明细 {len(plan.unmet)} 条" if plan.unmet else "")
+            + f" · 指纹 {plan.plan_ref[:20]}…")
+        if plan.unmet:
+            QMessageBox.warning(
+                self, "技能约束排班（部分不可行）",
+                "以下工位/约束未能满足：\n- " + "\n- ".join(plan.unmet[:6]))
+        else:
+            QMessageBox.information(self, "技能约束排班", "排班可行，已输出可执行建议")
+        self.analysis_completed.emit()
+
+    @staticmethod
+    def _process_frame(processes: list[Process]):
+        import pandas as pd
+
+        return pd.DataFrame([{
+            "process_id": p.process_id, "process_name": p.process_name,
+            "cycle_time": p.cycle_time, "labor_count": p.labor_count,
+            "predecessors": "、".join(p.predecessors or []),
+        } for p in processes])
+
+    def _record_skill_result(self, phase: str):
+        if self._last_skill_plan is None:
+            QMessageBox.information(self, "记入案例", "请先运行「技能约束排班」")
+            return
+        if not callable(self._skill_record_step):
+            QMessageBox.information(self, "记入案例", "未接入主窗口，无法记入案例")
+            return
+        frame = self._process_frame(self.ie_processes)
+        try:
+            self._skill_record_step(phase, self._last_skill_plan.to_dict(), frame)
+        except ValueError as exc:
+            QMessageBox.warning(self, "记入案例失败", str(exc))
+            return
+        label = "基线" if phase == "baseline" else "复测"
+        QMessageBox.information(
+            self, "记入案例",
+            f"技能约束排班已记入案例{label}（凭证含技能矩阵指纹）")
 
     def _on_one_click_analyze(self):
         if not self.ie_processes:
