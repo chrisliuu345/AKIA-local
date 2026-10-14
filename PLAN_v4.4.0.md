@@ -6,10 +6,10 @@
 > 设计决策仍以路线图为准，本文只描述执行路径。
 >
 > 探索日期：2026-10-12（HEAD `b8228bb`，v4.3.0 + 10-11 质量审查修复）。
-> **执行进度（2026-10-13）**：B0 ✅ 契约基座与 `.qap` 2.0（含抽样表重建，发现并修复
-> v4.3.0 遗留缺陷）；B1 ✅ 告警自动立案 8D（critical 同步立案 / 30 分钟冷却合并 /
-> D6 数据门禁 / 案例中心与告警中心入口）；B2 ✅ 测量系统在线化（滚动重复性/偏倚 /
-> MPC 判异 / 健康分与漂移提示 / `.qap` 持久化）；B3–B8 待开工。
+> **执行进度（2026-10-14）**：B0 ✅ 契约基座与 `.qap` 2.0（含抽样表重建，发现并修复
+> v4.3.0 遗留缺陷）；B1 ✅ 告警自动立案 8D；B2 ✅ 测量系统在线化；B3 ✅ 可信抽样
+> （转移状态机 / 确定性抽样 / 方案留痕与账本 / 批检验面板 / 百万行性能基线）；
+> B4–B8 待开工。
 
 **基线（v4.3.0 发布 + 审查修复后实测）**：178 个测试文件 / 2194 通过 / 56 跳过 /
 0 失败（514.2s）；ruff 全库零告警；性能基线 10 项通过；`.qap` 1.9（1.6–1.8 只读兼容）；
@@ -298,7 +298,7 @@ SchedulePlan    assignments[{process_id, operator, start_s, end_s}]
    已知边界：MPC 预热不足（<10 点）不因控制图触发漂移（仅偏倚限判定）；
    窗口原始值不持久化。
 
-### B3 可信抽样（10–12 人日）
+### B3 可信抽样（10–12 人日）✅ 2026-10-14
 
 | 编号 | 任务 | 落点 | 验收 |
 |------|------|------|------|
@@ -307,6 +307,38 @@ SchedulePlan    assignments[{process_id, operator, start_s, end_s}]
 | B3-3 | 方案留痕与账本接线：方案选择（含手动覆盖原因）→ `sampling_plan_selected`；判定 → `lot_inspected`；转移 → `sampling_transfer_changed` | `core/sampling_state.py`、`ui/tabs/sampling_tab.py`、`ui/main_window.py` | 证据视图可还原"为何本批加严/放宽"；证据包可独立校验 |
 | B3-4 | 抽样 Tab 升级：方法选择统一入口、批历史/转移时间线、覆盖须填原因 | `ui/tabs/sampling_tab.py` | UI 冒烟：录入批 → 拒收触发加严 → 时间线可见 |
 | B3-5 | 性能与基线：100 万行抽样 + 判定耗时进性能基线 | `tools/benchmark.py`、`tools/perf_baseline.json` | 新指标入 10+2 项基线并通过 |
+
+**B3 完成记录（2026-10-14）**：
+
+1. 转移状态机落地（B3-1）：`core/sampling_state.py` 新增 `SamplingStateManager`
+   （无 Qt）——按供应商·产品线作用域维护 `TransferState` 与检验批历史；登记批后
+   调用 B0 冻结的纯函数 `evaluate_transfer`；同输入批序列在两个管理器上重跑
+   轨迹逐条一致（对照测试）。**过程缺陷修复**：初版评估先取历史后追加本批，
+   导致"连续 2 批拒收"永不触发——冒烟测试捕获后改为"历史窗口 + 本批"。
+2. 确定性抽样（B3-2）：`SamplingEngine.sample_frame` 统一入口
+   （random/stratified/systematic + seed）；`systematic_sample` 修复无种子问题
+   （default_rng）；分层抽样每组派生确定性种子；矩阵测试覆盖"同参数重跑样本
+   逐行一致 + 指纹一致"（随机/分层/系统全查）。
+3. 方案留痕与账本（B3-3）：`select_plan` → `StandardRegistry` 登记
+   `sampling_plan` 版本（as-of、同方案幂等 plan_ref）+ 账本
+   `sampling_plan_selected`（stage/decision/plan）；`record_lot` →
+   `lot_inspected`（decision_id / row_fingerprint / state_before/after）；
+   转移 → `sampling_transfer_changed`（rule / reason / triggering_lots）；
+   手动覆盖必须填写原因（override 留痕）；抽样事件随证据包**独立校验通过**
+   （新增验收用例：导出 → verify → 事件文本含加严依据）。
+4. 抽样 Tab 升级（B3-4）：新增「批检验（转移）」面板——供应商/产品线/批量/
+   AQL/检验水平 → 查询方案（按当前状态查表，展示 字码/样本量/Ac/Re/状态）；
+   抽样方式（随机/分层/系统）+ 种子 + 样本行指纹显示；判定录入（检验数/
+   不合格数/严重标记/接收拒收）→ 登记批触发转移（提示"发生转移：连续 2 批
+   拒收…"）；手动覆盖（必填原因）；批历史/转移/方案三合一时间线（倒序，
+   同一时间戳按 转移 > 批 > 方案）。
+5. 性能基线（B3-5）：新增 `sampling_1m_rows_s`（百万行三种抽样各 n=200 +
+   指纹 + 方案选择/批登记判定），实测 **0.793s** 入基线；门禁通过（11 项）。
+6. 验证：新增 3 个测试文件 / +37 例；**全量逐文件回归 191 文件 / 2358 通过 /
+   56 跳过 / 0 失败（545.0s）**；ruff 零告警。另修复两处测试稳定性问题（日期
+   硬编码跨天失效；流式管道满载时序抖动改为轮询等待，均非产品缺陷）。
+7. 边界：`production_stable` 默认 True（自动转移按生产稳定处理，"生产不稳定
+   声明"入口留给后续版本）；放宽启用状态随 `sampling.json` 持久化（默认禁用）。
 
 ### B4 收益账本与 COPQ（8–10 人日）
 

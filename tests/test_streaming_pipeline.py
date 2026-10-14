@@ -46,8 +46,14 @@ def test_mock_jump_produces_offset_samples():
     normal = d.poll()
     # 跳变窗口放宽到 0.6s：避免满载回归时调度抖动把窗口耗尽（原 0.1s 会偶发失败）
     d.inject_jump(10.0, duration=0.6)
-    time.sleep(0.1)
-    jumped = d.poll()
+    # 满载回归下轮询调度可能延迟——轮询等待直至采到跳变样本（上限 0.5s）
+    deadline = time.time() + 0.5
+    jumped = []
+    while time.time() < deadline:
+        jumped = d.poll()
+        if any(s.value > 108.0 for s in jumped):
+            break
+        time.sleep(0.02)
     d.close()
     assert jumped, "跳变窗口内应采到样本"
     assert any(s.value > 108.0 for s in jumped), "跳变期间应有 >108 的样本"
