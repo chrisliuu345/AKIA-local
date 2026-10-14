@@ -9,30 +9,30 @@
 > v4.2.0 Release 中的 Linux AppImage 资产仍沿用旧文件名 `QA-Tool-4.2.0-x86_64.AppImage`
 > （GitHub 资产无法追溯改名）；自 v4.3.0 起统一为 `AKIA-*`。
 >
-> **发布形态**：当前版本 **v4.3.0 改善案例与证据账本** —— 源码 + Linux AppImage
-> （`AKIA-4.3.0-x86_64.AppImage`，附 `.sha256` 校验文件）；Windows 安装包在 Windows 侧构建。
+> **发布形态**：当前版本 **v4.4.0 闭环执行与效果验证** —— 源码 + Linux AppImage
+> （`AKIA-4.4.0-x86_64.AppImage`，附 `.sha256` 校验文件）；Windows 安装包在 Windows 侧构建。
 
 ---
 
 ## 快速开始
 
-最新发布为 v4.3.0，提供免装 Python 环境的离线运行包；Linux 侧为 **AppImage**（随 Release 发布），
+最新发布为 v4.4.0，提供免装 Python 环境的离线运行包；Linux 侧为 **AppImage**（随 Release 发布），
 Windows 侧为 **Inno Setup 安装包**（需在 Windows 机器上构建）：
 
 | 版本 | 安装文件 | 适用系统 | 发布状态 | 安装方式 |
 |------|----------|----------|----------|----------|
-| **Linux AppImage** | `AKIA-4.3.0-x86_64.AppImage` | 任意 x86_64 Linux（Debian / Ubuntu / Fedora / elementary 等） | ✅ 随 [v4.3.0 Release](https://github.com/chrisliuu345/AKIA-local/releases/tag/v4.3.0) 提供（附 `.sha256` 校验文件） | 免安装：赋予执行权限后直接运行 |
-| **Windows 安装包** | `AKIA-Setup-4.3.0.exe` | Windows 10/11（64 位） | Windows 侧构建（`build_pyinstaller.py` + `packaging/AKIA-installer.iss`） | 双击 Inno Setup 向导安装，开始菜单/桌面启动 |
+| **Linux AppImage** | `AKIA-4.4.0-x86_64.AppImage` | 任意 x86_64 Linux（Debian / Ubuntu / Fedora / elementary 等） | ✅ 随 [v4.4.0 Release](https://github.com/chrisliuu345/AKIA-local/releases/tag/v4.4.0) 提供（附 `.sha256` 校验文件） | 免安装：赋予执行权限后直接运行 |
+| **Windows 安装包** | `AKIA-Setup-4.4.0.exe` | Windows 10/11（64 位） | Windows 侧构建（`build_pyinstaller.py` + `packaging/AKIA-installer.iss`） | 双击 Inno Setup 向导安装，开始菜单/桌面启动 |
 
 > Linux 仅发布 **AppImage** 单一格式（不再构建 `.deb`）；Debian/Ubuntu/Fedora 等发行版通用。
 
 ### Linux（AppImage，免安装）
 
 ```bash
-# 从 v4.3.0 Release 下载 AppImage 与同名 .sha256 校验文件后
-sha256sum -c AKIA-4.3.0-x86_64.AppImage.sha256
-chmod +x AKIA-4.3.0-x86_64.AppImage
-./AKIA-4.3.0-x86_64.AppImage
+# 从 v4.4.0 Release 下载 AppImage 与同名 .sha256 校验文件后
+sha256sum -c AKIA-4.4.0-x86_64.AppImage.sha256
+chmod +x AKIA-4.4.0-x86_64.AppImage
+./AKIA-4.4.0-x86_64.AppImage
 ```
 
 > 无 FUSE 的环境（容器 / 精简发行版）追加 `--appimage-extract-and-run` 参数即可解包运行。
@@ -41,7 +41,7 @@ chmod +x AKIA-4.3.0-x86_64.AppImage
 ### Windows（安装包）
 
 在 Windows 上执行 `python build_pyinstaller.py --onefile`，再用 Inno Setup 编译
-`packaging/AKIA-installer.iss`，产物 `AKIA-Setup-4.3.0.exe` 双击按向导安装
+`packaging/AKIA-installer.iss`，产物 `AKIA-Setup-4.4.0.exe` 双击按向导安装
 （含开始菜单与桌面快捷方式）。
 
 ### 源码运行
@@ -109,6 +109,7 @@ python main.py
 | **PPAP** | 生产件批准程序 · 18 项检查清单 |
 | **控制计划** | FMEA → 控制计划 → SPC 五链贯通 |
 | **改善案例工作台** | 案例脊柱：基线测量 → 时间研究 → 线平衡瓶颈 → 改善方案 → 复测 → 配对检验 → 结论 → 标准草稿；每步留痕时间戳 · 数据引用 · 判定凭证 · 测量事件；**标准版本记录**（规格限/控制限/标准工时/组合票/控制计划条目 + 变更原因 + as-of 历史复判）；**证据链**（哈希链账本 · 证据视图/指纹重算/追溯码定位 · 可独立校验的证据包 · 脱敏分享包+泄漏扫描） |
+| **闭环执行（v4.4.0）** | **告警自动立案 8D**（critical 同步立案 · 30 分钟冷却合并 · D6 数据门禁：关闭必须带复测数据）· **测量系统在线化**（滚动重复性/偏倚 · MPC 判异 · 健康分与漂移提示）· **可信抽样**（GB/T 2828.1 转移状态机 · 确定性抽样带种子与行指纹 · 方案留痕入证据账本 · 批检验面板）· **收益账本与 COPQ**（月度复算 · 防重复计入 · 置信门禁 · ROI）· **技能约束线平衡**（技能矩阵 + 人数/设备约束输出可执行排班）· **抽样透明化**（图表/趋势/画像抽样统一标注且可复现） |
 
 ### AI 与报告
 
@@ -174,7 +175,7 @@ analysis/              # 分析引擎 (14 模块)
 core/                  # 核心引擎
 ui/                    # PySide6 UI (37 个 Tab + 插件 Tab)
 output/                # 报告引擎
-tests/                 # 1970+ 测试
+tests/                 # 2400+ 测试
 ```
 
 ---
@@ -183,8 +184,12 @@ tests/                 # 1970+ 测试
 
 从 [Releases](https://github.com/chrisliuu345/AKIA-local/releases) 下载最新版本：
 
-- `v4.3.0`（当前）— **改善案例与证据账本**（B0–B6）：案例生命周期 / 测量四通道 / 标准版本记录 /
-  证据账本与交换 v1；Linux AppImage `AKIA-4.3.0-x86_64.AppImage` + 源码包（zip / tar.gz）；
+- `v4.4.0`（当前）— **闭环执行与效果验证**（B0–B8）：告警自动立案 8D / 测量系统在线化 /
+  可信抽样（转移状态机 + 抽样决定留痕）/ 收益账本与 COPQ / 技能约束线平衡 / 抽样透明化
+  （八链路端到端演示 `tools/demo_v44_case.py`）；Linux AppImage `AKIA-4.4.0-x86_64.AppImage`
+  + 源码包（zip / tar.gz）；发布说明见 [`docs/releases/v4.4.0.md`](docs/releases/v4.4.0.md)
+- `v4.3.0` — **改善案例与证据账本**（B0–B6）：案例生命周期 / 测量四通道 / 标准版本记录 /
+  证据账本与交换 v1；Linux AppImage（x86_64）+ 源码包（zip / tar.gz）；
   发布说明见 [`docs/releases/v4.3.0.md`](docs/releases/v4.3.0.md)
 - `v4.2.1` — **源码补丁**（质量加固 + 品牌/体验/启动修复），仅源码 zip / tar.gz，无新安装包；
   发布说明见 [`docs/releases/v4.2.1.md`](docs/releases/v4.2.1.md)
@@ -196,6 +201,9 @@ tests/                 # 1970+ 测试
 ## 开发文档
 
 - [插件数据源合同（API 2.1）](docs/plugin-data-source.md)
+- [v4.4.0 迁移手册](docs/migration/v4.4.0.md)
+- [v4.4.0 发布说明](docs/releases/v4.4.0.md)
+- 闭环八链路端到端演示：`python tools/demo_v44_case.py --output TEMP/demo_v44`
 - [v4.3.0 迁移手册](docs/migration/v4.3.0.md)
 - [v4.3.0 发布说明](docs/releases/v4.3.0.md)
 - 端到端证据链演示：`python tools/demo_v43_case.py --output TEMP/demo_v43`
@@ -210,4 +218,4 @@ tests/                 # 1970+ 测试
 
 ---
 
-*Python 3.14 + PySide6 · 2180+ 测试 · 37 个分析 Tab + 插件接口 v2.1*
+*Python 3.14 + PySide6 · 2400+ 测试 · 37 个分析 Tab + 插件接口 v2.1*
