@@ -609,18 +609,22 @@ class SPCTab(BaseAnalysisTab):
             if len(ctx.standards) > before:
                 created.append(record)
         charts = (result.get("result") or {}) if isinstance(result, dict) else {}
-        for chart in charts.values():
-            if not isinstance(chart, dict) or "ucl" not in chart or "lcl" not in chart:
-                continue
+        chart_items = [(key, chart) for key, chart in charts.items()
+                       if isinstance(chart, dict)
+                       and "ucl" in chart and "lcl" in chart]
+        # 多图分析（如 XBar-R 的均值图 + 极差图）全部记录（B7-3）：
+        # 主图沿用既有对象引用（向后兼容），其余子图加 ":<图表键>" 后缀区分
+        for index, (chart_key, chart) in enumerate(chart_items):
+            ref = (f"{col}:{chart_type}" if index == 0
+                   else f"{col}:{chart_type}:{chart_key}")
             before = len(ctx.standards)
             record = ctx.record_control_limit(
-                f"{col}:{chart_type}", cl=chart.get("cl"), ucl=chart.get("ucl"),
+                ref, cl=chart.get("cl"), ucl=chart.get("ucl"),
                 lcl=chart.get("lcl"), chart_type=chart_type,
                 subgroup_size=params.get("subgroup_size"),
                 change_reason=text, changed_by="user")
             if len(ctx.standards) > before:
                 created.append(record)
-            break
         self.standard_object_ref = col
         if created:
             QMessageBox.information(

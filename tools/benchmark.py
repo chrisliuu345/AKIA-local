@@ -33,7 +33,8 @@ METRIC_KEYS = ("cold_start_s", "import_1m_rows_s", "chart_render_5k_s",
                "ml_train_5k_s", "spc_100k_rows_s", "spc_1m_rows_s",
                "msa_100k_rows_s", "ml_train_100k_rows_s",
                "evidence_append_1k_s", "case_open_1k_events_s",
-               "sampling_1m_rows_s")
+               "sampling_1m_rows_s", "benefit_recompute_10k_s",
+               "gauge_rolling_100k_s")
 DEFAULT_TOLERANCE = 3.0
 
 
@@ -259,6 +260,42 @@ def measure_sampling_1m_rows() -> float:
     return _timed(_run)
 
 
+def measure_benefit_recompute_10k() -> float:
+    """1 万条收益记录的月度复算（口径扫描 + 快照生成）。"""
+    def _run():
+        from core.benefit_ledger import BenefitLedger, BenefitRecord
+
+        ledger = BenefitLedger()
+        for index in range(10_000):
+            ledger.add(BenefitRecord(
+                case_id=f"C{index}", month="2026-10",
+                ledger_kind="improvement", category="改善收益", confidence="A",
+                basis={"baseline_value": 10.0, "new_value": 8.0,
+                       "quantity": 1.0, "unit_cost": 1.0, "unit": "s"}))
+        result = ledger.recompute_month("2026-10", now="2026-10-15T09:00:00+08:00")
+        if result["summary"]["count"] != 10_000:
+            raise RuntimeError("收益复算记录数不符")
+
+    return _timed(_run)
+
+
+def measure_gauge_rolling_100k() -> float:
+    """量具滚动监控一次摄入 10 万点（批量，滚动窗口 50）。"""
+    def _run():
+        import numpy as np
+
+        from core.gauge_study import GaugeMonitor, GaugeStudyPolicy
+
+        monitor = GaugeMonitor()
+        monitor.set_policy(GaugeStudyPolicy(
+            gauge_id="bench:value", expected_value=10.0, window_n=50,
+            drift_rule={"bias_limit": 0.1}))
+        values = np.random.default_rng(5).normal(10.0, 0.01, 100_000)
+        monitor.ingest_values("bench:value", values.tolist())
+
+    return _timed(_run)
+
+
 MEASURES = {
     "cold_start_s": measure_cold_start,
     "import_1m_rows_s": measure_import_1m_rows,
@@ -271,6 +308,8 @@ MEASURES = {
     "evidence_append_1k_s": measure_evidence_append_1k,
     "case_open_1k_events_s": measure_case_open_1k_events,
     "sampling_1m_rows_s": measure_sampling_1m_rows,
+    "benefit_recompute_10k_s": measure_benefit_recompute_10k,
+    "gauge_rolling_100k_s": measure_gauge_rolling_100k,
 }
 
 

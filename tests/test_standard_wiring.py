@@ -42,6 +42,30 @@ class TestControlPlanWiring:
         finally:
             tab.close()
 
+    def test_cell_edit_throttles_versions(self):
+        """逐格编辑节流（B7-3）：连续编辑合并为一个版本，显式 flush 才落库。"""
+        from ui.tabs.control_plan_tab import ControlPlanTab
+
+        tab = ControlPlanTab()
+        ctx = ProjectContext()
+        tab.set_project_context(ctx)
+        try:
+            tab._sync_context("初始控制计划")
+            key = "OP10|尺寸规格"
+            assert len(ctx.standards.history(key)) == 1
+            tab.table.item(0, 3).setText("10±0.07mm")
+            tab._on_cell_changed(0, 3)
+            tab.table.item(0, 3).setText("10±0.08mm")
+            tab._on_cell_changed(0, 3)
+            assert len(ctx.standards.history(key)) == 1, "节流窗口内不应立即产生版本"
+            tab._flush_pending_sync()
+            history = ctx.standards.history(key)
+            assert len(history) == 2
+            assert history[-1].payload["row"]["规格/公差"] == "10±0.08mm"
+            assert history[-1].change_reason == "控制计划条目编辑（自动保存）"
+        finally:
+            tab.close()
+
 
 class TestCapabilityWiring:
     def test_save_specification_versions(self):
@@ -107,6 +131,33 @@ class TestSpcWiring:
             assert ctx.standards.current("轴径").payload["usl"] == 10.1
             control = ctx.standards.current("轴径:I-MR")
             assert control.payload["ucl"] == 10.2 and control.payload["lcl"] == 9.8
+        finally:
+            tab.close()
+
+    def test_multi_chart_control_limits_all_recorded(self):
+        """XBar-R 的均值图与极差图控制限全部入标准（B7-3）。"""
+        from ui.tabs.spc_tab import SPCTab
+
+        tab = SPCTab()
+        ctx = ProjectContext()
+        tab.set_project_context(ctx)
+        tab.col_combo.addItem("轴径")
+        tab.current_result = {
+            "analysis_type": "XBar-R",
+            "params": {"column": "轴径", "subgroup_size": 5,
+                       "chart_type": "XBar-R"},
+            "result": {
+                "xbar_chart": {"cl": 10.0, "ucl": 10.3, "lcl": 9.7},
+                "r_chart": {"cl": 1.0, "ucl": 2.1, "lcl": 0.0},
+            },
+        }
+        try:
+            created = tab.save_standard("初始版本")
+            refs = {record.object_ref for record in created}
+            assert refs == {"轴径:XBar-R", "轴径:XBar-R:r_chart"}
+            range_record = ctx.standards.current("轴径:XBar-R:r_chart")
+            assert range_record.payload["ucl"] == 2.1
+            assert range_record.payload["chart_type"] == "XBar-R"
         finally:
             tab.close()
 

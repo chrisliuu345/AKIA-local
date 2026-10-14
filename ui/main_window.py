@@ -98,6 +98,10 @@ class MainWindow(QMainWindow):
         self.case_workflows: list = []
         self._last_case_workflow = None
         self.measurement_store = MeasurementStore()
+        # 决策落地（PLAN_v4.4.0 §8-7，2026-10-14）：连接器常驻采集默认**不写**
+        # 项目测量集合——避免长时运行撑大 `.qap` 与证据账本；案例按最近窗口
+        # 显式采集（工作台「采集连接器测量」）。如需常开，需先评估 FIFO 截断
+        # 与账本增长的现场影响，故暂不提供 UI 开关（迁移手册有记录）。
         self.measurement_capture = False
         self._chart_dependency_warned = False
         self.ledger = EvidenceLedger()
