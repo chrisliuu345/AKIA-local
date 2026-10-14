@@ -9,31 +9,31 @@
 > The v4.2.0 Linux AppImage asset keeps its original file name `QA-Tool-4.2.0-x86_64.AppImage`
 > (published GitHub assets cannot be renamed); releases from v4.3.0 use `AKIA-*`.
 >
-> **Release form**: current version **v4.3.0 — improvement cases & evidence ledger** — source plus a
-> Linux AppImage (`AKIA-4.3.0-x86_64.AppImage` with a `.sha256` checksum file); the Windows installer
+> **Release form**: current version **v4.4.0 — closed-loop execution & effect verification** — source plus a
+> Linux AppImage (`AKIA-4.4.0-x86_64.AppImage` with a `.sha256` checksum file); the Windows installer
 > is built on Windows.
 
 ---
 
 ## Quick Start
 
-The latest release is v4.3.0, shipping standalone, fully offline packages — a **Linux AppImage** (published with the release)
+The latest release is v4.4.0, shipping standalone, fully offline packages — a **Linux AppImage** (published with the release)
 and a **Windows Inno Setup installer** (built on Windows):
 
 | Edition | Installer file | Systems | Status | Install |
 |---------|----------------|---------|--------|---------|
-| **Linux AppImage** | `AKIA-4.3.0-x86_64.AppImage` | Any x86_64 Linux (Debian / Ubuntu / Fedora / elementary, …) | ✅ Ships with the [v4.3.0 release](https://github.com/chrisliuu345/AKIA-local/releases/tag/v4.3.0) (plus a `.sha256` checksum file) | Portable: make executable and run |
-| **Windows installer** | `AKIA-Setup-4.3.0.exe` | Windows 10/11 (64-bit) | Built on Windows (`build_pyinstaller.py` + `packaging/AKIA-installer.iss`) | Run the Inno Setup wizard; menu/desktop shortcuts |
+| **Linux AppImage** | `AKIA-4.4.0-x86_64.AppImage` | Any x86_64 Linux (Debian / Ubuntu / Fedora / elementary, …) | ✅ Ships with the [v4.4.0 release](https://github.com/chrisliuu345/AKIA-local/releases/tag/v4.4.0) (plus a `.sha256` checksum file) | Portable: make executable and run |
+| **Windows installer** | `AKIA-Setup-4.4.0.exe` | Windows 10/11 (64-bit) | Built on Windows (`build_pyinstaller.py` + `packaging/AKIA-installer.iss`) | Run the Inno Setup wizard; menu/desktop shortcuts |
 
 > Linux ships **AppImage only** (`.deb` is no longer built); works across Debian/Ubuntu/Fedora and derivatives.
 
 ### Linux (AppImage, portable)
 
 ```bash
-# download both files from the v4.3.0 release first
-sha256sum -c AKIA-4.3.0-x86_64.AppImage.sha256
-chmod +x AKIA-4.3.0-x86_64.AppImage
-./AKIA-4.3.0-x86_64.AppImage
+# download both files from the v4.4.0 release first
+sha256sum -c AKIA-4.4.0-x86_64.AppImage.sha256
+chmod +x AKIA-4.4.0-x86_64.AppImage
+./AKIA-4.4.0-x86_64.AppImage
 ```
 
 > On systems without FUSE (containers / minimal distros) add `--appimage-extract-and-run`.
@@ -42,7 +42,7 @@ chmod +x AKIA-4.3.0-x86_64.AppImage
 ### Windows (installer)
 
 On Windows run `python build_pyinstaller.py --onefile`, then compile
-`packaging/AKIA-installer.iss` with Inno Setup to produce `AKIA-Setup-4.3.0.exe`
+`packaging/AKIA-installer.iss` with Inno Setup to produce `AKIA-Setup-4.4.0.exe`
 (start-menu and desktop shortcuts included).
 
 ### From Source
@@ -107,6 +107,7 @@ Requires Python 3.11+
 | **FMEA** | RPN=S×O×D · Risk Coloring · PFMEA/DFMEA |
 | **PPAP** | Production Part Approval Process · 18-item Checklist |
 | **Control Plan** | FMEA → Control Plan → SPC Five-chain Integration |
+| **Closed-loop execution (v4.4.0)** | **Alert→8D auto case** (critical alerts open a case synchronously · 30-min cooldown merge · D6 data gate: closure needs re-measurement data) · **Measurement system online** (rolling repeatability/bias · MPC detection · health score & drift alerts) · **Trustworthy sampling** (GB/T 2828.1 transfer state machine · deterministic sampling with seed + row fingerprint · scheme trail in the evidence ledger · lot-inspection panel) · **Benefit ledger & COPQ** (monthly recompute · double-count protection · confidence gate · ROI) · **Skill-constrained line balancing** (skill matrix + headcount/equipment caps → executable roster) · **Sampling transparency** (chart/trend/profiler sampling uniformly labelled and reproducible) |
 
 ### AI & Reports
 
@@ -160,7 +161,7 @@ analysis/              # Analysis engines (14 modules)
 core/                  # Core Engines
 ui/                    # PySide6 UI (37 Tabs + plugin Tabs)
 output/                # Report Engine
-tests/                 # 1970+ Tests
+tests/                 # 2400+ Tests
 ```
 
 ---
@@ -169,9 +170,15 @@ tests/                 # 1970+ Tests
 
 Download from [Releases](https://github.com/chrisliuu345/AKIA-local/releases):
 
-- `v4.3.0` (current) — **improvement cases & evidence ledger** (B0–B6): case lifecycle /
+- `v4.4.0` (current) — **closed-loop execution & effect verification** (B0–B8): alert→8D auto case /
+  measurement system online / trustworthy sampling (transfer state machine + sampling-decision trail) /
+  benefit ledger & COPQ / skill-constrained line balancing / sampling transparency
+  (eight-link end-to-end demo `tools/demo_v44_case.py`); Linux AppImage `AKIA-4.4.0-x86_64.AppImage`
+  plus source archives (zip / tar.gz) —
+  notes: [`docs/releases/v4.4.0.md`](docs/releases/v4.4.0.md)
+- `v4.3.0` — **improvement cases & evidence ledger** (B0–B6): case lifecycle /
   measurement channels / standard version records / evidence ledger & exchange v1;
-  Linux AppImage `AKIA-4.3.0-x86_64.AppImage` plus source archives (zip / tar.gz) —
+  Linux AppImage (x86_64) plus source archives (zip / tar.gz) —
   notes: [`docs/releases/v4.3.0.md`](docs/releases/v4.3.0.md)
 - `v4.2.1` — **source-only patch** (quality hardening + branding/UX/startup fixes);
   source zip / tar.gz only, no new installers — notes: [`docs/releases/v4.2.1.md`](docs/releases/v4.2.1.md)
@@ -183,6 +190,9 @@ Download from [Releases](https://github.com/chrisliuu345/AKIA-local/releases):
 ## Developer Docs
 
 - [Plugin data source contract (API 2.1)](docs/plugin-data-source.md)
+- [v4.4.0 migration guide](docs/migration/v4.4.0.md)
+- [v4.4.0 release notes](docs/releases/v4.4.0.md)
+- Closed-loop eight-link end-to-end demo: `python tools/demo_v44_case.py --output TEMP/demo_v44`
 - [v4.3.0 migration guide](docs/migration/v4.3.0.md)
 - [v4.3.0 release notes](docs/releases/v4.3.0.md)
 - End-to-end evidence-chain demo: `python tools/demo_v43_case.py --output TEMP/demo_v43`
@@ -197,4 +207,4 @@ Proprietary commercial software. Unauthorized copying, modification, or distribu
 
 ---
 
-*Python 3.14 + PySide6 · 2180+ Tests · 37 Analysis Tabs + Plugin API v2.1*
+*Python 3.14 + PySide6 · 2400+ Tests · 37 Analysis Tabs + Plugin API v2.1*

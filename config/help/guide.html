@@ -83,7 +83,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
 
 <header class="top">
   <span class="logo">AKIA 使用指南</span>
-  <span class="tag">v4.3.0</span>
+  <span class="tag">v4.4.0</span>
   <span class="tag">Windows / Linux</span>
   <span class="meta">质量工程（QE）· 工业工程（IE）· 离线分析</span>
 </header>
@@ -108,6 +108,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
   <a href="#modules-eng">工程工具</a>
   <a href="#predictive">预测分析（机器学习）</a>
   <a href="#case-evidence">改善案例与证据链</a>
+  <a href="#closed-loop">闭环执行与效果验证</a>
   <div class="grp">图表与报告</div>
   <a href="#charts">图表与实时编辑</a>
   <a href="#export">导出与报告</a>
@@ -156,22 +157,22 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
 </section>
 
 <section class="card" id="install">
-  <h2>安装包与启动（当前版本 v4.3.0）</h2>
-  <p>v4.3.0 免装 Python 环境、完全离线运行。Linux 侧只发布 AppImage 单一格式（不再构建
+  <h2>安装包与启动（当前版本 v4.4.0）</h2>
+  <p>v4.4.0 免装 Python 环境、完全离线运行。Linux 侧只发布 AppImage 单一格式（不再构建
   <code>.deb</code>），已随 GitHub Release 提供下载；Windows 安装包在 Windows 侧用仓库内
   <code>packaging/AKIA-installer.iss</code> 构建：</p>
   <table>
     <tr><th>版本</th><th>安装文件</th><th>适用系统</th><th>发布状态</th><th>安装 / 启动</th></tr>
     <tr>
       <td class="k">Linux AppImage</td>
-      <td><code>AKIA-4.3.0-x86_64.AppImage</code></td>
+      <td><code>AKIA-4.4.0-x86_64.AppImage</code></td>
       <td>任意 x86_64 Linux（Debian / Ubuntu / elementary 等）</td>
-      <td>✅ 随 <code>v4.3.0</code> Release 提供（附 <code>.sha256</code> 校验文件）</td>
+      <td>✅ 随 <code>v4.4.0</code> Release 提供（附 <code>.sha256</code> 校验文件）</td>
       <td>免安装：<code>chmod +x</code> 后直接运行；可移动到 <code>/opt</code> 并自建桌面快捷方式</td>
     </tr>
     <tr>
       <td class="k">Windows 安装包</td>
-      <td><code>AKIA-Setup-4.3.0.exe</code></td>
+      <td><code>AKIA-Setup-4.4.0.exe</code></td>
       <td>Windows 10/11（64 位）</td>
       <td>Windows 侧构建（Linux 环境无法出包；构建脚本与 .iss 已就绪）</td>
       <td>双击运行 Inno Setup 向导，自动创建开始菜单/桌面快捷方式，支持卸载</td>
@@ -179,10 +180,10 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
   </table>
   <div class="note">
     <b>下载与校验（Linux）：</b>
-    <pre class="tight"><code># 从 https://github.com/chrisliuu345/AKIA-local/releases/tag/v4.3.0 下载两个文件后
-sha256sum -c AKIA-4.3.0-x86_64.AppImage.sha256
-chmod +x AKIA-4.3.0-x86_64.AppImage
-./AKIA-4.3.0-x86_64.AppImage</code></pre>
+    <pre class="tight"><code># 从 https://github.com/chrisliuu345/AKIA-local/releases/tag/v4.4.0 下载两个文件后
+sha256sum -c AKIA-4.4.0-x86_64.AppImage.sha256
+chmod +x AKIA-4.4.0-x86_64.AppImage
+./AKIA-4.4.0-x86_64.AppImage</code></pre>
     无 FUSE 的容器环境可加 <code>--appimage-extract-and-run</code> 参数运行（解包到临时目录执行）。
   </div>
 </section>
@@ -622,9 +623,60 @@ chmod +x AKIA-4.3.0-x86_64.AppImage
   原始视频与帧不进入事件与分享包。</p>
 </section>
 
+<section class="card" id="closed-loop">
+  <h2>闭环执行与效果验证（v4.4.0 新增）</h2>
+  <p>把「异常 → 立案 → 改善 → 复测 → 关闭 → 收益」串成一条数据驱动的闭环；案例关闭必须由
+  复测数据与统计判定放行。项目文件升级为 <code>.qap</code> 2.0（新增
+  抽样 / 量具 / 收益 / 技能 四段；1.6–1.9 旧文件只读兼容并自动升级）。</p>
+
+  <h3>告警自动立案 8D</h3>
+  <ul>
+    <li>critical 告警触发即同步自动立案（无轮询延迟）：数据快照进入案例基线，D1 预填、D2 由快照 + 特性生成、D3/D4 留空</li>
+    <li>同规则告警 30 分钟内合并为同一案例步骤（冷却合并），跨窗口自动新开；一案一号，项目重载后去重延续</li>
+    <li><b>D6 数据门禁</b>：关闭案例必须关联复测数据引用（配对检验 / SPC / 能力对比），不接受纯文字结论</li>
+    <li>入口：告警中心一键打开案例；案例中心显示「来源」徽标；8D Tab 可继续编辑草稿</li>
+  </ul>
+
+  <h3>测量系统在线化</h3>
+  <ul>
+    <li>标准件 / 重复测量自动积累（文件 / 连接器 / 插件 / 手工四通道统一摄入）→ 滚动重复性与偏倚</li>
+    <li>偏倚序列接入 MPC（测量过程控制）图，≥10 点预热后采信；支持偏倚限 / UCL / LCL 漂移规则</li>
+    <li>量具健康分（覆盖率 / 偏倚 / 稳定性加权）→ ok / watch / drift；漂移时账本 + 告警中心 + 状态栏三件套提示（1 小时冷却）</li>
+    <li>MSA Tab「量具在线监控」查看策略、状态与偏倚历史；研究随 <code>.qap gauge_studies</code> 段往返，重载后继续判异</li>
+  </ul>
+
+  <h3>可信抽样（批检验与转移）</h3>
+  <ul>
+    <li>GB/T 2828.1 正常 / 加严 / 放宽按供应商 · 产品线自动转移（抽样表按标准原文重建：箭头解析、7 档检验水平、转移规则纯函数）；放宽默认禁用，需显式启用</li>
+    <li><b>确定性抽样</b>：随机 / 分层 / 系统 / 序贯 / 计量型 / C=0 方法统一入口，携带种子与样本行指纹——同参数重跑样本逐行一致</li>
+    <li><b>方案留痕</b>：方案选择、批检验判定、转移变更写入证据账本（含手动覆盖必填原因），随证据包可独立校验</li>
+    <li>抽样 Tab「批检验（转移）」面板：查询生效方案 → 抽样 → 登记判定 → 覆盖 → 三合一时间线</li>
+  </ul>
+
+  <h3>收益账本与 COPQ</h3>
+  <ul>
+    <li>案例关闭后「登记收益」：基准值 / 新值 / 数量 / 单价 → 按月入账；历史月冻结，当月口径按「现在生效」标准版本前移，金额不因版本改数</li>
+    <li>置信门禁：仅 A / A- / B 级可信数据入账；C 级进入待完善可见但不计入汇总；防重复键保证标准升版不打开第二条入账窗口</li>
+    <li>COPQ 四类分项（预防 / 鉴定 / 内部失败 / 外部失败）+ ROI；菜单「工具 → 收益账本」查看汇总 / 分项 / 记录表 / 月度复算；工作台显示累计收益</li>
+  </ul>
+
+  <h3>技能约束线平衡</h3>
+  <ul>
+    <li>技能矩阵（人员 × 工序 × 等级 + 工序最低要求，<code>skill-hash-v1</code> 指纹）在线平衡 Tab 内编辑，不新增 Tab</li>
+    <li>在 LPT 平衡结果之上做技能兼容指派：一人一工位 · 工位内工序满足最低等级 · 人数 / 设备并发上限；<b>不可行输出明细清单</b>（技能不满足 / 无人可用 / 人数不足 / 设备不足），不静默降级</li>
+    <li>排班结果可记入案例基线 / 复测（凭证含技能矩阵指纹与不可行明细）；<code>.qap skills</code> 段往返</li>
+  </ul>
+
+  <h3>抽样透明化</h3>
+  <ul>
+    <li>展示 / 分析层抽样统一为「抽样决定」记录（方法 / 源规模 / 样本规模 / 种子 / 强制保留点数），界面显式标注</li>
+    <li>图表 300 点智能系统抽样判异点全部保留；趋势图 1000 点抽稀端点 / 极值保留；画像大表（>5000 行）正态检验改为固定种子抽样（可复现），不再跳过</li>
+  </ul>
+</section>
+
 </main>
 </div>
-<footer>AKIA v4.3.0 · 本指南随软件离线分发（config/help/guide.html）· 菜单「帮助 → 使用指南」或按 F1 打开</footer>
+<footer>AKIA v4.4.0 · 本指南随软件离线分发（config/help/guide.html）· 菜单「帮助 → 使用指南」或按 F1 打开</footer>
 
 </body>
 </html>
