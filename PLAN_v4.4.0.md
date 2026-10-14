@@ -9,7 +9,7 @@
 > **执行进度（2026-10-14）**：B0 ✅ 契约基座与 `.qap` 2.0（含抽样表重建，发现并修复
 > v4.3.0 遗留缺陷）；B1 ✅ 告警自动立案 8D；B2 ✅ 测量系统在线化；B3 ✅ 可信抽样；
 > B4 ✅ 收益账本与 COPQ；B5 ✅ 技能约束线平衡（案例模板 #2）；B6 ✅ 抽样透明化收口；
-> B7 ✅ 集成、性能与质量收口；B8 发布收尾进行中。
+> B7 ✅ 集成、性能与质量收口；B8 ✅ 版本收尾与发布（v4.4.0 已发布）。
 
 **基线（v4.3.0 发布 + 审查修复后实测）**：178 个测试文件 / 2194 通过 / 56 跳过 /
 0 失败（514.2s）；ruff 全库零告警；性能基线 10 项通过；`.qap` 1.9（1.6–1.8 只读兼容）；
@@ -487,13 +487,35 @@ SchedulePlan    assignments[{process_id, operator, start_s, end_s}]
    **全量逐文件回归 198 文件 / 2418 通过 / 56 跳过 / 0 失败（624.7s）**；
    ruff 零告警；八链路演示退出码 0；过程无产品缺陷。
 
-### B8 版本收尾与发布（2–3 人日）
+### B8 版本收尾与发布（2–3 人日）✅ 2026-10-14
 
 | 编号 | 任务 | 落点 | 验收 |
 |------|------|------|------|
 | B8-1 | 版本四端一致（settings / version_info / Inno / 文档）+ 发布说明 | 同 v4.3.0 收尾流程 | `tools/check_version.py` 通过 |
 | B8-2 | 发布门禁全绿 + Linux AppImage 构建 + 启动冒烟 + `.sha256` | `tools/release_check.py`、`build_appimage.sh` | 178+ 文件全绿、AppImage 启动冒烟通过 |
 | B8-3 | README / ROADMAP（中英）/ 使用指南 / release notes 同步 | 文档 | 版本历史新增 v4.4.0 行 |
+
+**B8 完成记录（2026-10-14）**：
+
+1. 版本四端一致（B8-1）：`config/settings.py` / `version_info.txt` /
+   `packaging/AKIA-installer.iss` / 文档（README 中英 / INSTALL_LINUX / ROADMAP 中英）
+   全部升至 4.4.0，`tools/check_version.py` 通过；新 `docs/releases/v4.4.0.md`
+   （交付概览 / 关键能力 / 升级与兼容 / 验证 / 已知限制）。
+2. 发布门禁（B8-2）：`tools/release_check.py` 全绿——版本一致性 → ruff 零告警 →
+   全量逐文件回归 **198 文件 / 2418 通过 / 56 跳过 / 0 失败（587.8s）** →
+   性能基线 **13 项通过**（tolerance ×4，冷启动 1.423s）。
+   Linux AppImage 构建：`AKIA-4.4.0-x86_64.AppImage`（259 MB，sha256
+   `1c33ff8411a4be98aa26f8787f7a5ceb84f7faf0e40515e7252666c5f47cf2bd` + `.sha256`）；
+   无 FUSE 环境以 `--appimage-extract-and-run` 启动冒烟通过（主程序进程稳定运行）。
+   过程修复 1 处构建脚本缺陷：`build_appimage.sh` 仅探测 `/dev/fuse`，在
+   "/dev/fuse 存在但 libfuse.so.2 缺失" 的宿主上 appimagetool 仍会
+   `dlopen(): error loading libfuse.so.2` 失败——现同时探测 libfuse 运行库并回退
+   `--appimage-extract-and-run`（首次构建即复现并修复）。
+3. 文档同步（B8-3）：README 中英（发布形态 / 快速开始 / 下载 / 开发文档 / 核心功能
+   +闭环执行条目）· ROADMAP 中英（头部当前版本 / 状态行 / 流程图 / 状态表 / 版本历史
+   发布行 / 当前版本要点换版）· 使用指南 `config/help/guide.html`（安装段 + 新增
+   「闭环执行与效果验证（v4.4.0 新增）」章节：自动立案 / 测量在线 / 可信抽样 /
+   收益账本 / 技能排班 / 抽样透明化）· 迁移手册在 B7 已就位。
 
 ## 5. 排期（约 11–13 周，含 20% 缓冲）
 
