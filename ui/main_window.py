@@ -32,6 +32,10 @@ from core.project_context import ProjectContext
 from core.measurement_store import MeasurementStore
 from core.evidence_ledger import EvidenceLedger
 from core.alert_case import AlertCaseOrchestrator
+from core.benefit_ledger import (
+    BenefitLedger,
+    record_case_benefit as core_record_case_benefit,
+)
 from core.gauge_study import GaugeMonitor
 from core.sampling_state import SamplingStateManager
 from core.time_utils import now_iso
@@ -111,6 +115,7 @@ class MainWindow(QMainWindow):
         self.gauge_drift_alerted.connect(self._on_gauge_drift_ui)
         self.sampling_manager = SamplingStateManager(
             ledger=self.ledger, standards=self.project_context.standards)
+        self.benefit_ledger = BenefitLedger()
 
         self._setup_ui()
         self._menu_refs: list = []
@@ -470,6 +475,10 @@ class MainWindow(QMainWindow):
         self.standard_history_act = QAction("标准版本记录", self,
                                             triggered=self._on_standard_history)
         tools_menu.addAction(self.standard_history_act)
+        self.benefit_ledger_act = QAction("收益账本", self,
+                                          triggered=self._on_benefit_ledger)
+        self.benefit_ledger_act.setToolTip("改善收益 / COPQ 四类 / ROI / 月度复算（v4.4.0 B4）")
+        tools_menu.addAction(self.benefit_ledger_act)
         self.evidence_view_act = QAction("证据视图", self,
                                          triggered=self._on_evidence_view)
         tools_menu.addAction(self.evidence_view_act)
@@ -623,6 +632,46 @@ class MainWindow(QMainWindow):
         tab.load_report(report)
         self._switch_tab(TAB_INDEX["eight_d"])
         return True
+
+    # ------------------------------------------------------------ 收益账本（v4.4.0 B4）
+    def _benefit_event_sink(self, event_type: str, object_refs: list,
+                            payload: dict) -> None:
+        self._ledger_append(event_type, object_refs=object_refs, payload=payload)
+
+    def record_case_benefit(self, workflow, draft: dict):
+        """案例收益入账（关闭案例后由工作台调用；口径自动带标准版本）。"""
+        record = core_record_case_benefit(
+            self.benefit_ledger, workflow.case,
+            standards=self.project_context.standards,
+            event_sink=self._benefit_event_sink, **draft)
+        return record
+
+    def recompute_benefits(self, month: str) -> dict:
+        """月度复算（当月口径前移；历史月冻结），复算事件入证据账本。"""
+        return self.benefit_ledger.recompute_month(
+            month, standards=self.project_context.standards,
+            event_sink=self._benefit_event_sink)
+
+    def case_benefit_summary(self, case_id: str) -> str:
+        """案例维度的收益摘要（工作台显示，回答"这条改善省了多少"）。"""
+        records = self.benefit_ledger.for_case(case_id)
+        if not records:
+            return ""
+        admitted = [record for record in records if record.admits_to_summary]
+        total = sum(record.amount for record in admitted
+                    if record.ledger_kind == "improvement")
+        parts = [f"改善收益 {total:,.2f}（{len(admitted)} 条入账）"]
+        pending = len(records) - len(admitted)
+        if pending:
+            parts.append(f"{pending} 条待完善(C)")
+        return " · ".join(parts)
+
+    def _on_benefit_ledger(self):
+        from ui.dialogs.benefit_ledger_dialog import BenefitLedgerDialog
+
+        dialog = BenefitLedgerDialog(self.benefit_ledger, self,
+                                     recompute=self.recompute_benefits)
+        dialog.exec()
 
     def _on_standard_history(self):
         """标准版本时间线（B3）：对象 / 生效区间 / 变更原因 / 变更人。"""
@@ -1848,6 +1897,7 @@ class MainWindow(QMainWindow):
                 evidence_events=self.ledger,
                 gauge_studies=self.gauge_monitor.to_dict(),
                 sampling=self.sampling_manager.to_dict(),
+                benefits=self.benefit_ledger.to_dict(),
             )
             self.status_label.setText(f"项目已保存: {path}")
             recent = ProjectManager.recent_projects()
@@ -1898,6 +1948,7 @@ class MainWindow(QMainWindow):
         self.sampling_manager = SamplingStateManager.from_dict(
             project.get("sampling"), ledger=self.ledger,
             standards=self.project_context.standards)
+        self.benefit_ledger = BenefitLedger.from_dict(project.get("benefits"))
         sampling_tab = self._tab_cache.get(TAB_INDEX["sampling"])
         if sampling_tab is not None and hasattr(sampling_tab, "set_sampling_context"):
             sampling_tab.set_sampling_context(self.sampling_manager)
@@ -2500,7 +2551,8 @@ class MainWindow(QMainWindow):
                 measurements=self.measurement_store.to_dicts(),
                 evidence_events=self.ledger,
                 gauge_studies=self.gauge_monitor.to_dict(),
-                sampling=self.sampling_manager.to_dict())
+                sampling=self.sampling_manager.to_dict(),
+                benefits=self.benefit_ledger.to_dict())
             audit("share_project", "user",
                   f"保存 {os.path.basename(path)}")
             self.status_label.setText("共享项目已保存")

@@ -29,7 +29,7 @@ class TestRecordValidation:
         restored = BenefitRecord.from_dict(record.to_dict())
         assert restored == record
         assert record.double_count_key == double_count_key(
-            "CASE-1", "2026-10", record.basis, "改善收益")
+            "CASE-1", "2026-10", record.basis, "改善收益", "improvement")
         assert record.category in BENEFIT_CATEGORIES
 
     def test_month_format(self):
