@@ -310,6 +310,9 @@ class SamplingEngine:
 
     @staticmethod
     def random_sample(df: pd.DataFrame, n: int, seed: int | None = None) -> pd.DataFrame:
+        n = int(n)
+        if n < 1:
+            raise ValueError(f"抽样数量必须 ≥ 1: {n}")
         if n >= len(df):
             return df.copy()
         return df.sample(n, random_state=seed).reset_index(drop=True)
@@ -318,22 +321,56 @@ class SamplingEngine:
     def stratified_sample(
         df: pd.DataFrame, column: str, n: int, seed: int | None = None
     ) -> pd.DataFrame:
+        n = int(n)
+        if n < 1:
+            raise ValueError(f"抽样数量必须 ≥ 1: {n}")
+        if column not in df.columns:
+            raise ValueError(f"分层列不存在: {column}")
         groups = df.groupby(column)
         frac = min(n / len(df), 1.0)
         result = []
-        for _, g in groups:
+        for index, (_, g) in enumerate(groups):
             k = max(1, int(len(g) * frac))
-            result.append(g.sample(min(k, len(g)), random_state=seed))
+            # 每组派生确定性种子（同一 seed 可复现；避免每组完全相同的位置模式）
+            group_seed = None if seed is None else int(seed) + index
+            result.append(g.sample(min(k, len(g)), random_state=group_seed))
         return pd.concat(result).reset_index(drop=True)
 
     @staticmethod
-    def systematic_sample(df: pd.DataFrame, n: int) -> pd.DataFrame:
+    def systematic_sample(df: pd.DataFrame, n: int,
+                          seed: int | None = None) -> pd.DataFrame:
+        n = int(n)
+        if n < 1:
+            raise ValueError(f"抽样数量必须 ≥ 1: {n}")
         if n >= len(df):
             return df.copy()
         step = len(df) // n
-        start = np.random.randint(0, step)
+        rng = np.random.default_rng(seed)
+        start = int(rng.integers(0, max(step, 1)))
         idx = range(start, len(df), step)
         return df.iloc[list(idx)[:n]].reset_index(drop=True)
+
+    @staticmethod
+    def sample_frame(df: pd.DataFrame, *, method: str, n: int, column: str = "",
+                     seed: int | None = None) -> pd.DataFrame:
+        """统一表格抽样入口（v4.4.0 B3）：随机/分层/系统，种子可复现。
+
+        同数据、同参数（方法/样本量/分层列/种子）重跑得到逐行一致的样本；
+        抽样结果行指纹由 ``core.sampling_plan.fingerprint_from_frames`` 生成。
+        """
+        mode = str(method or "").strip().lower()
+        if mode not in ("random", "stratified", "systematic"):
+            raise ValueError(
+                f"不支持的表格抽样方法: {method!r}"
+                f"（可选 random / stratified / systematic）")
+        target = str(column or "").strip()
+        if mode == "stratified":
+            if not target:
+                raise ValueError("分层抽样必须指定分层列")
+            return SamplingEngine.stratified_sample(df, target, n, seed)
+        if mode == "systematic":
+            return SamplingEngine.systematic_sample(df, n, seed)
+        return SamplingEngine.random_sample(df, n, seed)
 
     @staticmethod
     def sequential_decision(

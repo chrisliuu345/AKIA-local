@@ -9,6 +9,8 @@ from PySide6.QtWidgets import (
     QPushButton,
     QFormLayout,
     QComboBox,
+    QCheckBox,
+    QLineEdit,
     QSpinBox,
     QDoubleSpinBox,
     QTableWidget,
@@ -18,13 +20,25 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QColor
 from ui.tabs.base_tab import BaseAnalysisTab
-from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_TOGGLE, FONT_18B
+from ui.theme import (
+    BUTTON_PRIMARY_STRETCH,
+    BUTTON_SECONDARY,
+    BUTTON_TOGGLE,
+    FONT_18B,
+)
 from ui.theme import colors as theme_colors
 from core.sampling_engine import SamplingEngine
+from core.sampling_plan import scope_key_for
+
+_BATCH_METHODS = {"随机": "random", "分层": "stratified", "系统": "systematic"}
+_BATCH_STATES = {"normal": "正常", "tightened": "加严", "reduced": "放宽"}
+_BATCH_OVERRIDES = {"正常": "normal", "加严": "tightened", "放宽": "reduced"}
 
 
 class SamplingTab(BaseAnalysisTab):
     def __init__(self, p=None):
+        self._sampling_manager = None
+        self._batch_plan = None
         super().__init__(p)
         self._setup_ui()
 
@@ -62,11 +76,17 @@ class SamplingTab(BaseAnalysisTab):
         self.btn_czero.setCheckable(True)
         self.btn_czero.setStyleSheet(BUTTON_TOGGLE)
         self.btn_czero.clicked.connect(lambda: self._switch(4))
+        self.btn_batch = QPushButton("批检验（转移）")
+        self.btn_batch.setCheckable(True)
+        self.btn_batch.setStyleSheet(BUTTON_TOGGLE)
+        self.btn_batch.setToolTip("供应商·产品线转移状态机 / 检验批历史 / 抽样留痕（v4.4.0 B3）")
+        self.btn_batch.clicked.connect(lambda: self._switch(5))
         mb.addWidget(self.btn_aql)
         mb.addWidget(self.btn_rand)
         mb.addWidget(self.btn_seq)
         mb.addWidget(self.btn_measure)
         mb.addWidget(self.btn_czero)
+        mb.addWidget(self.btn_batch)
         mb.addStretch()
         layout.addLayout(mb)
         self.stack = QStackedWidget()
@@ -75,6 +95,7 @@ class SamplingTab(BaseAnalysisTab):
         self.stack.addWidget(self._sequential_panel(tc))
         self.stack.addWidget(self._measurement_panel(tc))
         self.stack.addWidget(self._czero_panel(tc))
+        self.stack.addWidget(self._batch_panel(tc))
         layout.addWidget(self.stack)
         self.result = QTableWidget()
         self.result.setAlternatingRowColors(True)
@@ -87,6 +108,7 @@ class SamplingTab(BaseAnalysisTab):
             (self.btn_seq, 2),
             (self.btn_measure, 3),
             (self.btn_czero, 4),
+            (self.btn_batch, 5),
         ]:
             b.setChecked(j == i)
         self.stack.setCurrentIndex(i)
@@ -189,6 +211,11 @@ class SamplingTab(BaseAnalysisTab):
             self.czero_col.addItem("(无)")
             for c in self.df.columns:
                 self.czero_col.addItem(str(c))
+        if hasattr(self, "batch_strat_col"):
+            self.batch_strat_col.clear()
+            self.batch_strat_col.addItem("(无)")
+            for c in self.df.columns:
+                self.batch_strat_col.addItem(str(c))
 
     def _do_sample(self):
         if self.df is None:
@@ -204,6 +231,260 @@ class SamplingTab(BaseAnalysisTab):
         else:
             df = SamplingEngine.random_sample(self.df, n)
         self._show_df(df)
+
+    # ------------------------------------------------------------ 批检验（v4.4.0 B3）
+    def set_sampling_context(self, manager):
+        """接入主窗口的抽样状态编排器（转移状态机/批历史/账本留痕）。"""
+        self._sampling_manager = manager
+        self._batch_plan = None
+        self._refresh_batch_ui()
+
+    def _batch_panel(self, tc):
+        w = QWidget()
+        outer = QVBoxLayout(w)
+
+        top = QFormLayout()
+        self.batch_supplier = QLineEdit()
+        self.batch_supplier.setPlaceholderText("供应商 / 来源")
+        top.addRow("供应商:", self.batch_supplier)
+        self.batch_product = QLineEdit()
+        self.batch_product.setPlaceholderText("产品 / 产线")
+        top.addRow("产品线:", self.batch_product)
+        self.batch_lot_size = QSpinBox()
+        self.batch_lot_size.setRange(1, 9_999_999)
+        self.batch_lot_size.setValue(2000)
+        top.addRow("批量:", self.batch_lot_size)
+        self.batch_aql = QComboBox()
+        self.batch_aql.addItems(
+            ["0.01", "0.015", "0.025", "0.04", "0.065", "0.10", "0.15",
+             "0.25", "0.40", "0.65", "1.0", "1.5", "2.5", "4.0", "6.5",
+             "10", "15", "25", "40", "65", "100"])
+        self.batch_aql.setCurrentText("1.0")
+        top.addRow("AQL:", self.batch_aql)
+        self.batch_level = QComboBox()
+        self.batch_level.addItems(["I", "II", "III"])
+        self.batch_level.setCurrentText("II")
+        top.addRow("检验水平:", self.batch_level)
+        self.batch_state_label = QLabel("当前状态: 正常（未接入）")
+        top.addRow("", self.batch_state_label)
+        outer.addLayout(top)
+        self.btn_batch_plan = QPushButton("查询方案（按当前检验状态）")
+        self.btn_batch_plan.setStyleSheet(BUTTON_PRIMARY_STRETCH)
+        self.btn_batch_plan.clicked.connect(self._do_batch_plan)
+        outer.addWidget(self.btn_batch_plan)
+
+        sample_form = QFormLayout()
+        self.batch_method = QComboBox()
+        self.batch_method.addItems(list(_BATCH_METHODS))
+        sample_form.addRow("抽样方式:", self.batch_method)
+        self.batch_strat_col = QComboBox()
+        self.batch_strat_col.addItem("(无)")
+        sample_form.addRow("分层列(可选):", self.batch_strat_col)
+        self.batch_seed = QSpinBox()
+        self.batch_seed.setRange(0, 999_999)
+        self.batch_seed.setValue(42)
+        sample_form.addRow("种子(可复现):", self.batch_seed)
+        outer.addLayout(sample_form)
+        self.btn_batch_sample = QPushButton("执行抽样（同参数重跑逐行一致）")
+        self.btn_batch_sample.setStyleSheet(BUTTON_PRIMARY_STRETCH)
+        self.btn_batch_sample.clicked.connect(self._do_batch_sample)
+        outer.addWidget(self.btn_batch_sample)
+        self.batch_fingerprint_label = QLabel("")
+        self.batch_fingerprint_label.setStyleSheet("color: #9aa4b2; font-size: 11px;")
+        outer.addWidget(self.batch_fingerprint_label)
+
+        judge = QFormLayout()
+        self.batch_inspected = QSpinBox()
+        self.batch_inspected.setRange(0, 9_999_999)
+        self.batch_inspected.setValue(50)
+        judge.addRow("检验数:", self.batch_inspected)
+        self.batch_defects = QSpinBox()
+        self.batch_defects.setRange(0, 9_999_999)
+        judge.addRow("不合格数:", self.batch_defects)
+        self.batch_serious = QCheckBox("严重不合格（立即加严）")
+        judge.addRow("", self.batch_serious)
+        self.batch_decision = QComboBox()
+        self.batch_decision.addItems(["接收", "拒收"])
+        judge.addRow("判定:", self.batch_decision)
+        outer.addLayout(judge)
+        self.btn_batch_record = QPushButton("登记检验批（触发转移评估）")
+        self.btn_batch_record.setStyleSheet(BUTTON_PRIMARY_STRETCH)
+        self.btn_batch_record.clicked.connect(self._do_batch_record)
+        outer.addWidget(self.btn_batch_record)
+        self.batch_result_label = QLabel("")
+        self.batch_result_label.setWordWrap(True)
+        outer.addWidget(self.batch_result_label)
+
+        override = QFormLayout()
+        self.batch_override_state = QComboBox()
+        self.batch_override_state.addItems(list(_BATCH_OVERRIDES))
+        override.addRow("覆盖为:", self.batch_override_state)
+        self.batch_override_reason = QLineEdit()
+        self.batch_override_reason.setPlaceholderText("必填：覆盖原因（进证据账本）")
+        override.addRow("覆盖原因:", self.batch_override_reason)
+        outer.addLayout(override)
+        self.btn_batch_override = QPushButton("应用覆盖")
+        self.btn_batch_override.setStyleSheet(BUTTON_SECONDARY)
+        self.btn_batch_override.clicked.connect(self._do_batch_override)
+        outer.addWidget(self.btn_batch_override)
+
+        self.batch_timeline = QTableWidget(0, 4)
+        self.batch_timeline.setHorizontalHeaderLabels(
+            ["时间", "类型", "对象", "说明"])
+        self.batch_timeline.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.batch_timeline.horizontalHeader().setStretchLastSection(True)
+        outer.addWidget(self.batch_timeline, 1)
+        return w
+
+    def _batch_scope(self) -> str:
+        return scope_key_for(self.batch_supplier.text().strip(),
+                             self.batch_product.text().strip())
+
+    def _batch_method_key(self) -> str:
+        return _BATCH_METHODS.get(self.batch_method.currentText(), "random")
+
+    def _require_batch_manager(self) -> bool:
+        if self._sampling_manager is None:
+            QMessageBox.information(self, "批检验",
+                                    "未接入抽样状态编排器（请从主界面进入后使用）")
+            return False
+        return True
+
+    def _do_batch_plan(self):
+        if not self._require_batch_manager():
+            return
+        scope = self._batch_scope()
+        if scope == "-|-":
+            QMessageBox.warning(self, "批检验", "请先填写供应商或产品线")
+            return
+        try:
+            self._batch_plan = self._sampling_manager.select_plan(
+                scope, lot_size=self.batch_lot_size.value(),
+                aql=float(self.batch_aql.currentText()),
+                level=self.batch_level.currentText(),
+                method=self._batch_method_key(),
+                seed=self.batch_seed.value())
+        except ValueError as exc:
+            QMessageBox.warning(self, "方案查询失败", str(exc))
+            return
+        plan = self._batch_plan["plan"]
+        self.result.setColumnCount(6)
+        self.result.setHorizontalHeaderLabels(
+            ["字码", "样本量", "Ac", "Re", "AQL", "检验状态"])
+        self.result.setRowCount(1)
+        for column, value in enumerate([
+                plan["code"], str(plan["sample_size"]), str(plan["accept"]),
+                str(plan["reject"]), str(plan["aql_actual"]),
+                _BATCH_STATES.get(self._batch_plan["state"],
+                                  self._batch_plan["state"])]):
+            self.result.setItem(0, column, QTableWidgetItem(str(value)))
+        self.result.resizeColumnsToContents()
+        self._refresh_batch_ui()
+
+    def _do_batch_sample(self):
+        if not self._require_batch_manager():
+            return
+        if self.df is None:
+            QMessageBox.information(self, "批检验", "请先导入数据")
+            return
+        if self._batch_plan is None:
+            QMessageBox.information(self, "批检验", "请先查询方案")
+            return
+        method = self._batch_method_key()
+        column = self.batch_strat_col.currentText()
+        if method == "stratified" and column in ("", "(无)"):
+            QMessageBox.warning(self, "批检验", "分层抽样请选择分层列")
+            return
+        try:
+            sampled, decision = self._sampling_manager.sample(
+                self.df, self._batch_scope(), method=method,
+                column="" if column == "(无)" else column,
+                seed=self.batch_seed.value())
+        except ValueError as exc:
+            QMessageBox.warning(self, "抽样失败", str(exc))
+            return
+        self._show_df(sampled)
+        fingerprint = decision.row_fingerprint if decision else ""
+        self.batch_fingerprint_label.setText(
+            f"样本 {len(sampled)} 行 · 种子 {self.batch_seed.value()} · 指纹 {fingerprint}")
+        self._refresh_batch_ui()
+
+    def _do_batch_record(self):
+        if not self._require_batch_manager():
+            return
+        if self._batch_plan is None:
+            QMessageBox.information(self, "批检验", "请先查询方案")
+            return
+        decision = "accept" if self.batch_decision.currentText() == "接收" else "reject"
+        serious = self.batch_serious.isChecked()
+        if serious and decision != "reject":
+            QMessageBox.warning(self, "批检验", "严重不合格仅适用于拒收批")
+            return
+        try:
+            result = self._sampling_manager.record_lot(
+                scope_key=self._batch_scope(),
+                supplier=self.batch_supplier.text().strip(),
+                product=self.batch_product.text().strip(),
+                qty=self.batch_lot_size.value(),
+                inspected=self.batch_inspected.value(),
+                defects=self.batch_defects.value(),
+                decision=decision, serious=serious)
+        except ValueError as exc:
+            QMessageBox.warning(self, "登记失败", str(exc))
+            return
+        text = (f"批次 {result['lot'].lot_id} 已登记 · 状态 "
+                f"{_BATCH_STATES.get(result['state'], result['state'])}")
+        if result["changed"]:
+            text += f" · 发生转移：{result['transfer'].reason}"
+        self.batch_result_label.setText(text)
+        self._refresh_batch_ui()
+
+    def _do_batch_override(self):
+        if not self._require_batch_manager():
+            return
+        reason = self.batch_override_reason.text().strip()
+        if not reason:
+            QMessageBox.warning(self, "批检验", "手动覆盖必须填写原因")
+            return
+        target = _BATCH_OVERRIDES[self.batch_override_state.currentText()]
+        try:
+            state = self._sampling_manager.manual_override(
+                self._batch_scope(), target, reason)
+        except ValueError as exc:
+            QMessageBox.warning(self, "覆盖失败", str(exc))
+            return
+        self.batch_result_label.setText(
+            f"已手动覆盖为 {_BATCH_STATES.get(state.state, state.state)}"
+            f"（原因已留痕）")
+        self.batch_override_reason.clear()
+        self._refresh_batch_ui()
+
+    def _refresh_batch_ui(self):
+        manager = self._sampling_manager
+        if manager is None:
+            self.batch_state_label.setText("当前状态: 正常（未接入）")
+            self.batch_timeline.setRowCount(0)
+            return
+        scope = self._batch_scope()
+        snapshot = manager.snapshot(scope)
+        state_text = _BATCH_STATES.get(snapshot["state"], snapshot["state"])
+        color = {"normal": "#2ecc71", "tightened": "#f39c12",
+                 "reduced": "#4da6ff"}.get(snapshot["state"], "#e1e2e6")
+        extra = (f" · 批数 {snapshot['lots_total']}"
+                 + (f" · 覆盖原因: {snapshot['override_reason']}"
+                    if snapshot["override_reason"] else ""))
+        self.batch_state_label.setText(
+            f"当前状态: <span style='color:{color};font-weight:bold'>"
+            f"{state_text}</span>{extra}")
+        rows = manager.timeline(scope, limit=50)
+        self.batch_timeline.setRowCount(len(rows))
+        kind_labels = {"plan": "方案", "lot": "检验批", "transfer": "状态转移"}
+        for row, item in enumerate(rows):
+            values = (item["at"], kind_labels.get(item["kind"], item["kind"]),
+                      item["title"], item["text"])
+            for column, value in enumerate(values):
+                self.batch_timeline.setItem(row, column, QTableWidgetItem(value))
+        self.batch_timeline.resizeColumnsToContents()
 
     def _show_df(self, df):
         self.result.setColumnCount(len(df.columns))

@@ -32,7 +32,8 @@ BASELINE_PATH = Path(__file__).resolve().parent / "perf_baseline.json"
 METRIC_KEYS = ("cold_start_s", "import_1m_rows_s", "chart_render_5k_s",
                "ml_train_5k_s", "spc_100k_rows_s", "spc_1m_rows_s",
                "msa_100k_rows_s", "ml_train_100k_rows_s",
-               "evidence_append_1k_s", "case_open_1k_events_s")
+               "evidence_append_1k_s", "case_open_1k_events_s",
+               "sampling_1m_rows_s")
 DEFAULT_TOLERANCE = 3.0
 
 
@@ -234,6 +235,30 @@ def measure_case_open_1k_events() -> float:
     return _timed(_run)
 
 
+def measure_sampling_1m_rows() -> float:
+    """百万行表格确定性抽样（随机/分层/系统 各 n=200）+ 指纹 + 批判定。"""
+    def _run():
+        from core.sampling_state import SamplingStateManager
+        from core.sampling_engine import SamplingEngine
+        from core.sampling_plan import fingerprint_from_frames
+
+        frame = _big_frame()
+        random_sample = SamplingEngine.sample_frame(
+            frame, method="random", n=200, seed=42)
+        systematic = SamplingEngine.sample_frame(
+            frame, method="systematic", n=200, seed=42)
+        stratified = SamplingEngine.sample_frame(
+            frame, method="stratified", n=200, column="产线", seed=42)
+        fingerprint_from_frames([random_sample, systematic, stratified])
+        manager = SamplingStateManager()
+        manager.select_plan("bench|line", lot_size=2000, aql=1.0, seed=42)
+        manager.sample(frame, "bench|line", method="systematic", n=200, seed=42)
+        manager.record_lot(scope_key="bench|line", qty=2000, inspected=200,
+                           defects=2, decision="reject")
+
+    return _timed(_run)
+
+
 MEASURES = {
     "cold_start_s": measure_cold_start,
     "import_1m_rows_s": measure_import_1m_rows,
@@ -245,6 +270,7 @@ MEASURES = {
     "ml_train_100k_rows_s": measure_ml_train_100k_rows,
     "evidence_append_1k_s": measure_evidence_append_1k,
     "case_open_1k_events_s": measure_case_open_1k_events,
+    "sampling_1m_rows_s": measure_sampling_1m_rows,
 }
 
 
