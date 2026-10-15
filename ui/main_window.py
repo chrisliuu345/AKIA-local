@@ -1917,6 +1917,23 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 QMessageBox.critical(self, i18n.tr("msg.export_failed"), str(e))
 
+    def _flush_tab_edits(self) -> None:
+        """保存路径统一入口：冲刷各 Tab 节流窗口内的挂起编辑（若有）。
+
+        Tab 侧以 ``flush_pending_edits()`` 暴露冲刷能力（当前：控制计划逐格
+        编辑 1.5s 节流）；单个 Tab 冲刷失败不影响保存主链路。
+        """
+        import logging
+
+        for tab in list(self._tab_cache.values()):
+            flush = getattr(tab, "flush_pending_edits", None)
+            if not callable(flush):
+                continue
+            try:
+                flush()
+            except Exception:
+                logging.getLogger(__name__).exception("刷新 Tab 挂起编辑失败")
+
     def _on_save_project(self):
         if not self.current_data:
             QMessageBox.warning(self, "无数据", "请先导入数据并运行分析")
@@ -1927,6 +1944,9 @@ class MainWindow(QMainWindow):
         if not path:
             return
         try:
+            # 冲刷节流窗口内的挂起编辑（如控制计划 1.5s 合并），否则刚编辑的
+            # 内容可能不落盘（2026-10-15 审查实测）
+            self._flush_tab_edits()
             self.status_label.setText("正在保存项目...")
             raw = self.current_data.get("raw_data", {})
             charts = {}
@@ -1983,6 +2003,11 @@ class MainWindow(QMainWindow):
             self.project_context.standards = StandardRegistry.from_dict(standards_payload)
         self._restore_ledger(project.get("evidence_events") or [],
                              project.get("evidence_errors") or [])
+        # 告警自动立案编排器持有 context/ledger 引用（v4.4.0 B1）：项目加载
+        # 会替换这两个对象，必须显式重绑——否则立案快照/8D 草稿/账本事件会
+        # 写入已被丢弃的旧对象（不落盘、不可见；2026-10-15 审查实测）。
+        self.alert_case_orchestrator.context = self.project_context
+        self.alert_case_orchestrator.ledger = self.ledger
         self._restore_case_workflows(project.get("cases") or [])
         self._restore_measurement_store(project.get("measurements") or [])
         self.gauge_monitor = GaugeMonitor.from_dict(project.get("gauge_studies"))
@@ -2588,6 +2613,8 @@ class MainWindow(QMainWindow):
         if not path:
             return
         try:
+            # 同 _on_save_project：共享保存前冲刷节流窗口内的挂起编辑
+            self._flush_tab_edits()
             raw = self.current_data.get("raw_data", {})
             charts = {}
             for label, buf in self._collect_charts(list(self.analyses.keys())).items():

@@ -188,3 +188,47 @@ class TestEightDDraftFlow:
         report_id = workflow.case.report_refs[0]
         assert main_window.open_eight_d_report(report_id) is True
         assert main_window.stack.currentIndex() == 30
+
+
+class TestProjectLoadRebind:
+    """项目加载后立案编排器必须重绑 context/ledger（2026-10-15 审查修复）。
+
+    回归背景：``_apply_loaded_project`` 会替换 ``project_context`` 与
+    ``ledger`` 对象；编排器若仍持有旧引用，立案的 8D 草稿与账本事件会写进
+    被丢弃的对象——不落盘、界面不可见。
+    """
+
+    def test_loaded_project_rebinds_orchestrator(self, main_window, tmp_path,
+                                                 monkeypatch):
+        from PySide6.QtWidgets import QFileDialog, QMessageBox
+
+        from core.project_manager import ProjectManager
+
+        monkeypatch.setattr(QMessageBox, "information",
+                            staticmethod(lambda *a, **k: None))
+        path = str(tmp_path / "rebind.qap")
+        monkeypatch.setattr(
+            QFileDialog, "getSaveFileName",
+            staticmethod(lambda *a, **k: (path, "")))
+        main_window._on_save_project()
+        project = ProjectManager.load_project(path)
+        main_window._apply_loaded_project(project, path, status_msg="probe")
+
+        orchestrator = main_window.alert_case_orchestrator
+        assert orchestrator.context is main_window.project_context
+        assert orchestrator.ledger is main_window.ledger
+
+        before_events = len(main_window.ledger.events)
+        main_window._on_live_alert(_FakeAlert(id="UI-ALERT-REBIND"))
+        workflow = next(
+            wf for wf in main_window.case_workflows
+            if "UI-ALERT-REBIND" in str(wf.case.steps))
+
+        # 8D 草稿进入**活动**项目上下文（可保存、可打开）
+        report_id = workflow.case.report_refs[0]
+        assert any(report.get("id") == report_id
+                   for report in main_window.project_context.eight_d_reports)
+        assert main_window.open_eight_d_report(report_id) is True
+        # 账本事件进入**活动**账本
+        appended = [e.event_type for e in main_window.ledger.events[before_events:]]
+        assert "alert_case_opened" in appended

@@ -115,7 +115,10 @@ def test_gemini_protocol_request_and_stream(monkeypatch):
                        model="gemini-2.5-flash")
     assert list(client.generate("ping")) == ["正", "常"]
     assert ":streamGenerateContent" in captured["url"]
-    assert "alt=sse" in captured["url"] and "key=AIza-test" in captured["url"]
+    assert "alt=sse" in captured["url"]
+    # 密钥必须走请求头，不得出现在 URL（安全审查 S3，2026-10-15）
+    assert "key=" not in captured["url"]
+    assert _header(captured["headers"], "x-goog-api-key") == "AIza-test"
     assert captured["body"]["contents"][0]["parts"][0]["text"] == "ping"
     assert captured["body"]["systemInstruction"]
 
@@ -199,7 +202,8 @@ def test_connection_gemini_lists_models(monkeypatch):
         [json.dumps({"models": [{"name": "models/gemini-2.5-flash"}]}).encode()]))
     result = LLMClient(provider="google", api_key="AIza-x").test_connection()
     assert result.ok and result.models == ["gemini-2.5-flash"]
-    assert "key=AIza-x" in captured["url"]
+    assert "key=" not in captured["url"]
+    assert _header(captured["headers"], "x-goog-api-key") == "AIza-x"
 
 
 def test_connection_ollama_lists_models(monkeypatch):
