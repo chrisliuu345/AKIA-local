@@ -318,8 +318,9 @@ class LLMClient:
 
     # ------------------------------------------------------------ 协议: Gemini 原生
     def _gen_gemini(self, prompt: str, model: str):
-        url = (f"{self.api_base}/models/{model}:streamGenerateContent"
-               f"?alt=sse&key={self.api_key}")
+        # 密钥走请求头（x-goog-api-key）而非 URL query —— 避免代理/网关/服务端
+        # 访问日志截获密钥（2026-10-15 安全审查 S3；Google 官方支持该请求头）。
+        url = f"{self.api_base}/models/{model}:streamGenerateContent?alt=sse"
         payload = json.dumps({
             "systemInstruction": {"parts": [{"text": SYSTEM_PROMPT}]},
             "contents": [{"role": "user", "parts": [{"text": prompt}]}],
@@ -327,7 +328,8 @@ class LLMClient:
         }).encode()
         try:
             req = urllib.request.Request(url, data=payload,
-                                         headers={"Content-Type": "application/json"},
+                                         headers={"Content-Type": "application/json",
+                                                  "x-goog-api-key": self.api_key},
                                          method="POST")
             with urllib.request.urlopen(req, timeout=self.TIMEOUT) as resp:
                 self._resp = resp
@@ -434,9 +436,11 @@ class LLMClient:
                                         f"连接正常（模型 {self.model}）",
                                         (time.time() - started) * 1000)
             if self.protocol == "gemini":
-                url = f"{self.api_base}/models?key={self.api_key}"
+                url = f"{self.api_base}/models"
                 with urllib.request.urlopen(
-                        urllib.request.Request(url, method="GET"),
+                        urllib.request.Request(
+                            url, method="GET",
+                            headers={"x-goog-api-key": self.api_key}),
                         timeout=timeout) as resp:
                     data = json.loads(resp.read().decode())
                 models = [str(m.get("name", "")).split("/")[-1]

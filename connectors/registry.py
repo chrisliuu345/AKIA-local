@@ -5,6 +5,7 @@ import logging
 from pathlib import Path
 
 from connectors.base import PluginInfo
+from connectors.plugins import PLUGIN_MODULES
 
 logger = logging.getLogger(__name__)
 
@@ -18,16 +19,33 @@ def discover(refresh: bool = False) -> dict[str, PluginInfo]:
     if _CACHE is not None and not refresh:
         return _CACHE
     infos = {}
-    for path in sorted(PLUGINS_DIR.glob("*.py")):
-        if path.name.startswith("_"):
-            continue
-        mod_name = f"connectors.plugins.{path.stem}"
+    for stem in _candidate_stems():
+        mod_name = f"connectors.plugins.{stem}"
         meta = _load_meta(mod_name)
         if meta is None:
             continue
         infos[meta.name] = meta
     _CACHE = infos
     return infos
+
+
+def _candidate_stems() -> list[str]:
+    """插件模块名候选（去重保序）。
+
+    源码运行：扫描 ``connectors/plugins/*.py``；冻结打包：源码不在磁盘上，
+    回退到 ``PLUGIN_MODULES`` 静态清单（构建时经 --collect-submodules 收集，
+    模块本身可导入）。两者并集保证任一形态下插件都可被发现。
+    """
+    stems: list[str] = []
+    for path in sorted(PLUGINS_DIR.glob("*.py")):
+        if path.name.startswith("_"):
+            continue
+        if path.stem not in stems:
+            stems.append(path.stem)
+    for stem in PLUGIN_MODULES:
+        if stem not in stems:
+            stems.append(str(stem))
+    return stems
 
 
 def _load_meta(mod_name: str) -> PluginInfo | None:
