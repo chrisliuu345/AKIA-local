@@ -8,8 +8,12 @@
 # 前置条件:
 #   1. Python 3.11+ 已安装
 #   2. pip install -r requirements.txt -r dev-requirements.txt
-#      (dev-requirements 含 pyinstaller; 构建需另外 pip install pyinstaller)
+#      (构建还需: pip install pyinstaller)
 #   3. sudo apt install file  # appimagetool 需要
+#
+# 供应链说明（2026-10-15 审查修复）:
+#   下载的 appimagetool 必须通过 packaging/appimagetool.sha256 校验；
+#   首次固定/升级上游二进制时更新该文件（校验失败即中止，防上游资产被替换）。
 
 set -e
 
@@ -76,12 +80,42 @@ fi
 echo ""
 echo "[4/5] 准备 appimagetool..."
 APPIMAGETOOL="${BUILD_DIR}/appimagetool"
+APPIMAGETOOL_SHA_FILE="${SCRIPT_DIR}/packaging/appimagetool.sha256"
+
+# 校验 helpers：优先 sha256sum，macOS 回退 shasum
+_sha256_of() {
+    if command -v sha256sum >/dev/null 2>&1; then
+        sha256sum "$1" | awk '{print $1}'
+    else
+        shasum -a 256 "$1" | awk '{print $1}'
+    fi
+}
+
 if [ ! -f "${APPIMAGETOOL}" ]; then
     echo "  下载 appimagetool..."
     wget -q -O "${APPIMAGETOOL}" \
         "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
     chmod +x "${APPIMAGETOOL}"
 fi
+
+# 强制校验（v4.4.1 供应链修复）：无 pin 文件或哈希不符 → 中止构建
+if [ ! -f "${APPIMAGETOOL_SHA_FILE}" ]; then
+    echo "[error] 缺少 appimagetool 校验文件: ${APPIMAGETOOL_SHA_FILE}"
+    echo "        首次使用时：下载官方 appimagetool 后运行"
+    echo "        sha256sum ${APPIMAGETOOL} | awk '{print \$1}' > packaging/appimagetool.sha256"
+    exit 1
+fi
+EXPECTED=$(tr -d ' \n' < "${APPIMAGETOOL_SHA_FILE}")
+ACTUAL=$(_sha256_of "${APPIMAGETOOL}")
+if [ "${EXPECTED}" != "${ACTUAL}" ]; then
+    echo "[error] appimagetool 校验失败（上游资产可能已变化或本地文件被替换）"
+    echo "        期望: ${EXPECTED}"
+    echo "        实际: ${ACTUAL}"
+    echo "        确认无误后更新 packaging/appimagetool.sha256 再构建"
+    rm -f "${APPIMAGETOOL}"  # 不保留未校验的二进制
+    exit 1
+fi
+echo "  appimagetool sha256 校验通过"
 
 # ── 步骤 5: 打包 AppImage ──────────────────────────────────
 echo ""
@@ -99,6 +133,12 @@ elif ! ldconfig -p 2>/dev/null | grep -q 'libfuse\.so\.2'; then
     APPIMAGETOOL_ARGS=(--appimage-extract-and-run)
 fi
 ARCH=x86_64 "${APPIMAGETOOL}" "${APPIMAGETOOL_ARGS[@]}" "${APPDIR_DIR}" "${OUTPUT_FILE}"
+
+# ── 步骤 6: 生成发布校验文件 (.sha256) ──────────────────────
+OUTPUT_BASENAME=$(basename "${OUTPUT_FILE}")
+SHA_FILE="${OUTPUT_FILE}.sha256"
+echo "  生成 ${OUTPUT_BASENAME}.sha256 ..."
+printf '%s  %s\n' "$(_sha256_of "${OUTPUT_FILE}")" "${OUTPUT_BASENAME}" > "${SHA_FILE}"
 
 # ── 完成 ───────────────────────────────────────────────────
 echo ""

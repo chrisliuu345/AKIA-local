@@ -47,7 +47,8 @@ chmod +x AKIA-4.4.0-x86_64.AppImage
 ### 源码运行
 
 > 依赖锁定：`requirements.lock` 是本机验证过的完整版本快照（CI 与发布门禁使用），
-> `requirements*.txt` 保留宽松约束便于升级。
+> `requirements*.txt` 保留宽松约束便于本地开发/升级。lock 需在**干净环境**由
+> `requirements*.txt` 生成（当前快照含少量本机工具链/插件包，待联网环境收口重生成）。
 
 ```bash
 git clone https://github.com/chrisliuu345/AKIA-local.git
@@ -62,6 +63,10 @@ python main.py
 
 > **图形依赖可选**：matplotlib / seaborn 缺失不影响主界面与数据/分析/证据功能；
 > 打开图表类 Tab 会提示安装（`pip install matplotlib seaborn`），完整依赖见 `requirements.txt`。
+
+> **连接器可选依赖**：Modbus TCP / OPC UA / MQTT 与 SQL Server（pyodbc）按需安装：
+> `pip install -r requirements-connectors.txt`。未安装时对应功能显示明确提示，
+> 不会静默失败。
 
 ---
 

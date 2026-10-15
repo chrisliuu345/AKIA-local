@@ -29,11 +29,11 @@ jobs:
         with:
           python-version: "3.14"
           cache: pip
-      - name: 安装依赖（含可选看板依赖）
+      - name: 安装依赖（requirements.lock 快照，含可选看板依赖）
         run: |
           python -m venv .venv
           .venv/bin/pip install --upgrade pip
-          .venv/bin/pip install -r requirements.txt -r dev-requirements.txt -r requirements-server.txt
+          .venv/bin/pip install -r requirements.lock
       - name: ruff 门禁
         run: .venv/bin/python -m ruff check .
       - name: 版本一致性门禁
@@ -49,16 +49,16 @@ jobs:
         with:
           python-version: "3.14"
           cache: pip
-      - name: 安装依赖（含可选看板依赖）
+      - name: 安装依赖（requirements.lock 快照，含可选看板依赖）
         run: |
           python -m venv .venv
           .venv/bin/pip install --upgrade pip
-          .venv/bin/pip install -r requirements.txt -r dev-requirements.txt -r requirements-server.txt
+          .venv/bin/pip install -r requirements.lock
       # CI 专用：runner 上没有 Secret Service，用 keyrings.alt 提供后端，
       # 使"密钥环前缀 + Fernet 往返"这段平台代码在 CI 中真实被测（生产仍走系统密钥环）
       - name: 提供密钥环后端（仅 CI）
         run: |
-          .venv/bin/pip install keyrings.alt
+          .venv/bin/pip install keyrings.alt==5.0.1
           echo "PYTHON_KEYRING_BACKEND=keyrings.alt.file.PlaintextKeyring" >> "$GITHUB_ENV"
       - name: 逐文件执行（单文件一进程）
         run: .venv/bin/python tools/run_tests.py --quiet
@@ -80,11 +80,11 @@ jobs:
         with:
           python-version: "3.14"
           cache: pip
-      - name: 安装依赖
+      - name: 安装依赖（requirements.lock 快照）
         run: |
           python -m venv .venv
           .venv/bin/pip install --upgrade pip
-          .venv/bin/pip install -r requirements.txt
+          .venv/bin/pip install -r requirements.lock
       - name: 性能基线（tolerance ×4）
         run: .venv/bin/python tools/benchmark.py --tolerance 4
 
@@ -103,8 +103,7 @@ jobs:
         run: |
           python -m venv .venv
           .venv/bin/pip install --upgrade pip
-          .venv/bin/pip install -r requirements.txt
-          .venv/bin/pip install pyinstaller
+          .venv/bin/pip install -r requirements.lock
           sudo apt-get update && sudo apt-get install -y file wget libfuse2
       - name: 构建 AppImage
         run: |
@@ -114,8 +113,14 @@ jobs:
         run: |
           ls -lh build/*.AppImage
           timeout 10 ./build/AKIA-*-x86_64.AppImage --appimage-extract-and-run || [ $? -eq 124 ]
+      - name: 打包完整性校验（动态导入模块必须随包分发）
+        run: |
+          .venv/bin/python tools/verify_bundle.py --dist build/akia.dist/akia
+          cd build && sha256sum -c AKIA-*.AppImage.sha256
       - uses: actions/upload-artifact@v4
         with:
           name: AKIA-AppImage
-          path: build/AKIA-*-x86_64.AppImage
+          path: |
+            build/AKIA-*-x86_64.AppImage
+            build/AKIA-*-x86_64.AppImage.sha256
           retention-days: 30

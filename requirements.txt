@@ -11,8 +11,6 @@ python-docx>=1.0.0
 python-pptx>=1.0.0
 xlsxwriter>=3.1.0
 reportlab>=4.0.0
-docxtpl>=0.16.0
-Jinja2>=3.1.0
 Pillow>=10.0.0
 scikit-learn>=1.3.0
 shap>=0.44.0
@@ -23,3 +21,4 @@ psycopg2-binary>=2.9.0
 pyserial>=3.5
 cryptography>=42.0
 keyring>=25.0
+# 可选：连接器插件（OPC UA / Modbus TCP / MQTT）见 requirements-connectors.txt

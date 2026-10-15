@@ -182,6 +182,15 @@ class DbConnectionDialog(QDialog):
     def _on_db_type_changed(self, db_type: str):
         port_map = {"MySQL": 3306, "PostgreSQL": 5432, "SQL Server": 1433}
         self.port_spin.setValue(port_map.get(db_type, 3306))
+        # SQL Server 需要 pyodbc 驱动（2026-10-15 审查修复：缺驱动时提前提示，
+        # 避免连接时才报 ModuleNotFoundError；pyodbc 不入默认依赖，按需安装）
+        if db_type == "SQL Server":
+            import importlib.util
+
+            if importlib.util.find_spec("pyodbc") is None:
+                self.conn_status.setText(
+                    "未检测到 pyodbc 驱动（SQL Server 需要）: pip install pyodbc")
+                self.conn_status.setStyleSheet("color: #e67e22;")
 
     def _on_config_selected(self, index: int):
         if index < 0:
