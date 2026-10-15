@@ -15,7 +15,22 @@ EMP (Empirical Measurement Process) 方法量具研究
 from typing import Any
 import numpy as np
 import pandas as pd
-from config import settings as _cfg
+
+from analysis.msa._d2 import d2_star_value, d2_value
+
+
+def _oob_notes(r: int, o: int, p: int, d2: float, d2_star_op: float,
+               d2_star_part: float, d2_oob: bool, oob_op: bool,
+               oob_part: bool) -> list[str]:
+    """常数表外近似/精确取值的透明标注（v4.4.1 审查修复）。"""
+    notes = []
+    if d2_oob:
+        notes.append(f"重复次数 r={r} 超出常数表（≤25），d2 采用精确计算值 {d2:.4f}")
+    if oob_op:
+        notes.append(f"操作员数 o={o} 超出 d2* 表（≤15），以 d2 保守上界 {d2_star_op:.4f} 近似")
+    if oob_part:
+        notes.append(f"零件数 p={p} 超出 d2* 表（≤15），以 d2 保守上界 {d2_star_part:.4f} 近似")
+    return notes
 
 
 def analyze_crossed(
@@ -58,17 +73,17 @@ def analyze_crossed(
     op_means = data.groupby(operator_col)[measurement_col].mean()
 
     r_bar = _avg_range(data, measurement_col, part_col, operator_col)
-    d2 = _cfg.CONTROL_CHART_CONSTANTS.get(r, {}).get("d2", 1.128 * (r ** 0.3))
+    d2, _d2_oob1 = d2_value(r)
 
     ev = r_bar / d2
 
     r_op = float(op_means.max() - op_means.min())
-    d2_star_op = _cfg.MSA_D2_STAR.get(o, _cfg.CONTROL_CHART_CONSTANTS.get(o, {}).get("d2", 1.128))
+    d2_star_op, _oob_op1 = d2_star_value(o)
     av = np.sqrt(max((r_op / d2_star_op) ** 2 - ev ** 2 / (p * r), 0))
 
     grr = np.sqrt(ev ** 2 + av ** 2)
     r_part = float(part_means.max() - part_means.min())
-    d2_star_part = _cfg.MSA_D2_STAR.get(p, _cfg.CONTROL_CHART_CONSTANTS.get(p, {}).get("d2", 1.128))
+    d2_star_part, _oob_part1 = d2_star_value(p)
     pv = r_part / d2_star_part
 
     tv = np.sqrt(grr ** 2 + pv ** 2)
@@ -86,6 +101,9 @@ def analyze_crossed(
 
     interaction_data = _calculate_interaction(data, measurement_col, part_col, operator_col)
 
+    oob_notes = _oob_notes(r, o, p, d2, d2_star_op, d2_star_part,
+                           _d2_oob1, _oob_op1, _oob_part1)
+
     return {
         "chart_type": "EMP Crossed",
         "method": "EMP",
@@ -94,6 +112,7 @@ def analyze_crossed(
             "operators": o,
             "replicates": r,
             "total_measurements": len(data),
+            "notes": oob_notes,
         },
         "variance_components": {
             "ev": round(float(ev), 6),
@@ -158,17 +177,17 @@ def analyze_nested(
     op_means = data.groupby(operator_col)[measurement_col].mean()
 
     r_bar = _avg_range(data, measurement_col, part_col, operator_col)
-    d2 = _cfg.CONTROL_CHART_CONSTANTS.get(r, {}).get("d2", 1.128 * (r ** 0.3))
+    d2, _d2_oob2 = d2_value(r)
 
     ev = r_bar / d2
 
     r_op = float(op_means.max() - op_means.min())
-    d2_star_op = _cfg.MSA_D2_STAR.get(o, _cfg.CONTROL_CHART_CONSTANTS.get(o, {}).get("d2", 1.128))
+    d2_star_op, _oob_op2 = d2_star_value(o)
     av = np.sqrt(max((r_op / d2_star_op) ** 2 - ev ** 2 / (p * r), 0))
 
     grr = np.sqrt(ev ** 2 + av ** 2)
     r_part = float(part_means.max() - part_means.min())
-    d2_star_part = _cfg.MSA_D2_STAR.get(p, _cfg.CONTROL_CHART_CONSTANTS.get(p, {}).get("d2", 1.128))
+    d2_star_part, _oob_part2 = d2_star_value(p)
     pv = r_part / d2_star_part
 
     tv = np.sqrt(grr ** 2 + pv ** 2)
@@ -184,6 +203,9 @@ def analyze_nested(
     discrimination_grade = _discrimination_grade(ndc)
     wheeler_criteria = _wheeler_criteria(ev, av, grr, pv, tv, ndc, grr_pct_tv)
 
+    oob_notes = _oob_notes(r, o, p, d2, d2_star_op, d2_star_part,
+                           _d2_oob2, _oob_op2, _oob_part2)
+
     return {
         "chart_type": "EMP Nested",
         "method": "EMP",
@@ -192,6 +214,7 @@ def analyze_nested(
             "operators": o,
             "replicates": r,
             "total_measurements": len(data),
+            "notes": oob_notes,
         },
         "variance_components": {
             "ev": round(float(ev), 6),

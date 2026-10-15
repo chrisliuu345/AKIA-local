@@ -12,6 +12,8 @@ import numpy as np
 import pandas as pd
 from config import settings as _cfg
 
+from analysis.msa._d2 import d2_star_value, d2_value
+
 
 def analyze_crossed(
     df: pd.DataFrame,
@@ -40,17 +42,17 @@ def analyze_crossed(
     op_means = data.groupby(operator_col)[measurement_col].mean()
 
     r_bar = _avg_range(data, measurement_col, part_col, operator_col)
-    d2 = _cfg.CONTROL_CHART_CONSTANTS.get(r, {}).get("d2", 1.128 * (r ** 0.3))
+    d2, _d2_oob = d2_value(r)
 
     ev = r_bar / d2
 
     r_op = float(op_means.max() - op_means.min())
-    d2_star_op = _cfg.MSA_D2_STAR.get(o, _cfg.CONTROL_CHART_CONSTANTS.get(o, {}).get("d2", 1.128))
+    d2_star_op, _oob_op = d2_star_value(o)
     av = np.sqrt(max((r_op / d2_star_op) ** 2 - ev ** 2 / (p * r), 0))
 
     grr = np.sqrt(ev ** 2 + av ** 2)
     r_part = float(part_means.max() - part_means.min())
-    d2_star_part = _cfg.MSA_D2_STAR.get(p, _cfg.CONTROL_CHART_CONSTANTS.get(p, {}).get("d2", 1.128))
+    d2_star_part, _oob_part = d2_star_value(p)
     pv = r_part / d2_star_part
 
     tv = np.sqrt(grr ** 2 + pv ** 2)
@@ -66,9 +68,20 @@ def analyze_crossed(
     interaction_chart = _interaction_chart_data(data, measurement_col, part_col, operator_col)
     uncertainty = _uncertainty_budget(ev, av, pv, grr, tv, p, o, r, tolerance)
 
+    #: 表外常数的透明标注（v4.4.1 审查修复）：超出 AIAG 表范围时
+    #: 使用精确计算值（d2）或以 d2 为保守上界（d2*），需随结果展示。
+    oob_notes = []
+    if _d2_oob:
+        oob_notes.append(f"重复次数 r={r} 超出常数表（≤25），d2 采用精确计算值 {d2:.4f}")
+    if _oob_op:
+        oob_notes.append(f"操作员数 o={o} 超出 d2* 表（≤15），以 d2 保守上界 {d2_star_op:.4f} 近似")
+    if _oob_part:
+        oob_notes.append(f"零件数 p={p} 超出 d2* 表（≤15），以 d2 保守上界 {d2_star_part:.4f} 近似")
+
     return {
         "chart_type": "Gage R&R (Crossed)",
-        "design": {"parts": p, "operators": o, "replicates": r, "total_measurements": len(data)},
+        "design": {"parts": p, "operators": o, "replicates": r, "total_measurements": len(data),
+                   "notes": oob_notes},
         "variance_components": {
             "ev": round(float(ev), 6),
             "av": round(float(av), 6),
@@ -114,7 +127,7 @@ def analyze_nested(
     r_bar = groups.apply(lambda x: x.max() - x.min() if len(x) > 1 else 0).mean()
     r = int(groups.size().mode().iloc[0] if not groups.size().empty else 1)
 
-    d2 = _cfg.CONTROL_CHART_CONSTANTS.get(r, {}).get("d2", 1.128)
+    d2, _ = d2_value(r)
     ev = float(r_bar) / d2 if d2 > 0 else 0
     tv = grand_std
     pv = np.sqrt(max(tv ** 2 - ev ** 2, 0))
