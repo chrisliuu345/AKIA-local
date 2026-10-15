@@ -274,3 +274,44 @@ class TestStandardHistoryUi:
             assert any("标准版本记录" in text for text in texts)
         finally:
             window.close()
+
+
+class TestControlPlanSaveFlush:
+    """保存工程前必须冲刷控制计划节流窗口内的挂起编辑（2026-10-15 审查修复）。
+
+    回归背景：逐格编辑 1.5s 节流合并落版；窗口内直接「保存工程」会写出旧值
+    （静默丢最后一笔编辑）。
+    """
+
+    def test_save_project_flushes_throttled_edit(self, tmp_path, monkeypatch):
+        import pandas as pd
+        from PySide6.QtWidgets import QFileDialog
+
+        from core.project_manager import ProjectManager
+        from ui.main_window import MainWindow
+
+        window = MainWindow()
+        try:
+            window.current_data = {
+                "source": "/tmp/line_a.xlsx",
+                "raw_data": {"S": pd.DataFrame({"x": [1.0, 2.0, 3.0]})},
+            }
+            tab = window._lazy_load_tab(17)  # 控制计划 Tab
+            assert tab is not None
+            tab._sync_context("初始控制计划")
+            tab.table.item(0, 3).setText("10±0.01mm")
+            tab._on_cell_changed(0, 3)
+            assert tab._pending_reason, "编辑应进入节流窗口（尚未落库）"
+
+            path = str(tmp_path / "flush.qap")
+            monkeypatch.setattr(
+                QFileDialog, "getSaveFileName",
+                staticmethod(lambda *a, **k: (path, "")))
+            window._on_save_project()
+
+            project = ProjectManager.load_project(path)
+            rows = project["project_context"]["control_plan_rows"]
+            assert rows[0]["规格/公差"] == "10±0.01mm", \
+                "保存工程必须先冲刷节流窗口内的编辑"
+        finally:
+            window.close()
