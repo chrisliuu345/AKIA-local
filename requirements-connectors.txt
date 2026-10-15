@@ -1,0 +1,18 @@
+# AKIA 连接器插件可选依赖（2026-10-15 审查修复）
+#
+# 安装后启用「设备 → 连接器」对应插件；未安装时插件显示不可用并给出
+# 明确提示（不会静默失败）。按需安装：
+#   pip install -r requirements-connectors.txt
+
+# OPC UA 连接器（connectors/plugins/opcua.py）
+asyncua>=2.0.1
+
+# Modbus TCP 连接器（connectors/plugins/modbus_tcp.py）
+pymodbus>=3.15.0
+
+# MQTT 订阅连接器（connectors/plugins/mqtt_sub.py）
+paho-mqtt>=2.1.0
+
+# SQL Server 数据库连接（core/sql_loader.py 方言 mssql+pyodbc；
+# 系统还需安装 Microsoft ODBC Driver for SQL Server）
+pyodbc>=5.0.0
