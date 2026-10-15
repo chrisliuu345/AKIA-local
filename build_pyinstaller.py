@@ -66,6 +66,17 @@ HIDDEN_IMPORTS = [
     "PIL.Image",
 ]
 
+#: 动态导入包的子模块收集（不写会造成打包产物缺失模块）：
+#: PyInstaller 只能静态跟踪字面量 import，而以下包经 importlib 动态加载——
+#: ui/_tab_registry.py 的 Tab 懒加载（import_module(module_path)）与
+#: connectors/registry.py 的插件发现（f"connectors.plugins.{stem}"）。
+#: 2026-10-15 审查实测：v4.2.0–v4.4.0 全部 AppImage 与 Windows onedir 构建
+#: 均缺失这两个包，打包版所有 Tab / 连接器插件不可用（源码运行无感知）。
+COLLECT_SUBMODULES = [
+    "ui.tabs",
+    "connectors.plugins",
+]
+
 EXCLUDES = [
     "tkinter",
     # 注意: 不可排除 unittest —— matplotlib → pyparsing(≥3.3) 的
@@ -180,6 +191,10 @@ def build(name: str, onefile: bool):
         cmd.append("--hidden-import")
         cmd.append(imp)
 
+    for pkg in COLLECT_SUBMODULES:
+        cmd.append("--collect-submodules")
+        cmd.append(pkg)
+
     for excl in EXCLUDES:
         cmd.append("--exclude-module")
         cmd.append(excl)
@@ -197,6 +212,8 @@ def build(name: str, onefile: bool):
 
     if onefile:
         candidates = list(DIST_DIR.glob(f"{name}*")) or list(BUILD_DIR.glob(f"{name}*"))
+        if candidates:
+            verify_bundle(candidates[0])
         _report(candidates)
         return
 
@@ -210,7 +227,25 @@ def build(name: str, onefile: bool):
         shutil.rmtree(final_dir, ignore_errors=True)
     shutil.move(str(src_dir), str(final_dir))
     print(f"[done] onedir 产物整理为: {final_dir}")
+    verify_bundle(final_dir / (f"{name}.exe" if sys.platform == "win32" else name))
     _report([final_dir])
+
+
+def verify_bundle(executable: Path) -> None:
+    """构建收尾自检：动态导入模块（Tab / 连接器插件）必须已进入打包产物。
+
+    缺失即中止构建——防止"源码全绿、打包产物缺模块"再次发生。
+    """
+    if not executable.exists():
+        print(f"\n[warn] 未找到打包产物可执行文件，跳过产物校验: {executable}")
+        return
+    cmd = [sys.executable, str(PROJECT_DIR / "tools" / "verify_bundle.py"),
+           "--dist", str(executable)]
+    result = subprocess.run(cmd, cwd=str(PROJECT_DIR), check=False)
+    if result.returncode != 0:
+        print(f"\n[error] 打包产物完整性校验失败（返回码 {result.returncode}）："
+              "动态导入模块缺失，产物不可发布！")
+        sys.exit(result.returncode)
 
 
 def _report(paths):

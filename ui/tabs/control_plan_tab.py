@@ -159,6 +159,14 @@ class ControlPlanTab(BaseAnalysisTab):
         reason, self._pending_reason = self._pending_reason, ""
         self._sync_context(change_reason=reason)
 
+    def flush_pending_edits(self) -> None:
+        """立即落库节流窗口内的编辑（项目保存 / 共享保存前由主窗口调用）。
+
+        1.5s 节流窗口内直接保存会写出旧值（2026-10-15 审查实测），
+        保存路径必须先冲刷；本方法即公开的冲刷入口。
+        """
+        self._flush_pending_sync()
+
     def _sync_context(self, change_reason: str = "控制计划条目更新"):
         """将当前行写入项目上下文（唯一事实源）"""
         self._sync_timer.stop()
