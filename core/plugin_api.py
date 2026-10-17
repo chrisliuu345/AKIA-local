@@ -23,7 +23,7 @@ from typing import Any
 
 PLUGIN_API_VERSION = "2.1"
 PLUGIN_ENTRY_POINT_GROUP = "akia.plugins"
-#: 旧品牌 entry point 组 — 兼容期仍会被扫描（第三方插件可继续用旧组发布）
+#: 旧版 entry point 组 — 兼容期仍会被扫描（第三方插件可继续用旧组发布）
 LEGACY_PLUGIN_ENTRY_POINT_GROUP = "qa_tool.plugins"
 CAPABILITIES = ("tab", "agent_tools", "settings", "data_source")
 

@@ -1,6 +1,7 @@
 #define MyAppName "AKIA"
 #define MyAppVersion "4.4.0"
-#define MyAppPublisher "AKIM"
+#define MyAppPublisher "AKIA contributors"
+#define MyAppURL "https://github.com/chrisliuu345/AKIA-local"
 #define MyAppExeName "AKIA.exe"
 
 [Setup]
@@ -9,6 +10,10 @@ AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
+AppPublisherURL={#MyAppURL}
+AppSupportURL={#MyAppURL}/issues
+AppUpdatesURL={#MyAppURL}/releases
+LicenseFile=..\LICENSE
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
