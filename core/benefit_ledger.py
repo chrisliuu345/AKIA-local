@@ -1,6 +1,6 @@
 """收益账本与 COPQ 契约 v1 — 改善收益记录与集合（v4.4.0 B0）。
 
-覆盖 PLAN_v4.4.0 §3.4 冻结的 ``BenefitRecord``：
+覆盖 ``BenefitRecord`` 契约：
 
 - 口径锁定当时标准版本（``basis.standard_ref`` / ``standard_as_of``），
   月度复算不追溯改写历史月（B4 编排）；
