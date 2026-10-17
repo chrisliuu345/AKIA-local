@@ -175,26 +175,25 @@ Download from [Releases](https://github.com/chrisliuu345/AKIA-local/releases):
   benefit ledger & COPQ / skill-constrained line balancing / sampling transparency
   (eight-link end-to-end demo `tools/demo_v44_case.py`); Linux AppImage `AKIA-4.4.0-x86_64.AppImage`
   plus source archives (zip / tar.gz) —
-  notes: [`docs/releases/v4.4.0.md`](docs/releases/v4.4.0.md)
+  see the [v4.4.0 Release](https://github.com/chrisliuu345/AKIA-local/releases/tag/v4.4.0)
 - `v4.3.0` — **improvement cases & evidence ledger** (B0–B6): case lifecycle /
   measurement channels / standard version records / evidence ledger & exchange v1;
   Linux AppImage (x86_64) plus source archives (zip / tar.gz) —
-  notes: [`docs/releases/v4.3.0.md`](docs/releases/v4.3.0.md)
+  see the [v4.3.0 Release](https://github.com/chrisliuu345/AKIA-local/releases/tag/v4.3.0)
 - `v4.2.1` — **source-only patch** (quality hardening + branding/UX/startup fixes);
-  source zip / tar.gz only, no new installers — notes: [`docs/releases/v4.2.1.md`](docs/releases/v4.2.1.md)
+  source zip / tar.gz only, no new installers —
+  see the [v4.2.1 Release](https://github.com/chrisliuu345/AKIA-local/releases/tag/v4.2.1)
 - `v4.2.0` — Linux AppImage (historical asset name `QA-Tool-4.2.0-x86_64.AppImage` + `.sha256`) and source archives (zip / tar.gz) —
-  notes: [`docs/releases/v4.2.0.md`](docs/releases/v4.2.0.md)
+  see the [v4.2.0 Release](https://github.com/chrisliuu345/AKIA-local/releases/tag/v4.2.0)
 
 ---
 
 ## Developer Docs
 
 - [Plugin data source contract (API 2.1)](docs/plugin-data-source.md)
-- [v4.4.0 migration guide](docs/migration/v4.4.0.md)
-- [v4.4.0 release notes](docs/releases/v4.4.0.md)
+- [Known-value and test conventions](KNOWN_VALUES.md) · [Per-file test rules](PYTEST_RULES.md)
+- [In-app guide](config/help/guide.html)
 - Closed-loop eight-link end-to-end demo: `python tools/demo_v44_case.py --output TEMP/demo_v44`
-- [v4.3.0 migration guide](docs/migration/v4.3.0.md)
-- [v4.3.0 release notes](docs/releases/v4.3.0.md)
 - End-to-end evidence-chain demo: `python tools/demo_v43_case.py --output TEMP/demo_v43`
 
 ---

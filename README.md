@@ -192,25 +192,23 @@ tests/                 # 2400+ 测试
 - `v4.4.0`（当前）— **闭环执行与效果验证**（B0–B8）：告警自动立案 8D / 测量系统在线化 /
   可信抽样（转移状态机 + 抽样决定留痕）/ 收益账本与 COPQ / 技能约束线平衡 / 抽样透明化
   （八链路端到端演示 `tools/demo_v44_case.py`）；Linux AppImage `AKIA-4.4.0-x86_64.AppImage`
-  + 源码包（zip / tar.gz）；发布说明见 [`docs/releases/v4.4.0.md`](docs/releases/v4.4.0.md)
+  + 源码包（zip / tar.gz）；详见 [v4.4.0 Release](https://github.com/chrisliuu345/AKIA-local/releases/tag/v4.4.0)
 - `v4.3.0` — **改善案例与证据账本**（B0–B6）：案例生命周期 / 测量四通道 / 标准版本记录 /
   证据账本与交换 v1；Linux AppImage（x86_64）+ 源码包（zip / tar.gz）；
-  发布说明见 [`docs/releases/v4.3.0.md`](docs/releases/v4.3.0.md)
+  详见 [v4.3.0 Release](https://github.com/chrisliuu345/AKIA-local/releases/tag/v4.3.0)
 - `v4.2.1` — **源码补丁**（质量加固 + 品牌/体验/启动修复），仅源码 zip / tar.gz，无新安装包；
-  发布说明见 [`docs/releases/v4.2.1.md`](docs/releases/v4.2.1.md)
+  详见 [v4.2.1 Release](https://github.com/chrisliuu345/AKIA-local/releases/tag/v4.2.1)
 - `v4.2.0` — Linux AppImage（历史资产名 `QA-Tool-4.2.0-x86_64.AppImage` + `.sha256`）与源码包（zip / tar.gz）；
-  发布说明见 [`docs/releases/v4.2.0.md`](docs/releases/v4.2.0.md)
+  详见 [v4.2.0 Release](https://github.com/chrisliuu345/AKIA-local/releases/tag/v4.2.0)
 
 ---
 
 ## 开发文档
 
 - [插件数据源合同（API 2.1）](docs/plugin-data-source.md)
-- [v4.4.0 迁移手册](docs/migration/v4.4.0.md)
-- [v4.4.0 发布说明](docs/releases/v4.4.0.md)
+- [测试与已知值规范](KNOWN_VALUES.md) · [逐文件测试规则](PYTEST_RULES.md)
+- [程序内使用指南](config/help/guide.html)
 - 闭环八链路端到端演示：`python tools/demo_v44_case.py --output TEMP/demo_v44`
-- [v4.3.0 迁移手册](docs/migration/v4.3.0.md)
-- [v4.3.0 发布说明](docs/releases/v4.3.0.md)
 - 端到端证据链演示：`python tools/demo_v43_case.py --output TEMP/demo_v43`
 
 ---

@@ -167,7 +167,7 @@ class AlertCaseLink:
 
 @dataclass
 class AlertCasePolicy:
-    """立案策略（默认值即 PLAN_v4.4.0 §8 决策 2/4）。"""
+    """立案策略（默认值即当前业务约定）。"""
 
     severity_threshold: str = "critical"   # 达到或高于该等级才立案
     cooldown_s: float = 1800.0             # 同 rule_key 合并窗口（30 分钟）
