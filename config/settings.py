@@ -1,6 +1,4 @@
-"""
-AKIA（AKIM IE/Quality analyzer-local）— 全局配置
-"""
+"""AKIA — 全局配置。"""
 
 import json
 import logging
@@ -11,12 +9,12 @@ import sys
 from core.fonts import get_ui_font
 
 APP_NAME = "AKIA"
-APP_FULL_NAME = "AKIM IE/Quality analyzer-local"
+APP_FULL_NAME = "Open-source Personal IE & Quality Analysis"
 APP_SLUG = "akia"
 APP_VERSION = "4.4.0"
 ORGANIZATION = "AKIA"
 
-# 旧品牌标识（仅用于一次性数据迁移，勿在新代码中引用）
+# 旧版数据标识（仅用于一次性数据迁移，勿在新代码中引用）
 LEGACY_APP_NAME = "QA-Tool"
 LEGACY_APP_SLUG = "qa-tool"
 
@@ -208,11 +206,11 @@ _USER_CONFIG_PATH = _default_user_config_path()
 
 
 def _migrate_legacy_user_config(target: str) -> None:
-    """打包版首次启动时，把旧版（QA-Tool）用户配置迁移到 AKIA 目录。
+    """打包版首次启动时，把旧版用户配置迁移到 AKIA 目录。
 
     迁移源按优先级:
       1. 旧版安装目录内的 user_config.json
-      2. 旧品牌平台目录 ``~/.config/QA-Tool`` / ``%APPDATA%\\QA-Tool``
+      2. 旧版平台目录 ``~/.config/QA-Tool`` / ``%APPDATA%\\QA-Tool``
     """
     if os.path.exists(target):
         return

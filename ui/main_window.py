@@ -19,7 +19,7 @@ from PySide6.QtCore import (
 )
 from PySide6.QtGui import QAction, QIcon, QFont, QPixmap, QDragEnterEvent, QDropEvent, QDesktopServices
 
-from config.settings import APP_NAME, APP_VERSION, CHART_FIGSIZE, tab_allowed
+from config.settings import APP_FULL_NAME, APP_NAME, APP_VERSION, CHART_FIGSIZE, tab_allowed
 from core.data_loader import DataLoader
 from core.data_parser import DataParser
 from core.data_validator import DataValidator
@@ -2933,10 +2933,9 @@ class MainWindow(QMainWindow):
         )
         msg_box.setText(
             f"<h2>{APP_NAME} v{APP_VERSION}</h2>"
-            f"<p>AKIM IE/Quality analyzer-local</p>"
-            f"<p>AI 工业质量 + IE 分析平台</p>"
-            f"<p>25+ 质量分析 · 5 IE 工具 · AI 根因分析 · 知识库 RAG</p>"
-            f"<p>企业特性: .qap 项目文件 · SQL 直连 · 批量调度 · 多用户协同</p>"
+            f"<p>{APP_FULL_NAME}</p>"
+            f"<p>开源个人工业工程与质量分析工具</p>"
+            f"<p>本地优先 · 可选 AI 助手 · 插件扩展 · Apache License 2.0</p>"
             f"<br><p style='color:#888'>技术栈: Python 3.14 · PySide6 · pandas · scipy · scikit-learn · SHAP</p>"
         )
         msg_box.setStandardButtons(QMessageBox.Ok)

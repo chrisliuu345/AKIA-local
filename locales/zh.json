@@ -204,7 +204,7 @@
   "msa.set_part": "设为零件列: ",
   "msa.title": "MSA 测量系统分析",
   "msa.tolerance": "公差:",
-  "msg.about_text": "AKIA（AKIM IE/Quality analyzer-local）<br>SPC控制图 | 过程能力分析 | 测量系统分析 | 假设检验 | DOE实验设计<br>支持大规模Excel数据处理，输出符合行业标准的质量分析报告",
+  "msg.about_text": "AKIA — 开源个人工业工程与质量分析工具<br>SPC控制图 | 过程能力分析 | 测量系统分析 | 假设检验 | DOE实验设计<br>本地优先 · Apache License 2.0",
   "msg.about_title": "关于 AKIA",
   "msg.cannot_load": "无法加载数据文件:",
   "msg.export_complete": "导出完成",

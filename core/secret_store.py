@@ -19,7 +19,7 @@ logger = logging.getLogger("AKIA.SecretStore")
 _PREFIX_DPAPI = "dpapi:"
 _PREFIX_KEYRING = "keyring:"
 
-#: 旧品牌 keyring 服务名（仅用于读取迁移）
+#: 旧版 keyring 服务名（仅用于读取迁移）
 _LEGACY_SERVICE_NAME = "qa-tool"
 _SERVICE_NAME = "akia"
 _KEY_NAME = "master-key"
