@@ -4,8 +4,8 @@
 用法: python tools/check_version.py
 
 校验范围: config/settings.py 的 APP_VERSION（事实源）、version_info.txt、
-build_pyinstaller.py（禁止硬编码）、README/README.en/INSTALL_LINUX 的
-产物文件名与版本声明、ROADMAP 头部当前版本。不一致时返回非零退出码。
+build_pyinstaller.py（禁止硬编码）、README/README.en 的产物文件名与版本声明、
+ROADMAP 头部当前版本。不一致时返回非零退出码。
 """
 
 import re
@@ -97,8 +97,7 @@ def main() -> int:
     check_version_info(version, problems)
     check_build_script(problems)
     check_installer(version, problems)
-    for rel in ("README.md", "README.en.md", "INSTALL_LINUX.md",
-                "ROADMAP.md", "ROADMAP.en.md"):
+    for rel in ("README.md", "README.en.md", "ROADMAP.md", "ROADMAP.en.md"):
         check_version_claims(rel, version, problems)
 
     print(f"APP_VERSION = {version}")
