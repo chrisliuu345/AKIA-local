@@ -17,7 +17,7 @@ from config.settings import APP_VERSION
 
 MODEL_EXT = ".qamodel"
 FORMAT_NAME = "akia-model"
-#: 旧品牌格式标记 — 只读兼容，避免既有 .qamodel 模型失效
+#: 旧格式标记 — 只读兼容，避免既有 .qamodel 模型失效
 LEGACY_FORMAT_NAMES = ("qa-tool-model",)
 _ACCEPTED_FORMATS = (FORMAT_NAME, *LEGACY_FORMAT_NAMES)
 FORMAT_VERSION = 1

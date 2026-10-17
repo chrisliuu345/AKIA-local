@@ -15,11 +15,11 @@ VSVersionInfo(
       StringTable(
         u'080404b0',
         [
-          StringStruct(u'CompanyName', u'AKIM'),
-          StringStruct(u'FileDescription', u'AKIA · AKIM IE/Quality analyzer-local'),
+          StringStruct(u'CompanyName', u'AKIA contributors'),
+          StringStruct(u'FileDescription', u'AKIA · Open-source Personal IE & Quality Analysis'),
           StringStruct(u'FileVersion', u'4.4.0'),
           StringStruct(u'InternalName', u'AKIA'),
-          StringStruct(u'LegalCopyright', u'Copyright © 2026 AKIM'),
+          StringStruct(u'LegalCopyright', u'Apache License 2.0 · Copyright © 2026 AKIA contributors'),
           StringStruct(u'OriginalFilename', u'AKIA.exe'),
           StringStruct(u'ProductName', u'AKIA'),
           StringStruct(u'ProductVersion', u'4.4.0')

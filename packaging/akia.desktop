@@ -2,7 +2,7 @@
 Type=Application
 Name=AKIA
 GenericName=IE/Quality Analyzer
-Comment=AKIM 工业工程与质量分析工具（本地版）
+Comment=Open-source personal IE and quality analysis
 Exec=/opt/akia/bin/akia %F
 Icon=akia
 Categories=Development;Science;Education;
