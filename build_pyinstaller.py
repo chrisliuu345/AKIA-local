@@ -49,6 +49,8 @@ DATA_FILES = [
     # _internal/logo.png/logo.png（冻结版按 __file__ 解析路径时读到目录，
     # logo 与默认配置都会静默丢失）。目标写 "." 才会落到 _internal/ 根下。
     ("logo.png", "."),
+    ("LICENSE", "."),
+    ("NOTICE", "."),
     # 仅打包公共默认配置；本机 user_config.json（可能含设备列表/告警密码）
     # 严禁进入安装包，运行时由 config.settings 叠加用户文件
     ("user_config.default.json", "."),
@@ -132,11 +134,11 @@ VSVersionInfo(
       StringTable(
         u'080404b0',
         [
-          StringStruct(u'CompanyName', u'AKIM'),
-          StringStruct(u'FileDescription', u'AKIA · AKIM IE/Quality analyzer-local'),
+          StringStruct(u'CompanyName', u'AKIA contributors'),
+          StringStruct(u'FileDescription', u'AKIA · Open-source Personal IE & Quality Analysis'),
           StringStruct(u'FileVersion', u'{version}'),
           StringStruct(u'InternalName', u'AKIA'),
-          StringStruct(u'LegalCopyright', u'Copyright \\u00a9 2026 AKIM'),
+          StringStruct(u'LegalCopyright', u'Apache License 2.0 \\u00b7 Copyright \\u00a9 2026 AKIA contributors'),
           StringStruct(u'OriginalFilename', u'AKIA.exe'),
           StringStruct(u'ProductName', u'AKIA'),
           StringStruct(u'ProductVersion', u'{version}')

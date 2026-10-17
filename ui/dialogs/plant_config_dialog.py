@@ -1,8 +1,7 @@
-"""产线配置可视化编辑器（v3.8.0-②）— data/plant.json 表格化编辑。
+"""产线配置可视化编辑器 — data/plant.json 表格化编辑。
 
-对标 Minitab RTSPC Autoconfigure 思路：产线/工位/通道/规格限/节拍/成本
-一次表格配置，支持 Excel·CSV 模板导入导出；保存即写回 plant.json，
-看板与实时 OEE/告警读取同一份配置。
+产线/工位/通道/规格限/节拍/成本一次表格配置，支持 Excel·CSV 模板导入导出；
+保存即写回 plant.json，看板与实时 OEE/告警读取同一份配置。
 """
 from pathlib import Path
 

@@ -1,7 +1,7 @@
-"""QSettings 品牌迁移 — 把旧组织（QA-Tool）下的设置复制到新组织（AKIA）。
+"""QSettings 兼容迁移 — 把旧组织下的设置复制到当前组织。
 
 涉及的组: MainWindow（窗口布局）/ RecentProjects / Dashboard / DBConnections /
-Formulas / LLM。迁移只在新组尚无数据时进行，避免覆盖 AKIA 已有配置。
+Formulas / LLM。迁移只在当前组织尚无数据时进行，避免覆盖已有配置。
 """
 from __future__ import annotations
 

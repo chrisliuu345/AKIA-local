@@ -71,7 +71,7 @@ def main():
     app.setApplicationName(APP_NAME)
     app.setOrganizationName(ORGANIZATION)
 
-    # 旧品牌（QA-Tool）QSettings 数据一次性迁移：窗口布局 / 最近项目 / 公式 / LLM 等
+    # 旧版 QSettings 数据一次性迁移：窗口布局 / 最近项目 / 公式 / LLM 等
     from core.settings_migration import migrate_legacy_qsettings
     migrate_legacy_qsettings()
 

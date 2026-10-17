@@ -24,7 +24,7 @@ _legacy_migrated = False
 
 
 def _migrate_legacy_log() -> None:
-    """首次写入前把旧品牌审计日志复制过来（保留旧文件）。"""
+    """首次写入前把旧版审计日志复制过来（保留旧文件）。"""
     global _legacy_migrated
     if _legacy_migrated:
         return

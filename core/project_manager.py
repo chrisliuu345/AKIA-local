@@ -382,7 +382,7 @@ PUBLIC_DEPT = "公共"
 
 
 def _ensure_shared_dir() -> None:
-    """共享目录首次使用时迁移旧品牌数据（保留旧目录）。"""
+    """共享目录首次使用时迁移旧版数据（保留旧目录）。"""
     if SHARED_DIR != _DEFAULT_SHARED_DIR:   # 测试/自定义目录不做旧数据搬迁
         return
     migrate_legacy_dir(legacy_home_dir("shared"), SHARED_DIR)
