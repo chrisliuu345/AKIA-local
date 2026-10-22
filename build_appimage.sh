@@ -140,11 +140,19 @@ SHA_FILE="${OUTPUT_FILE}.sha256"
 echo "  生成 ${OUTPUT_BASENAME}.sha256 ..."
 printf '%s  %s\n' "$(_sha256_of "${OUTPUT_FILE}")" "${OUTPUT_BASENAME}" > "${SHA_FILE}"
 
+# ── 步骤 7: 生成发布溯源清单 ───────────────────────────────
+RELEASE_MANIFEST="${BUILD_DIR}/release-manifest.json"
+echo "  生成发布溯源清单 ${RELEASE_MANIFEST} ..."
+python "${SCRIPT_DIR}/tools/release_manifest.py" \
+    --artifact "${OUTPUT_FILE}" \
+    --output "${RELEASE_MANIFEST}"
+
 # ── 完成 ───────────────────────────────────────────────────
 echo ""
 echo "=========================================="
 echo "  构建成功!"
 echo "  输出: ${OUTPUT_FILE}"
+echo "  溯源: ${RELEASE_MANIFEST}"
 echo "  大小: $(du -h "${OUTPUT_FILE}" | cut -f1)"
 echo "=========================================="
 echo ""

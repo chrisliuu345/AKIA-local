@@ -33,6 +33,8 @@ sys.path.insert(0, str(PROJECT_DIR))
 from config.settings import APP_VERSION  # noqa: E402
 
 GENERATED_VERSION_INFO = BUILD_DIR / "version_info.generated.txt"
+LICENSES_DIR = BUILD_DIR / "third_party_licenses"
+THIRD_PARTY_NOTICE = BUILD_DIR / "THIRD_PARTY_NOTICES.md"
 
 # 目录类数据: (源相对路径, 目标相对路径) — 落于 _internal/ 下, 与
 # config/settings.py 基于 __file__ 的路径解析一致
@@ -154,12 +156,33 @@ VSVersionInfo(
     return GENERATED_VERSION_INFO
 
 
+def collect_license_bundle() -> tuple[Path, Path]:
+    """Generate bundled third-party texts from the active build environment."""
+    print("[licenses] 收集第三方许可证与归属信息...")
+    cmd = [
+        sys.executable,
+        str(PROJECT_DIR / "tools" / "collect_licenses.py"),
+        "--output", str(LICENSES_DIR),
+        "--notice", str(THIRD_PARTY_NOTICE),
+        "--allow-missing",
+    ]
+    for name in ("requirements.txt", "requirements-server.txt",
+                 "requirements-connectors.txt"):
+        cmd.extend(["--requirements", str(PROJECT_DIR / name)])
+    result = subprocess.run(cmd, cwd=str(PROJECT_DIR), check=False)
+    if result.returncode != 0:
+        print("[error] 第三方许可证收集失败，构建中止")
+        sys.exit(result.returncode)
+    return LICENSES_DIR, THIRD_PARTY_NOTICE
+
+
 def build(name: str, onefile: bool):
     print("\n" + "=" * 60)
     print(f"  PyInstaller 构建 — 模式: {'onefile' if onefile else 'onedir'}")
     print(f"  平台: {sys.platform}  名称: {name}  版本: {APP_VERSION}")
     print("=" * 60 + "\n")
 
+    licenses_dir, notice_file = collect_license_bundle()
     cmd = [
         sys.executable, "-m", "PyInstaller",
         "--noconfirm", "--clean",
@@ -185,9 +208,18 @@ def build(name: str, onefile: bool):
             cmd.append("--icon")
             cmd.append(str(ICON_PATH_LINUX))
 
-    for src_rel, dest_rel in DATA_DIRS + DATA_FILES:
+    data_items = [
+        *DATA_DIRS,
+        (licenses_dir, "licenses"),
+        *DATA_FILES,
+        (notice_file, "."),
+    ]
+    for src_rel, dest_rel in data_items:
+        source = Path(src_rel)
+        if not source.is_absolute():
+            source = PROJECT_DIR / source
         cmd.append("--add-data")
-        cmd.append(f"{PROJECT_DIR / src_rel!s}{os.pathsep}{dest_rel}")
+        cmd.append(f"{source!s}{os.pathsep}{dest_rel}")
 
     for imp in HIDDEN_IMPORTS:
         cmd.append("--hidden-import")

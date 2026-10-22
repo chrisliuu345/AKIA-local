@@ -1,0 +1,21 @@
+# Versions exercised by AKIA's v4.5.0 test baseline.
+# Regenerate locks with this file as a constraint; update only with a full regression.
+PySide6==6.11.2
+PySide6_Addons==6.11.2
+PySide6_Essentials==6.11.2
+shiboken6==6.11.2
+matplotlib==3.11.1
+pandas==2.3.3
+SQLAlchemy==2.0.52
+fastapi==0.141.1
+starlette==1.6.0
+uvicorn==0.52.4
+websockets==17.1
+pydantic==2.13.5
+pydantic_core==2.46.5
+cryptography==50.0.1
+certifi==2026.10.19
+pillow==13.0.0
+fonttools==4.64.0
+lxml==6.1.2
+python-calamine==0.8.2

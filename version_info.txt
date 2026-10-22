@@ -1,8 +1,8 @@
 # UTF-8
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(4, 4, 0, 0),
-    prodvers=(4, 4, 0, 0),
+    filevers=(4, 5, 0, 0),
+    prodvers=(4, 5, 0, 0),
     mask=0x3f,
     flags=0x0,
     OS=0x40004,
@@ -17,12 +17,12 @@ VSVersionInfo(
         [
           StringStruct(u'CompanyName', u'AKIA contributors'),
           StringStruct(u'FileDescription', u'AKIA · Open-source Personal IE & Quality Analysis'),
-          StringStruct(u'FileVersion', u'4.4.0'),
+          StringStruct(u'FileVersion', u'4.5.0'),
           StringStruct(u'InternalName', u'AKIA'),
           StringStruct(u'LegalCopyright', u'Apache License 2.0 · Copyright © 2026 AKIA contributors'),
           StringStruct(u'OriginalFilename', u'AKIA.exe'),
           StringStruct(u'ProductName', u'AKIA'),
-          StringStruct(u'ProductVersion', u'4.4.0')
+          StringStruct(u'ProductVersion', u'4.5.0')
         ]
       )
     ]),

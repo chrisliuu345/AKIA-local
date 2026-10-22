@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0",
+  "id": "example.quality",
+  "name": "Example Quality Rule Pack",
+  "version": "1.0.0",
+  "description": "Portable example of sampling, judgement, and quality rules.",
+  "metadata": {
+    "owner": "AKIA contributors",
+    "status": "example"
+  },
+  "rules": [
+    {
+      "id": "sampling.aql",
+      "category": "sampling",
+      "type": "configuration",
+      "name": "AQL sampling configuration",
+      "description": "Reference settings consumed by sampling workflows.",
+      "severity": "info",
+      "settings": {
+        "aql": 2.5,
+        "inspection_level": "II",
+        "reduced_enabled": false
+      },
+      "message": "Sampling configuration"
+    },
+    {
+      "id": "judgement.cpk",
+      "category": "judgement",
+      "type": "threshold",
+      "name": "Process capability target",
+      "metric": "cpk",
+      "operator": ">=",
+      "value": 1.33,
+      "severity": "error",
+      "message": "Cpk is below the target"
+    },
+    {
+      "id": "quality.grr",
+      "category": "quality",
+      "type": "threshold",
+      "name": "Gauge R&R limit",
+      "metric": "grr_pct",
+      "operator": "<=",
+      "value": 10.0,
+      "severity": "warning",
+      "message": "Gauge R&R exceeds the preferred limit"
+    }
+  ]
+}

@@ -11,7 +11,7 @@ from core.fonts import get_ui_font
 APP_NAME = "AKIA"
 APP_FULL_NAME = "Open-source Personal IE & Quality Analysis"
 APP_SLUG = "akia"
-APP_VERSION = "4.4.0"
+APP_VERSION = "4.5.0"
 ORGANIZATION = "AKIA"
 
 # 旧版数据标识（仅用于一次性数据迁移，勿在新代码中引用）

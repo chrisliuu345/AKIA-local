@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from config.settings import APP_VERSION
+from core.archive_safety import open_safe_zip, read_member
 from core.time_utils import now_iso
 
 EVIDENCE_PACK_SCHEMA_VERSION = "1"
@@ -127,18 +128,22 @@ def verify_evidence_pack(path: str) -> dict[str, Any]:
         return {"ok": False, "problems": ["证据包不存在"], "manifest": {},
                 "ledger_chain": chain}
     try:
-        with zipfile.ZipFile(path, "r") as archive:
-            names = set(archive.namelist())
+        with open_safe_zip(path) as (archive, inspection):
+            names = set(inspection.names())
             if "manifest.json" not in names:
                 return {"ok": False, "problems": ["缺少 manifest.json"],
                         "manifest": {}, "ledger_chain": chain}
-            manifest = json.loads(archive.read("manifest.json").decode("utf-8"))
+            manifest_data = read_member(
+                archive, inspection, "manifest.json", max_bytes=2 * 1024 ** 2)
+            manifest = json.loads(manifest_data.decode("utf-8"))
             files = manifest.get("files") or {}
+            cached: dict[str, bytes] = {}
             for name, meta in files.items():
                 if name not in names:
                     problems.append(f"缺少文件: {name}")
                     continue
-                data = archive.read(name)
+                data = read_member(archive, inspection, name)
+                cached[name] = data
                 if _sha256_bytes(data) != meta.get("sha256"):
                     problems.append(f"哈希不匹配: {name}")
                 elif len(data) != meta.get("size"):
@@ -149,7 +154,10 @@ def verify_evidence_pack(path: str) -> dict[str, Any]:
             if "events.jsonl" in names:
                 from core.evidence_ledger import EvidenceLedger
 
-                ledger = EvidenceLedger.from_bytes(archive.read("events.jsonl"))
+                events = cached.get("events.jsonl")
+                if events is None:
+                    events = read_member(archive, inspection, "events.jsonl")
+                ledger = EvidenceLedger.from_bytes(events)
                 chain = ledger.verify()
                 if not chain.get("ok"):
                     problems.append("账本校验失败: " + str(chain.get("reason", "")))
@@ -163,10 +171,10 @@ def verify_evidence_pack(path: str) -> dict[str, Any]:
 
 def read_evidence_pack(path: str) -> dict[str, Any]:
     """读取证据包内容（不落盘解压），供证据视图/审计工具使用。"""
-    with zipfile.ZipFile(path, "r") as archive:
+    with open_safe_zip(path) as (archive, inspection):
         payload: dict[str, Any] = {"manifest": {}}
-        for name in archive.namelist():
-            data = archive.read(name)
+        for name in inspection.names():
+            data = read_member(archive, inspection, name)
             if name.endswith(".json"):
                 payload[name] = json.loads(data.decode("utf-8"))
             elif name.endswith((".jsonl", ".md", ".csv")):
