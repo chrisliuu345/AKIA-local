@@ -13,6 +13,9 @@ dist/
 # 本地发布产物（不打入仓库）
 4.0.0release/
 4.1.0release/
+# 旧版 Word 指南（当前指南为 config/help/guide.html）
+/使用指南.doc
+/使用指南.docx
 *.spec
 *.exe
 .DS_Store

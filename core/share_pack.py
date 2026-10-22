@@ -24,6 +24,7 @@ import numpy as np
 import pandas as pd
 
 from config.settings import APP_VERSION
+from core.archive_safety import ArchiveSecurityError, open_safe_zip, read_member
 from core.time_utils import now_iso
 
 SHARE_PACK_SCHEMA_VERSION = "1"
@@ -202,14 +203,15 @@ def scan_share_pack(path: str, *, raw_data: dict[str, pd.DataFrame] | None = Non
     """
     findings: list[dict[str, str]] = []
     try:
-        with zipfile.ZipFile(path, "r") as archive:
+        with open_safe_zip(path) as (archive, inspection):
             texts = []
-            for name in archive.namelist():
+            for name in inspection.names():
                 try:
-                    texts.append((name, archive.read(name).decode("utf-8")))
+                    data = read_member(archive, inspection, name)
+                    texts.append((name, data.decode("utf-8")))
                 except UnicodeDecodeError:
                     continue
-    except (OSError, zipfile.BadZipFile) as exc:
+    except (OSError, zipfile.BadZipFile, ArchiveSecurityError) as exc:
         return {"ok": False, "findings": [{"kind": "read-error", "value": str(exc)}]}
 
     forbidden_values = [str(item) for item in (forbidden or []) if str(item or "").strip()]
