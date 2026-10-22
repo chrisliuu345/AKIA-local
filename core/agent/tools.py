@@ -345,8 +345,13 @@ def _violation_lines(violations: list, limit: int = 5) -> list[str]:
     return lines
 
 
-def build_default_registry(ctx: AgentContext) -> ToolRegistry:
-    """构建覆盖本软件主要能力的工具集（新增工具在此登记即可被 Agent 调用）。"""
+def build_default_registry(ctx: AgentContext, *,
+                           include_plugins: bool = True) -> ToolRegistry:
+    """构建覆盖本软件主要能力的工具集（新增工具在此登记即可被 Agent 调用）。
+
+    ``include_plugins=False`` 供无界面 SDK/CLI 使用：不扫描用户插件目录，
+    避免自动化进程隐式执行第三方插件代码。
+    """
     reg = ToolRegistry()
 
     # ---------------- 数据 ----------------
@@ -1001,13 +1006,14 @@ def build_default_registry(ctx: AgentContext) -> ToolRegistry:
     register_ml_tools(reg, ctx)
 
     # ---------------- 插件工具（外部插件通过 manifest 声明贡献点）----------------
-    try:
-        from core.plugin_manager import PluginManager
-        manager = PluginManager()
-        manager.discover()
-        manager.register_agent_tools(reg, ctx)
-    except Exception:
-        import logging
-        logging.getLogger("AKIA.Agent").debug("插件工具注册失败", exc_info=True)
+    if include_plugins:
+        try:
+            from core.plugin_manager import PluginManager
+            manager = PluginManager()
+            manager.discover()
+            manager.register_agent_tools(reg, ctx)
+        except Exception:
+            import logging
+            logging.getLogger("AKIA.Agent").debug("插件工具注册失败", exc_info=True)
 
     return reg
