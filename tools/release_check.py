@@ -43,6 +43,8 @@ def main() -> int:
 
     steps: list[tuple[str, list[str]]] = [
         ("版本一致性（四端 + 文档产物名）", [PY, "tools/check_version.py"]),
+        ("依赖锁哈希与分层", [PY, "tools/check_dependencies.py"]),
+        ("抽样标准独立交叉核对", [PY, "tools/check_aql_reference.py"]),
         ("ruff 全库零告警", [PY, "-m", "ruff", "check", "."]),
     ]
     if not args.skip_tests:

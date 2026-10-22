@@ -33,8 +33,14 @@ _CORE_MODULES = [
     # 工程上下文
     "core.project_context",
     "core.project_manager",
+    "core.archive_safety",
+    "core.plugin_check",
+    "core.rule_pack",
     "core.i18n",
     "config.settings",
+    "akia_sdk",
+    "akia_sdk.client",
+    "akia_sdk.cli",
     "ui.main_window",
 ]
 

@@ -83,7 +83,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
 
 <header class="top">
   <span class="logo">AKIA 使用指南</span>
-  <span class="tag">v4.4.0</span>
+  <span class="tag">v4.5.0</span>
   <span class="tag">Windows / Linux</span>
   <span class="meta">质量工程（QE）· 工业工程（IE）· 离线分析</span>
 </header>
@@ -109,6 +109,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
   <a href="#predictive">预测分析（机器学习）</a>
   <a href="#case-evidence">改善案例与证据链</a>
   <a href="#closed-loop">闭环执行与效果验证</a>
+  <a href="#open-interfaces">开放接口与自动化</a>
   <div class="grp">图表与报告</div>
   <a href="#charts">图表与实时编辑</a>
   <a href="#export">导出与报告</a>
@@ -157,22 +158,22 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
 </section>
 
 <section class="card" id="install">
-  <h2>安装包与启动（当前版本 v4.4.0）</h2>
-  <p>v4.4.0 免装 Python 环境、完全离线运行。Linux 侧只发布 AppImage 单一格式（不再构建
+  <h2>安装包与启动（当前版本 v4.5.0）</h2>
+  <p>v4.5.0 免装 Python 环境、完全离线运行。Linux 侧只发布 AppImage 单一格式（不再构建
   <code>.deb</code>），已随 GitHub Release 提供下载；Windows 安装包在 Windows 侧用仓库内
   <code>packaging/AKIA-installer.iss</code> 构建：</p>
   <table>
     <tr><th>版本</th><th>安装文件</th><th>适用系统</th><th>发布状态</th><th>安装 / 启动</th></tr>
     <tr>
       <td class="k">Linux AppImage</td>
-      <td><code>AKIA-4.4.0-x86_64.AppImage</code></td>
+      <td><code>AKIA-4.5.0-x86_64.AppImage</code></td>
       <td>任意 x86_64 Linux（Debian / Ubuntu / elementary 等）</td>
-      <td>✅ 随 <code>v4.4.0</code> Release 提供（附 <code>.sha256</code> 校验文件）</td>
+      <td>✅ 随 <code>v4.5.0</code> Release 提供（附 <code>.sha256</code> 校验文件）</td>
       <td>免安装：<code>chmod +x</code> 后直接运行；可移动到 <code>/opt</code> 并自建桌面快捷方式</td>
     </tr>
     <tr>
       <td class="k">Windows 安装包</td>
-      <td><code>AKIA-Setup-4.4.0.exe</code></td>
+      <td><code>AKIA-Setup-4.5.0.exe</code></td>
       <td>Windows 10/11（64 位）</td>
       <td>Windows 侧构建（Linux 环境无法出包；构建脚本与 .iss 已就绪）</td>
       <td>双击运行 Inno Setup 向导，自动创建开始菜单/桌面快捷方式，支持卸载</td>
@@ -180,10 +181,10 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
   </table>
   <div class="note">
     <b>下载与校验（Linux）：</b>
-    <pre class="tight"><code># 从 https://github.com/chrisliuu345/AKIA-local/releases/tag/v4.4.0 下载两个文件后
-sha256sum -c AKIA-4.4.0-x86_64.AppImage.sha256
-chmod +x AKIA-4.4.0-x86_64.AppImage
-./AKIA-4.4.0-x86_64.AppImage</code></pre>
+    <pre class="tight"><code># 从 https://github.com/chrisliuu345/AKIA-local/releases/tag/v4.5.0 下载两个文件后
+sha256sum -c AKIA-4.5.0-x86_64.AppImage.sha256
+chmod +x AKIA-4.5.0-x86_64.AppImage
+./AKIA-4.5.0-x86_64.AppImage</code></pre>
     无 FUSE 的容器环境可加 <code>--appimage-extract-and-run</code> 参数运行（解包到临时目录执行）。
   </div>
 </section>
@@ -674,9 +675,43 @@ chmod +x AKIA-4.4.0-x86_64.AppImage
   </ul>
 </section>
 
+<section class="card" id="open-interfaces">
+  <h2>开放接口与自动化（v4.5.0 新增）</h2>
+  <p>无界面接口复用桌面端同一套分析引擎，不创建 Qt 应用；默认不扫描或执行第三方插件。</p>
+
+  <h3>CLI / SDK</h3>
+  <pre class="tight"><code>python -m akia_sdk tools --pretty
+python -m akia_sdk run --input data.xlsx --tool run_capability \
+  --params '{"column":"直径","usl":10.4,"lsl":9.6}'
+python -m akia_sdk rules-validate --pack config/rule-packs/example-quality.json</code></pre>
+  <p>Python 调用使用 <code>AKIAClient.from_file()</code>、<code>from_project()</code> 或
+  <code>from_dataframes()</code>；结果包含版本化 <code>schema_version</code>。CSV、Excel
+  和 <code>.qap</code> 均可在无 Qt 环境读取。</p>
+
+  <h3>MCP 本地服务</h3>
+  <p><code>python -m akia_sdk.mcp --project analysis.qap</code> 通过 stdio 暴露只读工具：
+  工具清单、数据画像、单工具分析、一键分析和服务器信息。数据源在启动时固定，调用阶段不接受
+  文件路径；外部 AI 工具无法借此浏览本机任意文件。</p>
+
+  <h3>规则包与插件</h3>
+  <ul>
+    <li>规则包使用结构化阈值 / 分类 / 配置规则，带 <code>rulepack-hash-v1</code> 内容指纹；拒绝未知字段、未知运算符和重复规则 ID</li>
+    <li><code>python tools/plugin_check.py &lt;插件目录&gt;</code> 只解析 manifest 与 AST，不执行插件代码</li>
+    <li><code>python tools/new_plugin.py</code> 生成目录式插件脚手架，并支持 Tab、Agent 工具、设置页和测量数据源能力</li>
+  </ul>
+
+  <h3>归档与发布安全</h3>
+  <ul>
+    <li>项目、证据包和分享包读取统一限制条目数、单项 / 总解压量、压缩比、重复 / 穿越路径、加密条目和符号链接</li>
+    <li>核心与 CI 依赖分别使用带 SHA256 的锁文件；CI 在 Python 3.11 / 3.14 上检查版本、哈希、漏洞和 SDK/MCP 冒烟</li>
+    <li>安装包生成 <code>licenses/</code>、<code>THIRD_PARTY_NOTICES.md</code> 和
+      <code>release-manifest.json</code>，后者绑定版本、提交、标签、锁文件、许可证清单与产物哈希</li>
+  </ul>
+</section>
+
 </main>
 </div>
-<footer>AKIA v4.4.0 · 本指南随软件离线分发（config/help/guide.html）· 菜单「帮助 → 使用指南」或按 F1 打开</footer>
+<footer>AKIA v4.5.0 · 本指南随软件离线分发（config/help/guide.html）· 菜单「帮助 → 使用指南」或按 F1 打开</footer>
 
 </body>
 </html>

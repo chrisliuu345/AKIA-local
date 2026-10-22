@@ -11,7 +11,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 
@@ -51,7 +51,7 @@ def normalize_iso(value: Any, field_name: str = "时间", *,
 
 def epoch_to_iso(ts: float) -> str:
     """epoch 秒（UTC）→ 本机时区带偏移 ISO-8601（毫秒精度）。"""
-    return datetime.fromtimestamp(float(ts), tz=timezone.utc).astimezone().isoformat(
+    return datetime.fromtimestamp(float(ts), tz=UTC).astimezone().isoformat(
         timespec="milliseconds")
 
 

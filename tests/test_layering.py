@@ -60,3 +60,15 @@ class TestAnalysisLayerStaysQtFree:
                 if name == "PySide6" or name.startswith("PySide6."):
                     offenders.append(str(path.relative_to(ROOT)))
         assert offenders == [], "analysis 层必须保持无 Qt: " + "; ".join(offenders)
+
+
+class TestHeadlessSdkStaysQtFree:
+    def test_sdk_does_not_import_qt_or_ui(self):
+        offenders = []
+        for path in _iter_python_files("akia_sdk"):
+            for name in _imports(path):
+                if name == "ui" or name.startswith("ui."):
+                    offenders.append(f"{path.relative_to(ROOT)} -> {name}")
+                if name == "PySide6" or name.startswith("PySide6."):
+                    offenders.append(f"{path.relative_to(ROOT)} -> {name}")
+        assert offenders == [], "SDK 必须保持无 Qt/UI 依赖: " + "; ".join(offenders)

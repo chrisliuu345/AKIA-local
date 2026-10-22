@@ -1,0 +1,20 @@
+Qt for Python (PySide6), Qt 6, and Shiboken6
+
+The installed PySide6, PySide6-Essentials, PySide6-Addons, and Shiboken6
+distributions declare the license expression:
+
+    LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+
+AKIA uses these components under the GNU Lesser General Public License,
+version 3. The complete LGPL-3.0 and GPL-3.0 texts are bundled alongside
+this notice.
+
+Upstream projects:
+
+- Qt for Python: https://code.qt.io/cgit/pyside/pyside-setup.git/
+- Qt source and releases: https://download.qt.io/official_releases/qt/
+- Qt licensing: https://www.qt.io/licensing/open-source-lgpl-obligations
+
+Users may replace the bundled Qt/PySide dynamic libraries with compatible
+versions. Corresponding source code is available from the upstream locations
+above for the version reported in the generated third-party manifest.

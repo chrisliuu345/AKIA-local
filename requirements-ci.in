@@ -1,0 +1,9 @@
+# CI 全量测试环境：核心 + 实时看板 + 连接器 + 开发工具。
+# 生成命令见 docs/dependency-management.md；CI 只安装带哈希的 requirements-ci.lock。
+-r requirements.txt
+-r requirements-server.txt
+-r requirements-connectors.txt
+-r dev-requirements.txt
+keyrings.alt==5.0.1
+# CI 打包作业从同一哈希锁安装构建工具。
+pyinstaller==6.22.2

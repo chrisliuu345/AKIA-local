@@ -8,10 +8,10 @@ import io
 import zipfile
 from datetime import datetime
 from typing import Any
-from PySide6.QtCore import QSettings
 
 import pandas as pd
 
+from core.archive_safety import open_safe_zip, read_member
 from core.improvement_case import CASE_SCHEMA_VERSION
 from core.legacy import legacy_home_dir, migrate_legacy_dir
 
@@ -205,8 +205,11 @@ class ProjectManager:
         return path
 
     @staticmethod
-    def load_project(path: str) -> dict[str, Any]:
+    def load_project(path: str, *, record_recent: bool = True) -> dict[str, Any]:
         """从 .qap 加载项目，返回完整上下文字典。
+
+        ``record_recent=False`` 供 CLI、SDK 和 MCP 使用，避免只读自动化进程
+        修改桌面端的最近项目配置。
 
         Returns: {
             "manifest": dict,
@@ -251,57 +254,59 @@ class ProjectManager:
         benefits = None
         skills = None
 
-        with zipfile.ZipFile(path, "r") as zf:
-            for name in zf.namelist():
+        with open_safe_zip(path) as (zf, inspection):
+            for name in inspection.names():
+                data = read_member(zf, inspection, name)
                 if name == "manifest.json":
-                    manifest = json.loads(zf.read(name).decode("utf-8"))
+                    manifest = json.loads(data.decode("utf-8"))
                 elif name.startswith("data/") and name.endswith(".csv"):
                     sname = name[5:-4]
-                    df = pd.read_csv(io.BytesIO(zf.read(name)))
+                    df = pd.read_csv(io.BytesIO(data))
                     raw_data[sname] = df
                 elif name == "analyses.json":
-                    raw = json.loads(zf.read(name).decode("utf-8"))
+                    raw = json.loads(data.decode("utf-8"))
                     for k, v in raw.items():
                         analyses[int(k)] = v
                 elif name == "context.json":
-                    project_context = json.loads(zf.read(name).decode("utf-8"))
+                    project_context = json.loads(data.decode("utf-8"))
                 elif name == "cases.json":
-                    payload = json.loads(zf.read(name).decode("utf-8"))
+                    payload = json.loads(data.decode("utf-8"))
                     if isinstance(payload, dict):
                         cases = payload.get("cases") or []
                     elif isinstance(payload, list):
                         cases = payload
                 elif name == "standards.json":
-                    standards = json.loads(zf.read(name).decode("utf-8"))
+                    standards = json.loads(data.decode("utf-8"))
                 elif name == "evidence/events.jsonl":
                     from core.evidence_ledger import EvidenceLedger
 
-                    ledger = EvidenceLedger.from_bytes(zf.read(name))
+                    ledger = EvidenceLedger.from_bytes(data)
                     evidence_events = [event.to_dict() for event in ledger.events]
                     evidence_recovered = ledger.recovered_truncation
                     evidence_errors = list(ledger.load_errors)
                 elif name == "measurements.jsonl":
                     from core.measurement_store import MeasurementStore
 
-                    store = MeasurementStore.from_bytes(zf.read(name))
+                    store = MeasurementStore.from_bytes(data)
                     measurements = store.to_dicts()
                     measurement_recovered = store.recovered_truncation
                     measurement_errors = list(store.load_errors)
                 elif name == "sampling.json":
-                    sampling = json.loads(zf.read(name).decode("utf-8"))
+                    sampling = json.loads(data.decode("utf-8"))
                 elif name == "gauge_studies.json":
-                    gauge_studies = json.loads(zf.read(name).decode("utf-8"))
+                    gauge_studies = json.loads(data.decode("utf-8"))
                 elif name == "benefits.json":
-                    benefits = json.loads(zf.read(name).decode("utf-8"))
+                    benefits = json.loads(data.decode("utf-8"))
                 elif name == "skills.json":
-                    skills = json.loads(zf.read(name).decode("utf-8"))
+                    skills = json.loads(data.decode("utf-8"))
                 elif name.startswith("charts/") and name.endswith(".png"):
                     label = name[7:-4]
-                    chart_bytes[label] = zf.read(name)
+                    chart_bytes[label] = data
                 elif name == "annotations.txt":
-                    annotations = zf.read(name).decode("utf-8")
+                    annotations = data.decode("utf-8")
 
-        ProjectManager.add_recent(path, os.path.basename(path))
+        if record_recent:
+            ProjectManager.add_recent(path, os.path.basename(path))
         return {
             "manifest": manifest,
             "raw_data": raw_data,
@@ -328,13 +333,20 @@ class ProjectManager:
         """仅读取 manifest，不解压全部内容"""
         if not os.path.exists(path):
             raise FileNotFoundError(f"项目文件不存在: {path}")
-        with zipfile.ZipFile(path, "r") as zf:
-            if "manifest.json" in zf.namelist():
-                return json.loads(zf.read("manifest.json").decode("utf-8"))
+        with open_safe_zip(path) as (zf, inspection):
+            if "manifest.json" in inspection.members:
+                data = read_member(
+                    zf, inspection, "manifest.json", max_bytes=2 * 1024 ** 2)
+                return json.loads(data.decode("utf-8"))
         return {}
 
     @staticmethod
     def recent_projects() -> list[dict[str, str]]:
+        try:
+            from PySide6.QtCore import QSettings
+        except ImportError:
+            # 无 GUI 的 SDK/CLI 环境不应因“最近项目”这一界面便利功能失败。
+            return []
         settings = QSettings("AKIA", "RecentProjects")
         raw = settings.value("list", "[]")
         try:
@@ -344,6 +356,10 @@ class ProjectManager:
 
     @staticmethod
     def add_recent(path: str, name: str):
+        try:
+            from PySide6.QtCore import QSettings
+        except ImportError:
+            return
         recent = ProjectManager.recent_projects()
         recent = [r for r in recent if r.get("path") != path]
         recent.insert(0, {"path": path, "name": name, "opened": datetime.now().isoformat()})
