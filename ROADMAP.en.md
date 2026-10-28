@@ -2,8 +2,8 @@
 
 [中文](ROADMAP.md) | [English](ROADMAP.en.md) | [Project Home](README.en.md) | [Releases](https://github.com/chrisliuu345/AKIA-local/releases)
 
-**Status**: v4.5.0 development and local quality gates are complete, pending commit and version tagging; v4.4.x is the previous stable line.
-**Last updated**: 2026-10-19
+**Status**: v4.5.0 is released. Current development is v4.6.0, optional intelligent assistance and local data assets. v4.4.x remains the previous stable line.
+**Last updated**: 2026-10-28
 
 ## Direction
 
@@ -31,15 +31,17 @@ AKIA is an open-source desktop application for personal industrial engineering a
 
 ## Release Sequence
 
-The following releases are ordered by dependency. Each minor release focuses on one primary theme and must meet its completion criteria before the next phase begins.
+The following releases are ordered by dependency. Each minor release focuses on one primary theme and must meet its completion criteria before the next phase begins. Unreleased themes now follow the dependency of shop-floor judgement: make existing IE methods and quality characteristics reviewable first, then bring video cycles and live measurements into that same evidence chain, and localise last so the interface is not translated twice while it is still moving.
 
 | Version | Theme | Primary goals |
 |---------|-------|---------------|
 | v4.5.0 | Open interfaces and release hardening | CLI, SDK, MCP, plugin and rule-pack interfaces; external-input safeguards and release provenance |
-| v4.6.0 | Optional intelligent assistance and local data assets | Model-call auditing, user-enabled assistance, and portable local data assets |
-| v4.7.0 | Bilingual interface and report localisation | Runtime language switching, complete Chinese/English resources, and localised reports and charts |
-| v4.8.0 | Video time-study research and deepening | Industry capability research, a visual-cycle event contract, review, and traceable time-study workflows |
-| v4.9.0 | Real-time acquisition and embedded interfaces | A unified acquisition-adapter contract, more industrial/embedded protocols, health diagnostics, and conformance tests |
+| v4.6.0 | Optional intelligent assistance and local data assets | Model-call auditing, user-enabled assistance, and an extensible local data-asset format |
+| v4.7.0 | Credible industrial-engineering methods | Known values for time study, line balance, OEE, and work sampling; an evidence chain from standard time through line balance to improvement cases |
+| v4.8.0 | Characteristic and lot judgement loop | Bind specifications, control limits, and GR&R to a characteristic; gauge gating; a lot or shift view; a full sampling-standard review |
+| v4.9.0 | Video time-study research and deepening | Industry capability research, a visual-cycle event contract, review, and traceable time-study workflows |
+| v4.10.0 | Real-time acquisition and embedded interfaces | A unified acquisition-adapter contract, more industrial/embedded protocols, health diagnostics, and conformance tests |
+| v4.11.0 | Bilingual interface and report localisation | Runtime language switching, complete Chinese/English resources, and localised reports and charts |
 
 ## Near-Term Milestones
 
@@ -59,50 +61,71 @@ Completion criteria: the CLI/SDK runs without a GUI; external inputs have resour
 
 ### v4.6.0 — Optional Intelligent Assistance and Local Data Assets
 
-- Add model configuration, run records, and an explainable call audit.
+- Add model configuration, run records, and an explainable call audit. Audit records stay on the machine.
 - Support user-enabled scoring and anomaly assistance without changing default offline behaviour.
-- Explore process-window recommendations, IE evidence chains, and edge anomaly detection.
-- Provide exportable and portable formats for local data assets.
+- Provide an exportable, portable local data-asset format. The format is versioned and can later absorb characteristic, lot, and standard-time records without introducing a second file type.
 
-Completion criteria: all intelligent features can be disabled; core offline analysis has no external-model dependency; intelligent assistance cannot bypass statistical decisions or human confirmation; results retain traceable inputs, models, configuration, and audit records.
+Completion criteria: all intelligent features can be disabled; core offline analysis has no external-model dependency; intelligent assistance cannot bypass statistical decisions or human confirmation; results retain traceable inputs, models, configuration, and audit records; existing projects remain readable.
 
-### v4.7.0 — Bilingual Interface and Report Localisation
+### v4.7.0 — Credible Industrial-Engineering Methods
 
-- Build a Qt-independent localisation layer with Chinese and English resource parity, missing-key fallback, and plugin text extension.
-- Support runtime language switching and persist the user's choice, updating menus, tabs, dialogs, status messages, and errors without a restart.
-- Apply the selected language to PDF, Word, Excel, PowerPoint, HTML reports, and charts, with consistent date, number, unit, and font-fallback rules.
-- Record the generation language in report metadata and evidence traces so outputs remain reproducible and reviewable across languages.
-- Add regression coverage for long-text layout, shortcuts, accessible names, and Chinese/English help entry points.
+- Add known-value cases, with sources and tolerances, for standard time (observed time, rating factor, and allowance), line-balance rate, OEE weighted availability, performance, and quality, and work-sampling sample size. Prefer textbooks, standards, or publicly reviewable worked examples.
+- When an implementation disagrees with a known value, correct that engine and state the effect on existing project results in the release notes.
+- Provide one reproducible path: a confirmed standard time feeds line balancing, the balance result can be the baseline and remeasure of an improvement case, and the evidence ledger records the step.
+- Do not add new IE method families in this release. Change SMED, value-stream mapping, and TPM only when a known value or this path exposes a defect.
 
-Completion criteria: switching language while the application is running updates open views and all subsequent exports; Chinese and English resource keys match and no primary interface text remains untranslated; report, chart, date, and number formats follow the selected language; switching language does not change analysis results or project-file semantics.
+Completion criteria: each of the four calculations has at least one known-value case in the per-file regression; the path from time study through line balance to case remeasure runs without a model or a network; the evidence record can restore the input parameters and the standard version used.
 
-### v4.8.0 — Video Time-Study Research and Deepening
+### v4.8.0 — Characteristic and Lot Judgement Loop
+
+- Treat the quality characteristic as the unit of work, and bind each control-plan row to its specification limits, control limits, and latest MSA/GR&R conclusion.
+- Show gauge status on SPC and process capability for that characteristic. When the gauge conclusion misses the agreed threshold, the capability figure remains computable and reviewable, but it must not be used as a release basis; the evidence record states why it was downgraded. The threshold is configurable and does not rewrite existing offline results by default.
+- Provide a lot or shift view that brings together the sampling decision, measurement events, control-chart points, and open improvement cases in that scope.
+- In an environment that holds a licensed copy of ISO 2859-1 / GB/T 2828.1, review the full AQL columns, special inspection levels, and switching rules, and record the reviewer, standard revision, and date. The independent cross-check completed in v4.5.0 remains in place.
+
+Completion criteria: a characteristic shows its specification, control limits, and gauge conclusion from the control plan; a failed gauge cannot be treated as a release basis for capability; one lot or shift view shows the sampling decision, measurements, and open cases together; the sampling review record is in the repository and the automated gate still passes; older `.qap` files remain readable.
+
+### v4.9.0 — Video Time-Study Research and Deepening
 
 - Start with public-source and representative-scenario research covering cycle segmentation, multiple operators and stations, occlusion handling, exception review, offline privacy, file interoperability, licensing, and deployment cost.
 - Convert the research into an acceptance-driven feature list, then deepen the event contract between visual plugins such as `AKIA-Vision-expansion` and the main application.
-- Carry video sessions, cycle boundaries, confidence, manual corrections, and review records through a traceable workflow into time study.
+- Carry video sessions, cycle boundaries, confidence, manual corrections, and review records through a traceable workflow. Confirmed cycles enter the v4.7.0 time-study and evidence path, rather than a second time-calculation engine.
 - Improve batch/multi-station analysis, exception-cycle review, task decomposition, baseline/remeasure comparison, and streaming usability for long videos.
 - Keep raw video and frames local by default; exclude them from measurement events, evidence packs, and share packs, retaining only controlled references and necessary statistical summaries.
 
 Completion criteria: research findings include explicit priorities and acceptance measures; at least one end-to-end scenario from video to cycles, time study, and evidence passes; manual corrections are traceable and parameters are reproducible; the plugin event contract has version-compatibility tests; the privacy boundary and raw-video retention policy pass a security review.
 
-### v4.9.0 — Real-Time Acquisition and Embedded Interface Expansion
+### v4.10.0 — Real-Time Acquisition and Embedded Interface Expansion
 
 - Define a unified real-time acquisition adapter contract covering capabilities, discovery, configuration validation, timestamps/units/quality flags, reconnection, buffering and backpressure, and health diagnostics.
 - On top of the existing OPC UA, Modbus TCP, MQTT, serial-gauge, and CMM DMIS support, add at least two industrial or embedded interface families prioritised through community demand.
 - Provide connection profiles, secure credential storage, data-mapping templates, simulators, and conformance tools to reduce the cost of adding devices.
 - Add offline buffering, out-of-order and duplicate detection, device-clock-skew warnings, and resource bounds for long-running acquisition.
+- Feed measurements from new interfaces into the unified measurement event, and make them visible in the v4.8.0 characteristic and lot views.
 - Keep connector dependencies optional, provide clear installation guidance when unavailable, and avoid mandatory lock-in to a single device or commercial platform.
 
-Completion criteria: at least two new interface families complete end-to-end acquisition through simulators or real hardware; data enters the unified MeasurementEvent and real-time analysis paths; disconnection, reconnection, ordering, and resource-bound tests pass; existing connectors and project formats remain compatible; third parties can independently implement and validate adapters from the documentation.
+Completion criteria: at least two new interface families complete end-to-end acquisition through simulators or real hardware; data enters the unified MeasurementEvent, the real-time analysis path, and the characteristic and lot views; disconnection, reconnection, ordering, and resource-bound tests pass; existing connectors and project formats remain compatible; third parties can independently implement and validate adapters from the documentation.
+
+### v4.11.0 — Bilingual Interface and Report Localisation
+
+- Build a Qt-independent localisation layer with Chinese and English resource parity, missing-key fallback, and plugin text extension.
+- Support runtime language switching and persist the user's choice, updating menus, tabs, dialogs, status messages, and errors without a restart.
+- Apply the selected language to PDF, Word, Excel, PowerPoint, HTML reports, and charts, with consistent date, number, unit, and font-fallback rules.
+- Cover interface and report text added in v4.7.0 through v4.10.0.
+- Record the generation language in report metadata and evidence traces so outputs remain reproducible and reviewable across languages.
+- Add regression coverage for long-text layout, shortcuts, accessible names, and Chinese/English help entry points.
+
+Completion criteria: switching language while the application is running updates open views and all subsequent exports; Chinese and English resource keys match and no primary interface text remains untranslated; report, chart, date, and number formats follow the selected language; switching language does not change analysis results or project-file semantics.
 
 ## Later Exploration
 
 - Light and high-contrast themes plus accessibility improvements.
 - More report templates, statistical methods, and community-driven connectors.
+- Optional local analysis such as process windows and edge anomaly detection. These capabilities must not bypass statistical decisions or human confirmation.
 - Advanced video time-study model evaluation, edge-device collaboration, and large-scale line deployment.
-- Installer, update, and cross-platform compatibility improvements.
-- Broader test coverage, performance baselines, and contributor documentation.
+- Automatic installer updates.
+- Performance baselines and contributor documentation.
+- Consider new machine-learning model families only after v4.7.0 and v4.8.0 are accepted.
 
 ## Non-Goals
 
@@ -123,6 +146,8 @@ Priorities are, in order: data correctness and security, regression and compatib
 - Freeze public interfaces and data contracts before implementing features in each minor release; new capabilities must provide a disable or fallback path.
 - Release tags, version numbers, source commits, dependency lockfiles, installers, and hashes must form one verifiable correspondence.
 - Releases pass static checks, version consistency, per-file tests, performance baselines, and packaging smoke tests.
+- From v4.6.0 onward, a release tag also runs Windows installer smoke alongside the Linux AppImage, and checks that the program entry point, project license, and third-party notices are packaged.
+- From v4.6.0 onward, the sidebar, analysis menu, and command palette use the tab registry as their only entry list. A registered page missing any of those entries is a release defect.
 - Tags and release notes live in GitHub Releases; this roadmap keeps only current status and future plans.
 
 ## Contributing
