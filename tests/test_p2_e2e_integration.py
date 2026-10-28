@@ -204,7 +204,11 @@ def test_request_headers_and_bodies_on_wire(base_url, api_server):
     api_server.requests.clear()
     LLMClient(provider="google", api_key="AIza-mock", api_base=base_url + "/v1beta",
               model="gemini-mock").test_connection()
-    assert "key=AIza-mock" in api_server.requests[-1]["path"]
+    gemini_call = api_server.requests[-1]
+    # 密钥必须留在请求头，不能出现在 URL，避免访问日志截获。
+    assert "key=" not in gemini_call["path"]
+    gemini_headers = {k.lower(): v for k, v in gemini_call["headers"].items()}
+    assert gemini_headers.get("x-goog-api-key") == "AIza-mock"
 
 
 # ---------------------------------------------------------------- 配置链路
