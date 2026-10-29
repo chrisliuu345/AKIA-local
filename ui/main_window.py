@@ -256,6 +256,8 @@ class MainWindow(QMainWindow):
             ("数据清洗向导", "操作", "", self._on_data_clean_wizard, "clean wizard"),
             ("产线配置 (plant.json)", "操作", "", self._on_plant_config, "plant config"),
             ("告警中心", "操作", "", self._on_alert_center, "alerts center"),
+            ("评分与异常辅助", "操作", "", self._on_local_assist,
+             "assist score anomaly spc alert"),
             ("连接器健康", "操作", "", self._on_connector_health, "connector health"),
             ("设置", "操作", "", self._on_settings, "settings preferences"),
             ("使用指南", "操作", "F1", self._on_open_guide, "help guide manual"),
@@ -508,6 +510,8 @@ class MainWindow(QMainWindow):
         tools_menu.addAction(plant_cfg_act)
         tools_menu.addAction(QAction(i18n.tr("menu.alert_center"), self,
                                      triggered=self._on_alert_center))
+        tools_menu.addAction(QAction("评分与异常辅助", self,
+                                     triggered=self._on_local_assist))
         tools_menu.addAction(QAction(i18n.tr("menu.connector_health"), self,
                                      triggered=self._on_connector_health))
         self.live_dash_act = QAction(i18n.tr("menu.live_dashboard"), self,
@@ -766,6 +770,17 @@ class MainWindow(QMainWindow):
         from ui.dialogs.model_call_audit_dialog import ModelCallAuditDialog
 
         ModelCallAuditDialog(self).exec()
+
+    def _on_local_assist(self):
+        """打开本机评分与异常辅助。未启用时不生成建议。"""
+        from ui.dialogs.local_assist_dialog import LocalAssistDialog
+
+        alerts = []
+        try:
+            alerts = self._get_alert_journal().entries(limit=20, unacked_only=True)
+        except Exception:
+            alerts = []  # 告警日志打不开时仍可查看已有分析
+        LocalAssistDialog(dict(self.analyses), alerts, self).exec()
 
 
     def _on_one_click_analysis(self):
