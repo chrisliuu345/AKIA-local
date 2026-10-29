@@ -693,9 +693,10 @@ class QAMHarnessDialog(QDialog):
         self.send_btn.setText("发送")
         mode = "离线工具模式" if getattr(reply, "offline", True) else getattr(reply, "provider", "")
         tools = len(getattr(reply, "tool_calls", []) or [])
+        audited = " · 已记入调用审计" if getattr(reply, "audit_record", "") else ""
         self.append_msg("system",
                         f"完成（{mode}）· 工具调用 {tools} 次 · "
-                        f"{getattr(reply, 'elapsed_ms', 0) / 1000:.1f}s")
+                        f"{getattr(reply, 'elapsed_ms', 0) / 1000:.1f}s{audited}")
         self._refresh_context_bar()
         self.engine.force_offline = False      # 仅对当次生效（此时工作线程已结束）
 

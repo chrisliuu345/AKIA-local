@@ -7,11 +7,14 @@
   2. **离线（规则路由）**: 无 Ollama/云 API 时按关键词路由到同一批工具，
      用模板 + core.agent.explain 生成"带判定与建议"的答案，保证工厂断网可用。
 
-纯逻辑层，无 Qt 依赖；UI 通过 respond_stream() 获取事件流。
+在线调度（成功或调用失败后的降级）把输入、模型、配置写入 core.audit 的操作日志，
+并附在 AgentReply 上。纯离线不记模型调用。纯逻辑层，无 Qt 依赖；UI 通过
+respond_stream() 获取事件流。
 """
 from __future__ import annotations
 
 import json
+import logging
 import re
 import time
 from dataclasses import dataclass, field
@@ -24,6 +27,9 @@ from core.agent.privacy import (
     is_cloud_endpoint, needs_consent,
 )
 from core.agent.tools import AgentContext, ToolRegistry, ToolResult
+from core.audit import record_model_call
+
+logger = logging.getLogger(__name__)
 
 TOOL_PROTOCOL = """你可以调用下列本地工具（数据不出本机）：
 
@@ -61,6 +67,10 @@ class AgentReply:
     provider: str = ""
     model: str = ""
     elapsed_ms: float = 0.0
+    # 追溯留在结果对象上。as_dict 不带这些字段，避免进入 SDK/MCP 的 JSON 信封。
+    input: str = ""
+    config: dict = field(default_factory=dict)
+    audit_record: str = ""
 
     def as_dict(self) -> dict:
         return {"text": self.text, "offline": self.offline,
@@ -69,6 +79,12 @@ class AgentReply:
                 "tool_calls": [{"name": c.name, "args": c.args, "ok": c.ok,
                                 "summary": c.summary, "error": c.error}
                                for c in self.tool_calls]}
+
+    def trace(self) -> dict:
+        """本机追溯：输入、模型、当时的模型配置、操作日志中的审计行。"""
+        return {"input": self.input, "model": self.model,
+                "config": dict(self.config or {}),
+                "audit_record": self.audit_record}
 
 
 _SPEC_RES = (
@@ -238,26 +254,79 @@ class AgentEngine:
             yield "done", reply
             return
 
+        failed = False
         if self.llm_available:
             reply = None
             try:
                 reply = yield from self._run_llm(question)
             except Exception as e:                     # LLM 异常 → 降级离线
+                failed = True
                 self.conversation.add("system", f"LLM 调用失败，降级离线模式: {e}")
                 reply = None
             if reply is not None:
                 reply.elapsed_ms = (time.time() - started) * 1000
+                self._attach_call_audit(question, reply, "ok")
                 self.conversation.add_assistant(reply.text)
                 yield "done", reply
                 return
 
         reply = self._run_offline(question)
         reply.elapsed_ms = (time.time() - started) * 1000
+        if failed:
+            # 模型已调度但失败：仍留下输入、模型和配置，outcome 标明改走了离线。
+            self._attach_call_audit(question, reply, "fallback")
         # 离线路径同样上报工具卡片（与在线路径一致的可观测性）
         for record in reply.tool_calls:
             yield "tool", record
         self.conversation.add_assistant(reply.text)
         yield "done", reply
+
+    def _attach_call_audit(self, question: str, reply: AgentReply, outcome: str) -> None:
+        """把本次模型调度写入操作日志，并让回复能对上那一行。失败不打断回答。"""
+        try:
+            recorded = record_model_call(
+                "user",
+                question=question,
+                model=self._dispatch_model(reply),
+                config=self._dispatch_config(),
+                outcome=outcome,
+                elapsed_ms=reply.elapsed_ms,
+                tools=[c.name for c in reply.tool_calls],
+            )
+        except Exception:
+            logger.warning("模型调用审计失败", exc_info=True)
+            return
+        reply.input = recorded.input
+        if recorded.model:
+            reply.model = recorded.model
+        reply.config = dict(recorded.config)
+        reply.audit_record = recorded.line
+
+    def _dispatch_model(self, reply: AgentReply) -> str:
+        return str(getattr(self.llm, "model", "") or reply.model or "")
+
+    def _dispatch_config(self) -> dict:
+        """用客户端已有的 config_summary；没有时只取调度时已经在用的字段。"""
+        llm = self.llm
+        summary = getattr(llm, "config_summary", None)
+        if callable(summary):
+            try:
+                data = summary()
+            except Exception:
+                data = None
+            if isinstance(data, dict):
+                return data
+        if llm is None:
+            return {}
+        config = {}
+        for key in ("provider", "protocol", "model", "api_base"):
+            value = getattr(llm, key, "")
+            if value:
+                config[key] = value
+        available = getattr(llm, "available", None)
+        if isinstance(available, bool):
+            config["available"] = available
+        return config
 
     # ---------- 在线路径 ----------
     def _run_llm(self, question: str) -> Iterator:

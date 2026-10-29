@@ -261,6 +261,8 @@ class MainWindow(QMainWindow):
             ("使用指南", "操作", "F1", self._on_open_guide, "help guide manual"),
             ("显示模式", "视图", "F11", self._open_display_mode, "display mode fullscreen"),
             ("QAM Harness", "Agent", "", self._on_llm_assist, "ai agent chat llm"),
+            ("调用审计", "Agent", "", self._on_model_call_audit,
+             "audit model call log"),
         ]
         for label, category, hint, callback, keywords in actions:
             entries.append({"label": label, "category": category, "hint": hint,
@@ -463,6 +465,7 @@ class MainWindow(QMainWindow):
         ai_chat = QAction(i18n.tr("sidebar.llm"), self)
         ai_chat.triggered.connect(self._on_llm_assist)
         ai_menu.addAction(ai_chat)
+        ai_menu.addAction(QAction("调用审计", self, triggered=self._on_model_call_audit))
         one_click = QAction(i18n.tr("menu.one_click"), self)
         one_click.triggered.connect(self._on_one_click_analysis)
         ai_menu.addAction(one_click)
@@ -757,6 +760,12 @@ class MainWindow(QMainWindow):
         dlg.show()
         dlg.raise_()
         dlg.activateWindow()
+
+    def _on_model_call_audit(self):
+        """查看本机操作日志里的模型调用记录。"""
+        from ui.dialogs.model_call_audit_dialog import ModelCallAuditDialog
+
+        ModelCallAuditDialog(self).exec()
 
 
     def _on_one_click_analysis(self):
