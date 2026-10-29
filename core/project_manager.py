@@ -12,11 +12,13 @@ from typing import Any
 import pandas as pd
 
 from core.archive_safety import open_safe_zip, read_member
+from core.data_asset import DATA_ASSET_MEMBER, prepare_data_asset
 from core.improvement_case import CASE_SCHEMA_VERSION
 from core.legacy import legacy_home_dir, migrate_legacy_dir
 
 # 2.0：新增 sampling.json / gauge_studies.json / benefits.json / skills.json（v4.4.0 B0）；
-# 1.6~1.9 只读兼容（无对应段时按空处理）
+# 1.6~1.9 只读兼容（无对应段时按空处理）。
+# data_asset.json 自带 format_version，不升本常量：没有该段的旧归档仍可打开。
 VERSION = "2.0"
 RECENT_MAX = 8
 
@@ -58,7 +60,8 @@ class ProjectManager:
                      sampling: Any = None,
                      gauge_studies: Any = None,
                      benefits: Any = None,
-                     skills: Any = None) -> str:
+                     skills: Any = None,
+                     data_asset: Any = None) -> str:
         """保存项目为 .qap 文件。
 
         raw_data: {sheet_name: DataFrame}
@@ -74,6 +77,8 @@ class ProjectManager:
         gauge_studies: 量具在线研究载荷（可选；写入 gauge_studies.json）
         benefits: 收益账本载荷（可选；写入 benefits.json）
         skills: 技能矩阵载荷（可选；写入 skills.json）
+        data_asset: 本地数据资产信封（可选；写入 data_asset.json）。
+                    None 写成当前格式的空信封。不从特性、批次或标准工时段复制记录。
         """
         if not path.endswith(".qap"):
             path += ".qap"
@@ -109,6 +114,9 @@ class ProjectManager:
         gauge_payload = _payload_segment(gauge_studies, "gauge_studies")
         benefits_payload = _payload_segment(benefits, "benefits")
         skills_payload = _payload_segment(skills, "skills")
+        # 空信封也要落盘：版本字段是以后迁入特性/批次/标准工时的扩展位。
+        # prepare 不会读取上面那些段。
+        data_asset_payload = _sanitize_for_json(prepare_data_asset(data_asset))
 
         manifest = {
             "version": VERSION,
@@ -135,6 +143,8 @@ class ProjectManager:
             "benefit_count": _count_items(benefits_payload, "records"),
             "has_skills": skills_payload is not None,
             "skill_entry_count": _count_items(skills_payload, "entries"),
+            "has_data_asset": True,
+            "data_asset_format_version": data_asset_payload.get("format_version"),
         }
 
         with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -195,6 +205,9 @@ class ProjectManager:
                     zf.writestr(segment, json.dumps(
                         payload, indent=2, ensure_ascii=False, default=str))
 
+            zf.writestr(DATA_ASSET_MEMBER, json.dumps(
+                data_asset_payload, indent=2, ensure_ascii=False, default=str))
+
             for label, png_data in chart_bytes.items():
                 zf.writestr(f"charts/{_safe_name(label)}.png", png_data)
 
@@ -230,6 +243,7 @@ class ProjectManager:
             "gauge_studies": dict | None,  # 量具在线研究；旧文件为 None
             "benefits": dict | None,       # 收益账本；旧文件为 None
             "skills": dict | None,         # 技能矩阵；旧文件为 None
+            "data_asset": dict | None,     # 本地数据资产；旧文件没有该段时为 None
         }
         """
         if not os.path.exists(path):
@@ -253,6 +267,7 @@ class ProjectManager:
         gauge_studies = None
         benefits = None
         skills = None
+        data_asset = None
 
         with open_safe_zip(path) as (zf, inspection):
             for name in inspection.names():
@@ -299,6 +314,11 @@ class ProjectManager:
                     benefits = json.loads(data.decode("utf-8"))
                 elif name == "skills.json":
                     skills = json.loads(data.decode("utf-8"))
+                elif name == DATA_ASSET_MEMBER:
+                    parsed = json.loads(data.decode("utf-8"))
+                    if not isinstance(parsed, dict):
+                        raise ValueError("data_asset.json 须为 JSON 对象")
+                    data_asset = parsed
                 elif name.startswith("charts/") and name.endswith(".png"):
                     label = name[7:-4]
                     chart_bytes[label] = data
@@ -326,6 +346,7 @@ class ProjectManager:
             "gauge_studies": gauge_studies,
             "benefits": benefits,
             "skills": skills,
+            "data_asset": data_asset,
         }
 
     @staticmethod
@@ -419,7 +440,8 @@ class SharedProjectManager:
                     sampling: Any = None,
                     gauge_studies: Any = None,
                     benefits: Any = None,
-                    skills: Any = None) -> str:
+                    skills: Any = None,
+                    data_asset: Any = None) -> str:
         """保存项目到共享目录"""
         _ensure_shared_dir()
         dept_norm = (department or PUBLIC_DEPT).replace("\\", "/")
@@ -439,7 +461,7 @@ class SharedProjectManager:
             project_context, cases=cases, standards=standards,
             measurements=measurements, evidence_events=evidence_events,
             sampling=sampling, gauge_studies=gauge_studies,
-            benefits=benefits, skills=skills)
+            benefits=benefits, skills=skills, data_asset=data_asset)
 
     @staticmethod
     def list_shared(department: str = "", role: str = "") -> list[dict[str, str]]:
