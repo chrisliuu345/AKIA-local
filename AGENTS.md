@@ -17,10 +17,12 @@
 - `.venv/`
 - `.pytest_cache/`、`.ruff_cache/`、`__pycache__/`
 - `build/`、`dist/`
-- `TEMP/`
+- `TEMP/` 里的暂存文件（目录占位 `TEMP/.gitkeep` 除外）
 - `data/`
 - `user_config.json`
 - 本地发布归档和其他被 `.gitignore` 排除的文件
+
+临时文件、一次性生成物和审查草稿只放在 `TEMP/`。这是唯一的本地暂存目录；不要在仓库根目录或其他源码路径另建 `tmp/`、`temp/` 或 `scratch/`。`.gitignore` 排除该目录的内容，只跟踪 `TEMP/.gitkeep`，不要提交暂存文件。
 
 清理时应优先删除可再生成的缓存和明确的旧发布产物。`.venv/`、`data/`、`TEMP/`、`build/`、`dist/`、`user_config.json` 以及 `.agents/`、`.aws/`、`.codex/` 可能包含开发环境或用户数据，除非用户明确要求，否则不要删除。
 
