@@ -122,6 +122,9 @@ class MainWindow(QMainWindow):
             ledger=self.ledger, standards=self.project_context.standards)
         self.benefit_ledger = BenefitLedger()
         self.skill_matrix = SkillMatrix()
+        # 从 .qap 读到的数据资产。None 表示旧项目没有该段；保存时原样交回，
+        # 由 ProjectManager 写成带版本号的信封，不在界面层迁入特性/批次/工时。
+        self.data_asset: dict[str, Any] | None = None
 
         self._setup_ui()
         self._menu_refs: list = []
@@ -1964,6 +1967,7 @@ class MainWindow(QMainWindow):
                 sampling=self.sampling_manager.to_dict(),
                 benefits=self.benefit_ledger.to_dict(),
                 skills=self.skill_matrix.to_dict(),
+                data_asset=self.data_asset,
             )
             self.status_label.setText(f"项目已保存: {path}")
             recent = ProjectManager.recent_projects()
@@ -2021,6 +2025,8 @@ class MainWindow(QMainWindow):
             standards=self.project_context.standards)
         self.benefit_ledger = BenefitLedger.from_dict(project.get("benefits"))
         self.skill_matrix = SkillMatrix.from_dict(project.get("skills"))
+        loaded_asset = project.get("data_asset")
+        self.data_asset = loaded_asset if isinstance(loaded_asset, dict) else None
         line_tab = self._tab_cache.get(TAB_INDEX["line_balance"])
         if line_tab is not None and hasattr(line_tab, "set_skill_context"):
             line_tab.set_skill_context(self.skill_matrix, self.save_skill_matrix,
@@ -2631,7 +2637,8 @@ class MainWindow(QMainWindow):
                 gauge_studies=self.gauge_monitor.to_dict(),
                 sampling=self.sampling_manager.to_dict(),
                 benefits=self.benefit_ledger.to_dict(),
-                skills=self.skill_matrix.to_dict())
+                skills=self.skill_matrix.to_dict(),
+                data_asset=self.data_asset)
             audit("share_project", "user",
                   f"保存 {os.path.basename(path)}")
             self.status_label.setText("共享项目已保存")
