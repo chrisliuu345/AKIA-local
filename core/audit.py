@@ -146,6 +146,62 @@ def record_model_call(operator: str, *, question: str, model: str,
                           outcome=outcome, line=line)
 
 
+# 本机辅助审计：与 model_call 分开，避免把统计辅助记成外部模型调用。
+LOCAL_ASSIST_ACTION = "local_assist"
+_LOCAL_CONFIG_KEYS = (
+    "method", "external_model", "enabled", "advisory",
+    "analysis_count", "alert_count", "violations", "sources",
+)
+
+
+class LocalRunAudit:
+    """一次本机辅助的追溯结果。method 是本地统计路径，不是外部模型。"""
+
+    def __init__(self, *, input: str, method: str, config: dict, outcome: str, line: str):
+        self.input = input
+        self.method = method
+        self.config = dict(config)
+        self.outcome = outcome
+        self.line = line
+
+    def trace(self) -> dict:
+        """与模型调用同一组字段：无外部模型时 model 槽写本机方法名。"""
+        return {"input": self.input, "model": self.method,
+                "config": dict(self.config), "audit_record": self.line}
+
+
+def _local_method(method: str) -> str:
+    name = str(method or "").strip() or "local:unspecified"
+    if not name.startswith("local:"):
+        name = "local:" + name
+    return name
+
+
+def record_local_run(operator: str, *, question: str, method: str,
+                     config: dict | None = None, outcome: str = "advisory"
+                     ) -> LocalRunAudit:
+    """把一次已发生的本机辅助写成操作日志。不写 model=，也不接收密钥字段。"""
+    text = " ".join((question or "").split())
+    if len(text) > _INPUT_LIMIT:
+        text = text[:_INPUT_LIMIT] + "…"
+    method_name = _local_method(method)
+    raw = dict(config or {})
+    safe = {key: raw[key] for key in _LOCAL_CONFIG_KEYS if key in raw}
+    safe["method"] = method_name
+    safe["external_model"] = False
+    parts = [f"input={_fmt(text)}", f"method={_fmt(method_name)}"]
+    for key in ("external_model", "enabled", "advisory", "sources",
+                "analysis_count", "alert_count", "violations"):
+        if key in safe:
+            parts.append(f"{key}={_fmt(safe[key])}")
+    if outcome:
+        parts.append(f"outcome={_fmt(outcome)}")
+    detail = " ".join(parts)
+    line = audit(LOCAL_ASSIST_ACTION, operator or "user", detail)
+    return LocalRunAudit(input=text, method=method_name, config=safe,
+                         outcome=outcome, line=line)
+
+
 def _line_action(line: str) -> str:
     body = line.split("] ", 1)[-1]
     if ": " not in body:
