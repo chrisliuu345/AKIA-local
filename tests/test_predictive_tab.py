@@ -44,6 +44,8 @@ def test_registry_and_sidebar_wiring():
 
     from ui.sidebar import CATEGORIES
     quality = next(c for c in CATEGORIES if c["key"] == "sidebar.quality_tools")
+    # 时间序列与预测分析同属质量工具；侧栏清单与注册表、分析菜单必须一起出现。
+    assert (36, "sidebar.time_series") in quality["items"]
     assert (37, "sidebar.predictive") in quality["items"]
 
     from core.i18n import i18n
