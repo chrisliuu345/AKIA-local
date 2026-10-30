@@ -143,6 +143,41 @@ jobs:
             build/release-manifest.json
           retention-days: 30
 
+  package-windows:
+    name: Windows 安装包冒烟（仅 tag）
+    # 与 package-appimage 相同的标签门闩：功能分支和 PR 不编译安装包。
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: windows-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+      - name: 安装依赖（CI 全量哈希锁）
+        shell: pwsh
+        run: |
+          python -m venv .venv
+          .\.venv\Scripts\python -m pip install --upgrade pip
+          .\.venv\Scripts\python -m pip install --require-hashes -r requirements-ci.lock
+      - name: 构建 Windows 程序目录
+        shell: pwsh
+        run: .\.venv\Scripts\python build_pyinstaller.py
+      # x64compatible 需要 Inno Setup 6.3+；固定 6.7.1，避免编译器浮动。
+      - name: 安装 Inno Setup
+        shell: pwsh
+        run: choco install innosetup --version=6.7.1 -y --no-progress
+      - name: 编译安装包并确认入口、许可证与第三方归属
+        shell: pwsh
+        run: .\.venv\Scripts\python tools/smoke_windows_installer.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AKIA-Windows-Setup
+          path: dist/AKIA-Setup-*.exe
+          if-no-files-found: error
+          retention-days: 30
+
   sdk-smoke:
     name: SDK / MCP 最低 Python 版本冒烟
     runs-on: ubuntu-latest
