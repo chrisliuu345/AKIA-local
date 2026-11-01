@@ -43,14 +43,18 @@ class AgentWorker(QThread):
     replied = Signal(object)
     failed = Signal(str)
 
-    def __init__(self, engine, question: str):
+    def __init__(self, engine, question: str, assistance_kind: str = ""):
         super().__init__()
         self.engine = engine
         self.question = question
+        self.assistance_kind = assistance_kind
 
     def run(self):
         try:
-            for kind, payload in self.engine.respond_stream(self.question):
+            stream = (self.engine.respond_stream(
+                self.question, assistance_kind=self.assistance_kind)
+                if self.assistance_kind else self.engine.respond_stream(self.question))
+            for kind, payload in stream:
                 if self.isInterruptionRequested():
                     return
                 if kind == "tool":
@@ -224,6 +228,26 @@ class QAMHarnessDialog(QDialog):
         model_row.addWidget(self.model_edit, 1)
         layout.addLayout(model_row)
         self._sync_model_edit()
+
+        assist_row = QHBoxLayout()
+        self.scoring_button = QPushButton("在线评分", self)
+        self.scoring_button.setObjectName("onlineScoringButton")
+        self.scoring_button.setToolTip("对最近一次统计结果生成顾问评分，不修改判定")
+        self.scoring_button.clicked.connect(
+            lambda: self._send_assistance("online_scoring"))
+        self.anomaly_button = QPushButton("异常辅助", self)
+        self.anomaly_button.setObjectName("anomalyAssistanceButton")
+        self.anomaly_button.setToolTip("识别异常与复核证据，不替代人工确认")
+        self.anomaly_button.clicked.connect(
+            lambda: self._send_assistance("anomaly_assistance"))
+        self.audit_button = QPushButton("调用审计", self)
+        self.audit_button.setObjectName("modelAuditButton")
+        self.audit_button.clicked.connect(self._open_model_audit)
+        assist_row.addWidget(self.scoring_button)
+        assist_row.addWidget(self.anomaly_button)
+        assist_row.addWidget(self.audit_button)
+        assist_row.addStretch()
+        layout.addLayout(assist_row)
 
         # ---- 上下文 / 工具条 ----
         self.context_label = QLabel("")
@@ -609,11 +633,26 @@ class QAMHarnessDialog(QDialog):
         self.input_box.setText(question)
         self.input_box.setFocus()
 
-    def _send_message(self):
+    def _send_assistance(self, kind: str):
+        try:
+            question = self.engine.prepare_assistance(kind)
+        except (ValueError, PermissionError) as exc:
+            QMessageBox.information(self, "智能辅助", str(exc))
+            return
+        label = "在线评分" if kind == "online_scoring" else "异常辅助"
+        self._send_message(question, assistance_kind=kind, display_text=label)
+
+    def _open_model_audit(self):
+        from core.agent.audit import get_model_audit
+        from ui.dialogs.model_audit_dialog import ModelAuditDialog
+
+        ModelAuditDialog(get_model_audit(), self).exec()
+
+    def _send_message(self, question="", *, assistance_kind="", display_text=""):
         if self.worker is not None and self.worker.isRunning():
             self.append_msg("system", "正在生成回复，请稍候…")
             return
-        text = self.input_box.text().strip()
+        text = str(question or self.input_box.text()).strip()
         if not text:
             return
 
@@ -642,13 +681,13 @@ class QAMHarnessDialog(QDialog):
         self.input_box.clear()
         self.send_btn.setEnabled(False)
         self.send_btn.setText("…")
-        self.append_msg("user", text, markdown=False)
-        self._history.append(("user", text))
+        self.append_msg("user", display_text or text, markdown=False)
+        self._history.append(("user", display_text or text))
         self._current_ai_msg = ""
         self._streaming_started = False
         self._stream_anchor = None
 
-        self.worker = AgentWorker(self.engine, text)
+        self.worker = AgentWorker(self.engine, text, assistance_kind=assistance_kind)
         self.worker.tool_called.connect(self._on_tool)
         self.worker.token_received.connect(self._on_token)
         self.worker.replied.connect(self._on_replied)
@@ -696,6 +735,10 @@ class QAMHarnessDialog(QDialog):
         self.append_msg("system",
                         f"完成（{mode}）· 工具调用 {tools} 次 · "
                         f"{getattr(reply, 'elapsed_ms', 0) / 1000:.1f}s")
+        if getattr(reply, "audit_id", ""):
+            self.append_msg("system", f"本地审计: {reply.audit_id}")
+        if getattr(reply, "human_confirmation_required", False):
+            self.append_msg("system", "该结果仅为智能辅助建议；统计判定未修改，需人工确认。")
         self._refresh_context_bar()
         self.engine.force_offline = False      # 仅对当次生效（此时工作线程已结束）
 

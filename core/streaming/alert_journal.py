@@ -75,7 +75,9 @@ class JournalEntry:
 
 
 def default_journal_path() -> Path:
-    return Path(__file__).resolve().parent.parent.parent / "data" / "alerts.jsonl"
+    from core.runtime_paths import default_data_path
+
+    return default_data_path("alerts.jsonl")
 
 
 class AlertJournal:

@@ -17,6 +17,7 @@ import time
 from dataclasses import dataclass, field
 from collections.abc import Iterator
 
+from core.agent.audit import bounded_payload, prompt_digest
 from core.agent.conversation import Conversation
 from core.agent.explain import explain_metric
 from core.agent.privacy import (
@@ -61,14 +62,30 @@ class AgentReply:
     provider: str = ""
     model: str = ""
     elapsed_ms: float = 0.0
+    audit_id: str = ""
+    assistance_kind: str = ""
+    advisory_only: bool = False
+    human_confirmation_required: bool = False
+    statistical_decision: dict = field(default_factory=dict)
 
     def as_dict(self) -> dict:
         return {"text": self.text, "offline": self.offline,
                 "provider": self.provider, "model": self.model,
                 "elapsed_ms": round(self.elapsed_ms, 1),
+                "audit_id": self.audit_id,
+                "assistance_kind": self.assistance_kind,
+                "advisory_only": self.advisory_only,
+                "human_confirmation_required": self.human_confirmation_required,
+                "statistical_decision": self.statistical_decision,
                 "tool_calls": [{"name": c.name, "args": c.args, "ok": c.ok,
                                 "summary": c.summary, "error": c.error}
                                for c in self.tool_calls]}
+
+
+ASSISTANCE_KINDS = {
+    "online_scoring": "在线评分",
+    "anomaly_assistance": "异常辅助",
+}
 
 
 _SPEC_RES = (
@@ -122,7 +139,8 @@ class AgentEngine:
 
     def __init__(self, registry: ToolRegistry, conversation: Conversation | None = None,
                  llm=None, knowledge=None, max_tool_steps: int = 3,
-                 context: AgentContext | None = None, privacy_check=None):
+                 context: AgentContext | None = None, privacy_check=None,
+                 audit_sink=None, assistance_enabled=None):
         self.registry = registry
         self.conversation = conversation or Conversation()
         self.llm = llm
@@ -131,6 +149,10 @@ class AgentEngine:
         self.max_tool_steps = max(1, int(max_tool_steps))
         # 隐私门: None → 用 core.agent.privacy 的默认策略（云端未授权即拒绝，fail-closed）
         self.privacy_check = privacy_check
+        self.audit_sink = audit_sink
+        self.assistance_enabled = assistance_enabled
+        self._assistance_source: dict = {}
+        self._audit_model_calls: list[dict] = []
         self.force_offline = False          # UI「仅用本地工具」当次生效
         self.conversation.set_system_prompt(self._system_prompt())
 
@@ -208,18 +230,102 @@ class AgentEngine:
                 "本地分析助手，运行在用户电脑上，可调用软件内的分析工具。\n\n"
                 + TOOL_PROTOCOL.format(tools=self.registry.describe()))
 
+    # ---------- 智能辅助与审计 ----------
+    def prepare_assistance(self, kind: str) -> str:
+        """把最近一次统计判定包装成顾问请求；统计结果本身不被模型改写。"""
+        if kind not in ASSISTANCE_KINDS:
+            raise ValueError(f"未知智能辅助类型: {kind}")
+        enabled = (self.assistance_enabled() if callable(self.assistance_enabled)
+                   else bool(self.assistance_enabled))
+        if not enabled:
+            raise PermissionError("智能辅助未启用（设置 → QAM Harness → 智能辅助）")
+        analyses = list((getattr(self.context, "analyses", None) or {}).values())
+        if not analyses:
+            raise ValueError("请先运行一项统计分析，再使用智能辅助")
+        source = analyses[-1]
+        self._assistance_source = source
+        payload = json.dumps({
+            "analysis_type": source.get("analysis_type", ""),
+            "params": source.get("params", {}),
+            "result": source.get("result", {}),
+            "credential": source.get("credential", {}),
+        }, ensure_ascii=False, default=str)[:12_000]
+        task = ("对结果进行 1-5 分评分，解释扣分依据与改进优先级"
+                if kind == "online_scoring" else
+                "识别异常模式、可能原因和需要人工复核的证据")
+        return (
+            f"请基于以下已完成的统计结果提供{ASSISTANCE_KINDS[kind]}：{task}。\n"
+            "你只能提供顾问建议，不得修改统计数值或作出放行决定；结尾必须注明需人工确认。\n"
+            f"统计输入：{payload}"
+        )
+
+    def _finish_reply(self, reply: AgentReply, question: str, started: float,
+                      status: str, error: str = "", assistance_kind: str = "") -> AgentReply:
+        reply.elapsed_ms = (time.time() - started) * 1000
+        if assistance_kind:
+            reply.assistance_kind = assistance_kind
+            reply.advisory_only = True
+            reply.human_confirmation_required = True
+            reply.statistical_decision = {
+                "analysis_type": self._assistance_source.get("analysis_type", ""),
+                "params": self._assistance_source.get("params", {}),
+                "credential": self._assistance_source.get("credential", {}),
+            }
+            reply.text = ("【智能辅助建议，不替代统计判定，需人工确认】\n"
+                          + reply.text)
+        if self.audit_sink is not None:
+            provider = str(getattr(self.llm, "provider", "") or "")
+            api_base = str(getattr(self.llm, "api_base", "") or "").split("?", 1)[0]
+            if "@" in api_base and "://" in api_base:
+                scheme, rest = api_base.split("://", 1)
+                api_base = f"{scheme}://{rest.rsplit('@', 1)[-1]}"
+            source = self._assistance_source if assistance_kind else {}
+            payload = {
+                "kind": assistance_kind or "chat",
+                "status": status,
+                "input": {
+                    "question": question,
+                    "assistance_source": bounded_payload(source),
+                },
+                "config": {
+                    "provider": provider,
+                    "model": str(getattr(self.llm, "model", "") or ""),
+                    "protocol": str(getattr(self.llm, "protocol", "") or ""),
+                    "api_base": api_base,
+                },
+                "context": (self.context.summary() if self.context is not None else ""),
+                "model_calls": list(self._audit_model_calls),
+                "tool_calls": [{
+                    "name": call.name, "args": call.args, "ok": call.ok,
+                    "summary": call.summary, "error": call.error,
+                    "duration_ms": call.duration_ms,
+                } for call in reply.tool_calls],
+                "result": {"text": reply.text, "offline": reply.offline},
+                "elapsed_ms": reply.elapsed_ms,
+                "error": error,
+            }
+            try:
+                reply.audit_id = self.audit_sink.record(payload)["record_id"]
+            except Exception as exc:  # 审计旁路不得改变分析结果
+                import logging
+                logging.getLogger("AKIA.ModelAudit").warning("模型审计记录失败: %s", exc)
+        return reply
+
     # ---------- 对外接口 ----------
-    def respond(self, question: str) -> AgentReply:
-        events = list(self.respond_stream(question))
+    def respond(self, question: str, *, assistance_kind: str = "") -> AgentReply:
+        events = list(self.respond_stream(question, assistance_kind=assistance_kind))
         for kind, payload in events:
             if kind == "done":
                 return payload
         return AgentReply(text="（未产生回复）", offline=not self.llm_available)
 
-    def respond_stream(self, question: str) -> Iterator[tuple[str, object]]:
+    def respond_stream(self, question: str, *, assistance_kind: str = "") -> Iterator[tuple[str, object]]:
         """事件流: ("tool", ToolCallRecord) / ("token", str) / ("done", AgentReply)。"""
         started = time.time()
         question = (question or "").strip()
+        self._audit_model_calls = []
+        if not assistance_kind:
+            self._assistance_source = {}
         if not question:
             yield "done", AgentReply(text="请输入问题。", offline=not self.llm_available)
             return
@@ -228,36 +334,63 @@ class AgentEngine:
 
         allowed, deny_note = self.privacy_allows(question)
         if self.llm_available and not allowed and deny_note:
-            # 隐私门拒绝/取消 → 直接走离线工具模式（功能不丢，仅不调用云 API）
-            reply = self._run_offline(question)
-            reply.text = f"{deny_note}\n\n{reply.text}"
-            reply.elapsed_ms = (time.time() - started) * 1000
+            if assistance_kind:
+                reply = AgentReply(
+                    text=deny_note, offline=True,
+                    provider=getattr(self.llm, "provider", ""),
+                    model=getattr(self.llm, "model", ""))
+            else:
+                # 隐私门拒绝/取消 → 直接走离线工具模式（功能不丢，仅不调用云 API）
+                reply = self._run_offline(question)
+                reply.text = f"{deny_note}\n\n{reply.text}"
             for record in reply.tool_calls:
                 yield "tool", record
             self.conversation.add_assistant(reply.text)
-            yield "done", reply
+            yield "done", self._finish_reply(
+                reply, question, started, "blocked", deny_note, assistance_kind)
             return
 
+        if assistance_kind and not self.llm_available:
+            reply = AgentReply(
+                text="智能辅助需要可用的本地或云端模型；现有统计结果保持不变。",
+                offline=True, provider="offline")
+            self.conversation.add_assistant(reply.text)
+            yield "done", self._finish_reply(
+                reply, question, started, "unavailable", "无可用模型", assistance_kind)
+            return
+
+        model_error = ""
         if self.llm_available:
             reply = None
             try:
                 reply = yield from self._run_llm(question)
             except Exception as e:                     # LLM 异常 → 降级离线
+                model_error = f"{type(e).__name__}: {e}"
                 self.conversation.add("system", f"LLM 调用失败，降级离线模式: {e}")
                 reply = None
             if reply is not None:
-                reply.elapsed_ms = (time.time() - started) * 1000
                 self.conversation.add_assistant(reply.text)
-                yield "done", reply
+                yield "done", self._finish_reply(
+                    reply, question, started, "completed", assistance_kind=assistance_kind)
+                return
+            if assistance_kind:
+                reply = AgentReply(
+                    text=f"模型调用失败，未生成辅助结论: {model_error}",
+                    offline=True, provider=getattr(self.llm, "provider", ""),
+                    model=getattr(self.llm, "model", ""))
+                self.conversation.add_assistant(reply.text)
+                yield "done", self._finish_reply(
+                    reply, question, started, "failed", model_error, assistance_kind)
                 return
 
         reply = self._run_offline(question)
-        reply.elapsed_ms = (time.time() - started) * 1000
         # 离线路径同样上报工具卡片（与在线路径一致的可观测性）
         for record in reply.tool_calls:
             yield "tool", record
         self.conversation.add_assistant(reply.text)
-        yield "done", reply
+        status = "fallback" if model_error else "offline"
+        yield "done", self._finish_reply(
+            reply, question, started, status, model_error, assistance_kind)
 
     # ---------- 在线路径 ----------
     def _run_llm(self, question: str) -> Iterator:
@@ -292,6 +425,9 @@ class AgentEngine:
           2. 正文中出现 `{"tool"` → 只补发其之前的正文，JSON 片段及之后不再外泄
           3. 其余情况正常逐块流式，保持打字机体验
         """
+        self._audit_model_calls.append({
+            "prompt_sha256": prompt_digest(prompt), "prompt_chars": len(prompt),
+        })
         buffer = ""
         emitted = 0
         mode = None                     # None=未定 / "text" / "tool"

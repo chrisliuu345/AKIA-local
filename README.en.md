@@ -8,7 +8,7 @@
 
 AKIA is an open-source, local-first desktop application for personal industrial engineering (IE) and quality analysis. It brings statistical process control, measurement system analysis, design of experiments, reliability, IE methods, and improvement-case management into one offline desktop workspace.
 
-Current version: v4.5.0.
+Current version: v4.6.0.
 
 AKIA requires no account, subscription, or online activation. Data stays on your machine by default; network connections are made only when you explicitly configure a cloud model, database, dashboard, or external device.
 
@@ -19,7 +19,8 @@ AKIA requires no account, subscription, or online activation. Data stays on your
 - **Improvement workflow**: improvement cases, standard versioning, evidence ledgers, 8D, FMEA, control plans, and PPAP.
 - **Live analysis**: live SPC, device data ingestion, line topology, alerts, and dashboards.
 - **Reproducible results**: known-value tests, recorded sampling decisions, conclusion credentials, and independently verifiable evidence packs.
-- **Optional AI assistant**: local Ollama or user-supplied OpenAI-compatible services, with encrypted credential storage.
+- **Optional AI assistant**: local Ollama or user-supplied OpenAI-compatible services, encrypted credentials, local model-call auditing, and explicitly enabled online scoring and anomaly assistance that remains advisory pending human review.
+- **Local data assets**: export and migrate worksheets, quality characteristics, lots, standard-time records, and domain data in a versioned `.qda` container with per-file hashes.
 - **Reports and extensions**: PDF, Word, Excel, and HTML reports, plus plugin-based data sources and tools.
 - **Open interfaces**: headless CLI/SDK, a local MCP stdio service, versioned rule packs, and a plugin scaffold.
 - **Release security**: archive resource limits, hashed dependency locks, third-party license notices, dependency auditing, and release provenance.
@@ -30,12 +31,12 @@ The in-app guide under Help → User Guide provides the complete feature referen
 
 ### Linux AppImage
 
-Download `AKIA-4.5.0-x86_64.AppImage` and its `.sha256` file from [Releases](https://github.com/chrisliuu345/AKIA-local/releases):
+Download `AKIA-4.6.0-x86_64.AppImage` and its `.sha256` file from [Releases](https://github.com/chrisliuu345/AKIA-local/releases):
 
 ```bash
-sha256sum -c AKIA-4.5.0-x86_64.AppImage.sha256
-chmod +x AKIA-4.5.0-x86_64.AppImage
-./AKIA-4.5.0-x86_64.AppImage
+sha256sum -c AKIA-4.6.0-x86_64.AppImage.sha256
+chmod +x AKIA-4.6.0-x86_64.AppImage
+./AKIA-4.6.0-x86_64.AppImage
 ```
 
 On systems without FUSE, launch with `--appimage-extract-and-run`. To build the AppImage yourself, run `bash build_appimage.sh`; output is written to `build/`.
@@ -80,6 +81,8 @@ Headless mode does not load third-party plugins by default. The MCP service bind
 
 - [CLI / SDK](docs/sdk-cli.md)
 - [MCP service](docs/mcp.md)
+- [Intelligent assistance and model auditing](docs/intelligent-assistance.md)
+- [Local data assets `.qda`](docs/data-assets.md)
 - [Rule packs](docs/rule-packs.md)
 - [Plugin development](docs/plugin-development.md)
 - [Dependency and release management](docs/dependency-management.md)

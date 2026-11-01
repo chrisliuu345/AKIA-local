@@ -26,6 +26,8 @@
   "dashboard_port": 8765,
   "llm_active_provider": "ollama",
   "llm_cloud_enabled": false,
+  "llm_assistance_enabled": false,
+  "model_audit_enabled": true,
   "llm_ollama_model": "qwen2.5:7b",
   "llm_openai_model": "gpt-4o-mini",
   "llm_anthropic_model": "claude-sonnet-4-5",

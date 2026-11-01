@@ -216,7 +216,20 @@ class RollupPoint:
 
 
 def default_store_path() -> Path:
-    return Path(__file__).resolve().parent.parent.parent / "data" / "timeseries.db"
+    from core.legacy import migrate_legacy_file
+    from core.runtime_paths import (
+        default_data_dir, default_data_path, packaged_data_path,
+    )
+
+    target = default_data_dir() / "timeseries.db"
+    legacy = packaged_data_path("timeseries.db")
+    migrate_database = not target.exists() and legacy.exists() and target != legacy
+    target = default_data_path("timeseries.db")
+    if migrate_database:
+        # SQLite 的最新提交可能仍在 WAL 中；仅复制主库会丢失这部分数据。
+        for suffix in ("-wal", "-shm"):
+            migrate_legacy_file(Path(f"{legacy}{suffix}"), Path(f"{target}{suffix}"))
+    return target
 
 
 class StreamingStatus:

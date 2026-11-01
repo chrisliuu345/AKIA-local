@@ -101,7 +101,8 @@ class ProjectManager:
         elif hasattr(measurements, "events"):
             measurement_payload = [event.to_dict() for event in measurements.events]
         elif isinstance(measurements, list):
-            measurement_payload = list(measurements)
+            measurement_payload = [event.to_dict() if hasattr(event, "to_dict") else event
+                                   for event in measurements]
         else:
             raise TypeError("measurements 需为 MeasurementStore 或 list")
 

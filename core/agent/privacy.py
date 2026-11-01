@@ -135,7 +135,7 @@ def revoke_consent(provider_id: str) -> None:
 
 def needs_consent(provider_id: str, base_url: str = "") -> bool:
     """是否需要弹隐私门：云端点 + 尚未授权。"""
-    if not provider_id or provider_id == "ollama":
+    if not provider_id:
         return False
     spec = get_provider(provider_id)
     endpoint = base_url or _get_setting(f"llm_{provider_id}_api_base", "") or spec.base_url
@@ -146,7 +146,7 @@ def needs_consent(provider_id: str, base_url: str = "") -> bool:
 
 def is_cloud_endpoint(provider_id: str, base_url: str = "") -> bool:
     """该供应商/端点是否属于"云端"（需云开关 + 隐私授权；内网端点不算）。"""
-    if not provider_id or provider_id == "ollama":
+    if not provider_id:
         return False
     spec = get_provider(provider_id)
     endpoint = base_url or _get_setting(f"llm_{provider_id}_api_base", "") or spec.base_url

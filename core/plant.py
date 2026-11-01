@@ -174,7 +174,9 @@ class PlantConfig:
 
 
 def default_plant_path() -> Path:
-    return Path(__file__).resolve().parent.parent / "data" / "plant.json"
+    from core.runtime_paths import default_data_path
+
+    return default_data_path("plant.json")
 
 
 def legacy_plant_path() -> Path:

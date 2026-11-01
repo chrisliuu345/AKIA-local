@@ -249,6 +249,8 @@ class MainWindow(QMainWindow):
             ("导入数据库", "操作", "", self._on_import_db, "sql database"),
             ("打开项目", "操作", "Ctrl+Shift+O", self._on_load_project, "open project qap"),
             ("保存项目", "操作", "Ctrl+Shift+S", self._on_save_project, "save project qap"),
+            ("导出本地数据资产", "操作", "", self._on_export_data_asset, "export data asset qda"),
+            ("导入本地数据资产", "操作", "", self._on_import_data_asset, "import data asset qda"),
             ("批量分析", "操作", "", self._on_run_all_analyses, "batch run all"),
             ("导出报告 (Word)", "操作", "", lambda: self._on_export_all("docx"),
              "export report word"),
@@ -345,6 +347,14 @@ class MainWindow(QMainWindow):
         open_project_action.setShortcut("Ctrl+Shift+O")
         open_project_action.triggered.connect(self._on_load_project)
         file_menu.addAction(open_project_action)
+        export_asset_action = QAction("导出本地数据资产 (.qda)", self)
+        export_asset_action.setObjectName("exportDataAssetAction")
+        export_asset_action.triggered.connect(self._on_export_data_asset)
+        file_menu.addAction(export_asset_action)
+        import_asset_action = QAction("导入本地数据资产 (.qda)", self)
+        import_asset_action.setObjectName("importDataAssetAction")
+        import_asset_action.triggered.connect(self._on_import_data_asset)
+        file_menu.addAction(import_asset_action)
         save_shared_action = QAction(i18n.tr("menu.save_shared"), self)
         save_shared_action.triggered.connect(self._on_save_shared)
         file_menu.addAction(save_shared_action)
@@ -1973,6 +1983,64 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "保存完成", f"项目已保存到:\n{path}")
         except Exception as e:
             QMessageBox.critical(self, "保存失败", str(e))
+
+    def _on_export_data_asset(self):
+        if not self.current_data:
+            QMessageBox.warning(self, "无数据", "请先导入数据或打开项目")
+            return
+        path, _ = QFileDialog.getSaveFileName(
+            self, "导出本地数据资产", "AKIA_Assets.qda", "AKIA 数据资产 (*.qda)")
+        if not path:
+            return
+        try:
+            from core.data_asset import export_data_asset
+            self._flush_tab_edits()
+            raw = self.current_data.get("raw_data", {})
+            charts = {}
+            for label, buf in self._collect_charts(list(self.analyses.keys())).items():
+                charts[label] = buf.getvalue() if hasattr(buf, 'getvalue') else buf
+            result = export_data_asset(
+                path, raw_data=raw, analyses=self.analyses, chart_bytes=charts,
+                project_context=self.project_context,
+                cases=[workflow.to_dict() for workflow in self.case_workflows],
+                standards=self.project_context.standards,
+                evidence_events=self.ledger,
+                measurements=self.measurement_store,
+                sampling=self.sampling_manager,
+                gauge_studies=self.gauge_monitor,
+                benefits=self.benefit_ledger,
+                skills=self.skill_matrix,
+            )
+            if not result["verify"].get("ok"):
+                raise ValueError("数据资产导出后校验失败")
+            audit("export", "user", f"本地数据资产 {os.path.basename(result['path'])}")
+            self.status_label.setText(f"数据资产已导出: {result['path']}")
+            QMessageBox.information(self, "导出完成", f"数据资产已保存到:\n{result['path']}")
+        except Exception as e:
+            QMessageBox.critical(self, "导出失败", str(e))
+
+    def _on_import_data_asset(self):
+        path, _ = QFileDialog.getOpenFileName(
+            self, "导入本地数据资产", "", "AKIA 数据资产 (*.qap *.qda);;All (*.*)")
+        if not path:
+            return
+        try:
+            from core.data_asset import load_data_asset, migrate_project_to_asset
+            if path.lower().endswith(".qap"):
+                # 旧项目通过同一迁移契约进入，避免维护第二套导入流程。
+                import tempfile
+                with tempfile.TemporaryDirectory() as directory:
+                    migrated = migrate_project_to_asset(
+                        path, os.path.join(directory, "migration.qda"))
+                    project = load_data_asset(migrated["path"])
+            else:
+                project = load_data_asset(path)
+            self._apply_loaded_project(
+                project, path,
+                status_msg=f"数据资产已导入: {project['manifest'].get('sheet_count', 0)} sheets",
+                success_msg=f"已导入 {project['manifest'].get('asset_counts', {})}")
+        except Exception as e:
+            QMessageBox.critical(self, "导入失败", str(e))
 
     def _apply_loaded_project(self, project: dict, path: str,
                               status_msg: str | None = None,

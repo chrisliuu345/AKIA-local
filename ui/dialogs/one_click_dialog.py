@@ -26,8 +26,14 @@ class AnalyzeWorker(QThread):
 
     def run(self):
         try:
+            from config.settings import get_setting
             llm = LLMClient()
-            analyzer = OneClickAnalyzer(llm_client=llm if llm.available else None)
+            audit_sink = None
+            if llm.available and bool(get_setting("model_audit_enabled", True)):
+                from core.agent.audit import get_model_audit
+                audit_sink = get_model_audit()
+            analyzer = OneClickAnalyzer(
+                llm_client=llm if llm.available else None, audit_sink=audit_sink)
             analyzer.set_progress_callback(self.progress_msg.emit)
             result = analyzer.run(self.raw_data, self.selected)
             self.finished.emit(result)
