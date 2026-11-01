@@ -8,7 +8,7 @@
 
 AKIA 是一款开源、本地优先的个人工业工程（IE）与质量分析桌面软件，面向现场改善、质量工程和数据分析工作。它将统计过程控制、测量系统分析、试验设计、可靠性分析、IE 工具和改善案例管理整合在一个离线桌面应用中。
 
-当前版本：v4.5.0。
+当前版本：v4.6.0。
 
 AKIA 不要求账号、订阅或在线激活。数据默认保存在本机；只有在你主动配置云模型、数据库、看板或外部设备时，软件才会建立相应的网络连接。
 
@@ -19,7 +19,8 @@ AKIA 不要求账号、订阅或在线激活。数据默认保存在本机；只
 - **改善闭环**：改善案例、标准版本记录、证据账本、8D、FMEA、控制计划与 PPAP。
 - **实时分析**：实时 SPC、设备数据接入、产线拓扑、告警与看板。
 - **可复现分析**：已知值测试、抽样决定记录、判定凭证与可独立校验的证据包。
-- **可选 AI 助手**：支持本地 Ollama 和用户自带的 OpenAI 兼容服务，密钥加密保存。
+- **可选 AI 助手**：支持本地 Ollama 和用户自带的 OpenAI 兼容服务，密钥加密保存；提供本地模型调用审计，以及显式启用、仅供人工复核的在线评分与异常辅助。
+- **本地数据资产**：通过带版本号和逐项哈希的 `.qda` 文件导出、迁移工作表、质量特性、批次、标准工时及领域记录。
 - **报告与扩展**：PDF、Word、Excel、HTML 报告，以及插件式数据源和工具扩展。
 - **开放接口**：无界面 CLI/SDK、本地 MCP stdio 服务、版本化规则包和插件脚手架。
 - **发布安全**：归档读取资源限制、哈希依赖锁、第三方许可证清单、依赖漏洞审计和发布溯源。
@@ -30,19 +31,19 @@ AKIA 不要求账号、订阅或在线激活。数据默认保存在本机；只
 
 ### Linux AppImage
 
-从 [Releases](https://github.com/chrisliuu345/AKIA-local/releases) 下载 `AKIA-4.5.0-x86_64.AppImage` 和同名 `.sha256` 文件：
+从 [Releases](https://github.com/chrisliuu345/AKIA-local/releases) 下载 `AKIA-4.6.0-x86_64.AppImage` 和同名 `.sha256` 文件：
 
 ```bash
-sha256sum -c AKIA-4.5.0-x86_64.AppImage.sha256
-chmod +x AKIA-4.5.0-x86_64.AppImage
-./AKIA-4.5.0-x86_64.AppImage
+sha256sum -c AKIA-4.6.0-x86_64.AppImage.sha256
+chmod +x AKIA-4.6.0-x86_64.AppImage
+./AKIA-4.6.0-x86_64.AppImage
 ```
 
 无 FUSE 的环境可使用 `--appimage-extract-and-run` 启动。若要自行构建 AppImage，请运行 `bash build_appimage.sh`，产物位于 `build/`。
 
 ### Windows
 
-下载 `AKIA-Setup-4.5.0.exe`，双击运行。
+下载 `AKIA-Setup-4.6.0.exe`，双击运行。
 或在 Windows 上执行：
 
 ```powershell
@@ -81,6 +82,8 @@ python main.py
 
 - [CLI / SDK](docs/sdk-cli.md)
 - [MCP 服务](docs/mcp.md)
+- [智能辅助与模型审计](docs/intelligent-assistance.md)
+- [本地数据资产 `.qda`](docs/data-assets.md)
 - [规则包](docs/rule-packs.md)
 - [插件开发](docs/plugin-development.md)
 - [依赖与发布管理](docs/dependency-management.md)

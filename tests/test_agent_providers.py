@@ -57,15 +57,18 @@ def test_models_and_base_url_resolution():
 def test_local_endpoint_detection():
     for url in ("http://localhost:11434", "http://127.0.0.1:8000/v1",
                 "http://10.1.2.3:8000/v1", "http://192.168.5.20/v1",
-                "http://172.16.9.9:1234/v1", "http://[::1]:8000/v1"):
+                "http://172.16.9.9:1234/v1", "http://169.254.1.2/v1",
+                "http://[::1]:8000/v1"):
         assert is_local_endpoint(url) is True, url
     for url in ("https://api.openai.com/v1", "https://api.deepseek.com/v1",
-                "http://8.8.8.8/v1", "http://172.32.0.1/v1"):
+                "http://8.8.8.8/v1", "http://172.32.0.1/v1",
+                "https://169.1.2.3/v1"):
         assert is_local_endpoint(url) is False, url
 
 
 def test_privacy_gate_scope():
     assert needs_privacy_gate("ollama") is False
+    assert needs_privacy_gate("ollama", "https://ollama.example.com") is True
     assert needs_privacy_gate("openai") is True
     assert needs_privacy_gate("custom") is False                      # 默认 localhost
     assert needs_privacy_gate("custom", "http://192.168.1.5:8000/v1") is False

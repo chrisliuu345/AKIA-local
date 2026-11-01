@@ -156,3 +156,13 @@ def test_cloud_switch_defaults_off(dialog):
     assert dialog.cloud_check.isChecked() is False
     dialog.cloud_check.setChecked(True)
     assert dialog.get_values()["llm_cloud_enabled"] is True
+
+
+def test_assistance_defaults_off_and_audit_defaults_on(dialog):
+    assert dialog.assistance_check.isChecked() is False
+    assert dialog.audit_check.isChecked() is True
+    dialog.assistance_check.setChecked(True)
+    dialog.audit_check.setChecked(False)
+    values = dialog.get_values()
+    assert values["llm_assistance_enabled"] is True
+    assert values["model_audit_enabled"] is False
