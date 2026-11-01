@@ -29,9 +29,7 @@ class ProviderSpec:
         return self.models[0] if self.models else ""
 
     def is_local(self, base_url: str | None = None) -> bool:
-        """本地/内网端点不需要隐私门（数据不出机）。"""
-        if self.protocol == "ollama":
-            return True
+        """按实际接口地址判定；远程 Ollama 不能继承本地供应商的豁免。"""
         return is_local_endpoint(base_url or self.base_url)
 
 
@@ -49,7 +47,8 @@ def is_local_endpoint(url: str) -> bool:
     if len(parts) == 4 and all(p.isdigit() for p in parts):
         a, b = int(parts[0]), int(parts[1])
         return (a == 10 or (a == 192 and b == 168)
-                or (a == 172 and 16 <= b <= 31) or a == 169)
+                or (a == 172 and 16 <= b <= 31)
+                or (a == 169 and b == 254))
     return False
 
 
@@ -146,10 +145,8 @@ def requires_key(provider_id: str) -> bool:
 
 
 def needs_privacy_gate(provider_id: str, base_url: str = "") -> bool:
-    """是否需要隐私门：非本地协议 + 非本地端点。"""
+    """是否需要隐私门：只由实际端点决定，协议/供应商名不构成豁免。"""
     spec = get_provider(provider_id)
-    if spec.protocol == "ollama":
-        return False
     return not spec.is_local(base_url or spec.base_url)
 
 

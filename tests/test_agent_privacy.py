@@ -98,6 +98,22 @@ def test_local_providers_never_need_consent(store):
     assert privacy.needs_consent("custom", "https://llm.corp.com/v1") is True
 
 
+def test_remote_ollama_uses_cloud_privacy_gate(store, ctx):
+    endpoint = "https://ollama.example.com:11434"
+    assert privacy.needs_consent("ollama", endpoint) is True
+    assert privacy.is_cloud_endpoint("ollama", endpoint) is True
+
+    llm = FakeCloudLLM()
+    llm.provider = "ollama"
+    llm.api_base = endpoint
+    engine = AgentEngine(build_default_registry(ctx), llm=llm, context=ctx)
+    reply = engine.respond("随便问问")
+
+    assert llm.calls == 0
+    assert reply.offline is True
+    assert "云调用已在设置中关闭" in reply.text
+
+
 def test_cloud_enabled_default_off(store):
     assert privacy.cloud_enabled() is False
     privacy.set_cloud_enabled(True)

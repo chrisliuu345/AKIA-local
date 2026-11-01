@@ -257,6 +257,14 @@ class SettingsDialog(QDialog):
         self.cloud_check.setChecked(bool(get_setting("llm_cloud_enabled", False)))
         form.addRow("云调用:", self.cloud_check)
 
+        self.assistance_check = QCheckBox("启用在线评分与异常辅助（仅顾问建议，需人工确认）")
+        self.assistance_check.setChecked(bool(get_setting("llm_assistance_enabled", False)))
+        form.addRow("智能辅助:", self.assistance_check)
+
+        self.audit_check = QCheckBox("记录本地模型调用审计（不保存 API Key）")
+        self.audit_check.setChecked(bool(get_setting("model_audit_enabled", True)))
+        form.addRow("调用审计:", self.audit_check)
+
         hint = QLabel("密钥仅以加密形式保存在本机（Windows DPAPI / Linux·macOS keyring）；"
                       "首次调用某家云 API 会弹出隐私确认，确认后按供应商记忆，可在此撤销。")
         hint.setWordWrap(True)
@@ -352,6 +360,8 @@ class SettingsDialog(QDialog):
             f"llm_{pid}_model": self.model_combo.currentText().strip(),
             f"llm_{pid}_api_base": self.api_base_edit.text().strip(),
             "llm_cloud_enabled": self.cloud_check.isChecked(),
+            "llm_assistance_enabled": self.assistance_check.isChecked(),
+            "model_audit_enabled": self.audit_check.isChecked(),
         }
         if getattr(self, "_key_cleared", False):
             # None = 删除该键（含 <key>_enc），否则旧加密值会被 get_secret 读回

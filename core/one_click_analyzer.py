@@ -2,6 +2,7 @@
 
 from typing import Any
 from collections.abc import Callable
+import time
 import pandas as pd
 
 from core.data_profiler import DataProfiler
@@ -14,9 +15,10 @@ _log = get_logger(__name__)
 class OneClickAnalyzer:
     """一键分析: 自动画像 + 推荐 + 执行 + 合成"""
 
-    def __init__(self, llm_client=None):
+    def __init__(self, llm_client=None, audit_sink=None):
         self.profiler = DataProfiler()
         self.llm = llm_client
+        self.audit_sink = audit_sink
         self._progress_cb: Callable[[str, int], None] | None = None
 
     def set_progress_callback(self, cb: Callable[[str, int], None]):
@@ -253,6 +255,28 @@ class OneClickAnalyzer:
 
         return None
 
+    def _audit_synthesis(self, *, results: list[dict], stats: dict, prompt: str,
+                         text: str, status: str, elapsed_ms: float, error: str = ""):
+        if self.audit_sink is None:
+            return
+        from core.agent.audit import bounded_payload, prompt_digest
+        self.audit_sink.record({
+            "kind": "one_click_report",
+            "status": status,
+            "input": {"results": bounded_payload(results), "stats": stats},
+            "config": {
+                "provider": getattr(self.llm, "provider", ""),
+                "model": getattr(self.llm, "model", ""),
+                "protocol": getattr(self.llm, "protocol", ""),
+                "api_base": str(getattr(self.llm, "api_base", "")).split("?", 1)[0],
+            },
+            "model_calls": [{"prompt_sha256": prompt_digest(prompt),
+                             "prompt_chars": len(prompt)}],
+            "result": {"text": text, "offline": False},
+            "elapsed_ms": elapsed_ms,
+            "error": error,
+        })
+
     def synthesize(self, results: list[dict], profile: dict) -> str:
         """调用 LLM 生成分析结论（或使用知识库降级）"""
         summary_parts = []
@@ -278,10 +302,18 @@ class OneClickAnalyzer:
         )
 
         if self.llm and self.llm.available:
+            started = time.time()
             try:
                 full = "".join(list(self.llm.generate(prompt)))
+                self._audit_synthesis(
+                    results=results, stats=stats, prompt=prompt, text=full,
+                    status="completed", elapsed_ms=(time.time() - started) * 1000)
                 return full
             except Exception as e:  # LLM 不可用时退回本地模板结论，但要让用户知道来源不同
+                self._audit_synthesis(
+                    results=results, stats=stats, prompt=prompt, text="",
+                    status="failed", elapsed_ms=(time.time() - started) * 1000,
+                    error=f"{type(e).__name__}: {e}")
                 _log.warning("AI 结论生成失败，改用本地模板结论: %s", e)
 
         return self._fallback_synthesis(results, stats)

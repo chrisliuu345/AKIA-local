@@ -143,6 +143,63 @@ jobs:
             build/release-manifest.json
           retention-days: 30
 
+  package-windows:
+    name: Windows 安装包冒烟（仅 tag）
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+      - name: 安装依赖与打包工具
+        shell: pwsh
+        run: |
+          python -m venv .venv
+          .venv\Scripts\pip install --upgrade pip
+          .venv\Scripts\pip install --require-hashes -r requirements-ci.lock
+      - name: 构建 PyInstaller onedir
+        run: .venv\Scripts\python build_pyinstaller.py
+      - name: 编译 Inno Setup 安装包
+        shell: pwsh
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { throw "未找到 Inno Setup: $iscc" }
+          & $iscc "packaging\AKIA-installer.iss"
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup 构建失败: $LASTEXITCODE" }
+      - name: 安装并启动冒烟（离屏，10 秒内不崩溃）
+        shell: pwsh
+        run: |
+          $setup = Get-ChildItem "dist\AKIA-Setup-*.exe" | Select-Object -First 1
+          if (-not $setup) { throw "未找到 Windows 安装包" }
+          $install = Join-Path $env:RUNNER_TEMP "akia-installed"
+          $proc = Start-Process $setup.FullName -Wait -PassThru -ArgumentList @(
+            "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/DIR=$install")
+          if ($proc.ExitCode -ne 0) { throw "安装失败: $($proc.ExitCode)" }
+          foreach ($relative in @("AKIA.exe", "_internal\LICENSE", "_internal\NOTICE",
+                                  "_internal\THIRD_PARTY_NOTICES.md", "_internal\licenses")) {
+            if (-not (Test-Path (Join-Path $install $relative))) { throw "安装包缺少: $relative" }
+          }
+          $app = Start-Process (Join-Path $install "AKIA.exe") -PassThru
+          Start-Sleep -Seconds 10
+          if ($app.HasExited -and $app.ExitCode -ne 0) { throw "启动失败: $($app.ExitCode)" }
+          if (-not $app.HasExited) { Stop-Process -Id $app.Id -Force }
+      - name: 生成并校验发布溯源清单
+        shell: pwsh
+        run: |
+          $artifact = (Get-ChildItem "dist\AKIA-Setup-*.exe" | Select-Object -First 1).FullName
+          .venv\Scripts\python tools\release_manifest.py --artifact $artifact --output build\release-manifest-windows.json --require-tag --require-clean
+          .venv\Scripts\python tools\release_manifest.py --verify build\release-manifest-windows.json --require-tag --require-clean
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AKIA-Windows-Installer
+          path: |
+            dist/AKIA-Setup-*.exe
+            build/release-manifest-windows.json
+          retention-days: 30
+
   sdk-smoke:
     name: SDK / MCP 最低 Python 版本冒烟
     runs-on: ubuntu-latest
