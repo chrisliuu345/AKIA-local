@@ -45,3 +45,12 @@ def test_ci_workflow_uses_hashes_and_audit():
     assert "--require-hashes -r requirements.lock" in workflow
     assert "pip-audit" in workflow
     assert "python-version: [\"3.11\", \"3.14\"]" in workflow
+
+
+def test_ci_has_windows_installer_smoke_for_v46():
+    workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(
+        encoding="utf-8")
+    assert "package-windows:" in workflow
+    assert "runs-on: windows-latest" in workflow
+    assert "AKIA-installer.iss" in workflow
+    assert "_internal\\THIRD_PARTY_NOTICES.md" in workflow

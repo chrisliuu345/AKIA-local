@@ -2,8 +2,8 @@
 
 [中文](ROADMAP.md) | [English](ROADMAP.en.md) | [Project Home](README.en.md) | [Releases](https://github.com/chrisliuu345/AKIA-local/releases)
 
-**Status**: v4.5.0 is released. Current development is v4.6.0, optional intelligent assistance and local data assets. v4.4.x remains the previous stable line.
-**Last updated**: 2026-10-28
+**Status**: v4.6.0 development is complete and release validation is underway. Subsequent development is v4.7.0, credible industrial-engineering methods. v4.5.x remains the previous stable line.
+**Last updated**: 2026-10-31
 
 ## Direction
 
@@ -62,7 +62,7 @@ Completion criteria: the CLI/SDK runs without a GUI; external inputs have resour
 ### v4.6.0 — Optional Intelligent Assistance and Local Data Assets
 
 - Add model configuration, run records, and an explainable call audit. Audit records stay on the machine.
-- Support user-enabled scoring and anomaly assistance without changing default offline behaviour.
+- Support explicitly user-enabled online scoring and anomaly assistance without changing default offline behaviour.
 - Provide an exportable, portable local data-asset format. The format is versioned and can later absorb characteristic, lot, and standard-time records without introducing a second file type.
 
 Completion criteria: all intelligent features can be disabled; core offline analysis has no external-model dependency; intelligent assistance cannot bypass statistical decisions or human confirmation; results retain traceable inputs, models, configuration, and audit records; existing projects remain readable.

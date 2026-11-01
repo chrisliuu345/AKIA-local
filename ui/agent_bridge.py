@@ -82,10 +82,19 @@ def build_context(main_window) -> AgentContext:
 
 def build_engine(main_window=None, llm=None):
     """组装 (AgentEngine, AgentContext) — 供对话 UI 与测试复用。"""
+    from config.settings import get_setting
     from core.agent.engine import AgentEngine
     from core.agent.tools import build_default_registry
 
     ctx = build_context(main_window)
     registry = build_default_registry(ctx)
-    engine = AgentEngine(registry, llm=llm, knowledge=ctx.knowledge, context=ctx)
+    audit_sink = None
+    if bool(get_setting("model_audit_enabled", True)):
+        from core.agent.audit import get_model_audit
+        audit_sink = get_model_audit()
+    engine = AgentEngine(
+        registry, llm=llm, knowledge=ctx.knowledge, context=ctx,
+        audit_sink=audit_sink,
+        assistance_enabled=lambda: bool(get_setting("llm_assistance_enabled", False)),
+    )
     return engine, ctx
