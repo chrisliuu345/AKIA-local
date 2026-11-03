@@ -1,27 +1,315 @@
-"""欢迎/首页 — 暗色渐变背景 + 卡片式快速入口 + 最近项目"""
+"""欢迎页 — 居中内容柱、主次入口和最近项目。
+
+信号与主窗口的连接保持原样，包括页面上不画出的 import_template_clicked。
+页内滚动只包住入口和最近项目，避免和窗口共享滚动区叠成两根外层滚动条。
+字标从现有高分辨率 PNG 按设备像素比缩小；源图不够高时保持原始像素，不再放大。
+"""
 
 import os
 
+from PySide6.QtCore import QEvent, QPointF, QSize, Signal, Qt
+from PySide6.QtGui import QColor, QFont, QPainter, QPen, QPixmap, QRadialGradient
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
+    QFrame,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
     QScrollArea,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
 )
-from PySide6.QtCore import Signal, Qt, QPointF
-from PySide6.QtGui import (
-    QFont, QColor, QPainter, QLinearGradient, QRadialGradient, QPen, QPixmap,
-)
+
+from config.settings import APP_FULL_NAME
+from core.i18n import i18n
+from ui.font_config import get_ui_font
 from ui.theme import colors as theme_colors
 from ui.widgets.elided_label import ElidedLabel
-from ui.font_config import get_ui_font
 
-from core.i18n import i18n
-from config.settings import APP_FULL_NAME, APP_VERSION
+# 版式常量。页边是柱两侧的最小留白；柱宽上限 860，更宽时只增加两侧空白。
+PAGE_MARGIN = 32
+COLUMN_WIDTH = 860
+HEADER_TOP = 28
+HEADER_BOTTOM = 8
+HEADER_GAP = 4
+SECTION_GAP = 22
+TILE_GAP = 12
+ROW_GAP = 8
+# 旧首页逻辑高度是 64。加大后仍低于字标原图高度（约 532px），只做缩小。
+LOGO_HEIGHT = 96
+GLOW_RADIUS = 280
+GLOW_ALPHA = 28
+PRIMARY_MIN_HEIGHT = 88
+SECONDARY_MIN_HEIGHT = 72
+RECENT_ROW_MIN_HEIGHT = 48
+EMPTY_MIN_HEIGHT = 72
+ACTION_RADIUS = 10
+RECENT_RADIUS = 8
+PATH_MAX_WIDTH = 420
+RECENT_LIMIT = 5
+PRIMARY_HINT_COLOR = "#d6e8fa"
+MIN_PAGE_SIZE = QSize(640, 480)
+
+_WORDMARK_CANDIDATES = (
+    "assets/logo_wordmark_light.png",
+    "assets/logo_wordmark.png",
+    "logo.png",
+)
+
+
+def _font(size: int, bold: bool = False) -> QFont:
+    font = QFont(get_ui_font(), size)
+    font.setBold(bold)
+    return font
+
+
+class _ShrinkableElided(ElidedLabel):
+    """允许布局把标签压窄到小于全文宽度，省略才有机会发生。"""
+
+    def minimumSizeHint(self):
+        hint = super().minimumSizeHint()
+        return QSize(0, hint.height())
+
+
+class _ClickableCard(QFrame):
+    """左键、Enter 和 Space 触发；焦点框单独绘制，不挤占布局。"""
+
+    activated = Signal()
+
+    def __init__(self, *, radius: int, parent=None):
+        super().__init__(parent)
+        self._radius = radius
+        self._pressed = False
+        self._hover = False
+        self.setFocusPolicy(Qt.StrongFocus)
+        self.setCursor(Qt.PointingHandCursor)
+        self.setAttribute(Qt.WA_StyledBackground, True)
+        self.setAttribute(Qt.WA_Hover, True)
+
+    def enterEvent(self, event):
+        self._hover = True
+        self._apply_chrome()
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        self._hover = False
+        self._pressed = False
+        self._apply_chrome()
+        super().leaveEvent(event)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self._pressed = True
+            self.setFocus(Qt.MouseFocusReason)
+            self._apply_chrome()
+        super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        pressed = self._pressed
+        self._pressed = False
+        self._apply_chrome()
+        if (
+            pressed
+            and event.button() == Qt.LeftButton
+            and self.rect().contains(event.position().toPoint())
+        ):
+            self.activated.emit()
+        super().mouseReleaseEvent(event)
+
+    def keyPressEvent(self, event):
+        if event.key() in (Qt.Key_Return, Qt.Key_Enter, Qt.Key_Space):
+            self.activated.emit()
+            event.accept()
+            return
+        super().keyPressEvent(event)
+
+    def focusInEvent(self, event):
+        super().focusInEvent(event)
+        self.update()
+
+    def focusOutEvent(self, event):
+        super().focusOutEvent(event)
+        self.update()
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        if not self.hasFocus():
+            return
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        pen = QPen(QColor(theme_colors()["accent_bright"]))
+        pen.setWidth(2)
+        painter.setPen(pen)
+        painter.setBrush(Qt.NoBrush)
+        painter.drawRoundedRect(self.rect().adjusted(1, 1, -2, -2), self._radius, self._radius)
+        painter.end()
+
+    def _apply_chrome(self):
+        raise NotImplementedError
+
+
+class _WelcomeAction(_ClickableCard):
+    """主操作或次操作。kind 为 solid / outline / secondary，高度和字号因此不同。"""
+
+    def __init__(self, title_key: str, desc_key: str, kind: str, parent=None):
+        super().__init__(radius=ACTION_RADIUS, parent=parent)
+        self._title_key = title_key
+        self._desc_key = desc_key
+        self._kind = kind
+        self.setObjectName("welcomeAction")
+        self.setProperty("kind", kind)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        if kind == "secondary":
+            self.setMinimumHeight(SECONDARY_MIN_HEIGHT)
+            title_size, desc_size = 13, 11
+        else:
+            self.setMinimumHeight(PRIMARY_MIN_HEIGHT)
+            title_size, desc_size = 15, 12
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 14, 16, 14)
+        layout.setSpacing(4)
+        layout.addStretch(1)
+
+        self._title = QLabel()
+        self._title.setFont(_font(title_size, bold=True))
+        self._title.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self._title.setWordWrap(True)
+        self._title.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        layout.addWidget(self._title)
+
+        self._desc = QLabel()
+        self._desc.setFont(_font(desc_size))
+        self._desc.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self._desc.setWordWrap(True)
+        self._desc.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        layout.addWidget(self._desc)
+        layout.addStretch(1)
+        self.refresh_texts()
+
+    def refresh_texts(self):
+        title = i18n.tr(self._title_key)
+        self._title.setText(title)
+        self._desc.setText(i18n.tr(self._desc_key))
+        self.setAccessibleName(title)
+        self._apply_chrome()
+
+    def _colors(self) -> tuple[str, str, str, str]:
+        tc = theme_colors()
+        if self._kind == "solid":
+            bg, border = tc["accent"], tc["accent"]
+            title, desc = "#ffffff", PRIMARY_HINT_COLOR
+            if self._pressed:
+                bg, border = tc["accent_dark"], tc["accent_dark"]
+            return bg, border, title, desc
+        title, desc = tc["text_primary"], tc["text_secondary"]
+        if self._kind == "outline":
+            bg, border = tc["bg_card"], tc["accent_bright"]
+            if self._pressed:
+                bg = tc["bg_active"]
+            return bg, border, title, desc
+        bg, border = tc["bg_card"], tc["border"]
+        if self._pressed:
+            bg, border = tc["bg_active"], tc["accent_bright"]
+        elif self._hover:
+            bg, border = tc["bg_hover"], tc["accent_bright"]
+        return bg, border, title, desc
+
+    def _apply_chrome(self):
+        bg, border, title, desc = self._colors()
+        self.setStyleSheet(
+            "QFrame#welcomeAction {"
+            f"background-color: {bg};"
+            f"border: 1px solid {border};"
+            f"border-radius: {ACTION_RADIUS}px;"
+            "}"
+        )
+        label = "background: transparent; border: none;"
+        self._title.setStyleSheet(f"color: {title}; {label}")
+        self._desc.setStyleSheet(f"color: {desc}; {label}")
+
+
+class _RecentRow(_ClickableCard):
+    def __init__(self, name: str, path: str, parent=None):
+        super().__init__(radius=RECENT_RADIUS, parent=parent)
+        self._path = path
+        self.setObjectName("welcomeRecentRow")
+        self.setAccessibleName(name)
+        self.setAccessibleDescription(path)
+        self.setToolTip(path)
+        self.setMinimumHeight(RECENT_ROW_MIN_HEIGHT)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(16, 8, 16, 8)
+        layout.setSpacing(12)
+
+        self._name = _ShrinkableElided(name)
+        self._name.setFont(_font(13))
+        self._name.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self._name.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self._name.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        layout.addWidget(self._name, 1)
+
+        self._path_label = _ShrinkableElided(path)
+        self._path_label.setFont(_font(11))
+        self._path_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self._path_label.setMaximumWidth(PATH_MAX_WIDTH)
+        self._path_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self._path_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        layout.addWidget(self._path_label, 0)
+        self._apply_chrome()
+
+    def _apply_chrome(self):
+        tc = theme_colors()
+        bg, border = tc["bg_card"], tc["border"]
+        if self._pressed:
+            bg, border = tc["bg_active"], tc["accent_bright"]
+        elif self._hover:
+            bg, border = tc["bg_hover"], tc["accent_bright"]
+        self.setStyleSheet(
+            "QFrame#welcomeRecentRow {"
+            f"background-color: {bg};"
+            f"border: 1px solid {border};"
+            f"border-radius: {RECENT_RADIUS}px;"
+            "}"
+        )
+        plain = "background: transparent; border: none;"
+        self._name.setStyleSheet(f"color: {tc['text_primary']}; {plain}")
+        self._path_label.setStyleSheet(f"color: {tc['text_muted']}; {plain}")
+
+
+class _CenteredColumn(QWidget):
+    """把子栏限制在柱宽内并水平居中，左右至少留出页边。"""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
+        self.setAutoFillBackground(False)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        self.column = QWidget(self)
+        self.column.setAttribute(Qt.WA_TranslucentBackground, True)
+        self.column.setAutoFillBackground(False)
+        self.column.setMaximumWidth(COLUMN_WIDTH)
+        self.column.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        available = max(0, self.width() - PAGE_MARGIN * 2)
+        width = min(COLUMN_WIDTH, available)
+        x = (self.width() - width) // 2
+        self.column.setGeometry(x, 0, width, max(0, self.height()))
+
+    def sizeHint(self):
+        hint = self.column.sizeHint()
+        return QSize(COLUMN_WIDTH + PAGE_MARGIN * 2, hint.height())
+
+    def minimumSizeHint(self):
+        hint = self.column.minimumSizeHint()
+        return QSize(0, hint.height())
 
 
 class WelcomePage(QWidget):
-    #: 首页大 logo 的逻辑高度（宽字标按比例缩放）
-    _LOGO_HEIGHT = 64
-
     import_data_clicked = Signal()
     import_ie_clicked = Signal()
     import_template_clicked = Signal()
@@ -33,297 +321,293 @@ class WelcomePage(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._recent_items: list = []
+        self._actions: list[_WelcomeAction] = []
+        self._text_labels: list[tuple[QLabel, str]] = []
+        self._wordmark_source = QPixmap()
+        self._wordmark_path = ""
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.setAutoFillBackground(False)
         self._setup_ui()
+        self.refresh_texts()
 
     def set_recent_projects(self, items: list):
-        self._recent_items = items or []
+        self._recent_items = list(items or [])
         self._rebuild_recent_section()
 
-    def _wordmark_pixmap(self) -> QPixmap:
-        """首页大 logo：透明背景字标；深色变体缺失时逐级回退。"""
+    def minimumSizeHint(self):
+        # 共享滚动区按这个提示定最小高度。内容更高时只滚页内滚动区。
+        return QSize(MIN_PAGE_SIZE.width(), MIN_PAGE_SIZE.height())
+
+    def sizeHint(self):
+        return QSize(MIN_PAGE_SIZE.width(), MIN_PAGE_SIZE.height())
+
+    def _load_wordmark_source(self) -> QPixmap:
         root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-        pixmap = QPixmap()
-        for rel in ("assets/logo_wordmark_light.png",
-                    "assets/logo_wordmark.png",
-                    "logo.png"):
+        for rel in _WORDMARK_CANDIDATES:
             path = os.path.join(root, rel)
             if not os.path.exists(path):
                 continue
             candidate = QPixmap(path)
             if not candidate.isNull():
-                pixmap = candidate
-                break
-        if pixmap.isNull():
-            return pixmap
+                self._wordmark_path = path
+                return candidate
+        self._wordmark_path = ""
+        return QPixmap()
+
+    def _wordmark_pixmap(self) -> QPixmap:
+        source = self._wordmark_source
+        if source.isNull():
+            source = self._load_wordmark_source()
+            self._wordmark_source = source
+        if source.isNull():
+            return source
         dpr = self.devicePixelRatioF() or 1.0
-        scaled = pixmap.scaledToHeight(
-            max(1, int(self._LOGO_HEIGHT * dpr)), Qt.SmoothTransformation)
-        scaled.setDevicePixelRatio(dpr)
-        return scaled
+        target_px = max(1, int(round(LOGO_HEIGHT * dpr)))
+        # 只从整张高分辨率字标缩小。源图像素不够时保持原图，避免放大发糊。
+        if source.height() > target_px:
+            scaled = source.scaledToHeight(target_px, Qt.SmoothTransformation)
+            scaled.setDevicePixelRatio(dpr)
+            return scaled
+        native = QPixmap(source)
+        native.setDevicePixelRatio(dpr)
+        return native
 
-    def _hero_center(self) -> tuple[float, float]:
-        """背景同心圆 / 光晕的圆心（logo 与之同心对齐）。"""
-        return self.width() / 2.0, min(self.height() * 0.18, 180.0)
-
-    def _sync_header_alignment(self) -> None:
-        """调整 header 上边距，使 logo 中心与同心圆圆心重合。"""
-        layout = getattr(self, "_header_layout", None)
-        if layout is None:
+    def _apply_logo(self):
+        pixmap = self._wordmark_pixmap()
+        self.logo_label.setPixmap(pixmap)
+        self.logo_label.setAccessibleName(i18n.tr("welcome.title"))
+        if pixmap.isNull():
+            self.logo_label.setFixedSize(LOGO_HEIGHT * 4, LOGO_HEIGHT)
             return
-        _, cy = self._hero_center()
-        logo_h = self.logo_label.sizeHint().height() or self._LOGO_HEIGHT
-        top = max(8, int(round(cy - logo_h / 2.0)))
-        layout.setContentsMargins(60, top, 60, 18)
+        dpr = pixmap.devicePixelRatio() or 1.0
+        self.logo_label.setFixedSize(
+            max(1, int(round(pixmap.width() / dpr))),
+            max(1, int(round(pixmap.height() / dpr))),
+        )
 
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        self._sync_header_alignment()
+    def _wordmark_center(self) -> QPointF:
+        label = getattr(self, "logo_label", None)
+        if label is None or label.width() <= 0:
+            return QPointF(self.width() / 2.0, HEADER_TOP + LOGO_HEIGHT / 2.0)
+        mapped = label.mapTo(self, label.rect().center())
+        return QPointF(mapped)
+
+    def _make_heading(self, key: str, size: int, color_key: str) -> QLabel:
+        label = QLabel()
+        label.setFont(_font(size, bold=True))
+        label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        tc = theme_colors()
+        label.setStyleSheet(f"color: {tc[color_key]}; background: transparent; border: none;")
+        self._text_labels.append((label, key))
+        return label
+
+    def _add_action(self, title_key: str, desc_key: str, kind: str, signal: Signal) -> _WelcomeAction:
+        action = _WelcomeAction(title_key, desc_key, kind)
+        action.activated.connect(signal.emit)
+        self._actions.append(action)
+        return action
 
     def _setup_ui(self):
-        tc = theme_colors()
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        root = QVBoxLayout(self)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.setSpacing(0)
 
-        header = QFrame()
-        header.setStyleSheet("QFrame { background: transparent; }")
-        header_layout = QVBoxLayout(header)
-        header_layout.setContentsMargins(60, 42, 60, 18)
-        header_layout.setSpacing(4)
-        self._header_layout = header_layout
+        header = _CenteredColumn()
+        header_layout = QVBoxLayout(header.column)
+        header_layout.setContentsMargins(0, HEADER_TOP, 0, HEADER_BOTTOM)
+        header_layout.setSpacing(HEADER_GAP)
 
-        # 大标题改为透明背景 logo（深色界面使用提亮变体，保证可见性）
         self.logo_label = QLabel()
         self.logo_label.setObjectName("welcomeLogo")
         self.logo_label.setAlignment(Qt.AlignCenter)
         self.logo_label.setStyleSheet("background: transparent;")
-        self.logo_label.setAccessibleName(i18n.tr("welcome.title"))
-        self.logo_label.setPixmap(self._wordmark_pixmap())
-        header_layout.addWidget(self.logo_label)
+        self.logo_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        header_layout.addWidget(self.logo_label, 0, Qt.AlignHCenter)
 
-        self.subtitle_label = QLabel(APP_FULL_NAME)
-        self.subtitle_label.setFont(QFont(get_ui_font(), 12))
+        self.subtitle_label = QLabel()
+        self.subtitle_label.setFont(_font(12))
         self.subtitle_label.setAlignment(Qt.AlignCenter)
+        self.subtitle_label.setWordWrap(True)
+        self.subtitle_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        tc = theme_colors()
         self.subtitle_label.setStyleSheet(
-            f"color: {tc['text_secondary']}; background: transparent;")
-        header_layout.addWidget(self.subtitle_label)
-
-        layout.addWidget(header)
-        self._sync_header_alignment()
-
-        divider = QFrame()
-        divider.setFixedHeight(2)
-        divider.setStyleSheet(
-            "QFrame { border: none; background: qlineargradient("
-            "x1:0, y1:0, x2:1, y2:0, "
-            "stop:0 transparent, stop:0.3 #4da6ff, stop:0.7 #1b5faa, stop:1 transparent); }"
+            f"color: {tc['text_secondary']}; background: transparent;"
         )
-        layout.addWidget(divider)
+        header_layout.addWidget(self.subtitle_label)
+        root.addWidget(header)
 
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.NoFrame)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
-        scroll.viewport().setAutoFillBackground(False)
+        divider_host = _CenteredColumn()
+        divider_layout = QVBoxLayout(divider_host.column)
+        divider_layout.setContentsMargins(0, 0, 0, 0)
+        divider_layout.setSpacing(0)
+        divider = QFrame()
+        divider.setObjectName("welcomeDivider")
+        divider.setFixedHeight(1)
+        divider.setFrameShape(QFrame.NoFrame)
+        divider.setStyleSheet(
+            f"background-color: {tc['border']}; border: none; max-height: 1px;"
+        )
+        divider_layout.addWidget(divider)
+        divider_host.setFixedHeight(1)
+        root.addWidget(divider_host)
 
-        body = QWidget()
-        body.setStyleSheet("background: transparent;")
-        body.setAutoFillBackground(False)
-        body_layout = QVBoxLayout(body)
-        body_layout.setContentsMargins(24, 28, 24, 20)
-        body_layout.setSpacing(16)
+        self._scroll = QScrollArea()
+        self._scroll.setWidgetResizable(True)
+        self._scroll.setFrameShape(QFrame.NoFrame)
+        self._scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self._scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
+        self._scroll.viewport().setAutoFillBackground(False)
+        self._scroll.viewport().setStyleSheet("background: transparent;")
 
-        cards_widget = QWidget()
-        cards_widget.setStyleSheet("background: transparent;")
-        cards_layout = QHBoxLayout(cards_widget)
-        cards_layout.setContentsMargins(0, 0, 0, 0)
-        cards_layout.setSpacing(12)
-        cards_layout.addStretch()
+        body_host = _CenteredColumn()
+        body = QVBoxLayout(body_host.column)
+        body.setContentsMargins(0, SECTION_GAP, 0, ROW_GAP)
+        body.setSpacing(SECTION_GAP)
 
-        card_defs = [
-            ("", "导入工作表", "Excel/CSV → SPC/能力/MSA/图表/工程工具…", self.import_data_clicked, None),
-            ("", "导入IE数据", "工序表/时间观测/物流/资源 → IE工具", self.import_ie_clicked, None),
-            ("", "最近项目", "打开最近使用的 .qap 项目", self.open_project_clicked, None),
-            ("", "新建分析", "直接跳转到 SPC 分析模块", self.new_analysis_clicked, None),
-            ("", i18n.tr("sidebar.diagnose"), "一键智能诊断数据质量", self.diagnose_clicked, None),
-            ("", "改善案例", "案例中心 · 证据链 · 改善闭环", self.case_center_clicked, None),
-        ]
+        start_label = self._make_heading("welcome.section_start", 11, "text_secondary")
+        import_action = self._add_action(
+            "welcome.import_sheet_title",
+            "welcome.import_sheet_desc",
+            "solid",
+            self.import_data_clicked,
+        )
+        open_action = self._add_action(
+            "welcome.open_project_title",
+            "welcome.open_project_desc",
+            "outline",
+            self.open_project_clicked,
+        )
+        primary_row = QWidget()
+        primary_row.setAutoFillBackground(False)
+        primary_layout = QHBoxLayout(primary_row)
+        primary_layout.setContentsMargins(0, 0, 0, 0)
+        primary_layout.setSpacing(TILE_GAP)
+        primary_layout.addWidget(import_action, 1)
+        primary_layout.addWidget(open_action, 1)
 
-        for _, title, desc, signal, _perm in card_defs:
-            card = self._make_card(title, desc, signal)
-            cards_layout.addWidget(card)
+        start_box = QWidget()
+        start_box.setAutoFillBackground(False)
+        start_layout = QVBoxLayout(start_box)
+        start_layout.setContentsMargins(0, 0, 0, 0)
+        start_layout.setSpacing(ROW_GAP)
+        start_layout.addWidget(start_label)
+        start_layout.addWidget(primary_row)
+        body.addWidget(start_box)
 
-        cards_layout.addStretch()
-        body_layout.addWidget(cards_widget)
+        secondary_specs = (
+            ("welcome.import_ie_title", "welcome.import_ie_desc", self.import_ie_clicked),
+            ("welcome.new_analysis_title", "welcome.new_analysis_desc", self.new_analysis_clicked),
+            ("welcome.diagnose_title", "welcome.diagnose_desc", self.diagnose_clicked),
+            ("welcome.case_title", "welcome.case_desc", self.case_center_clicked),
+        )
+        grid_host = QWidget()
+        grid_host.setAutoFillBackground(False)
+        grid = QGridLayout(grid_host)
+        grid.setContentsMargins(0, 0, 0, 0)
+        grid.setHorizontalSpacing(TILE_GAP)
+        grid.setVerticalSpacing(TILE_GAP)
+        grid.setColumnStretch(0, 1)
+        grid.setColumnStretch(1, 1)
+        for index, (title_key, desc_key, signal) in enumerate(secondary_specs):
+            action = self._add_action(title_key, desc_key, "secondary", signal)
+            grid.addWidget(action, index // 2, index % 2)
+        body.addWidget(grid_host)
 
-        recent_header = QLabel("最近项目")
-        recent_header.setFont(QFont(get_ui_font(), 11, QFont.Bold))
-        recent_header.setStyleSheet(
-            f"color: {tc['text_secondary']}; background: transparent; padding: 0 4px;")
-        body_layout.addWidget(recent_header)
-
+        recent_label = self._make_heading("welcome.section_recent", 13, "text_primary")
         self.recent_list = QWidget()
-        self.recent_list.setStyleSheet("background: transparent;")
+        self.recent_list.setAutoFillBackground(False)
         self.recent_layout = QVBoxLayout(self.recent_list)
         self.recent_layout.setContentsMargins(0, 0, 0, 0)
-        self.recent_layout.setSpacing(4)
-        body_layout.addWidget(self.recent_list)
+        self.recent_layout.setSpacing(ROW_GAP)
 
-        self._no_recent = QLabel("暂无最近项目 — 导入数据或打开项目开始分析")
-        self._no_recent.setFont(QFont(get_ui_font(), 10))
-        self._no_recent.setStyleSheet(
-            f"color: {tc['text_muted']}; background: {tc['bg_card']}; "
-            f"border: 1px dashed {tc['border']}; border-radius: 8px; padding: 18px;")
-        self._no_recent.setAlignment(Qt.AlignCenter)
-        self.recent_layout.addWidget(self._no_recent)
+        recent_box = QWidget()
+        recent_box.setAutoFillBackground(False)
+        recent_box_layout = QVBoxLayout(recent_box)
+        recent_box_layout.setContentsMargins(0, 0, 0, 0)
+        recent_box_layout.setSpacing(ROW_GAP)
+        recent_box_layout.addWidget(recent_label)
+        recent_box_layout.addWidget(self.recent_list)
+        body.addWidget(recent_box)
+        # 视口更高时把空白留在列表下面，避免把操作块拉高。
+        body.addStretch(1)
 
-        body_layout.addStretch()
+        self._scroll.setWidget(body_host)
+        root.addWidget(self._scroll, 1)
 
-        self.version_label = QLabel(f"v{APP_VERSION}")
-        self.version_label.setFont(QFont(get_ui_font(), 10))
-        self.version_label.setAlignment(Qt.AlignCenter)
-        self.version_label.setStyleSheet(
-            f"color: {tc['text_secondary']}; background: transparent; padding-bottom: 8px;")
-        body_layout.addWidget(self.version_label)
-
-        scroll.setWidget(body)
-        layout.addWidget(scroll, 1)
-
-    def _make_card(self, title: str, desc: str, signal):
-        tc = theme_colors()
-        card = QFrame()
-        card.setCursor(Qt.PointingHandCursor)
-        card.setMinimumWidth(118)
-        card.setMaximumWidth(160)
-        card.setMinimumHeight(100)
-        card.setStyleSheet(
-            f"QFrame {{"
-            f"background-color: {tc['bg_card']};"
-            f"border: 1px solid {tc['border']}; border-radius: 10px;"
-            f"}}"
-            f"QFrame:hover {{"
-            f"border-color: {tc['accent_bright']};"
-            f"background-color: {tc['bg_hover']};"
-            f"}}"
-        )
-
-        card_layout = QVBoxLayout(card)
-        card_layout.setContentsMargins(14, 16, 14, 14)
-        card_layout.setSpacing(4)
-
-        title_lbl = QLabel(title)
-        title_lbl.setFont(QFont(get_ui_font(), 10, QFont.Bold))
-        title_lbl.setAlignment(Qt.AlignCenter)
-        title_lbl.setStyleSheet(
-            f"color: {tc['text_primary']}; background: transparent; border: none;")
-        card_layout.addWidget(title_lbl)
-
-        desc_lbl = QLabel(desc)
-        desc_lbl.setFont(QFont(get_ui_font(), 8))
-        desc_lbl.setAlignment(Qt.AlignCenter)
-        desc_lbl.setStyleSheet(
-            f"color: {tc['text_muted']}; background: transparent; border: none;")
-        desc_lbl.setWordWrap(True)
-        card_layout.addWidget(desc_lbl)
-
-        if signal is not None:
-            def handler(e, s=signal):
-                s.emit()
-            card.mousePressEvent = handler
-
-        return card
+    def _clear_recent(self):
+        while self.recent_layout.count():
+            item = self.recent_layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.setParent(None)
+                widget.deleteLater()
 
     def _rebuild_recent_section(self):
-        for i in reversed(range(self.recent_layout.count())):
-            w = self.recent_layout.itemAt(i).widget()
-            if w:
-                w.setParent(None)
-
+        if not hasattr(self, "recent_layout"):
+            return
+        self._clear_recent()
         tc = theme_colors()
+        items = self._recent_items[:RECENT_LIMIT]
+        if not items:
+            empty = QLabel(i18n.tr("welcome.recent_empty"))
+            empty.setObjectName("welcomeRecentEmpty")
+            empty.setFont(_font(12))
+            empty.setAlignment(Qt.AlignCenter)
+            empty.setWordWrap(True)
+            empty.setMinimumHeight(EMPTY_MIN_HEIGHT)
+            empty.setStyleSheet(
+                f"color: {tc['text_muted']}; background-color: {tc['bg_card']};"
+                f"border: 1px dashed {tc['border']}; border-radius: {ACTION_RADIUS}px;"
+                "padding: 20px;"
+            )
+            self.recent_layout.addWidget(empty)
+            return
 
-        if not self._recent_items:
-            self._no_recent = QLabel("暂无最近项目 — 导入数据或打开项目开始分析")
-            self._no_recent.setFont(QFont(get_ui_font(), 10))
-            self._no_recent.setStyleSheet(
-                f"color: {tc['text_muted']}; background: {tc['bg_card']}; "
-                f"border: 1px dashed {tc['border']}; border-radius: 8px; padding: 18px;")
-            self._no_recent.setAlignment(Qt.AlignCenter)
-            self.recent_layout.addWidget(self._no_recent)
-        else:
-            for name, path in self._recent_items[:5]:
-                row = QFrame()
-                row.setCursor(Qt.PointingHandCursor)
-                row.setStyleSheet(
-                    f"QFrame {{ background: {tc['bg_card']}; "
-                    f"border: 1px solid {tc['border']}; border-radius: 6px; "
-                    f"padding: 8px 14px; }}"
-                    f"QFrame:hover {{ border-color: {tc['accent_bright']}; }}"
-                )
-                row_layout = QHBoxLayout(row)
-                row_layout.setContentsMargins(0, 0, 0, 0)
+        for item in items:
+            name, path = item[0], item[1]
+            row = _RecentRow(str(name), str(path))
+            row.activated.connect(lambda p=str(path): self._open_recent(p))
+            self.recent_layout.addWidget(row)
 
-                name_lbl = QLabel(name)
-                name_lbl.setFont(QFont(get_ui_font(), 10))
-                name_lbl.setStyleSheet(
-                    f"color: {tc['text_primary']}; background: transparent; border: none;")
-                row_layout.addWidget(name_lbl, 1)
-
-                path_lbl = ElidedLabel(path)
-                path_lbl.setFont(QFont(get_ui_font(), 8))
-                path_lbl.setMaximumWidth(360)
-                path_lbl.setStyleSheet(
-                    f"color: {tc['text_muted']}; background: transparent; border: none;")
-                row_layout.addWidget(path_lbl)
-
-                row._project_path = path
-                row.mousePressEvent = lambda e, p=path: self._on_recent_click(p)
-                self.recent_layout.addWidget(row)
-
-            self.recent_layout.addStretch()
-
-    def _on_recent_click(self, path: str):
+    def _open_recent(self, path: str):
         parent = self.window()
-        if parent and hasattr(parent, '_load_project_by_path'):
-            try:
-                parent._load_project_by_path(path)
-            except Exception:
-                import logging
-                logging.getLogger(__name__).exception(f"加载最近项目失败: {path}")
+        loader = getattr(parent, "_load_project_by_path", None)
+        if callable(loader):
+            loader(path)
 
     def paintEvent(self, event):
         tc = theme_colors()
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
+        painter.fillRect(self.rect(), QColor(tc["bg_body"]))
 
-        w, h = self.width(), self.height()
-        grad = QLinearGradient(0, 0, w, h)
-        grad.setColorAt(0.0, QColor("#0d1526"))
-        grad.setColorAt(1.0, QColor(tc["bg_body"]))
-        painter.fillRect(self.rect(), grad)
-
-        cx, cy = self._hero_center()
-        glow = QRadialGradient(QPointF(cx, cy), max(w * 0.28, 220.0))
-        glow_core = QColor(tc["accent"])
-        glow_core.setAlpha(30)
-        glow_edge = QColor(tc["accent"])
-        glow_edge.setAlpha(0)
-        glow.setColorAt(0.0, glow_core)
-        glow.setColorAt(1.0, glow_edge)
+        center = self._wordmark_center()
+        glow = QRadialGradient(center, float(GLOW_RADIUS))
+        core = QColor(tc["accent"])
+        core.setAlpha(GLOW_ALPHA)
+        edge = QColor(tc["accent"])
+        edge.setAlpha(0)
+        glow.setColorAt(0.0, core)
+        glow.setColorAt(1.0, edge)
         painter.fillRect(self.rect(), glow)
-
-        ring_base = QColor(tc["accent_bright"])
-        painter.setBrush(Qt.NoBrush)
-        for radius, alpha in ((85, 20), (135, 11), (195, 6)):
-            c = QColor(ring_base)
-            c.setAlpha(alpha)
-            painter.setPen(QPen(c, 1.5))
-            painter.drawEllipse(QPointF(cx, cy), radius, radius)
-
         painter.end()
         super().paintEvent(event)
 
     def refresh_texts(self):
-        self.logo_label.setPixmap(self._wordmark_pixmap())
-        self.logo_label.setAccessibleName(i18n.tr("welcome.title"))
-        self._sync_header_alignment()
+        self._apply_logo()
+        self.subtitle_label.setText(APP_FULL_NAME)
+        for label, key in self._text_labels:
+            label.setText(i18n.tr(key))
+        for action in self._actions:
+            action.refresh_texts()
+        self._rebuild_recent_section()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        if hasattr(self, "logo_label"):
+            self._apply_logo()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() == QEvent.DevicePixelRatioChange and hasattr(self, "logo_label"):
+            self._apply_logo()
