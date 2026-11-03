@@ -230,6 +230,27 @@ def test_recent_row_calls_loader_on_left_click_only():
         host.close()
 
 
+def test_wordmark_has_room_above_and_below():
+    page = _page()
+    try:
+        logo = page.logo_label
+        subtitle = page.subtitle_label
+        top = logo.mapTo(page, logo.rect().topLeft()).y()
+        bottom = logo.mapTo(page, logo.rect().bottomLeft()).y()
+        subtitle_top = subtitle.mapTo(page, subtitle.rect().topLeft()).y()
+        center = logo.mapTo(page, logo.rect().center())
+        primary = _action(page, "导入工作表")
+        primary_top = primary.mapTo(page, primary.rect().topLeft()).y()
+        assert top >= 96
+        assert subtitle_top - bottom >= 16
+        assert center.y() < primary_top
+        assert primary.minimumHeight() == 88
+        assert _action(page, "导入IE数据").minimumHeight() == 72
+        assert page._scroll.verticalScrollBar().maximum() == 0
+    finally:
+        page.close()
+
+
 def test_wordmark_is_enlarged_from_the_high_res_asset():
     page = _page()
     try:

@@ -27,11 +27,12 @@ from ui.theme import colors as theme_colors
 from ui.widgets.elided_label import ElidedLabel
 
 # 版式常量。页边是柱两侧的最小留白；柱宽上限 860，更宽时只增加两侧空白。
+# 字标上下留白把光晕中心留在首页上半部，而不是贴在顶边。
 PAGE_MARGIN = 32
 COLUMN_WIDTH = 860
-HEADER_TOP = 28
-HEADER_BOTTOM = 8
-HEADER_GAP = 4
+HEADER_TOP = 96
+HEADER_BOTTOM = 28
+HEADER_GAP = 20
 SECTION_GAP = 22
 TILE_GAP = 12
 ROW_GAP = 8
