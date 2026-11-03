@@ -87,7 +87,11 @@ class TestSnapshot:
         assert snapshot.rule_key == "line1|cycle"
         assert snapshot.severity == "critical"
         assert snapshot.usl == 40.0 and snapshot.lsl == 30.0
-        assert snapshot.ts.endswith("+08:00")
+        parsed = datetime.fromisoformat(snapshot.ts)
+        assert parsed.tzinfo is not None
+        # epoch 秒按本机时区写成 ISO-8601（core.time_utils.epoch_to_iso）。
+        # 偏移随运行环境变化：开发机常为 +08:00，GitHub runner 为 UTC。
+        assert parsed.utcoffset() == datetime.now().astimezone().utcoffset()
 
     def test_missing_subject_rejected(self):
         with pytest.raises(ValueError, match="设备/通道"):
