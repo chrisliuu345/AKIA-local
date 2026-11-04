@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from ui.widgets.chart_canvas import ChartCanvas
 
 from core.i18n import i18n
 from core.plant_compare import summarize_plant, build_comparison
@@ -242,7 +242,7 @@ class MultiPlantTab(BaseAnalysisTab):
             if w:
                 w.setParent(None)
                 w.deleteLater()
-        canvas = FigureCanvasQTAgg(fig)
+        canvas = ChartCanvas(fig)
         canvas.setStyleSheet("background: transparent;")
         self.chart_layout.addWidget(canvas)
         self.canvas = canvas

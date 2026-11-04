@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Signal, Qt
 from PySide6.QtGui import QFont
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from ui.widgets.chart_canvas import ChartCanvas
 import matplotlib.pyplot as plt
 
 from core.i18n import i18n
@@ -269,7 +269,7 @@ class MonitorTab(BaseAnalysisTab):
             if w:
                 w.setParent(None)
                 w.deleteLater()
-        canvas = FigureCanvasQTAgg(fig)
+        canvas = ChartCanvas(fig)
         canvas.setStyleSheet("background: transparent;")
         self.chart_layout.addWidget(canvas)
         self.canvas = canvas

@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from ui.widgets.chart_canvas import ChartCanvas
 import numpy as np
 
 from ui.tabs.base_tab import BaseAnalysisTab
@@ -220,7 +220,7 @@ class SMEDTab(BaseAnalysisTab):
                 if w:
                     w.setParent(None)
             plt.close("all")
-            self.canvas = FigureCanvasQTAgg(self.current_figure)
+            self.canvas = ChartCanvas(self.current_figure)
             self.canvas_layout.addWidget(self.canvas)
             self.canvas.draw()
         self.summary_label.setText(result.get("summary", ""))

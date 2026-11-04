@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from ui.widgets.chart_canvas import ChartCanvas
 from config.settings import OEE_WORLD_CLASS, OEE_GOOD, OEE_FAIR
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
@@ -290,7 +290,7 @@ class OEETab(BaseAnalysisTab):
         self._style_axis(ax2, tc, rotate=12)
 
         self.current_figure = fig
-        self.canvas = FigureCanvasQTAgg(fig)
+        self.canvas = ChartCanvas(fig)
         self.chart_layout.addWidget(self.canvas)
         self._switch_result_view(0)
 

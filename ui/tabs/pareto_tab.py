@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from ui.widgets.chart_canvas import ChartCanvas
 import matplotlib.pyplot as plt
 
 from ui.tabs.base_tab import BaseAnalysisTab
@@ -185,7 +185,7 @@ class ParetoTab(BaseAnalysisTab):
             ax.legend(fontsize=8)
 
         fig.set_facecolor(tc["bg_card"])
-        canvas = FigureCanvasQTAgg(fig)
+        canvas = ChartCanvas(fig)
         self.chart_layout.addWidget(canvas)
         self.canvas = canvas
         self.current_figure = fig

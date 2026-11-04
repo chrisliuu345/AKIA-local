@@ -123,7 +123,7 @@ class BaseAnalysisTab(QWidget):
 
         self.chart_pane = _result_pane()
         chart_outer = QVBoxLayout(self.chart_pane)
-        chart_outer.setContentsMargins(8, 8, 8, 8)
+        chart_outer.setContentsMargins(16, 16, 16, 16)
         self.chart_container = QWidget()
         self.chart_widget = self.chart_container
         self.chart_layout = QVBoxLayout(self.chart_container)
@@ -273,8 +273,8 @@ class BaseAnalysisTab(QWidget):
                 self._chart_toolbar = None
 
         # 2) 新 canvas 置于第一行
-        from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-        self.canvas = FigureCanvasQTAgg(fig)
+        from ui.widgets.chart_canvas import ChartCanvas
+        self.canvas = ChartCanvas(fig)
         # 快照自然像素高 — 隐藏页渲染时布局会把 canvas 压小并同步改写 figure 尺寸,
         # _pin 改读快照保证 showEvent 恢复时高度不丢失
         self._canvas_natural_h = int(

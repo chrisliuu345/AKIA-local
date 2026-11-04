@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from ui.widgets.chart_canvas import ChartCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
@@ -334,7 +334,7 @@ class ReliabilityTab(BaseAnalysisTab):
         ax2.grid(True, alpha=0.3)
         ax2.set_facecolor(tc["bg_body"])
 
-        canvas = FigureCanvasQTAgg(fig)
+        canvas = ChartCanvas(fig)
         self.chart_layout.addWidget(canvas)
         self.canvas = canvas
         self.current_figure = fig
@@ -463,7 +463,7 @@ class ReliabilityTab(BaseAnalysisTab):
                     bbox={"boxstyle": "round", "facecolor": tc["bg_body"],
                               "edgecolor": tc["border"], "alpha": 0.9})
 
-        canvas = FigureCanvasQTAgg(fig)
+        canvas = ChartCanvas(fig)
         self.chart_layout.addWidget(canvas)
         self.canvas = canvas
         self.current_figure = fig

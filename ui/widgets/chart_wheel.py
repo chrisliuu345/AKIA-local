@@ -7,7 +7,12 @@ _installed = False
 
 
 def _is_chart_canvas(obj) -> bool:
-    return type(obj).__name__ in ("FigureCanvasQTAgg", "FigureCanvasQT")
+    # ChartCanvas 是 FigureCanvasQTAgg 的子类，滚轮仍要交给页面。
+    name = type(obj).__name__
+    if name in ("FigureCanvasQTAgg", "FigureCanvasQT", "ChartCanvas"):
+        return True
+    return any(cls.__name__ in ("FigureCanvasQTAgg", "FigureCanvasQT")
+               for cls in type(obj).__mro__)
 
 
 def _forward_page_scroll(origin, event) -> None:

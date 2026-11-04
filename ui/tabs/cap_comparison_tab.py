@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from ui.widgets.chart_canvas import ChartCanvas
 from config.settings import CAPABILITY_GRADES
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
@@ -249,7 +249,7 @@ class CapComparisonTab(BaseAnalysisTab):
         ax.grid(True, alpha=0.3, axis="y")
 
         fig.subplots_adjust(left=0.08, right=0.95, top=0.90, bottom=0.18)
-        canvas = FigureCanvasQTAgg(fig)
+        canvas = ChartCanvas(fig)
         self.chart_layout.addWidget(canvas)
         self.canvas = canvas
         self.current_figure = fig

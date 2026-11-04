@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from ui.widgets.chart_canvas import ChartCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
@@ -240,7 +240,7 @@ class TrendTab(BaseAnalysisTab):
         fig.autofmt_xdate()
         fig.subplots_adjust(left=0.07, right=0.96, top=0.92, bottom=0.14)
 
-        canvas = FigureCanvasQTAgg(fig)
+        canvas = ChartCanvas(fig)
         self.chart_layout.addWidget(canvas)
         self.canvas = canvas
         self.current_figure = fig
