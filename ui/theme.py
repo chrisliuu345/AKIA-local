@@ -59,6 +59,12 @@ def apply_dark_palette():
     p.setColor(QPalette.Disabled, QPalette.WindowText, QColor("#5C5C5C"))
     p.setColor(QPalette.Disabled, QPalette.Text, QColor("#5C5C5C"))
     p.setColor(QPalette.Disabled, QPalette.ButtonText, QColor("#5C5C5C"))
+    # 立体框线用灰，避免 Fusion 默认把分隔线画成白条。
+    p.setColor(QPalette.Light, QColor("#333333"))
+    p.setColor(QPalette.Midlight, QColor("#2A2A2A"))
+    p.setColor(QPalette.Mid, QColor("#2A2A2A"))
+    p.setColor(QPalette.Dark, QColor("#1A1A1A"))
+    p.setColor(QPalette.Shadow, QColor("#111111"))
     app.setPalette(p)
 
 

@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QSpinBox, QGroupBox, QFormLayout, QTextEdit,
     QTableWidget, QTableWidgetItem, QSplitter, QHeaderView,
-    QFrame, QStackedWidget,
+    QStackedWidget,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
@@ -112,11 +112,6 @@ class DOETab(BaseAnalysisTab):
 
         top_layout.addWidget(config_group)
 
-        separator = QFrame()
-        separator.setFrameShape(QFrame.VLine)
-        separator.setStyleSheet("")
-        separator.setMaximumWidth(1)
-        top_layout.addWidget(separator)
 
         self.data_table = QTableWidget()
         self.data_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)

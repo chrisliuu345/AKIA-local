@@ -38,8 +38,8 @@ TILE_GAP = 12
 ROW_GAP = 8
 # 旧首页逻辑高度是 64。加大后仍低于字标原图高度（约 532px），只做缩小。
 LOGO_HEIGHT = 96
-GLOW_RADIUS = 280
-GLOW_ALPHA = 28
+GLOW_RADIUS = 640
+GLOW_ALPHA = 56
 PRIMARY_MIN_HEIGHT = 88
 SECONDARY_MIN_HEIGHT = 72
 RECENT_ROW_MIN_HEIGHT = 48
@@ -585,13 +585,13 @@ class WelcomePage(QWidget):
 
         center = self._wordmark_center()
         glow = QRadialGradient(center, float(GLOW_RADIUS))
-        # 光晕只用很淡的白，避免欢迎页被字标蓝铺开。
-        core = QColor("#FFFFFF")
-        core.setAlpha(GLOW_ALPHA)
-        edge = QColor("#FFFFFF")
-        edge.setAlpha(0)
-        glow.setColorAt(0.0, core)
-        glow.setColorAt(1.0, edge)
+        # 多段停靠把白光慢慢收掉，避免小半径上出现一圈硬边。
+        for stop, alpha in (
+            (0.0, GLOW_ALPHA), (0.18, 40), (0.40, 22), (0.62, 10), (0.84, 3), (1.0, 0),
+        ):
+            color = QColor("#FFFFFF")
+            color.setAlpha(alpha)
+            glow.setColorAt(stop, color)
         painter.fillRect(self.rect(), glow)
         painter.end()
         super().paintEvent(event)

@@ -69,11 +69,6 @@ class OEETab(BaseAnalysisTab):
         top_layout.addWidget(config_group)
 
 
-        separator = QFrame()
-        separator.setFrameShape(QFrame.VLine)
-        separator.setStyleSheet("")
-        separator.setMaximumWidth(1)
-        top_layout.addWidget(separator)
 
         kpi_group = QGroupBox("实时指标")
         kpi_grid = QGridLayout(kpi_group)

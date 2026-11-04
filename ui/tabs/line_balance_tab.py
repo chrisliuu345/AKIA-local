@@ -5,7 +5,6 @@
 from typing import Any
 
 from PySide6.QtWidgets import (
-    QFrame,
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QDoubleSpinBox, QGroupBox, QFormLayout, QSpinBox,
     QTableWidget, QTableWidgetItem, QSplitter, QHeaderView,
@@ -122,11 +121,6 @@ class LineBalanceTab(BaseAnalysisTab):
         top_layout.addWidget(config_group)
 
 
-        separator = QFrame()
-        separator.setFrameShape(QFrame.VLine)
-        separator.setStyleSheet("")
-        separator.setMaximumWidth(1)
-        top_layout.addWidget(separator)
 
         preview_group = QGroupBox("工序数据预览")
         preview_layout = QVBoxLayout(preview_group)

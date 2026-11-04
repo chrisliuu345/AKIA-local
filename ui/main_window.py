@@ -178,6 +178,8 @@ class MainWindow(QMainWindow):
         self.sidebar = Sidebar()
         self._sidebar_collapsed = False
         self._sidebar_anim = None
+        from ui.widgets.chart_wheel import install_chart_wheel_filter
+        install_chart_wheel_filter()
         self.sidebar.setFixedWidth(SIDEBAR_EXPANDED_WIDTH)
 
         vdivider = QFrame()
