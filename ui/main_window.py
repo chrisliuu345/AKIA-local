@@ -9,13 +9,14 @@ from typing import Any
 import pandas as pd
 
 from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+    QMainWindow, QWidget, QHBoxLayout,
     QMessageBox, QFileDialog,
-    QPushButton, QFrame,
+    QFrame,
     QScrollArea,
 )
 from PySide6.QtCore import (
     Qt, QSettings, QPropertyAnimation, QEasingCurve, QUrl, QTimer, Signal,
+    QVariantAnimation,
 )
 from PySide6.QtGui import QAction, QIcon, QFont, QPixmap, QDragEnterEvent, QDropEvent, QDesktopServices
 
@@ -43,9 +44,12 @@ from core.time_utils import now_iso
 from core.audit import audit
 from core.streaming.bus import StreamBus
 
-from ui.sidebar import Sidebar
+from ui.sidebar import (
+    SIDEBAR_COLLAPSED_WIDTH,
+    SIDEBAR_EXPANDED_WIDTH,
+    Sidebar,
+)
 from ui._tab_registry import INDEX_MAP, TAB_INDEX, CHAIN_TABS
-from ui.theme import colors as theme_colors
 from ui.font_config import get_ui_font
 from ui.widgets.elided_label import ElidedLabel
 from ui.welcome_page import WelcomePage
@@ -164,7 +168,6 @@ class MainWindow(QMainWindow):
 
     def _setup_ui(self):
         divider_color = "#2A2A2A"
-        tc = theme_colors()
 
         central = QWidget()
         self.setCentralWidget(central)
@@ -172,31 +175,10 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        self.expand_strip = QFrame()
-        self.expand_strip.setFixedWidth(26)
-        self.expand_strip.setStyleSheet(
-            f"QFrame {{ background-color: {tc['bg_header']}; border: none; }}"
-        )
-        strip_layout = QVBoxLayout(self.expand_strip)
-        strip_layout.setContentsMargins(0, 14, 0, 0)
-        strip_layout.setSpacing(0)
-        self.expand_btn = QPushButton("»")
-        self.expand_btn.setFont(QFont(get_ui_font(), 12))
-        self.expand_btn.setFixedSize(26, 40)
-        self.expand_btn.setCursor(Qt.PointingHandCursor)
-        self.expand_btn.setToolTip(i18n.tr("sidebar.expand") + " (Ctrl+B)")
-        self.expand_btn.setStyleSheet(
-            f"QPushButton {{ background-color: transparent; color: {tc['text_muted']};"
-            f"border: none; border-radius: 0; }}"
-            f"QPushButton:hover {{ color: {tc['accent_bright']}; background-color: {tc['bg_hover']}; }}"
-        )
-        self.expand_btn.clicked.connect(lambda: self._toggle_sidebar(False))
-        strip_layout.addWidget(self.expand_btn)
-        strip_layout.addStretch()
-        self.expand_strip.setVisible(False)
-
         self.sidebar = Sidebar()
-        self.sidebar.setFixedWidth(210)
+        self._sidebar_collapsed = False
+        self._sidebar_anim = None
+        self.sidebar.setFixedWidth(SIDEBAR_EXPANDED_WIDTH)
 
         vdivider = QFrame()
         vdivider.setFrameShape(QFrame.VLine)
@@ -216,7 +198,6 @@ class MainWindow(QMainWindow):
 
         self._plugin_tab_start = _PLUGIN_TAB_START
 
-        layout.addWidget(self.expand_strip)
         layout.addWidget(self.sidebar)
         layout.addWidget(vdivider)
         scroll = QScrollArea()
@@ -286,13 +267,34 @@ class MainWindow(QMainWindow):
         if callable(callback):
             callback()
 
-    def _toggle_sidebar(self, collapsed: bool):
-        self.sidebar.setVisible(not collapsed)
-        self.expand_strip.setVisible(collapsed)
+    def _set_sidebar_width(self, width: int):
+        self.sidebar.setFixedWidth(int(width))
+
+    def _toggle_sidebar(self, collapsed: bool, *, animate: bool = True):
+        """侧栏宽度动画。开关始终钉在底边，展开和收起不换位置。"""
+        collapsed = bool(collapsed)
+        if self._sidebar_anim is not None:
+            self._sidebar_anim.stop()
+            self._sidebar_anim = None
+        self._sidebar_collapsed = collapsed
+        self.sidebar.set_collapsed(collapsed)
         if hasattr(self, "toggle_sidebar_action"):
             self.toggle_sidebar_action.blockSignals(True)
             self.toggle_sidebar_action.setChecked(not collapsed)
             self.toggle_sidebar_action.blockSignals(False)
+        end = SIDEBAR_COLLAPSED_WIDTH if collapsed else SIDEBAR_EXPANDED_WIDTH
+        start = self.sidebar.width() or end
+        if not animate or start == end:
+            self._set_sidebar_width(end)
+            return
+        anim = QVariantAnimation(self)
+        anim.setDuration(240)
+        anim.setStartValue(int(start))
+        anim.setEndValue(int(end))
+        anim.setEasingCurve(QEasingCurve.InOutCubic)
+        anim.valueChanged.connect(self._set_sidebar_width)
+        self._sidebar_anim = anim
+        anim.start()
 
     def _setup_menu(self):
         menubar = self.menuBar()
@@ -818,7 +820,9 @@ class MainWindow(QMainWindow):
         self.sidebar.navigation_changed.connect(self._switch_tab)
         self.sidebar.diagnose_clicked.connect(self._on_diagnose)
         self.sidebar.llm_clicked.connect(self._on_llm_assist)
-        self.sidebar.collapse_requested.connect(lambda: self._toggle_sidebar(True))
+        self.sidebar.collapse_requested.connect(
+            lambda: self._toggle_sidebar(not self._sidebar_collapsed)
+        )
         self.welcome_page.import_data_clicked.connect(self._on_import_quality)
         self.welcome_page.import_ie_clicked.connect(self._on_import_ie)
         self.welcome_page.import_template_clicked.connect(self._on_import_template)
@@ -2576,7 +2580,7 @@ class MainWindow(QMainWindow):
             self.restoreState(state)
         collapsed = settings.value("sidebarCollapsed", False, type=bool)
         if collapsed:
-            self._toggle_sidebar(True)
+            self._toggle_sidebar(True, animate=False)
         from ui.theme import apply_dark_palette
         apply_dark_palette()
 
@@ -2584,7 +2588,7 @@ class MainWindow(QMainWindow):
         settings = QSettings("AKIA", "MainWindow")
         settings.setValue("geometry", self.saveGeometry())
         settings.setValue("windowState", self.saveState())
-        settings.setValue("sidebarCollapsed", not self.sidebar.isVisible())
+        settings.setValue("sidebarCollapsed", self._sidebar_collapsed)
         self._shutdown_runtime()
         super().closeEvent(event)
 

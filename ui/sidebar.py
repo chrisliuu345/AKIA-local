@@ -5,7 +5,7 @@
 from datetime import datetime
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
-    QScrollArea, QFrame,
+    QScrollArea, QFrame, QSizePolicy,
 )
 from PySide6.QtCore import Signal, Qt, QPropertyAnimation, QEasingCurve, QParallelAnimationGroup
 from PySide6.QtGui import QFont
@@ -17,6 +17,10 @@ from ui.font_config import get_ui_font, get_mono_font
 
 
 HOME_ITEM = (0, "sidebar.home")
+# 展开和收起共用底部同一条控制，宽度变化时它的底边不挪位置。
+SIDEBAR_EXPANDED_WIDTH = 210
+SIDEBAR_COLLAPSED_WIDTH = 40
+SIDEBAR_TOGGLE_HEIGHT = 36
 
 CATEGORIES = [
     {
@@ -428,22 +432,47 @@ class Sidebar(QWidget):
         scroll.setFrameShape(QFrame.NoFrame)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        scroll.setParent(self)
+        self._nav_scroll = scroll
 
-        self.collapse_btn = QPushButton("  " + i18n.tr("sidebar.collapse"))
+        # 不用布局摆这个按钮：收起后导航隐藏，布局会把它顶上去。
+        self.collapse_btn = QPushButton(self)
         self.collapse_btn.setFont(QFont(get_ui_font(), 10))
-        self.collapse_btn.setMinimumHeight(32)
+        self.collapse_btn.setFixedHeight(SIDEBAR_TOGGLE_HEIGHT)
         self.collapse_btn.setCursor(Qt.PointingHandCursor)
-        self.collapse_btn.setToolTip(i18n.tr("sidebar.collapse") + " (Ctrl+B)")
         self.collapse_btn.clicked.connect(self.collapse_requested.emit)
+        self._collapsed = False
+        self._apply_toggle_text()
 
-        outer = QVBoxLayout(self)
-        outer.setContentsMargins(0, 0, 0, 0)
-        outer.setSpacing(0)
-        outer.addWidget(scroll, 1)
-        outer.addWidget(self.collapse_btn)
-
+        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
         self.set_active(0)
         self._refresh_styles()
+        self._place_toggle()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._place_toggle()
+
+    def _place_toggle(self):
+        """收起和展开都把开关钉在侧栏底边，屏幕位置不跳。"""
+        height = SIDEBAR_TOGGLE_HEIGHT
+        top = max(0, self.height() - height)
+        self.collapse_btn.setGeometry(0, top, self.width(), height)
+        self._nav_scroll.setGeometry(0, 0, self.width(), top)
+
+    def set_collapsed(self, collapsed: bool):
+        self._collapsed = bool(collapsed)
+        self._nav_scroll.setVisible(not self._collapsed)
+        self._apply_toggle_text()
+        self._place_toggle()
+
+    def _apply_toggle_text(self):
+        if self._collapsed:
+            self.collapse_btn.setText("»")
+            self.collapse_btn.setToolTip(i18n.tr("sidebar.expand") + " (Ctrl+B)")
+        else:
+            self.collapse_btn.setText(i18n.tr("sidebar.collapse"))
+            self.collapse_btn.setToolTip(i18n.tr("sidebar.collapse") + " (Ctrl+B)")
 
     def set_active(self, index: int):
         self.active_index = index
@@ -642,5 +671,5 @@ class Sidebar(QWidget):
 
         self.diagnose_btn.setText("  " + i18n.tr(DIAGNOSIS_KEY))
         self.llm_btn.setText("  " + i18n.tr("sidebar.llm"))
-        self.collapse_btn.setText("  " + i18n.tr("sidebar.collapse"))
+        self._apply_toggle_text()
         self._refresh_styles()
