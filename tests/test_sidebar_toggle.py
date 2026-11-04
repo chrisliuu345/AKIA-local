@@ -4,7 +4,8 @@ import os
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtCore import QAbstractAnimation
+import pytest
+from PySide6.QtCore import QAbstractAnimation, QSettings
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 
@@ -12,6 +13,20 @@ from ui.main_window import MainWindow
 from ui.sidebar import SIDEBAR_COLLAPSED_WIDTH, SIDEBAR_EXPANDED_WIDTH
 
 app = QApplication.instance() or QApplication([])
+
+
+@pytest.fixture(autouse=True)
+def _fresh_window_settings():
+    """菜单冒烟会触发「收起侧栏」并在 closeEvent 里写入 QSettings。
+    同一 CI 作业的后续进程会读到收起状态，宽度从 210 变成 40。"""
+    settings = QSettings("AKIA", "MainWindow")
+    for key in ("sidebarCollapsed", "geometry", "windowState"):
+        settings.remove(key)
+    settings.sync()
+    yield
+    for key in ("sidebarCollapsed", "geometry", "windowState"):
+        settings.remove(key)
+    settings.sync()
 
 
 def _toggle_bottom(win):
