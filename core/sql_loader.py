@@ -33,21 +33,39 @@ DEFAULT_PORTS = {
 }
 
 
+# 主机只允许主机名、IPv4 或方括号 IPv6。@ / ? / # 会改写连接串的用户或查询参数。
+_HOST_RE = re.compile(
+    r"^(?:localhost"
+    r"|(?:\d{1,3}\.){3}\d{1,3}"
+    r"|\[[0-9A-Fa-f:.]+\]"
+    r"|[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
+    r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*)$"
+)
+
+
 def build_connection_string(config: dict) -> str:
     db_type = config["db_type"]
     driver = DB_TYPE_MAP.get(db_type)
     if not driver:
         raise ValueError(f"不支持的数据库类型: {db_type}")
-    host = config.get("host", "localhost")
-    port = config.get("port", DEFAULT_PORTS.get(db_type, 3306))
+    host = str(config.get("host") or "localhost").strip()
+    if not _HOST_RE.fullmatch(host):
+        raise ValueError("非法的数据库主机")
+    try:
+        port = int(config.get("port", DEFAULT_PORTS.get(db_type, 3306)))
+    except (TypeError, ValueError) as exc:
+        raise ValueError("非法的数据库端口") from exc
+    if not 1 <= port <= 65535:
+        raise ValueError("非法的数据库端口")
     database = config.get("database", "")
     user = config.get("user", "")
     password = config.get("password", "")
-    safe_user = quote(user, safe="")
-    safe_password = quote(password, safe="")
-    safe_database = quote(database, safe="")
+    safe_user = quote(str(user), safe="")
+    safe_password = quote(str(password), safe="")
+    safe_database = quote(str(database), safe="")
     if db_type == "mssql":
-        return f"{driver}://{safe_user}:{safe_password}@{host}:{port}/{safe_database}?driver=ODBC+Driver+17+for+SQL+Server"
+        return (f"{driver}://{safe_user}:{safe_password}@{host}:{port}/"
+                f"{safe_database}?driver=ODBC+Driver+17+for+SQL+Server")
     return f"{driver}://{safe_user}:{safe_password}@{host}:{port}/{safe_database}"
 
 

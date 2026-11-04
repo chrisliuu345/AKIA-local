@@ -14,6 +14,19 @@ from pathlib import Path
 
 from core.devices.driver import Sample
 
+# SQLite 的 LIMIT 为负数时表示不限制行数。
+_QUERY_LIMIT_MAX = 100_000
+
+
+def _bounded_limit(limit: int) -> int:
+    try:
+        value = int(limit)
+    except (TypeError, ValueError):
+        return 1
+    if value < 1:
+        return 1
+    return min(value, _QUERY_LIMIT_MAX)
+
 
 class TimeseriesStore:
     def __init__(self, path: str | Path):
@@ -69,6 +82,7 @@ class TimeseriesStore:
               since_ts: float | None = None, limit: int = 1000) -> list[Sample]:
         sql = "SELECT device, channel, ts, value FROM measurements WHERE device = ?"
         args: list = [device]
+        limit = _bounded_limit(limit)
         if channel:
             sql += " AND channel = ?"
             args.append(channel)
@@ -147,7 +161,7 @@ class TimeseriesStore:
             sql += " AND bucket_ts >= ?"
             args.append(since_ts)
         sql += " ORDER BY bucket_ts ASC LIMIT ?"
-        args.append(limit)
+        args.append(_bounded_limit(limit))
         with self._lock:
             rows = self._conn.execute(sql, args).fetchall()
         return [RollupPoint(r[0], r[1], r[2], r[3], r[4], r[5], int(r[6]))
