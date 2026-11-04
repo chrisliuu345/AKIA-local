@@ -46,6 +46,67 @@ def test_time_study_omits_text_pane_but_keeps_table():
     tab.close()
 
 
+def test_shared_text_pane_grows_with_the_table():
+    """右侧文字区要能看见摘要和好几行表，行数再多也由页面滚动接住。"""
+    from PySide6.QtCore import Qt
+
+    tab = SPCTab()
+    assert tab.data_pane.minimumHeight() >= 420
+    assert tab.result_table.verticalScrollBarPolicy() == Qt.ScrollBarAlwaysOff
+    tab.result_text.setPlainText("摘要\n" * 6)
+    tab.result_table.setColumnCount(2)
+    tab.result_table.setRowCount(20)
+    app.processEvents()
+    assert tab.result_table.minimumHeight() >= 20 * 24
+    assert tab.result_text.minimumHeight() >= 112
+    assert tab.data_pane.minimumHeight() >= (
+        tab.result_text.minimumHeight() + tab.result_table.minimumHeight()
+    )
+    tab.close()
+
+
+def test_table_only_page_uses_the_same_tall_pane():
+    tab = TimeStudyTab()
+    assert tab.data_pane.minimumHeight() >= 420
+    tab.result_table.setColumnCount(3)
+    tab.result_table.setRowCount(12)
+    app.processEvents()
+    assert tab.result_table.minimumHeight() >= 12 * 24
+    assert tab.data_pane.minimumHeight() >= tab.result_table.minimumHeight()
+    tab.close()
+
+
+def test_sampling_result_table_stays_with_the_current_mode():
+    """结果表跟在当前抽样方式下面，不被最高的批检验表单顶到页面外。"""
+    from PySide6.QtWidgets import QFrame, QScrollArea
+
+    from ui.main_window_helpers import _CurrentPageStack
+    from ui.tabs.sampling_tab import SamplingTab
+
+    tab = SamplingTab()
+    tab._do_aql()
+    outer = _CurrentPageStack()
+    outer.addWidget(tab)
+    scroll = QScrollArea()
+    scroll.setWidgetResizable(True)
+    scroll.setWidget(outer)
+    scroll.setFrameShape(QFrame.NoFrame)
+    scroll.resize(1100, 720)
+    scroll.show()
+    app.processEvents()
+
+    assert tab.stack.height() < 280
+    assert tab.result.minimumHeight() >= 180
+    assert tab.result.height() >= 180
+    assert tab.result.y() < tab.stack.y() + tab.stack.height() + 40
+    bottom = tab.result.y() + tab.result.height()
+    reach = scroll.verticalScrollBar().maximum() + scroll.viewport().height()
+    assert reach + 4 >= bottom
+    assert bottom <= tab.height() + 2
+    tab.close()
+    scroll.close()
+
+
 def test_chart_only_page_omits_empty_panes():
     class _ChartOnly(BaseAnalysisTab):
         def __init__(self):

@@ -26,11 +26,57 @@ _RESULT_PANE_QSS = (
 )
 
 
+# 文字和表格同框时的下限：摘要加上好几行表一起露出来，不必先去找框内滚动条。
+_DATA_PANE_FLOOR = 420
+_RESULT_TEXT_FLOOR = 112
+_RESULT_TABLE_FLOOR = 220
+
+
 def _result_pane() -> QFrame:
     pane = QFrame()
     pane.setObjectName("resultPane")
     pane.setStyleSheet(_RESULT_PANE_QSS)
     return pane
+
+
+def _table_content_height(table: QTableWidget) -> int:
+    """表头加全部数据行。页面滚动靠这个高度才能滚到最后一行。"""
+    header = table.horizontalHeader()
+    header_h = header.height()
+    if header_h < 8:
+        header_h = header.sizeHint().height()
+    header_h = max(header_h, 28)
+    rows = table.rowCount()
+    row_h = table.verticalHeader().defaultSectionSize() or 30
+    if rows > 0:
+        measured = table.rowHeight(0)
+        if measured > 0:
+            row_h = measured
+    return header_h + row_h * rows + table.frameWidth() * 2 + 8
+
+
+def fit_table_into_page(table: QTableWidget, *, floor: int = 0) -> int:
+    """表格至少有 floor 高，有数据时再撑到全部行，垂直滚动交给外层页面。"""
+    content = _table_content_height(table) if table.rowCount() else 0
+    height = max(floor, content)
+    table.setMinimumHeight(height)
+    table.setMaximumHeight(16777215)
+    table.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+    return height
+
+
+def bubble_layout(start: QWidget | None) -> None:
+    """子控件加高后，沿父链刷新布局，共享滚动区才会把新高度算进滚动范围。"""
+    widget = start
+    seen: set[int] = set()
+    while widget is not None and id(widget) not in seen:
+        seen.add(id(widget))
+        lay = widget.layout()
+        if lay is not None:
+            lay.invalidate()
+            lay.activate()
+        widget.updateGeometry()
+        widget = widget.parentWidget()
 
 
 class BaseAnalysisTab(QWidget):
@@ -95,38 +141,46 @@ class BaseAnalysisTab(QWidget):
         if options:
             self.options_pane = _result_pane()
             self.options_pane.setMinimumWidth(240)
-            self.options_pane.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
+            # 选项框保持内容高度，不跟着右侧文字区一起被拉成空白长框。
+            self.options_pane.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
             self.options_layout = QVBoxLayout(self.options_pane)
             self.options_layout.setContentsMargins(8, 8, 8, 8)
             self.options_pane.setVisible(False)
-            row.addWidget(self.options_pane, 2)
+            row.addWidget(self.options_pane, 2, Qt.AlignTop)
             placed = True
 
         if text or table:
             self.data_pane = _result_pane()
             self.data_widget = self.data_pane
             self.data_pane.setMinimumWidth(280)
-            self.data_pane.setMinimumHeight(160)
+            self.data_pane.setMinimumHeight(_DATA_PANE_FLOOR)
             data_layout = QVBoxLayout(self.data_pane)
             data_layout.setContentsMargins(8, 8, 8, 8)
             if text:
                 self.result_text = QTextEdit()
                 self.result_text.setReadOnly(True)
                 self.result_text.setFont(QFont(get_ui_font(), 12))
-                self.result_text.setMinimumHeight(72)
+                self.result_text.setMinimumHeight(_RESULT_TEXT_FLOOR)
+                self.result_text.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
                 self.result_text.setStyleSheet(
                     "QTextEdit { background: transparent; border: none; }"
                 )
+                self.result_text.document().contentsChanged.connect(self._fit_data_pane)
                 data_layout.addWidget(self.result_text)
             if table:
                 self.result_table = QTableWidget()
                 self.result_table.horizontalHeader().setStretchLastSection(True)
                 self.result_table.setAlternatingRowColors(True)
                 self.result_table.setShowGrid(True)
+                self.result_table.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
                 self.result_table.setStyleSheet(
                     "QTableWidget { font-size: 12px; background: transparent; border: none; }"
                     "QHeaderView::section { padding: 4px; }"
                 )
+                model = self.result_table.model()
+                model.rowsInserted.connect(self._fit_data_pane)
+                model.rowsRemoved.connect(self._fit_data_pane)
+                model.modelReset.connect(self._fit_data_pane)
                 data_layout.addWidget(self.result_table)
             row.addWidget(self.data_pane, 3)
             placed = True
@@ -135,7 +189,45 @@ class BaseAnalysisTab(QWidget):
             root.addLayout(row)
         self.results_host = host
         parent_layout.addWidget(host)
+        if self.data_pane is not None:
+            self._fit_data_pane()
         return host
+
+    def _fit_data_pane(self, *_args):
+        """文字按文档高度，表格按行数。框至少 _DATA_PANE_FLOOR，多出来的行靠页面滚动。"""
+        pane = getattr(self, "data_pane", None)
+        if pane is None or getattr(self, "_fitting_pane", False):
+            return
+        self._fitting_pane = True
+        try:
+            self._apply_data_pane_heights()
+            bubble_layout(pane)
+            # 父布局激活后文本宽度才稳定，再量一次避免摘要被裁成内部滚动。
+            self._apply_data_pane_heights()
+        finally:
+            self._fitting_pane = False
+
+    def _apply_data_pane_heights(self):
+        pane = self.data_pane
+        text_h = 0
+        table_h = 0
+        text = getattr(self, "result_text", None)
+        table = getattr(self, "result_table", None)
+        if text is not None:
+            text_h = _RESULT_TEXT_FLOOR
+            width = text.viewport().width()
+            if width > 40:
+                doc = text.document()
+                doc.setTextWidth(width)
+                text_h = max(_RESULT_TEXT_FLOOR, int(doc.size().height()) + 16)
+            text.setMinimumHeight(text_h)
+            text.setMaximumHeight(max(text_h, _RESULT_TEXT_FLOOR))
+            text.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        if table is not None:
+            table_h = fit_table_into_page(table, floor=_RESULT_TABLE_FLOOR)
+        spacing = 6 if text_h and table_h else 0
+        pane.setMinimumHeight(max(
+            _DATA_PANE_FLOOR, text_h + table_h + 16 + spacing))
 
     def _reveal_options_pane(self, chart_type: str | None):
         pane = getattr(self, "options_pane", None)
@@ -469,6 +561,8 @@ class BaseAnalysisTab(QWidget):
             stack = getattr(self, 'result_stack', None)
             if stack is not None:
                 stack.setMinimumHeight(self._last_page_height)
+        if getattr(self, "data_pane", None) is not None:
+            self._fit_data_pane()
 
     def hideEvent(self, event):
         super().hideEvent(event)
