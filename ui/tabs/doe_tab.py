@@ -33,7 +33,7 @@ class DOETab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel(i18n.tr("doe.title"))
-        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
@@ -79,7 +79,7 @@ class DOETab(BaseAnalysisTab):
         config_layout.addRow("重复次数:", self.replicates_spin)
 
         self.run_btn = QPushButton(i18n.tr("doe.run_btn"))
-        self.run_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.run_btn.setFont(QFont(get_ui_font(), 12))
         self.run_btn.setMinimumHeight(44)
         self.run_btn.setCursor(Qt.PointingHandCursor)
         self.run_btn.setStyleSheet(BUTTON_PRIMARY_STRETCH)
@@ -87,7 +87,7 @@ class DOETab(BaseAnalysisTab):
         config_layout.addRow(self.run_btn)
 
         self.power_btn = QPushButton("📊 Power & Sample Size")
-        self.power_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.power_btn.setFont(QFont(get_ui_font(), 12))
         self.power_btn.setMinimumHeight(40)
         self.power_btn.setCursor(Qt.PointingHandCursor)
         self.power_btn.setStyleSheet(BUTTON_SECONDARY)
@@ -95,7 +95,7 @@ class DOETab(BaseAnalysisTab):
         config_layout.addRow(self.power_btn)
 
         self.save_png_btn = QPushButton(i18n.tr("doe.save_png"))
-        self.save_png_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.save_png_btn.setFont(QFont(get_ui_font(), 12))
         self.save_png_btn.setMinimumHeight(40)
         self.save_png_btn.setCursor(Qt.PointingHandCursor)
         self.save_png_btn.setStyleSheet(BUTTON_SECONDARY)
@@ -103,7 +103,7 @@ class DOETab(BaseAnalysisTab):
         config_layout.addRow(self.save_png_btn)
 
         self.export_btn = QPushButton(i18n.tr("doe.export_btn"))
-        self.export_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.export_btn.setFont(QFont(get_ui_font(), 12))
         self.export_btn.setMinimumHeight(44)
         self.export_btn.setCursor(Qt.PointingHandCursor)
         self.export_btn.setStyleSheet(BUTTON_PRIMARY_STRETCH)
@@ -135,7 +135,7 @@ class DOETab(BaseAnalysisTab):
         bottom_layout.setSpacing(6)
 
         self.result_label = QLabel(i18n.tr("doe.result"))
-        self.result_label.setFont(QFont(get_ui_font(), 13, QFont.Bold))
+        self.result_label.setFont(QFont(get_ui_font(), 13))
         bottom_layout.addWidget(self.result_label)
 
         toggle_row = QHBoxLayout()
@@ -180,7 +180,7 @@ class DOETab(BaseAnalysisTab):
         self.result_table.setShowGrid(True)
         self.result_table.setStyleSheet(
             "QTableWidget { font-size: 12px; }"
-            "QHeaderView::section { font-weight: bold; padding: 4px; }"
+            "QHeaderView::section {  padding: 4px; }"
         )
         data_layout.addWidget(self.result_table)
         self.result_stack.addWidget(self.data_container)
@@ -233,7 +233,7 @@ class DOETab(BaseAnalysisTab):
         valid, msg = self.validate_params()
         if not valid:
             self._clear_canvas()
-            self.result_text.setStyleSheet("color: #C4544C; font-weight: bold;")
+            self.result_text.setStyleSheet("color: #E00000; ")
             self.result_text.setText(f"▎参数校验失败\n{msg}")
             return None
         self.result_text.setStyleSheet("")
@@ -244,7 +244,7 @@ class DOETab(BaseAnalysisTab):
             return result
         except Exception as e:
             self._clear_canvas()
-            self.result_text.setStyleSheet("color: #C4544C; font-weight: bold;")
+            self.result_text.setStyleSheet("color: #E00000; ")
             self.result_text.setText(f"▎分析失败\n{e!s}")
             return None
 
@@ -395,7 +395,7 @@ class DOETab(BaseAnalysisTab):
             self._add_chart_toolbar()
         except Exception as e:
             err_label = QLabel(f"图表渲染失败: {e}")
-            err_label.setStyleSheet("color: #C4544C; padding: 12px;")
+            err_label.setStyleSheet("color: #E00000; padding: 12px;")
             err_label.setWordWrap(True)
             self.chart_layout.addWidget(err_label)
 

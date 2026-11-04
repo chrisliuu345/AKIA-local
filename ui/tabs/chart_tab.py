@@ -40,7 +40,7 @@ class ChartTab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel(i18n.tr("chart_tab.title"))
-        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         layout.addWidget(self.title_label)
 
         top_layout = QHBoxLayout()
@@ -83,7 +83,7 @@ class ChartTab(BaseAnalysisTab):
         config_form_layout.addRow("", self.cb_3d)
 
         self.run_btn = QPushButton(i18n.tr("chart_tab.run_btn"))
-        self.run_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.run_btn.setFont(QFont(get_ui_font(), 12))
         self.run_btn.setMinimumHeight(44)
         self.run_btn.setCursor(Qt.PointingHandCursor)
         self.run_btn.setStyleSheet(BUTTON_PRIMARY_STRETCH)
@@ -91,7 +91,7 @@ class ChartTab(BaseAnalysisTab):
         config_form_layout.addRow(self.run_btn)
 
         self.save_png_btn = QPushButton(i18n.tr("chart_tab.save_png"))
-        self.save_png_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.save_png_btn.setFont(QFont(get_ui_font(), 12))
         self.save_png_btn.setMinimumHeight(40)
         self.save_png_btn.setCursor(Qt.PointingHandCursor)
         self.save_png_btn.setStyleSheet(BUTTON_SECONDARY)
@@ -188,7 +188,7 @@ class ChartTab(BaseAnalysisTab):
             from PySide6.QtWidgets import QCheckBox
             self.cb_show_regression = QCheckBox("显示回归线")
             self.cb_show_regression.setChecked(True)
-            self.cb_show_regression.setStyleSheet("color: #C3C2FF;")
+            self.cb_show_regression.setStyleSheet("color: #A3A3A3;")
             self.config_form_layout.addRow(self.cb_show_regression)
 
         configs = CHART_CONFIGS.get(chart_type, [])
@@ -354,7 +354,7 @@ class ChartTab(BaseAnalysisTab):
         ok, msg = self.validate_params()
         if not ok:
             self._clear_canvas()
-            self.result_text.setStyleSheet("color: #C4544C; font-weight: bold;")
+            self.result_text.setStyleSheet("color: #E00000; ")
             self.result_text.setText(msg)
             return None
         try:
@@ -364,7 +364,7 @@ class ChartTab(BaseAnalysisTab):
             return result
         except Exception as e:
             self._clear_canvas()
-            self.result_text.setStyleSheet("color: #C4544C; font-weight: bold;")
+            self.result_text.setStyleSheet("color: #E00000; ")
             self.result_text.setText(f"{i18n.tr('chart_tab.analysis_failed')}\n{e!s}")
 
     def refresh_texts(self):

@@ -42,7 +42,7 @@ class CapComparisonTab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel("工序能力对比图")
-        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
@@ -95,7 +95,7 @@ class CapComparisonTab(BaseAnalysisTab):
         self.btn_run.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.btn_run.setCursor(Qt.PointingHandCursor)
         self.btn_run.setMinimumHeight(44)
-        self.btn_run.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.btn_run.setFont(QFont(get_ui_font(), 12))
         self.btn_run.clicked.connect(self._run)
         left_layout.addWidget(self.btn_run)
 
@@ -228,7 +228,7 @@ class CapComparisonTab(BaseAnalysisTab):
         ax.bar(x - w/2, cp_vals, w * 0.45, label="Cp",
                        color=tc["accent_bright"], alpha=0.85)
         ax.bar(x - w/2 + w * 0.45, cpk_vals, w * 0.45, label="Cpk",
-                       color="#C4544C", alpha=0.85)
+                       color="#E00000", alpha=0.85)
         ax.bar(x + w/2, pp_vals, w * 0.45, label="Pp",
                        color=tc["accent"], alpha=0.6, hatch="//")
         ax.bar(x + w/2 + w * 0.45, ppk_vals, w * 0.45, label="Ppk",
@@ -236,10 +236,10 @@ class CapComparisonTab(BaseAnalysisTab):
 
         cpk_b = CAPABILITY_GRADES["B"][0]
         cpk_a = CAPABILITY_GRADES["A"][0]
-        ax.axhline(y=cpk_b, color="#8A8AB8", linestyle="--", linewidth=1, alpha=0.6)
-        ax.axhline(y=cpk_a, color="#C3C2FF", linestyle=":", linewidth=1, alpha=0.5)
-        ax.text(n - 0.5, cpk_b, f"Cp={cpk_b}", fontsize=7, color="#8A8AB8", va="bottom")
-        ax.text(n - 0.5, cpk_a, f"Cp={cpk_a}", fontsize=7, color="#C3C2FF", va="bottom")
+        ax.axhline(y=cpk_b, color="#737373", linestyle="--", linewidth=1, alpha=0.6)
+        ax.axhline(y=cpk_a, color="#B7C9F1", linestyle=":", linewidth=1, alpha=0.5)
+        ax.text(n - 0.5, cpk_b, f"Cp={cpk_b}", fontsize=7, color="#737373", va="bottom")
+        ax.text(n - 0.5, cpk_a, f"Cp={cpk_a}", fontsize=7, color="#B7C9F1", va="bottom")
 
         ax.set_xticks(x)
         ax.set_xticklabels(labels, fontsize=9, rotation=25, ha="right")

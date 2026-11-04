@@ -33,7 +33,7 @@ from ui.theme import BUTTON_PRIMARY_STRETCH
 from ui.theme import colors as theme_colors
 from ui.font_config import get_ui_font
 
-TREND_COLORS = ["#4648FF", "#1C1DEC", "#9394FE", "#6A6CFF", "#C3C2FF", "#3032D4"]
+TREND_COLORS = ["#4F73DC", "#37519A", "#8EABEA", "#6E8CE2", "#B7C9F1", "#2C4A96"]
 
 
 class TrendTab(BaseAnalysisTab):
@@ -52,7 +52,7 @@ class TrendTab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel("多系列趋势图")
-        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
@@ -94,7 +94,7 @@ class TrendTab(BaseAnalysisTab):
         self.btn_run.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.btn_run.setCursor(Qt.PointingHandCursor)
         self.btn_run.setMinimumHeight(44)
-        self.btn_run.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.btn_run.setFont(QFont(get_ui_font(), 12))
         self.btn_run.clicked.connect(self._run)
         cfg_layout.addRow(self.btn_run)
         left_layout.addWidget(cfg)

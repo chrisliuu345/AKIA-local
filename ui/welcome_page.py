@@ -48,7 +48,7 @@ ACTION_RADIUS = 10
 RECENT_RADIUS = 8
 PATH_MAX_WIDTH = 420
 RECENT_LIMIT = 5
-PRIMARY_HINT_COLOR = "#F4F4FF"
+PRIMARY_HINT_COLOR = "#5C5C5C"
 MIN_PAGE_SIZE = QSize(640, 480)
 
 _WORDMARK_CANDIDATES = (
@@ -166,6 +166,7 @@ class _WelcomeAction(_ClickableCard):
         else:
             self.setMinimumHeight(PRIMARY_MIN_HEIGHT)
             title_size, desc_size = 15, 12
+        # 按钮和卡片标题不再加粗，小号黑体容易糊成一块。
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 14, 16, 14)
@@ -173,7 +174,7 @@ class _WelcomeAction(_ClickableCard):
         layout.addStretch(1)
 
         self._title = QLabel()
-        self._title.setFont(_font(title_size, bold=True))
+        self._title.setFont(_font(title_size))
         self._title.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self._title.setWordWrap(True)
         self._title.setAttribute(Qt.WA_TransparentForMouseEvents, True)
@@ -198,22 +199,22 @@ class _WelcomeAction(_ClickableCard):
     def _colors(self) -> tuple[str, str, str, str]:
         tc = theme_colors()
         if self._kind == "solid":
-            bg, border = tc["accent"], tc["accent"]
-            title, desc = "#ffffff", PRIMARY_HINT_COLOR
+            bg, border = "#E8E8E8", "#E8E8E8"
+            title, desc = "#171717", PRIMARY_HINT_COLOR
             if self._pressed:
-                bg, border = tc["accent_dark"], tc["accent_dark"]
+                bg, border = "#D0D0D0", "#D0D0D0"
             return bg, border, title, desc
         title, desc = tc["text_primary"], tc["text_secondary"]
         if self._kind == "outline":
-            bg, border = tc["bg_card"], tc["accent_bright"]
+            bg, border = tc["bg_card"], tc["border"]
             if self._pressed:
                 bg = tc["bg_active"]
             return bg, border, title, desc
         bg, border = tc["bg_card"], tc["border"]
         if self._pressed:
-            bg, border = tc["bg_active"], tc["accent_bright"]
+            bg, border = tc["bg_active"], "#5C5C5C"
         elif self._hover:
-            bg, border = tc["bg_hover"], tc["accent_bright"]
+            bg, border = tc["bg_hover"], "#5C5C5C"
         return bg, border, title, desc
 
     def _apply_chrome(self):
@@ -265,9 +266,9 @@ class _RecentRow(_ClickableCard):
         tc = theme_colors()
         bg, border = tc["bg_card"], tc["border"]
         if self._pressed:
-            bg, border = tc["bg_active"], tc["accent_bright"]
+            bg, border = tc["bg_active"], "#5C5C5C"
         elif self._hover:
-            bg, border = tc["bg_hover"], tc["accent_bright"]
+            bg, border = tc["bg_hover"], "#5C5C5C"
         self.setStyleSheet(
             "QFrame#welcomeRecentRow {"
             f"background-color: {bg};"
@@ -395,7 +396,7 @@ class WelcomePage(QWidget):
 
     def _make_heading(self, key: str, size: int, color_key: str) -> QLabel:
         label = QLabel()
-        label.setFont(_font(size, bold=True))
+        label.setFont(_font(size))
         label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         tc = theme_colors()
         label.setStyleSheet(f"color: {tc[color_key]}; background: transparent; border: none;")
@@ -584,10 +585,10 @@ class WelcomePage(QWidget):
 
         center = self._wordmark_center()
         glow = QRadialGradient(center, float(GLOW_RADIUS))
-        # 光晕用较浅的长春花，避免欢迎页被 #4648FF 铺成一块亮蓝。
-        core = QColor(tc["accent_bright"])
+        # 光晕只用很淡的白，避免欢迎页被字标蓝铺开。
+        core = QColor("#FFFFFF")
         core.setAlpha(GLOW_ALPHA)
-        edge = QColor(tc["accent_bright"])
+        edge = QColor("#FFFFFF")
         edge.setAlpha(0)
         glow.setColorAt(0.0, core)
         glow.setColorAt(1.0, edge)

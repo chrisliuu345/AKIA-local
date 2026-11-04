@@ -23,9 +23,9 @@ from ui.theme import BUTTON_PRIMARY_STRETCH, FONT_18B, FONT_10
 from ui.theme import colors as theme_colors
 
 C = {
-    "worker": "#4648FF",
-    "idle": "#222248",
-    "machine": "#C4544C",
+    "worker": "#4F73DC",
+    "idle": "#242424",
+    "machine": "#E00000",
     "walk": "#C4922A",
     "load": "#3E9B68",
 }
@@ -223,8 +223,8 @@ class WorkerMachineTab(BaseAnalysisTab):
                     hatch="//",
                 )
             cum += wt + mt + walk
-        ax.axvline(x=takt, color="#C4544C", linestyle="--", linewidth=1.5)
-        ax.text(takt + 1, n - 0.3, f"Takt {takt}s", fontsize=9, color="#C4544C")
+        ax.axvline(x=takt, color="#E00000", linestyle="--", linewidth=1.5)
+        ax.text(takt + 1, n - 0.3, f"Takt {takt}s", fontsize=9, color="#E00000")
         ax.set_yticks([i - 0.17 for i in range(n)])
         ax.set_yticklabels(y_labels, fontsize=9)
         ax.set_xlabel("时间(秒)", fontsize=10)

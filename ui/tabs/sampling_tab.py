@@ -290,7 +290,7 @@ class SamplingTab(BaseAnalysisTab):
         self.btn_batch_sample.clicked.connect(self._do_batch_sample)
         outer.addWidget(self.btn_batch_sample)
         self.batch_fingerprint_label = QLabel("")
-        self.batch_fingerprint_label.setStyleSheet("color: #8A8AB8; font-size: 11px;")
+        self.batch_fingerprint_label.setStyleSheet("color: #737373; font-size: 11px;")
         outer.addWidget(self.batch_fingerprint_label)
 
         judge = QFormLayout()
@@ -469,12 +469,12 @@ class SamplingTab(BaseAnalysisTab):
         snapshot = manager.snapshot(scope)
         state_text = _BATCH_STATES.get(snapshot["state"], snapshot["state"])
         color = {"normal": "#3E9B68", "tightened": "#C4922A",
-                 "reduced": "#9394FE"}.get(snapshot["state"], "#E4E4F2")
+                 "reduced": "#4F73DC"}.get(snapshot["state"], "#EDEDED")
         extra = (f" · 批数 {snapshot['lots_total']}"
                  + (f" · 覆盖原因: {snapshot['override_reason']}"
                     if snapshot["override_reason"] else ""))
         self.batch_state_label.setText(
-            f"当前状态: <span style='color:{color};font-weight:bold'>"
+            f"当前状态: <span style='color:{color};'>"
             f"{state_text}</span>{extra}")
         rows = manager.timeline(scope, limit=50)
         self.batch_timeline.setRowCount(len(rows))
@@ -531,7 +531,7 @@ class SamplingTab(BaseAnalysisTab):
             if dec == "accept":
                 item.setForeground(QColor("#3E9B68"))
             elif dec == "reject":
-                item.setForeground(QColor("#C4544C"))
+                item.setForeground(QColor("#E00000"))
             self.result.setItem(0, j, item)
         self.result.resizeColumnsToContents()
 
@@ -629,7 +629,7 @@ class SamplingTab(BaseAnalysisTab):
         if dec["decision"] == "accept":
             item.setForeground(QColor("#3E9B68"))
         else:
-            item.setForeground(QColor("#C4544C"))
+            item.setForeground(QColor("#E00000"))
         self.result.setItem(0, 0, item)
         for j, v in enumerate(
             [
@@ -702,7 +702,7 @@ class SamplingTab(BaseAnalysisTab):
         if dec["decision"] == "accept":
             item.setForeground(QColor("#3E9B68"))
         else:
-            item.setForeground(QColor("#C4544C"))
+            item.setForeground(QColor("#E00000"))
         self.result.setItem(0, 0, item)
         for j, v in enumerate(
             [

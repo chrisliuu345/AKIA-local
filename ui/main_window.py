@@ -163,7 +163,7 @@ class MainWindow(QMainWindow):
         self._start_streaming_runtime()
 
     def _setup_ui(self):
-        divider_color = "#2A2A4E"
+        divider_color = "#2A2A2A"
         tc = theme_colors()
 
         central = QWidget()
@@ -181,7 +181,7 @@ class MainWindow(QMainWindow):
         strip_layout.setContentsMargins(0, 14, 0, 0)
         strip_layout.setSpacing(0)
         self.expand_btn = QPushButton("»")
-        self.expand_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.expand_btn.setFont(QFont(get_ui_font(), 12))
         self.expand_btn.setFixedSize(26, 40)
         self.expand_btn.setCursor(Qt.PointingHandCursor)
         self.expand_btn.setToolTip(i18n.tr("sidebar.expand") + " (Ctrl+B)")
@@ -805,7 +805,7 @@ class MainWindow(QMainWindow):
 
     def _setup_statusbar(self):
         self.statusBar().setStyleSheet(
-            "QStatusBar { min-height: 24px; background: #07071A; } QStatusBar::item { border: none; }"
+            "QStatusBar { min-height: 24px; background: #181818; } QStatusBar::item { border: none; }"
         )
         self.status_label = ElidedLabel(i18n.tr("status.ready"))
         self.statusBar().addWidget(self.status_label, 1)
@@ -1750,7 +1750,7 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(48, 48, 48, 48)
         layout.addStretch(1)
         title_label = QLabel(title)
-        title_label.setFont(QFont(get_ui_font(), 15, QFont.Bold))
+        title_label.setFont(QFont(get_ui_font(), 15))
         title_label.setAlignment(Qt.AlignCenter)
         message_label = QLabel(message)
         message_label.setAlignment(Qt.AlignCenter)

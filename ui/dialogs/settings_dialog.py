@@ -338,7 +338,7 @@ class SettingsDialog(QDialog):
 
         def _finish(result):
             self.test_btn.setEnabled(True)
-            color = "#3E9B68" if result.ok else "#C4544C"
+            color = "#3E9B68" if result.ok else "#E00000"
             models = f"（模型 {len(result.models)} 个）" if result.models else ""
             self.test_result.setText(
                 f"<span style='color:{color}'>{'✓' if result.ok else '✗'} "

@@ -33,24 +33,24 @@ _COLUMNS = 3
 
 _SELECTED_QSS = """
     QPushButton {
-        background: #4648FF;
+        background: #2A2A2A;
         color: #ffffff;
-        border: 1px solid #4648FF;
-        border-radius: 6px;
+        border: 1px solid #3A3A3A;
+        border-radius: 9px;
         padding: 4px 6px;
         text-align: left;
     }
 """
 _TILE_QSS = """
     QPushButton {
-        background: #161632;
-        color: #E4E4F2;
-        border: 1px solid #3A3A66;
-        border-radius: 6px;
+        background: #1C1C1C;
+        color: #EDEDED;
+        border: 1px solid #333333;
+        border-radius: 9px;
         padding: 4px 6px;
         text-align: left;
     }
-    QPushButton:hover { background: #222248; border-color: #3A3A66; }
+    QPushButton:hover { background: #242424; border-color: #333333; }
 """
 
 
@@ -92,11 +92,11 @@ class ChartGallery(QWidget):
         header.addWidget(icon)
 
         self._title = QLabel("图表类型库")
-        self._title.setFont(QFont(get_ui_font(), 12, QFont.Weight.Bold))
+        self._title.setFont(QFont(get_ui_font(), 12, QFont.Weight.Normal))
         header.addWidget(self._title)
 
         self._current_label = QLabel("")
-        self._current_label.setStyleSheet("color: #C3C2FF; font-size: 12px;")
+        self._current_label.setStyleSheet("color: #A3A3A3; font-size: 12px;")
         header.addWidget(self._current_label)
         header.addStretch()
 
@@ -104,9 +104,9 @@ class ChartGallery(QWidget):
         self._toggle_btn.setFixedWidth(76)
         self._toggle_btn.setFixedHeight(28)
         self._toggle_btn.setStyleSheet(
-            "QPushButton { background: #3A3A66; color: #E4E4F2; border: none;"
-            " border-radius: 6px; font-size: 12px; }"
-            "QPushButton:hover { background: #3A3A66; }")
+            "QPushButton { background: #333333; color: #EDEDED; border: none;"
+            " border-radius: 9px; font-size: 12px; }"
+            "QPushButton:hover { background: #333333; }")
         self._toggle_btn.clicked.connect(self.toggle_expand)
         header.addWidget(self._toggle_btn)
 
@@ -116,8 +116,8 @@ class ChartGallery(QWidget):
         self._body = _PopupPanel(self, Qt.Popup)
         self._body.setObjectName("chartGalleryPopup")
         self._body.setStyleSheet(
-            "QFrame#chartGalleryPopup { background: #14142E;"
-            " border: 1px solid #3A3A66; border-radius: 8px; }")
+            "QFrame#chartGalleryPopup { background: #171717;"
+            " border: 1px solid #333333; border-radius: 8px; }")
         self._body.setVisible(False)
         self._body.closed.connect(self._on_popup_closed)
 
@@ -151,7 +151,7 @@ class ChartGallery(QWidget):
                 continue
             cat_lbl = QLabel(category)
             cat_lbl.setStyleSheet("color: #8a8d9a; font-size: 11px;")
-            cat_lbl.setFont(QFont(get_ui_font(), 10, QFont.Weight.Bold))
+            cat_lbl.setFont(QFont(get_ui_font(), 10, QFont.Weight.Normal))
             self._groups_layout.addWidget(cat_lbl)
 
             grid = QGridLayout()

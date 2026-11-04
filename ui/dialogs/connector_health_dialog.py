@@ -60,7 +60,7 @@ class ConnectorHealthDialog(QDialog):
 
         bar = QHBoxLayout()
         self.status_label = QLabel("")
-        self.status_label.setStyleSheet("color: #8A8AB8; font-size: 11px;")
+        self.status_label.setStyleSheet("color: #737373; font-size: 11px;")
         bar.addWidget(self.status_label)
         bar.addStretch()
         for key, slot in (("connector_health.refresh", self.refresh),
@@ -142,7 +142,7 @@ class ConnectorHealthDialog(QDialog):
                 item = QTableWidgetItem(str(text))
                 if col == 2:
                     item.setForeground(QColor("#3E9B68" if info.available
-                                              else "#C4544C"))
+                                              else "#E00000"))
                 self.plugin_table.setItem(row, col, item)
 
     # ---------- 槽 ----------

@@ -39,7 +39,7 @@ class OEETab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel(i18n.tr("ie.oee.title"))
-        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
@@ -62,7 +62,7 @@ class OEETab(BaseAnalysisTab):
         self.btn_analyze.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.btn_analyze.setCursor(Qt.PointingHandCursor)
         self.btn_analyze.setMinimumHeight(44)
-        self.btn_analyze.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.btn_analyze.setFont(QFont(get_ui_font(), 12))
         self.btn_analyze.clicked.connect(self._on_one_click_analyze)
         config_layout.addRow(self.btn_analyze)
 
@@ -84,7 +84,7 @@ class OEETab(BaseAnalysisTab):
                                             ("oee", "OEE"))):
             card = QFrame()
             card.setStyleSheet(
-                "QFrame { background: #161632; border: 1px solid #2A2A4E; "
+                "QFrame { background: #1C1C1C; border: 1px solid #2A2A2A; "
                 "border-radius: 8px; }"
             )
             card.setMinimumWidth(118)
@@ -92,11 +92,11 @@ class OEETab(BaseAnalysisTab):
             cl.setContentsMargins(8, 6, 8, 6)
             name = QLabel(label)
             name.setFont(QFont(get_ui_font(), 9))
-            name.setStyleSheet("color: #C3C2FF; border: none;")
+            name.setStyleSheet("color: #B7C9F1; border: none;")
             name.setAlignment(Qt.AlignCenter)
             val = QLabel("--")
-            val.setFont(QFont(get_ui_font(), 16, QFont.Bold))
-            val.setStyleSheet("color: #E4E4F2; border: none;")
+            val.setFont(QFont(get_ui_font(), 16, QFont.DemiBold))
+            val.setStyleSheet("color: #EDEDED; border: none;")
             val.setAlignment(Qt.AlignCenter)
             cl.addWidget(name)
             cl.addWidget(val)
@@ -243,7 +243,7 @@ class OEETab(BaseAnalysisTab):
         elif oee >= OEE_FAIR:
             color = "#B86A28"
         else:
-            color = "#C4544C"
+            color = "#E00000"
         self._kpi_labels["oee"].setStyleSheet(f"color: {color}; border: none;")
 
     def _fill_table(self, result: dict[str, Any]):
@@ -280,10 +280,10 @@ class OEETab(BaseAnalysisTab):
         labels = [b["label"] for b in buckets]
 
         ax1 = fig.add_subplot(1, 2, 1)
-        metrics = [("availability", "A", "#4648FF"),
-                   ("performance", "P", "#1C1DEC"),
-                   ("quality", "Q", "#9394FE"),
-                   ("oee", "OEE", "#6A6CFF")]
+        metrics = [("availability", "A", "#4F73DC"),
+                   ("performance", "P", "#37519A"),
+                   ("quality", "Q", "#8EABEA"),
+                   ("oee", "OEE", "#6E8CE2")]
         import numpy as np
         x = np.arange(len(labels))
         width = 0.19
@@ -295,9 +295,9 @@ class OEETab(BaseAnalysisTab):
                 if b[key] is not None and v > 0:
                     ax1.text(xi + (k - 1.5) * width, v + 0.015, f"{v:.0%}",
                              ha="center", fontsize=7, color=tc["text_secondary"])
-        ax1.axhline(OEE_WORLD_CLASS, color="#C4544C", linestyle="--", linewidth=1.2)
+        ax1.axhline(OEE_WORLD_CLASS, color="#E00000", linestyle="--", linewidth=1.2)
         ax1.text(len(labels) - 0.5, OEE_WORLD_CLASS + 0.015, f"世界级 {OEE_WORLD_CLASS:.0%}", fontsize=8,
-                 color="#C4544C", ha="right")
+                 color="#E00000", ha="right")
         ax1.set_xticks(x)
         ax1.set_xticklabels(labels)
         ax1.set_ylim(0, 1.12)
@@ -320,7 +320,7 @@ class OEETab(BaseAnalysisTab):
         starts = [0, planned - down, planned - down - speed,
                   planned - down - speed - qual, 0]
         heights = [planned, down, speed, qual, value]
-        colors = ["#4648FF", "#C4544C", "#C4922A", "#9394FE", "#3E9B68"]
+        colors = ["#4F73DC", "#E00000", "#C4922A", "#8EABEA", "#3E9B68"]
         for i, (s, h, c) in enumerate(zip(starts, heights, colors, strict=True)):
             ax2.bar(stages[i], h, bottom=s, color=c, width=0.58)
             ax2.text(stages[i], s + h + planned * 0.015, f"{h:.2f}h",

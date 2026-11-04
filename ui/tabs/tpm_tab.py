@@ -34,11 +34,11 @@ class TPMTab(BaseAnalysisTab):
         self.kpi_labels = {}
         for key, label in [("mtbf", "MTBF (h)"), ("mttr", "MTTR (h)"), ("oee", "OEE %"), ("records", "记录数")]:
             card = QWidget()
-            card.setStyleSheet("background: #161632; border-radius: 8px; padding: 10px;")
+            card.setStyleSheet("background: #1C1C1C; border-radius: 8px; padding: 10px;")
             cl = QVBoxLayout(card)
             cl.addWidget(QLabel(label))
             v = QLabel("--")
-            v.setStyleSheet("font-size: 24px; font-weight: bold; color: #C3C2FF;")
+            v.setStyleSheet("font-size: 24px;  color: #B7C9F1;")
             cl.addWidget(v)
             self.kpi_labels[key] = v
             kpi_row.addWidget(card)
@@ -156,7 +156,7 @@ class TPMTab(BaseAnalysisTab):
         self.kpi_labels["records"].setText(str(result.record_count))
 
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5), dpi=100)
-        fig.patch.set_facecolor('#0C0C1E')
+        fig.patch.set_facecolor('#141414')
 
         losses = result.six_losses
         items = sorted(losses.items(), key=lambda x: x[1], reverse=True)
@@ -164,25 +164,25 @@ class TPMTab(BaseAnalysisTab):
         vals = [i[1] for i in items]
         total_loss = sum(vals) or 1
         cum_pct = np.cumsum(vals) / total_loss * 100
-        colors = ['#C4544C', '#B86A28', '#f1c40f', '#3E9B68', '#3498db', '#9b59b6']
+        colors = ['#E00000', '#B86A28', '#f1c40f', '#3E9B68', '#3498db', '#9b59b6']
         ax1.bar(names, vals, color=colors[:len(names)])
-        ax1.set_title("六大损失帕累托", fontsize=12, fontweight='bold', color='#E4E4F2')
-        ax1.tick_params(axis='x', rotation=15, colors='#C3C2FF')
-        ax1.set_facecolor('#101028')
+        ax1.set_title("六大损失帕累托", fontsize=12, fontweight='bold', color='#EDEDED')
+        ax1.tick_params(axis='x', rotation=15, colors='#B7C9F1')
+        ax1.set_facecolor('#101010')
         ax2_twin = ax1.twinx()
         ax2_twin.plot(names, cum_pct, 'ro-', linewidth=2, markersize=6)
-        ax2_twin.set_ylabel("累计 %", color='#E4E4F2')
+        ax2_twin.set_ylabel("累计 %", color='#EDEDED')
         ax2_twin.set_ylim(0, 105)
 
         if len(result.records) > 1:
             dates = [r.date for r in result.records]
             oees = [r.oee * 100 for r in result.records]
             ax2.plot(dates, oees, 'o-', color='#3E9B68', linewidth=2, markersize=8)
-            ax2.axhline(y=85, color='#4648FF', linestyle='--', alpha=0.7, label='世界级 85%')
-            ax2.set_title("OEE 趋势", fontsize=12, fontweight='bold', color='#E4E4F2')
-            ax2.tick_params(axis='x', rotation=15, colors='#C3C2FF')
-            ax2.set_ylabel("OEE %", color='#E4E4F2')
-            ax2.set_facecolor('#101028')
+            ax2.axhline(y=85, color='#4F73DC', linestyle='--', alpha=0.7, label='世界级 85%')
+            ax2.set_title("OEE 趋势", fontsize=12, fontweight='bold', color='#EDEDED')
+            ax2.tick_params(axis='x', rotation=15, colors='#B7C9F1')
+            ax2.set_ylabel("OEE %", color='#EDEDED')
+            ax2.set_facecolor('#101010')
             ax2.legend(fontsize=8)
 
         fig.tight_layout()
@@ -202,4 +202,4 @@ class TPMTab(BaseAnalysisTab):
             from PySide6.QtWidgets import QFileDialog
             path, _ = QFileDialog.getSaveFileName(self, "保存 TPM 图表", "tpm_analysis.png", "PNG (*.png)")
             if path:
-                self.current_figure.savefig(path, dpi=150, facecolor='#0C0C1E')
+                self.current_figure.savefig(path, dpi=150, facecolor='#141414')

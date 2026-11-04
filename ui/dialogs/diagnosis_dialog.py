@@ -19,8 +19,8 @@ from ui.theme import colors as theme_colors
 from ui.font_config import get_ui_font
 
 ICON_COLORS = {
-    "SPC": "#4648FF",
-    "CPK": "#1C1DEC",
+    "SPC": "#4F73DC",
+    "CPK": "#8EABEA",
     "MSA": "#6b4c9a",
     "TTEST": "#b85c38",
     "DOE": "#9467bd",
@@ -40,7 +40,7 @@ ICON_COLORS = {
 CONF_COLORS = {
     "highly_recommended": "#3E9B68",
     "recommended": "#C4922A",
-    "optional": "#8A8AB8",
+    "optional": "#737373",
 }
 
 
@@ -63,7 +63,7 @@ class DiagnosisDialog(QDialog):
 
         title_row = QHBoxLayout()
         title = QLabel("数据智能诊断")
-        title.setFont(QFont(get_ui_font(), 20, QFont.Bold))
+        title.setFont(QFont(get_ui_font(), 20, QFont.DemiBold))
         title_row.addWidget(title)
         title_row.addStretch()
         btn_export = QPushButton("导出报告")
@@ -169,7 +169,7 @@ class DiagnosisDialog(QDialog):
         layout.addWidget(bar)
 
         pct = QLabel(f"{int(value * 100)}%")
-        pct.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        pct.setFont(QFont(get_ui_font(), 12))
         pct.setAlignment(Qt.AlignCenter)
         pct.setStyleSheet(
             f"color: {self._gauge_color(value)}; background: transparent;"
@@ -183,7 +183,7 @@ class DiagnosisDialog(QDialog):
             return "#3E9B68"
         if v >= 0.5:
             return "#C4922A"
-        return "#C4544C"
+        return "#E00000"
 
     def _make_sheet_section(self, sn: str, sheet: dict, tc: dict) -> QFrame:
         card = QFrame()
@@ -196,7 +196,7 @@ class DiagnosisDialog(QDialog):
 
         hdr = QHBoxLayout()
         hl = QLabel(f" {sn}")
-        hl.setFont(QFont(get_ui_font(), 13, QFont.Bold))
+        hl.setFont(QFont(get_ui_font(), 13))
         hdr.addWidget(hl)
         info = QLabel(f"{sheet['row_count']} 行  {sheet['column_count']} 列")
         info.setFont(QFont(get_ui_font(), 10))
@@ -218,7 +218,7 @@ class DiagnosisDialog(QDialog):
             headers = ["列名", "类型", "缺失%", "偏度", "异常点", "分布"]
             for j, h in enumerate(headers):
                 lbl = QLabel(h)
-                lbl.setFont(QFont(get_ui_font(), 9, QFont.Bold))
+                lbl.setFont(QFont(get_ui_font(), 9))
                 lbl.setStyleSheet(f"color: {tc['text_secondary']}; padding: 2px 4px;")
                 grid.addWidget(lbl, 0, j)
             for i, c in enumerate(cols[:12], 1):
@@ -238,17 +238,17 @@ class DiagnosisDialog(QDialog):
                     lbl.setStyleSheet(f"color: {tc['text_primary']}; padding: 1px 4px;")
                     if j == 1 and c["category"] == "measurement":
                         lbl.setStyleSheet(
-                            f"color: {tc['accent_bright']}; font-weight: bold; padding: 1px 4px;"
+                            f"color: {tc['accent_bright']};  padding: 1px 4px;"
                         )
                     if c["missing_pct"] > 10:
-                        lbl.setStyleSheet("color: #C4544C; padding: 1px 4px;")
+                        lbl.setStyleSheet("color: #E00000; padding: 1px 4px;")
                     if j == 5:
                         dist = c.get("distribution", "-")
                         if c.get("normality_sample_note"):
                             lbl.setToolTip(str(c["normality_sample_note"]))
                         if dist == "normal":
                             lbl.setStyleSheet(
-                                "color: #3E9B68; font-weight: bold; padding: 1px 4px;"
+                                "color: #3E9B68;  padding: 1px 4px;"
                             )
                         elif dist == "skewed":
                             lbl.setStyleSheet("color: #C4922A; padding: 1px 4px;")
@@ -271,7 +271,7 @@ class DiagnosisDialog(QDialog):
                 if not group_recs:
                     continue
                 sec = QLabel(f" {star} {group_title} ({len(group_recs)})")
-                sec.setFont(QFont(get_ui_font(), 11, QFont.Bold))
+                sec.setFont(QFont(get_ui_font(), 11))
                 sec.setStyleSheet(
                     f"color: {CONF_COLORS.get(group_recs[0]['confidence']['grade'], tc['accent'])}; padding: 4px 0;"
                 )
@@ -285,7 +285,7 @@ class DiagnosisDialog(QDialog):
             for iss in issues[:5]:
                 il = QLabel(f"  {iss}")
                 il.setFont(QFont(get_ui_font(), 9))
-                il.setStyleSheet("color: #C4544C;")
+                il.setStyleSheet("color: #E00000;")
                 layout.addWidget(il)
         return card
 
@@ -295,7 +295,7 @@ class DiagnosisDialog(QDialog):
 
         icon_text = rec["icon"][:3]
         icon = QLabel(icon_text)
-        icon.setFont(QFont(get_ui_font(), 10, QFont.Bold))
+        icon.setFont(QFont(get_ui_font(), 10))
         icon.setFixedSize(38, 38)
         icon.setAlignment(Qt.AlignCenter)
         icolor = ICON_COLORS.get(rec["icon"], tc["accent"])
@@ -307,7 +307,7 @@ class DiagnosisDialog(QDialog):
         text_col = QVBoxLayout()
         text_col.setSpacing(2)
         title = QLabel(f"{rec['tab_name']} · {rec['method']}")
-        title.setFont(QFont(get_ui_font(), 11, QFont.Bold))
+        title.setFont(QFont(get_ui_font(), 11))
         title.setStyleSheet(f"color: {tc['text_primary']};")
         text_col.addWidget(title)
         reason = QLabel(rec["reason"])
@@ -324,7 +324,7 @@ class DiagnosisDialog(QDialog):
         cbar.setFormat(f" {int(pct * 100)}%")
         cbar.setFixedSize(60, 16)
         cbar.setFont(QFont(get_ui_font(), 8))
-        ccolor = CONF_COLORS.get(conf.get("grade", "optional"), "#8A8AB8")
+        ccolor = CONF_COLORS.get(conf.get("grade", "optional"), "#737373")
         cbar.setStyleSheet(
             f"QProgressBar {{ background: {tc['bg_body']}; border: none; border-radius: 3px; text-align: center; }} "
             f"QProgressBar::chunk {{ background: {ccolor}; border-radius: 3px; }}"

@@ -239,7 +239,7 @@ class DbConnectionDialog(QDialog):
             QMessageBox.information(self, i18n.tr("db.test_title"), i18n.tr("db.conn_success_msg"))
         except Exception as e:
             self.conn_status.setText(i18n.tr("db.conn_failed"))
-            self.conn_status.setStyleSheet("color: #C4544C;")
+            self.conn_status.setStyleSheet("color: #E00000;")
             QMessageBox.critical(self, i18n.tr("db.test_title"), f"{i18n.tr('db.conn_failed_msg')}\n{e!s}")
 
     def _load_table_list(self):

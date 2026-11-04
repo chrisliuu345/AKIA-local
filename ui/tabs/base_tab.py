@@ -309,7 +309,7 @@ class BaseAnalysisTab(QWidget):
         layout.addWidget(msg_lbl)
 
         btn = QPushButton(button_text or "导入数据")
-        btn.setFont(QFont(get_ui_font(), 11, QFont.Bold))
+        btn.setFont(QFont(get_ui_font(), 11))
         btn.setFixedSize(160, 40)
         btn.setCursor(Qt.PointingHandCursor)
         btn.setStyleSheet(

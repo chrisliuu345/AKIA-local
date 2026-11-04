@@ -27,10 +27,10 @@ from ui.theme import (
 )
 from ui.theme import colors as theme_colors
 
-C_W = "#4648FF"
-C_A = "#9394FE"
-C_WK = "#1C1DEC"
-C_I = "#C3C2FF"
+C_W = "#4F73DC"
+C_A = "#8EABEA"
+C_WK = "#37519A"
+C_I = "#B7C9F1"
 PRESETS = {
     "CNC加工": [(5, 10, 3), (4, 45, 0), (8, 0, 2), (3, 8, 0), (3, 5, 2), (4, 0, 0)],
     "装配线": [(6, 0, 2), (5, 0, 1), (4, 0, 3), (7, 0, 0), (3, 0, 2), (8, 0, 1)],
@@ -232,8 +232,8 @@ class StdWorkComboTab(BaseAnalysisTab):
                 color=tc["text_secondary"],
                 ha="center",
             )
-        ax.axvline(x=takt, color="#C4544C", linestyle="--", linewidth=1.5)
-        ax.text(takt + 0.5, n - 0.2, f"Takt {takt}s", fontsize=9, color="#C4544C")
+        ax.axvline(x=takt, color="#E00000", linestyle="--", linewidth=1.5)
+        ax.text(takt + 0.5, n - 0.2, f"Takt {takt}s", fontsize=9, color="#E00000")
         ax.set_yticks(range(n))
         ax.set_yticklabels(y_labels, fontsize=9)
         ax.set_xlabel("时间(秒)", fontsize=10)

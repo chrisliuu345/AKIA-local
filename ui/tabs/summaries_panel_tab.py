@@ -43,7 +43,7 @@ class SummaryPanelTab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel("统计摘要面板")
-        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
@@ -137,7 +137,7 @@ class SummaryPanelTab(BaseAnalysisTab):
                 edgecolor="white",
                 linewidth=0.3,
             )
-            ax_hist.axvline(np.mean(vals), color="#C4544C", linestyle="--", linewidth=1)
+            ax_hist.axvline(np.mean(vals), color="#E00000", linestyle="--", linewidth=1)
             ax_hist.set_title(
                 col, fontsize=9, fontweight="bold", color=tc["text_primary"]
             )

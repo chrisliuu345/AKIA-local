@@ -42,7 +42,7 @@ class ParetoTab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel("帕累托图 (Pareto)")
-        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
@@ -81,7 +81,7 @@ class ParetoTab(BaseAnalysisTab):
         self.btn_draw.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.btn_draw.setCursor(Qt.PointingHandCursor)
         self.btn_draw.setMinimumHeight(44)
-        self.btn_draw.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.btn_draw.setFont(QFont(get_ui_font(), 12))
         self.btn_draw.clicked.connect(self._draw)
         config_layout.addRow(self.btn_draw)
 

@@ -27,7 +27,7 @@ def test_status_colors_and_spec_color(html):
     lowered = html.lower()
     assert "#3e9b68" in lowered      # 正常
     assert "#c4922a" in lowered      # 判异 / 超规格
-    assert "#c4544c" in lowered      # 离线 / 严重
+    assert "#e00000" in lowered      # 离线 / 严重
     assert "#9a3a62" in lowered      # USL/LSL 规格线
 
 

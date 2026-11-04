@@ -40,7 +40,7 @@ class SPCTab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel(i18n.tr("spc.title"))
-        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
@@ -178,7 +178,7 @@ class SPCTab(BaseAnalysisTab):
         live_layout = QFormLayout(self.live_group)
         live_layout.setContentsMargins(10, 10, 10, 10)
         self.live_check = QCheckBox(i18n.tr("spc.live_mode"))
-        self.live_check.setStyleSheet("font-weight: bold;")
+        self.live_check.setStyleSheet("")
         self.live_check.toggled.connect(self._on_live_toggled)
         live_layout.addRow(self.live_check)
         self.live_dev_combo = QComboBox()
@@ -199,7 +199,7 @@ class SPCTab(BaseAnalysisTab):
         live_layout.addRow(self.live_status)
 
         self.run_btn = QPushButton(i18n.tr("spc.run_btn"))
-        self.run_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.run_btn.setFont(QFont(get_ui_font(), 12))
         self.run_btn.setMinimumHeight(44)
         self.run_btn.setCursor(Qt.PointingHandCursor)
         self.run_btn.setStyleSheet(BUTTON_PRIMARY_STRETCH)
@@ -207,7 +207,7 @@ class SPCTab(BaseAnalysisTab):
         config_layout.addRow(self.run_btn)
 
         self.save_png_btn = QPushButton(i18n.tr("spc.save_png"))
-        self.save_png_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.save_png_btn.setFont(QFont(get_ui_font(), 12))
         self.save_png_btn.setMinimumHeight(40)
         self.save_png_btn.setCursor(Qt.PointingHandCursor)
         self.save_png_btn.setStyleSheet(BUTTON_SECONDARY)
@@ -215,7 +215,7 @@ class SPCTab(BaseAnalysisTab):
         config_layout.addRow(self.save_png_btn)
 
         self.root_cause_btn = QPushButton(i18n.tr("spc.root_cause"))
-        self.root_cause_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.root_cause_btn.setFont(QFont(get_ui_font(), 12))
         self.root_cause_btn.setMinimumHeight(40)
         self.root_cause_btn.setCursor(Qt.PointingHandCursor)
         self.root_cause_btn.setStyleSheet(BUTTON_SECONDARY)
@@ -225,7 +225,7 @@ class SPCTab(BaseAnalysisTab):
         config_layout.addRow(self.root_cause_btn)
 
         self.export_btn = QPushButton(i18n.tr("spc.export_btn"))
-        self.export_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.export_btn.setFont(QFont(get_ui_font(), 12))
         self.export_btn.setMinimumHeight(44)
         self.export_btn.setCursor(Qt.PointingHandCursor)
         self.export_btn.setStyleSheet(BUTTON_PRIMARY_STRETCH)
@@ -278,7 +278,7 @@ class SPCTab(BaseAnalysisTab):
         bottom_layout.setSpacing(6)
 
         self.result_label = QLabel(i18n.tr("spc.result"))
-        self.result_label.setFont(QFont(get_ui_font(), 13, QFont.Bold))
+        self.result_label.setFont(QFont(get_ui_font(), 13))
         bottom_layout.addWidget(self.result_label)
 
         toggle_row = QHBoxLayout()
@@ -323,7 +323,7 @@ class SPCTab(BaseAnalysisTab):
         self.result_table.setShowGrid(True)
         self.result_table.setStyleSheet(
             "QTableWidget { font-size: 12px; }"
-            "QHeaderView::section { font-weight: bold; padding: 4px; }"
+            "QHeaderView::section {  padding: 4px; }"
         )
         data_layout.addWidget(self.result_table)
         self.result_stack.addWidget(self.data_container)
@@ -519,7 +519,7 @@ class SPCTab(BaseAnalysisTab):
             self.chart_type_combo.currentText())
         n_nelson = sum(1 for e in frame.events if e.kind == "nelson")
         n_oos = sum(1 for e in frame.events if e.kind == "oos")
-        color = "#3E9B68" if not frame.ooc and not frame.oos else "#C4544C"
+        color = "#3E9B68" if not frame.ooc and not frame.oos else "#E00000"
         self.live_status.setStyleSheet(f"font-size: 11px; color: {color};")
         text = (f"{chan} · {len(frame.data)} {i18n.tr('spc.live_pts')} · "
                 f"CL={frame.cl:.2f} UCL={frame.ucl:.2f} LCL={frame.lcl:.2f} · ")
@@ -640,7 +640,7 @@ class SPCTab(BaseAnalysisTab):
         valid, msg = self.validate_params()
         if not valid:
             self._clear_canvas()
-            self.result_text.setStyleSheet("color: #C4544C; font-weight: bold;")
+            self.result_text.setStyleSheet("color: #E00000; ")
             self.result_text.setText(f"▎参数校验失败\n{msg}")
             return None
         self.result_text.setStyleSheet("")
@@ -651,7 +651,7 @@ class SPCTab(BaseAnalysisTab):
             return result
         except Exception as e:
             self._clear_canvas()
-            self.result_text.setStyleSheet("color: #C4544C; font-weight: bold;")
+            self.result_text.setStyleSheet("color: #E00000; ")
             self.result_text.setText(f"▎分析失败\n{e!s}")
             return None
 
@@ -880,7 +880,7 @@ class SPCTab(BaseAnalysisTab):
         except Exception as e:
             self._clear_canvas()
             err_label = QLabel(f"图表渲染失败: {e}")
-            err_label.setStyleSheet("color: #C4544C; padding: 12px;")
+            err_label.setStyleSheet("color: #E00000; padding: 12px;")
             err_label.setWordWrap(True)
             self.chart_layout.addWidget(err_label)
 

@@ -14,12 +14,12 @@ from ui.font_config import get_ui_font
 
 
 M6_COLORS = [
-    QColor("#4648FF"), QColor("#1C1DEC"), QColor("#9394FE"),
-    QColor("#6A6CFF"), QColor("#C3C2FF"), QColor("#3032D4"),
+    QColor("#4F73DC"), QColor("#37519A"), QColor("#8EABEA"),
+    QColor("#6E8CE2"), QColor("#B7C9F1"), QColor("#2C4A96"),
 ]
-BG_COLOR = QColor("#161632")
-TEXT_COLOR = QColor("#E4E4F2")
-MUTED_COLOR = QColor("#C3C2FF")
+BG_COLOR = QColor("#1C1C1C")
+TEXT_COLOR = QColor("#EDEDED")
+MUTED_COLOR = QColor("#B7C9F1")
 
 
 class _LabelNode(QGraphicsItem):
@@ -127,13 +127,13 @@ class _ProblemBox(QGraphicsRectItem):
         self._y = y
         w = self._fit_width()
         super().__init__(x, y - self._h / 2, w, self._h)
-        self.setBrush(QBrush(QColor("#222248")))
-        self.setPen(QPen(QColor("#4648FF"), 2))
+        self.setBrush(QBrush(QColor("#242424")))
+        self.setPen(QPen(QColor("#4F73DC"), 2))
         self.setFlag(QGraphicsItem.ItemIsSelectable, False)
         self.setCursor(Qt.IBeamCursor)
 
         self.label = QGraphicsTextItem(self._text, self)
-        self.label.setFont(QFont(get_ui_font(), 13, QFont.Bold))
+        self.label.setFont(QFont(get_ui_font(), 13))
         self.label.setDefaultTextColor(TEXT_COLOR)
         self.label.setAcceptedMouseButtons(Qt.NoButton)
         self._place_label()
@@ -141,7 +141,7 @@ class _ProblemBox(QGraphicsRectItem):
     def _fit_width(self) -> float:
         """按文字宽度自适应框宽(最小 170)"""
         from PySide6.QtGui import QFontMetrics
-        fm = QFontMetrics(QFont(get_ui_font(), 13, QFont.Bold))
+        fm = QFontMetrics(QFont(get_ui_font(), 13))
         tw = fm.horizontalAdvance(self._text)
         return max(170.0, tw + 24)
 

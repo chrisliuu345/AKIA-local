@@ -20,12 +20,12 @@ class CauseNode:
 
 
 M6_COLORS = [
-    "#4648FF",
-    "#1C1DEC",
-    "#9394FE",
-    "#6A6CFF",
-    "#C3C2FF",
-    "#3032D4",
+    "#4F73DC",
+    "#37519A",
+    "#8EABEA",
+    "#6E8CE2",
+    "#B7C9F1",
+    "#2C4A96",
 ]
 
 M6_DEFAULTS = {
@@ -92,29 +92,29 @@ class FishboneEngine:
         plt.rcParams["axes.unicode_minus"] = False
 
         fig = Figure(figsize=figsize, dpi=dpi)
-        fig.set_facecolor("#161632")
+        fig.set_facecolor("#1C1C1C")
         ax = fig.add_axes([0.02, 0.02, 0.96, 0.92])
         ax.set_xlim(-10, 12)
         ax.set_ylim(-8, 8)
         ax.axis("off")
-        ax.set_facecolor("#161632")
+        ax.set_facecolor("#1C1C1C")
 
         branch_names = list(branches.keys())
         n = len(branch_names)
         if n == 0:
-            ax.text(1, 0, "请添加分析分支", fontsize=16, color="#C3C2FF",
+            ax.text(1, 0, "请添加分析分支", fontsize=16, color="#B7C9F1",
                     ha="center", va="center")
             return fig
 
         colors = M6_COLORS[:n] if n <= len(M6_COLORS) else M6_COLORS * ((n // len(M6_COLORS)) + 1)
 
         ax.annotate("", xy=(8.5, 0), xytext=(-6, 0),
-                     arrowprops={"arrowstyle": "->", "color": "#E4E4F2",
+                     arrowprops={"arrowstyle": "->", "color": "#EDEDED",
                                      "lw": 3, "connectionstyle": "arc3,rad=0"})
         ax.text(9, 0, problem, fontsize=14, fontweight="bold",
-                color="#E4E4F2", ha="left", va="center",
-                bbox={"boxstyle": "round,pad=0.5", "facecolor": "#222248",
-                          "edgecolor": "#4648FF", "linewidth": 1.5})
+                color="#EDEDED", ha="left", va="center",
+                bbox={"boxstyle": "round,pad=0.5", "facecolor": "#242424",
+                          "edgecolor": "#4F73DC", "linewidth": 1.5})
 
         spine_angles = np.linspace(15, 55, max(n, 1))
         for i, (bname, root) in enumerate(branches.items()):

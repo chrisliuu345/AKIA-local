@@ -64,15 +64,15 @@ CONTROL_CHART_CONSTANTS = {
 }
 
 CHART_COLORS = {
-    "primary": "#4648FF",
-    "secondary": "#9394FE",
-    "warning": "#C4544C",
-    "ucl_lcl": "#C4544C",
+    "primary": "#4F73DC",
+    "secondary": "#8EABEA",
+    "warning": "#E00000",
+    "ucl_lcl": "#E00000",
     "center_line": "#3E9B68",
-    "data_points": "#4648FF",
-    "violation": "#C4544C",
-    "grid": "#2A2A4E",
-    "background": "#0C0C1E",
+    "data_points": "#4F73DC",
+    "violation": "#E00000",
+    "grid": "#2A2A2A",
+    "background": "#141414",
 }
 
 CHART_DPI = 120

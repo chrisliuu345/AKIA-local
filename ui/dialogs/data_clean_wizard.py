@@ -41,7 +41,7 @@ class DataCleanWizard(QDialog):
 
         hdr = QHBoxLayout()
         self.title = QLabel("数据清洗向导")
-        self.title.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        self.title.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         hdr.addWidget(self.title)
         hdr.addStretch()
         self.summary = QLabel("")
@@ -82,7 +82,7 @@ class DataCleanWizard(QDialog):
         btns.addWidget(self.btn_rescan)
         self.btn_fix_all = QPushButton("一键修复全部")
         self.btn_fix_all.setStyleSheet(BUTTON_PRIMARY_STRETCH)
-        self.btn_fix_all.setFont(QFont(get_ui_font(), 11, QFont.Bold))
+        self.btn_fix_all.setFont(QFont(get_ui_font(), 11))
         self.btn_fix_all.clicked.connect(self._fix_all)
         btns.addWidget(self.btn_fix_all)
         self.btn_apply = QPushButton("应用并关闭")

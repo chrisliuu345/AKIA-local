@@ -33,7 +33,7 @@ class SheetMergeTab(BaseAnalysisTab):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
         self.title_label = QLabel("工作表合并")
-        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
         fg = QGroupBox("选择文件")

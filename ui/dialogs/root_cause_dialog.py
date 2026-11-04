@@ -48,7 +48,7 @@ class RootCauseDialog(QDialog):
 
         header = QHBoxLayout()
         title = QLabel(f"AI 根因分析 — {self.target_column}")
-        title.setFont(QFont(get_ui_font(), 16, QFont.Bold))
+        title.setFont(QFont(get_ui_font(), 16, QFont.DemiBold))
         title.setStyleSheet(f"color: {tc['text_primary']};")
         header.addWidget(title)
         header.addStretch()
@@ -64,7 +64,7 @@ class RootCauseDialog(QDialog):
         left_layout = QVBoxLayout(left)
         left_layout.setContentsMargins(0, 0, 0, 0)
         rank_label = QLabel("根因排行榜（综合得分 = 0.4×重要性 + 0.3×相关性 + 0.3×异常联动）")
-        rank_label.setFont(QFont(get_ui_font(), 10, QFont.Bold))
+        rank_label.setFont(QFont(get_ui_font(), 10))
         rank_label.setStyleSheet(f"color: {tc['text_secondary']};")
         left_layout.addWidget(rank_label)
 
@@ -82,7 +82,7 @@ class RootCauseDialog(QDialog):
             f"gridline-color: {tc['border_light']}; border: 1px solid {tc['border_light']}; "
             f"border-radius: 6px; }}"
             f"QHeaderView::section {{ background: {tc['bg_table_header']}; "
-            f"color: {tc['text_primary']}; font-weight: bold; padding: 6px; "
+            f"color: {tc['text_primary']};  padding: 6px; "
             f"border: none; }}"
             f"QTableWidget::item:selected {{ background: {tc['bg_active']}; }}"
         )
