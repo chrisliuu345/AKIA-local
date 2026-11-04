@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from ui.widgets.chart_canvas import ChartCanvas
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle, Polygon
 import matplotlib.pyplot as plt
@@ -289,7 +289,7 @@ class VSMTab(BaseAnalysisTab):
                 color=tc["text_secondary"])
 
         self.current_figure = fig
-        self.canvas = FigureCanvasQTAgg(fig)
+        self.canvas = ChartCanvas(fig)
         self.chart_layout.addWidget(self.canvas)
         self._switch_result_view(0)
 

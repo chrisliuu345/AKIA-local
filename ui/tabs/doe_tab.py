@@ -334,8 +334,8 @@ class DOETab(BaseAnalysisTab):
             if labels and values:
                 fig = create_pareto_chart(labels, values, title="因子效应 Pareto 图")
                 self.current_figure = fig
-                from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-                self.canvas = FigureCanvasQTAgg(fig)
+                from ui.widgets.chart_canvas import ChartCanvas
+                self.canvas = ChartCanvas(fig)
                 self.chart_layout.addWidget(self.canvas)
                 self.canvas.draw()
             self._add_chart_toolbar()

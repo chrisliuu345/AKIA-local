@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (
     QCalendarWidget, QListWidget,
 )
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from ui.widgets.chart_canvas import ChartCanvas
 import numpy as np
 
 from ui.tabs.base_tab import BaseAnalysisTab
@@ -191,7 +191,7 @@ class TPMTab(BaseAnalysisTab):
             if w:
                 w.setParent(None)
         plt.close("all")
-        self.canvas = FigureCanvasQTAgg(fig)
+        self.canvas = ChartCanvas(fig)
         self.canvas_layout.addWidget(self.canvas)
         self.canvas.draw()
         self.current_figure = fig

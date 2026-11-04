@@ -21,6 +21,16 @@ def test_toggle_strings_are_gone_from_analysis_tabs():
         assert "tab.view_chart" not in text, path.name
 
 
+def test_chart_frame_pads_all_sides():
+    tab = SPCTab()
+    margins = tab.chart_pane.layout().contentsMargins()
+    assert margins.left() >= 16
+    assert margins.right() >= 16
+    assert margins.top() >= 16
+    assert margins.bottom() >= 16
+    tab.close()
+
+
 def test_spc_results_have_three_panes():
     tab = SPCTab()
     assert tab.chart_pane is not None and not tab.chart_pane.isHidden()
