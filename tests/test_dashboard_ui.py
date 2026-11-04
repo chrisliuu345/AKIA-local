@@ -24,10 +24,11 @@ def test_palette_matches_desktop_theme(html):
 
 
 def test_status_colors_and_spec_color(html):
-    assert "#27ae60" in html      # 正常
-    assert "#ffa726" in html      # 判异 / 超规格
-    assert "#e74c3c" in html      # 离线 / 严重
-    assert "#c2185b" in html      # USL/LSL 规格线（与 chart_engine 一致）
+    lowered = html.lower()
+    assert "#3e9b68" in lowered      # 正常
+    assert "#c4922a" in lowered      # 判异 / 超规格
+    assert "#e00000" in lowered      # 离线 / 严重
+    assert "#9a3a62" in lowered      # USL/LSL 规格线
 
 
 def test_base_font_size_readable(html):

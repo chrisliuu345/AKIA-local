@@ -279,6 +279,25 @@ class TestW06SpaceEncoding:
         with pytest.raises(ValueError):
             build_connection_string({"db_type": "oracle"})
 
+    def test_host_at_sign_rejected(self):
+        from core.sql_loader import build_connection_string
+        import pytest
+        with pytest.raises(ValueError, match="主机"):
+            build_connection_string({
+                "db_type": "mysql", "host": "evil.example@localhost",
+                "port": 3306, "database": "db", "user": "u", "password": "p",
+            })
+
+    def test_port_query_injection_rejected(self):
+        from core.sql_loader import build_connection_string
+        import pytest
+        with pytest.raises(ValueError, match="端口"):
+            build_connection_string({
+                "db_type": "mysql", "host": "localhost",
+                "port": "3306?local_infile=1", "database": "db",
+                "user": "u", "password": "p",
+            })
+
 
 # ── Commit G: W07 reflect 回退路径 ───────────────────
 

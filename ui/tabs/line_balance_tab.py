@@ -5,21 +5,20 @@
 from typing import Any
 
 from PySide6.QtWidgets import (
-    QFrame,
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QDoubleSpinBox, QGroupBox, QFormLayout, QSpinBox,
     QTableWidget, QTableWidgetItem, QSplitter, QHeaderView,
-    QStackedWidget, QMessageBox,
+    QMessageBox,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from ui.widgets.chart_canvas import ChartCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
 from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
-from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY, BUTTON_TOGGLE
+from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY
 from ui.theme import colors as theme_colors
 from ui.font_config import get_ui_font
 from core.data_objects import Process
@@ -43,7 +42,7 @@ class LineBalanceTab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel(i18n.tr("ie.line_balance.title"))
-        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
@@ -70,7 +69,7 @@ class LineBalanceTab(BaseAnalysisTab):
         self.btn_analyze.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.btn_analyze.setCursor(Qt.PointingHandCursor)
         self.btn_analyze.setMinimumHeight(44)
-        self.btn_analyze.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.btn_analyze.setFont(QFont(get_ui_font(), 12))
         self.btn_analyze.clicked.connect(self._on_one_click_analyze)
         config_layout.addRow(self.btn_analyze)
 
@@ -107,7 +106,7 @@ class LineBalanceTab(BaseAnalysisTab):
         config_layout.addRow(case_row)
 
         self.skill_status_label = QLabel("技能矩阵: 未接入")
-        self.skill_status_label.setStyleSheet("color: #9aa4b2; font-size: 11px;")
+        self.skill_status_label.setStyleSheet("color: #737373; font-size: 11px;")
         self.skill_status_label.setWordWrap(True)
         config_layout.addRow(self.skill_status_label)
 
@@ -122,11 +121,6 @@ class LineBalanceTab(BaseAnalysisTab):
         top_layout.addWidget(config_group)
 
 
-        separator = QFrame()
-        separator.setFrameShape(QFrame.VLine)
-        separator.setStyleSheet("")
-        separator.setMaximumWidth(1)
-        top_layout.addWidget(separator)
 
         preview_group = QGroupBox("工序数据预览")
         preview_layout = QVBoxLayout(preview_group)
@@ -145,49 +139,7 @@ class LineBalanceTab(BaseAnalysisTab):
         bottom_layout = QVBoxLayout(bottom)
         bottom_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.result_stack = QStackedWidget()
-
-        self.chart_widget = QWidget()
-        self.chart_layout = QVBoxLayout(self.chart_widget)
-        self.chart_layout.setContentsMargins(0, 0, 0, 0)
-        self.result_stack.addWidget(self.chart_widget)
-
-        self.data_widget = QWidget()
-        data_layout = QVBoxLayout(self.data_widget)
-        data_layout.setContentsMargins(0, 0, 0, 0)
-        self.result_table = QTableWidget()
-        self.result_table.setAlternatingRowColors(True)
-        self.result_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        data_layout.addWidget(self.result_table)
-        self.result_stack.addWidget(self.data_widget)
-
-        toggle_row = QHBoxLayout()
-        toggle_row.setSpacing(8)
-        self.btn_view_chart = QPushButton(i18n.tr("tab.view_chart"))
-        self.btn_view_chart.setFont(QFont(get_ui_font(), 11))
-        self.btn_view_chart.setFixedHeight(30)
-        self.btn_view_chart.setCheckable(True)
-        self.btn_view_chart.setChecked(True)
-        self.btn_view_chart.setStyleSheet(BUTTON_TOGGLE)
-        self.btn_view_chart.clicked.connect(lambda: self._switch_result_view(0))
-        toggle_row.addWidget(self.btn_view_chart)
-        self.btn_view_data = QPushButton(i18n.tr("tab.view_data"))
-        self.btn_view_data.setFont(QFont(get_ui_font(), 11))
-        self.btn_view_data.setFixedHeight(30)
-        self.btn_view_data.setCheckable(True)
-        self.btn_view_data.setStyleSheet(BUTTON_TOGGLE)
-        self.btn_view_data.clicked.connect(lambda: self._switch_result_view(1))
-        toggle_row.addWidget(self.btn_view_data)
-        toggle_row.addStretch()
-        self.btn_save_png = QPushButton(i18n.tr("chart_tab.save_png"))
-        self.btn_save_png.setFont(QFont(get_ui_font(), 11))
-        self.btn_save_png.setFixedHeight(30)
-        self.btn_save_png.setStyleSheet(BUTTON_SECONDARY)
-        self.btn_save_png.clicked.connect(self._on_save_png)
-        toggle_row.addWidget(self.btn_save_png)
-
-        bottom_layout.addLayout(toggle_row)
-        bottom_layout.addWidget(self.result_stack, 1)
+        self.mount_results(bottom_layout, text=False, table=True, save_png=True)
 
         splitter.addWidget(bottom)
         splitter.setSizes([280, 520])
@@ -409,7 +361,7 @@ class LineBalanceTab(BaseAnalysisTab):
         colors = [tc["accent_bright"] if p.process_id == cur["bottleneck_id"]
                   else tc["accent"] for p in procs]
         ax1.bar(names, cts, color=colors, width=0.62)
-        ax1.axhline(takt, color="#e74c3c", linestyle="--", linewidth=1.6,
+        ax1.axhline(takt, color="#E00000", linestyle="--", linewidth=1.6,
                     label=f"节拍 {takt}s")
         ax1.set_title(f"现状：平衡率 {cur['balance_rate']:.1%}（{cur['station_count']} 工位）",
                       color=tc["text_primary"], fontsize=11)
@@ -419,8 +371,8 @@ class LineBalanceTab(BaseAnalysisTab):
         self._style_axis(ax1, tc, rotate=25)
 
         ax2 = fig.add_subplot(1, 2, 2)
-        palette = ["#1b5faa", "#217ca3", "#27ae60", "#9467bd", "#b85c38",
-                   "#17becf", "#6b4c9a", "#4da6ff"]
+        palette = ["#4F73DC", "#37519A", "#8EABEA", "#6E8CE2", "#B7C9F1",
+                   "#2C4A96", "#C5D4F4", "#6E8CE2"]
         xlabels = []
         for s in stations:
             bottom = 0.0
@@ -437,7 +389,7 @@ class LineBalanceTab(BaseAnalysisTab):
                      ha="center", va="bottom", fontsize=8,
                      color=tc["text_primary"])
             xlabels.append(f"工位{s['station_id']}")
-        ax2.axhline(takt, color="#e74c3c", linestyle="--", linewidth=1.6)
+        ax2.axhline(takt, color="#E00000", linestyle="--", linewidth=1.6)
         bal = result["balanced"]
         ax2.set_title(f"平衡后：平衡率 {bal['balance_rate']:.1%}"
                       f"（{bal['station_count']} 工位, +{bal['rate_improvement']:.0%}）",
@@ -446,7 +398,7 @@ class LineBalanceTab(BaseAnalysisTab):
         self._style_axis(ax2, tc, rotate=0)
 
         self.current_figure = fig
-        self.canvas = FigureCanvasQTAgg(fig)
+        self.canvas = ChartCanvas(fig)
         self.chart_layout.addWidget(self.canvas)
         self._switch_result_view(0)
 

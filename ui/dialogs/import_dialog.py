@@ -28,7 +28,7 @@ class ImportDialog(QDialog):
 
     def _setup_ui(self):
         tc = theme_colors()
-        mode_color = "#1b5faa" if self.mode == "quality" else "#27ae60"
+        mode_color = "#A3A3A3" if self.mode == "quality" else "#3E9B68"
         mode_label = "工作表数据" if self.mode == "quality" else "IE 分析数据"
 
         self.setWindowTitle(f"导入{mode_label}")
@@ -39,7 +39,7 @@ class ImportDialog(QDialog):
 
         header_layout = QHBoxLayout()
         mode_badge = QLabel(f"  {mode_label}  ")
-        mode_badge.setFont(QFont(get_ui_font(), 10, QFont.Bold))
+        mode_badge.setFont(QFont(get_ui_font(), 10))
         mode_badge.setStyleSheet(
             f"background-color: {mode_color}; color: white; border-radius: 4px; padding: 4px 8px;"
         )

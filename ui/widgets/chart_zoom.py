@@ -1,6 +1,7 @@
-"""图表交互缩放（v3.8.0）— 滚轮缩放 / Shift+滚轮 纵向缩放 / 双击复位。
+"""图表交互缩放（v3.8.0）— Ctrl+滚轮缩放 / Shift+滚轮 纵向缩放 / 双击复位。
 
-仅用于实时图表（普通分析图保持既有交互），纯函数 zoom_range 独立可测。
+普通滚轮留给外层页面滚动。仅用于实时图表（普通分析图保持既有交互），
+纯函数 zoom_range 独立可测。
 """
 from __future__ import annotations
 
@@ -48,8 +49,13 @@ def attach_wheel_zoom(canvas) -> None:
     def on_scroll(event):
         if event.inaxes is None:
             return
+        key = event.key or ""
+        shift = "shift" in key
+        ctrl = "control" in key or "ctrl" in key
+        # 没有修饰键时不缩放，页面滚动由 Qt 事件过滤器接管。
+        if not shift and not ctrl:
+            return
         factor = 0.85 if event.step > 0 else 1.0 / 0.85
-        shift = "shift" in (event.key or "")
         if shift:
             y_lo, y_hi = event.inaxes.get_ylim()
             span = (y_hi - y_lo) or 1.0

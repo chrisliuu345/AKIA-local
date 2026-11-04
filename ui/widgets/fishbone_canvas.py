@@ -14,12 +14,12 @@ from ui.font_config import get_ui_font
 
 
 M6_COLORS = [
-    QColor("#4da6ff"), QColor("#ff6b6b"), QColor("#51cf66"),
-    QColor("#ffa726"), QColor("#cc5de8"), QColor("#20c997"),
+    QColor("#4F73DC"), QColor("#37519A"), QColor("#8EABEA"),
+    QColor("#6E8CE2"), QColor("#B7C9F1"), QColor("#2C4A96"),
 ]
-BG_COLOR = QColor("#262632")
-TEXT_COLOR = QColor("#e1e2e6")
-MUTED_COLOR = QColor("#a0a3ae")
+BG_COLOR = QColor("#1C1C1C")
+TEXT_COLOR = QColor("#EDEDED")
+MUTED_COLOR = QColor("#B7C9F1")
 
 
 class _LabelNode(QGraphicsItem):
@@ -127,13 +127,13 @@ class _ProblemBox(QGraphicsRectItem):
         self._y = y
         w = self._fit_width()
         super().__init__(x, y - self._h / 2, w, self._h)
-        self.setBrush(QBrush(QColor("#363648")))
-        self.setPen(QPen(QColor("#4da6ff"), 2))
+        self.setBrush(QBrush(QColor("#242424")))
+        self.setPen(QPen(QColor("#4F73DC"), 2))
         self.setFlag(QGraphicsItem.ItemIsSelectable, False)
         self.setCursor(Qt.IBeamCursor)
 
         self.label = QGraphicsTextItem(self._text, self)
-        self.label.setFont(QFont(get_ui_font(), 13, QFont.Bold))
+        self.label.setFont(QFont(get_ui_font(), 13))
         self.label.setDefaultTextColor(TEXT_COLOR)
         self.label.setAcceptedMouseButtons(Qt.NoButton)
         self._place_label()
@@ -141,7 +141,7 @@ class _ProblemBox(QGraphicsRectItem):
     def _fit_width(self) -> float:
         """按文字宽度自适应框宽(最小 170)"""
         from PySide6.QtGui import QFontMetrics
-        fm = QFontMetrics(QFont(get_ui_font(), 13, QFont.Bold))
+        fm = QFontMetrics(QFont(get_ui_font(), 13))
         tw = fm.horizontalAdvance(self._text)
         return max(170.0, tw + 24)
 
@@ -482,11 +482,15 @@ class FishboneCanvas(QGraphicsView):
             self._render_children(child, gc, s, depth + 1)
 
     def wheelEvent(self, event):
-        """滚轮缩放"""
+        """Ctrl+滚轮缩放；普通滚轮交给外层页面。"""
+        if not (event.modifiers() & Qt.ControlModifier):
+            event.ignore()
+            return
         factor = 1.15 if event.angleDelta().y() > 0 else 1 / 1.15
         self.scale(factor, factor)
         self._zoom_level = self.transform().m11()
         self.zoom_changed.emit()
+        event.accept()
 
     def mousePressEvent(self, event):
         if event.button() in (Qt.MiddleButton, Qt.RightButton):

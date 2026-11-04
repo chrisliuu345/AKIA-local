@@ -38,8 +38,8 @@ TILE_GAP = 12
 ROW_GAP = 8
 # 旧首页逻辑高度是 64。加大后仍低于字标原图高度（约 532px），只做缩小。
 LOGO_HEIGHT = 96
-GLOW_RADIUS = 280
-GLOW_ALPHA = 28
+GLOW_RADIUS = 640
+GLOW_ALPHA = 56
 PRIMARY_MIN_HEIGHT = 88
 SECONDARY_MIN_HEIGHT = 72
 RECENT_ROW_MIN_HEIGHT = 48
@@ -48,7 +48,7 @@ ACTION_RADIUS = 10
 RECENT_RADIUS = 8
 PATH_MAX_WIDTH = 420
 RECENT_LIMIT = 5
-PRIMARY_HINT_COLOR = "#d6e8fa"
+PRIMARY_HINT_COLOR = "#5C5C5C"
 MIN_PAGE_SIZE = QSize(640, 480)
 
 _WORDMARK_CANDIDATES = (
@@ -138,7 +138,7 @@ class _ClickableCard(QFrame):
             return
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        pen = QPen(QColor(theme_colors()["accent_bright"]))
+        pen = QPen(QColor(theme_colors()["accent_dark"]))
         pen.setWidth(2)
         painter.setPen(pen)
         painter.setBrush(Qt.NoBrush)
@@ -166,6 +166,7 @@ class _WelcomeAction(_ClickableCard):
         else:
             self.setMinimumHeight(PRIMARY_MIN_HEIGHT)
             title_size, desc_size = 15, 12
+        # 按钮和卡片标题不再加粗，小号黑体容易糊成一块。
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 14, 16, 14)
@@ -173,7 +174,7 @@ class _WelcomeAction(_ClickableCard):
         layout.addStretch(1)
 
         self._title = QLabel()
-        self._title.setFont(_font(title_size, bold=True))
+        self._title.setFont(_font(title_size))
         self._title.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self._title.setWordWrap(True)
         self._title.setAttribute(Qt.WA_TransparentForMouseEvents, True)
@@ -198,22 +199,22 @@ class _WelcomeAction(_ClickableCard):
     def _colors(self) -> tuple[str, str, str, str]:
         tc = theme_colors()
         if self._kind == "solid":
-            bg, border = tc["accent"], tc["accent"]
-            title, desc = "#ffffff", PRIMARY_HINT_COLOR
+            bg, border = "#E8E8E8", "#E8E8E8"
+            title, desc = "#171717", PRIMARY_HINT_COLOR
             if self._pressed:
-                bg, border = tc["accent_dark"], tc["accent_dark"]
+                bg, border = "#D0D0D0", "#D0D0D0"
             return bg, border, title, desc
         title, desc = tc["text_primary"], tc["text_secondary"]
         if self._kind == "outline":
-            bg, border = tc["bg_card"], tc["accent_bright"]
+            bg, border = tc["bg_card"], tc["border"]
             if self._pressed:
                 bg = tc["bg_active"]
             return bg, border, title, desc
         bg, border = tc["bg_card"], tc["border"]
         if self._pressed:
-            bg, border = tc["bg_active"], tc["accent_bright"]
+            bg, border = tc["bg_active"], "#5C5C5C"
         elif self._hover:
-            bg, border = tc["bg_hover"], tc["accent_bright"]
+            bg, border = tc["bg_hover"], "#5C5C5C"
         return bg, border, title, desc
 
     def _apply_chrome(self):
@@ -265,9 +266,9 @@ class _RecentRow(_ClickableCard):
         tc = theme_colors()
         bg, border = tc["bg_card"], tc["border"]
         if self._pressed:
-            bg, border = tc["bg_active"], tc["accent_bright"]
+            bg, border = tc["bg_active"], "#5C5C5C"
         elif self._hover:
-            bg, border = tc["bg_hover"], tc["accent_bright"]
+            bg, border = tc["bg_hover"], "#5C5C5C"
         self.setStyleSheet(
             "QFrame#welcomeRecentRow {"
             f"background-color: {bg};"
@@ -395,7 +396,7 @@ class WelcomePage(QWidget):
 
     def _make_heading(self, key: str, size: int, color_key: str) -> QLabel:
         label = QLabel()
-        label.setFont(_font(size, bold=True))
+        label.setFont(_font(size))
         label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         tc = theme_colors()
         label.setStyleSheet(f"color: {tc[color_key]}; background: transparent; border: none;")
@@ -584,12 +585,13 @@ class WelcomePage(QWidget):
 
         center = self._wordmark_center()
         glow = QRadialGradient(center, float(GLOW_RADIUS))
-        core = QColor(tc["accent"])
-        core.setAlpha(GLOW_ALPHA)
-        edge = QColor(tc["accent"])
-        edge.setAlpha(0)
-        glow.setColorAt(0.0, core)
-        glow.setColorAt(1.0, edge)
+        # 多段停靠把白光慢慢收掉，避免小半径上出现一圈硬边。
+        for stop, alpha in (
+            (0.0, GLOW_ALPHA), (0.18, 40), (0.40, 22), (0.62, 10), (0.84, 3), (1.0, 0),
+        ):
+            color = QColor("#FFFFFF")
+            color.setAlpha(alpha)
+            glow.setColorAt(stop, color)
         painter.fillRect(self.rect(), glow)
         painter.end()
         super().paintEvent(event)

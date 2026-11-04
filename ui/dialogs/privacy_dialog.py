@@ -33,7 +33,7 @@ class CloudPrivacyDialog(QDialog):
         layout.setSpacing(10)
 
         title = QLabel("即将调用云 API，请确认外发内容")
-        title.setFont(QFont(get_ui_font(), 14, QFont.Bold))
+        title.setFont(QFont(get_ui_font(), 14))
         title.setStyleSheet(f"color: {tc['text_primary']};")
         layout.addWidget(title)
 
@@ -87,7 +87,7 @@ class CloudPrivacyDialog(QDialog):
         ok_btn.setDefault(True)
         ok_btn.setStyleSheet(
             f"QPushButton {{ background: {tc['accent']}; color: white; border: none;"
-            f"border-radius: 6px; padding: 6px 20px; font-weight: bold; }}"
+            f"border-radius: 6px; padding: 6px 20px;  }}"
             f"QPushButton:hover {{ background: {tc['accent_bright']}; }}")
         ok_btn.clicked.connect(self._choose_cloud)
         row.addWidget(ok_btn)

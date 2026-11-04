@@ -94,8 +94,8 @@ def test_markdown_renderer_features():
     html_text = md_to_html("### 标题\n**加粗** 与 `code`\n- 项目 A\n1. 步骤\n"
                            "```\nprint(1)\n```\n<script>alert(1)</script>")
     assert "<b>加粗</b>" in html_text
-    assert "background:#35354a" in html_text                # 行内代码
-    assert "color:#4da6ff;font-weight:bold" in html_text    # 标题
+    assert "background:#242424" in html_text                # 行内代码
+    assert "color:#EDEDED;" in html_text    # 标题
     assert "• 项目 A" in html_text
     assert "<pre" in html_text
     assert "&lt;script&gt;" in html_text                    # HTML 转义（防注入）

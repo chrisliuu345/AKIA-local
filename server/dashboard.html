@@ -7,12 +7,12 @@
 <style>
 /* 设计令牌与桌面端 ui/theme.py 对齐（bg_card/border/accent/状态色） */
 :root{
-  --bg-body:#181822; --bg-header:#13131c; --bg-card:#262632; --bg-card-2:#2c2c38;
-  --bg-inset:#1e1e28; --bg-hover:#363648;
-  --border:#3a3a48; --border-light:#2a2a36;
-  --text:#e1e2e6; --text-2:#a0a3ae; --text-3:#7b7f8c;
-  --accent:#1b5faa; --accent-bright:#4da6ff; --accent-dark:#14508a;
-  --ok:#27ae60; --warn:#ffa726; --bad:#e74c3c; --spec:#c2185b;
+  --bg-body:#141414; --bg-header:#181818; --bg-card:#1C1C1C; --bg-card-2:#222222;
+  --bg-inset:#141414; --bg-hover:#242424;
+  --border:#333333; --border-light:#2A2A2A;
+  --text:#EDEDED; --text-2:#A3A3A3; --text-3:#737373;
+  --accent:#4F73DC; --accent-bright:#8EABEA; --accent-dark:#37519A;
+  --ok:#3E9B68; --warn:#C4922A; --bad:#E00000; --spec:#9A3A62;
   --radius:10px; --shadow:0 2px 12px rgba(0,0,0,.35);
   --fs:15px; --fs-chart:12px;
 }
@@ -37,10 +37,10 @@ button{font-family:inherit;font-size:calc(var(--fs) - 2px);cursor:pointer}
 .brand{display:flex; align-items:center; gap:12px; min-width:280px}
 .logo-dot{
   width:14px; height:14px; border-radius:50%; background:var(--ok); flex:0 0 auto;
-  box-shadow:0 0 0 4px rgba(39,174,96,.18);
+  box-shadow:0 0 0 4px rgba(62,155,104,.18);
 }
-.logo-dot.offline{background:var(--bad); box-shadow:0 0 0 4px rgba(231,76,60,.18)}
-.brand-title{font-size:calc(var(--fs) + 4px); font-weight:700; letter-spacing:.4px}
+.logo-dot.offline{background:var(--bad); box-shadow:0 0 0 4px rgba(224,0,0,.18)}
+.brand-title{font-size:calc(var(--fs) + 4px); font-weight:500; letter-spacing:.4px}
 .brand-sub{font-size:calc(var(--fs) - 3px); color:var(--text-3); letter-spacing:.3px}
 .kpis{display:flex; gap:10px; flex-wrap:wrap; margin-left:auto}
 .kpi{
@@ -61,10 +61,10 @@ button{font-family:inherit;font-size:calc(var(--fs) - 2px);cursor:pointer}
 .fs-group{display:flex; gap:6px; align-items:center}
 .icon-btn{
   background:var(--bg-card); color:var(--text-2); border:1px solid var(--border);
-  border-radius:8px; padding:6px 11px; font-weight:700; line-height:1;
+  border-radius:8px; padding:6px 11px; font-weight:500; line-height:1;
 }
-.icon-btn:hover{background:var(--bg-hover); color:var(--text); border-color:var(--accent-bright)}
-.icon-btn.on{background:var(--accent); border-color:var(--accent); color:#fff}
+.icon-btn:hover{background:var(--bg-hover); color:var(--text); border-color:#5C5C5C}
+.icon-btn.on{background:#2A2A2A; border-color:#3A3A3A; color:#EDEDED}
 
 /* ---------- 布局 ---------- */
 main{padding:18px 22px 40px; display:flex; flex-direction:column; gap:18px}
@@ -78,7 +78,7 @@ main{padding:18px 22px 40px; display:flex; flex-direction:column; gap:18px}
 }
 .panel-head h2::before{
   content:""; position:absolute; left:0; top:3px; bottom:3px; width:4px;
-  border-radius:2px; background:var(--accent-bright);
+  border-radius:2px; background:#5C5C5C;
 }
 .panel-sub{font-size:calc(var(--fs) - 3px); color:var(--text-3)}
 .hint{margin-left:auto; font-size:calc(var(--fs) - 4px); color:var(--text-3)}
@@ -116,7 +116,7 @@ main{padding:18px 22px 40px; display:flex; flex-direction:column; gap:18px}
 .spec-chips{display:flex; flex-wrap:wrap; gap:6px}
 .spec-chip{
   font-size:calc(var(--fs) - 4px); padding:2px 8px; border-radius:6px;
-  background:rgba(194,24,91,.14); color:#f4a3c0; border:1px solid rgba(194,24,91,.45);
+  background:rgba(154,58,98,.14); color:#f4a3c0; border:1px solid rgba(154,58,98,.45);
 }
 .down-row{display:flex; align-items:center; gap:6px; flex-wrap:wrap}
 .down-row select{
@@ -124,11 +124,11 @@ main{padding:18px 22px 40px; display:flex; flex-direction:column; gap:18px}
   border-radius:6px; padding:3px 6px; font-size:calc(var(--fs) - 4px); max-width:110px;
 }
 .down-row button{
-  background:var(--accent); color:#fff; border:none; border-radius:6px;
+  background:#E8E8E8; color:#171717; border:none; border-radius:9px;
   padding:4px 10px; font-size:calc(var(--fs) - 4px);
 }
 .down-row button.ghost{background:transparent; color:var(--text-2); border:1px solid var(--border)}
-.down-row button:hover{background:var(--accent-bright)}
+.down-row button:hover{background:#F4F4F4}
 
 /* ---------- OEE / 成本 ---------- */
 .oee-grid,.cost-grid{
@@ -138,11 +138,11 @@ main{padding:18px 22px 40px; display:flex; flex-direction:column; gap:18px}
   background:var(--bg-inset); border:1px solid var(--border-light);
   border-radius:var(--radius); padding:14px 16px;
 }
-.metric-card.down{border-color:rgba(231,76,60,.55)}
+.metric-card.down{border-color:rgba(224,0,0,.55)}
 .metric-head{display:flex; align-items:baseline; gap:10px; margin-bottom:10px}
 .metric-name{font-size:calc(var(--fs) + 1px); font-weight:700}
 .metric-tag{margin-left:auto; font-size:calc(var(--fs) - 4px); color:var(--text-3)}
-.oee-value{font-size:calc(var(--fs) + 15px); font-weight:700; line-height:1.1}
+.oee-value{font-size:calc(var(--fs) + 15px); font-weight:500; line-height:1.1}
 .oee-value.good{color:var(--ok)}
 .oee-value.warn{color:var(--warn)}
 .oee-value.bad{color:var(--bad)}
@@ -151,7 +151,7 @@ main{padding:18px 22px 40px; display:flex; flex-direction:column; gap:18px}
 .bar-label{font-size:calc(var(--fs) - 3px); color:var(--text-2)}
 .bar{height:10px; background:var(--bg-card-2); border-radius:6px; overflow:hidden}
 .bar > i{display:block; height:100%; border-radius:6px; background:var(--accent-bright)}
-.bar.a > i{background:#4da6ff}
+.bar.a > i{background:#4F73DC}
 .bar.p > i{background:#8e7cff}
 .bar.q > i{background:var(--ok)}
 .bar-val{font-size:calc(var(--fs) - 2px); text-align:right; color:var(--text)}
@@ -170,12 +170,12 @@ main{padding:18px 22px 40px; display:flex; flex-direction:column; gap:18px}
   background:var(--bg-inset); border:1px solid var(--border-light);
   border-radius:var(--radius); padding:12px 14px 8px; position:relative;
 }
-.chart-card.oos{border-color:rgba(231,76,60,.55)}
+.chart-card.oos{border-color:rgba(224,0,0,.55)}
 .chart-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px}
 .chart-dev{font-size:calc(var(--fs) - 1px); font-weight:700}
 .chart-path{font-size:calc(var(--fs) - 4px); color:var(--text-3)}
 .chart-value{
-  margin-left:auto; font-size:calc(var(--fs) + 4px); font-weight:700; color:var(--accent-bright);
+  margin-left:auto; font-size:calc(var(--fs) + 4px); font-weight:500; color:#EDEDED;
 }
 .chart-value.oos{color:var(--bad)}
 .chart-badges{display:flex; gap:6px; flex-wrap:wrap; width:100%}
@@ -183,7 +183,7 @@ main{padding:18px 22px 40px; display:flex; flex-direction:column; gap:18px}
   font-size:calc(var(--fs) - 4px); padding:2px 8px; border-radius:6px;
   background:var(--bg-card-2); color:var(--text-2); border:1px solid var(--border);
 }
-.badge.spec{background:rgba(194,24,91,.14); color:#f4a3c0; border-color:rgba(194,24,91,.45)}
+.badge.spec{background:rgba(154,58,98,.14); color:#f4a3c0; border-color:rgba(154,58,98,.45)}
 .badge.zoom{background:rgba(77,166,255,.14); color:#9ccdff; border-color:rgba(77,166,255,.4)}
 .canvas-wrap{position:relative}
 canvas{display:block; width:100%; height:190px; background:var(--bg-body);
@@ -374,14 +374,14 @@ function yRange(c, i0, i1) {
 function draw(c) {
   const ctx = c.ctx, box = plotBox(c);
   ctx.clearRect(0, 0, c.w, c.h);
-  ctx.fillStyle = "#181822";
+  ctx.fillStyle = "#141414";
   ctx.fillRect(0, 0, c.w, c.h);
   ctx.font = fontPx(11) + 'px "Microsoft YaHei",sans-serif';
   ctx.textBaseline = "middle";
 
   const n = c.pts.length;
   if (!n) {
-    ctx.fillStyle = "#7b7f8c";
+    ctx.fillStyle = "#737373";
     ctx.font = fontPx(13) + 'px "Microsoft YaHei",sans-serif';
     ctx.textAlign = "center";
     ctx.fillText("等待数据…", c.w / 2, c.h / 2);
@@ -397,7 +397,7 @@ function draw(c) {
 
   /* 网格与 Y 轴刻度 */
   ctx.textAlign = "right";
-  ctx.strokeStyle = "#2a2a36";
+  ctx.strokeStyle = "#2A2A2A";
   ctx.lineWidth = 1;
   for (let t = 0; t <= 4; t++) {
     const value = lo + (span * t) / 4;
@@ -406,7 +406,7 @@ function draw(c) {
     ctx.moveTo(box.x0, y);
     ctx.lineTo(box.x1, y);
     ctx.stroke();
-    ctx.fillStyle = "#7b7f8c";
+    ctx.fillStyle = "#737373";
     ctx.fillText(value.toFixed(Math.abs(span) < 10 ? 2 : 1), box.x0 - 8, y);
   }
 
@@ -416,16 +416,16 @@ function draw(c) {
 
   /* 规格带（超限区域淡红）+ 规格线 */
   if (usl !== null && usl < hi) {
-    ctx.fillStyle = "rgba(231,76,60,.07)";
+    ctx.fillStyle = "rgba(224,0,0,.07)";
     ctx.fillRect(box.x0, box.y0, box.w, Math.max(0, Y(usl) - box.y0));
   }
   if (lsl !== null && lsl > lo) {
-    ctx.fillStyle = "rgba(231,76,60,.07)";
+    ctx.fillStyle = "rgba(224,0,0,.07)";
     ctx.fillRect(box.x0, Y(lsl), box.w, Math.max(0, box.y1 - Y(lsl)));
   }
   ctx.setLineDash([5, 4]);
   ctx.lineWidth = 1.4;
-  ctx.strokeStyle = "#c2185b";
+  ctx.strokeStyle = "#9A3A62";
   [[usl, "USL"], [lsl, "LSL"]].forEach(([value, label]) => {
     if (value === null) return;
     const y = Y(value);
@@ -438,7 +438,7 @@ function draw(c) {
     ctx.font = fontPx(11) + 'px "Microsoft YaHei",sans-serif';
     const tw = ctx.measureText(text).width + 10;
     ctx.setLineDash([]);
-    ctx.fillStyle = "rgba(194,24,91,.86)";
+    ctx.fillStyle = "rgba(154,58,98,.86)";
     ctx.fillRect(box.x1 - tw, y - 9, tw, 18);
     ctx.fillStyle = "#fff";
     ctx.textAlign = "center";
@@ -457,7 +457,7 @@ function draw(c) {
     const x = X(i0 + k), y = Y(p.v);
     if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
   });
-  ctx.strokeStyle = "#4da6ff";
+  ctx.strokeStyle = "#4F73DC";
   ctx.lineWidth = 2;
   ctx.lineJoin = "round";
   ctx.stroke();
@@ -472,7 +472,7 @@ function draw(c) {
     if (!isOos(c.spec, p.v)) return;
     const x = X(i0 + k), y = Y(p.v);
     ctx.beginPath();
-    ctx.fillStyle = "#e74c3c";
+    ctx.fillStyle = "#E00000";
     ctx.arc(x, y, 4.2, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = "rgba(255,255,255,.85)";
@@ -483,7 +483,7 @@ function draw(c) {
   if (i1 >= n - 1) {
     const lx = X(n - 1), ly = Y(lastP.v);
     ctx.beginPath();
-    ctx.fillStyle = isOos(c.spec, lastP.v) ? "#e74c3c" : "#4da6ff";
+    ctx.fillStyle = isOos(c.spec, lastP.v) ? "#E00000" : "#4F73DC";
     ctx.arc(lx, ly, 4.6, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = "rgba(77,166,255,.35)";
@@ -503,14 +503,14 @@ function draw(c) {
   }
 
   /* X 轴时间刻度 */
-  ctx.fillStyle = "#7b7f8c";
+  ctx.fillStyle = "#737373";
   ctx.textAlign = "left";
   ctx.fillText(clock(c.pts[i0].t), box.x0, box.y1 + 14);
   if (i1 > i0) {
     ctx.textAlign = "right";
     ctx.fillText(clock(c.pts[i1].t), box.x1, box.y1 + 14);
   }
-  ctx.strokeStyle = "#3a3a48";
+  ctx.strokeStyle = "#333333";
   ctx.beginPath();
   ctx.moveTo(box.x0, box.y1 + 0.5);
   ctx.lineTo(box.x1, box.y1 + 0.5);
@@ -587,7 +587,7 @@ function updateChartHeader(c) {
     bits.push("<span class='badge'>未配置规格限</span>");
   }
   bits.push("<span class='badge'>窗口 " + window.length + " 点</span>");
-  if (oosCount) bits.push("<span class='badge' style='color:#e74c3c'>超规格 " + oosCount + "</span>");
+  if (oosCount) bits.push("<span class='badge' style='color:#E00000'>超规格 " + oosCount + "</span>");
   if (c.zoomed) bits.push("<span class='badge zoom'>缩放中 · 双击复位</span>");
   badges.innerHTML = bits.join("");
 }
@@ -870,7 +870,7 @@ function updateKpis() {
   const scope = window.__oeeScope || { total: 0, counted: 0 };
   let oee = window.__oeeAvg === undefined ? "—" : pct(window.__oeeAvg);
   if (scope.total && scope.counted < scope.total) {
-    oee += "<span style='font-size:calc(var(--fs) - 3px);color:#7b7f8c'> (" + scope.counted +
+    oee += "<span style='font-size:calc(var(--fs) - 3px);color:#737373'> (" + scope.counted +
            "/" + scope.total + " 班次内)</span>";
   }
   const cost = window.__costTotal === undefined ? "—" : fmt(window.__costTotal, 2);

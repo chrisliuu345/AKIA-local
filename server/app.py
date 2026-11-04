@@ -21,6 +21,8 @@ from core.storage.timeseries import TimeseriesStore, default_store_path
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
 LOOPBACK_HOSTS = ("127.0.0.1", "localhost", "::1")
+# SQLite 把 LIMIT 负数当成「不限制」。接口上再收一层，避免一次拉完整库。
+_HISTORY_LIMIT_MAX = 5000
 
 _STATIC = Path(__file__).parent / "dashboard.html"
 
@@ -93,6 +95,7 @@ def create_app(bus: StreamBus, store: TimeseriesStore | None = None,
                       since: float | None = None, limit: int = 500,
                       agg: str | None = None):
         """历史查询 — agg=1m 时返回分钟降采样（v3.8.0-⑥），否则原始点。"""
+        limit = min(max(int(limit), 1), _HISTORY_LIMIT_MAX)
         if agg in ("1m", "1min", "minute") and store is not None:
             points = store.query_rollup(device, channel, since_ts=since, limit=limit)
             if points:

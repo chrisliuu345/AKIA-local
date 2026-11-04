@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from ui.widgets.chart_canvas import ChartCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
@@ -43,7 +43,7 @@ class SummaryPanelTab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel("统计摘要面板")
-        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
@@ -137,7 +137,7 @@ class SummaryPanelTab(BaseAnalysisTab):
                 edgecolor="white",
                 linewidth=0.3,
             )
-            ax_hist.axvline(np.mean(vals), color="#ff6b6b", linestyle="--", linewidth=1)
+            ax_hist.axvline(np.mean(vals), color="#E00000", linestyle="--", linewidth=1)
             ax_hist.set_title(
                 col, fontsize=9, fontweight="bold", color=tc["text_primary"]
             )
@@ -185,7 +185,7 @@ class SummaryPanelTab(BaseAnalysisTab):
             left=0.04, right=0.97, top=0.93, bottom=0.04, wspace=0.25, hspace=0.4
         )
 
-        canvas = FigureCanvasQTAgg(fig)
+        canvas = ChartCanvas(fig)
         self.chart_layout.addWidget(canvas)
         self.canvas = canvas
         self.current_figure = fig

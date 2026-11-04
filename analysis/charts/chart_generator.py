@@ -25,12 +25,12 @@ from config.settings import (
     get_effective,
 )
 
-# 命名调色板（UI 下拉保留原名；全部取自统一色盲友好序列的组合）
+# 命名调色板。分类色来自蓝色阶；暖色调、自然色只在需要和状态区分时保留压暗的绿/红/琥珀。
 _CHART_PALETTES = {
     "专业蓝": chart_style.palette(),
-    "暖色调": ["#E69F00", "#D55E00", "#F0E442", "#CC79A7", "#0072B2"],
-    "自然色": ["#009E73", "#56B4E9", "#0072B2", "#E69F00", "#CC79A7"],
-    "质感灰": ["#6e7080", "#a0a3ae", "#5a5c6a", "#c9ccd4", "#8a8c96"],
+    "暖色调": ["#C4922A", "#E00000", "#B86A28", "#8EABEA", "#4F73DC"],
+    "自然色": ["#3E9B68", "#8EABEA", "#4F73DC", "#C4922A", "#37519A"],
+    "质感灰": ["#737373", "#B7C9F1", "#5C5C5C", "#B0B0C8", "#5C5C88"],
 }
 
 def _dpi():
@@ -723,11 +723,11 @@ def _build_acf(data: dict, options: dict) -> Figure:
 
     fig, ax = plt.subplots(figsize=(8, 4), dpi=_dpi())
     lags_x = list(range(n_lags))
-    ax.bar(lags_x, acf_vals, color="#4da6ff", width=0.6, alpha=0.8, label="ACF")
+    ax.bar(lags_x, acf_vals, color="#4F73DC", width=0.6, alpha=0.8, label="ACF")
     if conf_lower and conf_upper:
         ax.fill_between(lags_x, conf_lower[:n_lags], conf_upper[:n_lags],
-                        color="#4da6ff", alpha=0.15, label="置信区间")
-    ax.axhline(y=0, color="#e1e2e6", linewidth=0.8)
+                        color="#4F73DC", alpha=0.15, label="置信区间")
+    ax.axhline(y=0, color="#EDEDED", linewidth=0.8)
     ax.set_xlabel("滞后阶数", fontsize=FONT_SIZE_LABEL)
     ax.set_ylabel("自相关系数", fontsize=FONT_SIZE_LABEL)
     ax.set_title("ACF 自相关函数", fontsize=FONT_SIZE_TITLE)
@@ -746,11 +746,11 @@ def _build_pacf(data: dict, options: dict) -> Figure:
 
     fig, ax = plt.subplots(figsize=(8, 4), dpi=_dpi())
     lags_x = list(range(n_lags))
-    ax.bar(lags_x, pacf_vals, color="#e74c3c", width=0.6, alpha=0.8, label="PACF")
+    ax.bar(lags_x, pacf_vals, color="#8EABEA", width=0.6, alpha=0.8, label="PACF")
     if conf_lower and conf_upper:
         ax.fill_between(lags_x, conf_lower[:n_lags], conf_upper[:n_lags],
-                        color="#e74c3c", alpha=0.15, label="置信区间")
-    ax.axhline(y=0, color="#e1e2e6", linewidth=0.8)
+                        color="#8EABEA", alpha=0.15, label="置信区间")
+    ax.axhline(y=0, color="#EDEDED", linewidth=0.8)
     ax.set_xlabel("滞后阶数", fontsize=FONT_SIZE_LABEL)
     ax.set_ylabel("偏自相关系数", fontsize=FONT_SIZE_LABEL)
     ax.set_title("PACF 偏自相关函数", fontsize=FONT_SIZE_TITLE)
@@ -774,17 +774,17 @@ def _build_acf_pacf(data: dict, options: dict) -> Figure:
     n1 = len(acf_vals)
     n2 = len(pacf_vals)
 
-    ax1.bar(range(n1), acf_vals, color="#4da6ff", width=0.6, alpha=0.8)
+    ax1.bar(range(n1), acf_vals, color="#4F73DC", width=0.6, alpha=0.8)
     if acf_cl and acf_cu:
-        ax1.fill_between(range(n1), acf_cl[:n1], acf_cu[:n1], color="#4da6ff", alpha=0.15)
-    ax1.axhline(y=0, color="#e1e2e6", linewidth=0.8)
+        ax1.fill_between(range(n1), acf_cl[:n1], acf_cu[:n1], color="#4F73DC", alpha=0.15)
+    ax1.axhline(y=0, color="#EDEDED", linewidth=0.8)
     ax1.set_title("ACF", fontsize=FONT_SIZE_TITLE)
     ax1.set_xlabel("滞后阶数", fontsize=FONT_SIZE_LABEL)
 
-    ax2.bar(range(n2), pacf_vals, color="#e74c3c", width=0.6, alpha=0.8)
+    ax2.bar(range(n2), pacf_vals, color="#8EABEA", width=0.6, alpha=0.8)
     if pacf_cl and pacf_cu:
-        ax2.fill_between(range(n2), pacf_cl[:n2], pacf_cu[:n2], color="#e74c3c", alpha=0.15)
-    ax2.axhline(y=0, color="#e1e2e6", linewidth=0.8)
+        ax2.fill_between(range(n2), pacf_cl[:n2], pacf_cu[:n2], color="#8EABEA", alpha=0.15)
+    ax2.axhline(y=0, color="#EDEDED", linewidth=0.8)
     ax2.set_title("PACF", fontsize=FONT_SIZE_TITLE)
     ax2.set_xlabel("滞后阶数", fontsize=FONT_SIZE_LABEL)
 
@@ -803,16 +803,16 @@ def _build_decomposition(data: dict, options: dict) -> Figure:
 
     fig, axes = plt.subplots(3, 1, figsize=(10, 8), dpi=_dpi(), sharex=True)
 
-    axes[0].plot(x[:len(trend)], trend, color="#4da6ff", linewidth=1.2)
+    axes[0].plot(x[:len(trend)], trend, color="#4F73DC", linewidth=1.2)
     axes[0].set_title("趋势 (Trend)", fontsize=FONT_SIZE_TITLE)
     axes[0].set_ylabel("趋势分量", fontsize=FONT_SIZE_LABEL)
 
-    axes[1].plot(x[:len(seasonal)], seasonal, color="#27ae60", linewidth=1.2)
+    axes[1].plot(x[:len(seasonal)], seasonal, color="#8EABEA", linewidth=1.2)
     axes[1].set_title("季节 (Seasonal)", fontsize=FONT_SIZE_TITLE)
     axes[1].set_ylabel("季节分量", fontsize=FONT_SIZE_LABEL)
 
-    axes[2].plot(x[:len(residual)], residual, color="#e74c3c", linewidth=0.8, alpha=0.7)
-    axes[2].axhline(y=0, color="#e1e2e6", linewidth=0.6)
+    axes[2].plot(x[:len(residual)], residual, color="#E00000", linewidth=0.8, alpha=0.7)
+    axes[2].axhline(y=0, color="#EDEDED", linewidth=0.6)
     axes[2].set_title("残差 (Residual)", fontsize=FONT_SIZE_TITLE)
     axes[2].set_ylabel("残差分量", fontsize=FONT_SIZE_LABEL)
     axes[2].set_xlabel("时间步", fontsize=FONT_SIZE_LABEL)
@@ -834,12 +834,12 @@ def _build_forecast(data: dict, options: dict) -> Figure:
     x_fc = list(range(n_hist, n_hist + n_fc))
 
     fig, ax = plt.subplots(figsize=(10, 5), dpi=_dpi())
-    ax.plot(x_hist, historical, color="#4da6ff", linewidth=1.2, label="历史数据")
+    ax.plot(x_hist, historical, color="#4F73DC", linewidth=1.2, label="历史数据")
     if forecast:
-        ax.plot(x_fc, forecast, color="#e74c3c", linewidth=1.5, linestyle="--", label="预测值")
+        ax.plot(x_fc, forecast, color="#8EABEA", linewidth=1.5, linestyle="--", label="预测值")
     if conf_lower and conf_upper:
-        ax.fill_between(x_fc, conf_lower, conf_upper, color="#e74c3c", alpha=0.15, label="置信区间")
-    ax.axvline(x=n_hist - 0.5, color="#ffa726", linewidth=0.8, linestyle=":", alpha=0.7)
+        ax.fill_between(x_fc, conf_lower, conf_upper, color="#8EABEA", alpha=0.15, label="置信区间")
+    ax.axvline(x=n_hist - 0.5, color="#C4922A", linewidth=0.8, linestyle=":", alpha=0.7)
     ax.legend(fontsize=FONT_SIZE_TICK)
     ax.set_xlabel("时间步", fontsize=FONT_SIZE_LABEL)
     ax.set_ylabel("值", fontsize=FONT_SIZE_LABEL)
@@ -858,10 +858,10 @@ def _build_qq(data: dict, options: dict) -> Figure:
         return fig
 
     fig, ax = plt.subplots(figsize=(6, 6), dpi=_dpi())
-    ax.scatter(theoretical, sample, s=8, alpha=0.6, color="#4da6ff", label="残差分位数")
+    ax.scatter(theoretical, sample, s=8, alpha=0.6, color="#4F73DC", label="残差分位数")
     mn = min(*theoretical, *sample)
     mx = max(*theoretical, *sample)
-    ax.plot([mn, mx], [mn, mx], color="#e74c3c", linewidth=1.2, linestyle="--", label="参考线")
+    ax.plot([mn, mx], [mn, mx], color="#C4922A", linewidth=1.2, linestyle="--", label="参考线")
     ax.set_xlabel("理论分位数", fontsize=FONT_SIZE_LABEL)
     ax.set_ylabel("样本分位数", fontsize=FONT_SIZE_LABEL)
     ax.set_title("Q-Q 正态概率图", fontsize=FONT_SIZE_TITLE)
@@ -879,19 +879,19 @@ def _build_resid_acf_pacf(data: dict, options: dict) -> Figure:
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 4), dpi=_dpi())
 
-    ax1.bar(range(n1), resid_acf, color="#4da6ff", width=0.6, alpha=0.8)
-    ax1.axhline(y=0, color="#e1e2e6", linewidth=0.8)
+    ax1.bar(range(n1), resid_acf, color="#4F73DC", width=0.6, alpha=0.8)
+    ax1.axhline(y=0, color="#EDEDED", linewidth=0.8)
     ci = 1.96 / np.sqrt(n1) if n1 > 1 else 0.2
-    ax1.axhline(y=ci, color="#ffa726", linewidth=0.6, linestyle="--", alpha=0.5)
-    ax1.axhline(y=-ci, color="#ffa726", linewidth=0.6, linestyle="--", alpha=0.5)
+    ax1.axhline(y=ci, color="#C4922A", linewidth=0.6, linestyle="--", alpha=0.5)
+    ax1.axhline(y=-ci, color="#C4922A", linewidth=0.6, linestyle="--", alpha=0.5)
     ax1.set_title("残差 ACF", fontsize=FONT_SIZE_TITLE)
     ax1.set_xlabel("滞后阶数", fontsize=FONT_SIZE_LABEL)
 
-    ax2.bar(range(n2), resid_pacf, color="#e74c3c", width=0.6, alpha=0.8)
-    ax2.axhline(y=0, color="#e1e2e6", linewidth=0.8)
+    ax2.bar(range(n2), resid_pacf, color="#8EABEA", width=0.6, alpha=0.8)
+    ax2.axhline(y=0, color="#EDEDED", linewidth=0.8)
     ci2 = 1.96 / np.sqrt(n2) if n2 > 1 else 0.2
-    ax2.axhline(y=ci2, color="#ffa726", linewidth=0.6, linestyle="--", alpha=0.5)
-    ax2.axhline(y=-ci2, color="#ffa726", linewidth=0.6, linestyle="--", alpha=0.5)
+    ax2.axhline(y=ci2, color="#C4922A", linewidth=0.6, linestyle="--", alpha=0.5)
+    ax2.axhline(y=-ci2, color="#C4922A", linewidth=0.6, linestyle="--", alpha=0.5)
     ax2.set_title("残差 PACF", fontsize=FONT_SIZE_TITLE)
     ax2.set_xlabel("滞后阶数", fontsize=FONT_SIZE_LABEL)
 
@@ -910,9 +910,9 @@ def _build_km_curve(data: dict, options: dict) -> Figure:
     fig, ax = plt.subplots(figsize=(10, 5), dpi=_dpi())
 
     if timeline and sf:
-        ax.step(timeline, sf, where="post", color="#4da6ff", linewidth=1.5, label=label)
+        ax.step(timeline, sf, where="post", color="#4F73DC", linewidth=1.5, label=label)
         if ci_lower and ci_upper and len(ci_lower) == len(timeline):
-            ax.fill_between(timeline, ci_lower, ci_upper, alpha=0.15, color="#4da6ff",
+            ax.fill_between(timeline, ci_lower, ci_upper, alpha=0.15, color="#4F73DC",
                             step="post", label="置信区间")
 
     ax.set_xlabel("时间", fontsize=FONT_SIZE_LABEL)
@@ -928,7 +928,7 @@ def _build_km_compare(data: dict, options: dict) -> Figure:
     """双组 Kaplan-Meier 生存曲线对比"""
     fig, ax = plt.subplots(figsize=(10, 5), dpi=_dpi())
 
-    for key, color, lbl in [("group_a", "#4da6ff", "A"), ("group_b", "#e74c3c", "B")]:
+    for key, color, lbl in [("group_a", "#4F73DC", "A"), ("group_b", "#8EABEA", "B")]:
         group = data.get(key, {})
         t = group.get("timeline", [])
         sf = group.get("survival_function", [])
@@ -944,7 +944,7 @@ def _build_km_compare(data: dict, options: dict) -> Figure:
     if p_val is not None:
         sig = "显著" if p_val < 0.05 else "不显著"
         ax.text(0.02, 0.02, f"Log-rank p={p_val:.4f} ({sig})",
-                transform=ax.transAxes, fontsize=10, color="#e1e2e6")
+                transform=ax.transAxes, fontsize=10, color="#EDEDED")
 
     ax.set_xlabel("时间", fontsize=FONT_SIZE_LABEL)
     ax.set_ylabel("生存概率 S(t)", fontsize=FONT_SIZE_LABEL)
@@ -969,21 +969,21 @@ def _build_rbd(data: dict, options: dict) -> Figure:
     for i, comp in enumerate(components):
         r = comp.get("reliability", 0)
         name = comp.get("name", f"C{i+1}")
-        color = "#27ae60" if r > 0.95 else "#ffa726" if r > 0.8 else "#e74c3c"
+        color = "#3E9B68" if r > 0.95 else "#C4922A" if r > 0.8 else "#E00000"
 
         rect = plt.Rectangle((i + 0.1, 0.3), 0.8, 1.0, facecolor=color, alpha=0.3,
                               edgecolor=color, linewidth=1.5)
         ax.add_patch(rect)
-        ax.text(i + 0.5, 1.0, name, ha="center", va="center", fontsize=10, color="#e1e2e6")
-        ax.text(i + 0.5, 0.6, f"R={r:.3f}", ha="center", va="center", fontsize=9, color="#a0a3ae")
+        ax.text(i + 0.5, 1.0, name, ha="center", va="center", fontsize=10, color="#EDEDED")
+        ax.text(i + 0.5, 0.6, f"R={r:.3f}", ha="center", va="center", fontsize=9, color="#B7C9F1")
 
         if i < len(components) - 1:
             ax.annotate("", xy=(i + 1.1, 0.8), xytext=(i + 0.9, 0.8),
-                        arrowprops={"arrowstyle": "->", "color": "#e1e2e6", "lw": 1.5})
+                        arrowprops={"arrowstyle": "->", "color": "#EDEDED", "lw": 1.5})
 
     ax.text(0.5, -0.3, f"结构: {structure}  |  系统 R = {sys_r:.4f}",
-            transform=ax.transAxes, fontsize=11, color="#e1e2e6",
-            bbox={"boxstyle": "round,pad=0.3", "facecolor": "#262632", "edgecolor": "#3a3a48"})
+            transform=ax.transAxes, fontsize=11, color="#EDEDED",
+            bbox={"boxstyle": "round,pad=0.3", "facecolor": "#1C1C1C", "edgecolor": "#333333"})
 
     fig.tight_layout()
     return fig
@@ -1005,17 +1005,17 @@ def _build_warranty_cost(data: dict, options: dict) -> Figure:
 
     sizes = [r_warranty, failure_prob]
     labels = [f"可靠\n{r_warranty:.1%}", f"失效\n{failure_prob:.1%}"]
-    colors = ["#27ae60", "#e74c3c"]
+    colors = ["#3E9B68", "#E00000"]
     ax1.pie(sizes, labels=labels, colors=colors, autopct="", startangle=90,
-            textprops={"fontsize": label_fontsize, "color": "#e1e2e6"})
+            textprops={"fontsize": label_fontsize, "color": "#EDEDED"})
     ax1.set_title("保修期末状态", fontsize=FONT_SIZE_TITLE)
 
     cost_fail = warranty_cost
-    ax2.bar(["可靠产品", "失效产品"], [0, cost_fail], color=["#27ae60", "#e74c3c"], alpha=0.7)
+    ax2.bar(["可靠产品", "失效产品"], [0, cost_fail], color=["#3E9B68", "#E00000"], alpha=0.7)
     ax2.set_ylabel("成本", fontsize=FONT_SIZE_LABEL)
     ax2.set_title(f"保修总成本: {warranty_cost:,.0f}", fontsize=FONT_SIZE_TITLE)
     ax2.text(1, cost_fail * 0.5, f"{expected_failures:.0f} 次失效\n× {summary.get('cost_per_failure', 0)} /次",
-             ha="center", va="center", fontsize=10, color="#e1e2e6")
+             ha="center", va="center", fontsize=10, color="#EDEDED")
 
     fig.tight_layout()
     return fig

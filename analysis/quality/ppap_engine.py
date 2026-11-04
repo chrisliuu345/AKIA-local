@@ -52,7 +52,7 @@ class PPAPItem:
 
     STATUS_COLORS: ClassVar[dict[str, str]] = {
         "pending": "#888", "in_progress": "#f1c40f",
-        "complete": "#2ecc71", "n_a": "#555"}
+        "complete": "#3E9B68", "n_a": "#555"}
 
 
 @dataclass

@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
     QComboBox,
 )
 from PySide6.QtCore import Qt
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from ui.widgets.chart_canvas import ChartCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt, matplotlib.patches as mpatches
 from ui.tabs.base_tab import BaseAnalysisTab
@@ -23,11 +23,11 @@ from ui.theme import BUTTON_PRIMARY_STRETCH, FONT_18B, FONT_10
 from ui.theme import colors as theme_colors
 
 C = {
-    "worker": "#4da6ff",
-    "idle": "#363648",
-    "machine": "#ff6b6b",
-    "walk": "#ffa726",
-    "load": "#51cf66",
+    "worker": "#4F73DC",
+    "idle": "#242424",
+    "machine": "#E00000",
+    "walk": "#C4922A",
+    "load": "#3E9B68",
 }
 PRESETS = {
     "单机单工": [(8, 5, 0), (0, 25, 0), (0, 20, 5), (5, 0, 3), (3, 2, 0), (2, 0, 0)],
@@ -223,8 +223,8 @@ class WorkerMachineTab(BaseAnalysisTab):
                     hatch="//",
                 )
             cum += wt + mt + walk
-        ax.axvline(x=takt, color="#ff6b6b", linestyle="--", linewidth=1.5)
-        ax.text(takt + 1, n - 0.3, f"Takt {takt}s", fontsize=9, color="#ff6b6b")
+        ax.axvline(x=takt, color="#E00000", linestyle="--", linewidth=1.5)
+        ax.text(takt + 1, n - 0.3, f"Takt {takt}s", fontsize=9, color="#E00000")
         ax.set_yticks([i - 0.17 for i in range(n)])
         ax.set_yticklabels(y_labels, fontsize=9)
         ax.set_xlabel("时间(秒)", fontsize=10)
@@ -242,7 +242,7 @@ class WorkerMachineTab(BaseAnalysisTab):
             loc="upper right",
         )
         fig.subplots_adjust(left=0.1, right=0.95, top=0.92, bottom=0.08)
-        canvas = FigureCanvasQTAgg(fig)
+        canvas = ChartCanvas(fig)
         self.chart_layout.addWidget(canvas)
         self.canvas = canvas
         self.current_figure = fig

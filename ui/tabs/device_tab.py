@@ -86,7 +86,7 @@ class DeviceCard(QFrame):
         icon.setStyleSheet("background: transparent;")
         top.addWidget(icon)
         name = _ElidedLabel(device.display_name)
-        name.setFont(QFont(get_ui_font(), 10, QFont.Bold))
+        name.setFont(QFont(get_ui_font(), 10))
         name.setStyleSheet(f"color: {tc['text_primary']}; background: transparent;")
         name.setToolTip(device.display_name)
         top.addWidget(name, 1)
@@ -221,7 +221,7 @@ class DeviceTab(BaseAnalysisTab):
         layout.setSpacing(10)
 
         title = QLabel(i18n.tr("device.title"))
-        title.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        title.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         title.setStyleSheet(f"color: {tc['text_primary']}; background: transparent;")
         layout.addWidget(title)
 

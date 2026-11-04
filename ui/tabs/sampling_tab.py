@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
 )
 from PySide6.QtGui import QColor
-from ui.tabs.base_tab import BaseAnalysisTab
+from ui.tabs.base_tab import BaseAnalysisTab, bubble_layout, fit_table_into_page
 from ui.theme import (
     BUTTON_PRIMARY_STRETCH,
     BUTTON_SECONDARY,
@@ -30,9 +30,39 @@ from ui.theme import colors as theme_colors
 from core.sampling_engine import SamplingEngine
 from core.sampling_plan import scope_key_for
 
+# 结果表至少能看清表头和一行，行多时再按内容加高，由页面滚动到底。
+_SAMPLING_TABLE_FLOOR = 180
+_BATCH_TIMELINE_FLOOR = 140
+
 _BATCH_METHODS = {"随机": "random", "分层": "stratified", "系统": "systematic"}
 _BATCH_STATES = {"normal": "正常", "tightened": "加严", "reduced": "放宽"}
 _BATCH_OVERRIDES = {"正常": "normal", "加严": "tightened", "放宽": "reduced"}
+
+
+class _CurrentModeStack(QStackedWidget):
+    """只按当前抽样方式计算高度。
+
+    QStackedWidget 默认取所有页里最高的一页。批检验表单很高，会把共用的
+    结果表顶到页面最底部，并且只剩下表格的最小高度，行被裁掉。
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.currentChanged.connect(self._relayout)
+
+    def _relayout(self, _index: int):
+        self.updateGeometry()
+
+    def sizeHint(self):
+        current = self.currentWidget()
+        return current.sizeHint() if current is not None else super().sizeHint()
+
+    def minimumSizeHint(self):
+        current = self.currentWidget()
+        if current is None:
+            return super().minimumSizeHint()
+        hint = current.minimumSizeHint()
+        return hint if hint.isValid() else current.sizeHint()
 
 
 class SamplingTab(BaseAnalysisTab):
@@ -89,7 +119,7 @@ class SamplingTab(BaseAnalysisTab):
         mb.addWidget(self.btn_batch)
         mb.addStretch()
         layout.addLayout(mb)
-        self.stack = QStackedWidget()
+        self.stack = _CurrentModeStack()
         self.stack.addWidget(self._aql_panel(tc))
         self.stack.addWidget(self._random_panel(tc))
         self.stack.addWidget(self._sequential_panel(tc))
@@ -100,6 +130,11 @@ class SamplingTab(BaseAnalysisTab):
         self.result = QTableWidget()
         self.result.setAlternatingRowColors(True)
         layout.addWidget(self.result, 1)
+        model = self.result.model()
+        model.rowsInserted.connect(self._fit_result_table)
+        model.rowsRemoved.connect(self._fit_result_table)
+        model.modelReset.connect(self._fit_result_table)
+        self._fit_result_table()
 
     def _switch(self, i):
         for b, j in [
@@ -112,6 +147,8 @@ class SamplingTab(BaseAnalysisTab):
         ]:
             b.setChecked(j == i)
         self.stack.setCurrentIndex(i)
+        bubble_layout(self.stack)
+        self._fit_result_table()
 
     def _aql_panel(self, tc):
         w = QWidget()
@@ -290,7 +327,7 @@ class SamplingTab(BaseAnalysisTab):
         self.btn_batch_sample.clicked.connect(self._do_batch_sample)
         outer.addWidget(self.btn_batch_sample)
         self.batch_fingerprint_label = QLabel("")
-        self.batch_fingerprint_label.setStyleSheet("color: #9aa4b2; font-size: 11px;")
+        self.batch_fingerprint_label.setStyleSheet("color: #737373; font-size: 11px;")
         outer.addWidget(self.batch_fingerprint_label)
 
         judge = QFormLayout()
@@ -334,7 +371,39 @@ class SamplingTab(BaseAnalysisTab):
         self.batch_timeline.setEditTriggers(QTableWidget.NoEditTriggers)
         self.batch_timeline.horizontalHeader().setStretchLastSection(True)
         outer.addWidget(self.batch_timeline, 1)
+        timeline_model = self.batch_timeline.model()
+        timeline_model.rowsInserted.connect(self._fit_batch_timeline)
+        timeline_model.rowsRemoved.connect(self._fit_batch_timeline)
+        self._fit_batch_timeline()
         return w
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        # 显示后表头高度才是最终值，再量一次，避免结果表停在样式应用前的矮高度。
+        self._fit_result_table()
+        if getattr(self, "batch_timeline", None) is not None:
+            self._fit_batch_timeline()
+
+    def _fit_result_table(self, *_args):
+        if getattr(self, "_fitting_result", False) or not hasattr(self, "result"):
+            return
+        self._fitting_result = True
+        try:
+            fit_table_into_page(self.result, floor=_SAMPLING_TABLE_FLOOR)
+            bubble_layout(self.result)
+        finally:
+            self._fitting_result = False
+
+    def _fit_batch_timeline(self, *_args):
+        table = getattr(self, "batch_timeline", None)
+        if table is None or getattr(self, "_fitting_timeline", False):
+            return
+        self._fitting_timeline = True
+        try:
+            fit_table_into_page(table, floor=_BATCH_TIMELINE_FLOOR)
+            bubble_layout(table)
+        finally:
+            self._fitting_timeline = False
 
     def _batch_scope(self) -> str:
         return scope_key_for(self.batch_supplier.text().strip(),
@@ -468,13 +537,13 @@ class SamplingTab(BaseAnalysisTab):
         scope = self._batch_scope()
         snapshot = manager.snapshot(scope)
         state_text = _BATCH_STATES.get(snapshot["state"], snapshot["state"])
-        color = {"normal": "#2ecc71", "tightened": "#f39c12",
-                 "reduced": "#4da6ff"}.get(snapshot["state"], "#e1e2e6")
+        color = {"normal": "#3E9B68", "tightened": "#C4922A",
+                 "reduced": "#4F73DC"}.get(snapshot["state"], "#EDEDED")
         extra = (f" · 批数 {snapshot['lots_total']}"
                  + (f" · 覆盖原因: {snapshot['override_reason']}"
                     if snapshot["override_reason"] else ""))
         self.batch_state_label.setText(
-            f"当前状态: <span style='color:{color};font-weight:bold'>"
+            f"当前状态: <span style='color:{color};'>"
             f"{state_text}</span>{extra}")
         rows = manager.timeline(scope, limit=50)
         self.batch_timeline.setRowCount(len(rows))
@@ -529,9 +598,9 @@ class SamplingTab(BaseAnalysisTab):
         for j, v in enumerate([dec, str(d), str(ins), f"{ac}/{re}"]):
             item = QTableWidgetItem(v)
             if dec == "accept":
-                item.setForeground(QColor("#27ae60"))
+                item.setForeground(QColor("#3E9B68"))
             elif dec == "reject":
-                item.setForeground(QColor("#e74c3c"))
+                item.setForeground(QColor("#E00000"))
             self.result.setItem(0, j, item)
         self.result.resizeColumnsToContents()
 
@@ -627,9 +696,9 @@ class SamplingTab(BaseAnalysisTab):
         self.result.setRowCount(1)
         item = QTableWidgetItem(dec["decision"])
         if dec["decision"] == "accept":
-            item.setForeground(QColor("#27ae60"))
+            item.setForeground(QColor("#3E9B68"))
         else:
-            item.setForeground(QColor("#e74c3c"))
+            item.setForeground(QColor("#E00000"))
         self.result.setItem(0, 0, item)
         for j, v in enumerate(
             [
@@ -700,9 +769,9 @@ class SamplingTab(BaseAnalysisTab):
         self.result.setRowCount(1)
         item = QTableWidgetItem(dec["decision"])
         if dec["decision"] == "accept":
-            item.setForeground(QColor("#27ae60"))
+            item.setForeground(QColor("#3E9B68"))
         else:
-            item.setForeground(QColor("#e74c3c"))
+            item.setForeground(QColor("#E00000"))
         self.result.setItem(0, 0, item)
         for j, v in enumerate(
             [

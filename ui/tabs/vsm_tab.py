@@ -5,22 +5,21 @@
 from typing import Any
 
 from PySide6.QtWidgets import (
-    QFrame,
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QDoubleSpinBox, QGroupBox, QFormLayout,
     QTableWidget, QTableWidgetItem, QSplitter, QHeaderView,
-    QStackedWidget, QMessageBox,
+    QMessageBox,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from ui.widgets.chart_canvas import ChartCanvas
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle, Polygon
 import matplotlib.pyplot as plt
 
 from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
-from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY, BUTTON_TOGGLE
+from ui.theme import BUTTON_PRIMARY_STRETCH
 from ui.theme import colors as theme_colors
 from ui.font_config import get_ui_font
 from core.data_objects import MaterialFlow, Process
@@ -40,7 +39,7 @@ class VSMTab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel(i18n.tr("ie.vsm.title"))
-        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
@@ -66,18 +65,13 @@ class VSMTab(BaseAnalysisTab):
         self.btn_analyze.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.btn_analyze.setCursor(Qt.PointingHandCursor)
         self.btn_analyze.setMinimumHeight(44)
-        self.btn_analyze.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.btn_analyze.setFont(QFont(get_ui_font(), 12))
         self.btn_analyze.clicked.connect(self._on_one_click_analyze)
         config_layout.addRow(self.btn_analyze)
 
         top_layout.addWidget(config_group)
 
 
-        separator = QFrame()
-        separator.setFrameShape(QFrame.VLine)
-        separator.setStyleSheet("")
-        separator.setMaximumWidth(1)
-        top_layout.addWidget(separator)
 
         preview_group = QGroupBox("数据预览")
         preview_layout = QVBoxLayout(preview_group)
@@ -96,49 +90,7 @@ class VSMTab(BaseAnalysisTab):
         bottom_layout = QVBoxLayout(bottom)
         bottom_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.result_stack = QStackedWidget()
-
-        self.chart_widget = QWidget()
-        self.chart_layout = QVBoxLayout(self.chart_widget)
-        self.chart_layout.setContentsMargins(0, 0, 0, 0)
-        self.result_stack.addWidget(self.chart_widget)
-
-        self.data_widget = QWidget()
-        data_layout = QVBoxLayout(self.data_widget)
-        data_layout.setContentsMargins(0, 0, 0, 0)
-        self.result_table = QTableWidget()
-        self.result_table.setAlternatingRowColors(True)
-        self.result_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        data_layout.addWidget(self.result_table)
-        self.result_stack.addWidget(self.data_widget)
-
-        toggle_row = QHBoxLayout()
-        toggle_row.setSpacing(8)
-        self.btn_view_chart = QPushButton(i18n.tr("tab.view_chart"))
-        self.btn_view_chart.setFont(QFont(get_ui_font(), 11))
-        self.btn_view_chart.setFixedHeight(30)
-        self.btn_view_chart.setCheckable(True)
-        self.btn_view_chart.setChecked(True)
-        self.btn_view_chart.setStyleSheet(BUTTON_TOGGLE)
-        self.btn_view_chart.clicked.connect(lambda: self._switch_result_view(0))
-        toggle_row.addWidget(self.btn_view_chart)
-        self.btn_view_data = QPushButton(i18n.tr("tab.view_data"))
-        self.btn_view_data.setFont(QFont(get_ui_font(), 11))
-        self.btn_view_data.setFixedHeight(30)
-        self.btn_view_data.setCheckable(True)
-        self.btn_view_data.setStyleSheet(BUTTON_TOGGLE)
-        self.btn_view_data.clicked.connect(lambda: self._switch_result_view(1))
-        toggle_row.addWidget(self.btn_view_data)
-        toggle_row.addStretch()
-        self.btn_save_png = QPushButton(i18n.tr("chart_tab.save_png"))
-        self.btn_save_png.setFont(QFont(get_ui_font(), 11))
-        self.btn_save_png.setFixedHeight(30)
-        self.btn_save_png.setStyleSheet(BUTTON_SECONDARY)
-        self.btn_save_png.clicked.connect(self._on_save_png)
-        toggle_row.addWidget(self.btn_save_png)
-
-        bottom_layout.addLayout(toggle_row)
-        bottom_layout.addWidget(self.result_stack, 1)
+        self.mount_results(bottom_layout, text=False, table=True, save_png=True)
 
         splitter.addWidget(bottom)
         splitter.setSizes([280, 520])
@@ -260,13 +212,13 @@ class VSMTab(BaseAnalysisTab):
         gap = ((x1 - x0) - n * box_w) / max(n - 1, 1) if n > 1 else 0
         y_box, box_h = 62, 18
 
-        box_color = "#262632"
+        box_color = "#1C1C1C"
         for i, st in enumerate(steps):
             x = x0 + i * (box_w + gap)
             over = st["process_name"] in s.get("over_takt", [])
             rect = Rectangle((x, y_box), box_w, box_h,
                              facecolor=box_color,
-                             edgecolor="#e74c3c" if over else tc["accent"],
+                             edgecolor="#E00000" if over else tc["accent"],
                              linewidth=1.6)
             ax.add_patch(rect)
             cx = x + box_w / 2
@@ -292,13 +244,13 @@ class VSMTab(BaseAnalysisTab):
                 tri_y = y_box + 1
                 ax.add_patch(Polygon(
                     [(tri_cx - 2.6, tri_y), (tri_cx + 2.6, tri_y), (tri_cx, tri_y + 6)],
-                    closed=True, facecolor="#e67e22", edgecolor="#e67e22", alpha=0.85))
+                    closed=True, facecolor="#B86A28", edgecolor="#B86A28", alpha=0.85))
                 ax.text(tri_cx, tri_y + 2, "I", ha="center", va="center",
                         fontsize=7, color="#ffffff", fontweight="bold")
                 ax.text(tri_cx, tri_y - 3.4, f"{st['inv_qty']:.0f}件",
-                        ha="center", va="center", fontsize=7.5, color="#e67e22")
+                        ha="center", va="center", fontsize=7.5, color="#B86A28")
                 ax.text(tri_cx, tri_y - 7.2, f"{st['inv_days']:.2f}天",
-                        ha="center", va="center", fontsize=7, color="#e67e22")
+                        ha="center", va="center", fontsize=7, color="#B86A28")
 
         y_lad = 26
         x_cur = x0
@@ -311,16 +263,16 @@ class VSMTab(BaseAnalysisTab):
         for st in steps:
             ax.plot([x_cur, x_cur, x_cur + va_w, x_cur + va_w],
                     [y_lad, y_lad + 5, y_lad + 5, y_lad],
-                    color="#27ae60", linewidth=1.8)
+                    color="#3E9B68", linewidth=1.8)
             ax.text(x_cur + va_w / 2, y_lad + 7, f"{st['ct']:.0f}s",
-                    ha="center", fontsize=7.5, color="#27ae60")
+                    ha="center", fontsize=7.5, color="#3E9B68")
             x_cur += va_w
             if st["inv_days"] > 0 and nva_scale > 0:
                 w = st["inv_days"] * nva_scale
                 ax.plot([x_cur, x_cur + w], [y_lad, y_lad],
-                        color="#e67e22", linewidth=2.2)
+                        color="#B86A28", linewidth=2.2)
                 ax.text(x_cur + w / 2, y_lad - 4.5, f"{st['inv_days']:.2f}天",
-                        ha="center", fontsize=7.5, color="#e67e22")
+                        ha="center", fontsize=7.5, color="#B86A28")
                 x_cur += w
 
         ax.plot([x0, x_cur], [y_lad, y_lad], color=tc["text_muted"],
@@ -329,15 +281,15 @@ class VSMTab(BaseAnalysisTab):
                 f"ΣVA {s['total_va_sec']:.0f}s\nLT {s['lead_time_days']:.2f}天",
                 va="center", fontsize=8.5, color=tc["text_primary"], fontweight="bold")
 
-        ax.plot([x0, x0 + 4], [8, 8], color="#27ae60", linewidth=1.8)
+        ax.plot([x0, x0 + 4], [8, 8], color="#3E9B68", linewidth=1.8)
         ax.text(x0 + 5, 8, "增值时间 (VA, 秒)", fontsize=8, va="center",
                 color=tc["text_secondary"])
-        ax.plot([x0 + 24, x0 + 28], [8, 8], color="#e67e22", linewidth=2.2)
+        ax.plot([x0 + 24, x0 + 28], [8, 8], color="#B86A28", linewidth=2.2)
         ax.text(x0 + 29, 8, "库存等待 (NVA, 天)", fontsize=8, va="center",
                 color=tc["text_secondary"])
 
         self.current_figure = fig
-        self.canvas = FigureCanvasQTAgg(fig)
+        self.canvas = ChartCanvas(fig)
         self.chart_layout.addWidget(self.canvas)
         self._switch_result_view(0)
 

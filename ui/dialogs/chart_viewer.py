@@ -6,9 +6,9 @@ from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QPushButton, QHBoxLayout,
 )
 from PySide6.QtCore import Qt
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from ui.theme import colors as theme_colors
+from ui.widgets.chart_canvas import ChartCanvas
 
 
 class ChartViewer(QDialog):
@@ -22,7 +22,7 @@ class ChartViewer(QDialog):
 
         layout = QVBoxLayout(self)
 
-        self.canvas = FigureCanvasQTAgg(figure)
+        self.canvas = ChartCanvas(figure)
         layout.addWidget(self.canvas, 1)
 
         btn_layout = QHBoxLayout()
@@ -33,7 +33,7 @@ class ChartViewer(QDialog):
         layout.addLayout(btn_layout)
 
 
-class MplCanvas(FigureCanvasQTAgg):
+class MplCanvas(ChartCanvas):
     """可嵌入PySide6的matplotlib画布"""
 
     def __init__(self, figure: Figure = None, parent=None):

@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from ui.widgets.chart_canvas import ChartCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
@@ -52,7 +52,7 @@ class ReliabilityTab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel(i18n.tr("reliability.title"))
-        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
@@ -107,7 +107,7 @@ class ReliabilityTab(BaseAnalysisTab):
         self.btn_analyze_w.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.btn_analyze_w.setCursor(Qt.PointingHandCursor)
         self.btn_analyze_w.setMinimumHeight(44)
-        self.btn_analyze_w.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.btn_analyze_w.setFont(QFont(get_ui_font(), 12))
         self.btn_analyze_w.clicked.connect(self._run_weibull)
         w_config_layout.addRow(self.btn_analyze_w)
 
@@ -132,7 +132,7 @@ class ReliabilityTab(BaseAnalysisTab):
         self.btn_analyze_m.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.btn_analyze_m.setCursor(Qt.PointingHandCursor)
         self.btn_analyze_m.setMinimumHeight(44)
-        self.btn_analyze_m.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.btn_analyze_m.setFont(QFont(get_ui_font(), 12))
         self.btn_analyze_m.clicked.connect(self._run_mtbf)
         m_config_layout.addRow(self.btn_analyze_m)
 
@@ -146,7 +146,7 @@ class ReliabilityTab(BaseAnalysisTab):
         for idx, key in enumerate(("beta", "eta", "b10", "b50")):
             card = QFrame()
             card.setStyleSheet(
-                "QFrame { background: #262632; border: 1px solid #2a2a36; border-radius: 8px; }")
+                "QFrame { background: #1C1C1C; border: 1px solid #2A2A2A; border-radius: 8px; }")
             card.setMinimumWidth(118)
             card_layout = QVBoxLayout(card)
             card_layout.setContentsMargins(12, 8, 12, 8)
@@ -156,7 +156,7 @@ class ReliabilityTab(BaseAnalysisTab):
             title_lbl.setAlignment(Qt.AlignCenter)
             card_layout.addWidget(title_lbl)
             val_lbl = QLabel("—")
-            val_lbl.setFont(QFont(get_ui_font(), 16, QFont.Bold))
+            val_lbl.setFont(QFont(get_ui_font(), 16, QFont.DemiBold))
             val_lbl.setStyleSheet(f"color: {tc['accent_bright']};")
             val_lbl.setAlignment(Qt.AlignCenter)
             card_layout.addWidget(val_lbl)
@@ -304,7 +304,7 @@ class ReliabilityTab(BaseAnalysisTab):
                                   max(pd_data["time"]) * 1.2, 100)
             z = (t_range - r.gamma) / r.eta
             F_theory = 100 * (1 - np.exp(-(z ** r.beta)))
-            ax1.plot(t_range, F_theory, "-", color="#ff6b6b", linewidth=1.5,
+            ax1.plot(t_range, F_theory, "-", color="#E00000", linewidth=1.5,
                      label=f"拟合 (β={r.beta:.2f}, η={r.eta:.0f})")
 
         ax1.set_xlabel("失效时间", fontsize=9)
@@ -323,10 +323,10 @@ class ReliabilityTab(BaseAnalysisTab):
         ax2.tick_params(axis="y", labelcolor=tc["accent_bright"])
 
         ax2b = ax2.twinx()
-        ax2b.plot(rc["t"], rc["h"], "--", color="#ff6b6b", linewidth=1.5,
+        ax2b.plot(rc["t"], rc["h"], "--", color="#E00000", linewidth=1.5,
                   label="h(t)")
-        ax2b.set_ylabel("失效率 h(t)", fontsize=9, color="#ff6b6b")
-        ax2b.tick_params(axis="y", labelcolor="#ff6b6b")
+        ax2b.set_ylabel("失效率 h(t)", fontsize=9, color="#E00000")
+        ax2b.tick_params(axis="y", labelcolor="#E00000")
 
         ax2.set_title(i18n.tr("reliability.reliability_func") + " & "
                       + i18n.tr("reliability.hazard_func"),
@@ -334,7 +334,7 @@ class ReliabilityTab(BaseAnalysisTab):
         ax2.grid(True, alpha=0.3)
         ax2.set_facecolor(tc["bg_body"])
 
-        canvas = FigureCanvasQTAgg(fig)
+        canvas = ChartCanvas(fig)
         self.chart_layout.addWidget(canvas)
         self.canvas = canvas
         self.current_figure = fig
@@ -425,7 +425,7 @@ class ReliabilityTab(BaseAnalysisTab):
             x = range(len(labels))
             ax1.bar(x, mtbf_vals, color=tc["accent"], alpha=0.8)
             ax1.errorbar(x, mtbf_vals, yerr=[ci_low, ci_high],
-                         fmt="none", ecolor="#ff6b6b", capsize=6, linewidth=1.5)
+                         fmt="none", ecolor="#E00000", capsize=6, linewidth=1.5)
             ax1.set_xticks(x)
             ax1.set_xticklabels(labels, fontsize=8)
             ax1.set_ylabel("MTBF (小时)", fontsize=9)
@@ -436,7 +436,7 @@ class ReliabilityTab(BaseAnalysisTab):
             ax2 = fig.add_subplot(1, 2, 2)
             avail_vals = [g.availability * 100 for g in groups]
             colors = [tc["accent_bright"] if v >= 99 else
-                      "#ffa726" if v >= 95 else "#ff6b6b" for v in avail_vals]
+                      "#C4922A" if v >= 95 else "#E00000" for v in avail_vals]
             ax2.bar(x, avail_vals, color=colors, alpha=0.85)
             ax2.axhline(y=99, color="#888888", linestyle="--", linewidth=1, alpha=0.5)
             ax2.set_xticks(x)
@@ -463,7 +463,7 @@ class ReliabilityTab(BaseAnalysisTab):
                     bbox={"boxstyle": "round", "facecolor": tc["bg_body"],
                               "edgecolor": tc["border"], "alpha": 0.9})
 
-        canvas = FigureCanvasQTAgg(fig)
+        canvas = ChartCanvas(fig)
         self.chart_layout.addWidget(canvas)
         self.canvas = canvas
         self.current_figure = fig

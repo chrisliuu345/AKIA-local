@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Signal, Qt
 from PySide6.QtGui import QFont
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from ui.widgets.chart_canvas import ChartCanvas
 import matplotlib.pyplot as plt
 
 from core.i18n import i18n
@@ -48,13 +48,13 @@ class MonitorTab(BaseAnalysisTab):
         layout.setSpacing(10)
 
         title = QLabel(i18n.tr("monitor.title"))
-        title.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        title.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         title.setStyleSheet(f"color: {tc['text_primary']}; background: transparent;")
         layout.addWidget(title)
 
         cfg = QGroupBox(i18n.tr("monitor.config"))
         cfg.setStyleSheet(
-            f"QGroupBox {{ color: {tc['text_secondary']}; border: 1px solid #3a3a3a;"
+            f"QGroupBox {{ color: {tc['text_secondary']}; border: 1px solid #2A2A2A;"
             f"border-radius: 8px; margin-top: 10px; padding-top: 8px; }}"
             f"QGroupBox::title {{ subcontrol-origin: margin; left: 12px; }}"
         )
@@ -88,7 +88,7 @@ class MonitorTab(BaseAnalysisTab):
 
         ctrl = QHBoxLayout()
         self.toggle_btn = QPushButton(i18n.tr("monitor.start"))
-        self.toggle_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.toggle_btn.setFont(QFont(get_ui_font(), 12))
         self.toggle_btn.setFixedHeight(44)
         self.toggle_btn.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.toggle_btn.setCursor(Qt.PointingHandCursor)
@@ -109,7 +109,7 @@ class MonitorTab(BaseAnalysisTab):
 
         log_group = QGroupBox(i18n.tr("alert.title"))
         log_group.setStyleSheet(
-            f"QGroupBox {{ color: {tc['text_secondary']}; border: 1px solid #3a3a3a;"
+            f"QGroupBox {{ color: {tc['text_secondary']}; border: 1px solid #2A2A2A;"
             f"border-radius: 8px; margin-top: 10px; padding-top: 8px; }}"
             f"QGroupBox::title {{ subcontrol-origin: margin; left: 12px; }}"
         )
@@ -134,7 +134,7 @@ class MonitorTab(BaseAnalysisTab):
                 w.setParent(None)
         hint = QLabel(i18n.tr("monitor.empty"))
         hint.setAlignment(Qt.AlignCenter)
-        hint.setStyleSheet("color: #6e7080; font-size: 14px;")
+        hint.setStyleSheet("color: #737373; font-size: 14px;")
         self.chart_layout.addWidget(hint)
         self.canvas = None
         self.current_figure = None
@@ -155,7 +155,7 @@ class MonitorTab(BaseAnalysisTab):
             path = self._file_path()
             if not path:
                 self.status_label.setText(i18n.tr("monitor.error_nofile"))
-                self.status_label.setStyleSheet("color: #e74c3c;")
+                self.status_label.setStyleSheet("color: #E00000;")
                 return
             self._start_monitor(path)
         else:
@@ -174,7 +174,7 @@ class MonitorTab(BaseAnalysisTab):
         self._on_update(initial)
         monitor.start()
         self.toggle_btn.setText(i18n.tr("monitor.stop"))
-        self.status_label.setStyleSheet("color: #27ae60;")
+        self.status_label.setStyleSheet("color: #3E9B68;")
 
     def _stop_monitor(self):
         if self._monitor is not None:
@@ -182,20 +182,20 @@ class MonitorTab(BaseAnalysisTab):
             self._monitor = None
         self.toggle_btn.setText(i18n.tr("monitor.start"))
         self.status_label.setText(i18n.tr("monitor.status_stopped"))
-        self.status_label.setStyleSheet("color: #6e7080;")
+        self.status_label.setStyleSheet("color: #737373;")
 
     def _on_update(self, payload: dict):
         tc = theme_colors()
         error = payload.get("error")
         if error:
             self.status_label.setText(i18n.tr("monitor.status_error") + " " + error)
-            self.status_label.setStyleSheet("color: #e74c3c;")
+            self.status_label.setStyleSheet("color: #E00000;")
             return
 
         spc = payload.get("spc")
         if not spc:
             self.status_label.setText(i18n.tr("monitor.error_empty"))
-            self.status_label.setStyleSheet("color: #e74c3c;")
+            self.status_label.setStyleSheet("color: #E00000;")
             return
 
         chart_type = spc.get("chart_type", "SPC")
@@ -236,8 +236,8 @@ class MonitorTab(BaseAnalysisTab):
         if state == AlertState.NEW:
             self.alert_banner.setText("⚠ " + message)
             self.alert_banner.setStyleSheet(
-                "color: #fff; background: #e74c3c; border-radius: 6px;"
-                "font-weight: bold; padding: 4px;")
+                "color: #fff; background: #E00000; border-radius: 6px;"
+                " padding: 4px;")
             self.alert_banner.show()
             if AlertRules.sound_enabled():
                 QApplication.beep()
@@ -246,8 +246,8 @@ class MonitorTab(BaseAnalysisTab):
         else:
             self.alert_banner.setText("✔ " + message)
             self.alert_banner.setStyleSheet(
-                "color: #fff; background: #27ae60; border-radius: 6px;"
-                "font-weight: bold; padding: 4px;")
+                "color: #fff; background: #3E9B68; border-radius: 6px;"
+                " padding: 4px;")
 
         if AlertRules.log_enabled():
             self._alert_log.add(message)
@@ -269,7 +269,7 @@ class MonitorTab(BaseAnalysisTab):
             if w:
                 w.setParent(None)
                 w.deleteLater()
-        canvas = FigureCanvasQTAgg(fig)
+        canvas = ChartCanvas(fig)
         canvas.setStyleSheet("background: transparent;")
         self.chart_layout.addWidget(canvas)
         self.canvas = canvas

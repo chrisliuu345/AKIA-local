@@ -27,6 +27,12 @@ def _minute_samples(base_ts: float, bucket: int, values, device="dev-a",
             for i, v in enumerate(values)]
 
 
+def test_negative_limit_does_not_return_every_row(store):
+    t0 = (1_700_000_000 // 60) * 60.0
+    store.insert_samples(_minute_samples(t0, 0, [1.0, 2.0, 3.0, 4.0]))
+    assert len(store.query("dev-a", limit=-1)) == 1
+
+
 def test_rollup_aggregates_complete_buckets_only(store):
     t0 = (1_700_000_000 // 60) * 60.0    # 与分钟桶对齐
     # 两个完整分钟桶 + 一个尚未结束的桶

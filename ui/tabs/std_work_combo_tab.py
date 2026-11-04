@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
     QComboBox,
 )
 from PySide6.QtCore import Qt
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from ui.widgets.chart_canvas import ChartCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt, matplotlib.patches as mpatches
 from ui.tabs.base_tab import BaseAnalysisTab
@@ -27,10 +27,10 @@ from ui.theme import (
 )
 from ui.theme import colors as theme_colors
 
-C_W = "#4da6ff"
-C_A = "#51cf66"
-C_WK = "#ffa726"
-C_I = "#363648"
+C_W = "#4F73DC"
+C_A = "#8EABEA"
+C_WK = "#37519A"
+C_I = "#B7C9F1"
 PRESETS = {
     "CNC加工": [(5, 10, 3), (4, 45, 0), (8, 0, 2), (3, 8, 0), (3, 5, 2), (4, 0, 0)],
     "装配线": [(6, 0, 2), (5, 0, 1), (4, 0, 3), (7, 0, 0), (3, 0, 2), (8, 0, 1)],
@@ -232,8 +232,8 @@ class StdWorkComboTab(BaseAnalysisTab):
                 color=tc["text_secondary"],
                 ha="center",
             )
-        ax.axvline(x=takt, color="#ff6b6b", linestyle="--", linewidth=1.5)
-        ax.text(takt + 0.5, n - 0.2, f"Takt {takt}s", fontsize=9, color="#ff6b6b")
+        ax.axvline(x=takt, color="#E00000", linestyle="--", linewidth=1.5)
+        ax.text(takt + 0.5, n - 0.2, f"Takt {takt}s", fontsize=9, color="#E00000")
         ax.set_yticks(range(n))
         ax.set_yticklabels(y_labels, fontsize=9)
         ax.set_xlabel("时间(秒)", fontsize=10)
@@ -252,7 +252,7 @@ class StdWorkComboTab(BaseAnalysisTab):
             loc="upper right",
         )
         fig.subplots_adjust(left=0.1, right=0.95, top=0.92, bottom=0.08)
-        canvas = FigureCanvasQTAgg(fig)
+        canvas = ChartCanvas(fig)
         self.chart_layout.addWidget(canvas)
         self.canvas = canvas
         self.current_figure = fig

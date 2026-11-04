@@ -74,19 +74,19 @@ def md_to_html(text: str) -> str:
     out: list[str] = []
     for idx, block in enumerate(blocks):
         if idx % 2 == 1:                            # 代码块
-            out.append("<pre style='background:#14141e;color:#c8ccd6;"
-                       "padding:8px 10px;border-left:3px solid #1b5faa;'>"
+            out.append("<pre style='background:#101010;color:#EDEDED;"
+                       "padding:8px 10px;border-left:3px solid #333333;'>"
                        + html.escape(block.strip()) + "</pre>")
             continue
         safe = html.escape(block)
         safe = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", safe)
         safe = re.sub(r"`([^`]+)`",
-                      r"<code style='background:#35354a;color:#e0a040;'>\1</code>", safe)
+                      r"<code style='background:#242424;color:#C4922A;'>\1</code>", safe)
         lines = []
         for line in safe.split("\n"):
             stripped = line.strip()
             if stripped.startswith("### "):
-                lines.append(f"<div style='color:#4da6ff;font-weight:bold;'>"
+                lines.append(f"<div style='color:#EDEDED;'>"
                              f"{stripped[4:]}</div>")
             elif stripped.startswith(("- ", "* ")):
                 lines.append("&nbsp;&nbsp;• " + stripped[2:])
@@ -177,7 +177,7 @@ class QAMHarnessDialog(QDialog):
         title_box = QVBoxLayout()
         title_box.setSpacing(0)
         title = QLabel("QAM Harness")
-        title.setFont(QFont(get_ui_font(), 17, QFont.Bold))
+        title.setFont(QFont(get_ui_font(), 17, QFont.DemiBold))
         title.setStyleSheet(f"color: {tc['text_primary']};")
         subtitle = QLabel("质量工程 AI Agent · 本地工具调用 + 知识库（数据不出本机）")
         subtitle.setFont(QFont(get_ui_font(), 9))
@@ -187,7 +187,7 @@ class QAMHarnessDialog(QDialog):
         header.addLayout(title_box)
 
         self.llm_status = QLabel("")
-        self.llm_status.setFont(QFont(get_ui_font(), 9, QFont.Bold))
+        self.llm_status.setFont(QFont(get_ui_font(), 9))
         header.addWidget(self.llm_status)
         header.addStretch()
 
@@ -304,7 +304,7 @@ class QAMHarnessDialog(QDialog):
         input_row.addWidget(self.input_box, 1)
 
         self.send_btn = QPushButton("发送")
-        self.send_btn.setFont(QFont(get_ui_font(), 11, QFont.Bold))
+        self.send_btn.setFont(QFont(get_ui_font(), 11))
         self.send_btn.setMinimumHeight(38)
         self.send_btn.setMinimumWidth(80)
         self.send_btn.setCursor(Qt.PointingHandCursor)
@@ -518,7 +518,7 @@ class QAMHarnessDialog(QDialog):
         tc = theme_colors(self)
         if self.llm.available:
             self.llm_status.setText(f"● 在线 · {self._provider_label()}")
-            self.llm_status.setStyleSheet("color: #27ae60; padding: 2px 6px;")
+            self.llm_status.setStyleSheet("color: #3E9B68; padding: 2px 6px;")
         else:
             self.llm_status.setText("● 离线 · 工具模式")
             self.llm_status.setStyleSheet(f"color: {tc['text_muted']}; padding: 2px 6px;")
@@ -588,7 +588,7 @@ class QAMHarnessDialog(QDialog):
     def _append_tool_card(self, record):
         tc = theme_colors(self)
         ok = getattr(record, "ok", False)
-        color = "#27ae60" if ok else "#e74c3c"
+        color = "#3E9B68" if ok else "#E00000"
         bg = "#1c2b22" if ok else "#2b1f1f"
         state = "成功" if ok else "失败"
         args = ", ".join(f"{k}={v}" for k, v in (getattr(record, "args", {}) or {}).items())
@@ -600,7 +600,7 @@ class QAMHarnessDialog(QDialog):
             f"<td width='16%'></td>"
             f"<td style='background:{bg};border-left:3px solid {color};"
             f"border-radius:6px;padding:8px 12px;'>"
-            f"<span style='color:{color};font-weight:bold;'>🔧 {html.escape(record.name)}</span>"
+            f"<span style='color:{color};'>🔧 {html.escape(record.name)}</span>"
             f"<span style='color:{tc['text_muted']};font-size:9pt;'>"
             f"　{args}　·　{state}　·　{ms:.0f} ms</span><br>"
             f"<span style='color:{tc['text_secondary']};font-size:10pt;'>{summary_html}</span>"

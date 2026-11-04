@@ -9,8 +9,8 @@ import pandas as pd
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QSpinBox, QDoubleSpinBox, QGroupBox, QFormLayout,
-    QTableWidget, QTableWidgetItem, QTextEdit, QSplitter, QHeaderView,
-    QFrame, QStackedWidget, QCheckBox, QMessageBox, QListWidget, QListWidgetItem,
+    QTableWidget, QTableWidgetItem, QSplitter, QHeaderView,
+    QCheckBox, QMessageBox, QListWidget, QListWidgetItem,
 )
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFont
@@ -20,7 +20,7 @@ from output.chart_engine import create_control_chart
 from core.i18n import i18n
 from core.streaming.live_spc import LiveSPC
 from ui.tabs.base_tab import BaseAnalysisTab
-from ui.theme import BUTTON_SECONDARY, BUTTON_TOGGLE, BUTTON_PRIMARY_STRETCH
+from ui.theme import BUTTON_SECONDARY, BUTTON_PRIMARY_STRETCH
 from ui.font_config import get_ui_font
 
 
@@ -40,7 +40,7 @@ class SPCTab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel(i18n.tr("spc.title"))
-        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
@@ -178,7 +178,7 @@ class SPCTab(BaseAnalysisTab):
         live_layout = QFormLayout(self.live_group)
         live_layout.setContentsMargins(10, 10, 10, 10)
         self.live_check = QCheckBox(i18n.tr("spc.live_mode"))
-        self.live_check.setStyleSheet("font-weight: bold;")
+        self.live_check.setStyleSheet("")
         self.live_check.toggled.connect(self._on_live_toggled)
         live_layout.addRow(self.live_check)
         self.live_dev_combo = QComboBox()
@@ -199,7 +199,7 @@ class SPCTab(BaseAnalysisTab):
         live_layout.addRow(self.live_status)
 
         self.run_btn = QPushButton(i18n.tr("spc.run_btn"))
-        self.run_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.run_btn.setFont(QFont(get_ui_font(), 12))
         self.run_btn.setMinimumHeight(44)
         self.run_btn.setCursor(Qt.PointingHandCursor)
         self.run_btn.setStyleSheet(BUTTON_PRIMARY_STRETCH)
@@ -207,7 +207,7 @@ class SPCTab(BaseAnalysisTab):
         config_layout.addRow(self.run_btn)
 
         self.save_png_btn = QPushButton(i18n.tr("spc.save_png"))
-        self.save_png_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.save_png_btn.setFont(QFont(get_ui_font(), 12))
         self.save_png_btn.setMinimumHeight(40)
         self.save_png_btn.setCursor(Qt.PointingHandCursor)
         self.save_png_btn.setStyleSheet(BUTTON_SECONDARY)
@@ -215,7 +215,7 @@ class SPCTab(BaseAnalysisTab):
         config_layout.addRow(self.save_png_btn)
 
         self.root_cause_btn = QPushButton(i18n.tr("spc.root_cause"))
-        self.root_cause_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.root_cause_btn.setFont(QFont(get_ui_font(), 12))
         self.root_cause_btn.setMinimumHeight(40)
         self.root_cause_btn.setCursor(Qt.PointingHandCursor)
         self.root_cause_btn.setStyleSheet(BUTTON_SECONDARY)
@@ -225,7 +225,7 @@ class SPCTab(BaseAnalysisTab):
         config_layout.addRow(self.root_cause_btn)
 
         self.export_btn = QPushButton(i18n.tr("spc.export_btn"))
-        self.export_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.export_btn.setFont(QFont(get_ui_font(), 12))
         self.export_btn.setMinimumHeight(44)
         self.export_btn.setCursor(Qt.PointingHandCursor)
         self.export_btn.setStyleSheet(BUTTON_PRIMARY_STRETCH)
@@ -254,11 +254,6 @@ class SPCTab(BaseAnalysisTab):
         self.cp_group.setVisible(False)
         top_layout.addWidget(self.cp_group)
 
-        separator = QFrame()
-        separator.setFrameShape(QFrame.VLine)
-        separator.setStyleSheet("")
-        separator.setMaximumWidth(1)
-        top_layout.addWidget(separator)
 
         
         self.data_table = QTableWidget()
@@ -278,57 +273,10 @@ class SPCTab(BaseAnalysisTab):
         bottom_layout.setSpacing(6)
 
         self.result_label = QLabel(i18n.tr("spc.result"))
-        self.result_label.setFont(QFont(get_ui_font(), 13, QFont.Bold))
+        self.result_label.setFont(QFont(get_ui_font(), 13))
         bottom_layout.addWidget(self.result_label)
 
-        toggle_row = QHBoxLayout()
-        toggle_row.setSpacing(8)
-        self.btn_view_chart = QPushButton(i18n.tr("tab.view_chart"))
-        self.btn_view_chart.setFont(QFont(get_ui_font(), 11))
-        self.btn_view_chart.setFixedHeight(30)
-        self.btn_view_chart.setCheckable(True)
-        self.btn_view_chart.setChecked(True)
-        self.btn_view_chart.setStyleSheet(BUTTON_TOGGLE)
-        self.btn_view_chart.clicked.connect(lambda: self._switch_result_view(0))
-        toggle_row.addWidget(self.btn_view_chart)
-        self.btn_view_data = QPushButton(i18n.tr("tab.view_data"))
-        self.btn_view_data.setFont(QFont(get_ui_font(), 11))
-        self.btn_view_data.setFixedHeight(30)
-        self.btn_view_data.setCheckable(True)
-        self.btn_view_data.setStyleSheet(BUTTON_TOGGLE)
-        self.btn_view_data.clicked.connect(lambda: self._switch_result_view(1))
-        toggle_row.addWidget(self.btn_view_data)
-        toggle_row.addStretch()
-        bottom_layout.addLayout(toggle_row)
-
-        self.result_stack = QStackedWidget()
-
-        self.chart_container = QWidget()
-        self.chart_layout = QVBoxLayout(self.chart_container)
-        self.chart_layout.setContentsMargins(0, 0, 0, 0)
-        self.chart_container.setMinimumHeight(300)
-        self.result_stack.addWidget(self.chart_container)
-
-        self.data_container = QWidget()
-        data_layout = QVBoxLayout(self.data_container)
-        data_layout.setContentsMargins(0, 0, 0, 0)
-        self.result_text = QTextEdit()
-        self.result_text.setReadOnly(True)
-        self.result_text.setFont(QFont(get_ui_font(), 12))
-        self.result_text.setMinimumHeight(80)
-        data_layout.addWidget(self.result_text)
-        self.result_table = QTableWidget()
-        self.result_table.horizontalHeader().setStretchLastSection(True)
-        self.result_table.setAlternatingRowColors(True)
-        self.result_table.setShowGrid(True)
-        self.result_table.setStyleSheet(
-            "QTableWidget { font-size: 12px; }"
-            "QHeaderView::section { font-weight: bold; padding: 4px; }"
-        )
-        data_layout.addWidget(self.result_table)
-        self.result_stack.addWidget(self.data_container)
-
-        bottom_layout.addWidget(self.result_stack)
+        self.mount_results(bottom_layout)
         splitter.addWidget(bottom)
         splitter.setStretchFactor(0, 3)
         splitter.setStretchFactor(1, 2)
@@ -519,7 +467,7 @@ class SPCTab(BaseAnalysisTab):
             self.chart_type_combo.currentText())
         n_nelson = sum(1 for e in frame.events if e.kind == "nelson")
         n_oos = sum(1 for e in frame.events if e.kind == "oos")
-        color = "#27ae60" if not frame.ooc and not frame.oos else "#e74c3c"
+        color = "#3E9B68" if not frame.ooc and not frame.oos else "#E00000"
         self.live_status.setStyleSheet(f"font-size: 11px; color: {color};")
         text = (f"{chan} · {len(frame.data)} {i18n.tr('spc.live_pts')} · "
                 f"CL={frame.cl:.2f} UCL={frame.ucl:.2f} LCL={frame.lcl:.2f} · ")
@@ -640,7 +588,7 @@ class SPCTab(BaseAnalysisTab):
         valid, msg = self.validate_params()
         if not valid:
             self._clear_canvas()
-            self.result_text.setStyleSheet("color: #e74c3c; font-weight: bold;")
+            self.result_text.setStyleSheet("color: #E00000; ")
             self.result_text.setText(f"▎参数校验失败\n{msg}")
             return None
         self.result_text.setStyleSheet("")
@@ -651,7 +599,7 @@ class SPCTab(BaseAnalysisTab):
             return result
         except Exception as e:
             self._clear_canvas()
-            self.result_text.setStyleSheet("color: #e74c3c; font-weight: bold;")
+            self.result_text.setStyleSheet("color: #E00000; ")
             self.result_text.setText(f"▎分析失败\n{e!s}")
             return None
 
@@ -880,7 +828,7 @@ class SPCTab(BaseAnalysisTab):
         except Exception as e:
             self._clear_canvas()
             err_label = QLabel(f"图表渲染失败: {e}")
-            err_label.setStyleSheet("color: #e74c3c; padding: 12px;")
+            err_label.setStyleSheet("color: #E00000; padding: 12px;")
             err_label.setWordWrap(True)
             self.chart_layout.addWidget(err_label)
 

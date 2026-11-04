@@ -30,7 +30,7 @@ class LayeredFormTab(BaseAnalysisTab):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
         self.title_label = QLabel("LPA 分层审核表")
-        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
         cfg = QGroupBox("模板配置")

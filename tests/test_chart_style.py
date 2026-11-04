@@ -328,8 +328,46 @@ class TestChartPolish:
         # 图例锚点在坐标区右侧之外（不再压住 UCL 线）
         fig.canvas.draw()
         assert legend.get_window_extent().x0 >= ax.get_window_extent().x1 - 1
+        # 图例在坐标区右侧，但仍落在画布留白之内，不画出页面。
+        ext = legend.get_window_extent()
+        box = fig.bbox
+        assert ext.x1 <= box.x1 - 2
+        assert ext.x0 >= box.x0 + 2
+        assert ext.y0 >= box.y0 + 2
+        assert ext.y1 <= box.y1 - 2
         texts = [t.get_text() for t in ax.texts]
         assert any(text.startswith("规则") for text in texts)
+        plt.close(fig)
+
+    def test_narrow_figure_keeps_legend_and_note_inside(self):
+        _apply(chart_style.THEME_DARK)
+        fig, ax = plt.subplots(figsize=(8, 3.5), dpi=100)
+        ax.plot([1, 2, 3], [1, 3, 2], label="数据点")
+        ax.annotate(
+            "这是一条放在最右侧的很长注释文字不应该画出页面边界",
+            xy=(3, 2), xytext=(8, 0), textcoords="offset points",
+            ha="left", va="center",
+        )
+        ax.legend(frameon=False, loc="upper left", bbox_to_anchor=(1.02, 1.0))
+        chart_style.finalize_figure(fig)
+        fig.set_size_inches(5.0, 3.2)
+        chart_style.fit_figure_in_frame(fig)
+        fig.canvas.draw()
+        box = fig.bbox
+        artists = list(ax.texts)
+        legend = ax.get_legend()
+        assert legend is not None
+        artists.extend(legend.get_texts())
+        for text in artists:
+            ext = text.get_window_extent()
+            assert ext.x1 <= box.x1 - 1, text.get_text()
+            assert ext.x0 >= box.x0
+            assert ext.y0 >= box.y0
+            assert ext.y1 <= box.y1
+        # 同一尺寸再收一次，不应把图面继续挤小。
+        before = [ax.get_position().bounds for ax in fig.axes]
+        chart_style.fit_figure_in_frame(fig)
+        assert [ax.get_position().bounds for ax in fig.axes] == before
         plt.close(fig)
 
     def test_capability_stats_card(self):

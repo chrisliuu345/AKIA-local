@@ -15,10 +15,10 @@ from ui.font_config import get_ui_font
 
 
 _TOAST_COLORS = {
-    "success": ("#27ae60", "#1a1a22"),
-    "error":   ("#e74c3c", "#1a1a22"),
-    "info":    ("#4da6ff", "#1a1a22"),
-    "warning": ("#ffa726", "#1a1a22"),
+    "success": ("#3E9B68", "#101010"),
+    "error":   ("#E00000", "#101010"),
+    "info":    ("#4F73DC", "#101010"),
+    "warning": ("#C4922A", "#101010"),
 }
 
 
@@ -52,7 +52,7 @@ class Toast(QFrame):
         layout.setContentsMargins(16, 6, 16, 6)
         label = QLabel(message)
         label.setFont(QFont(get_ui_font(), 10))
-        label.setStyleSheet("color: #e1e2e6; background: transparent;")
+        label.setStyleSheet("color: #EDEDED; background: transparent;")
         label.setWordWrap(True)
         layout.addWidget(label)
 

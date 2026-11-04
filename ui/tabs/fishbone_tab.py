@@ -42,7 +42,7 @@ class FishboneTab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel("鱼骨图 (石川图)")
-        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
@@ -148,7 +148,7 @@ class FishboneTab(BaseAnalysisTab):
         for bname, root in self._branches.items():
             branch_item = QTreeWidgetItem([bname, f"{self._count_children(root)}项"])
             branch_item.setData(0, Qt.UserRole, {"type": "branch"})
-            branch_item.setFont(0, QFont(get_ui_font(), 10, QFont.Bold))
+            branch_item.setFont(0, QFont(get_ui_font(), 10))
             self._add_tree_children(branch_item, root)
             self.tree.addTopLevelItem(branch_item)
         self.tree.expandAll()

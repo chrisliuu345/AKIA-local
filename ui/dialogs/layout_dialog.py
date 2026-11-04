@@ -22,7 +22,7 @@ class LayoutDialog(QDialog):
 
         layout = QVBoxLayout(self)
         hint = QLabel(i18n.tr("dashboard.layout_hint"))
-        hint.setStyleSheet("color: #a0a3ae;")
+        hint.setStyleSheet("color: #A3A3A3;")
         hint.setWordWrap(True)
         layout.addWidget(hint)
 

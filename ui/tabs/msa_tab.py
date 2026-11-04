@@ -9,15 +9,15 @@ import numpy as np
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QDoubleSpinBox, QGroupBox, QFormLayout,
-    QTableWidget, QTextEdit, QSplitter, QHeaderView,
-    QFrame, QMenu, QMessageBox, QStackedWidget,
+    QTableWidget, QSplitter, QHeaderView,
+    QMenu, QMessageBox,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
 from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
-from ui.theme import BUTTON_SECONDARY, BUTTON_TOGGLE, BUTTON_PRIMARY_STRETCH
+from ui.theme import BUTTON_SECONDARY, BUTTON_PRIMARY_STRETCH
 from ui.font_config import get_ui_font
 from core.formatting import format_pvalue
 from output.chart_engine import create_histogram
@@ -36,7 +36,7 @@ class MSATab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel(i18n.tr("msa.title"))
-        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
@@ -88,7 +88,7 @@ class MSATab(BaseAnalysisTab):
         config_layout.addRow("参考值:", self.ref_spin)
 
         self.run_btn = QPushButton(i18n.tr("msa.run_btn"))
-        self.run_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.run_btn.setFont(QFont(get_ui_font(), 12))
         self.run_btn.setMinimumHeight(44)
         self.run_btn.setCursor(Qt.PointingHandCursor)
         self.run_btn.setStyleSheet(BUTTON_PRIMARY_STRETCH)
@@ -96,7 +96,7 @@ class MSATab(BaseAnalysisTab):
         config_layout.addRow(self.run_btn)
 
         self.save_png_btn = QPushButton(i18n.tr("msa.save_png"))
-        self.save_png_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.save_png_btn.setFont(QFont(get_ui_font(), 12))
         self.save_png_btn.setMinimumHeight(40)
         self.save_png_btn.setCursor(Qt.PointingHandCursor)
         self.save_png_btn.setStyleSheet(BUTTON_SECONDARY)
@@ -104,7 +104,7 @@ class MSATab(BaseAnalysisTab):
         config_layout.addRow(self.save_png_btn)
 
         self.export_btn = QPushButton(i18n.tr("msa.export_btn"))
-        self.export_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.export_btn.setFont(QFont(get_ui_font(), 12))
         self.export_btn.setMinimumHeight(44)
         self.export_btn.setCursor(Qt.PointingHandCursor)
         self.export_btn.setStyleSheet(BUTTON_PRIMARY_STRETCH)
@@ -113,11 +113,6 @@ class MSATab(BaseAnalysisTab):
 
         top_layout.addWidget(config_group)
 
-        separator = QFrame()
-        separator.setFrameShape(QFrame.VLine)
-        separator.setStyleSheet("")
-        separator.setMaximumWidth(1)
-        top_layout.addWidget(separator)
 
         self.data_table = QTableWidget()
         self.data_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
@@ -138,56 +133,10 @@ class MSATab(BaseAnalysisTab):
         bottom_layout.setSpacing(6)
 
         self.result_label = QLabel(i18n.tr("msa.result"))
-        self.result_label.setFont(QFont(get_ui_font(), 13, QFont.Bold))
+        self.result_label.setFont(QFont(get_ui_font(), 13))
         bottom_layout.addWidget(self.result_label)
 
-        toggle_row = QHBoxLayout()
-        toggle_row.setSpacing(8)
-        self.btn_view_chart = QPushButton(i18n.tr("tab.view_chart"))
-        self.btn_view_chart.setFont(QFont(get_ui_font(), 11))
-        self.btn_view_chart.setFixedHeight(30)
-        self.btn_view_chart.setCheckable(True)
-        self.btn_view_chart.setChecked(True)
-        self.btn_view_chart.setStyleSheet(BUTTON_TOGGLE)
-        self.btn_view_chart.clicked.connect(lambda: self._switch_result_view(0))
-        toggle_row.addWidget(self.btn_view_chart)
-        self.btn_view_data = QPushButton(i18n.tr("tab.view_data"))
-        self.btn_view_data.setFont(QFont(get_ui_font(), 11))
-        self.btn_view_data.setFixedHeight(30)
-        self.btn_view_data.setCheckable(True)
-        self.btn_view_data.setStyleSheet(BUTTON_TOGGLE)
-        self.btn_view_data.clicked.connect(lambda: self._switch_result_view(1))
-        toggle_row.addWidget(self.btn_view_data)
-        toggle_row.addStretch()
-        bottom_layout.addLayout(toggle_row)
-
-        self.result_stack = QStackedWidget()
-        self.chart_container = QWidget()
-        self.chart_layout = QVBoxLayout(self.chart_container)
-        self.chart_layout.setContentsMargins(0, 0, 0, 0)
-        self.chart_container.setMinimumHeight(300)
-        self.result_stack.addWidget(self.chart_container)
-
-        self.data_container = QWidget()
-        data_layout = QVBoxLayout(self.data_container)
-        data_layout.setContentsMargins(0, 0, 0, 0)
-        self.result_text = QTextEdit()
-        self.result_text.setReadOnly(True)
-        self.result_text.setFont(QFont(get_ui_font(), 12))
-        self.result_text.setMinimumHeight(80)
-        data_layout.addWidget(self.result_text)
-        self.result_table = QTableWidget()
-        self.result_table.horizontalHeader().setStretchLastSection(True)
-        self.result_table.setAlternatingRowColors(True)
-        self.result_table.setShowGrid(True)
-        self.result_table.setStyleSheet(
-            "QTableWidget { font-size: 12px; }"
-            "QHeaderView::section { font-weight: bold; padding: 4px; }"
-        )
-        data_layout.addWidget(self.result_table)
-        self.result_stack.addWidget(self.data_container)
-
-        bottom_layout.addWidget(self.result_stack)
+        self.mount_results(bottom_layout)
         splitter.addWidget(bottom)
         splitter.setStretchFactor(0, 3)
         splitter.setStretchFactor(1, 2)
@@ -266,7 +215,7 @@ class MSATab(BaseAnalysisTab):
         valid, msg = self.validate_params()
         if not valid:
             self._clear_canvas()
-            self.result_text.setStyleSheet("color: #e74c3c; font-weight: bold;")
+            self.result_text.setStyleSheet("color: #E00000; ")
             self.result_text.setText(f"▎参数校验失败\n{msg}")
             return None
         self.result_text.setStyleSheet("")
@@ -277,7 +226,7 @@ class MSATab(BaseAnalysisTab):
             return result
         except Exception as e:
             self._clear_canvas()
-            self.result_text.setStyleSheet("color: #e74c3c; font-weight: bold;")
+            self.result_text.setStyleSheet("color: #E00000; ")
             self.result_text.setText(f"▎分析失败\n{e!s}")
             return None
 
@@ -407,7 +356,7 @@ class MSATab(BaseAnalysisTab):
         except Exception as e:
             self._clear_canvas()
             err_label = QLabel(f"图表渲染失败: {e}")
-            err_label.setStyleSheet("color: #e74c3c; padding: 12px;")
+            err_label.setStyleSheet("color: #E00000; padding: 12px;")
             err_label.setWordWrap(True)
             self.chart_layout.addWidget(err_label)
 
