@@ -41,7 +41,7 @@ class MultiPlantTab(BaseAnalysisTab):
         layout.setSpacing(10)
 
         title = QLabel(i18n.tr("multi_plant.title"))
-        title.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        title.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         title.setStyleSheet(f"color: {tc['text_primary']}; background: transparent;")
         layout.addWidget(title)
 
@@ -70,7 +70,7 @@ class MultiPlantTab(BaseAnalysisTab):
 
         ctrl = QHBoxLayout()
         self.run_btn = QPushButton(i18n.tr("multi_plant.run"))
-        self.run_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.run_btn.setFont(QFont(get_ui_font(), 12))
         self.run_btn.setFixedHeight(44)
         self.run_btn.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.run_btn.setCursor(Qt.PointingHandCursor)
@@ -112,7 +112,7 @@ class MultiPlantTab(BaseAnalysisTab):
                 w.setParent(None)
         hint = QLabel(i18n.tr("multi_plant.empty"))
         hint.setAlignment(Qt.AlignCenter)
-        hint.setStyleSheet("color: #8A8AB8; font-size: 14px;")
+        hint.setStyleSheet("color: #737373; font-size: 14px;")
         self.chart_layout.addWidget(hint)
         self.canvas = None
         self.current_figure = None
@@ -141,7 +141,7 @@ class MultiPlantTab(BaseAnalysisTab):
         tc = theme_colors()
         if not self._plants:
             self.status_label.setText(i18n.tr("multi_plant.no_files"))
-            self.status_label.setStyleSheet("color: #C4544C;")
+            self.status_label.setStyleSheet("color: #E00000;")
             return
 
         plants = [summarize_plant(path) for path in self._plants]
@@ -162,7 +162,7 @@ class MultiPlantTab(BaseAnalysisTab):
             self.status_label.setText(
                 i18n.tr("multi_plant.status_error").format(n=errors)
             )
-            self.status_label.setStyleSheet("color: #C4544C;")
+            self.status_label.setStyleSheet("color: #E00000;")
         else:
             self.status_label.setText(
                 i18n.tr("multi_plant.status_done").format(n=len(plants))
@@ -202,9 +202,9 @@ class MultiPlantTab(BaseAnalysisTab):
         cpk_pairs = [(p["name"], p["cpk"]) for p in ok if p["cpk"] is not None]
 
         panels = [
-            (means, i18n.tr("multi_plant.mean"), "#4648FF", names),
+            (means, i18n.tr("multi_plant.mean"), "#4F73DC", names),
             (stds, i18n.tr("multi_plant.std"), "#3E9B68", names),
-            (viols, i18n.tr("multi_plant.violations"), "#C4544C", names),
+            (viols, i18n.tr("multi_plant.violations"), "#E00000", names),
         ]
         if cpk_pairs:
             panels.append(

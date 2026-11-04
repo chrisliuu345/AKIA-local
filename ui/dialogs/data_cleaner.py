@@ -71,7 +71,7 @@ class DataCleaner(QDialog):
         bl = QVBoxLayout(container_before)
         bl.setContentsMargins(0, 0, 0, 0)
         lbl_before = QLabel("原始数据")
-        lbl_before.setStyleSheet(f"color: {tc['text_primary']}; font-weight: bold;")
+        lbl_before.setStyleSheet(f"color: {tc['text_primary']}; ")
         bl.addWidget(lbl_before)
         bl.addWidget(self.before_table)
 
@@ -80,7 +80,7 @@ class DataCleaner(QDialog):
         al.setContentsMargins(0, 0, 0, 0)
         bl2 = QHBoxLayout()
         lbl_after = QLabel("清洗后数据")
-        lbl_after.setStyleSheet(f"color: {tc['text_primary']}; font-weight: bold;")
+        lbl_after.setStyleSheet(f"color: {tc['text_primary']}; ")
         bl2.addWidget(lbl_after)
         bl2.addStretch()
         self.null_label = QLabel("")
@@ -96,12 +96,12 @@ class DataCleaner(QDialog):
         btn_layout.addStretch()
 
         self.apply_btn = QPushButton("应用到所有Tab")
-        self.apply_btn.setStyleSheet("background-color: #4648FF; color: white; padding: 8px 18px; border-radius: 6px;")
+        self.apply_btn.setStyleSheet("background-color: #E8E8E8; color: #171717; padding: 8px 18px; border-radius: 9px;")
         self.apply_btn.clicked.connect(self._on_apply)
         btn_layout.addWidget(self.apply_btn)
 
         self.export_btn = QPushButton("导出为Excel")
-        self.export_btn.setStyleSheet("background-color: #4648FF; color: white; padding: 8px 18px; border-radius: 6px;")
+        self.export_btn.setStyleSheet("background-color: #E8E8E8; color: #171717; padding: 8px 18px; border-radius: 9px;")
         self.export_btn.clicked.connect(self._on_export)
         btn_layout.addWidget(self.export_btn)
 
@@ -136,7 +136,7 @@ class DataCleaner(QDialog):
         layout.addRow("目标列:", self.missing_col)
 
         btn = QPushButton("执行缺失值处理")
-        btn.setStyleSheet("background-color: #4648FF; color: white; padding: 8px; border-radius: 6px;")
+        btn.setStyleSheet("background-color: #E8E8E8; color: #171717; padding: 8px; border-radius: 9px;")
         btn.clicked.connect(self._do_missing)
         layout.addRow(btn)
         return w
@@ -158,7 +158,7 @@ class DataCleaner(QDialog):
         layout.addRow("目标列:", self.outlier_col)
 
         btn = QPushButton("执行异常值处理")
-        btn.setStyleSheet("background-color: #4648FF; color: white; padding: 8px; border-radius: 6px;")
+        btn.setStyleSheet("background-color: #E8E8E8; color: #171717; padding: 8px; border-radius: 9px;")
         btn.clicked.connect(self._do_outliers)
         layout.addRow(btn)
         return w
@@ -177,7 +177,7 @@ class DataCleaner(QDialog):
         layout.addRow("状态:", self.invalid_label)
 
         btn_detect = QPushButton("检测并删除无效值")
-        btn_detect.setStyleSheet("background-color: #4648FF; color: white; padding: 8px; border-radius: 6px;")
+        btn_detect.setStyleSheet("background-color: #E8E8E8; color: #171717; padding: 8px; border-radius: 9px;")
         btn_detect.clicked.connect(self._do_invalid)
         layout.addRow(btn_detect)
 
@@ -216,7 +216,7 @@ class DataCleaner(QDialog):
         layout.addRow("删除列:", self.drop_col)
 
         btn_del = QPushButton("删除选中列")
-        btn_del.setStyleSheet("background-color: #4648FF; color: white; padding: 8px; border-radius: 6px;")
+        btn_del.setStyleSheet("background-color: #E8E8E8; color: #171717; padding: 8px; border-radius: 9px;")
         btn_del.clicked.connect(self._do_drop_column)
         layout.addRow(btn_del)
         return w

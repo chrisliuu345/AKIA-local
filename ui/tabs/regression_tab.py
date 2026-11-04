@@ -39,7 +39,7 @@ class RegressionTab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel(i18n.tr("reg.title"))
-        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         layout.addWidget(self.title_label)
 
         top_layout = QHBoxLayout()
@@ -64,7 +64,7 @@ class RegressionTab(BaseAnalysisTab):
         config_layout.addRow(i18n.tr("reg.factor3"), self.factor3_combo)
 
         self.run_btn = QPushButton(i18n.tr("reg.run_btn"))
-        self.run_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.run_btn.setFont(QFont(get_ui_font(), 12))
         self.run_btn.setMinimumHeight(44)
         self.run_btn.setCursor(Qt.PointingHandCursor)
         self.run_btn.setStyleSheet(BUTTON_PRIMARY_STRETCH)
@@ -72,7 +72,7 @@ class RegressionTab(BaseAnalysisTab):
         config_layout.addRow(self.run_btn)
 
         self.save_png_btn = QPushButton(i18n.tr("reg.save_png"))
-        self.save_png_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.save_png_btn.setFont(QFont(get_ui_font(), 12))
         self.save_png_btn.setMinimumHeight(40)
         self.save_png_btn.setCursor(Qt.PointingHandCursor)
         self.save_png_btn.setStyleSheet(BUTTON_SECONDARY)
@@ -80,7 +80,7 @@ class RegressionTab(BaseAnalysisTab):
         config_layout.addRow(self.save_png_btn)
 
         self.corr_btn = QPushButton(i18n.tr("reg.correlation"))
-        self.corr_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.corr_btn.setFont(QFont(get_ui_font(), 12))
         self.corr_btn.setMinimumHeight(40)
         self.corr_btn.setCursor(Qt.PointingHandCursor)
         self.corr_btn.setStyleSheet(BUTTON_SECONDARY)
@@ -88,7 +88,7 @@ class RegressionTab(BaseAnalysisTab):
         config_layout.addRow(self.corr_btn)
 
         self.export_btn = QPushButton(i18n.tr("reg.export_btn"))
-        self.export_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.export_btn.setFont(QFont(get_ui_font(), 12))
         self.export_btn.setMinimumHeight(44)
         self.export_btn.setCursor(Qt.PointingHandCursor)
         self.export_btn.setStyleSheet(BUTTON_PRIMARY_STRETCH)
@@ -118,7 +118,7 @@ class RegressionTab(BaseAnalysisTab):
 
         bottom_layout = QVBoxLayout()
         self.result_label = QLabel(i18n.tr("reg.result"))
-        self.result_label.setFont(QFont(get_ui_font(), 14, QFont.Bold))
+        self.result_label.setFont(QFont(get_ui_font(), 14))
         bottom_layout.addWidget(self.result_label)
 
         toggle_row = QHBoxLayout()
@@ -163,7 +163,7 @@ class RegressionTab(BaseAnalysisTab):
         self.result_table.setShowGrid(True)
         self.result_table.setStyleSheet(
             "QTableWidget { font-size: 12px; }"
-            "QHeaderView::section { font-weight: bold; padding: 4px; }"
+            "QHeaderView::section {  padding: 4px; }"
         )
         data_layout.addWidget(self.result_table)
         self.result_stack.addWidget(self.data_container)
@@ -209,7 +209,7 @@ class RegressionTab(BaseAnalysisTab):
         ok, msg = self.validate_params()
         if not ok:
             self._clear_canvas()
-            self.result_text.setStyleSheet("color: #C4544C; font-weight: bold;")
+            self.result_text.setStyleSheet("color: #E00000; ")
             self.result_text.setText(f"{i18n.tr('reg.val_param_failed')}\n{msg}")
             return None
         try:
@@ -219,7 +219,7 @@ class RegressionTab(BaseAnalysisTab):
             return result
         except Exception as e:
             self._clear_canvas()
-            self.result_text.setStyleSheet("color: #C4544C; font-weight: bold;")
+            self.result_text.setStyleSheet("color: #E00000; ")
             self.result_text.setText(f"{i18n.tr('reg.val_analysis_failed')}\n{e!s}")
 
     def validate_params(self) -> tuple:
@@ -286,7 +286,7 @@ class RegressionTab(BaseAnalysisTab):
             fitted = result.get("fitted_values", [])
             residuals = result.get("residuals", [])
             fig, axes = plt.subplots(2, 1, figsize=(10, 8), dpi=CHART_DPI)
-            axes[0].scatter(fitted, residuals, alpha=0.6, edgecolors="k", linewidth=0.3, color="#4648FF")
+            axes[0].scatter(fitted, residuals, alpha=0.6, edgecolors="k", linewidth=0.3, color="#4F73DC")
             axes[0].axhline(y=0, color="red", linestyle="--", linewidth=1)
             axes[0].set_xlabel("拟合值", fontsize=10)
             axes[0].set_ylabel("残差", fontsize=10)
@@ -303,7 +303,7 @@ class RegressionTab(BaseAnalysisTab):
         except Exception as e:
             self._clear_canvas()
             err_label = QLabel(f"{i18n.tr('reg.chart_failed')}{e}")
-            err_label.setStyleSheet("color: #C4544C; padding: 12px;")
+            err_label.setStyleSheet("color: #E00000; padding: 12px;")
             err_label.setWordWrap(True)
             self.chart_layout.addWidget(err_label)
 
@@ -327,6 +327,6 @@ class RegressionTab(BaseAnalysisTab):
         except Exception as e:
             self._clear_canvas()
             err_label = QLabel(f"{i18n.tr('reg.chart_failed')}{e}")
-            err_label.setStyleSheet("color: #C4544C; padding: 12px;")
+            err_label.setStyleSheet("color: #E00000; padding: 12px;")
             err_label.setWordWrap(True)
             self.chart_layout.addWidget(err_label)

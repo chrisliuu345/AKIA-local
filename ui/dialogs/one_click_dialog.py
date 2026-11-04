@@ -61,7 +61,7 @@ class OneClickDialog(QDialog):
         layout.setSpacing(8)
 
         title = QLabel("一键智能分析")
-        title.setFont(QFont(get_ui_font(), 16, QFont.Bold))
+        title.setFont(QFont(get_ui_font(), 16, QFont.DemiBold))
         layout.addWidget(title)
 
         desc = QLabel("自动画像数据 → 推荐分析组合 → 批量执行 → AI 撰写报告")
@@ -88,7 +88,7 @@ class OneClickDialog(QDialog):
         layout.addWidget(info_card)
 
         select_label = QLabel("选择分析范围（推荐项已勾选）:")
-        select_label.setFont(QFont(get_ui_font(), 11, QFont.Bold))
+        select_label.setFont(QFont(get_ui_font(), 11))
         layout.addWidget(select_label)
 
         scroll = QScrollArea()
@@ -137,7 +137,7 @@ class OneClickDialog(QDialog):
         btn_row.addStretch()
 
         self.run_btn = QPushButton("开始分析")
-        self.run_btn.setFont(QFont(get_ui_font(), 11, QFont.Bold))
+        self.run_btn.setFont(QFont(get_ui_font(), 11))
         self.run_btn.setMinimumHeight(36)
         self.run_btn.setMinimumWidth(120)
         self.run_btn.setCursor(Qt.PointingHandCursor)
@@ -197,7 +197,7 @@ class OneClickDialog(QDialog):
             cb.setFont(QFont(get_ui_font(), 10))
             cb.setChecked(rec.get("priority") == "high")
 
-            priority_color = {"high": "#C4544C", "medium": "#C4922A", "low": "#3E9B68"}
+            priority_color = {"high": "#E00000", "medium": "#C4922A", "low": "#3E9B68"}
             badge = QLabel({
                 "high": "★ 推荐", "medium": "☆ 建议", "low": "· 可选"
             }.get(rec.get("priority", ""), ""))

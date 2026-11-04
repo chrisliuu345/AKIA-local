@@ -1,8 +1,8 @@
 """统一图表风格层（v4.1.0 B1）— AKIA 图表的唯一事实源。
 
 设计:
-  - **两套主题**: ``dark``（应用内，近黑底掺 #0100AD）/ ``light``（报告白底掺 #C3C2FF）
-  - **分类色**取自品牌蓝色阶；合格 / 不合格 / 警告保持压暗的绿 / 红 / 琥珀，不并进蓝色
+  - **两套主题**: ``dark``（应用内近黑灰）/ ``light``（报告白底）
+  - **折线蓝**取自字标 “KIA”（#4F73DC）；不合格红取自字标 “A”（#E00000）；合格绿和警告琥珀保持低饱和
   - **统一 rcParams**：字体、字号、网格、脊线、图例、坐标轴负号
   - **工具函数**：apply_chart_style / style_axes / smart_ylim / add_limit_lines /
     mark_violations / finalize_figure / style_for_export
@@ -25,65 +25,65 @@ THEME_DARK = "dark"
 THEME_LIGHT = "light"
 DEFAULT_THEME = THEME_DARK
 
-# 分类色只从蓝色阶取样。深色图把较亮色放前面，浅色图把较深色放前面，避免线色贴住背景。
+# 分类色从字标蓝 #4F73DC 向白/黑拉开，深浅主题都能看清，不另起一套蓝。
 PALETTE: list[str] = [
-    "#4648FF",
-    "#1C1DEC",
-    "#9394FE",
-    "#C3C2FF",
-    "#0100AD",
-    "#6A6CFF",
-    "#3032D4",
-    "#B0B0FE",
+    "#4F73DC",
+    "#37519A",
+    "#8EABEA",
+    "#2C4A96",
+    "#6E8CE2",
+    "#B7C9F1",
+    "#283A6E",
+    "#C5D4F4",
 ]
 _PALETTE_DARK: list[str] = [
-    "#4648FF", "#9394FE", "#C3C2FF", "#6A6CFF",
-    "#1C1DEC", "#B0B0FE", "#3032D4", "#0100AD",
+    "#4F73DC", "#8EABEA", "#B7C9F1", "#6E8CE2",
+    "#37519A", "#C5D4F4", "#2C4A96", "#283A6E",
 ]
 _PALETTE_LIGHT: list[str] = [
-    "#4648FF", "#1C1DEC", "#0100AD", "#3032D4",
-    "#6A6CFF", "#9394FE", "#B0B0FE", "#C3C2FF",
+    "#4F73DC", "#37519A", "#2C4A96", "#283A6E",
+    "#6E8CE2", "#8EABEA", "#B7C9F1", "#C5D4F4",
 ]
 
 # 语义色（与主题相关）。good/warning/bad 不使用蓝色阶。
 _THEMES: dict[str, dict[str, str]] = {
     THEME_DARK: {
-        "figure_bg": "#0C0C1E",
-        "panel": "#161632",
-        "text": "#E4E4F2",
-        "text_muted": "#C3C2FF",
-        "axis": "#3A3A66",
-        "grid": "#2A2A4E",
-        "data": "#4648FF",
-        "data_alt": "#9394FE",
+        "figure_bg": "#141414",
+        "panel": "#1C1C1C",
+        "text": "#EDEDED",
+        "text_muted": "#A3A3A3",
+        "axis": "#333333",
+        "grid": "#2A2A2A",
+        "data": "#4F73DC",
+        "data_alt": "#8EABEA",
         "center": "#3E9B68",
-        "limit": "#C4544C",
+        "limit": "#E00000",
         "spec": "#C4922A",
-        "fit": "#C3C2FF",
-        "violation": "#C4544C",
+        "fit": "#37519A",
+        "violation": "#E00000",
         "good": "#3E9B68",
         "warning": "#C4922A",
-        "bad": "#C4544C",
-        "neutral": "#8A8AB8",
+        "bad": "#E00000",
+        "neutral": "#737373",
     },
     THEME_LIGHT: {
-        "figure_bg": "#F6F6FE",
-        "panel": "#FBFBFF",
-        "text": "#1A1A2E",
-        "text_muted": "#5A5A82",
-        "axis": "#C3C2FF",
-        "grid": "#E6E6F8",
-        "data": "#4648FF",
-        "data_alt": "#1C1DEC",
+        "figure_bg": "#F7F7F7",
+        "panel": "#FFFFFF",
+        "text": "#1A1A1A",
+        "text_muted": "#6B6B6B",
+        "axis": "#D4D4D4",
+        "grid": "#EEEEEE",
+        "data": "#4F73DC",
+        "data_alt": "#37519A",
         "center": "#2A7A4A",
-        "limit": "#A33C38",
+        "limit": "#E00000",
         "spec": "#8F6A12",
-        "fit": "#0100AD",
-        "violation": "#A33C38",
+        "fit": "#283A6E",
+        "violation": "#E00000",
         "good": "#2A7A4A",
         "warning": "#8F6A12",
-        "bad": "#A33C38",
-        "neutral": "#8E8EB0",
+        "bad": "#E00000",
+        "neutral": "#8A8A8A",
     },
 }
 
@@ -265,7 +265,7 @@ def add_limit_lines(ax, *, cl=None, ucl=None, lcl=None, usl=None, lsl=None,
                     fontsize: int = 9) -> list[float]:
     """绘制 CL / UCL / LCL / USL / LSL 参考线，返回纳入的数值列表。
 
-    - 控制限（UCL/LCL）: 压暗的红虚线
+    - 控制限（UCL/LCL）: 字标红虚线
     - 规格限（USL/LSL）: 压暗的琥珀点划线（与拟合线、控制限区分）
     - 中心线（CL）: 压暗的绿实线
     """

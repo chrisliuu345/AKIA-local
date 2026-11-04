@@ -43,7 +43,7 @@ class FMEATab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel("FMEA 失效模式与影响分析")
-        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
@@ -285,7 +285,7 @@ class FMEATab(BaseAnalysisTab):
     def _color_cell(self, item: QTableWidgetItem, level: str):
         if level == "high":
             item.setBackground(QColor("#5a1a1a"))
-            item.setForeground(QColor("#C4544C"))
+            item.setForeground(QColor("#E00000"))
         elif level == "medium":
             item.setBackground(QColor("#5a3a1a"))
             item.setForeground(QColor("#C4922A"))

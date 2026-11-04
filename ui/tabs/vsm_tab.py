@@ -40,7 +40,7 @@ class VSMTab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel(i18n.tr("ie.vsm.title"))
-        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
@@ -66,7 +66,7 @@ class VSMTab(BaseAnalysisTab):
         self.btn_analyze.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.btn_analyze.setCursor(Qt.PointingHandCursor)
         self.btn_analyze.setMinimumHeight(44)
-        self.btn_analyze.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.btn_analyze.setFont(QFont(get_ui_font(), 12))
         self.btn_analyze.clicked.connect(self._on_one_click_analyze)
         config_layout.addRow(self.btn_analyze)
 
@@ -260,13 +260,13 @@ class VSMTab(BaseAnalysisTab):
         gap = ((x1 - x0) - n * box_w) / max(n - 1, 1) if n > 1 else 0
         y_box, box_h = 62, 18
 
-        box_color = "#161632"
+        box_color = "#1C1C1C"
         for i, st in enumerate(steps):
             x = x0 + i * (box_w + gap)
             over = st["process_name"] in s.get("over_takt", [])
             rect = Rectangle((x, y_box), box_w, box_h,
                              facecolor=box_color,
-                             edgecolor="#C4544C" if over else tc["accent"],
+                             edgecolor="#E00000" if over else tc["accent"],
                              linewidth=1.6)
             ax.add_patch(rect)
             cx = x + box_w / 2

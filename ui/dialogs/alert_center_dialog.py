@@ -68,7 +68,7 @@ class AlertCenterDialog(QDialog):
         bar.addStretch()
 
         self.count_label = QLabel("")
-        self.count_label.setStyleSheet("color: #8A8AB8; font-size: 11px;")
+        self.count_label.setStyleSheet("color: #737373; font-size: 11px;")
         bar.addWidget(self.count_label)
         layout.addLayout(bar)
 

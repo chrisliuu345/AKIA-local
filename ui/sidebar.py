@@ -157,7 +157,7 @@ class CategoryGroup(QWidget):
         header_layout.addWidget(self._arrow_label)
 
         self._title_label = QLabel(i18n.tr(self.title_key))
-        self._title_label.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self._title_label.setFont(QFont(get_ui_font(), 12))
         self._title_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         header_layout.addWidget(self._title_label, 1)
 
@@ -271,21 +271,18 @@ class CategoryGroup(QWidget):
             if is_active:
                 btn.setStyleSheet(
                     f"QPushButton {{"
-                    f"background-color: {tc['accent']}; color: #ffffff;"
-                    f"border: none; border-left: 2px solid {tc['accent']};"
-                    f"border-radius: 4px; padding: 4px 10px; text-align: left;"
+                    f"background-color: {tc['bg_active']}; color: {tc['text_primary']};"
+                    f"border: none; border-radius: 8px; padding: 4px 10px; text-align: left;"
                     f"}}"
                 )
             else:
                 btn.setStyleSheet(
                     f"QPushButton {{"
                     f"background-color: transparent; color: {tc['text_primary']};"
-                    f"border: none; border-left: 2px solid transparent;"
-                    f"border-radius: 4px; padding: 4px 10px; text-align: left;"
+                    f"border: none; border-radius: 8px; padding: 4px 10px; text-align: left;"
                     f"}}"
                     f"QPushButton:hover {{"
                     f"background-color: {hover_bg};"
-                    f"border-left: 2px solid {tc['accent']};"
                     f"}}"
                 )
 
@@ -374,7 +371,7 @@ class Sidebar(QWidget):
         layout.addSpacing(6)
 
         self.diagnose_btn = QPushButton()
-        self.diagnose_btn.setFont(QFont(get_ui_font(), 11, QFont.Bold))
+        self.diagnose_btn.setFont(QFont(get_ui_font(), 11))
         self.diagnose_btn.setMinimumHeight(40)
         self.diagnose_btn.setCursor(Qt.PointingHandCursor)
         self.diagnose_btn.clicked.connect(self.diagnose_clicked.emit)
@@ -386,7 +383,7 @@ class Sidebar(QWidget):
         layout.addSpacing(4)
 
         self.llm_btn = QPushButton()
-        self.llm_btn.setFont(QFont(get_ui_font(), 11, QFont.Bold))
+        self.llm_btn.setFont(QFont(get_ui_font(), 11))
         self.llm_btn.setMinimumHeight(40)
         self.llm_btn.setCursor(Qt.PointingHandCursor)
         self.llm_btn.clicked.connect(self.llm_clicked.emit)
@@ -399,7 +396,7 @@ class Sidebar(QWidget):
 
         history_header = QHBoxLayout()
         hl = QLabel(i18n.tr("sidebar.history"))
-        hl.setFont(QFont(get_ui_font(), 10, QFont.Bold))
+        hl.setFont(QFont(get_ui_font(), 10))
         hl.setStyleSheet(f"color: {tc['text_secondary']}; padding: 2px 4px;")
         history_header.addWidget(hl)
         history_header.addStretch()
@@ -458,20 +455,18 @@ class Sidebar(QWidget):
         if is_home:
             self.home_btn.setStyleSheet(
                 f"QPushButton {{"
-                f"background-color: {tc['accent']}; color: #ffffff;"
-                f"border: none; border-left: 2px solid {tc['accent']};"
-                f"border-radius: 6px; padding: 10px 12px; text-align: left;"
+                f"background-color: {tc['bg_active']}; color: {tc['text_primary']};"
+                f"border: none; border-radius: 8px; padding: 10px 12px; text-align: left;"
                 f"}}"
             )
         else:
             self.home_btn.setStyleSheet(
                 f"QPushButton {{"
                 f"background-color: transparent; color: {tc['text_primary']};"
-                f"border: none; border-left: 2px solid transparent;"
-                f"border-radius: 6px; padding: 10px 12px; text-align: left;"
+                f"border: none; border-radius: 8px; padding: 10px 12px; text-align: left;"
                 f"}}"
                 f"QPushButton:hover {{"
-                f"background-color: {hover_bg}; border-left: 2px solid {tc['accent']};"
+                f"background-color: {hover_bg};"
                 f"}}"
             )
 
@@ -572,14 +567,11 @@ class Sidebar(QWidget):
 
     def _refresh_styles(self):
         tc = theme_colors(self)
-        accent = tc["accent"]
-        tc["accent_bright"]
         text_color = tc["text_primary"]
 
-        self.setStyleSheet(f"background-color: {tc['bg_body']};")
+        self.setStyleSheet(f"background-color: {tc['bg_header']};")
 
         hover_bg = tc["bg_hover"]
-        tc["bg_active"]
 
         for group in self.categories:
             group.header_btn.setStyleSheet(
@@ -598,7 +590,7 @@ class Sidebar(QWidget):
             btn.setStyleSheet(
                 f"QPushButton {{"
                 f"background-color: transparent; color: {text_color};"
-                f"border: none; border-radius: 6px; padding: 8px 12px;"
+                f"border: none; border-radius: 8px; padding: 8px 12px;"
                 f"text-align: left;"
                 f"}}"
                 f"QPushButton:hover {{"
@@ -608,8 +600,8 @@ class Sidebar(QWidget):
 
         self.diagnose_btn.setStyleSheet(
             f"QPushButton {{"
-            f"background-color: transparent; color: {text_color}; font-weight: bold;"
-            f"border: 1px solid {accent}; border-radius: 6px; padding: 8px 12px;"
+            f"background-color: transparent; color: {text_color};"
+            f"border: 1px solid {tc['border']}; border-radius: 8px; padding: 8px 12px;"
             f"text-align: left;"
             f"}}"
             f"QPushButton:hover {{"
@@ -620,8 +612,7 @@ class Sidebar(QWidget):
         self.llm_btn.setStyleSheet(
             f"QPushButton {{"
             f"background-color: transparent; color: {tc['text_primary']}; "
-            f"font-weight: bold;"
-            f"border: 1px solid {tc['border_light']}; border-radius: 6px; padding: 8px 12px;"
+            f"border: 1px solid {tc['border_light']}; border-radius: 8px; padding: 8px 12px;"
             f"text-align: left;"
             f"}}"
             f"QPushButton:hover {{"

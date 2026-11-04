@@ -45,16 +45,16 @@ class ExcelReport(BaseReportEngine):
             }),
             "heading1": wb.add_format({
                 "bold": True, "font_size": 14, "font_name": font_name,
-                "bg_color": "#0100AD", "font_color": "white",
+                "bg_color": "#2A2A2A", "font_color": "white",
                 "border": 1, "text_wrap": True,
             }),
             "heading2": wb.add_format({
                 "bold": True, "font_size": 12, "font_name": font_name,
-                "bg_color": "#E6E5FF", "font_color": "#0100AD", "border": 1,
+                "bg_color": "#F0F0F0", "font_color": "#1A1A1A", "border": 1,
             }),
             "header": wb.add_format({
                 "bold": True, "font_size": 10, "font_name": font_name,
-                "bg_color": "#1C1DEC", "font_color": "white", "border": 1,
+                "bg_color": "#2A2A2A", "font_color": "white", "border": 1,
                 "text_wrap": True,
             }),
             "cell": wb.add_format({

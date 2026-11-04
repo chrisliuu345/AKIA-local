@@ -49,7 +49,7 @@ class WorkSamplingTab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel(i18n.tr("ie.work_sampling.title"))
-        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
@@ -91,7 +91,7 @@ class WorkSamplingTab(BaseAnalysisTab):
         self.btn_analyze.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.btn_analyze.setCursor(Qt.PointingHandCursor)
         self.btn_analyze.setMinimumHeight(44)
-        self.btn_analyze.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.btn_analyze.setFont(QFont(get_ui_font(), 12))
         self.btn_analyze.clicked.connect(self._on_one_click_analyze)
         config_layout.addRow(self.btn_analyze)
 
@@ -204,7 +204,7 @@ class WorkSamplingTab(BaseAnalysisTab):
             btn.setStyleSheet(
                 f"QPushButton {{"
                 f"background-color: {col.name()}; color: #fff;"
-                f"font-weight: bold; font-size: 12px;"
+                f" font-size: 12px;"
                 f"border: none; border-radius: 6px; padding: 6px 12px;"
                 f"text-align: left;"
                 f"}}"
@@ -212,7 +212,7 @@ class WorkSamplingTab(BaseAnalysisTab):
                 f"background-color: {col.name()}; color: #fff;"
                 f"}}"
                 f"QPushButton:!checked {{"
-                f"background-color: #2A2A4E; color: #fff;"
+                f"background-color: #2A2A2A; color: #fff;"
                 f"border: 2px solid {col.name()};"
                 f"}}"
                 f"QPushButton:hover {{"

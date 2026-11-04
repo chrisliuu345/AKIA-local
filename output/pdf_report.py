@@ -79,19 +79,19 @@ class PDFReport(BaseReportEngine):
             self._styles = {
                 "title": ParagraphStyle(
                     "PDFTitle", fontName=fb, fontSize=24, leading=30,
-                    alignment=TA_CENTER, spaceAfter=24, textColor=HexColor("#0100AD"),
+                    alignment=TA_CENTER, spaceAfter=24, textColor=HexColor("#1A1A1A"),
                 ),
                 "subtitle": ParagraphStyle(
                     "PDFSubtitle", fontName=fn, fontSize=14, leading=20,
-                    alignment=TA_CENTER, spaceAfter=12, textColor=HexColor("#5A5A82"),
+                    alignment=TA_CENTER, spaceAfter=12, textColor=HexColor("#5C5C5C"),
                 ),
                 "h1": ParagraphStyle(
                     "PDFH1", fontName=fb, fontSize=16, leading=22,
-                    spaceBefore=20, spaceAfter=10, textColor=HexColor("#0100AD"),
+                    spaceBefore=20, spaceAfter=10, textColor=HexColor("#1A1A1A"),
                 ),
                 "h2": ParagraphStyle(
                     "PDFH2", fontName=fb, fontSize=13, leading=18,
-                    spaceBefore=14, spaceAfter=6, textColor=HexColor("#1A1A2E"),
+                    spaceBefore=14, spaceAfter=6, textColor=HexColor("#1A1A1A"),
                 ),
                 "body": ParagraphStyle(
                     "PDFBody", fontName=fn, fontSize=10, leading=16,
@@ -99,7 +99,7 @@ class PDFReport(BaseReportEngine):
                 ),
                 "meta": ParagraphStyle(
                     "PDFMeta", fontName=fn, fontSize=9, leading=14,
-                    alignment=TA_LEFT, textColor=HexColor("#8A8AB8888"),
+                    alignment=TA_LEFT, textColor=HexColor("#737373888"),
                 ),
             }
         return self._styles
@@ -168,7 +168,7 @@ class PDFReport(BaseReportEngine):
             def _wm(canvas, doc):
                 canvas.saveState()
                 canvas.setFont("Helvetica", 40)
-                canvas.setFillColor(HexColor("#8A8AB8888"), alpha=0.08)
+                canvas.setFillColor(HexColor("#737373888"), alpha=0.08)
                 canvas.drawString(3*cm, 14*cm, watermark)
                 canvas.restoreState()
             doc.build(self.story, onFirstPage=_wm, onLaterPages=_wm)
@@ -197,7 +197,7 @@ class PDFReport(BaseReportEngine):
             data.append([str(i + 1), atype, conclusion])
 
         col_w = [1.2 * cm, 9 * cm, 5.8 * cm]
-        self._draw_table(data, col_w, S, header_bg="#0100AD")
+        self._draw_table(data, col_w, S, header_bg="#2A2A2A")
 
     def _add_analysis_detail(self, result: dict, S: dict):
         if "capability" in result:
@@ -215,7 +215,7 @@ class PDFReport(BaseReportEngine):
                 ],
             ]
             col_w = [2.5 * cm] + [2.2 * cm] * 6
-            self._draw_table(rows, col_w, S, header_bg="#0100AD")
+            self._draw_table(rows, col_w, S, header_bg="#2A2A2A")
 
         if "percentages" in result:
             pct = result["percentages"]
@@ -230,11 +230,11 @@ class PDFReport(BaseReportEngine):
                 ],
             ]
             col_w = [3 * cm, 3 * cm, 3 * cm, 2.5 * cm, 4.5 * cm]
-            self._draw_table(rows, col_w, S, header_bg="#0100AD")
+            self._draw_table(rows, col_w, S, header_bg="#2A2A2A")
 
         if "p_value" in result:
             sig = result.get("is_significant", False)
-            color = "#0100AD" if sig else "#A33C38"
+            color = "#1A1A1A" if sig else "#E00000"
             msg = i18n.tr("report.significant") if sig else i18n.tr("report.not_significant")
             pv = result.get("p_value")
             try:
@@ -252,7 +252,7 @@ class PDFReport(BaseReportEngine):
                  f"{m.get('f_statistic', '-'):.2f}", str(m.get('n', '-'))],
             ]
             col_w = [3 * cm] + [3.25 * cm] * 4
-            self._draw_table(rows, col_w, S, header_bg="#0100AD")
+            self._draw_table(rows, col_w, S, header_bg="#2A2A2A")
 
     def _add_kv_table(self, title: str, params: dict, S: dict):
         self.story.append(Paragraph(title, S["h2"]))
@@ -263,7 +263,7 @@ class PDFReport(BaseReportEngine):
         self.story.append(Spacer(1, 0.3 * cm))
 
     def _draw_table(self, data: list[list[str]], col_widths: list[float],
-                    S: dict, header_bg: str = "#0100AD"):
+                    S: dict, header_bg: str = "#2A2A2A"):
         tbl = Table(data, colWidths=col_widths, repeatRows=1)
         style_cmds = [
             ("BACKGROUND", (0, 0), (-1, 0), HexColor(header_bg)),
@@ -281,7 +281,7 @@ class PDFReport(BaseReportEngine):
         ]
         if len(data) > 2:
             style_cmds.append(("ROWBACKGROUNDS", (0, 1), (-1, -1),
-                               [HexColor("#F6F6FE"), HexColor("#ffffff")]))
+                               [HexColor("#F7F7F7"), HexColor("#ffffff")]))
         tbl.setStyle(TableStyle(style_cmds))
         self.story.append(tbl)
         self.story.append(Spacer(1, 0.4 * cm))

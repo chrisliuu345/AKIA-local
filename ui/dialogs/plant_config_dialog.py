@@ -39,7 +39,7 @@ class PlantConfigDialog(QDialog):
 
         hint = QLabel(i18n.tr("plant.hint").format(path=str(self.path)))
         hint.setWordWrap(True)
-        hint.setStyleSheet("color: #8A8AB8; font-size: 11px;")
+        hint.setStyleSheet("color: #737373; font-size: 11px;")
         layout.addWidget(hint)
 
         self.table = QTableWidget()
@@ -63,7 +63,7 @@ class PlantConfigDialog(QDialog):
             row_bar.addWidget(btn)
         row_bar.addStretch()
         self.status_label = QLabel("")
-        self.status_label.setStyleSheet("color: #8A8AB8; font-size: 11px;")
+        self.status_label.setStyleSheet("color: #737373; font-size: 11px;")
         row_bar.addWidget(self.status_label)
         layout.addLayout(row_bar)
 

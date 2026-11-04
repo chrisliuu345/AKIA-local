@@ -36,21 +36,21 @@ def _ensure_templates():
     
     _BUILTIN_TEMPLATES = {
         "daily": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>质量日报</title>
-<style>body{{background:#F6F6FE;font-family:'{font_family}',sans-serif;max-width:800px;margin:auto;padding:20px;color:#1A1A2E}}
-h1{{color:#0100AD;border-bottom:2px solid #0100AD}}h2{{color:#5A5A82}}.kpi{{display:flex;gap:20px;margin:10px 0}}
-.kpi div{{flex:1;background:#F4F4FF;padding:12px;border-radius:8px;text-align:center}}
-.kpi .val{{font-size:28px;font-weight:bold;color:#0100AD}}table{{width:100%;border-collapse:collapse;margin:10px 0}}
-td,th{{border:1px solid #D8D7F2;padding:6px;text-align:center}}th{{background:#0100AD;color:#fff}}
-.footer{{color:#8A8AB8;font-size:12px;margin-top:30px}}</style></head><body>
+<style>body{{background:#F7F7F7;font-family:'{font_family}',sans-serif;max-width:800px;margin:auto;padding:20px;color:#1A1A1A}}
+h1{{color:#1A1A1A;border-bottom:2px solid #1A1A1A}}h2{{color:#5C5C5C}}.kpi{{display:flex;gap:20px;margin:10px 0}}
+.kpi div{{flex:1;background:#F3F3F3;padding:12px;border-radius:8px;text-align:center}}
+.kpi .val{{font-size:28px;font-weight:bold;color:#1A1A1A}}table{{width:100%;border-collapse:collapse;margin:10px 0}}
+td,th{{border:1px solid #E0E0E0;padding:6px;text-align:center}}th{{background:#2A2A2A;color:#fff}}
+.footer{{color:#737373;font-size:12px;margin-top:30px}}</style></head><body>
 <h1>质量日报</h1><p>日期: $date | 产品: $product | 部门: $department</p>
 <h2>关键指标</h2><div class="kpi">$kpi_cards</div>
 <h2>分析摘要</h2>$summary_table
 <div class="footer"><p>AKIA v$version · 自动生成于 $timestamp</p></div></body></html>""",
 
         "monthly_spc": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>月度SPC报告</title>
-<style>body{{background:#F6F6FE;font-family:'{font_family}',sans-serif;max-width:900px;margin:auto;padding:20px;color:#1A1A2E}}
-h1{{color:#0100AD}}h2{{color:#5A5A82;border-bottom:1px solid #D8D7F2}}table{{width:100%;border-collapse:collapse;margin:10px 0}}
-td,th{{border:1px solid #D8D7F2;padding:6px}}th{{background:#0100AD;color:#fff}}.warn{{color:#A33C38}}.ok{{color:#2A7A4A}}</style></head><body>
+<style>body{{background:#F7F7F7;font-family:'{font_family}',sans-serif;max-width:900px;margin:auto;padding:20px;color:#1A1A1A}}
+h1{{color:#1A1A1A}}h2{{color:#5C5C5C;border-bottom:1px solid #E0E0E0}}table{{width:100%;border-collapse:collapse;margin:10px 0}}
+td,th{{border:1px solid #E0E0E0;padding:6px}}th{{background:#2A2A2A;color:#fff}}.warn{{color:#E00000}}.ok{{color:#2A7A4A}}</style></head><body>
 <h1>月度SPC统计过程控制报告</h1><p>期间: $period | 产品: $product</p>
 <h2>过程能力汇总</h2>$capability_table
 <h2>SPC违规统计</h2>$spc_violations
@@ -58,26 +58,26 @@ td,th{{border:1px solid #D8D7F2;padding:6px}}th{{background:#0100AD;color:#fff}}
 <div class="footer"><p>AKIA v$version · $timestamp</p></div></body></html>""",
 
         "audit": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>审核报告</title>
-<style>body{{background:#F6F6FE;font-family:'{font_family}',sans-serif;max-width:800px;margin:auto;padding:20px;color:#1A1A2E}}
-h1{{color:#0100AD}}h2{{color:#5A5A82}}table{{width:100%;border-collapse:collapse;margin:10px 0}}
-td,th{{border:1px solid #D8D7F2;padding:6px}}th{{background:#0100AD;color:#fff}}
-.pass{{color:#2A7A4A}}.fail{{color:#A33C38}}</style></head><body>
+<style>body{{background:#F7F7F7;font-family:'{font_family}',sans-serif;max-width:800px;margin:auto;padding:20px;color:#1A1A1A}}
+h1{{color:#1A1A1A}}h2{{color:#5C5C5C}}table{{width:100%;border-collapse:collapse;margin:10px 0}}
+td,th{{border:1px solid #E0E0E0;padding:6px}}th{{background:#2A2A2A;color:#fff}}
+.pass{{color:#2A7A4A}}.fail{{color:#E00000}}</style></head><body>
 <h1>LPA分层过程审核报告</h1><p>审核日期: $date | 审核员: $auditor</p>
 <h2>审核结果</h2>$audit_table
 <h2>不符合项</h2>$nc_list
 <div class="footer"><p>AKIA v$version · $timestamp</p></div></body></html>""",
 
         "8d": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>8D报告</title>
-<style>body{{background:#F6F6FE;font-family:'{font_family}',sans-serif;max-width:800px;margin:auto;padding:20px;color:#1A1A2E}}
-h1{{color:#0100AD}}h2{{color:#5A5A82;border-bottom:1px solid #D8D7F2}}.step{{margin:10px 0;padding:10px;background:#F6F6FE;border-radius:6px}}
-.step h3{{margin:0;color:#0100AD}}</style></head><body>
+<style>body{{background:#F7F7F7;font-family:'{font_family}',sans-serif;max-width:800px;margin:auto;padding:20px;color:#1A1A1A}}
+h1{{color:#1A1A1A}}h2{{color:#5C5C5C;border-bottom:1px solid #E0E0E0}}.step{{margin:10px 0;padding:10px;background:#F7F7F7;border-radius:6px}}
+.step h3{{margin:0;color:#1A1A1A}}</style></head><body>
 <h1>8D问题解决报告</h1><p>$title_info</p>$steps_html
 <div class="footer"><p>AKIA v$version · $timestamp</p></div></body></html>""",
 
         "ppap": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>PPAP提交</title>
-<style>body{{background:#F6F6FE;font-family:'{font_family}',sans-serif;max-width:900px;margin:auto;padding:20px;color:#1A1A2E}}
-h1{{color:#0100AD}}table{{width:100%;border-collapse:collapse;margin:10px 0}}
-td,th{{border:1px solid #D8D7F2;padding:6px;text-align:center}}th{{background:#0100AD;color:#fff}}
+<style>body{{background:#F7F7F7;font-family:'{font_family}',sans-serif;max-width:900px;margin:auto;padding:20px;color:#1A1A1A}}
+h1{{color:#1A1A1A}}table{{width:100%;border-collapse:collapse;margin:10px 0}}
+td,th{{border:1px solid #E0E0E0;padding:6px;text-align:center}}th{{background:#2A2A2A;color:#fff}}
 .done{{background:#d4edda}}.pending{{background:#fff3cd}}.na{{background:#e2e3e5}}</style></head><body>
 <h1>PPAP生产件批准</h1><p>$ppap_info</p><h2>提交状态</h2>$items_table
 <h2>尺寸报告</h2>$dim_table
