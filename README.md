@@ -8,7 +8,7 @@
 
 AKIA 是一款开源、本地优先的个人工业工程（IE）与质量分析桌面软件，面向现场改善、质量工程和数据分析工作。它将统计过程控制、测量系统分析、试验设计、可靠性分析、IE 工具和改善案例管理整合在一个离线桌面应用中。
 
-当前版本：v4.6.2。
+当前版本：v4.6.3。
 
 AKIA 不要求账号、订阅或在线激活。数据默认保存在本机；只有在你主动配置云模型、数据库、看板或外部设备时，软件才会建立相应的网络连接。
 
@@ -31,19 +31,19 @@ AKIA 不要求账号、订阅或在线激活。数据默认保存在本机；只
 
 ### Linux AppImage
 
-从 [Releases](https://github.com/chrisliuu345/AKIA-local/releases) 下载 `AKIA-4.6.2-x86_64.AppImage` 和同名 `.sha256` 文件：
+从 [Releases](https://github.com/chrisliuu345/AKIA-local/releases) 下载 `AKIA-4.6.3-x86_64.AppImage` 和同名 `.sha256` 文件：
 
 ```bash
-sha256sum -c AKIA-4.6.2-x86_64.AppImage.sha256
-chmod +x AKIA-4.6.2-x86_64.AppImage
-./AKIA-4.6.2-x86_64.AppImage
+sha256sum -c AKIA-4.6.3-x86_64.AppImage.sha256
+chmod +x AKIA-4.6.3-x86_64.AppImage
+./AKIA-4.6.3-x86_64.AppImage
 ```
 
 无 FUSE 的环境可使用 `--appimage-extract-and-run` 启动。若要自行构建 AppImage，请运行 `bash build_appimage.sh`，产物位于 `build/`。
 
 ### Windows
 
-下载 `AKIA-Setup-4.6.2.exe`，双击运行。
+下载 `AKIA-Setup-4.6.3.exe`，双击运行。
 或在 Windows 上执行：
 
 ```powershell
