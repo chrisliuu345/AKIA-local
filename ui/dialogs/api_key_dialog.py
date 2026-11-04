@@ -35,7 +35,7 @@ class ApiKeyDialog(QDialog):
         layout.setSpacing(10)
 
         title = QLabel(f"接入 {self.spec.label}")
-        title.setFont(QFont(get_ui_font(), 14, QFont.Bold))
+        title.setFont(QFont(get_ui_font(), 14))
         title.setStyleSheet(f"color: {tc['text_primary']};")
         layout.addWidget(title)
 
@@ -74,7 +74,7 @@ class ApiKeyDialog(QDialog):
             layout.addWidget(docs)
 
         self.error_label = QLabel("")
-        self.error_label.setStyleSheet("color: #e74c3c; font-size: 9pt;")
+        self.error_label.setStyleSheet("color: #E00000; font-size: 9pt;")
         self.error_label.setVisible(False)
         layout.addWidget(self.error_label)
 
@@ -94,7 +94,7 @@ class ApiKeyDialog(QDialog):
         save_btn.setDefault(True)
         save_btn.setStyleSheet(
             f"QPushButton {{ background: {tc['accent']}; color: white; border: none;"
-            f"border-radius: 6px; padding: 5px 20px; font-weight: bold; }}"
+            f"border-radius: 6px; padding: 5px 20px;  }}"
             f"QPushButton:hover {{ background: {tc['accent_bright']}; }}")
         save_btn.clicked.connect(self._on_save)
         row.addWidget(save_btn)

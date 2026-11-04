@@ -8,18 +8,18 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QGroupBox, QFormLayout, QFrame,
     QTableWidget, QTableWidgetItem, QSplitter, QHeaderView,
-    QStackedWidget, QMessageBox, QGridLayout,
+    QMessageBox, QGridLayout,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from ui.widgets.chart_canvas import ChartCanvas
 from config.settings import OEE_WORLD_CLASS, OEE_GOOD, OEE_FAIR
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
 from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
-from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY, BUTTON_TOGGLE
+from ui.theme import BUTTON_PRIMARY_STRETCH
 from ui.theme import colors as theme_colors
 from ui.font_config import get_ui_font
 from core.data_objects import Resource
@@ -39,7 +39,7 @@ class OEETab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel(i18n.tr("ie.oee.title"))
-        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
@@ -62,18 +62,13 @@ class OEETab(BaseAnalysisTab):
         self.btn_analyze.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.btn_analyze.setCursor(Qt.PointingHandCursor)
         self.btn_analyze.setMinimumHeight(44)
-        self.btn_analyze.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.btn_analyze.setFont(QFont(get_ui_font(), 12))
         self.btn_analyze.clicked.connect(self._on_one_click_analyze)
         config_layout.addRow(self.btn_analyze)
 
         top_layout.addWidget(config_group)
 
 
-        separator = QFrame()
-        separator.setFrameShape(QFrame.VLine)
-        separator.setStyleSheet("")
-        separator.setMaximumWidth(1)
-        top_layout.addWidget(separator)
 
         kpi_group = QGroupBox("实时指标")
         kpi_grid = QGridLayout(kpi_group)
@@ -84,7 +79,7 @@ class OEETab(BaseAnalysisTab):
                                             ("oee", "OEE"))):
             card = QFrame()
             card.setStyleSheet(
-                "QFrame { background: #262632; border: 1px solid #2a2a36; "
+                "QFrame { background: #1C1C1C; border: 1px solid #2A2A2A; "
                 "border-radius: 8px; }"
             )
             card.setMinimumWidth(118)
@@ -92,11 +87,11 @@ class OEETab(BaseAnalysisTab):
             cl.setContentsMargins(8, 6, 8, 6)
             name = QLabel(label)
             name.setFont(QFont(get_ui_font(), 9))
-            name.setStyleSheet("color: #a0a3ae; border: none;")
+            name.setStyleSheet("color: #B7C9F1; border: none;")
             name.setAlignment(Qt.AlignCenter)
             val = QLabel("--")
-            val.setFont(QFont(get_ui_font(), 16, QFont.Bold))
-            val.setStyleSheet("color: #e1e2e6; border: none;")
+            val.setFont(QFont(get_ui_font(), 16, QFont.DemiBold))
+            val.setStyleSheet("color: #EDEDED; border: none;")
             val.setAlignment(Qt.AlignCenter)
             cl.addWidget(name)
             cl.addWidget(val)
@@ -121,49 +116,7 @@ class OEETab(BaseAnalysisTab):
         bottom_layout = QVBoxLayout(bottom)
         bottom_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.result_stack = QStackedWidget()
-
-        self.chart_widget = QWidget()
-        self.chart_layout = QVBoxLayout(self.chart_widget)
-        self.chart_layout.setContentsMargins(0, 0, 0, 0)
-        self.result_stack.addWidget(self.chart_widget)
-
-        self.data_widget = QWidget()
-        data_layout = QVBoxLayout(self.data_widget)
-        data_layout.setContentsMargins(0, 0, 0, 0)
-        self.result_table = QTableWidget()
-        self.result_table.setAlternatingRowColors(True)
-        self.result_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        data_layout.addWidget(self.result_table)
-        self.result_stack.addWidget(self.data_widget)
-
-        toggle_row = QHBoxLayout()
-        toggle_row.setSpacing(8)
-        self.btn_view_chart = QPushButton(i18n.tr("tab.view_chart"))
-        self.btn_view_chart.setFont(QFont(get_ui_font(), 11))
-        self.btn_view_chart.setFixedHeight(30)
-        self.btn_view_chart.setCheckable(True)
-        self.btn_view_chart.setChecked(True)
-        self.btn_view_chart.setStyleSheet(BUTTON_TOGGLE)
-        self.btn_view_chart.clicked.connect(lambda: self._switch_result_view(0))
-        toggle_row.addWidget(self.btn_view_chart)
-        self.btn_view_data = QPushButton(i18n.tr("tab.view_data"))
-        self.btn_view_data.setFont(QFont(get_ui_font(), 11))
-        self.btn_view_data.setFixedHeight(30)
-        self.btn_view_data.setCheckable(True)
-        self.btn_view_data.setStyleSheet(BUTTON_TOGGLE)
-        self.btn_view_data.clicked.connect(lambda: self._switch_result_view(1))
-        toggle_row.addWidget(self.btn_view_data)
-        toggle_row.addStretch()
-        self.btn_save_png = QPushButton(i18n.tr("chart_tab.save_png"))
-        self.btn_save_png.setFont(QFont(get_ui_font(), 11))
-        self.btn_save_png.setFixedHeight(30)
-        self.btn_save_png.setStyleSheet(BUTTON_SECONDARY)
-        self.btn_save_png.clicked.connect(self._on_save_png)
-        toggle_row.addWidget(self.btn_save_png)
-
-        bottom_layout.addLayout(toggle_row)
-        bottom_layout.addWidget(self.result_stack, 1)
+        self.mount_results(bottom_layout, text=False, table=True, save_png=True)
 
         splitter.addWidget(bottom)
         splitter.setSizes([320, 480])
@@ -237,13 +190,13 @@ class OEETab(BaseAnalysisTab):
         oee = ov.get("oee") or 0
         self._kpi_labels["oee"].setText(f"{oee:.1%}")
         if oee >= OEE_WORLD_CLASS:
-            color = "#27ae60"
+            color = "#3E9B68"
         elif oee >= OEE_GOOD:
             color = tc["accent_bright"]
         elif oee >= OEE_FAIR:
-            color = "#e67e22"
+            color = "#B86A28"
         else:
-            color = "#e74c3c"
+            color = "#E00000"
         self._kpi_labels["oee"].setStyleSheet(f"color: {color}; border: none;")
 
     def _fill_table(self, result: dict[str, Any]):
@@ -280,10 +233,10 @@ class OEETab(BaseAnalysisTab):
         labels = [b["label"] for b in buckets]
 
         ax1 = fig.add_subplot(1, 2, 1)
-        metrics = [("availability", "A", "#1b5faa"),
-                   ("performance", "P", "#217ca3"),
-                   ("quality", "Q", "#27ae60"),
-                   ("oee", "OEE", "#9467bd")]
+        metrics = [("availability", "A", "#4F73DC"),
+                   ("performance", "P", "#37519A"),
+                   ("quality", "Q", "#8EABEA"),
+                   ("oee", "OEE", "#6E8CE2")]
         import numpy as np
         x = np.arange(len(labels))
         width = 0.19
@@ -295,9 +248,9 @@ class OEETab(BaseAnalysisTab):
                 if b[key] is not None and v > 0:
                     ax1.text(xi + (k - 1.5) * width, v + 0.015, f"{v:.0%}",
                              ha="center", fontsize=7, color=tc["text_secondary"])
-        ax1.axhline(OEE_WORLD_CLASS, color="#e74c3c", linestyle="--", linewidth=1.2)
+        ax1.axhline(OEE_WORLD_CLASS, color="#E00000", linestyle="--", linewidth=1.2)
         ax1.text(len(labels) - 0.5, OEE_WORLD_CLASS + 0.015, f"世界级 {OEE_WORLD_CLASS:.0%}", fontsize=8,
-                 color="#e74c3c", ha="right")
+                 color="#E00000", ha="right")
         ax1.set_xticks(x)
         ax1.set_xticklabels(labels)
         ax1.set_ylim(0, 1.12)
@@ -320,7 +273,7 @@ class OEETab(BaseAnalysisTab):
         starts = [0, planned - down, planned - down - speed,
                   planned - down - speed - qual, 0]
         heights = [planned, down, speed, qual, value]
-        colors = ["#1b5faa", "#e74c3c", "#e67e22", "#9467bd", "#27ae60"]
+        colors = ["#4F73DC", "#E00000", "#C4922A", "#8EABEA", "#3E9B68"]
         for i, (s, h, c) in enumerate(zip(starts, heights, colors, strict=True)):
             ax2.bar(stages[i], h, bottom=s, color=c, width=0.58)
             ax2.text(stages[i], s + h + planned * 0.015, f"{h:.2f}h",
@@ -337,7 +290,7 @@ class OEETab(BaseAnalysisTab):
         self._style_axis(ax2, tc, rotate=12)
 
         self.current_figure = fig
-        self.canvas = FigureCanvasQTAgg(fig)
+        self.canvas = ChartCanvas(fig)
         self.chart_layout.addWidget(self.canvas)
         self._switch_result_view(0)
 

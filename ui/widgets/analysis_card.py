@@ -53,7 +53,7 @@ class AnalysisCard(QFrame):
     """单个分析结果卡片 — 垂直排列：标题行 + 指标行 + 图表区"""
 
     def __init__(self, atype: str, rows: list[str], figure=None,
-                 status_color: str = "#6e7080", timestamp: str = "",
+                 status_color: str = "#737373", timestamp: str = "",
                  parent=None):
         super().__init__(parent)
         self._atype = atype

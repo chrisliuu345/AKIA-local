@@ -125,7 +125,7 @@ class EvidenceViewDialog(QDialog):
         params = cred.params or {}
         trace = credential_trace_code([credential])
         chain = self._chain_result()
-        chain_color = "#2ecc71" if chain.get("ok") else "#e74c3c"
+        chain_color = "#3E9B68" if chain.get("ok") else "#E00000"
         chain_text = ("账本链校验通过" if chain.get("ok")
                       else f"账本链校验失败：{chain.get('reason', '')}")
         diff = analysis.get("rerun_diff") or {}
@@ -155,7 +155,7 @@ class EvidenceViewDialog(QDialog):
         parts = [f'<h3>[{key}] {analysis.get("analysis_type", "?")}</h3>',
                  f'<p style="color:{chain_color}"><b>{chain_text}</b></p>']
         if self.ledger_failures:
-            parts.append(f'<p style="color:#e74c3c">账本写入失败累计：'
+            parts.append(f'<p style="color:#E00000">账本写入失败累计：'
                          f'{self.ledger_failures} 次</p>')
         parts.append("<table>" + "".join(
             f"<tr><td><b>{html.escape(str(name))}</b></td>"

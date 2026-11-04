@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from ui.widgets.chart_canvas import ChartCanvas
 from config.settings import CAPABILITY_GRADES
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
@@ -42,7 +42,7 @@ class CapComparisonTab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel("工序能力对比图")
-        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
@@ -95,7 +95,7 @@ class CapComparisonTab(BaseAnalysisTab):
         self.btn_run.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.btn_run.setCursor(Qt.PointingHandCursor)
         self.btn_run.setMinimumHeight(44)
-        self.btn_run.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.btn_run.setFont(QFont(get_ui_font(), 12))
         self.btn_run.clicked.connect(self._run)
         left_layout.addWidget(self.btn_run)
 
@@ -228,18 +228,18 @@ class CapComparisonTab(BaseAnalysisTab):
         ax.bar(x - w/2, cp_vals, w * 0.45, label="Cp",
                        color=tc["accent_bright"], alpha=0.85)
         ax.bar(x - w/2 + w * 0.45, cpk_vals, w * 0.45, label="Cpk",
-                       color="#ff6b6b", alpha=0.85)
+                       color="#E00000", alpha=0.85)
         ax.bar(x + w/2, pp_vals, w * 0.45, label="Pp",
                        color=tc["accent"], alpha=0.6, hatch="//")
         ax.bar(x + w/2 + w * 0.45, ppk_vals, w * 0.45, label="Ppk",
-                       color="#ffa726", alpha=0.6, hatch="//")
+                       color="#C4922A", alpha=0.6, hatch="//")
 
         cpk_b = CAPABILITY_GRADES["B"][0]
         cpk_a = CAPABILITY_GRADES["A"][0]
-        ax.axhline(y=cpk_b, color="#6e7080", linestyle="--", linewidth=1, alpha=0.6)
-        ax.axhline(y=cpk_a, color="#a0a3ae", linestyle=":", linewidth=1, alpha=0.5)
-        ax.text(n - 0.5, cpk_b, f"Cp={cpk_b}", fontsize=7, color="#6e7080", va="bottom")
-        ax.text(n - 0.5, cpk_a, f"Cp={cpk_a}", fontsize=7, color="#a0a3ae", va="bottom")
+        ax.axhline(y=cpk_b, color="#737373", linestyle="--", linewidth=1, alpha=0.6)
+        ax.axhline(y=cpk_a, color="#B7C9F1", linestyle=":", linewidth=1, alpha=0.5)
+        ax.text(n - 0.5, cpk_b, f"Cp={cpk_b}", fontsize=7, color="#737373", va="bottom")
+        ax.text(n - 0.5, cpk_a, f"Cp={cpk_a}", fontsize=7, color="#B7C9F1", va="bottom")
 
         ax.set_xticks(x)
         ax.set_xticklabels(labels, fontsize=9, rotation=25, ha="right")
@@ -249,7 +249,7 @@ class CapComparisonTab(BaseAnalysisTab):
         ax.grid(True, alpha=0.3, axis="y")
 
         fig.subplots_adjust(left=0.08, right=0.95, top=0.90, bottom=0.18)
-        canvas = FigureCanvasQTAgg(fig)
+        canvas = ChartCanvas(fig)
         self.chart_layout.addWidget(canvas)
         self.canvas = canvas
         self.current_figure = fig

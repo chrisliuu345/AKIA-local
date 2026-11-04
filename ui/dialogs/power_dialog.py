@@ -35,7 +35,7 @@ class PowerDialog(QDialog):
         layout.setSpacing(10)
 
         title = QLabel("Power & Sample Size 分析")
-        title.setFont(QFont(get_ui_font(), 16, QFont.Bold))
+        title.setFont(QFont(get_ui_font(), 16, QFont.DemiBold))
         layout.addWidget(title)
 
         type_group = QGroupBox("检验类型")
@@ -736,7 +736,7 @@ class PowerDialog(QDialog):
         """显示结果文本"""
         tc = theme_colors()
         if error:
-            self.result_text.setStyleSheet("color: #e74c3c; font-weight: bold;")
+            self.result_text.setStyleSheet("color: #E00000; ")
         else:
             self.result_text.setStyleSheet(f"color: {tc['text_primary']};")
         self.result_text.setPlainText(text)

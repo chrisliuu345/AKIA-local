@@ -73,7 +73,7 @@ class FormulaDialog(QDialog):
 
         self.preview_label = QLabel(i18n.tr("formula.preview") + " —")
         self.preview_label.setStyleSheet(
-            f"color: {tc['accent_bright']}; font-weight: bold; padding: 4px 0;")
+            f"color: {tc['accent_bright']};  padding: 4px 0;")
         right.addWidget(self.preview_label)
 
         right.addWidget(QLabel(i18n.tr("formula.variables")))

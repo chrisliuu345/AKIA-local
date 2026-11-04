@@ -7,13 +7,152 @@ import pandas as pd
 
 from PySide6.QtWidgets import (
     QWidget, QFileDialog, QTableWidgetItem, QMenu, QApplication,
-    QVBoxLayout, QLabel, QPushButton, QFrame,
+    QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QTextEdit, QTableWidget,
+    QSizePolicy, QFormLayout, QComboBox,
 )
-from PySide6.QtCore import Signal, Qt, QTimer
+from PySide6.QtCore import Signal, Qt, QTimer, QEvent, QObject
 from PySide6.QtGui import QImage, QFont
 
-from ui.theme import colors as theme_colors
+from ui.theme import colors as theme_colors, BUTTON_SECONDARY, CONFIG_BUTTON_GAP
 from ui.font_config import get_ui_font
+from core.i18n import i18n
+
+_RESULT_PANE_QSS = (
+    "QFrame#resultPane {"
+    "background: transparent;"
+    "border: 1px solid #333333;"
+    "border-radius: 9px;"
+    "}"
+)
+
+
+# 文字和表格同框时的下限：摘要加上好几行表一起露出来，不必先去找框内滚动条。
+_DATA_PANE_FLOOR = 420
+_RESULT_TEXT_FLOOR = 112
+_RESULT_TABLE_FLOOR = 220
+
+
+def _result_pane() -> QFrame:
+    pane = QFrame()
+    pane.setObjectName("resultPane")
+    pane.setStyleSheet(_RESULT_PANE_QSS)
+    return pane
+
+
+def _table_content_height(table: QTableWidget) -> int:
+    """表头加全部数据行。页面滚动靠这个高度才能滚到最后一行。"""
+    header = table.horizontalHeader()
+    header_h = header.height()
+    if header_h < 8:
+        header_h = header.sizeHint().height()
+    header_h = max(header_h, 28)
+    rows = table.rowCount()
+    row_h = table.verticalHeader().defaultSectionSize() or 30
+    if rows > 0:
+        measured = table.rowHeight(0)
+        if measured > 0:
+            row_h = measured
+    return header_h + row_h * rows + table.frameWidth() * 2 + 8
+
+
+def fit_table_into_page(table: QTableWidget, *, floor: int = 0) -> int:
+    """表格至少有 floor 高，有数据时再撑到全部行，垂直滚动交给外层页面。"""
+    content = _table_content_height(table) if table.rowCount() else 0
+    height = max(floor, content)
+    table.setMinimumHeight(height)
+    table.setMaximumHeight(16777215)
+    table.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+    return height
+
+
+_config_polish_installed = False
+
+
+def _mark_analysis_combo(combo: QComboBox) -> None:
+    """分析页下拉用样式表里的圆角按钮，不用 Fusion 自带的箭头块。"""
+    if combo.property("analysisCombo"):
+        return
+    combo.setProperty("analysisCombo", True)
+    combo.style().unpolish(combo)
+    combo.style().polish(combo)
+
+
+def _analysis_tab(widget: QWidget | None) -> QWidget | None:
+    while widget is not None:
+        if isinstance(widget, BaseAnalysisTab):
+            return widget
+        widget = widget.parentWidget()
+    return None
+
+
+def _form_has_button_stack(layout: QFormLayout) -> bool:
+    previous_was_button = False
+    for row in range(layout.rowCount()):
+        item = layout.itemAt(row, QFormLayout.ItemRole.FieldRole)
+        widget = item.widget() if item is not None else None
+        is_button = isinstance(widget, QPushButton)
+        if is_button and previous_was_button:
+            return True
+        previous_was_button = is_button
+    return False
+
+
+def polish_analysis_controls(root: QWidget) -> None:
+    """分析页下拉换成圆角按钮；配置区里叠放的按钮拉开竖向间距。"""
+    for combo in root.findChildren(QComboBox):
+        _mark_analysis_combo(combo)
+    seen: set[int] = set()
+    for button in root.findChildren(QPushButton):
+        parent = button.parentWidget()
+        layout = parent.layout() if parent is not None else None
+        if not isinstance(layout, QFormLayout) or id(layout) in seen:
+            continue
+        if getattr(layout, "_akia_button_gap", False) or not _form_has_button_stack(layout):
+            continue
+        seen.add(id(layout))
+        layout._akia_button_gap = True
+        current = layout.verticalSpacing()
+        if current < 0:
+            current = 6
+        layout.setVerticalSpacing(current + CONFIG_BUTTON_GAP)
+
+
+class _ConfigControlFilter(QObject):
+    """后加的下拉和按钮（图表配置重建、抽样方式切换）也走同一套处理。"""
+
+    def eventFilter(self, obj, event):
+        if event.type() != QEvent.Type.ChildAdded:
+            return False
+        child = event.child()
+        if not isinstance(child, (QComboBox, QPushButton)):
+            return False
+        tab = _analysis_tab(child)
+        if tab is not None:
+            QTimer.singleShot(0, lambda page=tab: polish_analysis_controls(page))
+        return False
+
+
+def _install_config_polish() -> None:
+    global _config_polish_installed
+    app = QApplication.instance()
+    if app is None or _config_polish_installed:
+        return
+    app.installEventFilter(_ConfigControlFilter(app))
+    _config_polish_installed = True
+
+
+def bubble_layout(start: QWidget | None) -> None:
+    """子控件加高后，沿父链刷新布局，共享滚动区才会把新高度算进滚动范围。"""
+    widget = start
+    seen: set[int] = set()
+    while widget is not None and id(widget) not in seen:
+        seen.add(id(widget))
+        lay = widget.layout()
+        if lay is not None:
+            lay.invalidate()
+            lay.activate()
+        widget.updateGeometry()
+        widget = widget.parentWidget()
 
 
 class BaseAnalysisTab(QWidget):
@@ -23,6 +162,7 @@ class BaseAnalysisTab(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        _install_config_polish()
         self.df: pd.DataFrame = None
         self.parsed_info: dict[str, Any] = {}
         self.current_result: dict[str, Any] = {}
@@ -34,6 +174,144 @@ class BaseAnalysisTab(QWidget):
         self._current_chart_type: str | None = None
         self._chart_options: dict[str, Any] = {}
         self._chart_editor_panel = None
+        self.options_pane = None
+        self.data_pane = None
+        self.chart_pane = None
+        self.options_layout = None
+
+    def mount_results(self, parent_layout, *, text: bool = True, table: bool = True,
+                      options: bool = True, save_png: bool = False):
+        """图表全宽在上；其下左侧是图表选项，右侧是文字数据。空的一侧不留白框。"""
+        host = QWidget()
+        root = QVBoxLayout(host)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.setSpacing(10)
+
+        if save_png:
+            actions = QHBoxLayout()
+            actions.addStretch()
+            self.btn_save_png = QPushButton(i18n.tr("chart_tab.save_png"))
+            self.btn_save_png.setFont(QFont(get_ui_font(), 11))
+            self.btn_save_png.setFixedHeight(30)
+            self.btn_save_png.setStyleSheet(BUTTON_SECONDARY)
+            self.btn_save_png.clicked.connect(self._on_save_png)
+            actions.addWidget(self.btn_save_png)
+            root.addLayout(actions)
+
+        self.chart_pane = _result_pane()
+        chart_outer = QVBoxLayout(self.chart_pane)
+        chart_outer.setContentsMargins(16, 16, 16, 16)
+        self.chart_container = QWidget()
+        self.chart_widget = self.chart_container
+        self.chart_layout = QVBoxLayout(self.chart_container)
+        self.chart_layout.setContentsMargins(0, 0, 0, 0)
+        self.chart_container.setMinimumHeight(280)
+        chart_outer.addWidget(self.chart_container)
+        root.addWidget(self.chart_pane)
+
+        self.result_text = None
+        self.result_table = None
+        row = QHBoxLayout()
+        row.setSpacing(10)
+        placed = False
+
+        if options:
+            self.options_pane = _result_pane()
+            self.options_pane.setMinimumWidth(240)
+            # 选项框保持内容高度，不跟着右侧文字区一起被拉成空白长框。
+            self.options_pane.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+            self.options_layout = QVBoxLayout(self.options_pane)
+            self.options_layout.setContentsMargins(8, 8, 8, 8)
+            self.options_pane.setVisible(False)
+            row.addWidget(self.options_pane, 2, Qt.AlignTop)
+            placed = True
+
+        if text or table:
+            self.data_pane = _result_pane()
+            self.data_widget = self.data_pane
+            self.data_pane.setMinimumWidth(280)
+            self.data_pane.setMinimumHeight(_DATA_PANE_FLOOR)
+            data_layout = QVBoxLayout(self.data_pane)
+            data_layout.setContentsMargins(8, 8, 8, 8)
+            if text:
+                self.result_text = QTextEdit()
+                self.result_text.setReadOnly(True)
+                self.result_text.setFont(QFont(get_ui_font(), 12))
+                self.result_text.setMinimumHeight(_RESULT_TEXT_FLOOR)
+                self.result_text.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+                self.result_text.setStyleSheet(
+                    "QTextEdit { background: transparent; border: none; }"
+                )
+                self.result_text.document().contentsChanged.connect(self._fit_data_pane)
+                data_layout.addWidget(self.result_text)
+            if table:
+                self.result_table = QTableWidget()
+                self.result_table.horizontalHeader().setStretchLastSection(True)
+                self.result_table.setAlternatingRowColors(True)
+                self.result_table.setShowGrid(True)
+                self.result_table.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+                self.result_table.setStyleSheet(
+                    "QTableWidget { font-size: 12px; background: transparent; border: none; }"
+                    "QHeaderView::section { padding: 4px; }"
+                )
+                model = self.result_table.model()
+                model.rowsInserted.connect(self._fit_data_pane)
+                model.rowsRemoved.connect(self._fit_data_pane)
+                model.modelReset.connect(self._fit_data_pane)
+                data_layout.addWidget(self.result_table)
+            row.addWidget(self.data_pane, 3)
+            placed = True
+
+        if placed:
+            root.addLayout(row)
+        self.results_host = host
+        parent_layout.addWidget(host)
+        if self.data_pane is not None:
+            self._fit_data_pane()
+        return host
+
+    def _fit_data_pane(self, *_args):
+        """文字按文档高度，表格按行数。框至少 _DATA_PANE_FLOOR，多出来的行靠页面滚动。"""
+        pane = getattr(self, "data_pane", None)
+        if pane is None or getattr(self, "_fitting_pane", False):
+            return
+        self._fitting_pane = True
+        try:
+            self._apply_data_pane_heights()
+            bubble_layout(pane)
+            # 父布局激活后文本宽度才稳定，再量一次避免摘要被裁成内部滚动。
+            self._apply_data_pane_heights()
+        finally:
+            self._fitting_pane = False
+
+    def _apply_data_pane_heights(self):
+        pane = self.data_pane
+        text_h = 0
+        table_h = 0
+        text = getattr(self, "result_text", None)
+        table = getattr(self, "result_table", None)
+        if text is not None:
+            text_h = _RESULT_TEXT_FLOOR
+            width = text.viewport().width()
+            if width > 40:
+                doc = text.document()
+                doc.setTextWidth(width)
+                text_h = max(_RESULT_TEXT_FLOOR, int(doc.size().height()) + 16)
+            text.setMinimumHeight(text_h)
+            text.setMaximumHeight(max(text_h, _RESULT_TEXT_FLOOR))
+            text.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        if table is not None:
+            table_h = fit_table_into_page(table, floor=_RESULT_TABLE_FLOOR)
+        spacing = 6 if text_h and table_h else 0
+        pane.setMinimumHeight(max(
+            _DATA_PANE_FLOOR, text_h + table_h + 16 + spacing))
+
+    def _reveal_options_pane(self, chart_type: str | None):
+        pane = getattr(self, "options_pane", None)
+        if pane is None:
+            return
+        from analysis.charts.chart_options import get_chart_options
+        pane.setVisible(bool(chart_type and get_chart_options(chart_type)))
 
     def _clear_canvas(self):
         """清空图表区域并释放 matplotlib 资源"""
@@ -72,8 +350,8 @@ class BaseAnalysisTab(QWidget):
                 self._chart_toolbar = None
 
         # 2) 新 canvas 置于第一行
-        from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-        self.canvas = FigureCanvasQTAgg(fig)
+        from ui.widgets.chart_canvas import ChartCanvas
+        self.canvas = ChartCanvas(fig)
         # 快照自然像素高 — 隐藏页渲染时布局会把 canvas 压小并同步改写 figure 尺寸,
         # _pin 改读快照保证 showEvent 恢复时高度不丢失
         self._canvas_natural_h = int(
@@ -92,9 +370,8 @@ class BaseAnalysisTab(QWidget):
                 plt.close(old)
 
     def _switch_result_view(self, idx: int):
-        self.btn_view_chart.setChecked(idx == 0)
-        self.btn_view_data.setChecked(idx == 1)
-        self.result_stack.setCurrentIndex(idx)
+        """图表和文字数据同时可见，不再切换页面。"""
+        return
 
     def _on_save_png(self):
         self._on_save_figure("PNG 图片 (*.png)", "png", dpi=None)
@@ -193,8 +470,13 @@ class BaseAnalysisTab(QWidget):
             from ui.widgets.chart_editor import ChartEditorPanel
             self._chart_editor_panel = ChartEditorPanel()
             self._chart_editor_panel.options_changed.connect(self._on_chart_options_changed)
-        if self.chart_layout.indexOf(self._chart_editor_panel) < 0:
-            self.chart_layout.addWidget(self._chart_editor_panel)
+            self._chart_editor_panel._content_frame.setStyleSheet(
+                "QFrame { background: transparent; border: none; }"
+            )
+        host = getattr(self, "options_layout", None) or self.chart_layout
+        if host.indexOf(self._chart_editor_panel) < 0:
+            host.addWidget(self._chart_editor_panel)
+        self._reveal_options_pane(self._current_chart_type)
         self._pin_canvas_natural_height()
         self.chart_layout.setContentsMargins(0, 4, 0, 4)
         self._animate_chart_container()
@@ -309,7 +591,7 @@ class BaseAnalysisTab(QWidget):
         layout.addWidget(msg_lbl)
 
         btn = QPushButton(button_text or "导入数据")
-        btn.setFont(QFont(get_ui_font(), 11, QFont.Bold))
+        btn.setFont(QFont(get_ui_font(), 11))
         btn.setFixedSize(160, 40)
         btn.setCursor(Qt.PointingHandCursor)
         btn.setStyleSheet(
@@ -332,6 +614,9 @@ class BaseAnalysisTab(QWidget):
                 self.canvas.setMinimumHeight(0)
         if getattr(self, 'chart_container', None) is not None:
             self.chart_container.setMinimumHeight(300)
+        host = getattr(self, 'results_host', None)
+        if host is not None:
+            host.setMinimumHeight(0)
         if getattr(self, 'result_stack', None) is not None:
             self.result_stack.setMinimumHeight(300)
 
@@ -347,9 +632,15 @@ class BaseAnalysisTab(QWidget):
             # 无 canvas 的分析页（图表由子控件承载）：hideEvent 释放后按记录恢复，
             # 否则切回该 Tab 时滚动范围会丢失（长页无法滚动）
             self.chart_container.setMinimumHeight(self._last_page_height)
+            host = getattr(self, 'results_host', None)
+            if host is not None:
+                host.setMinimumHeight(self._last_page_height)
             stack = getattr(self, 'result_stack', None)
             if stack is not None:
                 stack.setMinimumHeight(self._last_page_height)
+        if getattr(self, "data_pane", None) is not None:
+            self._fit_data_pane()
+        polish_analysis_controls(self)
 
     def hideEvent(self, event):
         super().hideEvent(event)
@@ -408,6 +699,7 @@ class BaseAnalysisTab(QWidget):
         if self._chart_editor_panel:
             self._chart_editor_panel.set_chart_type(chart_type)
             self._chart_options = self._chart_editor_panel.get_options()
+            self._reveal_options_pane(chart_type)
             # 面板控件重建后 min 尺寸已变 → 立即重算页面高度，避免滚动范围滞后一帧
             self._sync_chart_page_height()
 

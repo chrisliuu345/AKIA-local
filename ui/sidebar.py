@@ -5,7 +5,7 @@
 from datetime import datetime
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
-    QScrollArea, QFrame,
+    QScrollArea, QFrame, QSizePolicy,
 )
 from PySide6.QtCore import Signal, Qt, QPropertyAnimation, QEasingCurve, QParallelAnimationGroup
 from PySide6.QtGui import QFont
@@ -17,6 +17,10 @@ from ui.font_config import get_ui_font, get_mono_font
 
 
 HOME_ITEM = (0, "sidebar.home")
+# 展开和收起共用底部同一条控制，宽度变化时它的底边不挪位置。
+SIDEBAR_EXPANDED_WIDTH = 210
+SIDEBAR_COLLAPSED_WIDTH = 40
+SIDEBAR_TOGGLE_HEIGHT = 36
 
 CATEGORIES = [
     {
@@ -157,7 +161,7 @@ class CategoryGroup(QWidget):
         header_layout.addWidget(self._arrow_label)
 
         self._title_label = QLabel(i18n.tr(self.title_key))
-        self._title_label.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self._title_label.setFont(QFont(get_ui_font(), 12))
         self._title_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         header_layout.addWidget(self._title_label, 1)
 
@@ -263,9 +267,7 @@ class CategoryGroup(QWidget):
 
     def set_active(self, index: int):
         tc = theme_colors(self)
-        accent_bright = tc["accent_bright"]
         hover_bg = tc["bg_hover"]
-        active_bg = tc["bg_active"]
 
         for idx, btn in self.sub_buttons.items():
             is_active = (idx == index)
@@ -273,21 +275,18 @@ class CategoryGroup(QWidget):
             if is_active:
                 btn.setStyleSheet(
                     f"QPushButton {{"
-                    f"background-color: {active_bg}; color: {accent_bright};"
-                    f"border: none; border-left: 2px solid {accent_bright};"
-                    f"border-radius: 4px; padding: 4px 10px; text-align: left;"
+                    f"background-color: {tc['bg_active']}; color: {tc['text_primary']};"
+                    f"border: none; border-radius: 8px; padding: 4px 10px; text-align: left;"
                     f"}}"
                 )
             else:
                 btn.setStyleSheet(
                     f"QPushButton {{"
                     f"background-color: transparent; color: {tc['text_primary']};"
-                    f"border: none; border-left: 2px solid transparent;"
-                    f"border-radius: 4px; padding: 4px 10px; text-align: left;"
+                    f"border: none; border-radius: 8px; padding: 4px 10px; text-align: left;"
                     f"}}"
                     f"QPushButton:hover {{"
                     f"background-color: {hover_bg};"
-                    f"border-left: 2px solid {tc['accent']};"
                     f"}}"
                 )
 
@@ -376,7 +375,7 @@ class Sidebar(QWidget):
         layout.addSpacing(6)
 
         self.diagnose_btn = QPushButton()
-        self.diagnose_btn.setFont(QFont(get_ui_font(), 11, QFont.Bold))
+        self.diagnose_btn.setFont(QFont(get_ui_font(), 11))
         self.diagnose_btn.setMinimumHeight(40)
         self.diagnose_btn.setCursor(Qt.PointingHandCursor)
         self.diagnose_btn.clicked.connect(self.diagnose_clicked.emit)
@@ -388,7 +387,7 @@ class Sidebar(QWidget):
         layout.addSpacing(4)
 
         self.llm_btn = QPushButton()
-        self.llm_btn.setFont(QFont(get_ui_font(), 11, QFont.Bold))
+        self.llm_btn.setFont(QFont(get_ui_font(), 11))
         self.llm_btn.setMinimumHeight(40)
         self.llm_btn.setCursor(Qt.PointingHandCursor)
         self.llm_btn.clicked.connect(self.llm_clicked.emit)
@@ -401,7 +400,7 @@ class Sidebar(QWidget):
 
         history_header = QHBoxLayout()
         hl = QLabel(i18n.tr("sidebar.history"))
-        hl.setFont(QFont(get_ui_font(), 10, QFont.Bold))
+        hl.setFont(QFont(get_ui_font(), 10))
         hl.setStyleSheet(f"color: {tc['text_secondary']}; padding: 2px 4px;")
         history_header.addWidget(hl)
         history_header.addStretch()
@@ -433,49 +432,70 @@ class Sidebar(QWidget):
         scroll.setFrameShape(QFrame.NoFrame)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        scroll.setParent(self)
+        self._nav_scroll = scroll
 
-        self.collapse_btn = QPushButton("  " + i18n.tr("sidebar.collapse"))
+        # 不用布局摆这个按钮：收起后导航隐藏，布局会把它顶上去。
+        self.collapse_btn = QPushButton(self)
         self.collapse_btn.setFont(QFont(get_ui_font(), 10))
-        self.collapse_btn.setMinimumHeight(32)
+        self.collapse_btn.setFixedHeight(SIDEBAR_TOGGLE_HEIGHT)
         self.collapse_btn.setCursor(Qt.PointingHandCursor)
-        self.collapse_btn.setToolTip(i18n.tr("sidebar.collapse") + " (Ctrl+B)")
         self.collapse_btn.clicked.connect(self.collapse_requested.emit)
+        self._collapsed = False
+        self._apply_toggle_text()
 
-        outer = QVBoxLayout(self)
-        outer.setContentsMargins(0, 0, 0, 0)
-        outer.setSpacing(0)
-        outer.addWidget(scroll, 1)
-        outer.addWidget(self.collapse_btn)
-
+        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
         self.set_active(0)
         self._refresh_styles()
+        self._place_toggle()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._place_toggle()
+
+    def _place_toggle(self):
+        """收起和展开都把开关钉在侧栏底边，屏幕位置不跳。"""
+        height = SIDEBAR_TOGGLE_HEIGHT
+        top = max(0, self.height() - height)
+        self.collapse_btn.setGeometry(0, top, self.width(), height)
+        self._nav_scroll.setGeometry(0, 0, self.width(), top)
+
+    def set_collapsed(self, collapsed: bool):
+        self._collapsed = bool(collapsed)
+        self._nav_scroll.setVisible(not self._collapsed)
+        self._apply_toggle_text()
+        self._place_toggle()
+
+    def _apply_toggle_text(self):
+        if self._collapsed:
+            self.collapse_btn.setText("»")
+            self.collapse_btn.setToolTip(i18n.tr("sidebar.expand") + " (Ctrl+B)")
+        else:
+            self.collapse_btn.setText(i18n.tr("sidebar.collapse"))
+            self.collapse_btn.setToolTip(i18n.tr("sidebar.collapse") + " (Ctrl+B)")
 
     def set_active(self, index: int):
         self.active_index = index
         tc = theme_colors(self)
-        accent_bright = tc["accent_bright"]
         hover_bg = tc["bg_hover"]
-        active_bg = tc["bg_active"]
 
         is_home = (index == 0)
         self.home_btn.setChecked(is_home)
         if is_home:
             self.home_btn.setStyleSheet(
                 f"QPushButton {{"
-                f"background-color: {active_bg}; color: {accent_bright};"
-                f"border: none; border-left: 2px solid {accent_bright};"
-                f"border-radius: 6px; padding: 10px 12px; text-align: left;"
+                f"background-color: {tc['bg_active']}; color: {tc['text_primary']};"
+                f"border: none; border-radius: 8px; padding: 10px 12px; text-align: left;"
                 f"}}"
             )
         else:
             self.home_btn.setStyleSheet(
                 f"QPushButton {{"
                 f"background-color: transparent; color: {tc['text_primary']};"
-                f"border: none; border-left: 2px solid transparent;"
-                f"border-radius: 6px; padding: 10px 12px; text-align: left;"
+                f"border: none; border-radius: 8px; padding: 10px 12px; text-align: left;"
                 f"}}"
                 f"QPushButton:hover {{"
-                f"background-color: {hover_bg}; border-left: 2px solid {tc['accent']};"
+                f"background-color: {hover_bg};"
                 f"}}"
             )
 
@@ -562,7 +582,7 @@ class Sidebar(QWidget):
                 res_lbl.setFixedWidth(50)
                 res_lbl.setAlignment(Qt.AlignCenter)
                 is_positive = "A" in entry["result"] or "可" in entry["result"]
-                res_color = tc["accent"] if is_positive else tc["text_primary"]
+                res_color = tc["accent_bright"] if is_positive else tc["text_primary"]
                 res_bg = tc["bg_active"]
                 res_lbl.setStyleSheet(f"color: {res_color}; background: {res_bg}; "
                                       f"border-radius: 4px; padding: 1px 5px;")
@@ -576,14 +596,11 @@ class Sidebar(QWidget):
 
     def _refresh_styles(self):
         tc = theme_colors(self)
-        accent = tc["accent"]
-        tc["accent_bright"]
         text_color = tc["text_primary"]
 
-        self.setStyleSheet(f"background-color: {tc['bg_body']};")
+        self.setStyleSheet(f"background-color: {tc['bg_header']};")
 
         hover_bg = tc["bg_hover"]
-        tc["bg_active"]
 
         for group in self.categories:
             group.header_btn.setStyleSheet(
@@ -602,7 +619,7 @@ class Sidebar(QWidget):
             btn.setStyleSheet(
                 f"QPushButton {{"
                 f"background-color: transparent; color: {text_color};"
-                f"border: none; border-radius: 6px; padding: 8px 12px;"
+                f"border: none; border-radius: 8px; padding: 8px 12px;"
                 f"text-align: left;"
                 f"}}"
                 f"QPushButton:hover {{"
@@ -612,8 +629,8 @@ class Sidebar(QWidget):
 
         self.diagnose_btn.setStyleSheet(
             f"QPushButton {{"
-            f"background-color: transparent; color: {accent}; font-weight: bold;"
-            f"border: 1px solid {accent}; border-radius: 6px; padding: 8px 12px;"
+            f"background-color: transparent; color: {text_color};"
+            f"border: 1px solid {tc['border']}; border-radius: 8px; padding: 8px 12px;"
             f"text-align: left;"
             f"}}"
             f"QPushButton:hover {{"
@@ -624,8 +641,7 @@ class Sidebar(QWidget):
         self.llm_btn.setStyleSheet(
             f"QPushButton {{"
             f"background-color: transparent; color: {tc['text_primary']}; "
-            f"font-weight: bold;"
-            f"border: 1px solid {tc['border_light']}; border-radius: 6px; padding: 8px 12px;"
+            f"border: 1px solid {tc['border_light']}; border-radius: 8px; padding: 8px 12px;"
             f"text-align: left;"
             f"}}"
             f"QPushButton:hover {{"
@@ -655,5 +671,5 @@ class Sidebar(QWidget):
 
         self.diagnose_btn.setText("  " + i18n.tr(DIAGNOSIS_KEY))
         self.llm_btn.setText("  " + i18n.tr("sidebar.llm"))
-        self.collapse_btn.setText("  " + i18n.tr("sidebar.collapse"))
+        self._apply_toggle_text()
         self._refresh_styles()

@@ -49,7 +49,7 @@ class ChartEditorPanel(QWidget):
         header.addWidget(icon_label)
 
         title = QLabel("图表选项")
-        title.setFont(QFont(get_ui_font(), 12, QFont.Weight.Bold))
+        title.setFont(QFont(get_ui_font(), 12, QFont.Weight.Normal))
         header.addWidget(title)
 
         header.addStretch()
@@ -60,7 +60,7 @@ class ChartEditorPanel(QWidget):
         self._content_frame.setStyleSheet("""
             QFrame {
                 background: #1e1e2e;
-                border: 1px solid #3a3a48;
+                border: 1px solid #333333;
                 border-radius: 6px;
             }
         """)
@@ -69,7 +69,7 @@ class ChartEditorPanel(QWidget):
         self._content_layout.setSpacing(10)
 
         self._placeholder = QLabel("选择图表类型后显示编辑选项")
-        self._placeholder.setStyleSheet("color: #6e7080; font-size: 12px;")
+        self._placeholder.setStyleSheet("color: #737373; font-size: 12px;")
         self._placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._content_layout.addWidget(self._placeholder)
 
@@ -107,7 +107,7 @@ class ChartEditorPanel(QWidget):
             self._slider_scales.clear()
             if not opts:
                 self._placeholder = QLabel("该图表类型暂不支持编辑")
-                self._placeholder.setStyleSheet("color: #6e7080; font-size: 11px;")
+                self._placeholder.setStyleSheet("color: #737373; font-size: 11px;")
                 self._content_layout.addWidget(self._placeholder)
                 return
 
@@ -154,18 +154,18 @@ class ChartEditorPanel(QWidget):
         slider.setStyleSheet("""
             QSlider::groove:horizontal {
                 height: 6px;
-                background: #3a3a48;
+                background: #333333;
                 border-radius: 3px;
             }
             QSlider::handle:horizontal {
                 width: 20px;
                 height: 20px;
                 margin: -7px 0;
-                background: #4da6ff;
+                background: #E8E8E8;
                 border-radius: 10px;
             }
             QSlider::handle:horizontal:hover {
-                background: #7fc1ff;
+                background: #F4F4F4;
             }
         """)
         slider.valueChanged.connect(
@@ -200,7 +200,7 @@ class ChartEditorPanel(QWidget):
             rb = QRadioButton(option_text)
             rb.setFont(QFont(get_ui_font(), 10))
             rb.setStyleSheet("""
-                QRadioButton { color: #e1e2e6; padding: 2px 4px; }
+                QRadioButton { color: #EDEDED; padding: 2px 4px; }
                 QRadioButton::indicator { width: 16px; height: 16px; }
             """)
             if option_text == opt.default:
@@ -217,7 +217,7 @@ class ChartEditorPanel(QWidget):
         cb.setFont(QFont(get_ui_font(), 10))
         cb.setChecked(opt.default)
         cb.setStyleSheet("""
-            QCheckBox { color: #e1e2e6; padding: 2px 4px; }
+            QCheckBox { color: #EDEDED; padding: 2px 4px; }
             QCheckBox::indicator { width: 18px; height: 18px; }
         """)
         cb.stateChanged.connect(lambda state, key=opt.key: self._on_checkbox_changed(key, state))

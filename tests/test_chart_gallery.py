@@ -70,7 +70,7 @@ class TestChartGallery:
     def test_set_current_highlights(self, gallery):
         gallery.set_current("帕累托图")
         assert gallery.current_type() == "帕累托图"
-        assert "4da6ff" in gallery._tile_buttons["帕累托图"].styleSheet()
+        assert "2a2a2a" in gallery._tile_buttons["帕累托图"].styleSheet().lower()
 
     def test_groups_cover_all_types(self):
         known = {n for _, names in GALLERY_GROUPS for n in names}

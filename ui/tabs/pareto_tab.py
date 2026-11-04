@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from ui.widgets.chart_canvas import ChartCanvas
 import matplotlib.pyplot as plt
 
 from ui.tabs.base_tab import BaseAnalysisTab
@@ -42,7 +42,7 @@ class ParetoTab(BaseAnalysisTab):
         layout.setContentsMargins(12, 12, 12, 12)
 
         self.title_label = QLabel("帕累托图 (Pareto)")
-        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        self.title_label.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         layout.addWidget(self.title_label)
         layout.addSpacing(4)
 
@@ -81,7 +81,7 @@ class ParetoTab(BaseAnalysisTab):
         self.btn_draw.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.btn_draw.setCursor(Qt.PointingHandCursor)
         self.btn_draw.setMinimumHeight(44)
-        self.btn_draw.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.btn_draw.setFont(QFont(get_ui_font(), 12))
         self.btn_draw.clicked.connect(self._draw)
         config_layout.addRow(self.btn_draw)
 
@@ -180,12 +180,12 @@ class ParetoTab(BaseAnalysisTab):
         threshold = self.threshold_spin.value()
         if threshold > 0 and threshold < 100:
             ax = fig.axes[0]
-            ax.axhline(y=threshold, color="#ffa726", linestyle=":", linewidth=1.5,
+            ax.axhline(y=threshold, color="#C4922A", linestyle=":", linewidth=1.5,
                       alpha=0.7, label=f"{threshold}% 阈值")
             ax.legend(fontsize=8)
 
         fig.set_facecolor(tc["bg_card"])
-        canvas = FigureCanvasQTAgg(fig)
+        canvas = ChartCanvas(fig)
         self.chart_layout.addWidget(canvas)
         self.canvas = canvas
         self.current_figure = fig

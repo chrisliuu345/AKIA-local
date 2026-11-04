@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from ui.widgets.chart_canvas import ChartCanvas
 
 from core.i18n import i18n
 from core.plant_compare import summarize_plant, build_comparison
@@ -41,7 +41,7 @@ class MultiPlantTab(BaseAnalysisTab):
         layout.setSpacing(10)
 
         title = QLabel(i18n.tr("multi_plant.title"))
-        title.setFont(QFont(get_ui_font(), 18, QFont.Bold))
+        title.setFont(QFont(get_ui_font(), 18, QFont.DemiBold))
         title.setStyleSheet(f"color: {tc['text_primary']}; background: transparent;")
         layout.addWidget(title)
 
@@ -70,7 +70,7 @@ class MultiPlantTab(BaseAnalysisTab):
 
         ctrl = QHBoxLayout()
         self.run_btn = QPushButton(i18n.tr("multi_plant.run"))
-        self.run_btn.setFont(QFont(get_ui_font(), 12, QFont.Bold))
+        self.run_btn.setFont(QFont(get_ui_font(), 12))
         self.run_btn.setFixedHeight(44)
         self.run_btn.setStyleSheet(BUTTON_PRIMARY_STRETCH)
         self.run_btn.setCursor(Qt.PointingHandCursor)
@@ -112,7 +112,7 @@ class MultiPlantTab(BaseAnalysisTab):
                 w.setParent(None)
         hint = QLabel(i18n.tr("multi_plant.empty"))
         hint.setAlignment(Qt.AlignCenter)
-        hint.setStyleSheet("color: #6e7080; font-size: 14px;")
+        hint.setStyleSheet("color: #737373; font-size: 14px;")
         self.chart_layout.addWidget(hint)
         self.canvas = None
         self.current_figure = None
@@ -141,7 +141,7 @@ class MultiPlantTab(BaseAnalysisTab):
         tc = theme_colors()
         if not self._plants:
             self.status_label.setText(i18n.tr("multi_plant.no_files"))
-            self.status_label.setStyleSheet("color: #e74c3c;")
+            self.status_label.setStyleSheet("color: #E00000;")
             return
 
         plants = [summarize_plant(path) for path in self._plants]
@@ -162,7 +162,7 @@ class MultiPlantTab(BaseAnalysisTab):
             self.status_label.setText(
                 i18n.tr("multi_plant.status_error").format(n=errors)
             )
-            self.status_label.setStyleSheet("color: #e74c3c;")
+            self.status_label.setStyleSheet("color: #E00000;")
         else:
             self.status_label.setText(
                 i18n.tr("multi_plant.status_done").format(n=len(plants))
@@ -202,14 +202,14 @@ class MultiPlantTab(BaseAnalysisTab):
         cpk_pairs = [(p["name"], p["cpk"]) for p in ok if p["cpk"] is not None]
 
         panels = [
-            (means, i18n.tr("multi_plant.mean"), "#4da6ff", names),
-            (stds, i18n.tr("multi_plant.std"), "#27ae60", names),
-            (viols, i18n.tr("multi_plant.violations"), "#e74c3c", names),
+            (means, i18n.tr("multi_plant.mean"), "#4F73DC", names),
+            (stds, i18n.tr("multi_plant.std"), "#3E9B68", names),
+            (viols, i18n.tr("multi_plant.violations"), "#E00000", names),
         ]
         if cpk_pairs:
             panels.append(
                 ([v for _, v in cpk_pairs], i18n.tr("multi_plant.cpk"),
-                 "#ffa726", [n for n, _ in cpk_pairs])
+                 "#C4922A", [n for n, _ in cpk_pairs])
             )
 
         fig = Figure(figsize=(11, 4.2 * len(panels)), dpi=100)
@@ -242,7 +242,7 @@ class MultiPlantTab(BaseAnalysisTab):
             if w:
                 w.setParent(None)
                 w.deleteLater()
-        canvas = FigureCanvasQTAgg(fig)
+        canvas = ChartCanvas(fig)
         canvas.setStyleSheet("background: transparent;")
         self.chart_layout.addWidget(canvas)
         self.canvas = canvas

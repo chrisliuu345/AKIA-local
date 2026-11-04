@@ -111,4 +111,4 @@ def test_dashboard_asset_has_spec_and_zoom():
     assert "USL" in html and "LSL" in html
     assert "wheel" in html and "dblclick" in html       # 缩放 / 复位
     assert "mousedown" in html and "mousemove" in html  # 拖拽平移
-    assert "specs" in html and "c2185b" in html         # 规格线样式
+    assert "specs" in html and "9a3a62" in html.lower()  # 规格线样式

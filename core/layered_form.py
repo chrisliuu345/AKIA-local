@@ -58,7 +58,7 @@ class LPAEngine:
         categories = selected_categories or list(LPA_TEMPLATES.keys())
         auditors = auditors or ["审核员A", "审核员B"]
         header_fill = PatternFill(
-            start_color="1b5faa", end_color="1b5faa", fill_type="solid"
+            start_color="2A2A2A", end_color="2A2A2A", fill_type="solid"
         )
         header_font = Font(name=get_ui_font(), color="FFFFFF", bold=True, size=10)
         pass_fill = PatternFill(

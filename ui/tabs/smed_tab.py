@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from ui.widgets.chart_canvas import ChartCanvas
 import numpy as np
 
 from ui.tabs.base_tab import BaseAnalysisTab
@@ -161,9 +161,9 @@ class SMEDTab(BaseAnalysisTab):
         all_tasks = list(reversed(result.tasks))
 
         fig, (ax_gantt, ax_compare) = plt.subplots(1, 2, figsize=(14, 7), dpi=100, gridspec_kw={'width_ratios': [1.5, 1]})
-        fig.patch.set_facecolor('#181822')
+        fig.patch.set_facecolor('#141414')
 
-        colors_map = {'internal': '#e74c3c', 'external': '#3498db'}
+        colors_map = {'internal': '#E00000', 'external': '#3498db'}
         labels, colors_list, starts, widths_after = [], [], [], []
         for t in all_tasks:
             labels.append(truncate_label(t.name))
@@ -179,10 +179,10 @@ class SMEDTab(BaseAnalysisTab):
         gantt_fs = 9 if len(all_tasks) <= 8 else 7
         ax_gantt.set_yticklabels(labels, fontsize=gantt_fs)
         ax_gantt.set_xlabel("时间 (秒)", fontsize=10)
-        ax_gantt.set_title("改善后时间分布", fontsize=12, fontweight='bold', color='#e1e2e6')
-        ax_gantt.set_facecolor('#1c1c26')
-        ax_gantt.tick_params(colors='#a0a3ae')
-        ax_gantt.legend([plt.Rectangle((0,0),1,1,color='#e74c3c'), plt.Rectangle((0,0),1,1,color='#3498db')],
+        ax_gantt.set_title("改善后时间分布", fontsize=12, fontweight='bold', color='#EDEDED')
+        ax_gantt.set_facecolor('#101010')
+        ax_gantt.tick_params(colors='#A3A3A3')
+        ax_gantt.legend([plt.Rectangle((0,0),1,1,color='#E00000'), plt.Rectangle((0,0),1,1,color='#3498db')],
                         ['内部作业', '外部作业'], fontsize=8, loc='lower right')
 
         cats = ['内部作业', '外部作业', '总时间']
@@ -190,18 +190,18 @@ class SMEDTab(BaseAnalysisTab):
         after_vals = [result.total_internal_after, result.total_external_after, result.total_after]
         x = np.arange(len(cats))
         w = 0.35
-        ax_compare.bar(x - w/2, before_vals, w, color='#e74c3c', alpha=0.8, label='改善前')
-        ax_compare.bar(x + w/2, after_vals, w, color='#2ecc71', alpha=0.8, label='改善后')
+        ax_compare.bar(x - w/2, before_vals, w, color='#E00000', alpha=0.8, label='改善前')
+        ax_compare.bar(x + w/2, after_vals, w, color='#3E9B68', alpha=0.8, label='改善后')
         ax_compare.set_xticks(x)
         ax_compare.set_xticklabels(cats, fontsize=9)
         ax_compare.set_ylabel("时间 (秒)", fontsize=10)
-        ax_compare.set_title(f"改善对比 (-{result.improvement_pct:.1f}%)", fontsize=12, fontweight='bold', color='#e1e2e6')
-        ax_compare.set_facecolor('#1c1c26')
-        ax_compare.tick_params(colors='#a0a3ae')
+        ax_compare.set_title(f"改善对比 (-{result.improvement_pct:.1f}%)", fontsize=12, fontweight='bold', color='#EDEDED')
+        ax_compare.set_facecolor('#101010')
+        ax_compare.tick_params(colors='#A3A3A3')
         ax_compare.legend(fontsize=8)
         for i in range(3):
-            ax_compare.text(x[i] - w/2, before_vals[i] + 5, f'{before_vals[i]:.0f}', ha='center', fontsize=8, color='#e1e2e6')
-            ax_compare.text(x[i] + w/2, after_vals[i] + 5, f'{after_vals[i]:.0f}', ha='center', fontsize=8, color='#e1e2e6')
+            ax_compare.text(x[i] - w/2, before_vals[i] + 5, f'{before_vals[i]:.0f}', ha='center', fontsize=8, color='#EDEDED')
+            ax_compare.text(x[i] + w/2, after_vals[i] + 5, f'{after_vals[i]:.0f}', ha='center', fontsize=8, color='#EDEDED')
 
         fig.tight_layout(rect=[0.18, 0, 1, 1])
         self.current_figure = fig
@@ -220,7 +220,7 @@ class SMEDTab(BaseAnalysisTab):
                 if w:
                     w.setParent(None)
             plt.close("all")
-            self.canvas = FigureCanvasQTAgg(self.current_figure)
+            self.canvas = ChartCanvas(self.current_figure)
             self.canvas_layout.addWidget(self.canvas)
             self.canvas.draw()
         self.summary_label.setText(result.get("summary", ""))
@@ -232,4 +232,4 @@ class SMEDTab(BaseAnalysisTab):
         from PySide6.QtWidgets import QFileDialog
         path, _ = QFileDialog.getSaveFileName(self, "保存 SMED 图表", "smed_analysis.png", "PNG (*.png)")
         if path:
-            self.current_figure.savefig(path, dpi=150, facecolor='#181822')
+            self.current_figure.savefig(path, dpi=150, facecolor='#141414')

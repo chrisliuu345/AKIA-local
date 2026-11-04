@@ -35,14 +35,14 @@ _TYPE_GROUPS: tuple[tuple[str, tuple[str, ...]], ...] = (
 )
 
 _HELP_TEMPLATE = """<style>
-body { color: #d0d3da; background: #1e1e28; font-family: "{font}", sans-serif; }
-h3 { margin-top: 14px; color: #4da6ff; }
-code { background: #35354a; color: #e0a040; padding: 2px 5px; border-radius: 3px; }
-pre { background: #14141e; color: #c0c4ce; padding: 8px 12px; border-radius: 4px; border-left: 3px solid #1b5faa; }
+body { color: #EDEDED; background: #141414; font-family: "{font}", sans-serif; }
+h3 { margin-top: 14px; color: #EDEDED; }
+code { background: #242424; color: #C4922A; padding: 2px 5px; border-radius: 3px; }
+pre { background: #101010; color: #EDEDED; padding: 8px 12px; border-radius: 4px; border-left: 3px solid #333333; }
 table { border-collapse: collapse; width: 100%; }
-th { background: #2c2c3a; color: #d0d3da; padding: 4px 8px; border: 1px solid #3a3a48; text-align: left; }
-td { color: #b0b4be; padding: 4px 8px; border: 1px solid #3a3a48; }
-td.k { color: #4da6ff; }
+th { background: #222222; color: #EDEDED; padding: 4px 8px; border: 1px solid #333333; text-align: left; }
+td { color: #EDEDED; padding: 4px 8px; border: 1px solid #333333; }
+td.k { color: #4F73DC; }
 </style>
 
 <h3>支持格式</h3>
@@ -135,7 +135,7 @@ class TemplateHelpDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("分析模板格式说明")
         self.setMinimumSize(720, 520)
-        self.setStyleSheet("background-color: #1e1e28;")
+        self.setStyleSheet("background-color: #141414;")
         layout = QVBoxLayout(self)
 
         title = QLabel("分析模板格式说明")
@@ -157,7 +157,7 @@ class TemplateHelpDialog(QDialog):
         close_btn.clicked.connect(self.accept)
         close_btn.setMinimumHeight(36)
         close_btn.setStyleSheet(
-            "QPushButton { background-color: #1b5faa; color: #fff; border: none;"
+            "QPushButton { background-color: #E8E8E8; color: #171717; border: none; border-radius: 9px;"
             "border-radius: 6px; padding: 6px 24px; }"
             "QPushButton:hover { background-color: #15508f; }"
         )

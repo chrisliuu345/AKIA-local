@@ -45,7 +45,7 @@ class EightDTab(BaseAnalysisTab):
 
         left = QWidget()
         left.setFixedWidth(170)
-        left.setStyleSheet("background: #1c1c26; border-right: 1px solid #3a3a48;")
+        left.setStyleSheet("background: #101010; border-right: 1px solid #333333;")
         ll = QVBoxLayout(left)
         ll.setContentsMargins(8, 12, 8, 12)
         ll.addWidget(QLabel("8D 步骤"))
@@ -53,7 +53,7 @@ class EightDTab(BaseAnalysisTab):
         self.step_list.setStyleSheet(
             "QListWidget { background: transparent; border: none; } "
             "QListWidget::item { padding: 8px; } "
-            "QListWidget::item:selected { background: #2a384a; }"
+            "QListWidget::item:selected { background: #2A2A2A; }"
         )
         for code, label in EightDReport.STEP_LABELS.items():
             item = QListWidgetItem(f"{code}: {label}")
