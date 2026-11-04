@@ -7,3 +7,5 @@
 keyrings.alt==5.0.1
 # CI 打包作业从同一哈希锁安装构建工具。
 pyinstaller==6.22.2
+# PyInstaller 在 Windows 上的条件依赖，同样必须出现在哈希锁里。
+pefile==2024.8.26 ; sys_platform == "win32"
