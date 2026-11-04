@@ -1,8 +1,15 @@
 """AKIA 暗色主题 — 全局色彩、调色板、按钮样式、字体常量"""
 
-from PySide6.QtGui import QPalette, QColor, QFont
+import tempfile
+from pathlib import Path
+
+from PySide6.QtCore import QDir, Qt, QPointF
+from PySide6.QtGui import QPalette, QColor, QFont, QImage, QPainter, QPen
 from PySide6.QtWidgets import QApplication
 from ui.font_config import get_ui_font
+
+# 分析页配置区里上下叠放的按钮，行距本身几乎贴在一起。
+CONFIG_BUTTON_GAP = 10
 
 FONT_FAMILY = get_ui_font()
 
@@ -117,6 +124,26 @@ APP_STYLESHEET = """
         QComboBox:hover { border: 1px solid #5C5C5C; }
         QComboBox:focus { border: 1px solid #4F73DC; }
         QComboBox QAbstractItemView { background-color: #1C1C1C; color: #EDEDED; selection-background-color: #2A2A2A; selection-color: #EDEDED; }
+        /* 分析页下拉：右侧是一枚圆角灰按钮，描边和圆角与输入框一致，不用系统自带箭头。 */
+        QComboBox[analysisCombo="true"] { padding-right: 34px; }
+        QComboBox[analysisCombo="true"]::drop-down {
+            subcontrol-origin: border;
+            subcontrol-position: center right;
+            width: 22px;
+            border: 1px solid #333333;
+            border-radius: 8px;
+            background: #242424;
+            margin: 3px 4px 3px 0;
+        }
+        QComboBox[analysisCombo="true"]::drop-down:hover {
+            background: #2E2E2E;
+            border-color: #5C5C5C;
+        }
+        QComboBox[analysisCombo="true"]::down-arrow {
+            image: url(akia:combo_chevron.png);
+            width: 10px;
+            height: 10px;
+        }
         QLineEdit { background-color: #101010; color: #EDEDED; border: 1px solid #333333; border-radius: 8px; padding: 4px 8px; }
         QLineEdit:focus { border: 1px solid #4F73DC; }
         QSpinBox, QDoubleSpinBox { background-color: #101010; color: #EDEDED; border: 1px solid #333333; border-radius: 8px; padding: 2px 6px; }
@@ -169,3 +196,24 @@ BUTTON_PRIMARY_STRETCH = (
     "QPushButton:hover { background-color: #F4F4F4; }"
     "QPushButton:pressed { background-color: #D0D0D0; padding-top: 13px; padding-bottom: 11px; }"
 )
+
+
+def ensure_combo_indicator() -> None:
+    """画出下拉按钮里的折线，并注册样式表用的 akia: 搜索路径。"""
+    directory = Path(tempfile.gettempdir()) / "akia-ui"
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / "combo_chevron.png"
+    if not path.exists():
+        image = QImage(16, 16, QImage.Format.Format_ARGB32)
+        image.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(image)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        pen = QPen(QColor("#EDEDED"))
+        pen.setWidthF(1.7)
+        pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+        pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+        painter.setPen(pen)
+        painter.drawPolyline([QPointF(4, 6), QPointF(8, 10.5), QPointF(12, 6)])
+        painter.end()
+        image.save(str(path))
+    QDir.addSearchPath("akia", str(directory))

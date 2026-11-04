@@ -8,12 +8,12 @@ import pandas as pd
 from PySide6.QtWidgets import (
     QWidget, QFileDialog, QTableWidgetItem, QMenu, QApplication,
     QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QTextEdit, QTableWidget,
-    QSizePolicy,
+    QSizePolicy, QFormLayout, QComboBox,
 )
-from PySide6.QtCore import Signal, Qt, QTimer
+from PySide6.QtCore import Signal, Qt, QTimer, QEvent, QObject
 from PySide6.QtGui import QImage, QFont
 
-from ui.theme import colors as theme_colors, BUTTON_SECONDARY
+from ui.theme import colors as theme_colors, BUTTON_SECONDARY, CONFIG_BUTTON_GAP
 from ui.font_config import get_ui_font
 from core.i18n import i18n
 
@@ -65,6 +65,82 @@ def fit_table_into_page(table: QTableWidget, *, floor: int = 0) -> int:
     return height
 
 
+_config_polish_installed = False
+
+
+def _mark_analysis_combo(combo: QComboBox) -> None:
+    """分析页下拉用样式表里的圆角按钮，不用 Fusion 自带的箭头块。"""
+    if combo.property("analysisCombo"):
+        return
+    combo.setProperty("analysisCombo", True)
+    combo.style().unpolish(combo)
+    combo.style().polish(combo)
+
+
+def _analysis_tab(widget: QWidget | None) -> QWidget | None:
+    while widget is not None:
+        if isinstance(widget, BaseAnalysisTab):
+            return widget
+        widget = widget.parentWidget()
+    return None
+
+
+def _form_has_button_stack(layout: QFormLayout) -> bool:
+    previous_was_button = False
+    for row in range(layout.rowCount()):
+        item = layout.itemAt(row, QFormLayout.ItemRole.FieldRole)
+        widget = item.widget() if item is not None else None
+        is_button = isinstance(widget, QPushButton)
+        if is_button and previous_was_button:
+            return True
+        previous_was_button = is_button
+    return False
+
+
+def polish_analysis_controls(root: QWidget) -> None:
+    """分析页下拉换成圆角按钮；配置区里叠放的按钮拉开竖向间距。"""
+    for combo in root.findChildren(QComboBox):
+        _mark_analysis_combo(combo)
+    seen: set[int] = set()
+    for button in root.findChildren(QPushButton):
+        parent = button.parentWidget()
+        layout = parent.layout() if parent is not None else None
+        if not isinstance(layout, QFormLayout) or id(layout) in seen:
+            continue
+        if getattr(layout, "_akia_button_gap", False) or not _form_has_button_stack(layout):
+            continue
+        seen.add(id(layout))
+        layout._akia_button_gap = True
+        current = layout.verticalSpacing()
+        if current < 0:
+            current = 6
+        layout.setVerticalSpacing(current + CONFIG_BUTTON_GAP)
+
+
+class _ConfigControlFilter(QObject):
+    """后加的下拉和按钮（图表配置重建、抽样方式切换）也走同一套处理。"""
+
+    def eventFilter(self, obj, event):
+        if event.type() != QEvent.Type.ChildAdded:
+            return False
+        child = event.child()
+        if not isinstance(child, (QComboBox, QPushButton)):
+            return False
+        tab = _analysis_tab(child)
+        if tab is not None:
+            QTimer.singleShot(0, lambda page=tab: polish_analysis_controls(page))
+        return False
+
+
+def _install_config_polish() -> None:
+    global _config_polish_installed
+    app = QApplication.instance()
+    if app is None or _config_polish_installed:
+        return
+    app.installEventFilter(_ConfigControlFilter(app))
+    _config_polish_installed = True
+
+
 def bubble_layout(start: QWidget | None) -> None:
     """子控件加高后，沿父链刷新布局，共享滚动区才会把新高度算进滚动范围。"""
     widget = start
@@ -86,6 +162,7 @@ class BaseAnalysisTab(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        _install_config_polish()
         self.df: pd.DataFrame = None
         self.parsed_info: dict[str, Any] = {}
         self.current_result: dict[str, Any] = {}
@@ -563,6 +640,7 @@ class BaseAnalysisTab(QWidget):
                 stack.setMinimumHeight(self._last_page_height)
         if getattr(self, "data_pane", None) is not None:
             self._fit_data_pane()
+        polish_analysis_controls(self)
 
     def hideEvent(self, event):
         super().hideEvent(event)
