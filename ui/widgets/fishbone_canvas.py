@@ -482,11 +482,15 @@ class FishboneCanvas(QGraphicsView):
             self._render_children(child, gc, s, depth + 1)
 
     def wheelEvent(self, event):
-        """滚轮缩放"""
+        """Ctrl+滚轮缩放；普通滚轮交给外层页面。"""
+        if not (event.modifiers() & Qt.ControlModifier):
+            event.ignore()
+            return
         factor = 1.15 if event.angleDelta().y() > 0 else 1 / 1.15
         self.scale(factor, factor)
         self._zoom_level = self.transform().m11()
         self.zoom_changed.emit()
+        event.accept()
 
     def mousePressEvent(self, event):
         if event.button() in (Qt.MiddleButton, Qt.RightButton):

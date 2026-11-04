@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QSpinBox, QDoubleSpinBox, QGroupBox, QFormLayout,
     QTableWidget, QTableWidgetItem, QTextEdit, QSplitter, QHeaderView,
-    QFrame, QStackedWidget, QCheckBox, QMessageBox, QListWidget, QListWidgetItem,
+    QStackedWidget, QCheckBox, QMessageBox, QListWidget, QListWidgetItem,
 )
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFont
@@ -254,11 +254,6 @@ class SPCTab(BaseAnalysisTab):
         self.cp_group.setVisible(False)
         top_layout.addWidget(self.cp_group)
 
-        separator = QFrame()
-        separator.setFrameShape(QFrame.VLine)
-        separator.setStyleSheet("")
-        separator.setMaximumWidth(1)
-        top_layout.addWidget(separator)
 
         
         self.data_table = QTableWidget()

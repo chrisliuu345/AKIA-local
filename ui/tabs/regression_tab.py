@@ -6,7 +6,6 @@ from typing import Any
 import pandas as pd
 
 from PySide6.QtWidgets import (
-    QFrame,
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QGroupBox, QFormLayout, QTextEdit,
     QTableWidget, QHeaderView,
@@ -98,11 +97,6 @@ class RegressionTab(BaseAnalysisTab):
         top_layout.addWidget(config_group)
 
 
-        separator = QFrame()
-        separator.setFrameShape(QFrame.VLine)
-        separator.setStyleSheet("")
-        separator.setMaximumWidth(1)
-        top_layout.addWidget(separator)
 
         
         self.data_table = QTableWidget()

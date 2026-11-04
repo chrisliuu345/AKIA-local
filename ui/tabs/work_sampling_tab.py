@@ -6,7 +6,6 @@ from collections import OrderedDict
 from typing import Any
 
 from PySide6.QtWidgets import (
-    QFrame,
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QGroupBox, QFormLayout,
     QTableWidget, QTableWidgetItem, QSplitter, QHeaderView,
@@ -98,11 +97,6 @@ class WorkSamplingTab(BaseAnalysisTab):
         top_layout.addWidget(config_group)
 
 
-        separator = QFrame()
-        separator.setFrameShape(QFrame.VLine)
-        separator.setStyleSheet("")
-        separator.setMaximumWidth(1)
-        top_layout.addWidget(separator)
 
         obs_group = QGroupBox("观测记录")
         obs_layout = QVBoxLayout(obs_group)
