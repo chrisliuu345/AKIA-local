@@ -164,8 +164,9 @@ class TestLiveRefreshStability:
         assert tab.current_figure is not None
         assert tab.canvas.figure is tab.current_figure
         assert tab.current_figure.canvas is tab.canvas  # 双向绑定完好（导出/右键依赖）
-        assert tab._chart_editor_panel is panel_before  # 编辑面板行保持原位
-        assert tab.chart_layout.count() == 2  # canvas + 编辑面板，无多余操作栏行
+        assert tab._chart_editor_panel is panel_before  # 编辑面板仍是同一块
+        assert tab.chart_layout.count() == 1  # 图表面板只放画布
+        assert tab.options_layout.indexOf(tab._chart_editor_panel) >= 0
 
     def test_scroll_position_kept_after_refresh(self, chart_tab):
         tab = self._prepare(chart_tab)

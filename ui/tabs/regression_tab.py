@@ -6,10 +6,8 @@ from typing import Any
 import pandas as pd
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QComboBox, QGroupBox, QFormLayout, QTextEdit,
-    QTableWidget, QHeaderView,
-    QStackedWidget,
+    QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
+    QComboBox, QGroupBox, QFormLayout, QTableWidget, QHeaderView,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
@@ -17,7 +15,7 @@ from PySide6.QtGui import QFont
 from analysis.regression.linear_regression import analyze as reg_analyze
 from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
-from ui.theme import BUTTON_SECONDARY, BUTTON_TOGGLE, BUTTON_PRIMARY_STRETCH
+from ui.theme import BUTTON_SECONDARY, BUTTON_PRIMARY_STRETCH
 from ui.font_config import get_ui_font
 from core.formatting import format_pvalue
 
@@ -115,54 +113,7 @@ class RegressionTab(BaseAnalysisTab):
         self.result_label.setFont(QFont(get_ui_font(), 14))
         bottom_layout.addWidget(self.result_label)
 
-        toggle_row = QHBoxLayout()
-        toggle_row.setSpacing(8)
-        self.btn_view_chart = QPushButton(i18n.tr("tab.view_chart"))
-        self.btn_view_chart.setFont(QFont(get_ui_font(), 11))
-        self.btn_view_chart.setFixedHeight(30)
-        self.btn_view_chart.setCheckable(True)
-        self.btn_view_chart.setChecked(True)
-        self.btn_view_chart.setStyleSheet(BUTTON_TOGGLE)
-        self.btn_view_chart.clicked.connect(lambda: self._switch_result_view(0))
-        toggle_row.addWidget(self.btn_view_chart)
-        self.btn_view_data = QPushButton(i18n.tr("tab.view_data"))
-        self.btn_view_data.setFont(QFont(get_ui_font(), 11))
-        self.btn_view_data.setFixedHeight(30)
-        self.btn_view_data.setCheckable(True)
-        self.btn_view_data.setStyleSheet(BUTTON_TOGGLE)
-        self.btn_view_data.clicked.connect(lambda: self._switch_result_view(1))
-        toggle_row.addWidget(self.btn_view_data)
-        toggle_row.addStretch()
-        bottom_layout.addLayout(toggle_row)
-
-        self.result_stack = QStackedWidget()
-
-        self.chart_container = QWidget()
-        self.chart_layout = QVBoxLayout(self.chart_container)
-        self.chart_layout.setContentsMargins(0, 0, 0, 0)
-        self.chart_container.setMinimumHeight(300)
-        self.result_stack.addWidget(self.chart_container)
-
-        self.data_container = QWidget()
-        data_layout = QVBoxLayout(self.data_container)
-        data_layout.setContentsMargins(0, 0, 0, 0)
-        self.result_text = QTextEdit()
-        self.result_text.setReadOnly(True)
-        self.result_text.setFont(QFont(get_ui_font(), 12))
-        self.result_text.setMinimumHeight(80)
-        data_layout.addWidget(self.result_text)
-        self.result_table = QTableWidget()
-        self.result_table.horizontalHeader().setStretchLastSection(True)
-        self.result_table.setAlternatingRowColors(True)
-        self.result_table.setShowGrid(True)
-        self.result_table.setStyleSheet(
-            "QTableWidget { font-size: 12px; }"
-            "QHeaderView::section {  padding: 4px; }"
-        )
-        data_layout.addWidget(self.result_table)
-        self.result_stack.addWidget(self.data_container)
-
-        bottom_layout.addWidget(self.result_stack)
+        self.mount_results(bottom_layout)
         layout.addLayout(bottom_layout)
 
     def set_data(self, df: pd.DataFrame, parsed_info: dict[str, Any] | None = None):

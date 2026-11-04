@@ -7,16 +7,16 @@ import pandas as pd
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QComboBox, QGroupBox, QFormLayout, QTextEdit, QCheckBox,
+    QComboBox, QGroupBox, QFormLayout, QCheckBox,
     QTableWidget, QHeaderView,
-    QStackedWidget, QListWidget, QListWidgetItem, QLineEdit,
+    QListWidget, QListWidgetItem, QLineEdit,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
 from core.i18n import i18n
 from ui.tabs.base_tab import BaseAnalysisTab
-from ui.theme import colors as theme_colors, BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY, BUTTON_TOGGLE
+from ui.theme import colors as theme_colors, BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY
 from ui.font_config import get_ui_font
 from analysis.charts import generate_chart, CHART_TYPES, CHART_CONFIGS
 from analysis.charts.chart_generator import _build_summary, _CHART_PALETTES
@@ -110,53 +110,7 @@ class ChartTab(BaseAnalysisTab):
 
         layout.addLayout(top_layout)
 
-        result_group = QGroupBox(i18n.tr("chart_tab.result"))
-        result_layout = QVBoxLayout(result_group)
-
-        toggle_row = QHBoxLayout()
-        self.btn_view_chart = QPushButton(i18n.tr("tab.view_chart"))
-        self.btn_view_chart.setFont(QFont(get_ui_font(), 11))
-        self.btn_view_chart.setFixedHeight(30)
-        self.btn_view_chart.setCheckable(True)
-        self.btn_view_chart.setChecked(True)
-        self.btn_view_chart.setStyleSheet(BUTTON_TOGGLE)
-        self.btn_view_chart.clicked.connect(lambda: self._switch_result_view(0))
-        toggle_row.addWidget(self.btn_view_chart)
-
-        self.btn_view_data = QPushButton(i18n.tr("tab.view_data"))
-        self.btn_view_data.setFont(QFont(get_ui_font(), 11))
-        self.btn_view_data.setFixedHeight(30)
-        self.btn_view_data.setCheckable(True)
-        self.btn_view_data.setStyleSheet(BUTTON_TOGGLE)
-        self.btn_view_data.clicked.connect(lambda: self._switch_result_view(1))
-        toggle_row.addWidget(self.btn_view_data)
-        toggle_row.addStretch()
-        result_layout.addLayout(toggle_row)
-
-        self.result_stack = QStackedWidget()
-
-        self.chart_container = QWidget()
-        self.chart_layout = QVBoxLayout(self.chart_container)
-        self.chart_layout.setContentsMargins(0, 0, 0, 0)
-        self.chart_container.setMinimumHeight(300)
-        self.result_stack.addWidget(self.chart_container)
-
-        self.data_container = QWidget()
-        data_layout = QVBoxLayout(self.data_container)
-        data_layout.setContentsMargins(0, 0, 0, 0)
-        self.result_text = QTextEdit()
-        self.result_text.setReadOnly(True)
-        self.result_text.setFont(QFont(get_ui_font(), 11))
-        self.result_text.setMinimumHeight(80)
-        data_layout.addWidget(self.result_text)
-        self.result_table = QTableWidget()
-        self.result_table.horizontalHeader().setStretchLastSection(True)
-        self.result_table.setAlternatingRowColors(True)
-        data_layout.addWidget(self.result_table)
-        self.result_stack.addWidget(self.data_container)
-
-        result_layout.addWidget(self.result_stack)
-        layout.addWidget(result_group, 1)
+        self.mount_results(layout)
 
         self._rebuild_config_panel(CHART_TYPES[0])
 
