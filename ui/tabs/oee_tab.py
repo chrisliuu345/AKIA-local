@@ -84,7 +84,7 @@ class OEETab(BaseAnalysisTab):
                                             ("oee", "OEE"))):
             card = QFrame()
             card.setStyleSheet(
-                "QFrame { background: #262632; border: 1px solid #2a2a36; "
+                "QFrame { background: #161632; border: 1px solid #2A2A4E; "
                 "border-radius: 8px; }"
             )
             card.setMinimumWidth(118)
@@ -92,11 +92,11 @@ class OEETab(BaseAnalysisTab):
             cl.setContentsMargins(8, 6, 8, 6)
             name = QLabel(label)
             name.setFont(QFont(get_ui_font(), 9))
-            name.setStyleSheet("color: #a0a3ae; border: none;")
+            name.setStyleSheet("color: #C3C2FF; border: none;")
             name.setAlignment(Qt.AlignCenter)
             val = QLabel("--")
             val.setFont(QFont(get_ui_font(), 16, QFont.Bold))
-            val.setStyleSheet("color: #e1e2e6; border: none;")
+            val.setStyleSheet("color: #E4E4F2; border: none;")
             val.setAlignment(Qt.AlignCenter)
             cl.addWidget(name)
             cl.addWidget(val)
@@ -237,13 +237,13 @@ class OEETab(BaseAnalysisTab):
         oee = ov.get("oee") or 0
         self._kpi_labels["oee"].setText(f"{oee:.1%}")
         if oee >= OEE_WORLD_CLASS:
-            color = "#27ae60"
+            color = "#3E9B68"
         elif oee >= OEE_GOOD:
             color = tc["accent_bright"]
         elif oee >= OEE_FAIR:
-            color = "#e67e22"
+            color = "#B86A28"
         else:
-            color = "#e74c3c"
+            color = "#C4544C"
         self._kpi_labels["oee"].setStyleSheet(f"color: {color}; border: none;")
 
     def _fill_table(self, result: dict[str, Any]):
@@ -280,10 +280,10 @@ class OEETab(BaseAnalysisTab):
         labels = [b["label"] for b in buckets]
 
         ax1 = fig.add_subplot(1, 2, 1)
-        metrics = [("availability", "A", "#1b5faa"),
-                   ("performance", "P", "#217ca3"),
-                   ("quality", "Q", "#27ae60"),
-                   ("oee", "OEE", "#9467bd")]
+        metrics = [("availability", "A", "#4648FF"),
+                   ("performance", "P", "#1C1DEC"),
+                   ("quality", "Q", "#9394FE"),
+                   ("oee", "OEE", "#6A6CFF")]
         import numpy as np
         x = np.arange(len(labels))
         width = 0.19
@@ -295,9 +295,9 @@ class OEETab(BaseAnalysisTab):
                 if b[key] is not None and v > 0:
                     ax1.text(xi + (k - 1.5) * width, v + 0.015, f"{v:.0%}",
                              ha="center", fontsize=7, color=tc["text_secondary"])
-        ax1.axhline(OEE_WORLD_CLASS, color="#e74c3c", linestyle="--", linewidth=1.2)
+        ax1.axhline(OEE_WORLD_CLASS, color="#C4544C", linestyle="--", linewidth=1.2)
         ax1.text(len(labels) - 0.5, OEE_WORLD_CLASS + 0.015, f"世界级 {OEE_WORLD_CLASS:.0%}", fontsize=8,
-                 color="#e74c3c", ha="right")
+                 color="#C4544C", ha="right")
         ax1.set_xticks(x)
         ax1.set_xticklabels(labels)
         ax1.set_ylim(0, 1.12)
@@ -320,7 +320,7 @@ class OEETab(BaseAnalysisTab):
         starts = [0, planned - down, planned - down - speed,
                   planned - down - speed - qual, 0]
         heights = [planned, down, speed, qual, value]
-        colors = ["#1b5faa", "#e74c3c", "#e67e22", "#9467bd", "#27ae60"]
+        colors = ["#4648FF", "#C4544C", "#C4922A", "#9394FE", "#3E9B68"]
         for i, (s, h, c) in enumerate(zip(starts, heights, colors, strict=True)):
             ax2.bar(stages[i], h, bottom=s, color=c, width=0.58)
             ax2.text(stages[i], s + h + planned * 0.015, f"{h:.2f}h",

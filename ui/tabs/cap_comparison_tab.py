@@ -228,18 +228,18 @@ class CapComparisonTab(BaseAnalysisTab):
         ax.bar(x - w/2, cp_vals, w * 0.45, label="Cp",
                        color=tc["accent_bright"], alpha=0.85)
         ax.bar(x - w/2 + w * 0.45, cpk_vals, w * 0.45, label="Cpk",
-                       color="#ff6b6b", alpha=0.85)
+                       color="#C4544C", alpha=0.85)
         ax.bar(x + w/2, pp_vals, w * 0.45, label="Pp",
                        color=tc["accent"], alpha=0.6, hatch="//")
         ax.bar(x + w/2 + w * 0.45, ppk_vals, w * 0.45, label="Ppk",
-                       color="#ffa726", alpha=0.6, hatch="//")
+                       color="#C4922A", alpha=0.6, hatch="//")
 
         cpk_b = CAPABILITY_GRADES["B"][0]
         cpk_a = CAPABILITY_GRADES["A"][0]
-        ax.axhline(y=cpk_b, color="#6e7080", linestyle="--", linewidth=1, alpha=0.6)
-        ax.axhline(y=cpk_a, color="#a0a3ae", linestyle=":", linewidth=1, alpha=0.5)
-        ax.text(n - 0.5, cpk_b, f"Cp={cpk_b}", fontsize=7, color="#6e7080", va="bottom")
-        ax.text(n - 0.5, cpk_a, f"Cp={cpk_a}", fontsize=7, color="#a0a3ae", va="bottom")
+        ax.axhline(y=cpk_b, color="#8A8AB8", linestyle="--", linewidth=1, alpha=0.6)
+        ax.axhline(y=cpk_a, color="#C3C2FF", linestyle=":", linewidth=1, alpha=0.5)
+        ax.text(n - 0.5, cpk_b, f"Cp={cpk_b}", fontsize=7, color="#8A8AB8", va="bottom")
+        ax.text(n - 0.5, cpk_a, f"Cp={cpk_a}", fontsize=7, color="#C3C2FF", va="bottom")
 
         ax.set_xticks(x)
         ax.set_xticklabels(labels, fontsize=9, rotation=25, ha="right")

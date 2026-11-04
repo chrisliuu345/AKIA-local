@@ -33,7 +33,7 @@ from ui.theme import BUTTON_PRIMARY_STRETCH
 from ui.theme import colors as theme_colors
 from ui.font_config import get_ui_font
 
-TREND_COLORS = ["#4da6ff", "#ff6b6b", "#51cf66", "#ffa726", "#cc5de8", "#20c997"]
+TREND_COLORS = ["#4648FF", "#1C1DEC", "#9394FE", "#6A6CFF", "#C3C2FF", "#3032D4"]
 
 
 class TrendTab(BaseAnalysisTab):

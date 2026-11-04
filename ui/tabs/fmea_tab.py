@@ -285,13 +285,13 @@ class FMEATab(BaseAnalysisTab):
     def _color_cell(self, item: QTableWidgetItem, level: str):
         if level == "high":
             item.setBackground(QColor("#5a1a1a"))
-            item.setForeground(QColor("#ff6b6b"))
+            item.setForeground(QColor("#C4544C"))
         elif level == "medium":
             item.setBackground(QColor("#5a3a1a"))
-            item.setForeground(QColor("#ffa726"))
+            item.setForeground(QColor("#C4922A"))
         else:
             item.setBackground(QColor("#1a3a1a"))
-            item.setForeground(QColor("#51cf66"))
+            item.setForeground(QColor("#3E9B68"))
 
     def _update_stats(self):
         stats = self._engine.get_stats(self._items)

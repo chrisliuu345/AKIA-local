@@ -290,7 +290,7 @@ class SamplingTab(BaseAnalysisTab):
         self.btn_batch_sample.clicked.connect(self._do_batch_sample)
         outer.addWidget(self.btn_batch_sample)
         self.batch_fingerprint_label = QLabel("")
-        self.batch_fingerprint_label.setStyleSheet("color: #9aa4b2; font-size: 11px;")
+        self.batch_fingerprint_label.setStyleSheet("color: #8A8AB8; font-size: 11px;")
         outer.addWidget(self.batch_fingerprint_label)
 
         judge = QFormLayout()
@@ -468,8 +468,8 @@ class SamplingTab(BaseAnalysisTab):
         scope = self._batch_scope()
         snapshot = manager.snapshot(scope)
         state_text = _BATCH_STATES.get(snapshot["state"], snapshot["state"])
-        color = {"normal": "#2ecc71", "tightened": "#f39c12",
-                 "reduced": "#4da6ff"}.get(snapshot["state"], "#e1e2e6")
+        color = {"normal": "#3E9B68", "tightened": "#C4922A",
+                 "reduced": "#9394FE"}.get(snapshot["state"], "#E4E4F2")
         extra = (f" · 批数 {snapshot['lots_total']}"
                  + (f" · 覆盖原因: {snapshot['override_reason']}"
                     if snapshot["override_reason"] else ""))
@@ -529,9 +529,9 @@ class SamplingTab(BaseAnalysisTab):
         for j, v in enumerate([dec, str(d), str(ins), f"{ac}/{re}"]):
             item = QTableWidgetItem(v)
             if dec == "accept":
-                item.setForeground(QColor("#27ae60"))
+                item.setForeground(QColor("#3E9B68"))
             elif dec == "reject":
-                item.setForeground(QColor("#e74c3c"))
+                item.setForeground(QColor("#C4544C"))
             self.result.setItem(0, j, item)
         self.result.resizeColumnsToContents()
 
@@ -627,9 +627,9 @@ class SamplingTab(BaseAnalysisTab):
         self.result.setRowCount(1)
         item = QTableWidgetItem(dec["decision"])
         if dec["decision"] == "accept":
-            item.setForeground(QColor("#27ae60"))
+            item.setForeground(QColor("#3E9B68"))
         else:
-            item.setForeground(QColor("#e74c3c"))
+            item.setForeground(QColor("#C4544C"))
         self.result.setItem(0, 0, item)
         for j, v in enumerate(
             [
@@ -700,9 +700,9 @@ class SamplingTab(BaseAnalysisTab):
         self.result.setRowCount(1)
         item = QTableWidgetItem(dec["decision"])
         if dec["decision"] == "accept":
-            item.setForeground(QColor("#27ae60"))
+            item.setForeground(QColor("#3E9B68"))
         else:
-            item.setForeground(QColor("#e74c3c"))
+            item.setForeground(QColor("#C4544C"))
         self.result.setItem(0, 0, item)
         for j, v in enumerate(
             [

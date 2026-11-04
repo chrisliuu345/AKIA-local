@@ -82,58 +82,9 @@ def main():
     app.setFont(font)
     app.setStyle("Fusion")
 
-    from ui.theme import apply_dark_palette
+    from ui.theme import APP_STYLESHEET, apply_dark_palette
     apply_dark_palette()
-
-    app.setStyleSheet("""
-        QWidget { background-color: #181822; color: #e1e2e6; }
-        QMainWindow { background-color: #181822; }
-        QDialog { background-color: #181822; }
-        QMenuBar { background-color: #13131c; color: #e1e2e6; }
-        QMenuBar::item:selected { background-color: #363648; }
-        QMenu { background-color: #262632; color: #e1e2e6; border: 1px solid #3a3a48; }
-        QMenu::item:selected { background-color: #363648; }
-        QStatusBar { background-color: #13131c; color: #a0a3ae; min-height: 24px; }
-        QStatusBar::item { border: none; }
-        QToolTip { background-color: #363648; color: #e1e2e6; border: 1px solid #3a3a48; }
-        QScrollBar:vertical { width: 8px; background: #181822; border: none; }
-        QScrollBar::handle:vertical { background: #3a3a48; border-radius: 4px; min-height: 30px; }
-        QScrollBar::handle:vertical:hover { background: #4a4a5a; }
-        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
-        QScrollBar:horizontal { height: 8px; background: #181822; border: none; }
-        QScrollBar::handle:horizontal { background: #3a3a48; border-radius: 4px; min-width: 30px; }
-        QScrollBar::handle:horizontal:hover { background: #4a4a5a; }
-        QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
-        QTableWidget { alternate-background-color: #22222e; background-color: #1c1c26; color: #e1e2e6; }
-        QTableWidget::item:hover { background: #363648; }
-        QHeaderView::section { background-color: #2c2c38; color: #a0a3ae; border: 1px solid #3a3a48; padding: 4px; }
-        QComboBox { background-color: #262632; color: #e1e2e6; border: 1px solid #3a3a48; border-radius: 4px; padding: 4px 8px; }
-        QComboBox:hover { border: 1px solid #4da6ff; }
-        QComboBox:focus { border: 1px solid #4da6ff; }
-        QComboBox QAbstractItemView { background-color: #262632; color: #e1e2e6; selection-background-color: #363648; }
-        QLineEdit { background-color: #1c1c26; color: #e1e2e6; border: 1px solid #3a3a48; border-radius: 4px; padding: 4px 8px; }
-        QLineEdit:focus { border: 1px solid #4da6ff; }
-        QSpinBox, QDoubleSpinBox { background-color: #1c1c26; color: #e1e2e6; border: 1px solid #3a3a48; border-radius: 4px; padding: 2px 6px; }
-        QSpinBox:focus, QDoubleSpinBox:focus { border: 1px solid #4da6ff; }
-        QGroupBox { color: #a0a3ae; border: 1px solid #3a3a48; border-radius: 6px; margin-top: 8px; padding-top: 16px; }
-        QGroupBox::title { color: #a0a3ae; padding: 0 6px; subcontrol-origin: margin; }
-        QTextEdit, QPlainTextEdit { background-color: #1c1c26; color: #e1e2e6; border: 1px solid #3a3a48; }
-        QListWidget { background-color: #1c1c26; color: #e1e2e6; border: 1px solid #3a3a48; }
-        QListWidget::item:hover { background-color: #363648; }
-        QListWidget::item:selected { background-color: #2a384a; }
-        QTreeWidget { background-color: #1c1c26; color: #e1e2e6; border: 1px solid #3a3a48; }
-        QTreeWidget::item:hover { background-color: #363648; }
-        QTreeWidget::item:selected { background-color: #2a384a; }
-        QCheckBox { color: #e1e2e6; }
-        QRadioButton { color: #e1e2e6; }
-        QLabel { color: #e1e2e6; background: transparent; }
-        QSplitter::handle { background: #3a3a48; }
-        QTabWidget::pane { background-color: #181822; border: 1px solid #3a3a48; }
-        QTabBar::tab { background-color: #262632; color: #a0a3ae; border: 1px solid #3a3a48; padding: 6px 12px; }
-        QTabBar::tab:selected { background-color: #181822; color: #e1e2e6; }
-        QProgressBar { background-color: #1c1c26; border: none; border-radius: 3px; text-align: center; color: #e1e2e6; }
-        QProgressBar::chunk { background-color: #1b5faa; border-radius: 3px; }
-    """)
+    app.setStyleSheet(APP_STYLESHEET)
 
     # 自本版起取消加载界面：启动后直接构建并显示主界面
     from ui.main_window import MainWindow

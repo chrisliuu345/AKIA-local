@@ -139,7 +139,7 @@ class TestCardDetails:
         tab.refresh()
         dot = _dot(tab._cards[0])
         assert dot is not None
-        assert "#27ae60" in dot.styleSheet()
+        assert "#3E9B68" in dot.styleSheet()
         tab.close()
 
     def test_dot_red_for_bad_cpk(self, main, monkeypatch):
@@ -148,7 +148,7 @@ class TestCardDetails:
         tab.refresh()
         dot = _dot(tab._cards[0])
         assert dot is not None
-        assert "#e74c3c" in dot.styleSheet()
+        assert "#C4544C" in dot.styleSheet()
         tab.close()
 
     def test_dot_red_for_violations(self, main, monkeypatch):
@@ -158,7 +158,7 @@ class TestCardDetails:
         tab.refresh()
         dot = _dot(tab._cards[0])
         assert dot is not None
-        assert "#e74c3c" in dot.styleSheet()
+        assert "#C4544C" in dot.styleSheet()
         tab.close()
 
 

@@ -188,7 +188,7 @@ class ChartTab(BaseAnalysisTab):
             from PySide6.QtWidgets import QCheckBox
             self.cb_show_regression = QCheckBox("显示回归线")
             self.cb_show_regression.setChecked(True)
-            self.cb_show_regression.setStyleSheet("color: #a0a3ae;")
+            self.cb_show_regression.setStyleSheet("color: #C3C2FF;")
             self.config_form_layout.addRow(self.cb_show_regression)
 
         configs = CHART_CONFIGS.get(chart_type, [])
@@ -354,7 +354,7 @@ class ChartTab(BaseAnalysisTab):
         ok, msg = self.validate_params()
         if not ok:
             self._clear_canvas()
-            self.result_text.setStyleSheet("color: #e74c3c; font-weight: bold;")
+            self.result_text.setStyleSheet("color: #C4544C; font-weight: bold;")
             self.result_text.setText(msg)
             return None
         try:
@@ -364,7 +364,7 @@ class ChartTab(BaseAnalysisTab):
             return result
         except Exception as e:
             self._clear_canvas()
-            self.result_text.setStyleSheet("color: #e74c3c; font-weight: bold;")
+            self.result_text.setStyleSheet("color: #C4544C; font-weight: bold;")
             self.result_text.setText(f"{i18n.tr('chart_tab.analysis_failed')}\n{e!s}")
 
     def refresh_texts(self):

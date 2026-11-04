@@ -74,19 +74,19 @@ def md_to_html(text: str) -> str:
     out: list[str] = []
     for idx, block in enumerate(blocks):
         if idx % 2 == 1:                            # 代码块
-            out.append("<pre style='background:#14141e;color:#c8ccd6;"
-                       "padding:8px 10px;border-left:3px solid #1b5faa;'>"
+            out.append("<pre style='background:#101028;color:#E4E4F2;"
+                       "padding:8px 10px;border-left:3px solid #4648FF;'>"
                        + html.escape(block.strip()) + "</pre>")
             continue
         safe = html.escape(block)
         safe = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", safe)
         safe = re.sub(r"`([^`]+)`",
-                      r"<code style='background:#35354a;color:#e0a040;'>\1</code>", safe)
+                      r"<code style='background:#222248;color:#C4922A;'>\1</code>", safe)
         lines = []
         for line in safe.split("\n"):
             stripped = line.strip()
             if stripped.startswith("### "):
-                lines.append(f"<div style='color:#4da6ff;font-weight:bold;'>"
+                lines.append(f"<div style='color:#C3C2FF;font-weight:bold;'>"
                              f"{stripped[4:]}</div>")
             elif stripped.startswith(("- ", "* ")):
                 lines.append("&nbsp;&nbsp;• " + stripped[2:])
@@ -518,7 +518,7 @@ class QAMHarnessDialog(QDialog):
         tc = theme_colors(self)
         if self.llm.available:
             self.llm_status.setText(f"● 在线 · {self._provider_label()}")
-            self.llm_status.setStyleSheet("color: #27ae60; padding: 2px 6px;")
+            self.llm_status.setStyleSheet("color: #3E9B68; padding: 2px 6px;")
         else:
             self.llm_status.setText("● 离线 · 工具模式")
             self.llm_status.setStyleSheet(f"color: {tc['text_muted']}; padding: 2px 6px;")
@@ -588,7 +588,7 @@ class QAMHarnessDialog(QDialog):
     def _append_tool_card(self, record):
         tc = theme_colors(self)
         ok = getattr(record, "ok", False)
-        color = "#27ae60" if ok else "#e74c3c"
+        color = "#3E9B68" if ok else "#C4544C"
         bg = "#1c2b22" if ok else "#2b1f1f"
         state = "成功" if ok else "失败"
         args = ", ".join(f"{k}={v}" for k, v in (getattr(record, "args", {}) or {}).items())

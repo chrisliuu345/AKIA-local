@@ -519,7 +519,7 @@ class SPCTab(BaseAnalysisTab):
             self.chart_type_combo.currentText())
         n_nelson = sum(1 for e in frame.events if e.kind == "nelson")
         n_oos = sum(1 for e in frame.events if e.kind == "oos")
-        color = "#27ae60" if not frame.ooc and not frame.oos else "#e74c3c"
+        color = "#3E9B68" if not frame.ooc and not frame.oos else "#C4544C"
         self.live_status.setStyleSheet(f"font-size: 11px; color: {color};")
         text = (f"{chan} · {len(frame.data)} {i18n.tr('spc.live_pts')} · "
                 f"CL={frame.cl:.2f} UCL={frame.ucl:.2f} LCL={frame.lcl:.2f} · ")
@@ -640,7 +640,7 @@ class SPCTab(BaseAnalysisTab):
         valid, msg = self.validate_params()
         if not valid:
             self._clear_canvas()
-            self.result_text.setStyleSheet("color: #e74c3c; font-weight: bold;")
+            self.result_text.setStyleSheet("color: #C4544C; font-weight: bold;")
             self.result_text.setText(f"▎参数校验失败\n{msg}")
             return None
         self.result_text.setStyleSheet("")
@@ -651,7 +651,7 @@ class SPCTab(BaseAnalysisTab):
             return result
         except Exception as e:
             self._clear_canvas()
-            self.result_text.setStyleSheet("color: #e74c3c; font-weight: bold;")
+            self.result_text.setStyleSheet("color: #C4544C; font-weight: bold;")
             self.result_text.setText(f"▎分析失败\n{e!s}")
             return None
 
@@ -880,7 +880,7 @@ class SPCTab(BaseAnalysisTab):
         except Exception as e:
             self._clear_canvas()
             err_label = QLabel(f"图表渲染失败: {e}")
-            err_label.setStyleSheet("color: #e74c3c; padding: 12px;")
+            err_label.setStyleSheet("color: #C4544C; padding: 12px;")
             err_label.setWordWrap(True)
             self.chart_layout.addWidget(err_label)
 

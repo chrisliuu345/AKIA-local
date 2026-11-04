@@ -14,12 +14,12 @@ from ui.font_config import get_ui_font
 
 
 M6_COLORS = [
-    QColor("#4da6ff"), QColor("#ff6b6b"), QColor("#51cf66"),
-    QColor("#ffa726"), QColor("#cc5de8"), QColor("#20c997"),
+    QColor("#4648FF"), QColor("#1C1DEC"), QColor("#9394FE"),
+    QColor("#6A6CFF"), QColor("#C3C2FF"), QColor("#3032D4"),
 ]
-BG_COLOR = QColor("#262632")
-TEXT_COLOR = QColor("#e1e2e6")
-MUTED_COLOR = QColor("#a0a3ae")
+BG_COLOR = QColor("#161632")
+TEXT_COLOR = QColor("#E4E4F2")
+MUTED_COLOR = QColor("#C3C2FF")
 
 
 class _LabelNode(QGraphicsItem):
@@ -127,8 +127,8 @@ class _ProblemBox(QGraphicsRectItem):
         self._y = y
         w = self._fit_width()
         super().__init__(x, y - self._h / 2, w, self._h)
-        self.setBrush(QBrush(QColor("#363648")))
-        self.setPen(QPen(QColor("#4da6ff"), 2))
+        self.setBrush(QBrush(QColor("#222248")))
+        self.setPen(QPen(QColor("#4648FF"), 2))
         self.setFlag(QGraphicsItem.ItemIsSelectable, False)
         self.setCursor(Qt.IBeamCursor)
 

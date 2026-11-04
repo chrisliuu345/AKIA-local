@@ -107,7 +107,7 @@ class LineBalanceTab(BaseAnalysisTab):
         config_layout.addRow(case_row)
 
         self.skill_status_label = QLabel("技能矩阵: 未接入")
-        self.skill_status_label.setStyleSheet("color: #9aa4b2; font-size: 11px;")
+        self.skill_status_label.setStyleSheet("color: #8A8AB8; font-size: 11px;")
         self.skill_status_label.setWordWrap(True)
         config_layout.addRow(self.skill_status_label)
 
@@ -409,7 +409,7 @@ class LineBalanceTab(BaseAnalysisTab):
         colors = [tc["accent_bright"] if p.process_id == cur["bottleneck_id"]
                   else tc["accent"] for p in procs]
         ax1.bar(names, cts, color=colors, width=0.62)
-        ax1.axhline(takt, color="#e74c3c", linestyle="--", linewidth=1.6,
+        ax1.axhline(takt, color="#C4544C", linestyle="--", linewidth=1.6,
                     label=f"节拍 {takt}s")
         ax1.set_title(f"现状：平衡率 {cur['balance_rate']:.1%}（{cur['station_count']} 工位）",
                       color=tc["text_primary"], fontsize=11)
@@ -419,8 +419,8 @@ class LineBalanceTab(BaseAnalysisTab):
         self._style_axis(ax1, tc, rotate=25)
 
         ax2 = fig.add_subplot(1, 2, 2)
-        palette = ["#1b5faa", "#217ca3", "#27ae60", "#9467bd", "#b85c38",
-                   "#17becf", "#6b4c9a", "#4da6ff"]
+        palette = ["#4648FF", "#1C1DEC", "#9394FE", "#6A6CFF", "#C3C2FF",
+                   "#3032D4", "#B0B0FE", "#5A5CFF"]
         xlabels = []
         for s in stations:
             bottom = 0.0
@@ -437,7 +437,7 @@ class LineBalanceTab(BaseAnalysisTab):
                      ha="center", va="bottom", fontsize=8,
                      color=tc["text_primary"])
             xlabels.append(f"工位{s['station_id']}")
-        ax2.axhline(takt, color="#e74c3c", linestyle="--", linewidth=1.6)
+        ax2.axhline(takt, color="#C4544C", linestyle="--", linewidth=1.6)
         bal = result["balanced"]
         ax2.set_title(f"平衡后：平衡率 {bal['balance_rate']:.1%}"
                       f"（{bal['station_count']} 工位, +{bal['rate_improvement']:.0%}）",

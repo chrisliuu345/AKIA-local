@@ -28,7 +28,7 @@ class ImportDialog(QDialog):
 
     def _setup_ui(self):
         tc = theme_colors()
-        mode_color = "#1b5faa" if self.mode == "quality" else "#27ae60"
+        mode_color = "#4648FF" if self.mode == "quality" else "#3E9B68"
         mode_label = "工作表数据" if self.mode == "quality" else "IE 分析数据"
 
         self.setWindowTitle(f"导入{mode_label}")

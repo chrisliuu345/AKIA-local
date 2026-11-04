@@ -209,7 +209,7 @@ class RegressionTab(BaseAnalysisTab):
         ok, msg = self.validate_params()
         if not ok:
             self._clear_canvas()
-            self.result_text.setStyleSheet("color: #e74c3c; font-weight: bold;")
+            self.result_text.setStyleSheet("color: #C4544C; font-weight: bold;")
             self.result_text.setText(f"{i18n.tr('reg.val_param_failed')}\n{msg}")
             return None
         try:
@@ -219,7 +219,7 @@ class RegressionTab(BaseAnalysisTab):
             return result
         except Exception as e:
             self._clear_canvas()
-            self.result_text.setStyleSheet("color: #e74c3c; font-weight: bold;")
+            self.result_text.setStyleSheet("color: #C4544C; font-weight: bold;")
             self.result_text.setText(f"{i18n.tr('reg.val_analysis_failed')}\n{e!s}")
 
     def validate_params(self) -> tuple:
@@ -286,7 +286,7 @@ class RegressionTab(BaseAnalysisTab):
             fitted = result.get("fitted_values", [])
             residuals = result.get("residuals", [])
             fig, axes = plt.subplots(2, 1, figsize=(10, 8), dpi=CHART_DPI)
-            axes[0].scatter(fitted, residuals, alpha=0.6, edgecolors="k", linewidth=0.3, color="#1b5faa")
+            axes[0].scatter(fitted, residuals, alpha=0.6, edgecolors="k", linewidth=0.3, color="#4648FF")
             axes[0].axhline(y=0, color="red", linestyle="--", linewidth=1)
             axes[0].set_xlabel("拟合值", fontsize=10)
             axes[0].set_ylabel("残差", fontsize=10)
@@ -303,7 +303,7 @@ class RegressionTab(BaseAnalysisTab):
         except Exception as e:
             self._clear_canvas()
             err_label = QLabel(f"{i18n.tr('reg.chart_failed')}{e}")
-            err_label.setStyleSheet("color: #e74c3c; padding: 12px;")
+            err_label.setStyleSheet("color: #C4544C; padding: 12px;")
             err_label.setWordWrap(True)
             self.chart_layout.addWidget(err_label)
 
@@ -327,6 +327,6 @@ class RegressionTab(BaseAnalysisTab):
         except Exception as e:
             self._clear_canvas()
             err_label = QLabel(f"{i18n.tr('reg.chart_failed')}{e}")
-            err_label.setStyleSheet("color: #e74c3c; padding: 12px;")
+            err_label.setStyleSheet("color: #C4544C; padding: 12px;")
             err_label.setWordWrap(True)
             self.chart_layout.addWidget(err_label)

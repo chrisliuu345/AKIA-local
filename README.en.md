@@ -8,7 +8,7 @@
 
 AKIA is an open-source, local-first desktop application for personal industrial engineering (IE) and quality analysis. It brings statistical process control, measurement system analysis, design of experiments, reliability, IE methods, and improvement-case management into one offline desktop workspace.
 
-Current version: v4.6.0.
+Current version: v4.6.2.
 
 AKIA requires no account, subscription, or online activation. Data stays on your machine by default; network connections are made only when you explicitly configure a cloud model, database, dashboard, or external device.
 
@@ -31,12 +31,12 @@ The in-app guide under Help → User Guide provides the complete feature referen
 
 ### Linux AppImage
 
-Download `AKIA-4.6.0-x86_64.AppImage` and its `.sha256` file from [Releases](https://github.com/chrisliuu345/AKIA-local/releases):
+Download `AKIA-4.6.2-x86_64.AppImage` and its `.sha256` file from [Releases](https://github.com/chrisliuu345/AKIA-local/releases):
 
 ```bash
-sha256sum -c AKIA-4.6.0-x86_64.AppImage.sha256
-chmod +x AKIA-4.6.0-x86_64.AppImage
-./AKIA-4.6.0-x86_64.AppImage
+sha256sum -c AKIA-4.6.2-x86_64.AppImage.sha256
+chmod +x AKIA-4.6.2-x86_64.AppImage
+./AKIA-4.6.2-x86_64.AppImage
 ```
 
 On systems without FUSE, launch with `--appimage-extract-and-run`. To build the AppImage yourself, run `bash build_appimage.sh`; output is written to `build/`.

@@ -75,7 +75,7 @@ _METRIC_SPECS = {
 _REFRESH_INTERVAL_MS = 5000
 
 _STATUS_RANK = {"na": 0, "good": 1, "warn": 2, "bad": 3}
-_STATUS_COLORS = {"na": "#6e7080", "good": "#27ae60", "warn": "#ffa726", "bad": "#e74c3c"}
+_STATUS_COLORS = {"na": "#8A8AB8", "good": "#3E9B68", "warn": "#C4922A", "bad": "#C4544C"}
 
 
 def _cpk_status(cpk):
@@ -220,7 +220,7 @@ class DashboardTab(BaseAnalysisTab):
 
     def _show_empty(self):
         empty = QLabel(i18n.tr("dashboard.empty"))
-        empty.setStyleSheet("color: #6e7080; font-size: 14px; padding: 40px;")
+        empty.setStyleSheet("color: #8A8AB8; font-size: 14px; padding: 40px;")
         empty.setAlignment(Qt.AlignCenter)
         self.card_layout.insertWidget(0, empty)
         self._cards.append(empty)

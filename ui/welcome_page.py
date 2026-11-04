@@ -48,7 +48,7 @@ ACTION_RADIUS = 10
 RECENT_RADIUS = 8
 PATH_MAX_WIDTH = 420
 RECENT_LIMIT = 5
-PRIMARY_HINT_COLOR = "#d6e8fa"
+PRIMARY_HINT_COLOR = "#F4F4FF"
 MIN_PAGE_SIZE = QSize(640, 480)
 
 _WORDMARK_CANDIDATES = (
@@ -138,7 +138,7 @@ class _ClickableCard(QFrame):
             return
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        pen = QPen(QColor(theme_colors()["accent_bright"]))
+        pen = QPen(QColor(theme_colors()["accent_dark"]))
         pen.setWidth(2)
         painter.setPen(pen)
         painter.setBrush(Qt.NoBrush)
@@ -584,9 +584,10 @@ class WelcomePage(QWidget):
 
         center = self._wordmark_center()
         glow = QRadialGradient(center, float(GLOW_RADIUS))
-        core = QColor(tc["accent"])
+        # 光晕用较浅的长春花，避免欢迎页被 #4648FF 铺成一块亮蓝。
+        core = QColor(tc["accent_bright"])
         core.setAlpha(GLOW_ALPHA)
-        edge = QColor(tc["accent"])
+        edge = QColor(tc["accent_bright"])
         edge.setAlpha(0)
         glow.setColorAt(0.0, core)
         glow.setColorAt(1.0, edge)

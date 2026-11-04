@@ -1,8 +1,8 @@
 """统一图表风格层（v4.1.0 B1）— AKIA 图表的唯一事实源。
 
 设计:
-  - **两套主题**: ``dark``（应用内，与 ui/theme.py 深色一致）/ ``light``（报告与导出白底）
-  - **色盲友好调色板**（Okabe-Ito）+ 固定语义色：数据 / 中心线 / 控制限 / 规格限 / 拟合 / 违规
+  - **两套主题**: ``dark``（应用内，近黑底掺 #0100AD）/ ``light``（报告白底掺 #C3C2FF）
+  - **分类色**取自品牌蓝色阶；合格 / 不合格 / 警告保持压暗的绿 / 红 / 琥珀，不并进蓝色
   - **统一 rcParams**：字体、字号、网格、脊线、图例、坐标轴负号
   - **工具函数**：apply_chart_style / style_axes / smart_ylim / add_limit_lines /
     mark_violations / finalize_figure / style_for_export
@@ -25,57 +25,65 @@ THEME_DARK = "dark"
 THEME_LIGHT = "light"
 DEFAULT_THEME = THEME_DARK
 
-# Okabe-Ito 色盲友好序列（首色为数据蓝）
+# 分类色只从蓝色阶取样。深色图把较亮色放前面，浅色图把较深色放前面，避免线色贴住背景。
 PALETTE: list[str] = [
-    "#0072B2",  # 蓝
-    "#E69F00",  # 橙
-    "#009E73",  # 蓝绿
-    "#D55E00",  # 朱红
-    "#CC79A7",  # 品红
-    "#56B4E9",  # 天蓝
-    "#F0E442",  # 黄
-    "#7F7F7F",  # 灰
+    "#4648FF",
+    "#1C1DEC",
+    "#9394FE",
+    "#C3C2FF",
+    "#0100AD",
+    "#6A6CFF",
+    "#3032D4",
+    "#B0B0FE",
+]
+_PALETTE_DARK: list[str] = [
+    "#4648FF", "#9394FE", "#C3C2FF", "#6A6CFF",
+    "#1C1DEC", "#B0B0FE", "#3032D4", "#0100AD",
+]
+_PALETTE_LIGHT: list[str] = [
+    "#4648FF", "#1C1DEC", "#0100AD", "#3032D4",
+    "#6A6CFF", "#9394FE", "#B0B0FE", "#C3C2FF",
 ]
 
-# 语义色（与主题相关）
+# 语义色（与主题相关）。good/warning/bad 不使用蓝色阶。
 _THEMES: dict[str, dict[str, str]] = {
     THEME_DARK: {
-        "figure_bg": "#181822",
-        "panel": "#262632",
-        "text": "#e1e2e6",
-        "text_muted": "#a0a3ae",
-        "axis": "#3a3a48",
-        "grid": "#32323f",
-        "data": "#56B4E9",
-        "data_alt": "#E69F00",
-        "center": "#009E73",
-        "limit": "#D55E00",
-        "spec": "#E69F00",
-        "fit": "#CC79A7",
-        "violation": "#D55E00",
-        "good": "#009E73",
-        "warning": "#F0E442",
-        "bad": "#D55E00",
-        "neutral": "#8a8c96",
+        "figure_bg": "#0C0C1E",
+        "panel": "#161632",
+        "text": "#E4E4F2",
+        "text_muted": "#C3C2FF",
+        "axis": "#3A3A66",
+        "grid": "#2A2A4E",
+        "data": "#4648FF",
+        "data_alt": "#9394FE",
+        "center": "#3E9B68",
+        "limit": "#C4544C",
+        "spec": "#C4922A",
+        "fit": "#C3C2FF",
+        "violation": "#C4544C",
+        "good": "#3E9B68",
+        "warning": "#C4922A",
+        "bad": "#C4544C",
+        "neutral": "#8A8AB8",
     },
     THEME_LIGHT: {
-        "figure_bg": "#ffffff",
-        "panel": "#ffffff",
-        "text": "#2b2b33",
-        "text_muted": "#666a73",
-        "axis": "#c9ccd4",
-        "grid": "#e6e8ee",
-        "data": "#0072B2",
-        "data_alt": "#E69F00",
-        "center": "#009E73",
-        "limit": "#D55E00",
-        "spec": "#E69F00",
-        "fit": "#CC79A7",
-        "violation": "#D55E00",
-        "good": "#009E73",
-        "warning": "#B8860B",
-        "bad": "#D55E00",
-        "neutral": "#9aa0a6",
+        "figure_bg": "#F6F6FE",
+        "panel": "#FBFBFF",
+        "text": "#1A1A2E",
+        "text_muted": "#5A5A82",
+        "axis": "#C3C2FF",
+        "grid": "#E6E6F8",
+        "data": "#4648FF",
+        "data_alt": "#1C1DEC",
+        "center": "#2A7A4A",
+        "limit": "#A33C38",
+        "spec": "#8F6A12",
+        "fit": "#0100AD",
+        "violation": "#A33C38",
+        "good": "#2A7A4A",
+        "warning": "#8F6A12",
+        "bad": "#A33C38",
+        "neutral": "#8E8EB0",
     },
 }
 
@@ -103,7 +111,13 @@ def semantic(theme: str | None = None) -> dict[str, str]:
 
 def palette(n: int | None = None, theme: str | None = None) -> list[str]:
     """取调色板；n 超出长度时自动循环。"""
-    colors = list(PALETTE)
+    name = str(theme or "").lower()
+    if name == THEME_LIGHT:
+        colors = list(_PALETTE_LIGHT)
+    elif name == THEME_DARK:
+        colors = list(_PALETTE_DARK)
+    else:
+        colors = list(PALETTE)
     if n is None or int(n) <= 0:
         return colors
     count = int(n)
@@ -175,7 +189,7 @@ def apply_chart_style(theme: str | None = None, *, dpi: int | None = None) -> st
         "grid.linewidth": 0.7,
         "axes.spines.top": False,
         "axes.spines.right": False,
-        "axes.prop_cycle": plt.cycler(color=list(PALETTE)),
+        "axes.prop_cycle": plt.cycler(color=palette(theme=name)),
         "figure.dpi": int(dpi) if dpi else plt.rcParams.get("figure.dpi", 100),
     })
     setup_fonts()
@@ -251,9 +265,9 @@ def add_limit_lines(ax, *, cl=None, ucl=None, lcl=None, usl=None, lsl=None,
                     fontsize: int = 9) -> list[float]:
     """绘制 CL / UCL / LCL / USL / LSL 参考线，返回纳入的数值列表。
 
-    - 控制限（UCL/LCL）: 朱红虚线
-    - 规格限（USL/LSL）: 橙色点划线（与拟合线、控制限区分）
-    - 中心线（CL）: 蓝绿实线
+    - 控制限（UCL/LCL）: 压暗的红虚线
+    - 规格限（USL/LSL）: 压暗的琥珀点划线（与拟合线、控制限区分）
+    - 中心线（CL）: 压暗的绿实线
     """
     s = semantic()
     included: list[float] = []

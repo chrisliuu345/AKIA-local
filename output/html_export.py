@@ -14,7 +14,7 @@ from output.base_report_engine import BaseReportEngine
 def _fig_to_base64(fig) -> str:
     with io.BytesIO() as buf:
         fig.savefig(buf, format="png", dpi=100, bbox_inches="tight",
-                    facecolor=CHART_COLORS.get("background", "#181822"))
+                    facecolor=CHART_COLORS.get("background", "#0C0C1E"))
         buf.seek(0)
         return base64.b64encode(buf.read()).decode()
 
@@ -46,11 +46,11 @@ def export_html(analyses: list[dict], charts: dict[str, bytes] | None = None,
 <html lang="zh-CN">
 <head><meta charset="utf-8"><title>{safe_title}</title>
 <style>
-body{{font-family:'{font_family}',sans-serif;max-width:1000px;margin:auto;padding:20px;background:#181822;color:#e1e2e6}}
-h1{{color:#4da6ff;border-bottom:2px solid #3a3a48;padding-bottom:10px}}
-h3{{color:#a0a3ae}}.summary{{background:#262632;padding:12px;border-radius:8px;margin:8px 0}}
-.chart{{margin:16px 0;background:#1c1c26;padding:12px;border-radius:8px}}
-.footer{{color:#6e7080;font-size:12px;margin-top:30px;text-align:center}}
+body{{font-family:'{font_family}',sans-serif;max-width:1000px;margin:auto;padding:20px;background:#0C0C1E;color:#E4E4F2}}
+h1{{color:#C3C2FF;border-bottom:2px solid #3A3A66;padding-bottom:10px}}
+h3{{color:#C3C2FF}}.summary{{background:#161632;padding:12px;border-radius:8px;margin:8px 0}}
+.chart{{margin:16px 0;background:#101028;padding:12px;border-radius:8px}}
+.footer{{color:#8A8AB8;font-size:12px;margin-top:30px;text-align:center}}
 </style></head><body>
 <h1>{safe_title}</h1>
 <p>生成时间: {datetime.now().strftime("%Y-%m-%d %H:%M")} | 分析项目: {len(items)} 项 | AKIA v{APP_VERSION}</p>

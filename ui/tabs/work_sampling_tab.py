@@ -212,7 +212,7 @@ class WorkSamplingTab(BaseAnalysisTab):
                 f"background-color: {col.name()}; color: #fff;"
                 f"}}"
                 f"QPushButton:!checked {{"
-                f"background-color: #2a2a36; color: #fff;"
+                f"background-color: #2A2A4E; color: #fff;"
                 f"border: 2px solid {col.name()};"
                 f"}}"
                 f"QPushButton:hover {{"

@@ -1,7 +1,7 @@
 """
 图表类型线条图标 — 用 matplotlib 运行期生成迷你图，替代 emoji
 
-线条风单色（主题蓝 #4da6ff + 白高光），透明背景，与暗色界面一致。
+线条风单色（较浅的长春花 #9394FE + 近白高光），透明背景，避免图标铺成高饱和蓝。
 懒生成 + 模块级缓存；生成失败返回空 QIcon（按钮退化为纯文字）。
 """
 
@@ -10,8 +10,8 @@ from collections.abc import Callable
 
 from PySide6.QtGui import QIcon, QPixmap
 
-_BLUE = "#4da6ff"
-_WHITE = "#e1e2e6"
+_BLUE = "#9394FE"
+_WHITE = "#E4E4F2"
 _ICON_PX = 120
 
 #: 运行时由 _ensure_matplotlib() 绑定；模块导入阶段不触碰 matplotlib，

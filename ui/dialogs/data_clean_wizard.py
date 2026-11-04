@@ -185,7 +185,7 @@ class DataCleanWizard(QDialog):
         if not self._issues:
             self.issue_list.setText(" 未发现数据问题 — 数据质量良好")
             self.issue_list.setStyleSheet(
-                f"color: #27ae60; padding: 4px 8px; background: {tc['bg_card']}; border-radius: 6px;"
+                f"color: #3E9B68; padding: 4px 8px; background: {tc['bg_card']}; border-radius: 6px;"
             )
         else:
             lines = [f" 发现 {len(self._issues)} 个问题:"]
@@ -195,7 +195,7 @@ class DataCleanWizard(QDialog):
                 )
             self.issue_list.setText("\n".join(lines))
             self.issue_list.setStyleSheet(
-                f"color: #ffa726; padding: 6px 8px; background: {tc['bg_card']}; border-radius: 6px;"
+                f"color: #C4922A; padding: 6px 8px; background: {tc['bg_card']}; border-radius: 6px;"
             )
 
         self._show_df(self.before_table, self.original)

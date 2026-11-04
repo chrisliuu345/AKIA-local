@@ -11,7 +11,7 @@ from core.fonts import get_ui_font
 APP_NAME = "AKIA"
 APP_FULL_NAME = "Open-source Personal IE & Quality Analysis"
 APP_SLUG = "akia"
-APP_VERSION = "4.6.0"
+APP_VERSION = "4.6.2"
 ORGANIZATION = "AKIA"
 
 # 旧版数据标识（仅用于一次性数据迁移，勿在新代码中引用）
@@ -64,15 +64,15 @@ CONTROL_CHART_CONSTANTS = {
 }
 
 CHART_COLORS = {
-    "primary": "#1f77b4",
-    "secondary": "#ff7f0e",
-    "warning": "#d62728",
-    "ucl_lcl": "#d62728",
-    "center_line": "#2ca02c",
-    "data_points": "#1f77b4",
-    "violation": "#d62728",
-    "grid": "#e0e0e0",
-    "background": "#ffffff",
+    "primary": "#4648FF",
+    "secondary": "#9394FE",
+    "warning": "#C4544C",
+    "ucl_lcl": "#C4544C",
+    "center_line": "#3E9B68",
+    "data_points": "#4648FF",
+    "violation": "#C4544C",
+    "grid": "#2A2A4E",
+    "background": "#0C0C1E",
 }
 
 CHART_DPI = 120

@@ -1,5 +1,5 @@
 #define MyAppName "AKIA"
-#define MyAppVersion "4.6.0"
+#define MyAppVersion "4.6.2"
 #define MyAppPublisher "AKIA contributors"
 #define MyAppURL "https://github.com/chrisliuu345/AKIA-local"
 #define MyAppExeName "AKIA.exe"
