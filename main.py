@@ -82,8 +82,9 @@ def main():
     app.setFont(font)
     app.setStyle("Fusion")
 
-    from ui.theme import APP_STYLESHEET, apply_dark_palette
+    from ui.theme import APP_STYLESHEET, apply_dark_palette, ensure_combo_indicator
     apply_dark_palette()
+    ensure_combo_indicator()
     app.setStyleSheet(APP_STYLESHEET)
 
     # 自本版起取消加载界面：启动后直接构建并显示主界面
