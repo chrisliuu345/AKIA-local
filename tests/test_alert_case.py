@@ -2,7 +2,7 @@
 
 import os
 from uuid import uuid4
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from types import SimpleNamespace
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -83,11 +83,15 @@ def _setup(**kwargs):
 
 class TestSnapshot:
     def test_snapshot_from_event(self):
-        snapshot = AlertSnapshot.from_event(_alert())
+        alert = _alert()
+        snapshot = AlertSnapshot.from_event(alert)
         assert snapshot.rule_key == "line1|cycle"
         assert snapshot.severity == "critical"
         assert snapshot.usl == 40.0 and snapshot.lsl == 30.0
-        assert snapshot.ts.endswith("+08:00")
+        # epoch 按本机时区写成带偏移 ISO；CI 常为 UTC，不能写死 +08:00。
+        expected = datetime.fromtimestamp(
+            alert.ts, tz=UTC).astimezone().isoformat(timespec="milliseconds")
+        assert snapshot.ts == expected
 
     def test_missing_subject_rejected(self):
         with pytest.raises(ValueError, match="设备/通道"):
