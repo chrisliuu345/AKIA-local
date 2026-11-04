@@ -158,10 +158,13 @@ def test_main_window_resets_scroll_range_on_tab_switch():
     win._switch_tab(1)
     _pump()
     assert scroll.verticalScrollBar().maximum() > 200, "长页应可滚动"
+    tall_scroll = scroll.verticalScrollBar().maximum()
 
     win._switch_tab(2)                       # 切到过程能力
     _pump()
-    assert scroll.verticalScrollBar().maximum() < 400, "不应继承上一页的滚动长度"
+    # 过程能力页自己的图表加上加高后的文字区会滚动，但必须落在 SPC 钉死的 1400px 之下。
+    assert scroll.verticalScrollBar().maximum() < tall_scroll, "不应继承上一页的滚动长度"
+    assert scroll.verticalScrollBar().maximum() < 700, "不应继承上一页的滚动长度"
     assert scroll.verticalScrollBar().value() == 0, "切换后应回到顶部"
 
     win._switch_tab(1)                       # 切回长页
