@@ -263,9 +263,7 @@ class CategoryGroup(QWidget):
 
     def set_active(self, index: int):
         tc = theme_colors(self)
-        accent_bright = tc["accent_bright"]
         hover_bg = tc["bg_hover"]
-        active_bg = tc["bg_active"]
 
         for idx, btn in self.sub_buttons.items():
             is_active = (idx == index)
@@ -273,8 +271,8 @@ class CategoryGroup(QWidget):
             if is_active:
                 btn.setStyleSheet(
                     f"QPushButton {{"
-                    f"background-color: {active_bg}; color: {accent_bright};"
-                    f"border: none; border-left: 2px solid {accent_bright};"
+                    f"background-color: {tc['accent']}; color: #ffffff;"
+                    f"border: none; border-left: 2px solid {tc['accent']};"
                     f"border-radius: 4px; padding: 4px 10px; text-align: left;"
                     f"}}"
                 )
@@ -453,17 +451,15 @@ class Sidebar(QWidget):
     def set_active(self, index: int):
         self.active_index = index
         tc = theme_colors(self)
-        accent_bright = tc["accent_bright"]
         hover_bg = tc["bg_hover"]
-        active_bg = tc["bg_active"]
 
         is_home = (index == 0)
         self.home_btn.setChecked(is_home)
         if is_home:
             self.home_btn.setStyleSheet(
                 f"QPushButton {{"
-                f"background-color: {active_bg}; color: {accent_bright};"
-                f"border: none; border-left: 2px solid {accent_bright};"
+                f"background-color: {tc['accent']}; color: #ffffff;"
+                f"border: none; border-left: 2px solid {tc['accent']};"
                 f"border-radius: 6px; padding: 10px 12px; text-align: left;"
                 f"}}"
             )
@@ -562,7 +558,7 @@ class Sidebar(QWidget):
                 res_lbl.setFixedWidth(50)
                 res_lbl.setAlignment(Qt.AlignCenter)
                 is_positive = "A" in entry["result"] or "可" in entry["result"]
-                res_color = tc["accent"] if is_positive else tc["text_primary"]
+                res_color = tc["accent_bright"] if is_positive else tc["text_primary"]
                 res_bg = tc["bg_active"]
                 res_lbl.setStyleSheet(f"color: {res_color}; background: {res_bg}; "
                                       f"border-radius: 4px; padding: 1px 5px;")
@@ -612,7 +608,7 @@ class Sidebar(QWidget):
 
         self.diagnose_btn.setStyleSheet(
             f"QPushButton {{"
-            f"background-color: transparent; color: {accent}; font-weight: bold;"
+            f"background-color: transparent; color: {text_color}; font-weight: bold;"
             f"border: 1px solid {accent}; border-radius: 6px; padding: 8px 12px;"
             f"text-align: left;"
             f"}}"

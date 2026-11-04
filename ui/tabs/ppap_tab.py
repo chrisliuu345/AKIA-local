@@ -55,7 +55,7 @@ class PPAPTab(BaseAnalysisTab):
         layout.addLayout(info_row)
 
         self.pct_label = QLabel("完成度: 0%")
-        self.pct_label.setStyleSheet("font-size: 16px; font-weight: bold; color: #4da6ff;")
+        self.pct_label.setStyleSheet("font-size: 16px; font-weight: bold; color: #C3C2FF;")
         layout.addWidget(self.pct_label)
 
         self.matrix = QTableWidget(18, 3)
@@ -144,7 +144,7 @@ class PPAPTab(BaseAnalysisTab):
                 if cell is None:
                     continue
                 if is_required:
-                    cell.setForeground(QColor("#4da6ff"))
+                    cell.setForeground(QColor("#9394FE"))
                 else:
                     cell.setData(Qt.ForegroundRole, None)   # 还原默认前景/背景
                     cell.setData(Qt.BackgroundRole, None)

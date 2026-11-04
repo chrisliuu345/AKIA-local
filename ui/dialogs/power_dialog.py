@@ -736,7 +736,7 @@ class PowerDialog(QDialog):
         """显示结果文本"""
         tc = theme_colors()
         if error:
-            self.result_text.setStyleSheet("color: #e74c3c; font-weight: bold;")
+            self.result_text.setStyleSheet("color: #C4544C; font-weight: bold;")
         else:
             self.result_text.setStyleSheet(f"color: {tc['text_primary']};")
         self.result_text.setPlainText(text)

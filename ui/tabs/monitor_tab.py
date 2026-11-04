@@ -54,7 +54,7 @@ class MonitorTab(BaseAnalysisTab):
 
         cfg = QGroupBox(i18n.tr("monitor.config"))
         cfg.setStyleSheet(
-            f"QGroupBox {{ color: {tc['text_secondary']}; border: 1px solid #3a3a3a;"
+            f"QGroupBox {{ color: {tc['text_secondary']}; border: 1px solid #2A2A4E;"
             f"border-radius: 8px; margin-top: 10px; padding-top: 8px; }}"
             f"QGroupBox::title {{ subcontrol-origin: margin; left: 12px; }}"
         )
@@ -109,7 +109,7 @@ class MonitorTab(BaseAnalysisTab):
 
         log_group = QGroupBox(i18n.tr("alert.title"))
         log_group.setStyleSheet(
-            f"QGroupBox {{ color: {tc['text_secondary']}; border: 1px solid #3a3a3a;"
+            f"QGroupBox {{ color: {tc['text_secondary']}; border: 1px solid #2A2A4E;"
             f"border-radius: 8px; margin-top: 10px; padding-top: 8px; }}"
             f"QGroupBox::title {{ subcontrol-origin: margin; left: 12px; }}"
         )
@@ -134,7 +134,7 @@ class MonitorTab(BaseAnalysisTab):
                 w.setParent(None)
         hint = QLabel(i18n.tr("monitor.empty"))
         hint.setAlignment(Qt.AlignCenter)
-        hint.setStyleSheet("color: #6e7080; font-size: 14px;")
+        hint.setStyleSheet("color: #8A8AB8; font-size: 14px;")
         self.chart_layout.addWidget(hint)
         self.canvas = None
         self.current_figure = None
@@ -155,7 +155,7 @@ class MonitorTab(BaseAnalysisTab):
             path = self._file_path()
             if not path:
                 self.status_label.setText(i18n.tr("monitor.error_nofile"))
-                self.status_label.setStyleSheet("color: #e74c3c;")
+                self.status_label.setStyleSheet("color: #C4544C;")
                 return
             self._start_monitor(path)
         else:
@@ -174,7 +174,7 @@ class MonitorTab(BaseAnalysisTab):
         self._on_update(initial)
         monitor.start()
         self.toggle_btn.setText(i18n.tr("monitor.stop"))
-        self.status_label.setStyleSheet("color: #27ae60;")
+        self.status_label.setStyleSheet("color: #3E9B68;")
 
     def _stop_monitor(self):
         if self._monitor is not None:
@@ -182,20 +182,20 @@ class MonitorTab(BaseAnalysisTab):
             self._monitor = None
         self.toggle_btn.setText(i18n.tr("monitor.start"))
         self.status_label.setText(i18n.tr("monitor.status_stopped"))
-        self.status_label.setStyleSheet("color: #6e7080;")
+        self.status_label.setStyleSheet("color: #8A8AB8;")
 
     def _on_update(self, payload: dict):
         tc = theme_colors()
         error = payload.get("error")
         if error:
             self.status_label.setText(i18n.tr("monitor.status_error") + " " + error)
-            self.status_label.setStyleSheet("color: #e74c3c;")
+            self.status_label.setStyleSheet("color: #C4544C;")
             return
 
         spc = payload.get("spc")
         if not spc:
             self.status_label.setText(i18n.tr("monitor.error_empty"))
-            self.status_label.setStyleSheet("color: #e74c3c;")
+            self.status_label.setStyleSheet("color: #C4544C;")
             return
 
         chart_type = spc.get("chart_type", "SPC")
@@ -236,7 +236,7 @@ class MonitorTab(BaseAnalysisTab):
         if state == AlertState.NEW:
             self.alert_banner.setText("⚠ " + message)
             self.alert_banner.setStyleSheet(
-                "color: #fff; background: #e74c3c; border-radius: 6px;"
+                "color: #fff; background: #C4544C; border-radius: 6px;"
                 "font-weight: bold; padding: 4px;")
             self.alert_banner.show()
             if AlertRules.sound_enabled():
@@ -246,7 +246,7 @@ class MonitorTab(BaseAnalysisTab):
         else:
             self.alert_banner.setText("✔ " + message)
             self.alert_banner.setStyleSheet(
-                "color: #fff; background: #27ae60; border-radius: 6px;"
+                "color: #fff; background: #3E9B68; border-radius: 6px;"
                 "font-weight: bold; padding: 4px;")
 
         if AlertRules.log_enabled():

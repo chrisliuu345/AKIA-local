@@ -262,7 +262,7 @@ class PredictiveTab(BaseAnalysisTab):
     def _on_run_clicked(self):
         ok, message = self.validate_params()
         if not ok:
-            self.status_label.setStyleSheet("color: #e74c3c;")
+            self.status_label.setStyleSheet("color: #C4544C;")
             self.status_label.setText(message)
             return
         self.run_btn.setEnabled(False)
@@ -280,20 +280,20 @@ class PredictiveTab(BaseAnalysisTab):
 
     def _on_worker_failed(self, message):
         self.run_btn.setEnabled(True)
-        self.status_label.setStyleSheet("color: #e74c3c;")
+        self.status_label.setStyleSheet("color: #C4544C;")
         self.status_label.setText(f"训练失败: {message}")
 
     def run_and_display(self) -> dict[str, Any] | None:
         """同步入口（批量分析/测试）——后台按钮走 _on_run_clicked。"""
         ok, message = self.validate_params()
         if not ok:
-            self.status_label.setStyleSheet("color: #e74c3c;")
+            self.status_label.setStyleSheet("color: #C4544C;")
             self.status_label.setText(message)
             return None
         try:
             result = self._make_job()()
         except Exception as exc:
-            self.status_label.setStyleSheet("color: #e74c3c;")
+            self.status_label.setStyleSheet("color: #C4544C;")
             self.status_label.setText(f"训练失败: {exc}")
             return None
         self.display_result(result)
@@ -380,7 +380,7 @@ class PredictiveTab(BaseAnalysisTab):
                 actual = np.asarray([r.get("actual") for r in rows], dtype=float)
                 predicted = np.asarray([r.get("predicted") for r in rows], dtype=float)
                 fig, axes = plt.subplots(1, 2, figsize=(11, 4.2), dpi=CHART_DPI)
-                axes[0].scatter(actual, predicted, alpha=0.6, color="#1b5faa",
+                axes[0].scatter(actual, predicted, alpha=0.6, color="#4648FF",
                                 edgecolors="k", linewidth=0.3)
                 lo = float(min(actual.min(), predicted.min()))
                 hi = float(max(actual.max(), predicted.max()))
@@ -417,7 +417,7 @@ class PredictiveTab(BaseAnalysisTab):
                                      else "black")
                 roc = analysis.get("roc")
                 if roc:
-                    axes[1].plot(roc["fpr"], roc["tpr"], color="#1b5faa",
+                    axes[1].plot(roc["fpr"], roc["tpr"], color="#4648FF",
                                  label=f"AUC={roc['auc']:.3f}")
                     axes[1].plot([0, 1], [0, 1], "k--", linewidth=1)
                     axes[1].set_xlabel("假阳性率")
@@ -460,7 +460,7 @@ class PredictiveTab(BaseAnalysisTab):
 
     def predict_with_loaded(self) -> pd.DataFrame | None:
         if self._model_bundle is None:
-            self.status_label.setStyleSheet("color: #e74c3c;")
+            self.status_label.setStyleSheet("color: #C4544C;")
             self.status_label.setText("请先加载模型（.qamodel）")
             return None
         if self.df is None:

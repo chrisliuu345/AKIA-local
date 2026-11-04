@@ -180,7 +180,7 @@ class ParetoTab(BaseAnalysisTab):
         threshold = self.threshold_spin.value()
         if threshold > 0 and threshold < 100:
             ax = fig.axes[0]
-            ax.axhline(y=threshold, color="#ffa726", linestyle=":", linewidth=1.5,
+            ax.axhline(y=threshold, color="#C4922A", linestyle=":", linewidth=1.5,
                       alpha=0.7, label=f"{threshold}% 阈值")
             ax.legend(fontsize=8)
 

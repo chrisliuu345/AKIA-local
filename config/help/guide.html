@@ -6,8 +6,9 @@
 <title>AKIA 使用指南</title>
 <style>
 :root{
-  --brand:#1b5faa; --brand-dark:#144780; --text:#333; --muted:#666;
-  --line:#e3e8ef; --bg:#f7f9fb; --card:#ffffff;
+  --brand:#1C1DEC; --brand-dark:#0100AD; --accent:#4648FF;
+  --text:#1A1A2E; --muted:#5C5C88;
+  --line:#D8D7F2; --bg:#F6F6FE; --card:#ffffff;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -17,10 +18,11 @@ a{color:var(--brand);text-decoration:none}
 a:hover{text-decoration:underline}
 
 /* 顶部 */
-header.top{background:var(--brand);color:#fff;padding:14px 28px;
-  display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+header.top{background:#F4F4FF;color:#0100AD;padding:14px 28px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  border-bottom:2px solid #C3C2FF}
 header.top .logo{font-size:20px;font-weight:700;letter-spacing:.5px}
-header.top .tag{background:rgba(255,255,255,.18);border-radius:12px;
+header.top .tag{background:#E6E5FF;color:#0100AD;border-radius:12px;
   padding:2px 12px;font-size:12.5px}
 header.top .meta{margin-left:auto;font-size:12.5px;opacity:.85}
 
@@ -29,47 +31,47 @@ header.top .meta{margin-left:auto;font-size:12.5px;opacity:.85}
 nav.toc{width:230px;flex:0 0 230px;position:sticky;top:16px;
   align-self:flex-start;max-height:calc(100vh - 32px);overflow:auto;
   background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 10px}
-nav.toc .grp{font-size:12px;color:#98a2b3;font-weight:700;margin:12px 8px 4px}
+nav.toc .grp{font-size:12px;color:#8A8AB8;font-weight:700;margin:12px 8px 4px}
 nav.toc a{display:block;padding:5px 10px;border-radius:6px;font-size:13.5px;color:var(--text)}
-nav.toc a:hover{background:#eef4fb;text-decoration:none;color:var(--brand)}
+nav.toc a:hover{background:#EEEEFF;text-decoration:none;color:var(--brand)}
 main{flex:1;min-width:0}
 section.card{background:var(--card);border:1px solid var(--line);border-radius:10px;
   padding:22px 28px;margin-bottom:22px;scroll-margin-top:16px}
 h1{font-size:22px;margin:0 0 6px;color:var(--brand-dark)}
-h2{font-size:18px;margin:2px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--brand);color:var(--brand-dark)}
-h3{font-size:15.5px;margin:18px 0 8px;color:#222}
+h2{font-size:18px;margin:2px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--line);color:var(--brand-dark)}
+h3{font-size:15.5px;margin:18px 0 8px;color:#1A1A2E}
 h4{font-size:14px;margin:14px 0 6px}
 ul,ol{padding-left:22px}
 li{margin:4px 0}
-code{background:#eef2f7;border-radius:4px;padding:1px 6px;font-size:13px;
+code{background:#EEEEFF;border-radius:4px;padding:1px 6px;font-size:13px;
   font-family:Consolas,"Courier New",monospace}
 
 /* 步骤卡片 */
 .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin:8px 0}
-.stepbox{background:#f4f8fc;border:1px solid #dbe7f3;border-left:4px solid var(--brand);
+.stepbox{background:#F4F4FF;border:1px solid var(--line);border-left:4px solid var(--accent);
   border-radius:8px;padding:14px 16px}
 .stepbox b{color:var(--brand-dark)}
 ol.tight li{margin:2px 0}
 
 /* 模块表 */
 table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px}
-th{background:var(--brand);color:#fff;padding:7px 10px;text-align:left;font-weight:600}
+th{background:#E6E5FF;color:#0100AD;padding:7px 10px;text-align:left;font-weight:600}
 td{border:1px solid var(--line);padding:6px 10px;background:#fff}
-tr:nth-child(even) td{background:#fafcfe}
+tr:nth-child(even) td{background:#F7F7FF}
 td.k{white-space:nowrap;color:var(--brand-dark);font-weight:600}
 
 /* FAQ */
 details{border:1px solid var(--line);border-radius:8px;margin:8px 0;background:#fff;overflow:hidden}
 details summary{cursor:pointer;padding:11px 16px;font-weight:600;color:var(--brand-dark);
-  background:#f4f8fc;list-style:none;display:flex;gap:8px;align-items:center}
-details summary::before{content:"Q";background:var(--brand);color:#fff;border-radius:50%;
+  background:#F4F4FF;list-style:none;display:flex;gap:8px;align-items:center}
+details summary::before{content:"Q";background:var(--accent);color:#fff;border-radius:50%;
   width:20px;height:20px;font-size:12px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 20px}
 details[open] summary{border-bottom:1px solid var(--line)}
 details .ans{padding:10px 16px 12px 44px;color:var(--text)}
 details .ans::before{content:"A　";color:var(--muted);font-weight:700}
 
 .note{background:#fdf6e3;border:1px solid #f0e0b0;border-radius:8px;padding:10px 14px;font-size:13px;margin:10px 0}
-footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-size:12.5px}
+footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#8A8AB8;font-size:12.5px}
 
 @media (max-width:820px){ .wrap{flex-direction:column} nav.toc{position:static;width:auto;flex:auto;max-height:none} }
 @media print{
@@ -83,7 +85,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
 
 <header class="top">
   <span class="logo">AKIA 使用指南</span>
-  <span class="tag">v4.6.0</span>
+  <span class="tag">v4.6.2</span>
   <span class="tag">Windows / Linux</span>
   <span class="meta">质量工程（QE）· 工业工程（IE）· 离线分析</span>
 </header>
@@ -158,22 +160,22 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
 </section>
 
 <section class="card" id="install">
-  <h2>安装包与启动（当前版本 v4.6.0）</h2>
-  <p>v4.6.0 免装 Python 环境、完全离线运行。Linux 侧只发布 AppImage 单一格式（不再构建
+  <h2>安装包与启动（当前版本 v4.6.2）</h2>
+  <p>v4.6.2 免装 Python 环境、完全离线运行。Linux 侧只发布 AppImage 单一格式（不再构建
   <code>.deb</code>），已随 GitHub Release 提供下载；Windows 安装包在 Windows 侧用仓库内
   <code>packaging/AKIA-installer.iss</code> 构建：</p>
   <table>
     <tr><th>版本</th><th>安装文件</th><th>适用系统</th><th>发布状态</th><th>安装 / 启动</th></tr>
     <tr>
       <td class="k">Linux AppImage</td>
-      <td><code>AKIA-4.6.0-x86_64.AppImage</code></td>
+      <td><code>AKIA-4.6.2-x86_64.AppImage</code></td>
       <td>任意 x86_64 Linux（Debian / Ubuntu / elementary 等）</td>
-      <td>✅ 随 <code>v4.6.0</code> Release 提供（附 <code>.sha256</code> 校验文件）</td>
+      <td>✅ 随 <code>v4.6.2</code> Release 提供（附 <code>.sha256</code> 校验文件）</td>
       <td>免安装：<code>chmod +x</code> 后直接运行；可移动到 <code>/opt</code> 并自建桌面快捷方式</td>
     </tr>
     <tr>
       <td class="k">Windows 安装包</td>
-      <td><code>AKIA-Setup-4.6.0.exe</code></td>
+      <td><code>AKIA-Setup-4.6.2.exe</code></td>
       <td>Windows 10/11（64 位）</td>
       <td>Windows 侧构建（Linux 环境无法出包；构建脚本与 .iss 已就绪）</td>
       <td>双击运行 Inno Setup 向导，自动创建开始菜单/桌面快捷方式，支持卸载</td>
@@ -181,10 +183,10 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:#98a2b3;font-siz
   </table>
   <div class="note">
     <b>下载与校验（Linux）：</b>
-    <pre class="tight"><code># 从 https://github.com/chrisliuu345/AKIA-local/releases/tag/v4.6.0 下载两个文件后
-sha256sum -c AKIA-4.6.0-x86_64.AppImage.sha256
-chmod +x AKIA-4.6.0-x86_64.AppImage
-./AKIA-4.6.0-x86_64.AppImage</code></pre>
+    <pre class="tight"><code># 从 https://github.com/chrisliuu345/AKIA-local/releases/tag/v4.6.2 下载两个文件后
+sha256sum -c AKIA-4.6.2-x86_64.AppImage.sha256
+chmod +x AKIA-4.6.2-x86_64.AppImage
+./AKIA-4.6.2-x86_64.AppImage</code></pre>
     无 FUSE 的容器环境可加 <code>--appimage-extract-and-run</code> 参数运行（解包到临时目录执行）。
   </div>
 </section>
@@ -732,7 +734,7 @@ python -m akia_sdk rules-validate --pack config/rule-packs/example-quality.json<
 
 </main>
 </div>
-<footer>AKIA v4.6.0 · 本指南随软件离线分发（config/help/guide.html）· 菜单「帮助 → 使用指南」或按 F1 打开</footer>
+<footer>AKIA v4.6.2 · 本指南随软件离线分发（config/help/guide.html）· 菜单「帮助 → 使用指南」或按 F1 打开</footer>
 
 </body>
 </html>

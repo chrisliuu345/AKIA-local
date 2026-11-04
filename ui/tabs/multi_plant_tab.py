@@ -112,7 +112,7 @@ class MultiPlantTab(BaseAnalysisTab):
                 w.setParent(None)
         hint = QLabel(i18n.tr("multi_plant.empty"))
         hint.setAlignment(Qt.AlignCenter)
-        hint.setStyleSheet("color: #6e7080; font-size: 14px;")
+        hint.setStyleSheet("color: #8A8AB8; font-size: 14px;")
         self.chart_layout.addWidget(hint)
         self.canvas = None
         self.current_figure = None
@@ -141,7 +141,7 @@ class MultiPlantTab(BaseAnalysisTab):
         tc = theme_colors()
         if not self._plants:
             self.status_label.setText(i18n.tr("multi_plant.no_files"))
-            self.status_label.setStyleSheet("color: #e74c3c;")
+            self.status_label.setStyleSheet("color: #C4544C;")
             return
 
         plants = [summarize_plant(path) for path in self._plants]
@@ -162,7 +162,7 @@ class MultiPlantTab(BaseAnalysisTab):
             self.status_label.setText(
                 i18n.tr("multi_plant.status_error").format(n=errors)
             )
-            self.status_label.setStyleSheet("color: #e74c3c;")
+            self.status_label.setStyleSheet("color: #C4544C;")
         else:
             self.status_label.setText(
                 i18n.tr("multi_plant.status_done").format(n=len(plants))
@@ -202,14 +202,14 @@ class MultiPlantTab(BaseAnalysisTab):
         cpk_pairs = [(p["name"], p["cpk"]) for p in ok if p["cpk"] is not None]
 
         panels = [
-            (means, i18n.tr("multi_plant.mean"), "#4da6ff", names),
-            (stds, i18n.tr("multi_plant.std"), "#27ae60", names),
-            (viols, i18n.tr("multi_plant.violations"), "#e74c3c", names),
+            (means, i18n.tr("multi_plant.mean"), "#4648FF", names),
+            (stds, i18n.tr("multi_plant.std"), "#3E9B68", names),
+            (viols, i18n.tr("multi_plant.violations"), "#C4544C", names),
         ]
         if cpk_pairs:
             panels.append(
                 ([v for _, v in cpk_pairs], i18n.tr("multi_plant.cpk"),
-                 "#ffa726", [n for n, _ in cpk_pairs])
+                 "#C4922A", [n for n, _ in cpk_pairs])
             )
 
         fig = Figure(figsize=(11, 4.2 * len(panels)), dpi=100)

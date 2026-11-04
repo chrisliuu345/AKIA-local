@@ -146,7 +146,7 @@ class ReliabilityTab(BaseAnalysisTab):
         for idx, key in enumerate(("beta", "eta", "b10", "b50")):
             card = QFrame()
             card.setStyleSheet(
-                "QFrame { background: #262632; border: 1px solid #2a2a36; border-radius: 8px; }")
+                "QFrame { background: #161632; border: 1px solid #2A2A4E; border-radius: 8px; }")
             card.setMinimumWidth(118)
             card_layout = QVBoxLayout(card)
             card_layout.setContentsMargins(12, 8, 12, 8)
@@ -304,7 +304,7 @@ class ReliabilityTab(BaseAnalysisTab):
                                   max(pd_data["time"]) * 1.2, 100)
             z = (t_range - r.gamma) / r.eta
             F_theory = 100 * (1 - np.exp(-(z ** r.beta)))
-            ax1.plot(t_range, F_theory, "-", color="#ff6b6b", linewidth=1.5,
+            ax1.plot(t_range, F_theory, "-", color="#C4544C", linewidth=1.5,
                      label=f"拟合 (β={r.beta:.2f}, η={r.eta:.0f})")
 
         ax1.set_xlabel("失效时间", fontsize=9)
@@ -323,10 +323,10 @@ class ReliabilityTab(BaseAnalysisTab):
         ax2.tick_params(axis="y", labelcolor=tc["accent_bright"])
 
         ax2b = ax2.twinx()
-        ax2b.plot(rc["t"], rc["h"], "--", color="#ff6b6b", linewidth=1.5,
+        ax2b.plot(rc["t"], rc["h"], "--", color="#C4544C", linewidth=1.5,
                   label="h(t)")
-        ax2b.set_ylabel("失效率 h(t)", fontsize=9, color="#ff6b6b")
-        ax2b.tick_params(axis="y", labelcolor="#ff6b6b")
+        ax2b.set_ylabel("失效率 h(t)", fontsize=9, color="#C4544C")
+        ax2b.tick_params(axis="y", labelcolor="#C4544C")
 
         ax2.set_title(i18n.tr("reliability.reliability_func") + " & "
                       + i18n.tr("reliability.hazard_func"),
@@ -425,7 +425,7 @@ class ReliabilityTab(BaseAnalysisTab):
             x = range(len(labels))
             ax1.bar(x, mtbf_vals, color=tc["accent"], alpha=0.8)
             ax1.errorbar(x, mtbf_vals, yerr=[ci_low, ci_high],
-                         fmt="none", ecolor="#ff6b6b", capsize=6, linewidth=1.5)
+                         fmt="none", ecolor="#C4544C", capsize=6, linewidth=1.5)
             ax1.set_xticks(x)
             ax1.set_xticklabels(labels, fontsize=8)
             ax1.set_ylabel("MTBF (小时)", fontsize=9)
@@ -436,7 +436,7 @@ class ReliabilityTab(BaseAnalysisTab):
             ax2 = fig.add_subplot(1, 2, 2)
             avail_vals = [g.availability * 100 for g in groups]
             colors = [tc["accent_bright"] if v >= 99 else
-                      "#ffa726" if v >= 95 else "#ff6b6b" for v in avail_vals]
+                      "#C4922A" if v >= 95 else "#C4544C" for v in avail_vals]
             ax2.bar(x, avail_vals, color=colors, alpha=0.85)
             ax2.axhline(y=99, color="#888888", linestyle="--", linewidth=1, alpha=0.5)
             ax2.set_xticks(x)

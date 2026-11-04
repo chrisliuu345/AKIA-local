@@ -33,9 +33,9 @@ _COLUMNS = 3
 
 _SELECTED_QSS = """
     QPushButton {
-        background: #2a5f9e;
+        background: #4648FF;
         color: #ffffff;
-        border: 1px solid #4da6ff;
+        border: 1px solid #4648FF;
         border-radius: 6px;
         padding: 4px 6px;
         text-align: left;
@@ -43,14 +43,14 @@ _SELECTED_QSS = """
 """
 _TILE_QSS = """
     QPushButton {
-        background: #262632;
-        color: #d8d9de;
-        border: 1px solid #3a3a48;
+        background: #161632;
+        color: #E4E4F2;
+        border: 1px solid #3A3A66;
         border-radius: 6px;
         padding: 4px 6px;
         text-align: left;
     }
-    QPushButton:hover { background: #2f2f3d; border-color: #4a4a58; }
+    QPushButton:hover { background: #222248; border-color: #3A3A66; }
 """
 
 
@@ -96,7 +96,7 @@ class ChartGallery(QWidget):
         header.addWidget(self._title)
 
         self._current_label = QLabel("")
-        self._current_label.setStyleSheet("color: #4da6ff; font-size: 12px;")
+        self._current_label.setStyleSheet("color: #C3C2FF; font-size: 12px;")
         header.addWidget(self._current_label)
         header.addStretch()
 
@@ -104,9 +104,9 @@ class ChartGallery(QWidget):
         self._toggle_btn.setFixedWidth(76)
         self._toggle_btn.setFixedHeight(28)
         self._toggle_btn.setStyleSheet(
-            "QPushButton { background: #3a3a48; color: #e1e2e6; border: none;"
+            "QPushButton { background: #3A3A66; color: #E4E4F2; border: none;"
             " border-radius: 6px; font-size: 12px; }"
-            "QPushButton:hover { background: #4a4a58; }")
+            "QPushButton:hover { background: #3A3A66; }")
         self._toggle_btn.clicked.connect(self.toggle_expand)
         header.addWidget(self._toggle_btn)
 
@@ -116,8 +116,8 @@ class ChartGallery(QWidget):
         self._body = _PopupPanel(self, Qt.Popup)
         self._body.setObjectName("chartGalleryPopup")
         self._body.setStyleSheet(
-            "QFrame#chartGalleryPopup { background: #22222e;"
-            " border: 1px solid #3a3a48; border-radius: 8px; }")
+            "QFrame#chartGalleryPopup { background: #14142E;"
+            " border: 1px solid #3A3A66; border-radius: 8px; }")
         self._body.setVisible(False)
         self._body.closed.connect(self._on_popup_closed)
 

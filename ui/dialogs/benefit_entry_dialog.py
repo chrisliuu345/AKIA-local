@@ -62,7 +62,7 @@ class BenefitEntryDialog(QDialog):
         layout.addLayout(form)
         hint = QLabel("改善收益 = (基线值 − 新值) × 数量 × 单价；\n"
                       "COPQ 四类 = 数量 × 单价；C 级仅登记，不计入汇总。")
-        hint.setStyleSheet("color: #9aa4b2; font-size: 11px;")
+        hint.setStyleSheet("color: #8A8AB8; font-size: 11px;")
         hint.setWordWrap(True)
         layout.addWidget(hint)
 

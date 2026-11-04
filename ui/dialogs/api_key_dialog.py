@@ -74,7 +74,7 @@ class ApiKeyDialog(QDialog):
             layout.addWidget(docs)
 
         self.error_label = QLabel("")
-        self.error_label.setStyleSheet("color: #e74c3c; font-size: 9pt;")
+        self.error_label.setStyleSheet("color: #C4544C; font-size: 9pt;")
         self.error_label.setVisible(False)
         layout.addWidget(self.error_label)
 

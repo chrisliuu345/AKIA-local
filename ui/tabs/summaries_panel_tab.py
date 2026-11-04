@@ -137,7 +137,7 @@ class SummaryPanelTab(BaseAnalysisTab):
                 edgecolor="white",
                 linewidth=0.3,
             )
-            ax_hist.axvline(np.mean(vals), color="#ff6b6b", linestyle="--", linewidth=1)
+            ax_hist.axvline(np.mean(vals), color="#C4544C", linestyle="--", linewidth=1)
             ax_hist.set_title(
                 col, fontsize=9, fontweight="bold", color=tc["text_primary"]
             )

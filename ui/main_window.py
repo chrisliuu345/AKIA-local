@@ -163,7 +163,7 @@ class MainWindow(QMainWindow):
         self._start_streaming_runtime()
 
     def _setup_ui(self):
-        divider_color = "#3a3a3a"
+        divider_color = "#2A2A4E"
         tc = theme_colors()
 
         central = QWidget()
@@ -805,7 +805,7 @@ class MainWindow(QMainWindow):
 
     def _setup_statusbar(self):
         self.statusBar().setStyleSheet(
-            "QStatusBar { min-height: 24px; background: #13131c; } QStatusBar::item { border: none; }"
+            "QStatusBar { min-height: 24px; background: #07071A; } QStatusBar::item { border: none; }"
         )
         self.status_label = ElidedLabel(i18n.tr("status.ready"))
         self.statusBar().addWidget(self.status_label, 1)

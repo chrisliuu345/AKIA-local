@@ -266,7 +266,7 @@ class MSATab(BaseAnalysisTab):
         valid, msg = self.validate_params()
         if not valid:
             self._clear_canvas()
-            self.result_text.setStyleSheet("color: #e74c3c; font-weight: bold;")
+            self.result_text.setStyleSheet("color: #C4544C; font-weight: bold;")
             self.result_text.setText(f"▎参数校验失败\n{msg}")
             return None
         self.result_text.setStyleSheet("")
@@ -277,7 +277,7 @@ class MSATab(BaseAnalysisTab):
             return result
         except Exception as e:
             self._clear_canvas()
-            self.result_text.setStyleSheet("color: #e74c3c; font-weight: bold;")
+            self.result_text.setStyleSheet("color: #C4544C; font-weight: bold;")
             self.result_text.setText(f"▎分析失败\n{e!s}")
             return None
 
@@ -407,7 +407,7 @@ class MSATab(BaseAnalysisTab):
         except Exception as e:
             self._clear_canvas()
             err_label = QLabel(f"图表渲染失败: {e}")
-            err_label.setStyleSheet("color: #e74c3c; padding: 12px;")
+            err_label.setStyleSheet("color: #C4544C; padding: 12px;")
             err_label.setWordWrap(True)
             self.chart_layout.addWidget(err_label)
 

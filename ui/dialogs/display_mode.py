@@ -25,11 +25,11 @@ from ui.theme import FONT_36B, FONT_18B, FONT_14B, FONT_12
 from ui.widgets.animate import fade_in, count_up, cross_fade
 from ui.widgets.elided_label import ElidedLabel
 
-BG_BIG_SCREEN = "#0c0c12"
-BG_KPI_CARD = "#161620"
-ACCENT = "#4da6ff"
-ACCENT_WARN = "#ffa726"
-TEXT_DIM = "#6e7080"
+BG_BIG_SCREEN = "#0C0C1E"
+BG_KPI_CARD = "#161632"
+ACCENT = "#9394FE"
+ACCENT_WARN = "#C4922A"
+TEXT_DIM = "#8A8AB8"
 
 CAROUSEL_INTERVAL_MS = 8000
 CLOCK_INTERVAL_MS = 1000
@@ -109,9 +109,9 @@ class DisplayModeWindow(QWidget):
         self._load_data()
         self._start_timers()
         self.setStyleSheet(
-            f"QWidget {{ background-color: {BG_BIG_SCREEN}; color: #e1e2e6; }}"
-            f"QPushButton {{ background-color: #1b1b28; color: #a0a3ae;"
-            f"border: 1px solid #3a3a48; border-radius: 6px; padding: 8px 18px; }}"
+            f"QWidget {{ background-color: {BG_BIG_SCREEN}; color: #E4E4F2; }}"
+            f"QPushButton {{ background-color: #1b1b28; color: #C3C2FF;"
+            f"border: 1px solid #3A3A66; border-radius: 6px; padding: 8px 18px; }}"
             f"QPushButton:hover {{ color: #fff; border-color: {ACCENT}; }}"
         )
 
@@ -136,7 +136,7 @@ class DisplayModeWindow(QWidget):
 
         self.clock_label = QLabel("")
         self.clock_label.setFont(FONT_14B)
-        self.clock_label.setStyleSheet("color: #e1e2e6; background: transparent;")
+        self.clock_label.setStyleSheet("color: #E4E4F2; background: transparent;")
         top.addWidget(self.clock_label)
         root.addLayout(top)
 
@@ -221,16 +221,16 @@ class DisplayModeWindow(QWidget):
             best = max(cpk_vals)
             cpk_a = CAPABILITY_GRADES["A"][0]
             cpk_b = CAPABILITY_GRADES["B"][0]
-            color = "#27ae60" if best >= cpk_a else (ACCENT_WARN if best >= cpk_b else "#e74c3c")
+            color = "#3E9B68" if best >= cpk_a else (ACCENT_WARN if best >= cpk_b else "#C4544C")
             self._add_kpi_tile(i18n.tr("display.kpi_cpk"), best, lambda v: f"{v:.3f}", color)
         if grr_vals:
             grr = min(grr_vals)
-            color = "#27ae60" if grr < MSA_GRR_ACCEPTABLE else (ACCENT_WARN if grr < MSA_GRR_MARGINAL else "#e74c3c")
+            color = "#3E9B68" if grr < MSA_GRR_ACCEPTABLE else (ACCENT_WARN if grr < MSA_GRR_MARGINAL else "#C4544C")
             self._add_kpi_tile(i18n.tr("display.kpi_grr"), grr * 100, lambda v: f"{v:.1f}%", color)
         if viol_sum > 0:
             self._add_kpi_tile(i18n.tr("display.kpi_violations"), float(viol_sum),
                                lambda v: f"{int(v)}",
-                               "#27ae60" if viol_sum < 10 else "#e74c3c")
+                               "#3E9B68" if viol_sum < 10 else "#C4544C")
 
         from ui.dialogs.formula_dialog import FormulaDialog
         from core.kpi_formula import evaluate, describe_variables, FormulaError

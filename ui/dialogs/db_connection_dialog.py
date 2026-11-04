@@ -190,7 +190,7 @@ class DbConnectionDialog(QDialog):
             if importlib.util.find_spec("pyodbc") is None:
                 self.conn_status.setText(
                     "未检测到 pyodbc 驱动（SQL Server 需要）: pip install pyodbc")
-                self.conn_status.setStyleSheet("color: #e67e22;")
+                self.conn_status.setStyleSheet("color: #B86A28;")
 
     def _on_config_selected(self, index: int):
         if index < 0:
@@ -234,12 +234,12 @@ class DbConnectionDialog(QDialog):
         try:
             self.sql_loader.connect(config)
             self.conn_status.setText(i18n.tr("db.conn_success"))
-            self.conn_status.setStyleSheet("color: #27ae60;")
+            self.conn_status.setStyleSheet("color: #3E9B68;")
             self._load_table_list()
             QMessageBox.information(self, i18n.tr("db.test_title"), i18n.tr("db.conn_success_msg"))
         except Exception as e:
             self.conn_status.setText(i18n.tr("db.conn_failed"))
-            self.conn_status.setStyleSheet("color: #e74c3c;")
+            self.conn_status.setStyleSheet("color: #C4544C;")
             QMessageBox.critical(self, i18n.tr("db.test_title"), f"{i18n.tr('db.conn_failed_msg')}\n{e!s}")
 
     def _load_table_list(self):

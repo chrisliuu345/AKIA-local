@@ -17,7 +17,7 @@ from core.gauge_study import GaugeMonitor, GaugeStudyPolicy
 from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY
 
 _STATE_LABELS = {"ok": "正常", "watch": "关注", "drift": "漂移"}
-_STATE_COLORS = {"ok": "#2ecc71", "watch": "#f39c12", "drift": "#e74c3c"}
+_STATE_COLORS = {"ok": "#3E9B68", "watch": "#C4922A", "drift": "#C4544C"}
 
 
 def _parse_optional_float(text: str, name: str) -> float | None:
@@ -264,7 +264,7 @@ class GaugeOnlineDialog(QDialog):
             self._render_chart()
             return
         state = record["state"]
-        color = _STATE_COLORS.get(state, "#a0a3ae")
+        color = _STATE_COLORS.get(state, "#C3C2FF")
         self.status_label.setText(
             f"{gauge_id} · "
             f"<span style='color:{color};font-weight:bold'>"

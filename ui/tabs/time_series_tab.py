@@ -233,14 +233,14 @@ class TimeSeriesTab(BaseAnalysisTab):
         ok, msg = self.validate_params()
         if not ok:
             self._clear_canvas()
-            self.result_text.setStyleSheet("color: #e74c3c; font-weight: bold;")
+            self.result_text.setStyleSheet("color: #C4544C; font-weight: bold;")
             self.result_text.setText(msg)
             return None
         try:
             result = self.run_analysis()
             if result and "error" in result:
                 self._clear_canvas()
-                self.result_text.setStyleSheet("color: #e74c3c; font-weight: bold;")
+                self.result_text.setStyleSheet("color: #C4544C; font-weight: bold;")
                 self.result_text.setText(result["error"])
                 return None
             self.display_result(result)
@@ -248,7 +248,7 @@ class TimeSeriesTab(BaseAnalysisTab):
             return result
         except Exception as e:
             self._clear_canvas()
-            self.result_text.setStyleSheet("color: #e74c3c; font-weight: bold;")
+            self.result_text.setStyleSheet("color: #C4544C; font-weight: bold;")
             self.result_text.setText(f"分析失败: {e!s}")
 
     def run_analysis(self) -> dict[str, Any]:

@@ -197,7 +197,7 @@ class OneClickDialog(QDialog):
             cb.setFont(QFont(get_ui_font(), 10))
             cb.setChecked(rec.get("priority") == "high")
 
-            priority_color = {"high": "#ff6b6b", "medium": "#ffa726", "low": "#66bb6a"}
+            priority_color = {"high": "#C4544C", "medium": "#C4922A", "low": "#3E9B68"}
             badge = QLabel({
                 "high": "★ 推荐", "medium": "☆ 建议", "low": "· 可选"
             }.get(rec.get("priority", ""), ""))

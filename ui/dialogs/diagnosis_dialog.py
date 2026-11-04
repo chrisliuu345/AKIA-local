@@ -19,8 +19,8 @@ from ui.theme import colors as theme_colors
 from ui.font_config import get_ui_font
 
 ICON_COLORS = {
-    "SPC": "#1b5faa",
-    "CPK": "#217ca3",
+    "SPC": "#4648FF",
+    "CPK": "#1C1DEC",
     "MSA": "#6b4c9a",
     "TTEST": "#b85c38",
     "DOE": "#9467bd",
@@ -38,9 +38,9 @@ ICON_COLORS = {
     "FMEA": "#880e4f",
 }
 CONF_COLORS = {
-    "highly_recommended": "#27ae60",
-    "recommended": "#ffa726",
-    "optional": "#6e7080",
+    "highly_recommended": "#3E9B68",
+    "recommended": "#C4922A",
+    "optional": "#8A8AB8",
 }
 
 
@@ -180,10 +180,10 @@ class DiagnosisDialog(QDialog):
     @staticmethod
     def _gauge_color(v: float) -> str:
         if v >= 0.8:
-            return "#27ae60"
+            return "#3E9B68"
         if v >= 0.5:
-            return "#ffa726"
-        return "#e74c3c"
+            return "#C4922A"
+        return "#C4544C"
 
     def _make_sheet_section(self, sn: str, sheet: dict, tc: dict) -> QFrame:
         card = QFrame()
@@ -241,17 +241,17 @@ class DiagnosisDialog(QDialog):
                             f"color: {tc['accent_bright']}; font-weight: bold; padding: 1px 4px;"
                         )
                     if c["missing_pct"] > 10:
-                        lbl.setStyleSheet("color: #e74c3c; padding: 1px 4px;")
+                        lbl.setStyleSheet("color: #C4544C; padding: 1px 4px;")
                     if j == 5:
                         dist = c.get("distribution", "-")
                         if c.get("normality_sample_note"):
                             lbl.setToolTip(str(c["normality_sample_note"]))
                         if dist == "normal":
                             lbl.setStyleSheet(
-                                "color: #27ae60; font-weight: bold; padding: 1px 4px;"
+                                "color: #3E9B68; font-weight: bold; padding: 1px 4px;"
                             )
                         elif dist == "skewed":
-                            lbl.setStyleSheet("color: #ffa726; padding: 1px 4px;")
+                            lbl.setStyleSheet("color: #C4922A; padding: 1px 4px;")
                     grid.addWidget(lbl, i, j)
             layout.addLayout(grid)
 
@@ -285,7 +285,7 @@ class DiagnosisDialog(QDialog):
             for iss in issues[:5]:
                 il = QLabel(f"  {iss}")
                 il.setFont(QFont(get_ui_font(), 9))
-                il.setStyleSheet("color: #e74c3c;")
+                il.setStyleSheet("color: #C4544C;")
                 layout.addWidget(il)
         return card
 
@@ -324,7 +324,7 @@ class DiagnosisDialog(QDialog):
         cbar.setFormat(f" {int(pct * 100)}%")
         cbar.setFixedSize(60, 16)
         cbar.setFont(QFont(get_ui_font(), 8))
-        ccolor = CONF_COLORS.get(conf.get("grade", "optional"), "#6e7080")
+        ccolor = CONF_COLORS.get(conf.get("grade", "optional"), "#8A8AB8")
         cbar.setStyleSheet(
             f"QProgressBar {{ background: {tc['bg_body']}; border: none; border-radius: 3px; text-align: center; }} "
             f"QProgressBar::chunk {{ background: {ccolor}; border-radius: 3px; }}"
