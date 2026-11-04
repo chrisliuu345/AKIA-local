@@ -189,6 +189,33 @@ class TestAnalysisCard:
         assert card is not None
         card.deleteLater()
 
+    def test_thumbnail_background_is_black(self, app):
+        import matplotlib.pyplot as plt
+
+        from ui.widgets.analysis_card import figure_to_pixmap
+
+        fig, ax = plt.subplots()
+        ax.set_facecolor("white")
+        fig.patch.set_facecolor("white")
+        ax.plot([0, 1, 2], [1, 0.2, 1.4], color="#111111", linewidth=3)
+        ax.plot([0, 1, 2], [0.2, 1.2, 0.4], color="#4F73DC", linewidth=3)
+        pm = figure_to_pixmap(fig, width=320, height=180, dpi=60)
+        plt.close(fig)
+        assert pm is not None and not pm.isNull()
+        image = pm.toImage()
+        corner = image.pixelColor(1, 1)
+        assert corner.red() < 40 and corner.green() < 40 and corner.blue() < 40
+        readable = False
+        for x in range(0, image.width(), 3):
+            for y in range(0, image.height(), 3):
+                pixel = image.pixelColor(x, y)
+                if pixel.blue() > 150 and pixel.red() < 140:
+                    readable = True
+                    break
+            if readable:
+                break
+        assert readable
+
 
 class TestAnimationsAndFingerprint:
     def test_no_effect_when_animations_off(self, main, monkeypatch):

@@ -30,16 +30,57 @@ CARD_PADDING = 16
 CARD_RADIUS = 10
 
 
+def _thumbnail_face() -> str:
+    """快照底色跟界面页底，不再铺白。"""
+    return theme_colors().get("bg_body", "#141414")
+
+
+def _line_readable_on(face: str, fig) -> None:
+    """快照坐标区改成界面黑。贴近黑底的折线和文字改成能看清的颜色。"""
+    import matplotlib.colors as mcolors
+
+    bg = mcolors.to_rgb(face)
+    ink = theme_colors().get("accent", "#4F73DC")
+    text_color = theme_colors().get("text_primary", "#EDEDED")
+
+    def too_close(color) -> bool:
+        try:
+            rgb = mcolors.to_rgb(color)
+        except (ValueError, TypeError):
+            return False
+        return sum((channel - base) ** 2 for channel, base in zip(rgb, bg, strict=True)) < 0.08
+
+    for ax in fig.axes:
+        try:
+            ax.set_facecolor(face)
+        except (AttributeError, ValueError):
+            continue
+        for line in getattr(ax, "lines", []):
+            if too_close(line.get_color()):
+                line.set_color(ink)
+        for spine in ax.spines.values():
+            if too_close(spine.get_edgecolor()):
+                spine.set_edgecolor("#333333")
+        for text in list(getattr(ax, "texts", [])) + [ax.title, ax.xaxis.label, ax.yaxis.label]:
+            if too_close(text.get_color()):
+                text.set_color(text_color)
+        ax.tick_params(colors=theme_colors().get("text_secondary", "#A3A3A3"))
+
+
 def figure_to_pixmap(fig, width: int = CHART_SNAPSHOT_W,
                      height: int = CHART_SNAPSHOT_H, dpi: int = CHART_DPI) -> QPixmap | None:
-    """将 matplotlib Figure 渲染为 QPixmap 快照"""
+    """将 matplotlib Figure 渲染为 QPixmap 快照。底色是界面黑，不是白。"""
     if not _HAS_MPL or fig is None:
         return None
     try:
         fig2 = deepcopy(fig)
         fig2.set_size_inches(width / dpi, height / dpi, forward=False)
+        face = _thumbnail_face()
+        fig2.patch.set_facecolor(face)
+        _line_readable_on(face, fig2)
         buf = BytesIO()
-        fig2.savefig(buf, format="png", dpi=dpi, bbox_inches="tight", facecolor="white")
+        fig2.savefig(buf, format="png", dpi=dpi, bbox_inches="tight",
+                     facecolor=face, edgecolor=face)
         buf.seek(0)
         pm = QPixmap()
         pm.loadFromData(buf.read())
