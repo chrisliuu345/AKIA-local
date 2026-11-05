@@ -66,11 +66,13 @@ class ContextBuilder:
         for h in self.history[-6:]:
             history_text += f"用户: {h['user']}\n助手: {h['assistant']}\n\n"
 
+        # 标题里的换行不能写进 f-string 表达式：Python 3.11 会 SyntaxError。
+        history_block = f"--- 对话历史 ---\n{history_text}" if history_text else ""
         return (
             "你是一个专业质量分析助手(质量工程师/六西格玛黑带)。"
             "基于以下实际分析数据回答用户问题。如果数据不足，请诚实说明。\n\n"
             f"{context}\n"
-            f"{'--- 对话历史 ---\n' + history_text if history_text else ''}"
+            f"{history_block}"
             f"用户问题: {user_question}"
         )
 

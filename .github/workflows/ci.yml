@@ -20,6 +20,9 @@ env:
   MPLCONFIGDIR: "/tmp/mplcache"
   OMP_NUM_THREADS: "2"
   OPENBLAS_NUM_THREADS: "2"
+  # 非 TTY 下 Python 全缓冲。runner 被 SIGTERM（退出码 143）时，未刷新的
+  # 失败行会从日志里消失。
+  PYTHONUNBUFFERED: "1"
 
 jobs:
   lint:
@@ -68,6 +71,23 @@ jobs:
       - name: 配置密钥环测试后端
         run: |
           echo "PYTHON_KEYRING_BACKEND=keyrings.alt.file.PlaintextKeyring" >> "$GITHUB_ENV"
+      # libQt6Gui.so 的 DT_NEEDED 含 libEGL.so.1，import PySide6 时就会失败，
+      # 与 QT_QPA_PLATFORM=offscreen 无关。ubuntu-24.04 runner 镜像没有 libegl1。
+      - name: 安装 Qt 离屏运行库
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libegl1 \
+            libgl1 \
+            libglib2.0-0 \
+            libfontconfig1 \
+            libfreetype6 \
+            libxkbcommon0 \
+            libdbus-1-3 \
+            libx11-6 \
+            libxcb1 \
+            fonts-wqy-microhei
+          fc-cache -f
       - name: 逐文件执行（单文件一进程）
         run: .venv/bin/python tools/run_tests.py --quiet
       - name: 失败日志留存（仅失败时）
@@ -93,6 +113,19 @@ jobs:
           python -m venv .venv
           .venv/bin/pip install --upgrade pip
           .venv/bin/pip install --require-hashes -r requirements-ci.lock
+      - name: 安装 Qt 离屏运行库
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libegl1 \
+            libgl1 \
+            libglib2.0-0 \
+            libfontconfig1 \
+            libfreetype6 \
+            libxkbcommon0 \
+            libdbus-1-3 \
+            libx11-6 \
+            libxcb1
       - name: 性能基线（tolerance ×4）
         run: .venv/bin/python tools/benchmark.py --tolerance 4
 
@@ -112,7 +145,10 @@ jobs:
           python -m venv .venv
           .venv/bin/pip install --upgrade pip
           .venv/bin/pip install --require-hashes -r requirements-ci.lock
-          sudo apt-get update && sudo apt-get install -y file wget libfuse2
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends \
+            file wget libfuse2 \
+            libegl1 libgl1 libglib2.0-0 libfontconfig1 libfreetype6 \
+            libxkbcommon0 libdbus-1-3 libx11-6 libxcb1
       - name: 构建 AppImage
         run: |
           chmod +x build_appimage.sh
@@ -215,6 +251,37 @@ jobs:
           python -m venv .venv
           .venv/bin/pip install --upgrade pip
           .venv/bin/pip install --require-hashes -r requirements.lock
+      # pytest 在 dev-requirements / requirements-ci.lock，不在核心运行时锁里。
+      # 只抽测试运行器及其直接依赖，避免这条作业改用整份 CI 锁而换掉核心版本。
+      - name: 安装 pytest（CI 哈希锁子集）
+        run: |
+          .venv/bin/python - <<'PY'
+          from pathlib import Path
+
+          # packaging 是 pytest 的安装依赖；核心锁里已有同版本，这里带上哈希
+          # 才能在 --require-hashes 下解析它。
+          wanted = {"pytest", "pluggy", "iniconfig", "pygments", "packaging"}
+          blocks: list[list[str]] = []
+          current: list[str] = []
+          name = ""
+          for line in Path("requirements-ci.lock").read_text(encoding="utf-8").splitlines():
+              if line and not line.startswith((" ", "#")) and "==" in line.split()[0]:
+                  if name in wanted and current:
+                      blocks.append(current)
+                  name = line.split("==", 1)[0].strip()
+                  current = [line]
+              elif current:
+                  current.append(line)
+          if name in wanted and current:
+              blocks.append(current)
+          found = {block[0].split("==", 1)[0].strip() for block in blocks}
+          missing = wanted - found
+          if missing:
+              raise SystemExit(f"requirements-ci.lock 缺少 pytest 依赖: {sorted(missing)}")
+          text = "\n\n".join("\n".join(block).rstrip() for block in blocks) + "\n"
+          Path("/tmp/akia-pytest-runner.txt").write_text(text, encoding="utf-8")
+          PY
+          .venv/bin/pip install --require-hashes -r /tmp/akia-pytest-runner.txt
       - name: SDK CLI 回归
         run: .venv/bin/python tools/run_tests.py --files tests/test_sdk_cli.py
       - name: MCP 协议回归
