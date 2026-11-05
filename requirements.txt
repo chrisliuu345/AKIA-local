@@ -21,4 +21,8 @@ psycopg2-binary>=2.9.0
 pyserial>=3.5
 cryptography>=42.0
 keyring>=25.0
+# Windows 上的条件依赖（keyring / tqdm）。哈希锁必须钉住版本，
+# 否则 --require-hashes 拒绝未出现在锁里的 >= 约束。
+pywin32-ctypes>=0.2.0 ; sys_platform == "win32"
+colorama>=0.4 ; sys_platform == "win32"
 # 可选：连接器插件（OPC UA / Modbus TCP / MQTT）见 requirements-connectors.txt

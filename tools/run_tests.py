@@ -103,11 +103,16 @@ def run(files: list[Path], timeout: float, quiet: bool,
         line = _summary_line(output)
         if code == 0:
             if not quiet:
-                print(f"ok   {stage:38s} {line}")
+                print(f"ok   {stage:38s} {line}", flush=True)
         else:
             reason = "超时" if code == 124 else f"退出码 {code}"
-            print(f"FAIL {stage:38s} {reason} | {line}")
-            print(f"     日志: {log_path}")
+            print(f"FAIL {stage:38s} {reason} | {line}", flush=True)
+            print(f"     日志: {log_path}", flush=True)
+            # 失败原因写进作业日志。SDK 冒烟作业不上传产物，只留路径时
+            # 「No module named pytest」这类启动失败在 CI 里看不见。
+            tail = "\n".join(output.strip().splitlines()[-40:])
+            if tail:
+                print(tail, flush=True)
             failures.append((stage, reason))
         for token, counter in (("passed", "passed"), ("skipped", "skipped")):
             if token in line:
@@ -120,11 +125,11 @@ def run(files: list[Path], timeout: float, quiet: bool,
 
     elapsed = time.time() - started
     print(f"\n文件: {len(files)} | 通过用例: {total_passed} | 跳过: {total_skipped} "
-          f"| 失败文件: {len(failures)} | 用时: {elapsed:.1f}s")
+          f"| 失败文件: {len(failures)} | 用时: {elapsed:.1f}s", flush=True)
     if failures:
-        print("失败文件清单:")
+        print("失败文件清单:", flush=True)
         for stage, reason in failures:
-            print(f"  - {stage}（{reason}）")
+            print(f"  - {stage}（{reason}）", flush=True)
     return 1 if failures else 0
 
 
