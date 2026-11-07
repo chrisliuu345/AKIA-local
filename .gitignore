@@ -1,5 +1,6 @@
 __pycache__/
 .pytest_cache/
+.ruff_cache/
 *.pyc
 *.pyo
 user_config.json
@@ -24,7 +25,9 @@ HANDOVER.md
 TEMP/dev_private_key.pem
 TEMP/*.pem
 .integrity_baseline.json
-TEMP/
+# 唯一本地暂存目录：临时文件与生成物只放这里。占位文件入库，其余内容不入库。
+TEMP/*
+!TEMP/.gitkeep
 
 # 运行期数据（程序生成，不入库）
 data/
