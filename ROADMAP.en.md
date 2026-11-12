@@ -2,8 +2,8 @@
 
 [中文](ROADMAP.md) | [English](ROADMAP.en.md) | [Project Home](README.en.md) | [Releases](https://github.com/chrisliuu345/AKIA-local/releases)
 
-**Status**: v4.6.0 development is complete and release validation is underway. Subsequent development is v4.7.0, credible industrial-engineering methods. v4.5.x remains the previous stable line.
-**Last updated**: 2026-10-31
+**Status**: Current version is v4.6.3. Next is an intermediate v4.6.x maintenance release for security and correctness, then v4.7.0, credible industrial-engineering methods.
+**Last updated**: 2026-11-12
 
 ## Direction
 
@@ -31,16 +31,17 @@ AKIA is an open-source desktop application for personal industrial engineering a
 
 ## Release Sequence
 
-The following releases are ordered by dependency. Each minor release focuses on one primary theme and must meet its completion criteria before the next phase begins. Unreleased themes now follow the dependency of shop-floor judgement: make existing IE methods and quality characteristics reviewable first, then bring video cycles and live measurements into that same evidence chain, and localise last so the interface is not translated twice while it is still moving.
+The following releases are ordered by dependency. Each minor release focuses on one primary theme and must meet its completion criteria before the next phase begins. v4.6.0 requires that intelligent assistance cannot bypass statistical decisions or human confirmation. That bar is not met: the in-app assistant runs tool calls with no confirmation and can reach pickle through `joblib.load`. A v4.6.x maintenance release therefore comes before v4.7.0 and only covers security and correctness; it does not open a new minor theme. Unreleased themes still follow the dependency of shop-floor judgement: make existing IE methods and quality characteristics reviewable first, then bring video cycles and live measurements into that same evidence chain, and finish full localisation last so the interface is not translated twice while it is still moving. From v4.7.0, new and touched interface strings go through `i18n.tr`, and the main window is split, so v4.11.0 does not rewrite the v4.7.0–v4.10.0 text.
 
 | Version | Theme | Primary goals |
 |---------|-------|---------------|
 | v4.5.0 | Open interfaces and release hardening | CLI, SDK, MCP, plugin and rule-pack interfaces; external-input safeguards and release provenance |
 | v4.6.0 | Optional intelligent assistance and local data assets | Model-call auditing, user-enabled assistance, and an extensible local data-asset format |
-| v4.7.0 | Credible industrial-engineering methods | Known values for time study, line balance, OEE, and work sampling; an evidence chain from standard time through line balance to improvement cases |
+| v4.6.x | Maintenance patch (not a new theme) | Confirmation, path boundaries, and model-file HMAC for assistance; a real OPC UA connection; dashboard origin, token, and escaping; secrets and atomic writes; MQTT, history order, and live-SPC resubscribe that the lot view depends on |
+| v4.7.0 | Credible industrial-engineering methods | Known values for time study, line balance, OEE, and work sampling; an evidence chain from standard time through line balance to improvement cases; UI-thread work, read performance, the main-window split, and `i18n.tr` groundwork |
 | v4.8.0 | Characteristic and lot judgement loop | Bind specifications, control limits, and GR&R to a characteristic; gauge gating; a lot or shift view; a full sampling-standard review |
 | v4.9.0 | Video time-study research and deepening | Industry capability research, a visual-cycle event contract, review, and traceable time-study workflows |
-| v4.10.0 | Real-time acquisition and embedded interfaces | A unified acquisition-adapter contract, more industrial/embedded protocols, health diagnostics, and conformance tests |
+| v4.10.0 | Real-time acquisition and embedded interfaces | A unified acquisition-adapter contract, more industrial/embedded protocols, health diagnostics, and conformance tests; an origin, authentication, and injection review before more protocols |
 | v4.11.0 | Bilingual interface and report localisation | Runtime language switching, complete Chinese/English resources, and localised reports and charts |
 
 ## Near-Term Milestones
@@ -67,14 +68,35 @@ Completion criteria: the CLI/SDK runs without a GUI; external inputs have resour
 
 Completion criteria: all intelligent features can be disabled; core offline analysis has no external-model dependency; intelligent assistance cannot bypass statistical decisions or human confirmation; results retain traceable inputs, models, configuration, and audit records; existing projects remain readable.
 
+The requirement that intelligent assistance cannot bypass statistical decisions or human confirmation is not yet met. v4.6.x closes it.
+
+### v4.6.x — Security and Correctness Maintenance
+
+This is not a new minor theme. The in-app assistant runs tool calls with no confirmation and can reach pickle through `joblib.load`, so the v4.6.0 completion bar is still open. This patch only covers security and correctness, and it includes the connector defects the v4.8.0 lot view depends on, rather than leaving them until v4.10.0.
+
+- Reject path parameters supplied by the model, and verify a model file's HMAC before `joblib.load`. The model cannot choose a path; a person selects the file in the interface.
+- Do not run a model-initiated tool call until a person confirms it.
+- Make OPC UA actually connect, and surface connection and read errors.
+- Check Origin on the live dashboard, issue a random token by default, escape untrusted fields, and do not leave the access token in the URL.
+- Do not fall back to a plaintext secret when encryption fails; write config and project files atomically.
+- Lock MQTT subscription state and use the paho v2 API; return the newest history rows when no start time is given; resubscribe live SPC when the device changes.
+
+Completion criteria: regression shows that a model-supplied path is rejected, a person-selected model file still loads, and a failed HMAC check never calls `joblib.load`; a model-initiated tool call does not run without human confirmation; OPC UA reports an error for an unreachable endpoint, and a loopback test reads a node value; the dashboard rejects a non-local Origin, uses a random token even on loopback only, renders untrusted fields as text, and does not keep the token in the address; failed encryption does not write a plaintext secret, and config and project writes replace the file atomically; MQTT updates its latest values under a lock and uses the paho v2 callback API; a history query without `since` returns the newest rows; live SPC resubscribes after a device change and keeps plotting points; no new analysis methods or protocols are added, and existing projects remain readable.
+
 ### v4.7.0 — Credible Industrial-Engineering Methods
 
 - Add known-value cases, with sources and tolerances, for standard time (observed time, rating factor, and allowance), line-balance rate, OEE weighted availability, performance, and quality, and work-sampling sample size. Prefer textbooks, standards, or publicly reviewable worked examples.
 - When an implementation disagrees with a known value, correct that engine and state the effect on existing project results in the release notes.
 - Provide one reproducible path: a confirmed standard time feeds line balancing, the balance result can be the baseline and remeasure of an improvement case, and the evidence ledger records the step.
 - Do not add new IE method families in this release. Change SMED, value-stream mapping, and TPM only when a known value or this path exposes a defect.
+- Move import, export, project I/O, and tab analysis off the GUI thread through one `run_in_worker`.
+- Extract the repeated `run_and_display` template and split `ui/main_window.py`.
+- Prefer calamine for xlsx, and cache numeric columns after one conversion.
+- Make benefit-ledger lookup O(1) and tighten that benchmark.
+- Move the LLM availability probe off the UI thread, set a database connect timeout, and cap rows on SQL loads.
+- Pass only new and touched interface strings through `i18n.tr`. Full translation stays in v4.11.0. The main-window split lands in this release so v4.11.0 does not rewrite v4.7.0–v4.10.0 strings.
 
-Completion criteria: each of the four calculations has at least one known-value case in the per-file regression; the path from time study through line balance to case remeasure runs without a model or a network; the evidence record can restore the input parameters and the standard version used.
+Completion criteria: each of the four calculations has at least one known-value case in the per-file regression; the path from time study through line balance to case remeasure runs without a model or a network; the evidence record can restore the input parameters and the standard version used; import, export, project I/O, and tab analysis do not run on the UI thread; benefit-ledger lookup is O(1) and its benchmark stays within the ×1.5 tolerance; new and touched interface strings go through `i18n.tr`, and full translation remains in v4.11.0.
 
 ### v4.8.0 — Characteristic and Lot Judgement Loop
 
@@ -103,8 +125,9 @@ Completion criteria: research findings include explicit priorities and acceptanc
 - Add offline buffering, out-of-order and duplicate detection, device-clock-skew warnings, and resource bounds for long-running acquisition.
 - Feed measurements from new interfaces into the unified measurement event, and make them visible in the v4.8.0 characteristic and lot views.
 - Keep connector dependencies optional, provide clear installation guidance when unavailable, and avoid mandatory lock-in to a single device or commercial platform.
+- Before further protocols widen network exposure, the live dashboard and new connectors pass a security review of origin, authentication, and injection. OPC UA and MQTT correctness is a v4.6.x prerequisite, not new scope for this release.
 
-Completion criteria: at least two new interface families complete end-to-end acquisition through simulators or real hardware; data enters the unified MeasurementEvent, the real-time analysis path, and the characteristic and lot views; disconnection, reconnection, ordering, and resource-bound tests pass; existing connectors and project formats remain compatible; third parties can independently implement and validate adapters from the documentation.
+Completion criteria: at least two new interface families complete end-to-end acquisition through simulators or real hardware; data enters the unified MeasurementEvent, the real-time analysis path, and the characteristic and lot views; disconnection, reconnection, ordering, and resource-bound tests pass; existing connectors and project formats remain compatible; third parties can independently implement and validate adapters from the documentation; the live dashboard and new connectors pass a security review of origin, authentication, and injection before more protocols widen network exposure; OPC UA and MQTT correctness is not new scope for this release.
 
 ### v4.11.0 — Bilingual Interface and Report Localisation
 
@@ -112,10 +135,11 @@ Completion criteria: at least two new interface families complete end-to-end acq
 - Support runtime language switching and persist the user's choice, updating menus, tabs, dialogs, status messages, and errors without a restart.
 - Apply the selected language to PDF, Word, Excel, PowerPoint, HTML reports, and charts, with consistent date, number, unit, and font-fallback rules.
 - Cover interface and report text added in v4.7.0 through v4.10.0.
+- From v4.7.0, new and touched interface strings already go through `i18n.tr`, and the main window is already split. This release finishes the remaining translation and does not rewrite those strings.
 - Record the generation language in report metadata and evidence traces so outputs remain reproducible and reviewable across languages.
 - Add regression coverage for long-text layout, shortcuts, accessible names, and Chinese/English help entry points.
 
-Completion criteria: switching language while the application is running updates open views and all subsequent exports; Chinese and English resource keys match and no primary interface text remains untranslated; report, chart, date, and number formats follow the selected language; switching language does not change analysis results or project-file semantics.
+Completion criteria: switching language while the application is running updates open views and all subsequent exports; Chinese and English resource keys match and no primary interface text remains untranslated; report, chart, date, and number formats follow the selected language; switching language does not change analysis results or project-file semantics; v4.7.0–v4.10.0 strings already passed through `i18n.tr` keep their keys and are not rewritten wholesale in this release.
 
 ## Later Exploration
 
@@ -124,7 +148,8 @@ Completion criteria: switching language while the application is running updates
 - Optional local analysis such as process windows and edge anomaly detection. These capabilities must not bypass statistical decisions or human confirmation.
 - Advanced video time-study model evaluation, edge-device collaboration, and large-scale line deployment.
 - Automatic installer updates.
-- Performance baselines and contributor documentation.
+- Tighten the performance-baseline gate (tolerance from ×3 to ×1.5).
+- Contributor documentation.
 - Consider new machine-learning model families only after v4.7.0 and v4.8.0 are accepted.
 
 ## Non-Goals
@@ -146,6 +171,8 @@ Priorities are, in order: data correctness and security, regression and compatib
 - Freeze public interfaces and data contracts before implementing features in each minor release; new capabilities must provide a disable or fallback path.
 - Release tags, version numbers, source commits, dependency lockfiles, installers, and hashes must form one verifiable correspondence.
 - Releases pass static checks, version consistency, per-file tests, performance baselines, and packaging smoke tests.
+- Performance-baseline tolerance is ×1.5. The previous ×3 tolerance let through a benefit-ledger regression of about 2.2×; that correction is in v4.7.0.
+- mypy is ratcheted directory by directory, and coverage has a per-directory floor, in the same style as the ruff ratchet: each directory starts from its current level and only tightens.
 - From v4.6.0 onward, a release tag also runs Windows installer smoke alongside the Linux AppImage, and checks that the program entry point, project license, and third-party notices are packaged.
 - From v4.6.0 onward, the sidebar, analysis menu, and command palette use the tab registry as their only entry list. A registered page missing any of those entries is a release defect.
 - Tags and release notes live in GitHub Releases; this roadmap keeps only current status and future plans.
