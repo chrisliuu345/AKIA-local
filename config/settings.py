@@ -290,15 +290,21 @@ def save_config(values: dict) -> None:
     """
     global CHART_DPI, MSA_GRR_ACCEPTABLE, MSA_GRR_MARGINAL, MSA_NDC_THRESHOLD
     removals = [k for k, v in values.items() if v is None]
-    for key in removals:
-        _user_overrides.pop(key, None)
-        _user_overrides.pop(f"{key}_enc", None)
     protected = _protect_secrets({k: v for k, v in values.items() if v is not None})
-    _user_overrides.update(protected)
+    updated = dict(_user_overrides)
+    for key in removals:
+        updated.pop(key, None)
+        updated.pop(f"{key}_enc", None)
+    updated.update(protected)
     # 迁移清理：加密成功后移除旧版明文键，避免同一密钥以两种形态共存
     for key in values:
         if is_secret_key(key) and (f"{key}_enc" in protected or key in removals):
-            _user_overrides.pop(key, None)
+            updated.pop(key, None)
+    from core.atomic_io import atomic_write_text
+    atomic_write_text(
+        _USER_CONFIG_PATH, json.dumps(updated, indent=2, ensure_ascii=False))
+    _user_overrides.clear()
+    _user_overrides.update(updated)
     if "chart_dpi" in values:
         CHART_DPI = values["chart_dpi"]
     if "msa_grr_acceptable" in values:
@@ -306,28 +312,22 @@ def save_config(values: dict) -> None:
         MSA_GRR_MARGINAL = max(values["msa_grr_acceptable"], MSA_GRR_MARGINAL)
     if "msa_ndc_threshold" in values:
         MSA_NDC_THRESHOLD = values["msa_ndc_threshold"]
-    parent = os.path.dirname(_USER_CONFIG_PATH)
-    if parent:
-        os.makedirs(parent, exist_ok=True)
-    with open(_USER_CONFIG_PATH, "w", encoding="utf-8") as f:
-        json.dump(_user_overrides, f, indent=2, ensure_ascii=False)
 
 
 def _protect_secrets(values: dict) -> dict:
-    """敏感明文 → 加密存储（<key>_enc）。加密不可用时保留明文并告警，
-    避免用户配置被静默丢弃。"""
+    """敏感明文 → 加密存储（<key>_enc）。加密失败时拒绝写入，不回退明文。"""
     out = {}
     for key, value in values.items():
         if is_secret_key(key) and isinstance(value, str) and value:
+            from core.secret_store import encrypt_secret
             try:
-                from core.secret_store import encrypt_secret
                 encrypted = encrypt_secret(value)
-                if encrypted:
-                    out[f"{key}_enc"] = encrypted
-                    continue
-            except Exception as e:  # noqa: BLE001 - 加密失败：告警后退回明文保存（不阻断）
-                logging.getLogger("AKIA.Settings").warning(
-                    "敏感配置 %s 加密失败，按明文保存: %s", key, e)
+            except Exception as exc:
+                raise RuntimeError(f"敏感配置 {key} 加密失败，已拒绝写入") from exc
+            if not encrypted:
+                raise RuntimeError(f"敏感配置 {key} 加密失败，已拒绝写入")
+            out[f"{key}_enc"] = encrypted
+            continue
         out[key] = value
     return out
 

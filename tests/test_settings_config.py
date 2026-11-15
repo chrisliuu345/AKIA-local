@@ -8,6 +8,7 @@
 """
 
 import json
+import os
 
 import pytest
 
@@ -97,6 +98,43 @@ class TestSecretProtection:
         assert "alert_smtp_password" not in saved
         assert saved["alert_smtp_password_enc"] == "enc(S3cret!)"
         assert settings.get_secret("alert_smtp_password") == "S3cret!"
+
+    def test_encrypt_failure_does_not_write_plaintext(self, cfg, monkeypatch):
+        import core.secret_store as secret_store
+
+        settings, _default_path, user_path = cfg
+        _write(user_path, {"chart_dpi": 100})
+        settings.load_config()
+
+        def boom(_text):
+            raise RuntimeError("keyring down")
+
+        monkeypatch.setattr(secret_store, "encrypt_secret", boom)
+        with pytest.raises(RuntimeError, match="已拒绝写入"):
+            settings.save_config({"alert_smtp_password": "S3cret!"})
+
+        saved = user_path.read_text(encoding="utf-8")
+        assert "S3cret!" not in saved
+        assert "alert_smtp_password" not in json.loads(saved)
+        assert not any(name.endswith(".tmp") for name in os.listdir(user_path.parent))
+
+    def test_save_config_replaces_file(self, cfg, monkeypatch):
+        import core.atomic_io as atomic_io
+
+        settings, _default_path, user_path = cfg
+        _write(_default_path, {})
+        settings.load_config()
+        calls = []
+        real = atomic_io.os.replace
+
+        def spy(src, dst):
+            calls.append(os.path.basename(dst))
+            return real(src, dst)
+
+        monkeypatch.setattr(atomic_io.os, "replace", spy)
+        settings.save_config({"chart_dpi": 144})
+        assert calls == [user_path.name]
+        assert json.loads(user_path.read_text(encoding="utf-8"))["chart_dpi"] == 144
 
     def test_plaintext_secret_still_readable(self, cfg):
         """旧版本明文配置保持可读（向后兼容）"""
