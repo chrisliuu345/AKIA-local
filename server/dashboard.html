@@ -268,7 +268,11 @@ footer{padding:0 22px 24px; color:var(--text-3); font-size:calc(var(--fs) - 3px)
 const MAX_POINTS = 300;
 const OEE_GOOD = 0.65, OEE_WORLD_CLASS = 0.85;   // 与 config.settings 一致
 const STATUS_TEXT = { green: "正常", yellow: "判异", red: "离线" };
-const TOKEN = new URLSearchParams(location.search).get("token") || "";
+if (location.search.includes("token=")) {
+  const clean = new URL(location.href);
+  clean.searchParams.delete("token");
+  history.replaceState(null, "", clean.pathname + clean.search + clean.hash);
+}
 const charts = {};        // key: device:channel -> chart state
 const specs = {};         // device -> {channel: {usl, lsl}}
 let reasonCodes = [];
@@ -296,13 +300,20 @@ function setFontScale(v) {
 
 /* ---------- 通用 ---------- */
 function api(path) {
-  if (!TOKEN) return path;
-  return path + (path.includes("?") ? "&" : "?") + "token=" + encodeURIComponent(TOKEN);
+  return path;
+}
+
+function esc(value) {
+  return String(value == null ? "" : value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 const wsScheme = location.protocol === "https:" ? "wss://" : "ws://";
-const wsUrl = wsScheme + location.host + "/ws/stream" +
-              (TOKEN ? "?token=" + encodeURIComponent(TOKEN) : "");
+const wsUrl = wsScheme + location.host + "/ws/stream";
 
 const fmt = (v, digits = 2) => Number(v).toFixed(digits);
 const pct = v => (Number(v) * 100).toFixed(1) + "%";
@@ -664,7 +675,7 @@ function showTooltip(c, ev) {
   const tip = document.getElementById("tooltip");
   if (!p) { hideTooltip(); return; }
   const oos = isOos(c.spec, p.v) ? " · <span class='fault'>超规格</span>" : "";
-  tip.innerHTML = "<b>" + c.dev + " · " + c.ch + "</b><br>" +
+  tip.innerHTML = "<b>" + esc(c.dev) + " · " + esc(c.ch) + "</b><br>" +
                   clock(p.t) + " · <span class='num'>" + fmt(p.v, 3) + "</span>" + oos;
   tip.style.display = "block";
   tip.style.left = Math.min(window.innerWidth - 190, ev.clientX + 14) + "px";
@@ -700,11 +711,11 @@ function renderPlant(lines) {
     const head = document.createElement("div");
     head.className = "line-head";
     const bits = [];
-    if (line.ideal_cycle_time_s) bits.push("节拍 " + line.ideal_cycle_time_s + "s");
-    if (line.shift) bits.push("班次 " + line.shift);
-    if (line.unit_cost) bits.push("单位成本 " + line.unit_cost);
-    if (line.downtime_cost_per_min) bits.push("停机 " + line.downtime_cost_per_min + "/min");
-    head.innerHTML = "<span class='line-name'>" + line.name + "</span>" +
+    if (line.ideal_cycle_time_s) bits.push("节拍 " + esc(line.ideal_cycle_time_s) + "s");
+    if (line.shift) bits.push("班次 " + esc(line.shift));
+    if (line.unit_cost) bits.push("单位成本 " + esc(line.unit_cost));
+    if (line.downtime_cost_per_min) bits.push("停机 " + esc(line.downtime_cost_per_min) + "/min");
+    head.innerHTML = "<span class='line-name'>" + esc(line.name) + "</span>" +
                      "<span class='line-meta'>" + bits.join(" · ") + "</span>";
     block.appendChild(head);
 
@@ -718,15 +729,16 @@ function renderPlant(lines) {
       card.className = "station " + st.status;
       const specs = Object.entries(st.specs || {}).map(([ch, sp]) => {
         const parts = [];
-        if (sp.usl !== null && sp.usl !== undefined) parts.push("USL " + sp.usl);
-        if (sp.lsl !== null && sp.lsl !== undefined) parts.push("LSL " + sp.lsl);
-        return ch + (parts.length ? " " + parts.join(" / ") : "");
+        if (sp.usl !== null && sp.usl !== undefined) parts.push("USL " + esc(sp.usl));
+        if (sp.lsl !== null && sp.lsl !== undefined) parts.push("LSL " + esc(sp.lsl));
+        return esc(ch) + (parts.length ? " " + parts.join(" / ") : "");
       }).filter(Boolean);
       card.innerHTML =
-        "<div class='station-top'><span class='status-dot " + st.status + "'></span>" +
-        "<span class='station-name'>" + st.name + "</span>" +
-        "<span class='station-state'>" + STATUS_TEXT[st.status] + "</span></div>" +
-        "<div class='station-sub'>" + st.device + " · " + (st.channels || []).join(", ") +
+        "<div class='station-top'><span class='status-dot " + esc(st.status) + "'></span>" +
+        "<span class='station-name'>" + esc(st.name) + "</span>" +
+        "<span class='station-state'>" + esc(STATUS_TEXT[st.status] || st.status) + "</span></div>" +
+        "<div class='station-sub'>" + esc(st.device) + " · " +
+        (st.channels || []).map(esc).join(", ") +
         (st.online ? "" : " · 离线") + "</div>" +
         (specs.length ? "<div class='spec-chips'>" +
           specs.map(t => "<span class='spec-chip'>" + t + "</span>").join("") + "</div>" : "");
@@ -816,13 +828,13 @@ function renderOee(lines, downtime) {
       "不良 " + (m.defects || 0),
       m.ideal_cycle_time_s ? "节拍 " + m.ideal_cycle_time_s + "s" : "未配置节拍",
       down.downtime_s ? "停机 " + fmt(down.downtime_s / 60, 1) + " min" : "",
-      down.down ? "<span class='fault'>停机中（" + down.reason + "）</span>" : "",
+      down.down ? "<span class='fault'>停机中（" + esc(down.reason) + "）</span>" : "",
       m.shift_configured ? (m.in_shift ? "班次内" : "<span class='fault'>班次外</span>")
                          : "全天口径",
     ].filter(Boolean);
     card.innerHTML =
-      "<div class='metric-head'><span class='metric-name'>" + name + "</span>" +
-      "<span class='metric-tag'>" + grade + "</span></div>" +
+      "<div class='metric-head'><span class='metric-name'>" + esc(name) + "</span>" +
+      "<span class='metric-tag'>" + esc(grade) + "</span></div>" +
       "<div class='oee-value " + status + (outOfShift ? "" : " num") + "'>" +
       (outOfShift ? "班次外" : pct(m.oee)) + "</div>" +
       "<div class='bars'>" + bar("A", m.availability, "a") + bar("P", m.performance, "p") +
@@ -849,8 +861,8 @@ function renderCost(lines) {
     card.className = "metric-card";
     const hasLoss = (c.total_loss || 0) > 0;
     card.innerHTML =
-      "<div class='metric-head'><span class='metric-name'>" + name + "</span>" +
-      "<span class='metric-tag'>" + (c.currency || "货币单位未配置") + "</span></div>" +
+      "<div class='metric-head'><span class='metric-name'>" + esc(name) + "</span>" +
+      "<span class='metric-tag'>" + esc(c.currency || "货币单位未配置") + "</span></div>" +
       "<div class='cost-value " + (hasLoss ? "bad" : "good") + " num'>" +
       fmt(c.total_loss || 0, 2) + "</div>" +
       "<div class='metric-foot'>" +
