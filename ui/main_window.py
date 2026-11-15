@@ -2795,7 +2795,7 @@ class MainWindow(QMainWindow):
                     self.stream_bus, None, host=cfg["host"], port=cfg["port"],
                     plant=plant, oee=self._oee_computer,
                     downtime=self._downtime, auth_token=cfg["token"])
-                self._dash_url = dashboard_url("127.0.0.1", cfg["port"], cfg["token"])
+                self._dash_url = dashboard_url("127.0.0.1", cfg["port"])
             except Exception as e:
                 QMessageBox.warning(
                     self, i18n.tr("menu.live_dashboard"),

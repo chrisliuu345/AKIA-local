@@ -10,10 +10,12 @@ import contextlib
 import argparse
 import asyncio
 import json
+import logging
 import secrets
 import threading
 import time
 from pathlib import Path
+from urllib.parse import urlparse
 
 from core.streaming.bus import StreamBus
 from core.storage.timeseries import TimeseriesStore, default_store_path
@@ -32,8 +34,8 @@ def dashboard_config() -> dict:
 
     - dashboard_host / dashboard_port: 监听地址（多机部署时才改为 0.0.0.0）
     - dashboard_token: 访问令牌（敏感键 → 经密钥库加密存储）
-    非回环地址且未设置令牌时，除非显式打开 dashboard_allow_lan_without_token，
-    一律回退到 127.0.0.1 —— 避免车间网络里裸暴露数据接口。
+    未配置令牌时生成随机令牌并尝试加密保存。只监听回环地址时同样使用令牌，
+    地址本身不携带令牌。
     """
     from config.settings import get_secret, get_setting
 
@@ -43,18 +45,44 @@ def dashboard_config() -> dict:
     except (TypeError, ValueError):
         port = DEFAULT_PORT
     token = str(get_secret("dashboard_token", "") or "").strip()
-    if host not in LOOPBACK_HOSTS and not token and not bool(
-            get_setting("dashboard_allow_lan_without_token", False)):
-        host = DEFAULT_HOST
-    return {"host": host, "port": port, "token": token or None}
+    if not token:
+        token = secrets.token_urlsafe(24)
+        try:
+            from config.settings import save_config
+            save_config({"dashboard_token": token})
+        except Exception:
+            logging.getLogger("AKIA.Dashboard").warning(
+                "看板令牌未能加密保存，本次仍使用内存中的随机令牌")
+    return {"host": host, "port": port, "token": token}
 
 
 def dashboard_url(host: str, port: int, token: str | None = None) -> str:
-    """看板访问地址（带令牌时自动携带 ?token=）。"""
-    base = f"http://{host}:{port}/"
-    if token:
-        return f"{base}?token={token}"
-    return base
+    """看板访问地址。令牌不进入 URL，避免留在历史、日志和 Referer 里。
+
+    ``token`` 只为兼容旧调用方保留，调用结果不包含它。
+    """
+    _ = token
+    return f"http://{host}:{port}/"
+
+
+def _origin_allowed(origin: str) -> bool:
+    if not origin:
+        return True
+    host = (urlparse(origin).hostname or "").lower().strip("[]")
+    return host in LOOPBACK_HOSTS
+
+
+def _peer_loopback(host: str | None) -> bool:
+    peer = (host or "").lower().removeprefix("::ffff:")
+    return peer in LOOPBACK_HOSTS
+
+
+def _cookie_token(header: str) -> str:
+    for part in (header or "").split(";"):
+        name, _, value = part.strip().partition("=")
+        if name == "akia_dashboard":
+            return value
+    return ""
 
 
 def create_app(bus: StreamBus, store: TimeseriesStore | None = None,
@@ -65,22 +93,34 @@ def create_app(bus: StreamBus, store: TimeseriesStore | None = None,
 
     app = FastAPI(title="AKIA 实时看板", docs_url=None, redoc_url=None)
 
+    def _presented_token(headers) -> str:
+        header = headers.get("authorization", "")
+        if header.lower().startswith("bearer "):
+            return header[7:].strip()
+        return _cookie_token(headers.get("cookie", ""))
+
     def _authorized(request) -> bool:
-        """v3.8.0 可选鉴权: Bearer 头或 ?token= 查询参数。未配置 token 时全放行。"""
+        """Bearer 或 Cookie。查询串里的令牌一律忽略，未配置令牌时全放行。"""
         if not auth_token:
             return True
-        header = request.headers.get("authorization", "")
-        if header.lower().startswith("bearer "):
-            if secrets.compare_digest(header[7:].strip(), auth_token):
-                return True
-        supplied = request.query_params.get("token", "")
+        supplied = _presented_token(request.headers)
         return bool(supplied) and secrets.compare_digest(supplied, auth_token)
 
     @app.middleware("http")
     async def _auth_middleware(request, call_next):
-        if _authorized(request):
-            return await call_next(request)
-        return PlainTextResponse("401 未授权: 缺少或错误的看板访问令牌", status_code=401)
+        if not _origin_allowed(request.headers.get("origin", "")):
+            return PlainTextResponse("403 拒绝非本机来源", status_code=403)
+        loopback_page = (
+            request.method == "GET" and request.url.path == "/"
+            and _peer_loopback(None if request.client is None else request.client.host)
+        )
+        if not loopback_page and not _authorized(request):
+            return PlainTextResponse("401 未授权: 缺少或错误的看板访问令牌", status_code=401)
+        response = await call_next(request)
+        if loopback_page and auth_token:
+            response.set_cookie(
+                "akia_dashboard", auth_token, httponly=True, samesite="strict")
+        return response
 
     @app.get("/")
     async def index():
@@ -210,8 +250,11 @@ def create_app(bus: StreamBus, store: TimeseriesStore | None = None,
 
     @app.websocket("/ws/stream")
     async def stream(ws: WebSocket):
+        if not _origin_allowed(ws.headers.get("origin", "")):
+            await ws.close(code=1008)
+            return
         if auth_token:
-            supplied = ws.query_params.get("token", "")
+            supplied = _presented_token(ws.headers)
             if not (supplied and secrets.compare_digest(supplied, auth_token)):
                 await ws.close(code=1008)
                 return
@@ -297,7 +340,7 @@ if __name__ == "__main__":
 
     store = TimeseriesStore(default_store_path())
     bus = StreamBus()
-    token = args.token.strip() or None
+    token = args.token.strip() or secrets.token_urlsafe(24)
 
     def _demo_source():
         from core.devices.driver import MockDriver
@@ -307,6 +350,7 @@ if __name__ == "__main__":
         return runner
 
     _demo_source()
-    print(f"AKIA 实时看板: http://{args.host}:{args.port}")
+    print(f"AKIA 实时看板: {dashboard_url(args.host, args.port)}")
+    print("访问令牌不在地址中。本机打开页面会写入 Cookie；其他客户端使用 Authorization: Bearer。")
     uvicorn.run(create_app(bus, store, auth_token=token), host=args.host,
                 port=args.port, log_level="warning")
