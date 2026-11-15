@@ -1,5 +1,7 @@
 """v4.0.0 P4 — 模型持久化（.qamodel 保存 / 加载 / 预测）。"""
 
+from pathlib import Path
+
 import pandas as pd
 import pytest
 
@@ -55,12 +57,38 @@ class TestSaveLoad:
         with pytest.raises(persist.ModelFileError, match="不存在"):
             persist.load_model(tmp_path / "nope.qamodel")
 
-    def test_foreign_file_rejected(self, tmp_path):
+    def test_foreign_file_rejected(self, tmp_path, monkeypatch):
         import joblib
+
+        loaded = []
+
+        def _spy(source):
+            loaded.append(source)
+            return joblib.load(source)
+
+        monkeypatch.setattr(persist.joblib, "load", _spy)
         bad = tmp_path / "bad.qamodel"
         joblib.dump({"format": "something-else"}, bad)
-        with pytest.raises(persist.ModelFileError, match="不是本工具生成"):
+        with pytest.raises(persist.ModelFileError, match="HMAC"):
             persist.load_model(bad)
+        assert loaded == []
+
+    def test_tampered_signature_does_not_unpickle(self, tmp_path, monkeypatch):
+        loaded = []
+
+        def _spy(_source):
+            loaded.append(True)
+
+        monkeypatch.setattr(persist.joblib, "load", _spy)
+        path = persist.save_model(tmp_path / "m.qamodel", {"marker": 1},
+                                  task="regression", target="y", features=["x"])
+        target = Path(path)
+        raw = bytearray(target.read_bytes())
+        raw[-1] ^= 0x01
+        target.write_bytes(raw)
+        with pytest.raises(persist.ModelFileError, match="HMAC"):
+            persist.load_model(path)
+        assert loaded == []
 
     def test_predict_requires_feature_columns(self, tmp_path):
         df = _frame()
