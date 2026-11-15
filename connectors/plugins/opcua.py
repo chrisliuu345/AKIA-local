@@ -3,15 +3,18 @@
 config:
     endpoint: str    必填 (如 opc.tcp://192.168.1.5:4840)
     node_ids: {"CH0": "ns=2;i=1"}   节点映射
+
+连接失败和任一节点读数失败都向上抛出，不把缺数当成 0 或静默跳过。
 """
 import contextlib
+
 from connectors.base import ConnectorBase
 
 PLUGIN = {"name": "opcua", "category": "plc",
           "description": "OPC-UA 客户端 — PLC/设备节点读取"}
 
 try:
-    from asyncua import Client
+    import asyncua  # noqa: F401
     AVAILABLE = True
 except ImportError:
     AVAILABLE = False
@@ -25,23 +28,36 @@ class Connector(ConnectorBase):
     def open(self) -> None:
         if not AVAILABLE:
             raise ImportError("需要安装 asyncua")
-        self._client = Client(self.config["endpoint"])
+        from asyncua.sync import Client
+
+        endpoint = str(self.config.get("endpoint") or "").strip()
+        if not endpoint:
+            raise ConnectionError("OPC-UA 连接失败: 未配置端点")
+        client = Client(endpoint, timeout=4)
         try:
-            self._client.connect()
+            client.connect()
         except Exception as e:
-            self._client = None
+            with contextlib.suppress(Exception):
+                client.disconnect()
             raise ConnectionError(f"OPC-UA 连接失败: {e}") from e
+        self._client = client
 
     def poll(self) -> list:
         if not self._client:
-            return []
+            raise ConnectionError("OPC-UA 读数失败: 尚未连接")
+        node_ids = self.config.get("node_ids") or {}
+        if not node_ids:
+            raise ConnectionError("OPC-UA 读数失败: 未配置节点")
         samples = []
-        for label, node in self.config.get("node_ids", {}).items():
+        errors = []
+        for label, node in node_ids.items():
             try:
                 value = self._client.get_node(node).read_value()
                 samples.append(self._sample(label, float(value)))
-            except Exception:  # 单节点读取失败：跳过该点，保留其余样本
-                pass
+            except Exception as e:
+                errors.append(f"{label}: {e}")
+        if errors:
+            raise ConnectionError("OPC-UA 读数失败: " + "; ".join(errors))
         return samples
 
     def close(self) -> None:
