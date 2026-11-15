@@ -4,7 +4,13 @@
 
 有发布提交或版本标签、但没有 GitHub Release 的版本会标明。主线上的 v2.7.0、v2.8.0、v2.9.0、v3.1.0、v3.2.0 和 v4.4.1 没有独立的发布提交、版本标签或 GitHub Release，不单列。
 
-当前版本号见 `config/settings.py` 的 `APP_VERSION`（v4.6.3）。安装包以对应 GitHub Release 的附件为准。
+当前版本号见 `config/settings.py` 的 `APP_VERSION`（v4.6.4）。安装包以对应 GitHub Release 的附件为准。
+
+## v4.6.4 — 2026-11-15
+
+有版本提交，尚无版本标签，也没有 GitHub Release 或安装包附件。
+
+安全与正确性维护：模型 HMAC 与路径拒绝、工具调用人工确认、OPC UA 报错、看板来源与令牌、密钥原子写入，以及 MQTT、历史最新行和实时 SPC 重新订阅。
 
 ## v4.6.3 — 2026-11-04
 
