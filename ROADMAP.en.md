@@ -2,8 +2,8 @@
 
 [中文](ROADMAP.md) | [English](ROADMAP.en.md) | [Project Home](README.en.md) | [Releases](https://github.com/chrisliuu345/AKIA-local/releases)
 
-**Status**: Current version is v4.6.3. Next is an intermediate v4.6.x maintenance release for security and correctness, then v4.7.0, credible industrial-engineering methods.
-**Last updated**: 2026-11-12
+**Status**: Current version is v4.6.4. The v4.6.x security and correctness maintenance is done. Next is v4.7.0, credible industrial-engineering methods.
+**Last updated**: 2026-11-15
 
 ## Direction
 
@@ -31,7 +31,7 @@ AKIA is an open-source desktop application for personal industrial engineering a
 
 ## Release Sequence
 
-The following releases are ordered by dependency. Each minor release focuses on one primary theme and must meet its completion criteria before the next phase begins. v4.6.0 requires that intelligent assistance cannot bypass statistical decisions or human confirmation. That bar is not met: the in-app assistant runs tool calls with no confirmation and can reach pickle through `joblib.load`. A v4.6.x maintenance release therefore comes before v4.7.0 and only covers security and correctness; it does not open a new minor theme. Unreleased themes still follow the dependency of shop-floor judgement: make existing IE methods and quality characteristics reviewable first, then bring video cycles and live measurements into that same evidence chain, and finish full localisation last so the interface is not translated twice while it is still moving. From v4.7.0, new and touched interface strings go through `i18n.tr`, and the main window is split, so v4.11.0 does not rewrite the v4.7.0–v4.10.0 text.
+The following releases are ordered by dependency. Each minor release focuses on one primary theme and must meet its completion criteria before the next phase begins. v4.6.4 closes the v4.6.0 bar for human confirmation, path boundaries, and model HMAC, together with the connector and dashboard fixes in that maintenance release. Next is v4.7.0. Unreleased themes still follow the dependency of shop-floor judgement: make existing IE methods and quality characteristics reviewable first, then bring video cycles and live measurements into that same evidence chain, and finish full localisation last so the interface is not translated twice while it is still moving. From v4.7.0, new and touched interface strings go through `i18n.tr`, and the main window is split, so v4.11.0 does not rewrite the v4.7.0–v4.10.0 text.
 
 | Version | Theme | Primary goals |
 |---------|-------|---------------|
@@ -68,7 +68,7 @@ Completion criteria: the CLI/SDK runs without a GUI; external inputs have resour
 
 Completion criteria: all intelligent features can be disabled; core offline analysis has no external-model dependency; intelligent assistance cannot bypass statistical decisions or human confirmation; results retain traceable inputs, models, configuration, and audit records; existing projects remain readable.
 
-The requirement that intelligent assistance cannot bypass statistical decisions or human confirmation is not yet met. v4.6.x closes it.
+The requirement that intelligent assistance cannot bypass statistical decisions or human confirmation is closed in v4.6.4.
 
 ### v4.6.x — Security and Correctness Maintenance
 
