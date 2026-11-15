@@ -95,6 +95,34 @@ def test_mqtt_connector_parses_broker_payload(monkeypatch):
     assert {(s.channel, s.value) for s in samples} == {("CH0", 21.5), ("CH1", 18.0)}
 
 
+def test_mqtt_open_uses_paho_v2_callback(monkeypatch):
+    import connectors.plugins.mqtt_sub as mq
+
+    created = {}
+
+    class FakeClient:
+        def __init__(self, *args, **kwargs):
+            created["args"] = args
+            created["kwargs"] = kwargs
+
+        def connect(self, *_args, **_kwargs):
+            return None
+
+        def loop_start(self):
+            return None
+
+        def subscribe(self, topic):
+            created["topic"] = topic
+
+    monkeypatch.setattr(mq.mqtt, "Client", FakeClient)
+    connector = mq.Connector({"name": "iot", "broker": "127.0.0.1", "topic": "d/x"})
+    connector.open()
+    assert created["args"][0] == mq.mqtt.CallbackAPIVersion.VERSION2
+    assert created["kwargs"]["client_id"] == "iot"
+    assert created["topic"] == "d/x"
+    assert connector._lock.locked() is False
+
+
 def test_modbus_connector_mock_client(monkeypatch):
     """B8: 同步客户端 + register 映射 + 读失败安全。"""
     import connectors.plugins.modbus_tcp as mb

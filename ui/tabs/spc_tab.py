@@ -433,10 +433,19 @@ class SPCTab(BaseAnalysisTab):
         with self._live_lock:
             self._live_queue.extend(samples)
 
-    def _on_live_device_changed(self, _device: str):
-        # 通道列表在收到首个批量后更新
+    def _on_live_device_changed(self, device: str):
+        # 通道列表在收到首个批量后更新。切换设备必须退订旧主题，否则新设备不出点。
         self.live_chan_combo.clear()
         self._last_channel = ""
+        if self._live_unsub is None or self._bus is None or self._live_spc is None:
+            return
+        self._live_unsub()
+        self._live_unsub = None
+        self._live_spc.reset()
+        with self._live_lock:
+            self._live_queue = []
+        if device:
+            self._live_unsub = self._bus.subscribe(device, self._live_enqueue)
 
     def _live_poll(self):
         if self._live_spc is None:

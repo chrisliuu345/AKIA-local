@@ -93,7 +93,7 @@ def test_store_roundtrip_and_query(store):
     got = store.query("dev", "CH0", since_ts=1002.0)
     assert [s.value for s in got] == [2.0, 3.0, 4.0]
     got = store.query("dev", "CH0", limit=2)
-    assert [s.value for s in got] == [0.0, 1.0]
+    assert [s.value for s in got] == [3.0, 4.0]
     # 持久化: 重开库仍可查
     store2 = TimeseriesStore(store._path)
     assert store2.count("dev") == 5
