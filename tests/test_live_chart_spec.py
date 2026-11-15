@@ -106,6 +106,36 @@ def test_attach_wheel_zoom_binds_without_error():
     plt.close(fig)
 
 
+def test_live_spc_resubscribes_after_device_switch():
+    from PySide6.QtWidgets import QApplication
+
+    from core.devices.driver import Sample
+    from core.streaming.bus import StreamBus
+    from ui.tabs.spc_tab import SPCTab
+
+    QApplication.instance() or QApplication([])
+    bus = StreamBus()
+    bus.publish("old-dev", [Sample("old-dev", "CH0", 1.0, 1.0)])
+    bus.publish("new-dev", [Sample("new-dev", "CH0", 2.0, 2.0)])
+    tab = SPCTab()
+    try:
+        tab.set_stream_source(bus)
+        tab.chart_type_combo.setCurrentText("I-MR")
+        tab._live_start()
+        current = tab.live_dev_combo.currentText()
+        other = "new-dev" if current == "old-dev" else "old-dev"
+        tab.live_dev_combo.setCurrentText(other)
+        bus.publish(current, [Sample(current, "CH0", 3.0, 3.0)])
+        bus.publish(other, [Sample(other, "CH0", 9.0, 4.0)])
+        with tab._live_lock:
+            queued = list(tab._live_queue)
+        assert [sample.device for sample in queued] == [other]
+        assert queued[0].value == 9.0
+    finally:
+        tab._live_teardown()
+        tab.deleteLater()
+
+
 def test_dashboard_asset_has_spec_and_zoom():
     html = Path("server/dashboard.html").read_text(encoding="utf-8")
     assert "USL" in html and "LSL" in html

@@ -80,16 +80,22 @@ class TimeseriesStore:
 
     def query(self, device: str, channel: str | None = None,
               since_ts: float | None = None, limit: int = 1000) -> list[Sample]:
-        sql = "SELECT device, channel, ts, value FROM measurements WHERE device = ?"
+        where = "WHERE device = ?"
         args: list = [device]
         limit = _bounded_limit(limit)
         if channel:
-            sql += " AND channel = ?"
+            where += " AND channel = ?"
             args.append(channel)
         if since_ts:
-            sql += " AND ts >= ?"
+            where += " AND ts >= ?"
             args.append(since_ts)
-        sql += " ORDER BY ts ASC LIMIT ?"
+            sql = ("SELECT device, channel, ts, value FROM measurements "
+                   f"{where} ORDER BY ts ASC LIMIT ?")
+        else:
+            # 未指定起点时返回最新的 limit 行，再按时间正序交给图表。
+            sql = ("SELECT device, channel, ts, value FROM ("
+                   "SELECT device, channel, ts, value FROM measurements "
+                   f"{where} ORDER BY ts DESC LIMIT ?) ORDER BY ts ASC")
         args.append(limit)
         with self._lock:
             rows = self._conn.execute(sql, args).fetchall()
@@ -157,11 +163,15 @@ class TimeseriesStore:
         if channel:
             sql += " AND channel = ?"
             args.append(channel)
+        limit = _bounded_limit(limit)
         if since_ts:
             sql += " AND bucket_ts >= ?"
             args.append(since_ts)
-        sql += " ORDER BY bucket_ts ASC LIMIT ?"
-        args.append(_bounded_limit(limit))
+            sql += " ORDER BY bucket_ts ASC LIMIT ?"
+        else:
+            sql = ("SELECT device, channel, bucket_ts, avg_v, min_v, max_v, n FROM ("
+                   + sql + " ORDER BY bucket_ts DESC LIMIT ?) ORDER BY bucket_ts ASC")
+        args.append(limit)
         with self._lock:
             rows = self._conn.execute(sql, args).fetchall()
         return [RollupPoint(r[0], r[1], r[2], r[3], r[4], r[5], int(r[6]))

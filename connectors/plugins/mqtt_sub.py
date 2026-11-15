@@ -8,6 +8,7 @@ config:
 """
 import contextlib
 import json
+import threading
 
 from connectors.base import ConnectorBase
 
@@ -25,12 +26,16 @@ class Connector(ConnectorBase):
     def __init__(self, config: dict):
         super().__init__(config.get("name", "iot-01"), config)
         self._latest: dict[str, object] = {}
+        self._lock = threading.Lock()
         self._client = None
 
     def open(self) -> None:
         if not AVAILABLE:
             raise ImportError("需要安装 paho-mqtt")
-        self._client = mqtt.Client(client_id=self.name)
+        if not hasattr(mqtt, "CallbackAPIVersion"):
+            raise RuntimeError("需要 paho-mqtt 2 的 CallbackAPIVersion")
+        self._client = mqtt.Client(
+            mqtt.CallbackAPIVersion.VERSION2, client_id=self.name)
         self._client.on_message = self._on_message
         self._client.connect(self.config["broker"],
                              port=int(self.config.get("port", 1883)), keepalive=30)
@@ -41,21 +46,23 @@ class Connector(ConnectorBase):
         try:
             payload = json.loads(msg.payload.decode("utf-8"))
         except (ValueError, UnicodeDecodeError):
-            self._latest["value"] = msg.payload.decode("utf-8", errors="replace")
-            return
-        if isinstance(payload, dict):
-            self._latest.update(payload)
-        else:
-            self._latest["value"] = payload
+            payload = msg.payload.decode("utf-8", errors="replace")
+        with self._lock:
+            if isinstance(payload, dict):
+                self._latest.update(payload)
+            else:
+                self._latest["value"] = payload
 
     def poll(self) -> list:
-        channels = self.config.get("channels", []) or list(self._latest)
+        with self._lock:
+            latest = dict(self._latest)
+        channels = self.config.get("channels", []) or list(latest)
         samples = []
         for ch in channels:
-            if ch not in self._latest:
+            if ch not in latest:
                 continue
             with contextlib.suppress(TypeError, ValueError):
-                samples.append(self._sample(ch, float(self._latest[ch])))
+                samples.append(self._sample(ch, float(latest[ch])))
         return samples
 
     def close(self) -> None:
