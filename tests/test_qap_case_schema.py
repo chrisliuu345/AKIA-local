@@ -12,6 +12,32 @@ from core.evidence import make_credential
 from core.project_manager import VERSION, ProjectManager
 
 
+def test_save_project_replaces_existing_file(monkeypatch):
+    import core.atomic_io as atomic_io
+
+    raw = {"Sheet1": pd.DataFrame({"A": [1]})}
+    with tempfile.NamedTemporaryFile(suffix=".qap", delete=False) as handle:
+        path = handle.name
+    try:
+        ProjectManager.save_project(path, raw, {}, {})
+        before = open(path, "rb").read()
+        calls = []
+        real = atomic_io.os.replace
+
+        def spy(src, dst):
+            calls.append(os.path.basename(dst))
+            return real(src, dst)
+
+        monkeypatch.setattr(atomic_io.os, "replace", spy)
+        ProjectManager.save_project(path, raw, {}, {}, cases=_sample_cases())
+        assert calls == [os.path.basename(path)]
+        assert open(path, "rb").read() != before
+        assert ProjectManager.load_project(path)["manifest"]["case_count"] == 2
+        assert not any(name.endswith(".tmp") for name in os.listdir(os.path.dirname(path)))
+    finally:
+        os.remove(path)
+
+
 def _sample_cases():
     first = ImprovementCase(id="CASE-001", title="节拍改善",
                             baseline_refs=["sheet:工时"])

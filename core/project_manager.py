@@ -6,6 +6,8 @@ import json
 import os
 import io
 import zipfile
+
+from core.atomic_io import atomic_path
 from datetime import datetime
 from typing import Any
 
@@ -138,7 +140,8 @@ class ProjectManager:
             "skill_entry_count": _count_items(skills_payload, "entries"),
         }
 
-        with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as zf:
+        with atomic_path(path) as temporary, zipfile.ZipFile(
+                temporary, "w", zipfile.ZIP_DEFLATED) as zf:
             zf.writestr("manifest.json", json.dumps(manifest, indent=2, ensure_ascii=False))
 
             for sname, df in raw_data.items():
