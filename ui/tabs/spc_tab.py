@@ -602,7 +602,9 @@ class SPCTab(BaseAnalysisTab):
             return None
         self.result_text.setStyleSheet("")
         try:
-            result = self.run_analysis()
+            from ui.worker import run_in_worker
+            result = run_in_worker(self, self._spc_job())
+            self.current_result = result
             self.display_result(result)
             self.analysis_completed.emit()
             return result
@@ -629,60 +631,34 @@ class SPCTab(BaseAnalysisTab):
             item.setCheckState(check_state)
 
     def run_analysis(self) -> dict[str, Any]:
+        finished = self._spc_job()()
+        self.current_result = finished
+        return finished
+
+    def _spc_job(self):
+        from config.settings import get_setting
+
         col = self.col_combo.currentText()
         chart_type = self.chart_type_combo.currentText()
         subgroup_size = self.subgroup_spin.value()
+        selected_cols = self._get_hotelling_columns()
+        frame = self.df
+        cusum_k = self.cusum_k_spin.value()
+        cusum_h = self.cusum_h_spin.value()
+        ewma_lam = self.ewma_lam_spin.value()
+        ewma_l = self.ewma_L_spin.value()
+        laney_alpha = self.laney_alpha_spin.value()
+        spec_on = self.spec_check.isChecked()
+        usl = self.usl_spin.value()
+        lsl = self.lsl_spin.value()
+        nelson = bool(get_setting("nelson_rules_enabled", True))
 
-        result = {}
-        if chart_type == "Hotelling T²":
-            selected_cols = self._get_hotelling_columns()
-            result = hotelling.analyze(self.df, selected_cols)
-        else:
-            data = pd.to_numeric(self.df[col], errors="coerce").dropna()
-            if chart_type == "XBar-R":
-                result = xbar_r.analyze(data, subgroup_size)
-            elif chart_type == "XBar-S":
-                result = xbar_s.analyze(data, subgroup_size)
-            elif chart_type == "I-MR":
-                result = imr.analyze(data)
-            elif chart_type == "P Chart":
-                result = p_chart.analyze(data, pd.Series([subgroup_size] * len(data)))
-            elif chart_type == "NP Chart":
-                result = np_chart.analyze(data, subgroup_size)
-            elif chart_type == "C Chart":
-                result = c_chart.analyze(data)
-            elif chart_type == "U Chart":
-                result = u_chart.analyze(data, pd.Series([subgroup_size] * len(data)))
-            elif chart_type == "CUSUM":
-                result = cusum.analyze(data, k=self.cusum_k_spin.value(), h=self.cusum_h_spin.value())
-            elif chart_type == "EWMA":
-                result = ewma.analyze(data, lam=self.ewma_lam_spin.value(), L=self.ewma_L_spin.value())
-            elif chart_type == "Laney P'":
-                sample_sizes = pd.Series([subgroup_size] * len(data))
-                result = laney.laney_p_prime(data.values, sample_sizes.values, alpha=self.laney_alpha_spin.value())
-            elif chart_type == "Laney U'":
-                sample_sizes = pd.Series([subgroup_size] * len(data))
-                result = laney.laney_u_prime(data.values, sample_sizes.values, alpha=self.laney_alpha_spin.value())
-
-        self.current_result = {
-            "analysis_type": chart_type,
-            "params": {"column": col, "subgroup_size": subgroup_size, "chart_type": chart_type},
-            "result": result,
-            "chart_data": result,
-        }
-        if self.spec_check.isChecked():
-            result["usl"] = self.usl_spin.value()
-            result["lsl"] = self.lsl_spin.value()
-
-        from config.settings import get_setting
-        if not get_setting("nelson_rules_enabled", True):
-            for chart_key in ("xbar_chart", "r_chart", "s_chart", "i_chart", "mr_chart",
-                              "p_chart", "np_chart", "c_chart", "u_chart",
-                              "cusum_chart", "ewma_chart", "laney_p_chart", "laney_u_chart"):
-                chart = result.get(chart_key, {})
-                if isinstance(chart, dict):
-                    chart["violations"] = []
-        return self.current_result
+        def compute():
+            return _compute_spc(
+                frame, col, chart_type, subgroup_size, selected_cols,
+                cusum_k, cusum_h, ewma_lam, ewma_l, laney_alpha,
+                spec_on, usl, lsl, nelson)
+        return compute
 
     def display_result(self, analysis: dict[str, Any] | None = None):
         if analysis is None:
@@ -856,3 +832,53 @@ class SPCTab(BaseAnalysisTab):
         if col_name in combo_items:
             self.col_combo.setCurrentText(col_name)
             self.data_table.selectColumn(index)
+
+
+def _compute_spc(frame, col, chart_type, subgroup_size, selected_cols,
+                 cusum_k, cusum_h, ewma_lam, ewma_l, laney_alpha,
+                 spec_on, usl, lsl, nelson) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    if chart_type == "Hotelling T²":
+        result = hotelling.analyze(frame, selected_cols)
+    else:
+        data = pd.to_numeric(frame[col], errors="coerce").dropna()
+        if chart_type == "XBar-R":
+            result = xbar_r.analyze(data, subgroup_size)
+        elif chart_type == "XBar-S":
+            result = xbar_s.analyze(data, subgroup_size)
+        elif chart_type == "I-MR":
+            result = imr.analyze(data)
+        elif chart_type == "P Chart":
+            result = p_chart.analyze(data, pd.Series([subgroup_size] * len(data)))
+        elif chart_type == "NP Chart":
+            result = np_chart.analyze(data, subgroup_size)
+        elif chart_type == "C Chart":
+            result = c_chart.analyze(data)
+        elif chart_type == "U Chart":
+            result = u_chart.analyze(data, pd.Series([subgroup_size] * len(data)))
+        elif chart_type == "CUSUM":
+            result = cusum.analyze(data, k=cusum_k, h=cusum_h)
+        elif chart_type == "EWMA":
+            result = ewma.analyze(data, lam=ewma_lam, L=ewma_l)
+        elif chart_type == "Laney P'":
+            sample_sizes = pd.Series([subgroup_size] * len(data))
+            result = laney.laney_p_prime(data.values, sample_sizes.values, alpha=laney_alpha)
+        elif chart_type == "Laney U'":
+            sample_sizes = pd.Series([subgroup_size] * len(data))
+            result = laney.laney_u_prime(data.values, sample_sizes.values, alpha=laney_alpha)
+    if spec_on:
+        result["usl"] = usl
+        result["lsl"] = lsl
+    if not nelson:
+        for chart_key in ("xbar_chart", "r_chart", "s_chart", "i_chart", "mr_chart",
+                          "p_chart", "np_chart", "c_chart", "u_chart",
+                          "cusum_chart", "ewma_chart", "laney_p_chart", "laney_u_chart"):
+            chart = result.get(chart_key, {})
+            if isinstance(chart, dict):
+                chart["violations"] = []
+    return {
+        "analysis_type": chart_type,
+        "params": {"column": col, "subgroup_size": subgroup_size, "chart_type": chart_type},
+        "result": result,
+        "chart_data": result,
+    }

@@ -132,8 +132,10 @@ class VSMTab(BaseAnalysisTab):
             return
 
         demand = self.demand_spin.value()
-        engine = VSMEngine()
-        result = engine.analyze(self.ie_processes, self.ie_flows, demand)
+        processes = list(self.ie_processes)
+        flows = list(self.ie_flows)
+        from ui.worker import run_in_worker
+        result = run_in_worker(self, VSMEngine().analyze, processes, flows, demand)
 
         if result.get("error"):
             QMessageBox.warning(self, "分析失败", result["error"])

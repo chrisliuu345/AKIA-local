@@ -155,8 +155,9 @@ class OEETab(BaseAnalysisTab):
 
         group_by = {"全部": "all", "按班组": "group", "按班次": "shift"}[
             self.group_combo.currentText()]
-        engine = OEEEngine()
-        result = engine.analyze(self.ie_resources, group_by)
+        resources = list(self.ie_resources)
+        from ui.worker import run_in_worker
+        result = run_in_worker(self, OEEEngine().analyze, resources, group_by)
 
         if result.get("error"):
             QMessageBox.warning(self, "分析失败", result["error"])

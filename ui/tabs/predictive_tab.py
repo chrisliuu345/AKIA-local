@@ -291,7 +291,8 @@ class PredictiveTab(BaseAnalysisTab):
             self.status_label.setText(message)
             return None
         try:
-            result = self._make_job()()
+            from ui.worker import run_in_worker
+            result = run_in_worker(self, self._make_job())
         except Exception as exc:
             self.status_label.setStyleSheet("color: #E00000;")
             self.status_label.setText(f"训练失败: {exc}")

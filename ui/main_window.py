@@ -29,6 +29,7 @@ from core.session_manager import SessionManager
 from core.i18n import i18n
 from core.data_profiler import DataProfiler
 from core.project_manager import ProjectManager
+from ui.worker import run_in_worker
 from core.project_context import ProjectContext
 from core.measurement_store import MeasurementStore
 from core.evidence_ledger import EvidenceLedger
@@ -703,6 +704,9 @@ class MainWindow(QMainWindow):
         if tab is not None and hasattr(tab, "set_skill_context"):
             tab.set_skill_context(self.skill_matrix, self.save_skill_matrix,
                                   self.record_skill_balance_step)
+        if tab is not None and hasattr(tab, "set_balance_context"):
+            tab.set_balance_context(self.project_context,
+                                    self.record_line_balance_step)
 
     def record_skill_balance_step(self, phase: str, result: dict, frame=None):
         """把技能约束排班结果记入案例（基线/复测）；凭证含技能矩阵指纹。"""
@@ -728,6 +732,40 @@ class MainWindow(QMainWindow):
                     "unmet": list(result.get("unmet") or [])},
             note="技能约束线平衡（含技能矩阵指纹）")
         return step
+
+    def record_line_balance_step(self, phase: str, bundle: dict):
+        """把已确认标准工时算出的线平衡记入案例，并写入证据账本。"""
+        from analysis.ie.chain import IE_STANDARD_VERSION, record_balance
+
+        key = str(phase or "").strip().lower()
+        if key in ("re_measure", "remeasure"):
+            key = "re_measure"
+        elif key != "baseline":
+            raise ValueError(f"不支持的案例阶段: {phase!r}")
+        workflow = self._last_case_workflow
+        if workflow is None:
+            from core.case_workflow import CaseWorkflow
+
+            source = str((self.current_data or {}).get("source", "") or "")
+            title = (f"改善案例 — {os.path.basename(source)}" if source
+                     else "改善案例")
+            workflow = self._register_case_workflow(
+                CaseWorkflow(title=title, ledger=self.ledger))
+        event = record_balance(
+            self.ledger, phase=key, case_id=workflow.case.id, result=bundle)
+        record_ids = [str(item.get("standard_record_id"))
+                      for item in bundle.get("records") or []
+                      if item.get("standard_record_id")]
+        workflow.record_step(
+            key, result=bundle.get("balance") or {},
+            rule_version=IE_STANDARD_VERSION,
+            analysis_type="生产线平衡",
+            params={"standard_version": IE_STANDARD_VERSION,
+                    "standard_record_ids": record_ids,
+                    "evidence_event_id": event.event_id},
+            standard_refs=record_ids,
+            note="已确认标准工时进入线平衡")
+        return event
 
     def _on_standard_history(self):
         """标准版本时间线（B3）：对象 / 生效区间 / 变更原因 / 变更人。"""
@@ -974,7 +1012,14 @@ class MainWindow(QMainWindow):
             file_path, _sheet_names = dialog.get_selection()
             try:
                 self.status_label.setText(f"{i18n.tr('status.loading')}{file_path}...")
-                raw_data = self.data_loader.load(file_path)
+                loader = self.data_loader
+
+                def _load_quality():
+                    raw = loader.load(file_path)
+                    return raw, dict(loader.metadata or {})
+
+                raw_data, metadata = run_in_worker(self, _load_quality)
+                self.data_loader.metadata = metadata
                 audit("import_data", "user",
                       f"质量数据 {os.path.basename(file_path)}")
                 self._record_data_imported(file_path, raw_data, kind="quality")
@@ -1037,11 +1082,18 @@ class MainWindow(QMainWindow):
             file_path, _sheet_names = dialog.get_selection()
             try:
                 self.status_label.setText(f"{i18n.tr('status.loading')}{file_path}...")
-                raw_data = self.data_loader.load(file_path)
+                loader = self.data_loader
+
+                def _load_ie():
+                    raw = loader.load(file_path)
+                    ie = loader.load_ie_data()
+                    return raw, ie, dict(loader.metadata or {})
+
+                raw_data, ie_data, metadata = run_in_worker(self, _load_ie)
+                self.data_loader.metadata = metadata
                 audit("import_data", "user",
                       f"IE 数据 {os.path.basename(file_path)}")
                 self._record_data_imported(file_path, raw_data, kind="ie")
-                ie_data = self.data_loader.load_ie_data()
 
                 if not ie_data:
                     from core.ie_parser import IEDataParser
@@ -1108,13 +1160,21 @@ class MainWindow(QMainWindow):
                 return
             try:
                 self.status_label.setText(f"正在从数据库加载 {len(table_names)} 个表...")
+
+                def _load_db():
+                    db = SqlLoader()
+                    try:
+                        db.connect(config)
+                        tables = db.load(table_names)
+                        meta = dict(db.metadata or {})
+                    finally:
+                        with contextlib.suppress(Exception):
+                            db.disconnect()
+                    return tables, meta
+
+                raw_data, metadata = run_in_worker(self, _load_db)
                 loader = SqlLoader()
-                try:
-                    loader.connect(config)
-                    raw_data = loader.load(table_names)
-                finally:
-                    with contextlib.suppress(Exception):
-                        loader.disconnect()
+                loader.metadata = metadata
                 audit("import_db", "user",
                       f"数据库 {config.get('database', '')} 表数={len(raw_data)}")
                 self._record_data_imported(
@@ -1704,6 +1764,9 @@ class MainWindow(QMainWindow):
         if hasattr(tab, "set_skill_context"):
             tab.set_skill_context(self.skill_matrix, self.save_skill_matrix,
                                   self.record_skill_balance_step)
+        if hasattr(tab, "set_balance_context"):
+            tab.set_balance_context(self.project_context,
+                                    self.record_line_balance_step)
         return tab
 
     def _handle_tab_dependency_error(self, idx: int, class_name: str,
@@ -1839,21 +1902,23 @@ class MainWindow(QMainWindow):
         if file_path:
             try:
                 self.status_label.setText(f"{i18n.tr('status.exporting')} {fmt.upper()}...")
-                if fmt == "xlsx":
-                    from output.excel_report import ExcelReport
-                    ExcelReport().generate([result], file_path)
-                elif fmt == "docx":
-                    charts = self._collect_charts([idx])
-                    from output.word_report import WordReport
-                    WordReport().generate([result], file_path, charts=charts)
-                elif fmt == "pdf":
-                    charts = self._collect_charts([idx])
-                    from output.pdf_report import generate_pdf_report
-                    generate_pdf_report([result], file_path, charts=charts)
-                elif fmt == "pptx":
-                    charts = self._collect_charts([idx])
-                    from output.pptx_report import PptxReport
-                    PptxReport().generate([result], file_path, charts=charts)
+                charts = {} if fmt == "xlsx" else self._collect_charts([idx])
+
+                def _export_one():
+                    if fmt == "xlsx":
+                        from output.excel_report import ExcelReport
+                        ExcelReport().generate([result], file_path)
+                    elif fmt == "docx":
+                        from output.word_report import WordReport
+                        WordReport().generate([result], file_path, charts=charts)
+                    elif fmt == "pdf":
+                        from output.pdf_report import generate_pdf_report
+                        generate_pdf_report([result], file_path, charts=charts)
+                    elif fmt == "pptx":
+                        from output.pptx_report import PptxReport
+                        PptxReport().generate([result], file_path, charts=charts)
+
+                run_in_worker(self, _export_one)
                 self.status_label.setText(f"{i18n.tr('status.exported')}{file_path}")
                 audit("export", "user",
                       f"单Tab导出 {fmt} {os.path.basename(file_path)}")
@@ -1878,21 +1943,24 @@ class MainWindow(QMainWindow):
             try:
                 self.status_label.setText(f"{i18n.tr('status.exporting')} {fmt.upper()}...")
                 analyses_list = list(self.analyses.values())
-                if fmt == "xlsx":
-                    from output.excel_report import ExcelReport
-                    ExcelReport().generate(analyses_list, file_path)
-                elif fmt == "docx":
-                    charts = self._collect_charts(list(self.analyses.keys()))
-                    from output.word_report import WordReport
-                    WordReport().generate(analyses_list, file_path, charts=charts)
-                elif fmt == "pptx":
-                    charts = self._collect_charts(list(self.analyses.keys()))
-                    from output.pptx_report import PptxReport
-                    PptxReport().generate(analyses_list, file_path, charts=charts)
-                elif fmt == "pdf":
-                    charts = self._collect_charts(list(self.analyses.keys()))
-                    from output.pdf_report import generate_pdf_report
-                    generate_pdf_report(analyses_list, file_path, charts=charts)
+                charts = ({} if fmt == "xlsx"
+                          else self._collect_charts(list(self.analyses.keys())))
+
+                def _export_all():
+                    if fmt == "xlsx":
+                        from output.excel_report import ExcelReport
+                        ExcelReport().generate(analyses_list, file_path)
+                    elif fmt == "docx":
+                        from output.word_report import WordReport
+                        WordReport().generate(analyses_list, file_path, charts=charts)
+                    elif fmt == "pptx":
+                        from output.pptx_report import PptxReport
+                        PptxReport().generate(analyses_list, file_path, charts=charts)
+                    elif fmt == "pdf":
+                        from output.pdf_report import generate_pdf_report
+                        generate_pdf_report(analyses_list, file_path, charts=charts)
+
+                run_in_worker(self, _export_all)
                 self.status_label.setText(f"{i18n.tr('status.exported')}{file_path}")
                 audit("export", "user",
                       f"汇总导出 {fmt} {os.path.basename(file_path)}")
@@ -1968,21 +2036,35 @@ class MainWindow(QMainWindow):
             charts = {}
             for label, buf in self._collect_charts(list(self.analyses.keys())).items():
                 charts[label] = buf.getvalue() if hasattr(buf, 'getvalue') else buf
-            ProjectManager.save_project(
-                path, raw, self.analyses, charts, "",
-                project_context=self.project_context.to_dict() if self.project_context else None,
-                cases=[workflow.to_dict() for workflow in self.case_workflows],
-                standards=(self.project_context.standards.to_dict()
-                           if self.project_context else None),
-                measurements=self.measurement_store.to_dicts(),
-                evidence_events=self.ledger,
-                gauge_studies=self.gauge_monitor.to_dict(),
-                sampling=self.sampling_manager.to_dict(),
-                benefits=self.benefit_ledger.to_dict(),
-                skills=self.skill_matrix.to_dict(),
-            )
+            payload = {
+                "path": path, "raw": raw, "analyses": self.analyses, "charts": charts,
+                "project_context": self.project_context.to_dict() if self.project_context else None,
+                "cases": [workflow.to_dict() for workflow in self.case_workflows],
+                "standards": (self.project_context.standards.to_dict()
+                              if self.project_context else None),
+                "measurements": self.measurement_store.to_dicts(),
+                "evidence_events": self.ledger,
+                "gauge_studies": self.gauge_monitor.to_dict(),
+                "sampling": self.sampling_manager.to_dict(),
+                "benefits": self.benefit_ledger.to_dict(),
+                "skills": self.skill_matrix.to_dict(),
+            }
+
+            def _save_project():
+                ProjectManager.save_project(
+                    payload["path"], payload["raw"], payload["analyses"],
+                    payload["charts"], "",
+                    project_context=payload["project_context"],
+                    cases=payload["cases"], standards=payload["standards"],
+                    measurements=payload["measurements"],
+                    evidence_events=payload["evidence_events"],
+                    gauge_studies=payload["gauge_studies"],
+                    sampling=payload["sampling"], benefits=payload["benefits"],
+                    skills=payload["skills"])
+                return ProjectManager.recent_projects()
+
+            recent = run_in_worker(self, _save_project)
             self.status_label.setText(f"项目已保存: {path}")
-            recent = ProjectManager.recent_projects()
             self._rebuild_recent_menu(recent)
             recent_items = [(r["name"], r["path"]) for r in recent]
             self.welcome_page.set_recent_projects(recent_items)
@@ -2099,6 +2181,9 @@ class MainWindow(QMainWindow):
         if line_tab is not None and hasattr(line_tab, "set_skill_context"):
             line_tab.set_skill_context(self.skill_matrix, self.save_skill_matrix,
                                        self.record_skill_balance_step)
+        if line_tab is not None and hasattr(line_tab, "set_balance_context"):
+            line_tab.set_balance_context(self.project_context,
+                                         self.record_line_balance_step)
         sampling_tab = self._tab_cache.get(TAB_INDEX["sampling"])
         if sampling_tab is not None and hasattr(sampling_tab, "set_sampling_context"):
             sampling_tab.set_sampling_context(self.sampling_manager)
@@ -2311,7 +2396,7 @@ class MainWindow(QMainWindow):
             return
         try:
             self.status_label.setText("正在加载项目...")
-            project = ProjectManager.load_project(path)
+            project = run_in_worker(self, ProjectManager.load_project, path)
             self._apply_loaded_project(
                 project, path,
                 success_msg=(
@@ -2326,7 +2411,7 @@ class MainWindow(QMainWindow):
         """通过路径直接加载项目（供欢迎页最近项目使用）"""
         try:
             self.status_label.setText("正在加载项目...")
-            project = ProjectManager.load_project(path)
+            project = run_in_worker(self, ProjectManager.load_project, path)
             self._apply_loaded_project(project, path)
         except Exception as e:
             QMessageBox.critical(self, "加载失败", str(e))
@@ -2346,7 +2431,7 @@ class MainWindow(QMainWindow):
         if os.path.exists(path):
             try:
                 self.status_label.setText("正在加载项目...")
-                project = ProjectManager.load_project(path)
+                project = run_in_worker(self, ProjectManager.load_project, path)
                 self._apply_loaded_project(
                     project, path,
                     status_msg=f"项目已加载: {len(project['raw_data'])} sheets",
@@ -2430,7 +2515,14 @@ class MainWindow(QMainWindow):
                 data = self.session_manager.load(file_path)
                 src_file = data.get("file_path", "")
                 if src_file and os.path.exists(src_file):
-                    raw_data = self.data_loader.load(src_file)
+                    loader = self.data_loader
+
+                    def _load_session_file():
+                        raw = loader.load(src_file)
+                        return raw, dict(loader.metadata or {})
+
+                    raw_data, metadata = run_in_worker(self, _load_session_file)
+                    self.data_loader.metadata = metadata
                     self.current_data = {
                         "file_path": src_file,
                         "raw_data": raw_data,
@@ -3036,7 +3128,14 @@ class MainWindow(QMainWindow):
     def _load_and_route(self, file_path: str):
         try:
             self.status_label.setText(f"加载中... {file_path}")
-            raw_data = self.data_loader.load(file_path)
+            loader = self.data_loader
+
+            def _load_dropped():
+                raw = loader.load(file_path)
+                return raw, dict(loader.metadata or {})
+
+            raw_data, metadata = run_in_worker(self, _load_dropped)
+            self.data_loader.metadata = metadata
             audit("import_data",
                   "user",
                   f"拖拽导入 {os.path.basename(file_path)}")

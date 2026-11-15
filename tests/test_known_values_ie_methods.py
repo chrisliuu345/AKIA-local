@@ -51,6 +51,7 @@ def test_freivalds_standard_time():
     assert_close(row["avg_time"], 10.0, _TIME, context="观测时间均值")
     assert_close(row["normal_time"], 12.5, _TIME, context="正常时间")
     assert_close(row["standard_time"], 15.0, _TIME, context="标准工时")
+    assert row["observation_times"] == [8.0, 10.0, 12.0, 10.0]
 
 
 def test_ie_line_balance_rate():

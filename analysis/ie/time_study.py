@@ -173,6 +173,7 @@ class TimeStudyEngine:
                 "outliers_removed": len(outliers),
                 "outlier_indices": outliers,
                 "stats": stats_result,
+                "observation_times": [round(float(value), 6) for value in times_clean.tolist()],
                 "avg_time": round(avg_time, 3),
                 "normal_time": round(normal_time, 3),
                 "standard_time": round(standard_time, 3),

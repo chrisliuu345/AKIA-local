@@ -1,8 +1,14 @@
 """标准工时进入线平衡，基线与复测写入证据账本。不使用模型或网络。"""
 
-from analysis.ie.chain import IE_STANDARD_VERSION, record_balance, run_confirmed_balance
-from core.data_objects import TimeObservation
+from analysis.ie.chain import (
+    IE_STANDARD_VERSION,
+    apply_confirmed_standard_times,
+    record_balance,
+    run_confirmed_balance,
+)
+from core.data_objects import Process, TimeObservation
 from core.evidence_ledger import EvidenceLedger, verify_chain
+from core.project_context import ProjectContext
 
 
 def _obs(process: str, seconds: float, cycle: int) -> TimeObservation:
@@ -48,3 +54,21 @@ def test_confirmed_standard_time_becomes_line_balance_evidence():
         assert event.object_refs == ["case:CASE-1", f"phase:{event.payload['phase']}"]
     assert second.payload["balance_rate"] == 0.8125
     assert second.payload["inputs"][1]["standard_time"] == 24.0
+
+
+def test_saved_standard_time_replaces_imported_cycle_time():
+    context = ProjectContext()
+    context.record_standard_time(
+        "P1", standard_time_s=15.0, normal_time_s=12.5, allowance_pct=20,
+        rating=1.25, cycles=4, operator="OP",
+        observation_times=[8, 10, 12, 10], change_reason="确认标准工时")
+    imported = [
+        Process("P1", "装配", cycle_time=99),
+        Process("P2", "检验", cycle_time=30),
+    ]
+    processes, applied = apply_confirmed_standard_times(imported, context.standards)
+    assert imported[0].cycle_time == 99
+    assert [item.cycle_time for item in processes] == [15.0, 30.0]
+    assert applied[0]["standard_record_id"] == context.standards.current("P1").record_id
+    assert applied[0]["observation_times"] == [8.0, 10.0, 12.0, 10.0]
+    assert applied[0]["source"] == "confirmed_standard_time"

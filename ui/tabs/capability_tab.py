@@ -267,7 +267,9 @@ class CapabilityTab(BaseAnalysisTab):
             return None
         self.result_text.setStyleSheet("")
         try:
-            result = self.run_analysis()
+            from ui.worker import run_in_worker
+            result = run_in_worker(self, self._capability_job())
+            self.current_result = result
             self.display_result(result)
             self.analysis_completed.emit()
             return result
@@ -278,6 +280,11 @@ class CapabilityTab(BaseAnalysisTab):
             return None
 
     def run_analysis(self) -> dict[str, Any]:
+        finished = self._capability_job()()
+        self.current_result = finished
+        return finished
+
+    def _capability_job(self):
         from analysis.capability import normal_cap, non_normal_cap, between_within_cap, tolerance_interval
         from analysis.distribution import fitting
 
@@ -288,48 +295,19 @@ class CapabilityTab(BaseAnalysisTab):
         target = self.target_spin.value()
         sub_size = self.subgroup_spin.value()
         data = pd.to_numeric(self.df[col], errors="coerce").dropna()
+        frame = self.df
+        subgroup_column = self.parsed_info.get("subgroup_column", "")
+        ti_text = self.ti_method_combo.currentText()
+        ti_confidence = self.ti_confidence_spin.value()
+        ti_proportion = self.ti_proportion_spin.value()
+        dist_label = self.dist_combo.currentText()
 
-        result = {}
-        if method == "正态过程能力":
-            result = normal_cap.analyze(data, usl, lsl, target, sub_size)
-        elif method.startswith("非正态"):
-            if "百分位法" in method:
-                m = "percentile"
-            else:
-                m = "box_cox" if "Box-Cox" in method else "johnson"
-            result = non_normal_cap.analyze(data, usl, lsl, m)
-        elif method == "组间/组内能力":
-            result = between_within_cap.analyze(self.df, col, self.parsed_info.get("subgroup_column", ""), usl, lsl)
-        elif method == "公差区间 (正态)":
-            ti_method = "two-sided" if "双侧" in self.ti_method_combo.currentText() else "one-sided"
-            result = tolerance_interval.tolerance_interval_normal(
-                data.values, 
-                confidence=self.ti_confidence_spin.value(),
-                proportion=self.ti_proportion_spin.value(),
-                method=ti_method
-            )
-        elif method == "公差区间 (非参数)":
-            ti_method = "two-sided" if "双侧" in self.ti_method_combo.currentText() else "one-sided"
-            result = tolerance_interval.tolerance_interval_nonparam(
-                data.values,
-                confidence=self.ti_confidence_spin.value(),
-                proportion=self.ti_proportion_spin.value(),
-                method=ti_method
-            )
-        elif method == "分布拟合":
-            dist_map = {"正态": "normal", "对数正态": "lognormal", "指数": "exponential", "Gamma": "gamma", "Weibull": "weibull"}
-            dist_name = dist_map.get(self.dist_combo.currentText(), "normal")
-            fit_result = fitting.fit_distribution(data, dist_name)
-            gof_result = fitting.goodness_of_fit(data, dist_name)
-            result = {**fit_result, **gof_result}
-
-        self.current_result = {
-            "analysis_type": method,
-            "params": {"column": col, "usl": usl, "lsl": lsl, "target": target, "method": method},
-            "result": result,
-            "chart_data": result,
-        }
-        return self.current_result
+        def compute():
+            return _compute_capability(
+                data, frame, col, method, usl, lsl, target, sub_size,
+                subgroup_column, ti_text, ti_confidence, ti_proportion, dist_label,
+                normal_cap, non_normal_cap, between_within_cap, tolerance_interval, fitting)
+        return compute
 
     def save_specification_standard(self, reason: str = ""):
         """把当前 USL/LSL/目标值记录为规格限标准版本（B3-2）。"""
@@ -487,3 +465,40 @@ class CapabilityTab(BaseAnalysisTab):
         self.title_label.setText(i18n.tr("cap.title"))
         self.run_btn.setText(i18n.tr("cap.run_btn"))
         self.result_label.setText(i18n.tr("cap.result"))
+
+
+def _compute_capability(data, frame, col, method, usl, lsl, target, sub_size,
+                        subgroup_column, ti_text, ti_confidence, ti_proportion,
+                        dist_label, normal_cap, non_normal_cap, between_within_cap,
+                        tolerance_interval, fitting) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    if method == "正态过程能力":
+        result = normal_cap.analyze(data, usl, lsl, target, sub_size)
+    elif method.startswith("非正态"):
+        if "百分位法" in method:
+            transform = "percentile"
+        else:
+            transform = "box_cox" if "Box-Cox" in method else "johnson"
+        result = non_normal_cap.analyze(data, usl, lsl, transform)
+    elif method == "组间/组内能力":
+        result = between_within_cap.analyze(frame, col, subgroup_column, usl, lsl)
+    elif method == "公差区间 (正态)":
+        ti_method = "two-sided" if "双侧" in ti_text else "one-sided"
+        result = tolerance_interval.tolerance_interval_normal(
+            data.values, confidence=ti_confidence, proportion=ti_proportion, method=ti_method)
+    elif method == "公差区间 (非参数)":
+        ti_method = "two-sided" if "双侧" in ti_text else "one-sided"
+        result = tolerance_interval.tolerance_interval_nonparam(
+            data.values, confidence=ti_confidence, proportion=ti_proportion, method=ti_method)
+    elif method == "分布拟合":
+        dist_map = {"正态": "normal", "对数正态": "lognormal", "指数": "exponential",
+                    "Gamma": "gamma", "Weibull": "weibull"}
+        dist_name = dist_map.get(dist_label, "normal")
+        result = {**fitting.fit_distribution(data, dist_name),
+                  **fitting.goodness_of_fit(data, dist_name)}
+    return {
+        "analysis_type": method,
+        "params": {"column": col, "usl": usl, "lsl": lsl, "target": target, "method": method},
+        "result": result,
+        "chart_data": result,
+    }

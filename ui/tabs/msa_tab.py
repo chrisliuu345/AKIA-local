@@ -220,7 +220,9 @@ class MSATab(BaseAnalysisTab):
             return None
         self.result_text.setStyleSheet("")
         try:
-            result = self.run_analysis()
+            from ui.worker import run_in_worker
+            result = run_in_worker(self, self._msa_job())
+            self.current_result = result
             self.display_result(result)
             self.analysis_completed.emit()
             return result
@@ -231,6 +233,11 @@ class MSATab(BaseAnalysisTab):
             return None
 
     def run_analysis(self) -> dict[str, Any]:
+        finished = self._msa_job()()
+        self.current_result = finished
+        return finished
+
+    def _msa_job(self):
         from analysis.msa import gage_rr, linearity_bias, attribute_agree, type1_study, emp
 
         method = self.method_combo.currentText()
@@ -239,32 +246,13 @@ class MSATab(BaseAnalysisTab):
         operator = self.operator_col.currentText()
         tolerance = self.tolerance_spin.value()
         reference = self.ref_spin.value()
+        frame = self.df
 
-        result = {}
-        if "R&R" in method and "交叉" in method:
-            result = gage_rr.analyze_crossed(self.df, measure, part, operator, tolerance)
-        elif "R&R" in method and "嵌套" in method:
-            result = gage_rr.analyze_nested(self.df, measure, part, operator, tolerance)
-        elif "EMP" in method:
-            result = emp.analyze_crossed(self.df, measure, part, operator, tolerance)
-        elif "偏倚" in method:
-            data = pd.to_numeric(self.df[measure], errors="coerce").dropna()
-            result = linearity_bias.analyze_bias(data, reference)
-        elif "线性" in method:
-            result = linearity_bias.analyze_linearity(self.df, measure, part)
-        elif "属性一致性" in method:
-            result = attribute_agree.analyze(self.df, measure, part, operator)
-        elif "Type 1" in method:
-            data = pd.to_numeric(self.df[measure], errors="coerce").dropna()
-            result = type1_study.analyze(data, reference, tolerance=tolerance)
-
-        self.current_result = {
-            "analysis_type": method,
-            "params": {"measurement": measure, "part": part, "operator": operator, "tolerance": tolerance, "method": method},
-            "result": result,
-            "chart_data": result,
-        }
-        return self.current_result
+        def compute():
+            return _compute_msa(
+                frame, method, measure, part, operator, tolerance, reference,
+                gage_rr, linearity_bias, attribute_agree, type1_study, emp)
+        return compute
 
     def display_result(self, analysis: dict[str, Any] | None = None):
         if analysis is None:
@@ -401,3 +389,31 @@ class MSATab(BaseAnalysisTab):
         self.title_label.setText(i18n.tr("msa.title"))
         self.run_btn.setText(i18n.tr("msa.run_btn"))
         self.result_label.setText(i18n.tr("msa.result"))
+
+
+def _compute_msa(frame, method, measure, part, operator, tolerance, reference,
+                 gage_rr, linearity_bias, attribute_agree, type1_study, emp) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    if "R&R" in method and "交叉" in method:
+        result = gage_rr.analyze_crossed(frame, measure, part, operator, tolerance)
+    elif "R&R" in method and "嵌套" in method:
+        result = gage_rr.analyze_nested(frame, measure, part, operator, tolerance)
+    elif "EMP" in method:
+        result = emp.analyze_crossed(frame, measure, part, operator, tolerance)
+    elif "偏倚" in method:
+        data = pd.to_numeric(frame[measure], errors="coerce").dropna()
+        result = linearity_bias.analyze_bias(data, reference)
+    elif "线性" in method:
+        result = linearity_bias.analyze_linearity(frame, measure, part)
+    elif "属性一致性" in method:
+        result = attribute_agree.analyze(frame, measure, part, operator)
+    elif "Type 1" in method:
+        data = pd.to_numeric(frame[measure], errors="coerce").dropna()
+        result = type1_study.analyze(data, reference, tolerance=tolerance)
+    return {
+        "analysis_type": method,
+        "params": {"measurement": measure, "part": part, "operator": operator,
+                   "tolerance": tolerance, "method": method},
+        "result": result,
+        "chart_data": result,
+    }

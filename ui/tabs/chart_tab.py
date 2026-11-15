@@ -247,20 +247,23 @@ class ChartTab(BaseAnalysisTab):
         return None
 
     def run_analysis(self) -> dict[str, Any]:
+        packed = self._chart_job()()
+        self.current_result = packed["stored"]
+        return packed["shown"]
+
+    def _chart_job(self):
         chart_type = self.chart_type_combo.currentText()
         params = self._collect_params()
-
         all_cols = list(params.get("columns", []))
         for multi_list in params.get("multi_columns", {}).values():
             all_cols.extend(multi_list)
-        all_cols = [c for c in all_cols if c]
-
+        all_cols = [col for col in all_cols if col]
+        frame = self.df
         data = {
-            "df": self.df,
+            "df": frame,
             "columns": all_cols,
             "multi_columns": params.get("multi_columns", {}),
         }
-
         options = {
             "title": self.title_edit.text().strip(),
             "dark_mode": True,
@@ -270,22 +273,21 @@ class ChartTab(BaseAnalysisTab):
             options["show_regression"] = self.cb_show_regression.isChecked()
         options["chart_options"] = self._chart_options.copy()
 
-        fig = generate_chart(chart_type, data, options)
-
-        if chart_type == "小多图" and len(all_cols) >= 2:
-            from analysis.charts.faceting import faceting_summary_lines
-            lines = faceting_summary_lines(self.df, all_cols[0], all_cols[1])
-            summary = "\n".join(lines)
-        else:
-            summary = _build_summary(self.df, all_cols) if all_cols else ""
-
-        self.current_result = {
-            "analysis_type": f"Chart: {chart_type}",
-            "params": {"chart_type": chart_type, "columns": all_cols},
-            "result": {"summary": summary, "chart_type": chart_type},
-        }
-
-        return {"figure": fig, "summary": summary, "chart_type": chart_type}
+        def compute():
+            fig = generate_chart(chart_type, data, options)
+            if chart_type == "小多图" and len(all_cols) >= 2:
+                from analysis.charts.faceting import faceting_summary_lines
+                summary = "\n".join(faceting_summary_lines(frame, all_cols[0], all_cols[1]))
+            else:
+                summary = _build_summary(frame, all_cols) if all_cols else ""
+            shown = {"figure": fig, "summary": summary, "chart_type": chart_type}
+            stored = {
+                "analysis_type": f"Chart: {chart_type}",
+                "params": {"chart_type": chart_type, "columns": all_cols},
+                "result": {"summary": summary, "chart_type": chart_type},
+            }
+            return {"shown": shown, "stored": stored}
+        return compute
 
     def display_result(self, analysis: dict[str, Any] | None = None):
         if analysis is None:
@@ -312,10 +314,13 @@ class ChartTab(BaseAnalysisTab):
             self.result_text.setText(msg)
             return None
         try:
-            result = self.run_analysis()
-            self.display_result(result)
+            from ui.worker import run_in_worker
+            result = run_in_worker(self, self._chart_job())
+            self.current_result = result["stored"]
+            shown = result["shown"]
+            self.display_result(shown)
             self.analysis_completed.emit()
-            return result
+            return shown
         except Exception as e:
             self._clear_canvas()
             self.result_text.setStyleSheet("color: #E00000; ")

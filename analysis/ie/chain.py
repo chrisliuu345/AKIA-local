@@ -91,6 +91,93 @@ def processes_from_confirmed(records: list[dict[str, Any]], *,
     return processes
 
 
+def apply_confirmed_standard_times(processes: list[Process], standards
+                                   ) -> tuple[list[Process], list[dict[str, Any]]]:
+    """用现行标准工时替换对应工序的 CT。没有标准的工序保持导入值。
+
+    不修改传入的工序列表。返回新的工序列表，以及被替换工序的可还原输入。
+    """
+    applied: list[dict[str, Any]] = []
+    updated: list[Process] = []
+    for process in processes:
+        record = _current_standard_time(standards, process.process_id)
+        standard = _standard_seconds(record)
+        if record is None or standard <= 0:
+            updated.append(_copy_process(process))
+            continue
+        payload = record.payload or {}
+        updated.append(_copy_process(process, cycle_time=standard))
+        applied.append({
+            "process_id": process.process_id,
+            "operator": str(payload.get("operator") or ""),
+            "observation_times": [float(value) for value in (payload.get("observation_times") or [])],
+            "rating": payload.get("rating"),
+            "allowance_pct": payload.get("allowance_pct"),
+            "normal_time": payload.get("normal_time_s"),
+            "standard_time": standard,
+            "standard_record_id": record.record_id,
+            "standard_version": IE_STANDARD_VERSION,
+            "formula": IE_FORMULA,
+            "source": "confirmed_standard_time",
+        })
+    return updated, applied
+
+
+def bundle_balance(processes: list[Process], balance: dict[str, Any],
+                   applied: list[dict[str, Any]]) -> dict[str, Any]:
+    """把一次线平衡和它使用的标准工时收成证据可写入的结果。"""
+    if balance.get("error"):
+        raise ValueError(balance["error"])
+    applied_ids = {item["process_id"] for item in applied}
+    records = list(applied)
+    for process in processes:
+        if process.process_id in applied_ids or not process.cycle_time:
+            continue
+        records.append({
+            "process_id": process.process_id,
+            "standard_time": float(process.cycle_time),
+            "observation_times": [],
+            "source": "imported_cycle_time",
+            "standard_version": "",
+        })
+    return {
+        "records": records,
+        "processes": processes,
+        "balance": balance,
+        "standard_version": IE_STANDARD_VERSION,
+        "formula": IE_FORMULA,
+    }
+
+
+def _current_standard_time(standards, process_id: str):
+    if standards is None or not hasattr(standards, "current"):
+        return None
+    record = standards.current(process_id)
+    if record is None or getattr(record, "object_type", "") != "standard_time":
+        return None
+    return record
+
+
+def _standard_seconds(record) -> float:
+    if record is None:
+        return 0.0
+    try:
+        return float((record.payload or {}).get("standard_time_s") or 0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _copy_process(process: Process, cycle_time: float | None = None) -> Process:
+    return Process(
+        process_id=process.process_id,
+        process_name=process.process_name,
+        equipment=process.equipment,
+        cycle_time=process.cycle_time if cycle_time is None else float(cycle_time),
+        labor_count=process.labor_count,
+        predecessors=list(process.predecessors or []),
+    )
+
+
 def run_confirmed_balance(observations: list[TimeObservation], *,
                           rating: float = 1.0,
                           allowance_pct: float = 12.0,

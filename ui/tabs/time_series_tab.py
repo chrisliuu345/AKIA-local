@@ -189,7 +189,9 @@ class TimeSeriesTab(BaseAnalysisTab):
             self.result_text.setText(msg)
             return None
         try:
-            result = self.run_analysis()
+            from ui.worker import run_in_worker
+            raw, method, value_col = run_in_worker(self, self._ts_job())
+            result = self._store_ts(raw, method, value_col)
             if result and "error" in result:
                 self._clear_canvas()
                 self.result_text.setStyleSheet("color: #E00000; ")
@@ -204,61 +206,37 @@ class TimeSeriesTab(BaseAnalysisTab):
             self.result_text.setText(f"分析失败: {e!s}")
 
     def run_analysis(self) -> dict[str, Any]:
+        raw, method, value_col = self._ts_job()()
+        return self._store_ts(raw, method, value_col)
+
+    def _store_ts(self, raw: dict[str, Any], method: str, value_col: str) -> dict[str, Any]:
+        self.current_result = {
+            "analysis_type": f"TimeSeries: {method}",
+            "params": {"method": method, "value_col": value_col},
+            "result": raw,
+        }
+        return raw
+
+    def _ts_job(self):
         from analysis.time_series import acf_pacf, seasonal_decomposition, exponential_smoothing, arima, forecasting
 
         value_col = self.value_col_combo.currentText()
         data = self.df[value_col].dropna()
-
+        method = "acf_pacf"
         for key, btn in self.method_btns.items():
             if btn.isChecked():
                 method = key
                 break
-        else:
-            method = "acf_pacf"
+        period = self.seasonal_period_spin.value()
+        seasonal = "additive" if self.seasonal_type_combo.currentIndex() == 0 else "multiplicative"
+        steps = self.forecast_steps_spin.value()
+        order = (self.arima_p_spin.value(), self.arima_d_spin.value(), self.arima_q_spin.value())
 
-        if method == "acf_pacf":
-            result = acf_pacf.analyze(data)
-        elif method == "decomposition":
-            period = self.seasonal_period_spin.value()
-            if period == 2:
-                period = None
-            result = seasonal_decomposition.analyze(data, period=period)
-        elif method == "exp_smoothing":
-            period = self.seasonal_period_spin.value()
-            if period == 2:
-                period = None
-            seasonal = "additive" if self.seasonal_type_combo.currentIndex() == 0 else "multiplicative"
-            result = exponential_smoothing.analyze(
-                data, method="holt_winters", seasonal=seasonal,
-                seasonal_periods=period, forecast_steps=self.forecast_steps_spin.value(),
-            )
-        elif method == "arima":
-            p = self.arima_p_spin.value()
-            d = self.arima_d_spin.value()
-            q = self.arima_q_spin.value()
-            use_auto = (p == 0 and q == 0)
-            result = arima.analyze(
-                data, order=None if use_auto else (p, d, q),
-                auto_select=use_auto, forecast_steps=self.forecast_steps_spin.value(),
-            )
-        elif method == "compare":
-            period = self.seasonal_period_spin.value()
-            if period == 2:
-                period = None
-            seasonal = "additive" if self.seasonal_type_combo.currentIndex() == 0 else "multiplicative"
-            result = forecasting.compare_models(
-                data, forecast_steps=self.forecast_steps_spin.value(),
-                seasonal_periods=period, seasonal=seasonal,
-            )
-        else:
-            result = {"error": f"未知方法: {method}"}
-
-        self.current_result = {
-            "analysis_type": f"TimeSeries: {method}",
-            "params": {"method": method, "value_col": value_col},
-            "result": result,
-        }
-        return result
+        def compute():
+            return _compute_ts(
+                data, method, period, seasonal, steps, order,
+                acf_pacf, seasonal_decomposition, exponential_smoothing, arima, forecasting), method, value_col
+        return compute
 
     def display_result(self, result: dict[str, Any]):
         self._clear_canvas()
@@ -342,3 +320,26 @@ class TimeSeriesTab(BaseAnalysisTab):
             self._switch_result_view(0)
         except Exception as e:
             self.result_text.append(f"\n图表渲染失败: {e!s}")
+
+
+def _compute_ts(data, method, period, seasonal, steps, order,
+                acf_pacf, seasonal_decomposition, exponential_smoothing, arima, forecasting):
+    season = None if period == 2 else period
+    if method == "acf_pacf":
+        return acf_pacf.analyze(data)
+    if method == "decomposition":
+        return seasonal_decomposition.analyze(data, period=season)
+    if method == "exp_smoothing":
+        return exponential_smoothing.analyze(
+            data, method="holt_winters", seasonal=seasonal,
+            seasonal_periods=season, forecast_steps=steps)
+    if method == "arima":
+        p, d, q = order
+        use_auto = p == 0 and q == 0
+        return arima.analyze(
+            data, order=None if use_auto else (p, d, q),
+            auto_select=use_auto, forecast_steps=steps)
+    if method == "compare":
+        return forecasting.compare_models(
+            data, forecast_steps=steps, seasonal_periods=season, seasonal=seasonal)
+    return {"error": f"未知方法: {method}"}

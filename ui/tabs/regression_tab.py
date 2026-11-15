@@ -158,7 +158,9 @@ class RegressionTab(BaseAnalysisTab):
             self.result_text.setText(f"{i18n.tr('reg.val_param_failed')}\n{msg}")
             return None
         try:
-            result = self.run_analysis()
+            from ui.worker import run_in_worker
+            result = run_in_worker(self, self._regression_job())
+            self.current_result = result
             self.display_result(result)
             self.analysis_completed.emit()
             return result
@@ -175,20 +177,28 @@ class RegressionTab(BaseAnalysisTab):
         return True, ""
 
     def run_analysis(self) -> dict[str, Any]:
+        finished = self._regression_job()()
+        self.current_result = finished
+        return finished
+
+    def _regression_job(self):
         response = self.response_combo.currentText()
         factors = []
         for combo in [self.factor1_combo, self.factor2_combo, self.factor3_combo]:
             txt = combo.currentText()
             if txt and txt != response:
                 factors.append(txt)
-        result = reg_analyze(self.df, response, factors)
-        self.current_result = {
-            "analysis_type": f"Regression: {response}",
-            "params": {"response": response, "factors": factors},
-            "result": result,
-            "chart_data": result,
-        }
-        return self.current_result
+        frame = self.df
+
+        def compute():
+            result = reg_analyze(frame, response, factors)
+            return {
+                "analysis_type": f"Regression: {response}",
+                "params": {"response": response, "factors": list(factors)},
+                "result": result,
+                "chart_data": result,
+            }
+        return compute
 
     def display_result(self, analysis: dict[str, Any] | None = None):
         if analysis is None:

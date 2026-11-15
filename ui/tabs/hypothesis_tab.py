@@ -266,7 +266,9 @@ class HypothesisTab(BaseAnalysisTab):
             return None
         self.result_text.setStyleSheet("")
         try:
-            result = self.run_analysis()
+            from ui.worker import run_in_worker
+            result = run_in_worker(self, self._hypothesis_job())
+            self.current_result = result
             self.display_result(result)
             self.analysis_completed.emit()
             return result
@@ -277,6 +279,11 @@ class HypothesisTab(BaseAnalysisTab):
             return None
 
     def run_analysis(self) -> dict[str, Any]:
+        finished = self._hypothesis_job()()
+        self.current_result = finished
+        return finished
+
+    def _hypothesis_job(self):
         from analysis.hypothesis import t_tests, anova, normality, variance_tests, nonparametric, equivalence, proportion
 
         method = self.test_combo.currentText()
@@ -287,81 +294,17 @@ class HypothesisTab(BaseAnalysisTab):
         target = self.target_spin.value()
         alternative = self.alternative_combo.currentText()
         confidence = self.confidence_spin.value()
+        margin = self.margin_spin.value()
+        successes = (self.prop_success1_spin.value(), self.prop_n1_spin.value(),
+                     self.prop_success2_spin.value(), self.prop_n2_spin.value())
+        frame = self.df
 
-        result = {}
-        if method == "单样本 t检验":
-            data = pd.to_numeric(self.df[col1], errors="coerce").dropna()
-            result = t_tests.one_sample(data, target, alternative)
-        elif method == "双样本 t检验":
-            g1 = pd.to_numeric(self.df[col1], errors="coerce").dropna()
-            g2 = pd.to_numeric(self.df[col2], errors="coerce").dropna()
-            result = t_tests.two_sample(g1, g2, alternative=alternative)
-        elif method == "配对 t检验":
-            g1 = pd.to_numeric(self.df[col1], errors="coerce").dropna()
-            g2 = pd.to_numeric(self.df[col2], errors="coerce").dropna()
-            result = t_tests.paired(g1, g2, alternative)
-        elif method == "单因素 ANOVA":
-            result = anova.one_way(self.df, col1, factor)
-        elif method == "双因素 ANOVA":
-            result = anova.two_way(self.df, col1, factor, factor2)
-        elif method == "正态性检验":
-            data = pd.to_numeric(self.df[col1], errors="coerce").dropna()
-            result = normality.normality_test(data, confidence)
-        elif method == "方差齐性检验":
-            groups = [pd.to_numeric(self.df[c], errors="coerce").dropna() for c in [col1, col2]]
-            result = variance_tests.variance_tests(*groups, confidence)
-        elif method == "Mood 中位数检验":
-            groups = [pd.to_numeric(self.df[c], errors="coerce").dropna().values 
-                     for c in [col1, col2] if c and c in self.df.columns]
-            result = nonparametric.mood_median_test(*groups)
-        elif method == "Friedman 检验":
-            groups = [pd.to_numeric(self.df[c], errors="coerce").dropna().values 
-                     for c in [col1, col2] if c and c in self.df.columns]
-            result = nonparametric.friedman_test(*groups)
-        elif method == "Mann-Whitney U":
-            g1 = pd.to_numeric(self.df[col1], errors="coerce").dropna().values
-            g2 = pd.to_numeric(self.df[col2], errors="coerce").dropna().values
-            result = nonparametric.mann_whitney(g1, g2, alternative=alternative)
-        elif method == "Wilcoxon 符号秩":
-            g1 = pd.to_numeric(self.df[col1], errors="coerce").dropna().values
-            g2 = pd.to_numeric(self.df[col2], errors="coerce").dropna().values
-            result = nonparametric.wilcoxon_signed_rank(g1, g2, alternative=alternative)
-        elif method == "Kruskal-Wallis":
-            groups = [pd.to_numeric(self.df[col1], errors="coerce").dropna().values]
-            if col2 and col2 in self.df.columns:
-                groups.append(pd.to_numeric(self.df[col2], errors="coerce").dropna().values)
-            result = nonparametric.kruskal_wallis(*groups)
-        elif method == "TOST 单样本等价检验":
-            data = pd.to_numeric(self.df[col1], errors="coerce").dropna()
-            result = equivalence.one_sample_tost(data, target, self.margin_spin.value())
-        elif method == "TOST 双样本等价检验":
-            g1 = pd.to_numeric(self.df[col1], errors="coerce").dropna()
-            g2 = pd.to_numeric(self.df[col2], errors="coerce").dropna()
-            result = equivalence.two_sample_tost(g1, g2, self.margin_spin.value())
-        elif method == "χ²拟合优度检验":
-            raw = self.df[col1].dropna()
-            if raw.dtype in ("float64", "float32") and raw.nunique() > 20:
-                data = raw.value_counts().sort_index()
-            else:
-                data = raw.value_counts()
-            result = proportion.chi_square_gof(data)
-        elif method == "χ²独立性检验":
-            result = proportion.chi_square_independence(self.df, col1, col2)
-        elif method == "双比例检验":
-            result = proportion.two_proportion_test(
-                self.prop_success1_spin.value(),
-                self.prop_n1_spin.value(),
-                self.prop_success2_spin.value(),
-                self.prop_n2_spin.value()
-            )
-
-        self.current_result = {
-            "analysis_type": method,
-            "params": {"column1": col1, "column2": col2, "factor": factor, "target": target, "alternative": alternative},
-            "result": result,
-            "chart_data": result,
-        }
-        return self.current_result
+        def compute():
+            return _compute_hypothesis(
+                frame, method, col1, col2, factor, factor2, target, alternative,
+                confidence, margin, successes,
+                t_tests, anova, normality, variance_tests, nonparametric, equivalence, proportion)
+        return compute
 
     def display_result(self, analysis: dict[str, Any] | None = None):
         if analysis is None:
@@ -509,3 +452,77 @@ class HypothesisTab(BaseAnalysisTab):
         self.title_label.setText(i18n.tr("hyp.title"))
         self.run_btn.setText(i18n.tr("hyp.run_btn"))
         self.result_label.setText(i18n.tr("hyp.result"))
+
+
+def _compute_hypothesis(frame, method, col1, col2, factor, factor2, target, alternative,
+                        confidence, margin, successes,
+                        t_tests, anova, normality, variance_tests, nonparametric,
+                        equivalence, proportion) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    if method == "单样本 t检验":
+        data = pd.to_numeric(frame[col1], errors="coerce").dropna()
+        result = t_tests.one_sample(data, target, alternative)
+    elif method == "双样本 t检验":
+        g1 = pd.to_numeric(frame[col1], errors="coerce").dropna()
+        g2 = pd.to_numeric(frame[col2], errors="coerce").dropna()
+        result = t_tests.two_sample(g1, g2, alternative=alternative)
+    elif method == "配对 t检验":
+        g1 = pd.to_numeric(frame[col1], errors="coerce").dropna()
+        g2 = pd.to_numeric(frame[col2], errors="coerce").dropna()
+        result = t_tests.paired(g1, g2, alternative)
+    elif method == "单因素 ANOVA":
+        result = anova.one_way(frame, col1, factor)
+    elif method == "双因素 ANOVA":
+        result = anova.two_way(frame, col1, factor, factor2)
+    elif method == "正态性检验":
+        data = pd.to_numeric(frame[col1], errors="coerce").dropna()
+        result = normality.normality_test(data, confidence)
+    elif method == "方差齐性检验":
+        groups = [pd.to_numeric(frame[c], errors="coerce").dropna() for c in [col1, col2]]
+        result = variance_tests.variance_tests(*groups, confidence)
+    elif method == "Mood 中位数检验":
+        groups = [pd.to_numeric(frame[c], errors="coerce").dropna().values
+                  for c in [col1, col2] if c and c in frame.columns]
+        result = nonparametric.mood_median_test(*groups)
+    elif method == "Friedman 检验":
+        groups = [pd.to_numeric(frame[c], errors="coerce").dropna().values
+                  for c in [col1, col2] if c and c in frame.columns]
+        result = nonparametric.friedman_test(*groups)
+    elif method == "Mann-Whitney U":
+        g1 = pd.to_numeric(frame[col1], errors="coerce").dropna().values
+        g2 = pd.to_numeric(frame[col2], errors="coerce").dropna().values
+        result = nonparametric.mann_whitney(g1, g2, alternative=alternative)
+    elif method == "Wilcoxon 符号秩":
+        g1 = pd.to_numeric(frame[col1], errors="coerce").dropna().values
+        g2 = pd.to_numeric(frame[col2], errors="coerce").dropna().values
+        result = nonparametric.wilcoxon_signed_rank(g1, g2, alternative=alternative)
+    elif method == "Kruskal-Wallis":
+        groups = [pd.to_numeric(frame[col1], errors="coerce").dropna().values]
+        if col2 and col2 in frame.columns:
+            groups.append(pd.to_numeric(frame[col2], errors="coerce").dropna().values)
+        result = nonparametric.kruskal_wallis(*groups)
+    elif method == "TOST 单样本等价检验":
+        data = pd.to_numeric(frame[col1], errors="coerce").dropna()
+        result = equivalence.one_sample_tost(data, target, margin)
+    elif method == "TOST 双样本等价检验":
+        g1 = pd.to_numeric(frame[col1], errors="coerce").dropna()
+        g2 = pd.to_numeric(frame[col2], errors="coerce").dropna()
+        result = equivalence.two_sample_tost(g1, g2, margin)
+    elif method == "χ²拟合优度检验":
+        raw = frame[col1].dropna()
+        if raw.dtype in ("float64", "float32") and raw.nunique() > 20:
+            data = raw.value_counts().sort_index()
+        else:
+            data = raw.value_counts()
+        result = proportion.chi_square_gof(data)
+    elif method == "χ²独立性检验":
+        result = proportion.chi_square_independence(frame, col1, col2)
+    elif method == "双比例检验":
+        result = proportion.two_proportion_test(*successes)
+    return {
+        "analysis_type": method,
+        "params": {"column1": col1, "column2": col2, "factor": factor,
+                   "target": target, "alternative": alternative},
+        "result": result,
+        "chart_data": result,
+    }
