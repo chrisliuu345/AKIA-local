@@ -103,78 +103,72 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 36px;color:#737373;font-siz
 <main>
 
 <section class="card" id="intro">
-  <h1>先做出第一张图</h1>
-  <p>AKIA 在本机离线运行，不需要账号。界面是黑、白、灰。下面每条路径都按同一顺序写：点哪里、屏幕上有什么、做完得到什么。</p>
+  <h1>开始使用</h1>
+  <p>AKIA 是本机离线运行的工业工程与质量分析软件，无需账号。下文按操作路径说明：入口、界面反馈与结果。</p>
 </section>
 
 <section class="card" id="quick-start">
   <h2>四条起步路径</h2>
 
-  <h3>1. 打开软件</h3>
+  <h3>1. 启动</h3>
   <div class="task">
-    <p class="do"><b class="k">点</b>启动 AKIA。Linux 运行 <code>AKIA-4.6.4-x86_64.AppImage</code>；Windows 从开始菜单打开。</p>
-    <p class="do"><b class="k">看到</b>左侧深灰侧栏，右侧欢迎页。欢迎页中间是字标，下面是「开始」。</p>
-    <p class="do"><b class="k">结果</b>还没有分析。用下面的卡片导入、打开项目，或直接做抽样查表。</p>
+    <p class="do"><b class="k">操作</b>Linux 运行 <code>AKIA-4.6.4-x86_64.AppImage</code>；Windows 从开始菜单打开。</p>
+    <p class="do"><b class="k">界面</b>左侧为功能侧栏，右侧为欢迎页。</p>
+    <p class="do"><b class="k">结果</b>可导入数据、打开项目，或直接进入抽样查表。</p>
   </div>
   <figure class="shot">
     <img src="images/welcome.png" alt="欢迎页：导入工作表、打开项目、新建分析">
-    <figcaption>欢迎页。「导入工作表」和「打开项目」在第一行。</figcaption>
+    <figcaption>欢迎页入口：导入工作表、打开项目、新建分析等。</figcaption>
   </figure>
 
-  <h3 id="data-import">2. 导入工作表，或打开已有项目</h3>
+  <h3 id="data-import">2. 导入数据或打开项目</h3>
   <div class="task">
-    <p class="do"><b class="k">点</b>欢迎页「导入工作表」，或菜单「文件 → 导入工作表」（<code>Ctrl+O</code>）。已有项目则点「打开项目」，或菜单「文件 → 打开项目 (.qap)」。</p>
-    <p class="do"><b class="k">看到</b>文件选择框。工作表认 Excel / CSV。项目文件扩展名是 <code>.qap</code>。</p>
-    <p class="do"><b class="k">结果</b>工作表进入当前数据。状态栏显示文件名。之后打开的分析页会带上这份数据。IE 工时用「导入 IE 数据」，数据库用「导入数据库」。读文件和连库都在后台进行，窗口不会卡住。</p>
+    <p class="do"><b class="k">操作</b>欢迎页「导入工作表」或「文件 → 导入工作表」（<code>Ctrl+O</code>）。已有项目用「打开项目」或「文件 → 打开项目 (.qap)」。</p>
+    <p class="do"><b class="k">界面</b>工作表支持 Excel / CSV；项目文件为 <code>.qap</code>。IE 工时用「导入 IE 数据」，数据库用「导入数据库」。</p>
+    <p class="do"><b class="k">结果</b>数据载入当前会话，状态栏显示来源。后续分析页共用这份数据。</p>
   </div>
-  <p>列名用测量值本身，例如「直径」。一张表可以有多列，分析时再选要用的列。</p>
-  <p>数据库单表最多载入 10 万行。超出时弹出「数据未完整载入」，状态栏写出表名。有主键的表按主键取前面的行，分析只用这批已载入的行。</p>
+  <p>测量列以特性命名（如「直径」）。数据库单表上限 10 万行；超出时提示截断，分析仅基于已载入行。</p>
 
-  <h3>3. 做一张 SPC 控制图</h3>
+  <h3>3. SPC 控制图</h3>
   <div class="task">
-    <p class="do"><b class="k">点</b>欢迎页「新建分析」，或侧栏「质量分析工具 → SPC 控制图」。</p>
-    <p class="do"><b class="k">看到</b>页顶是控制图类型、测量列、子组大小。默认类型是 XBar-R，子组大小 5。需要规格限时再勾选并填写 USL / LSL。</p>
-    <p class="do"><b class="k">点</b>「运行分析 (F5)」。计算在后台进行，窗口仍可滚动。这一次还没结束时再点，第二次会被忽略。</p>
-    <p class="do"><b class="k">看到</b>结果区没有「图表 / 数据」开关。控制图横贯上方。图下方左侧是「图表选项」，右侧是文字结论和数值表。页面只有一根滚动条；鼠标在图上滚动时滚动的是页面，按住 Ctrl 再滚动才缩放图表。</p>
-    <p class="do"><b class="k">结果</b>图上有数据点、中心线 CL、控制限 UCL / LCL。右侧表写出同样的数值。点超出控制限时，图上会标出判异点。</p>
+    <p class="do"><b class="k">操作</b>侧栏「质量分析工具 → SPC 控制图」，选择类型与测量列后按 <code>F5</code> 运行。</p>
+    <p class="do"><b class="k">界面</b>默认 XBar-R、子组大小 5；规格限按需填写 USL / LSL。</p>
+    <p class="do"><b class="k">结果</b>上方为控制图（CL、UCL、LCL 与判异点），下方为图表选项与数值结论。普通滚轮翻页，Ctrl+滚轮缩放横轴。</p>
   </div>
   <figure class="shot">
     <img src="images/spc.png" alt="SPC 结果：上方是 XBar-R 图，右侧是图例">
-    <figcaption>运行分析之后。图在上，图例在图内右侧，不画出边框。选项和数值表在图的下方。</figcaption>
+    <figcaption>运行后：图在上，选项与数值表在下。</figcaption>
   </figure>
 
-  <h3>4. 不导入数据，先查抽样方案</h3>
+  <h3>4. AQL 抽样查表</h3>
   <div class="task">
-    <p class="do"><b class="k">点</b>侧栏「抽样检验」。页顶保持「AQL 查表」。</p>
-    <p class="do"><b class="k">看到</b>批量默认 1000，AQL 默认 1.0。</p>
-    <p class="do"><b class="k">点</b>「查表」。</p>
-    <p class="do"><b class="k">结果</b>下方表格给出字码、样本量、接收数 Ac、拒收数 Re。例如批量 1000、AQL 1.0 时，字码 J，样本量 80，Ac 2，Re 3。随机抽样、序贯、计量型和 C=0 用同一排按钮切换，结果仍出现在这张表里。</p>
+    <p class="do"><b class="k">操作</b>侧栏「抽样检验」，保持「AQL 查表」，填写批量与 AQL 后点「查表」。</p>
+    <p class="do"><b class="k">结果</b>给出字码、样本量、Ac / Re。无需先导入工作表。</p>
   </div>
   <figure class="shot">
     <img src="images/sampling.png" alt="抽样检验 AQL 查表结果">
-    <figcaption>AQL 查表不需要先导入工作表。</figcaption>
+    <figcaption>AQL 查表示例（批量 1000、AQL 1.0 → 字码 J，n=80，Ac=2，Re=3）。</figcaption>
   </figure>
 </section>
 
 <section class="card" id="ui">
-  <h2>界面上这几处就够用</h2>
+  <h2>界面结构</h2>
   <table>
-    <tr><th>位置</th><th>做什么</th></tr>
-    <tr><td class="k">侧栏</td><td>分组是质量分析工具、IE 工具、图表工具、抽样检验等。点分组再点具体页。底边「收起侧栏」或 <code>Ctrl+B</code> 把侧栏收成一条。</td></tr>
-    <tr><td class="k">分析页</td><td>上面是参数和数据表，下面是结果。结果里图在上；有选项时在左，文字和表在右。空的那一块不占位置。</td></tr>
-    <tr><td class="k">菜单</td><td>文件：导入、打开和保存 <code>.qap</code>、导出报告。工具：设置、批量调度、数据清洗、产线配置 (plant.json)、告警中心、连接器健康、实时看板。帮助：使用指南（F1）。</td></tr>
-    <tr><td class="k">显示模式</td><td>菜单「显示 → 显示模式」或 <code>F11</code>，把当前图放到大屏上。</td></tr>
+    <tr><th>区域</th><th>说明</th></tr>
+    <tr><td class="k">侧栏</td><td>质量分析、IE、图表、抽样等分组。可收起（<code>Ctrl+B</code>）。</td></tr>
+    <tr><td class="k">分析页</td><td>上方参数与数据，下方结果（图、选项、结论）。</td></tr>
+    <tr><td class="k">菜单</td><td>文件：导入 / 项目 / 导出。工具：设置、批量调度、产线配置、告警与看板。帮助：使用指南（F1）。</td></tr>
+    <tr><td class="k">显示模式</td><td>「显示 → 显示模式」或 <code>F11</code>，适于投屏。</td></tr>
   </table>
 </section>
 
 <section class="card" id="templates">
   <h2>分析模板与批量</h2>
   <div class="task">
-    <p class="do"><b class="k">点</b>菜单「文件 → 导入分析模板」。</p>
-    <p class="do"><b class="k">看到</b>一份 JSON 或 Excel。JSON 可以是 <code>.json</code>，Excel 可以是 <code>.xlsx</code> / <code>.xls</code> / <code>.xlsm</code>。</p>
-    <p class="do"><b class="k">结果</b>模板里的每一项分析按写好的列名和规格限跑完。多个模板排队用菜单「工具 → 批量调度」。格式说明也可以在菜单「帮助 → 模板格式说明」里看，那里的类型清单与软件一致。</p>
+    <p class="do"><b class="k">操作</b>「文件 → 导入分析模板」（JSON 或 Excel）。多份模板排队用「工具 → 批量调度」。</p>
+    <p class="do"><b class="k">结果</b>按模板中的列名与规格限依次执行。字段说明见「帮助 → 模板格式说明」。</p>
   </div>
-  <h3>一份最小的 JSON</h3>
+  <h3>最小 JSON 示例</h3>
   <pre>{
   "analyses": [{
     "analysis_type": "xbar_r",
@@ -185,7 +179,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 36px;color:#737373;font-siz
     "lsl": 9.5
   }]
 }</pre>
-  <p>也可以只写一个 <code>analysis</code> 对象，或把 <code>analysis_type</code> 放在最外层。Excel 则每个 Sheet 是一项分析：A 列参数名，B 列参数值。</p>
+  <p>亦可使用单一 <code>analysis</code> 对象。Excel 中每个工作表为一项分析（A 列参数名，B 列参数值）。</p>
   <h3>可用分析类型（25 种）</h3>
   <table>
     <tr><th>类别</th><th>analysis_type</th></tr>
@@ -195,135 +189,121 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 36px;color:#737373;font-siz
     <tr><td class="k">假设检验</td><td><code>t_test_1sample</code> <code>t_test_2sample</code> <code>t_test_paired</code> <code>anova_oneway</code> <code>anova_twoway</code> <code>normality_test</code> <code>variance_test</code></td></tr>
     <tr><td class="k">DOE</td><td><code>factorial_design</code> <code>response_surface</code> <code>doe_analysis</code> <code>box_behnken</code></td></tr>
   </table>
-  <p>必填字段是 <code>analysis_type</code>、<code>data_sheet</code>、<code>measurement_column</code>。可选：<code>subgroup_size</code>、<code>usl</code>、<code>lsl</code>、<code>target</code>、<code>confidence_level</code>。写了表外的类型时，软件会提示不支持的分析类型。</p>
+  <p>必填：<code>analysis_type</code>、<code>data_sheet</code>、<code>measurement_column</code>。可选：<code>subgroup_size</code>、<code>usl</code>、<code>lsl</code>、<code>target</code>、<code>confidence_level</code>。</p>
 </section>
 
 <section class="card" id="modules">
   <h2>模块总览</h2>
-  <p>侧栏分组如下。点分组，再点页面。</p>
   <h3 id="modules-quality">质量分析工具</h3>
   <table>
-    <tr><th>页面</th><th>做完能看到</th></tr>
-    <tr><td class="k">SPC 控制图</td><td>XBar-R/S、I-MR、P/NP/C/U、CUSUM、EWMA、Laney、Hotelling T²，以及判异点</td></tr>
-    <tr><td class="k">过程能力</td><td>Cp、Cpk、Pp、Ppk 和直方图</td></tr>
+    <tr><th>页面</th><th>输出要点</th></tr>
+    <tr><td class="k">SPC 控制图</td><td>XBar-R/S、I-MR、P/NP/C/U、CUSUM、EWMA、Laney、Hotelling T² 与判异</td></tr>
+    <tr><td class="k">过程能力</td><td>Cp、Cpk、Pp、Ppk 与直方图</td></tr>
     <tr><td class="k">MSA</td><td>Gage R&amp;R、偏倚、线性、属性一致性</td></tr>
-    <tr><td class="k">假设检验</td><td>t 检验、ANOVA、卡方等的统计量和结论</td></tr>
-    <tr><td class="k">实验设计 (DOE)</td><td>设计表、效应和 Pareto</td></tr>
-    <tr><td class="k">回归分析</td><td>拟合、R² 和残差图</td></tr>
+    <tr><td class="k">假设检验</td><td>t 检验、ANOVA、正态性与方差等</td></tr>
+    <tr><td class="k">实验设计 (DOE)</td><td>设计表、效应与 Pareto</td></tr>
+    <tr><td class="k">回归分析</td><td>拟合、R² 与残差图</td></tr>
   </table>
   <h3 id="modules-chart">图表工具</h3>
-  <p>图表构建器、趋势、能力对比、汇总面板。在图表构建器里点缩略图切换类型，再点运行。</p>
+  <p>图表构建器、趋势、能力对比、汇总面板。</p>
   <h3 id="modules-ie">IE 工具</h3>
-  <p>时间研究、工作抽样、线平衡、OEE、VSM、人机作业、标准作业组合、SMED、TPM。工时数据用「文件 → 导入 IE 数据」，不要和普通工作表混用。</p>
-  <div class="task">
-    <p class="do"><b class="k">点</b>工时研究里保存标准工时。打开线平衡，勾选「采用已确认标准工时」，再点运行分析。</p>
-    <p class="do"><b class="k">看到</b>页面写出覆盖了几道工序。没有现行标准工时的工序仍用导入的 CT，并列出工序号。</p>
-    <p class="do"><b class="k">结果</b>每一道参与平衡的工序都有标准工时之后，才能记入基线或复测。记录写入证据账本，留下观测、评比、宽放和标准版本。覆盖不全时会拒绝记入，避免把导入 CT 和标准工时混成一条基线。</p>
-  </div>
+  <p>时间研究、工作抽样、线平衡、OEE、VSM、人机作业、标准作业组合、SMED、TPM。工时数据须经「文件 → 导入 IE 数据」单独导入。</p>
+  <p class="note">线平衡可勾选「采用已确认标准工时」。仅当参与工序均已覆盖现行标准工时，方可记入基线或复测并写入证据账本；覆盖不全时软件将拒绝记入。</p>
   <h3 id="modules-eng">工程工具</h3>
-  <p>可靠性、鱼骨图、柏拉图、FMEA、控制计划、8D、PPAP。鱼骨图在图上直接改文字；8D 和 PPAP 按步骤填表。</p>
+  <p>可靠性、鱼骨图、柏拉图、FMEA、控制计划、8D、PPAP。</p>
 </section>
 
 <section class="card" id="charts">
-  <h2>看结果</h2>
+  <h2>查看结果</h2>
   <ol>
-    <li>图在结果区最上，宽度跟页面走。</li>
-    <li>图下面左边是图表选项（字号、网格、控制限）。改完图表会刷新，不用再点运行分析。</li>
-    <li>右边是文字结论和数值表。没有文字或没有表的页面，那一侧不出现空框。</li>
-    <li>图上右键可以保存 PNG 或 SVG。整份结果用菜单「文件 → 导出报告」。</li>
+    <li>结果区上方为图表，下方左侧为图表选项，右侧为结论与数值表。</li>
+    <li>调整选项后图表即时刷新，无需重新运行分析。</li>
+    <li>图上右键可导出 PNG / SVG；完整结果经「文件 → 导出报告」输出。</li>
   </ol>
-  <p class="note">选项随项目文件 <code>.qap</code> 保存。下次打开项目，图和选项一起回来。</p>
+  <p class="note">图表选项随 <code>.qap</code> 项目一并保存。</p>
 </section>
 
 <section class="card" id="export">
   <h2>导出</h2>
   <div class="task">
-    <p class="do"><b class="k">点</b>菜单「文件 → 导出报告」，选 Word、Excel、PDF、PowerPoint 或 HTML。</p>
-    <p class="do"><b class="k">看到</b>保存对话框。</p>
-    <p class="do"><b class="k">结果</b>已运行的分析写进一个文件。要连数据一起留着，用「文件 → 保存项目 (.qap)」。</p>
+    <p class="do"><b class="k">操作</b>「文件 → 导出报告」，可选 Word、Excel、PDF、PowerPoint 或 HTML。</p>
+    <p class="do"><b class="k">结果</b>写入已运行的分析。连同数据留存请使用「文件 → 保存项目 (.qap)」。</p>
   </div>
-  <p>菜单「工具 → 报告模板」按质量日报、月报、8D 或 PPAP 的版式出文。合规输出在导出报告的合规子菜单里。</p>
+  <p>「工具 → 报告模板」提供质量日报、月报、8D、PPAP 等版式；合规输出见导出报告的合规子菜单。</p>
 </section>
 
 <section class="card" id="ai">
   <h2>QAM Harness</h2>
   <div class="task">
-    <p class="do"><b class="k">点</b>菜单「QAM Harness」，或侧栏底部同名按钮。</p>
-    <p class="do"><b class="k">看到</b>一个独立对话窗口。没配模型时，仍可用离线工具模式：它调用软件里的同一套统计，给出数值和判定。</p>
-    <p class="do"><b class="k">结果</b>对话里出现工具卡片和结论。本地模型用 Ollama。云模型在「工具 → 设置 → QAM Harness」里填写密钥；第一次调用会先问你是否允许把问题和摘要发出去。原始数据表和密钥不会发送。</p>
+    <p class="do"><b class="k">操作</b>菜单「QAM Harness」或侧栏底部入口。</p>
+    <p class="do"><b class="k">结果</b>未配置模型时仍可使用离线工具模式，调用本机同一套统计算法。云模型密钥在「工具 → 设置 → QAM Harness」配置；首次外发前需确认。原始数据表与密钥不会发送。</p>
   </div>
 </section>
 
 <section class="card" id="realtime">
   <h2>实时看板</h2>
   <div class="task">
-    <p class="do"><b class="k">点</b>菜单「工具 → 实时看板」。需要先安装 <code>requirements-server.txt</code> 里的依赖。</p>
-    <p class="do"><b class="k">看到</b>浏览器里的产线画面：控制图、工位灯、OEE。右上角 A− / A / A+ 改变字号，A+ 适合车间大屏。</p>
-    <p class="do"><b class="k">结果</b>设备数据进来之后，判异和超规格会着色。规格限来自产线配置。</p>
+    <p class="do"><b class="k">操作</b>「工具 → 实时看板」（需安装 <code>requirements-server.txt</code> 依赖）。</p>
+    <p class="do"><b class="k">结果</b>浏览器展示控制图、工位状态与 OEE；字号档位 A− / A / A+（A+ 适于车间大屏）。规格限来自产线配置。</p>
   </div>
   <ul>
-    <li>菜单「工具 → 产线配置 (plant.json)」编辑产线、工位、通道、USL、LSL、节拍和班次。</li>
-    <li>菜单「工具 → 连接器健康」查看 Modbus、MQTT、OPC-UA 等数据源，并可重连。</li>
-    <li>菜单「工具 → 告警中心」筛选、确认和导出告警。</li>
-    <li>原始点保留天数是 <code>ts_raw_retention_days</code>，聚合数据是 <code>ts_rollup_retention_days</code>。</li>
-    <li>未设置 <code>dashboard_token</code> 时会生成随机令牌。本机打开看板会写入 Cookie，地址里不放令牌。</li>
+    <li>「工具 → 产线配置 (plant.json)」：产线、工位、通道、USL、LSL、节拍与班次。</li>
+    <li>「工具 → 连接器健康」：Modbus、MQTT、OPC-UA 等数据源状态与重连。</li>
+    <li>「工具 → 告警中心」：筛选、确认与导出告警。</li>
+    <li>保留策略：<code>ts_raw_retention_days</code>（原始点）、<code>ts_rollup_retention_days</code>（聚合）。</li>
+    <li>未设置 <code>dashboard_token</code> 时生成随机令牌；本机访问写入 Cookie，地址栏不携带令牌。</li>
   </ul>
 </section>
 
 <section class="card" id="hardware">
-  <h2>硬件</h2>
+  <h2>硬件扩展</h2>
   <div class="task">
-    <p class="do"><b class="k">点</b>菜单「工具 → 设置」，启用设备扩展，接上 ESP32 或 MaixCAM。</p>
-    <p class="do"><b class="k">看到</b>侧栏「实时监控」里的设备页。</p>
-    <p class="do"><b class="k">结果</b>采集值进入实时控制图。烧录方法以设备附带说明为准。</p>
+    <p class="do"><b class="k">操作</b>「工具 → 设置」启用设备扩展，连接 ESP32 或 MaixCAM。</p>
+    <p class="do"><b class="k">结果</b>采集值进入实时控制图。烧录与接线以设备说明为准。</p>
   </div>
 </section>
 
 <section class="card" id="install">
   <h2>安装</h2>
   <table>
-    <tr><th></th><th>文件</th><th>怎么打开</th></tr>
-    <tr><td class="k">Linux</td><td><code>AKIA-4.6.4-x86_64.AppImage</code></td><td><code>chmod +x</code> 后直接运行。可用附带的 <code>.sha256</code> 核对文件。</td></tr>
-    <tr><td class="k">Windows</td><td><code>AKIA-Setup-4.6.4.exe</code></td><td>双击安装。安装程序会加入开始菜单。</td></tr>
+    <tr><th></th><th>文件</th><th>说明</th></tr>
+    <tr><td class="k">Linux</td><td><code>AKIA-4.6.4-x86_64.AppImage</code></td><td><code>chmod +x</code> 后运行；可用同名 <code>.sha256</code> 校验。</td></tr>
+    <tr><td class="k">Windows</td><td><code>AKIA-Setup-4.6.4.exe</code></td><td>安装后加入开始菜单。</td></tr>
   </table>
-  <p>不需要单独安装 Python，也不需要联网。</p>
+  <p>发行包已自带运行环境，无需另行安装 Python，也无需联网。</p>
 </section>
 
 <section class="card" id="faq">
   <h2>常见问题</h2>
   <details>
-    <summary>导入之后分析页还是空的</summary>
-    <div class="ans">先确认状态栏里有文件名，再打开对应页面，选中测量列，点「运行分析」。抽样检验的 AQL 查表不需要工作表。</div>
+    <summary>导入后分析页仍为空</summary>
+    <div class="ans">确认状态栏已显示数据源，再于分析页选定测量列并运行。AQL 查表不依赖工作表。</div>
   </details>
   <details>
-    <summary>图下面只有一半，另一半在哪</summary>
-    <div class="ans">向下滚动这一页。图在上，选项在左，文字和表在右。没有「图表 / 数据」开关。</div>
+    <summary>结果区布局与交互</summary>
+    <div class="ans">图在上，选项在左，结论在右。普通滚轮翻页；Ctrl+滚轮缩放横轴，Shift+滚轮缩放纵轴。</div>
   </details>
   <details>
-    <summary>滚轮把图缩放了，页面不动</summary>
-    <div class="ans">普通滚动移动页面。按住 Ctrl 再滚动才缩放横轴，按住 Shift 再滚动缩放纵轴。</div>
+    <summary>如何保留分析</summary>
+    <div class="ans">「保存项目 (.qap)」保留数据与选项；「导出报告」仅输出已运行结果。</div>
   </details>
   <details>
-    <summary>怎样留下这次分析</summary>
-    <div class="ans">「文件 → 保存项目 (.qap)」保存数据和选项。「文件 → 导出报告」只导出已经跑过的结果。</div>
+    <summary>模板提示不支持的分析类型</summary>
+    <div class="ans">对照上文 25 种 <code>analysis_type</code>；与「帮助 → 模板格式说明」一致。</div>
   </details>
   <details>
-    <summary>模板报不支持的分析类型</summary>
-    <div class="ans">对照上面的 25 种 <code>analysis_type</code>。帮助菜单里的模板格式说明与这一份清单相同。</div>
+    <summary>线平衡无法记入基线</summary>
+    <div class="ans">勾选「采用已确认标准工时」后，各工序须具备现行标准工时。缺项会在页面列出，请先在工时研究中保存后再分析。</div>
   </details>
   <details>
-    <summary>线平衡不能记入基线</summary>
-    <div class="ans">勾选「采用已确认标准工时」后，每一道参与平衡的工序都要有现行标准工时。缺的工序会列在页面上。先到工时研究保存，再重新分析。</div>
-  </details>
-  <details>
-    <summary>数据库里的表只进来一部分</summary>
-    <div class="ans">单表上限是 10 万行。弹窗和状态栏会写出表名。分析只用已经载入的行。要看全表时，先在库里筛好再导入。</div>
+    <summary>数据库表只载入部分行</summary>
+    <div class="ans">单表上限 10 万行。提示中会列出表名；分析仅使用已载入行。全量分析请先在库侧筛选。</div>
   </details>
 </section>
 
 <section class="card" id="support">
   <h2>支持</h2>
-  <p>缺陷和功能建议走项目的 GitHub Issues。安全问题用私密漏洞报告，不要贴在公开问题里。</p>
+  <p>缺陷与功能建议请提交 GitHub Issues。安全问题请使用私密漏洞报告渠道，勿在公开议题中披露细节。</p>
   <p>AKIA is open source under the Apache License 2.0.</p>
 </section>
 
