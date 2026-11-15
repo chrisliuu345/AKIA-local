@@ -371,6 +371,10 @@ def cloud_dialog(ctx, tmp_path, monkeypatch):
     dlg.deleteLater()
 
 
+def test_dialog_requires_confirmation_before_model_tools(dialog):
+    assert callable(dialog.engine.confirm_tool)
+
+
 def test_provider_combo_lists_all_byok_vendors(cloud_dialog):
     dlg, _engine = cloud_dialog
     providers = [dlg.provider_combo.itemData(i)

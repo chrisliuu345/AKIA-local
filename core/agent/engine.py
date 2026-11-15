@@ -155,13 +155,16 @@ class AgentEngine:
     def __init__(self, registry: ToolRegistry, conversation: Conversation | None = None,
                  llm=None, knowledge=None, max_tool_steps: int = 3,
                  context: AgentContext | None = None, privacy_check=None,
-                 audit_sink=None, assistance_enabled=None):
+                 audit_sink=None, assistance_enabled=None,
+                 confirm_tool=None):
         self.registry = registry
         self.conversation = conversation or Conversation()
         self.llm = llm
         self.knowledge = knowledge
         self.context = context
         self.max_tool_steps = max(1, int(max_tool_steps))
+        # 模型发起的工具调用默认不执行。界面传入确认回调后，返回真才运行。
+        self.confirm_tool = confirm_tool
         # 隐私门: None → 用 core.agent.privacy 的默认策略（云端未授权即拒绝，fail-closed）
         self.privacy_check = privacy_check
         self.audit_sink = audit_sink
@@ -421,14 +424,15 @@ class AgentEngine:
                                   model=getattr(self.llm, "model", ""))
             paths = _model_supplied_paths(args)
             if paths:
-                record = ToolCallRecord(
-                    name=name, args=args, ok=False,
-                    error="拒绝模型给出的路径参数: " + ", ".join(paths),
-                )
+                record = self._refused_tool(
+                    name, args, "拒绝模型给出的路径参数: " + ", ".join(paths))
                 tool_calls.append(record)
                 yield "tool", record
-                self.conversation.add_tool_result(
-                    name, False, record.error, record.args)
+                continue
+            if not self._tool_confirmed(name, args):
+                record = self._refused_tool(name, args, "未经人工确认，已拒绝执行")
+                tool_calls.append(record)
+                yield "tool", record
                 continue
             record = self._execute(name, args)
             tool_calls.append(record)
@@ -617,6 +621,20 @@ class AgentEngine:
             budget = re.search(r"(\d+)\s*秒", question)
             return {"time_budget_s": float(budget.group(1))} if budget else {}
         return {}
+
+    def _tool_confirmed(self, name: str, args: dict) -> bool:
+        confirmer = self.confirm_tool
+        if confirmer is None:
+            return False
+        try:
+            return bool(confirmer(name, dict(args or {})))
+        except Exception:
+            return False
+
+    def _refused_tool(self, name: str, args: dict, error: str) -> ToolCallRecord:
+        record = ToolCallRecord(name=name, args=args, ok=False, error=error)
+        self.conversation.add_tool_result(name, False, error, record.args)
+        return record
 
     def _execute(self, name: str, args: dict) -> ToolCallRecord:
         result: ToolResult = self.registry.call(name, args, self.context)
