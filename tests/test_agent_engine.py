@@ -91,7 +91,8 @@ def test_llm_tool_call_then_final_answer(ctx):
         '```json\n{"tool": "run_capability", "args": {"column": "厚度", "usl": 5.2, "lsl": 4.8}}\n```',
         "结论: 过程能力良好，建议保持现有控制。",
     ])
-    engine = AgentEngine(registry, llm=llm, context=ctx)
+    engine = AgentEngine(registry, llm=llm, context=ctx,
+                         confirm_tool=lambda _name, _args: True)
     reply = engine.respond("帮我做能力分析 USL=5.2 LSL=4.8")
     assert reply.offline is False
     assert [c.name for c in reply.tool_calls] == ["run_capability"]
@@ -123,7 +124,8 @@ def test_tool_step_limit(ctx):
     # LLM 反复请求同一工具 → 达到 max_tool_steps 后收尾，不无限循环
     script = ['{"tool": "list_data", "args": {}}'] * 6
     engine = AgentEngine(build_default_registry(ctx), llm=FakeLLM(script),
-                         context=ctx, max_tool_steps=2)
+                         context=ctx, max_tool_steps=2,
+                         confirm_tool=lambda _name, _args: True)
     reply = engine.respond("看数据")
     assert len(reply.tool_calls) == 2
     assert "已完成 2 步工具调用" in reply.text
@@ -134,7 +136,8 @@ def test_stream_events_include_tool_tokens_done(ctx):
         '{"tool": "list_data", "args": {}}',
         "数据里有 1 张表。",
     ])
-    engine = AgentEngine(build_default_registry(ctx), llm=llm, context=ctx)
+    engine = AgentEngine(build_default_registry(ctx), llm=llm, context=ctx,
+                         confirm_tool=lambda _name, _args: True)
     kinds = [k for k, _ in engine.respond_stream("列出数据")]
     assert "tool" in kinds and "token" in kinds and kinds[-1] == "done"
 
@@ -144,7 +147,8 @@ def test_stream_events_include_tool_tokens_done(ctx):
 
 def _stream(ctx, script):
     llm = FakeLLM(script)
-    engine = AgentEngine(build_default_registry(ctx), llm=llm, context=ctx)
+    engine = AgentEngine(build_default_registry(ctx), llm=llm, context=ctx,
+                         confirm_tool=lambda _name, _args: True)
     events = list(engine.respond_stream("测试"))
     tokens = "".join(p for k, p in events if k == "token")
     tools = [p for k, p in events if k == "tool"]
@@ -185,6 +189,32 @@ def test_stream_plain_answer_still_streams(ctx):
     tokens, tools, reply = _stream(ctx, ["Cpk≥1.33 表示过程能力良好。"])
     assert tools == []
     assert "Cpk" in tokens and "Cpk" in reply.text
+
+
+def test_model_tool_call_requires_confirmation(ctx):
+    registry = build_default_registry(ctx)
+    called = []
+    original = registry.call
+
+    def wrapped(name, args, context):
+        called.append(name)
+        return original(name, args, context)
+
+    registry.call = wrapped
+    llm = FakeLLM(['{"tool": "list_data", "args": {}}', "未执行。"])
+    engine = AgentEngine(registry, llm=llm, context=ctx)
+    reply = engine.respond("列出数据")
+    assert called == []
+    assert reply.tool_calls[0].ok is False
+    assert "确认" in reply.tool_calls[0].error
+
+    called.clear()
+    llm = FakeLLM(['{"tool": "list_data", "args": {}}', "仍未执行。"])
+    engine = AgentEngine(registry, llm=llm, context=ctx,
+                         confirm_tool=lambda _name, _args: False)
+    reply = engine.respond("列出数据")
+    assert called == []
+    assert reply.tool_calls[0].ok is False
 
 
 def test_model_supplied_path_is_not_loaded(ctx):

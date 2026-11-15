@@ -11,9 +11,10 @@ from __future__ import annotations
 
 import contextlib
 import html
+import json
 import re
 
-from PySide6.QtCore import QEvent, QSettings, Qt, QThread, Signal
+from PySide6.QtCore import QEvent, QObject, QSettings, Qt, QThread, Signal
 from PySide6.QtGui import QFont, QTextCursor
 from PySide6.QtWidgets import (
     QApplication, QComboBox, QDialog, QFileDialog, QHBoxLayout, QLabel, QLineEdit,
@@ -33,6 +34,35 @@ PRESET_QUESTIONS = [
     ("告警处置", "有哪些未确认告警？建议的处置顺序是什么？"),
     ("五链状态", "五链（FMEA → 控制计划 → PPAP → 8D）现在是什么状态？"),
 ]
+
+
+class ToolConfirm(QObject):
+    """模型要执行工具时，回到界面线程等用户确认。未确认则调用方不得执行。"""
+
+    _ask = Signal(str, str)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._ok = False
+        self._ask.connect(self._on_ask, Qt.BlockingQueuedConnection)
+
+    def _on_ask(self, name: str, args_json: str):
+        answer = QMessageBox.question(
+            self.parent(),
+            "确认工具调用",
+            f"模型请求执行「{name}」。确认后才会运行。\n\n参数:\n{args_json[:800]}",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        self._ok = answer == QMessageBox.Yes
+
+    def __call__(self, name: str, args: dict) -> bool:
+        payload = json.dumps(args or {}, ensure_ascii=False, default=str)
+        if QThread.currentThread() is self.thread():
+            self._on_ask(name, payload)
+            return self._ok
+        self._ask.emit(name, payload)
+        return self._ok
 
 
 class AgentWorker(QThread):
@@ -132,6 +162,7 @@ class QAMHarnessDialog(QDialog):
             if getattr(engine, "llm", None) is None:
                 engine.set_llm(self.llm)
         self.engine = engine
+        self.engine.confirm_tool = ToolConfirm(self)
         self._last_provider_id = self.llm.provider
 
         self.worker: AgentWorker | None = None
