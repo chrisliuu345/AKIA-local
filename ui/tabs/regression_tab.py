@@ -151,23 +151,13 @@ class RegressionTab(BaseAnalysisTab):
         self.data_table.selectColumn(index)
 
     def run_and_display(self) -> dict[str, Any]:
-        ok, msg = self.validate_params()
-        if not ok:
-            self._clear_canvas()
-            self.result_text.setStyleSheet("color: #E00000; ")
-            self.result_text.setText(f"{i18n.tr('reg.val_param_failed')}\n{msg}")
-            return None
-        try:
-            from ui.worker import run_in_worker
-            result = run_in_worker(self, self._regression_job())
-            self.current_result = result
-            self.display_result(result)
-            self.analysis_completed.emit()
-            return result
-        except Exception as e:
-            self._clear_canvas()
-            self.result_text.setStyleSheet("color: #E00000; ")
-            self.result_text.setText(f"{i18n.tr('reg.val_analysis_failed')}\n{e!s}")
+        from ui.present import present_analysis
+        return present_analysis(
+            self,
+            self._regression_job,
+            on_invalid=lambda msg: f"{i18n.tr('reg.val_param_failed')}\n{msg}",
+            on_failed=lambda exc: f"{i18n.tr('reg.val_analysis_failed')}\n{exc!s}",
+        )
 
     def validate_params(self) -> tuple:
         if self.df is None:

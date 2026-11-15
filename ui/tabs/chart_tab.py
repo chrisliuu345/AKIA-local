@@ -307,24 +307,19 @@ class ChartTab(BaseAnalysisTab):
             self.set_chart_type(chart_type)
 
     def run_and_display(self) -> dict[str, Any]:
-        ok, msg = self.validate_params()
-        if not ok:
-            self._clear_canvas()
-            self.result_text.setStyleSheet("color: #E00000; ")
-            self.result_text.setText(msg)
-            return None
-        try:
-            from ui.worker import run_in_worker
-            result = run_in_worker(self, self._chart_job())
-            self.current_result = result["stored"]
-            shown = result["shown"]
-            self.display_result(shown)
-            self.analysis_completed.emit()
-            return shown
-        except Exception as e:
-            self._clear_canvas()
-            self.result_text.setStyleSheet("color: #E00000; ")
-            self.result_text.setText(f"{i18n.tr('chart_tab.analysis_failed')}\n{e!s}")
+        from ui.present import present_analysis
+
+        def finish(produced):
+            self.current_result = produced["stored"]
+            return produced["shown"]
+
+        return present_analysis(
+            self,
+            self._chart_job,
+            on_invalid=lambda msg: msg,
+            on_failed=lambda exc: f"{i18n.tr('chart_tab.analysis_failed')}\n{exc!s}",
+            finish=finish,
+        )
 
     def refresh_texts(self):
         self.title_label.setText(i18n.tr("chart_tab.title"))

@@ -2,7 +2,7 @@
 
 [中文](ROADMAP.md) | [English](ROADMAP.en.md) | [Project Home](README.en.md) | [Releases](https://github.com/chrisliuu345/AKIA-local/releases)
 
-**Status**: Current version is v4.6.4. The v4.6.x security and correctness maintenance is done. Preparation for v4.7.0, credible industrial-engineering methods, has started: known values for standard time, line balance, weighted OEE, and work-sampling sample size are in place, and the contract from standard time through line balance into the evidence ledger is frozen. UI-thread work, read performance, benefit-ledger lookup, and the main-window split are still open.
+**Status**: Current version is v4.6.4. The v4.6.x security and correctness maintenance is done. v4.7.0, credible industrial-engineering methods, is in progress: known values, the standard-time evidence chain, UI-thread work, the shared `run_and_display` entry, and the main-window split are in place. xlsx reads, benefit-ledger lookup, model-availability checks, and database timeouts are still open.
 **Last updated**: 2026-11-15
 
 ## Direction

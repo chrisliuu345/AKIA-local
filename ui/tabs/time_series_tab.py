@@ -182,28 +182,26 @@ class TimeSeriesTab(BaseAnalysisTab):
         return True, ""
 
     def run_and_display(self) -> dict[str, Any]:
-        ok, msg = self.validate_params()
-        if not ok:
-            self._clear_canvas()
-            self.result_text.setStyleSheet("color: #E00000; ")
-            self.result_text.setText(msg)
-            return None
-        try:
-            from ui.worker import run_in_worker
-            raw, method, value_col = run_in_worker(self, self._ts_job())
+        from core.i18n import i18n
+        from ui.present import present_analysis
+
+        def finish(produced):
+            raw, method, value_col = produced
             result = self._store_ts(raw, method, value_col)
             if result and "error" in result:
                 self._clear_canvas()
                 self.result_text.setStyleSheet("color: #E00000; ")
                 self.result_text.setText(result["error"])
                 return None
-            self.display_result(result)
-            self.analysis_completed.emit()
             return result
-        except Exception as e:
-            self._clear_canvas()
-            self.result_text.setStyleSheet("color: #E00000; ")
-            self.result_text.setText(f"分析失败: {e!s}")
+
+        return present_analysis(
+            self,
+            self._ts_job,
+            on_invalid=lambda msg: msg,
+            on_failed=lambda exc: f"{i18n.tr('val.analysis_failed')}: {exc!s}",
+            finish=finish,
+        )
 
     def run_analysis(self) -> dict[str, Any]:
         raw, method, value_col = self._ts_job()()

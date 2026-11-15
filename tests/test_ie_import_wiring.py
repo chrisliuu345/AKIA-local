@@ -66,7 +66,7 @@ class TestIeImportClearsEmptyState:
         """菜单「导入 IE 数据」全链路：Tab 填充 + 遮罩立即消失。"""
         import pandas as pd
 
-        import ui.main_window as main_window
+        import ui.window.imports as imports
 
         class FakeDialog:
             def __init__(self, parent=None, mode=""):
@@ -78,7 +78,7 @@ class TestIeImportClearsEmptyState:
             def get_selection(self):
                 return "fake_ie.xls", []
 
-        monkeypatch.setattr(main_window, "ImportDialog", FakeDialog)
+        monkeypatch.setattr(imports, "ImportDialog", FakeDialog)
         monkeypatch.setattr(window.data_loader, "load",
                             lambda path: {"Sheet1": pd.DataFrame({"a": [1]})})
         monkeypatch.setattr(

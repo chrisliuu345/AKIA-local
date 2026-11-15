@@ -212,25 +212,8 @@ class MSATab(BaseAnalysisTab):
         return True, ""
 
     def run_and_display(self) -> dict[str, Any]:
-        valid, msg = self.validate_params()
-        if not valid:
-            self._clear_canvas()
-            self.result_text.setStyleSheet("color: #E00000; ")
-            self.result_text.setText(f"▎参数校验失败\n{msg}")
-            return None
-        self.result_text.setStyleSheet("")
-        try:
-            from ui.worker import run_in_worker
-            result = run_in_worker(self, self._msa_job())
-            self.current_result = result
-            self.display_result(result)
-            self.analysis_completed.emit()
-            return result
-        except Exception as e:
-            self._clear_canvas()
-            self.result_text.setStyleSheet("color: #E00000; ")
-            self.result_text.setText(f"▎分析失败\n{e!s}")
-            return None
+        from ui.present import present_analysis
+        return present_analysis(self, self._msa_job)
 
     def run_analysis(self) -> dict[str, Any]:
         finished = self._msa_job()()

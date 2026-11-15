@@ -176,27 +176,13 @@ class DOETab(BaseAnalysisTab):
         return True, ""
 
     def run_and_display(self) -> dict[str, Any]:
-        valid, msg = self.validate_params()
-        if not valid:
-            self._clear_canvas()
-            self.result_text.setStyleSheet("color: #E00000; ")
-            self.result_text.setText(f"▎参数校验失败\n{msg}")
-            return None
-        self.result_text.setStyleSheet("")
-        try:
-            from ui.worker import run_in_worker
-            result, design = run_in_worker(self, self._doe_job())
-            finished = self._apply_doe(result, design)
-            if finished is None:
-                return None
-            self.display_result(finished)
-            self.analysis_completed.emit()
-            return finished
-        except Exception as e:
-            self._clear_canvas()
-            self.result_text.setStyleSheet("color: #E00000; ")
-            self.result_text.setText(f"▎分析失败\n{e!s}")
-            return None
+        from ui.present import present_analysis
+
+        def finish(produced):
+            result, design = produced
+            return self._apply_doe(result, design)
+
+        return present_analysis(self, self._doe_job, finish=finish)
 
     def run_analysis(self) -> dict[str, Any]:
         result, design = self._doe_job()()
