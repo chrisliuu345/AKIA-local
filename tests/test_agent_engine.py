@@ -187,6 +187,28 @@ def test_stream_plain_answer_still_streams(ctx):
     assert "Cpk" in tokens and "Cpk" in reply.text
 
 
+def test_model_supplied_path_is_not_loaded(ctx):
+    registry = build_default_registry(ctx)
+    called = []
+    original = registry.call
+
+    def wrapped(name, args, context):
+        called.append(name)
+        return original(name, args, context)
+
+    registry.call = wrapped
+    llm = FakeLLM([
+        '{"tool": "ml_predict", "args": {"model_path": "/tmp/evil.qamodel"}}',
+        "已拒绝路径。",
+    ])
+    engine = AgentEngine(registry, llm=llm, context=ctx)
+    reply = engine.respond("用这个模型预测")
+    assert called == []
+    assert reply.tool_calls[0].ok is False
+    assert "路径" in reply.tool_calls[0].error
+    assert "已拒绝路径" in reply.text
+
+
 def test_parse_tool_call_variants(engine):
     parse = engine._extract_tool_call
     assert parse('{"tool": "list_data", "args": {}}')[0] == "list_data"

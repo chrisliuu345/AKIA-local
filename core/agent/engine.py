@@ -93,6 +93,11 @@ _SPEC_RES = (
     re.compile(r"(?:lsl|规格下限|下规格限)\s*[=:：]?\s*(-?\d+(?:\.\d+)?)", re.I),
 )
 
+# 模型不得自行选择要读写的文件；路径只能由人在界面里选定。
+_PATH_ARG_KEYS = frozenset({
+    "path", "file", "filepath", "filename", "model_path", "save_path",
+})
+
 # 关键词 → 工具（顺序即优先级，先具体后一般）
 _OFFLINE_RULES: tuple[tuple[tuple[str, ...], str], ...] = (
     (("automl", "自动选模", "自动建模", "机器学习", "随机森林", "梯度提升",
@@ -116,6 +121,16 @@ _OFFLINE_RULES: tuple[tuple[tuple[str, ...], str], ...] = (
     (("已运行", "分析结果", "跑过哪些", "结果列表"), "list_analyses"),
     (("哪张表", "有哪些表", "数据表", "多少行", "列名", "字段"), "list_data"),
 )
+
+
+def _model_supplied_paths(args: dict) -> list[str]:
+    """模型工具参数里的路径字段。命中后整次调用不执行。"""
+    found: list[str] = []
+    for key in args or {}:
+        normalized = str(key).strip().lower()
+        if normalized in _PATH_ARG_KEYS or normalized.endswith(("_path", "_file")):
+            found.append(str(key))
+    return found
 
 
 def _match_offline(question: str, has_live: bool) -> str | None:
@@ -404,6 +419,17 @@ class AgentEngine:
                                   tool_calls=tool_calls, offline=False,
                                   provider=getattr(self.llm, "provider", ""),
                                   model=getattr(self.llm, "model", ""))
+            paths = _model_supplied_paths(args)
+            if paths:
+                record = ToolCallRecord(
+                    name=name, args=args, ok=False,
+                    error="拒绝模型给出的路径参数: " + ", ".join(paths),
+                )
+                tool_calls.append(record)
+                yield "tool", record
+                self.conversation.add_tool_result(
+                    name, False, record.error, record.args)
+                continue
             record = self._execute(name, args)
             tool_calls.append(record)
             yield "tool", record
@@ -582,11 +608,8 @@ class AgentEngine:
         if name == "search_knowledge":
             return {"query": question, "top_k": 3}
         if name == "ml_predict":
-            match = re.search(r"[^\s，。'\"]+\.qamodel", question)
-            args = {"rows": 10}
-            if match:
-                args["model_path"] = match.group(0)
-            return args
+            # 对话文本里的路径不是人在界面选定的文件，不传给加载器。
+            return {"rows": 10}
         if name == "ml_explain":
             match = re.search(r"第\s*(\d+)\s*行", question)
             return {"row_index": int(match.group(1))} if match else {}

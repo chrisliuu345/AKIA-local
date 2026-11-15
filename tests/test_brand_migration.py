@@ -5,6 +5,7 @@ import os
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import joblib
+import pytest
 
 
 def test_legacy_user_config_env_still_honoured(monkeypatch):
@@ -62,9 +63,11 @@ def test_qsettings_migration_copies_legacy_org(monkeypatch):
     assert settings_migration.migrate_legacy_qsettings(("LLM",)) == 0
 
 
-def test_legacy_model_format_still_loads(tmp_path):
+def test_unsigned_legacy_model_is_not_unpickled(tmp_path, monkeypatch):
     from analysis.ml import persist
 
+    loaded = []
+    monkeypatch.setattr(persist.joblib, "load", loaded.append)
     payload = {
         "format": "qa-tool-model",
         "format_version": 1,
@@ -76,8 +79,9 @@ def test_legacy_model_format_still_loads(tmp_path):
     path = tmp_path / "legacy.qamodel"
     joblib.dump(payload, path)
 
-    bundle = persist.load_model(path)
-    assert bundle["format"] == "qa-tool-model"
+    with pytest.raises(persist.ModelFileError, match="HMAC"):
+        persist.load_model(path)
+    assert loaded == []
     assert persist.FORMAT_NAME == "akia-model"
     assert persist.MODEL_EXT == ".qamodel"
 

@@ -131,5 +131,5 @@ def test_offline_routing_hits_ml_tools(registry, ctx):
 
     engine = AgentEngine(registry, context=ctx)
     args = engine._offline_args("ml_predict", "加载模型 models/强度.qamodel 做预测")
-    assert args["model_path"].endswith(".qamodel")
+    assert "model_path" not in args
     assert engine._offline_args("ml_explain", "解释第 12 行")["row_index"] == 12
