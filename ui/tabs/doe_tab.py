@@ -5,6 +5,8 @@ DOE 实验设计分析页 — 含图表嵌入
 from typing import Any
 import pandas as pd
 
+from core.numeric_cache import cached_numeric
+
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QSpinBox, QGroupBox, QFormLayout, QTableWidget, QTableWidgetItem, QSplitter, QHeaderView,
@@ -168,7 +170,7 @@ class DOETab(BaseAnalysisTab):
         if len(self.df) < 4:
             return False, f"数据量不足（仅{len(self.df)}行），至少需要4行"
         try:
-            data = pd.to_numeric(self.df[response], errors="coerce").dropna()
+            data = cached_numeric(self.df, response).dropna()
         except KeyError:
             return False, f"列 '{response}' 在当前数据表中不存在，请点击右侧表格列标题重新选择"
         if len(data) < 4:

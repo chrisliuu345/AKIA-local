@@ -37,7 +37,7 @@ class AssistMixin:
             dlg.raise_()
             dlg.activateWindow()
             return
-        dlg = QAMHarnessDialog(self, engine=None)
+        dlg = QAMHarnessDialog(self, engine=None, llm=client)
         dlg.setAttribute(Qt.WA_DeleteOnClose, True)
         dlg.destroyed.connect(lambda *_: setattr(self, "_agent_dialog", None))
         self._agent_dialog = dlg

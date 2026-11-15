@@ -41,6 +41,53 @@ class TestExcelUtils:
         assert workbook.sheet_names == ["Sheet1", "Extra"]
         workbook.close()
 
+    def test_xlsx_prefers_calamine_and_caches_numeric_columns(self, excel_file, monkeypatch):
+        calls = []
+        real = pd.read_excel
+
+        def wrapped(*args, **kwargs):
+            calls.append(kwargs.get("engine"))
+            return real(*args, **kwargs)
+
+        monkeypatch.setattr("core.excel_utils.pd.read_excel", wrapped)
+        frame = read_excel_auto(str(excel_file), dtype=str)
+        assert calls == ["calamine"]
+        assert frame["x"].tolist() == ["1", "2", "3"]
+
+        from core.numeric_cache import cached_numeric
+        converted = {"n": 0}
+        real_to_numeric = pd.to_numeric
+
+        def counting(*args, **kwargs):
+            converted["n"] += 1
+            return real_to_numeric(*args, **kwargs)
+
+        monkeypatch.setattr("core.numeric_cache.pd.to_numeric", counting)
+        first = cached_numeric(frame, "x")
+        second = cached_numeric(frame, "x")
+        pd.testing.assert_series_equal(first, second)
+        assert first is not second  # 副本：调用方就地改值不能写回缓存
+        assert converted["n"] == 0
+        assert first.tolist() == [1, 2, 3]
+
+    def test_xlsx_falls_back_to_openpyxl(self, excel_file, monkeypatch):
+        real = pd.read_excel
+
+        def wrapped(*args, **kwargs):
+            if kwargs.get("engine") == "calamine":
+                raise ValueError("calamine down")
+            return real(*args, **kwargs)
+
+        monkeypatch.setattr("core.excel_utils.pd.read_excel", wrapped)
+        frame = read_excel_auto(str(excel_file))
+        assert frame["x"].tolist() == [1, 2, 3]
+
+    def test_broken_xlsx_names_both_engines(self, tmp_path):
+        broken = tmp_path / "broken.xlsx"
+        broken.write_bytes(b"not an excel file")
+        with pytest.raises(ValueError, match="calamine/openpyxl"):
+            read_excel_auto(str(broken))
+
     def test_broken_xls_reports_engine_hint(self, tmp_path):
         broken = tmp_path / "broken.xls"
         broken.write_bytes(b"not an excel file")

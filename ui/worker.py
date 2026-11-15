@@ -16,6 +16,10 @@ from PySide6.QtCore import QEventLoop, QObject, Qt, QThread, Signal
 from PySide6.QtWidgets import QApplication
 
 
+class WorkerInterrupted(RuntimeError):
+    """局部事件循环在计算结束前被退出（例如应用正在关闭），没有可用结果。"""
+
+
 class _FnWorker(QThread):
     done = Signal(object)
     failed = Signal(object)
@@ -29,8 +33,11 @@ class _FnWorker(QThread):
     def run(self) -> None:
         try:
             self.done.emit(self._fn(*self._args, **self._kwargs))
-        except Exception as exc:
-            self.failed.emit(exc)
+        except BaseException as exc:
+            # SystemExit 等不是 Exception 的子类。漏掉它们，信号发不出，
+            # 调用方的局部事件循环就永远等不到结束。
+            self.failed.emit(exc if isinstance(exc, Exception) else RuntimeError(
+                f"后台计算异常退出: {exc!r}"))
 
 
 class _Bridge(QObject):
@@ -69,4 +76,7 @@ def run_in_worker(owner: QObject, fn: Callable[..., Any], /, *args: Any, **kwarg
         app.processEvents()
     if "error" in holder:
         raise holder["error"]
-    return holder.get("value")
+    if "value" not in holder:
+        # 不能把「没有结果」当成函数返回了 None，否则调用方会把它当结果展示。
+        raise WorkerInterrupted("后台计算被中断，没有结果")
+    return holder["value"]

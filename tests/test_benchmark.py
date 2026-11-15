@@ -48,3 +48,18 @@ def test_update_baseline_writes_json(tmp_path, monkeypatch):
     results = {"cold_start_s": 1.5}
     target.write_text(json.dumps(results), encoding="utf-8")
     assert benchmark.load_baseline() == results
+
+
+def test_benefit_recompute_limit_is_strictly_1_5x():
+    """绝对下限不能把 ×1.5 悄悄放宽成 ×1.85（0.59s 基线 + 0.5s）。"""
+    base = {"benefit_recompute_10k_s": 0.59}
+    assert benchmark.compare({"benefit_recompute_10k_s": 0.59 * 1.49}, base, 4.0) == []
+    flagged = benchmark.compare({"benefit_recompute_10k_s": 0.59 * 1.6}, base, 4.0)
+    assert flagged and abs(flagged[0][3] - 0.885) < 1e-9
+
+
+def test_other_metrics_keep_the_wide_floor():
+    """通用指标的 0.5s 绝对下限不变：基线 0.2s、容差 ×1.5 时，0.69s 仍放行。"""
+    base = {"cold_start_s": 0.2}
+    assert benchmark.compare({"cold_start_s": 0.69}, base, 1.5) == []
+    assert benchmark.compare({"cold_start_s": 0.71}, base, 1.5)

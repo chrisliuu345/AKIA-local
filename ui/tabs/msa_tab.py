@@ -4,6 +4,8 @@ MSA 测量系统分析页 — 含图表嵌入
 
 from typing import Any
 import pandas as pd
+
+from core.numeric_cache import cached_numeric
 import numpy as np
 
 from PySide6.QtWidgets import (
@@ -206,7 +208,7 @@ class MSATab(BaseAnalysisTab):
             reference = self.ref_spin.value()
             if reference == 0.0:
                 return False, "Type 1 量具研究需要设置参考值（真值）"
-            data = pd.to_numeric(self.df[measure], errors="coerce").dropna()
+            data = cached_numeric(self.df, measure).dropna()
             if len(data) < 5:
                 return False, f"Type 1 量具研究至少需要 5 个观测值，当前 {len(data)}"
         return True, ""
@@ -246,7 +248,7 @@ class MSATab(BaseAnalysisTab):
         measure = analysis.get("params", {}).get("measurement", "")
         if self.df is not None and measure:
             try:
-                raw = pd.to_numeric(self.df[measure], errors="coerce").dropna().values
+                raw = cached_numeric(self.df, measure).dropna().values
                 self._render_chart(raw)
             except Exception:
                 self._clear_canvas()
@@ -384,14 +386,14 @@ def _compute_msa(frame, method, measure, part, operator, tolerance, reference,
     elif "EMP" in method:
         result = emp.analyze_crossed(frame, measure, part, operator, tolerance)
     elif "偏倚" in method:
-        data = pd.to_numeric(frame[measure], errors="coerce").dropna()
+        data = cached_numeric(frame, measure).dropna()
         result = linearity_bias.analyze_bias(data, reference)
     elif "线性" in method:
         result = linearity_bias.analyze_linearity(frame, measure, part)
     elif "属性一致性" in method:
         result = attribute_agree.analyze(frame, measure, part, operator)
     elif "Type 1" in method:
-        data = pd.to_numeric(frame[measure], errors="coerce").dropna()
+        data = cached_numeric(frame, measure).dropna()
         result = type1_study.analyze(data, reference, tolerance=tolerance)
     return {
         "analysis_type": method,

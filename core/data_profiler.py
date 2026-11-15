@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 from core.log_util import get_logger
+from core.numeric_cache import cached_numeric
 
 
 def _scipy_stats():
@@ -99,7 +100,7 @@ class DataProfiler:
         sp_stats = _scipy_stats()
         result = []
         for col in df.columns:
-            series = pd.to_numeric(df[col], errors="coerce")
+            series = cached_numeric(df, col)
             non_null = series.dropna()
             n = len(non_null)
             missing_pct = round((len(df) - n) / max(len(df), 1) * 100, 1)
@@ -268,10 +269,10 @@ class DataProfiler:
                 "icon": "SPC",
             }
             if usl_col:
-                usl_vals = pd.to_numeric(df[usl_col], errors="coerce").dropna()
+                usl_vals = cached_numeric(df, usl_col).dropna()
                 rec["params"]["usl"] = float(usl_vals.iloc[0]) if len(usl_vals) else None
             if lsl_col:
-                lsl_vals = pd.to_numeric(df[lsl_col], errors="coerce").dropna()
+                lsl_vals = cached_numeric(df, lsl_col).dropna()
                 rec["params"]["lsl"] = float(lsl_vals.iloc[0]) if len(lsl_vals) else None
             grade, conf = self._score_recommendation(cols, rec)
             rec["confidence"] = {"grade": grade, "percentage": conf}

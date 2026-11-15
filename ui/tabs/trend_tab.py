@@ -2,6 +2,8 @@
 
 import numpy as np
 import pandas as pd
+
+from core.numeric_cache import cached_numeric
 from typing import Any
 
 from PySide6.QtWidgets import (
@@ -124,7 +126,7 @@ class TrendTab(BaseAnalysisTab):
         for c in self.df.columns:
             self.date_combo.addItem(str(c), c)
             try:
-                s = pd.to_numeric(self.df[c], errors="coerce").dropna()
+                s = cached_numeric(self.df, c).dropna()
                 if len(s) > 0:
                     self.val_list.addItem(str(c))
             except Exception:  # 非数值列：不加入可选列
@@ -160,7 +162,7 @@ class TrendTab(BaseAnalysisTab):
         stats_rows = []
         sampled_note = ""
         for j, vcol in enumerate(val_cols):
-            vals = pd.to_numeric(self.df[vcol], errors="coerce")
+            vals = cached_numeric(self.df, vcol)
             mask = dates.notna() & vals.notna()
             d, v = dates[mask].values, vals[mask].values
             if len(d) < 2:

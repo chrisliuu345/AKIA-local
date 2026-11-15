@@ -4,6 +4,8 @@
 
 from typing import Any
 import pandas as pd
+
+from core.numeric_cache import cached_numeric
 import numpy as np
 
 from PySide6.QtWidgets import (
@@ -247,7 +249,7 @@ class CapabilityTab(BaseAnalysisTab):
         if not col:
             return False, "请选择测量列（可点击右侧表格列标题快速选择）"
         try:
-            data = pd.to_numeric(self.df[col], errors="coerce").dropna()
+            data = cached_numeric(self.df, col).dropna()
         except KeyError:
             return False, f"列 '{col}' 在当前数据表中不存在，请点击右侧表格列标题重新选择"
         if len(data) < 5:
@@ -277,7 +279,7 @@ class CapabilityTab(BaseAnalysisTab):
         lsl = self.lsl_spin.value()
         target = self.target_spin.value()
         sub_size = self.subgroup_spin.value()
-        data = pd.to_numeric(self.df[col], errors="coerce").dropna()
+        data = cached_numeric(self.df, col).dropna()
         frame = self.df
         subgroup_column = self.parsed_info.get("subgroup_column", "")
         ti_text = self.ti_method_combo.currentText()
@@ -339,7 +341,7 @@ class CapabilityTab(BaseAnalysisTab):
         col = analysis.get("params", {}).get("column", "")
         if self.df is not None and col:
             try:
-                raw = pd.to_numeric(self.df[col], errors="coerce").dropna().values
+                raw = cached_numeric(self.df, col).dropna().values
                 self._render_chart(result, raw)
             except Exception:
                 self._clear_canvas()

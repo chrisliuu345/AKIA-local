@@ -6,6 +6,8 @@ import threading
 from typing import Any
 import pandas as pd
 
+from core.numeric_cache import cached_numeric
+
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QSpinBox, QDoubleSpinBox, QGroupBox, QFormLayout,
@@ -520,7 +522,7 @@ class SPCTab(BaseAnalysisTab):
         if not col:
             return False, "请选择测量列（可点击右侧表格列标题快速选择）"
         try:
-            data = pd.to_numeric(self.df[col], errors="coerce").dropna()
+            data = cached_numeric(self.df, col).dropna()
         except KeyError:
             return False, f"列 '{col}' 在当前数据表中不存在，请点击右侧表格列标题重新选择"
         if len(data) < 2:
@@ -824,7 +826,7 @@ def _compute_spc(frame, col, chart_type, subgroup_size, selected_cols,
     if chart_type == "Hotelling T²":
         result = hotelling.analyze(frame, selected_cols)
     else:
-        data = pd.to_numeric(frame[col], errors="coerce").dropna()
+        data = cached_numeric(frame, col).dropna()
         if chart_type == "XBar-R":
             result = xbar_r.analyze(data, subgroup_size)
         elif chart_type == "XBar-S":

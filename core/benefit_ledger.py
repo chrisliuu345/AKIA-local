@@ -231,10 +231,17 @@ class BenefitRecord:
 
 
 class BenefitLedger:
-    """收益记录集合（按 double_count_key 防重复；月度/分区查询）。"""
+    """收益记录集合（按 double_count_key 防重复；月度/分区查询）。
+
+    防重键、案例和月份各有一份索引，入账查重和按案例/月份查找都是 O(1)。
+    金额仍按命中的记录累加。
+    """
 
     def __init__(self, records: list[BenefitRecord] | None = None):
         self.records: list[BenefitRecord] = []
+        self._by_key: dict[str, BenefitRecord] = {}
+        self._by_case: dict[str, list[BenefitRecord]] = {}
+        self._by_month: dict[str, list[BenefitRecord]] = {}
         for record in records or []:
             self.add(record)
 
@@ -247,12 +254,15 @@ class BenefitLedger:
     def add(self, record) -> BenefitRecord:
         """入账；同 double_count_key 拒绝（防重复计入）。"""
         normalized = self._normalize(record)
-        for existing in self.records:
-            if existing.double_count_key == normalized.double_count_key:
-                raise ValueError(
-                    f"重复计入被拒绝：案例 {normalized.case_id} 在 "
-                    f"{normalized.month} 的口径已存在记录 {existing.record_id}")
+        existing = self._by_key.get(normalized.double_count_key)
+        if existing is not None:
+            raise ValueError(
+                f"重复计入被拒绝：案例 {normalized.case_id} 在 "
+                f"{normalized.month} 的口径已存在记录 {existing.record_id}")
         self.records.append(normalized)
+        self._by_key[normalized.double_count_key] = normalized
+        self._by_case.setdefault(normalized.case_id, []).append(normalized)
+        self._by_month.setdefault(normalized.month, []).append(normalized)
         return normalized
 
     def __len__(self) -> int:
@@ -263,19 +273,22 @@ class BenefitLedger:
 
     def for_case(self, case_id: str) -> list[BenefitRecord]:
         target = str(case_id or "").strip()
-        return [r for r in self.records if r.case_id == target]
+        return list(self._by_case.get(target, ()))
 
     def for_month(self, month: str) -> list[BenefitRecord]:
         target = str(month or "").strip()
-        return [r for r in self.records if r.month == target]
+        return list(self._by_month.get(target, ()))
+
+    def _in_month(self, month: str) -> list[BenefitRecord]:
+        target = str(month or "").strip()
+        if target:
+            return self.for_month(target)
+        return self.records
 
     def cost_breakdown(self, month: str = "") -> dict[str, float]:
         """COPQ 四类分项（仅置信门槛内的记录）；``month`` 为空统计全部。"""
         breakdown = dict.fromkeys(("预防", "鉴定", "内部失败", "外部失败"), 0.0)
-        target = str(month or "").strip()
-        for record in self.records:
-            if target and record.month != target:
-                continue
+        for record in self._in_month(month):
             if record.ledger_kind != "cost_of_quality":
                 continue
             if not record.admits_to_summary:
@@ -291,9 +304,7 @@ class BenefitLedger:
         pending: list[str] = []
         target = str(month or "").strip()
         count = 0
-        for record in self.records:
-            if target and record.month != target:
-                continue
+        for record in self._in_month(target):
             count += 1
             if not record.admits_to_summary:
                 pending.append(record.record_id)

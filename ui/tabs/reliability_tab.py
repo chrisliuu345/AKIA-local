@@ -5,6 +5,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from core.numeric_cache import cached_numeric
+
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QGroupBox, QFormLayout, QFrame,
@@ -215,12 +217,12 @@ class ReliabilityTab(BaseAnalysisTab):
         col = self.failure_col_combo.currentData()
         if col is None:
             return
-        times = pd.to_numeric(self.df[col], errors="coerce").dropna().tolist()
+        times = cached_numeric(self.df, col).dropna().tolist()
 
         cen_col = self.censored_combo.currentData()
         censored = None
         if cen_col is not None and cen_col in self.df.columns:
-            censored = pd.to_numeric(self.df[cen_col], errors="coerce").clip(0, 1).fillna(1).astype(int).tolist()
+            censored = cached_numeric(self.df, cen_col).clip(0, 1).fillna(1).astype(int).tolist()
 
         fit_method = self.fit_method_combo.currentData()
         three_p = self.three_param_check.isChecked()
@@ -346,12 +348,12 @@ class ReliabilityTab(BaseAnalysisTab):
         tbf_col = self.tbf_combo.currentData()
         if tbf_col is None:
             return
-        tbf = pd.to_numeric(self.df[tbf_col], errors="coerce").dropna().tolist()
+        tbf = cached_numeric(self.df, tbf_col).dropna().tolist()
 
         rt_col = self.repair_combo.currentData()
         rt = None
         if rt_col is not None and rt_col in self.df.columns:
-            rt = pd.to_numeric(self.df[rt_col], errors="coerce").fillna(0).tolist()
+            rt = cached_numeric(self.df, rt_col).fillna(0).tolist()
 
         grp_col = self.mtbf_group_combo.currentData()
         groups = None

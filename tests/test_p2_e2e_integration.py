@@ -214,6 +214,7 @@ def test_request_headers_and_bodies_on_wire(base_url, api_server):
 # ---------------------------------------------------------------- 配置链路
 
 
+@pytest.mark.requires_keyring
 def test_settings_to_client_to_connection(base_url, isolated_config):
     from config.settings import save_config
     from core.llm_client import LLMClient as Client

@@ -5,6 +5,8 @@
 from typing import Any
 import pandas as pd
 
+from core.numeric_cache import cached_numeric
+
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QGroupBox, QFormLayout, QCheckBox,
@@ -239,7 +241,7 @@ class ChartTab(BaseAnalysisTab):
         if self.df is None or col not in self.df.columns:
             return None
         try:
-            n = pd.to_numeric(self.df[col], errors="coerce").dropna()
+            n = cached_numeric(self.df, col).dropna()
         except Exception:
             n = pd.Series(dtype=float)
         if len(n) == 0:

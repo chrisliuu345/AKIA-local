@@ -77,6 +77,10 @@ class LineBalanceTab(BaseAnalysisTab):
             "ie.line_balance.use_standard_tip",
             "勾选后，用项目里该工序现行标准工时替换导入的 CT，再计算平衡率"))
         config_layout.addRow(self.use_standard_check)
+        self.standard_coverage_label = QLabel("")
+        self.standard_coverage_label.setWordWrap(True)
+        self.standard_coverage_label.setStyleSheet("color: #737373; font-size: 11px;")
+        config_layout.addRow(self.standard_coverage_label)
 
         self.btn_analyze = QPushButton(i18n.tr("ie.run_btn"))
         self.btn_analyze.setStyleSheet(BUTTON_PRIMARY_STRETCH)
@@ -178,6 +182,10 @@ class LineBalanceTab(BaseAnalysisTab):
 
     def set_ie_data(self, processes: list[Process]):
         self.ie_processes = processes
+        # 换了工序表，上一次的分析输入和证据包就不再对应当前数据。
+        self._analysis_processes = []
+        self._last_balance_bundle = None
+        self.standard_coverage_label.setText("")
         self._populate_preview(processes)
 
     def _populate_preview(self, processes: list[Process]):
@@ -313,6 +321,17 @@ class LineBalanceTab(BaseAnalysisTab):
             self, "记入案例",
             f"技能约束排班已记入案例{label}（凭证含技能矩阵指纹）")
 
+    def _show_standard_coverage(self, applied: list) -> None:
+        if not self.use_standard_check.isChecked():
+            self.standard_coverage_label.setText("")
+            return
+        uncovered = (self._last_balance_bundle or {}).get("uncovered_process_ids") or []
+        total = len(applied) + len(uncovered)
+        text = f"标准工时覆盖 {len(applied)}/{total} 道工序"
+        if uncovered:
+            text += f"；仍用导入 CT：{'、'.join(uncovered)}（不能记入基线/复测）"
+        self.standard_coverage_label.setText(text)
+
     def _record_standard_balance(self, phase: str):
         bundle = self._last_balance_bundle or {}
         records = bundle.get("records") or []
@@ -320,6 +339,15 @@ class LineBalanceTab(BaseAnalysisTab):
             QMessageBox.information(
                 self, "记入案例",
                 "请先勾选「采用已确认标准工时」并重新分析")
+            return
+        uncovered = bundle.get("uncovered_process_ids") or []
+        if uncovered:
+            # 混用导入 CT 的平衡率不能当作“标准工时基线”，否则前后对比口径不一。
+            QMessageBox.warning(
+                self, "记入案例",
+                "以下工序没有现行标准工时，仍在使用导入的 CT：\n"
+                + "、".join(uncovered)
+                + "\n请先在工时研究中保存这些工序的标准工时，再记入案例。")
             return
         if not callable(self._balance_record_step):
             QMessageBox.information(self, "记入案例", "未接入主窗口，无法记入案例")
@@ -361,6 +389,7 @@ class LineBalanceTab(BaseAnalysisTab):
 
         self._analysis_processes = processes
         self._last_balance_bundle = bundle_balance(processes, result, applied)
+        self._show_standard_coverage(applied)
         self.current_result = {
             "analysis_type": "生产线平衡",
             "params": {"takt": result["takt"]},

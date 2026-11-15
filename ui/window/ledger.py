@@ -100,13 +100,16 @@ class LedgerMixin:
                      "ack_by": entry.ack_by})
 
     def _record_data_imported(self, source: str, raw_data: dict,
-                              kind: str = "file") -> None:
+                              kind: str = "file", extra: dict | None = None) -> None:
         sheets = len(raw_data or {})
         rows = sum(len(df) for df in (raw_data or {}).values()
                    if hasattr(df, "__len__"))
+        payload = {"source": str(source), "kind": kind,
+                   "sheets": sheets, "rows": int(rows)}
+        # 截断等会影响分析范围的事实要进证据，事后才能说明数据不是全量。
+        payload.update(extra or {})
         self._ledger_append("data_imported", object_refs=[str(source)],
-                            payload={"source": str(source), "kind": kind,
-                                     "sheets": sheets, "rows": int(rows)})
+                            payload=payload)
 
     def _record_report_exported(self, fmt: str, file_path: str,
                                 analyses=None) -> None:

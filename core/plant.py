@@ -264,7 +264,11 @@ def rows_from_excel(path: str | Path) -> list[dict]:
     """Excel/CSV 模板 → 表格行（表头用 ROW_COLUMNS 中文名或字段名）。"""
     import pandas as pd
 
-    df = pd.read_csv(path) if str(path).lower().endswith(".csv") else pd.read_excel(path)
+    if str(path).lower().endswith(".csv"):
+        df = pd.read_csv(path)
+    else:
+        from core.excel_utils import read_excel_auto
+        df = read_excel_auto(path)
     alias = {label: key for key, label in ROW_COLUMNS}
     alias.update({key: key for key, _ in ROW_COLUMNS})
     out: list[dict] = []

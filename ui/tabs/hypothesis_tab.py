@@ -4,6 +4,8 @@
 
 from typing import Any
 import pandas as pd
+
+from core.numeric_cache import cached_numeric
 import numpy as np
 
 from PySide6.QtWidgets import (
@@ -217,7 +219,7 @@ class HypothesisTab(BaseAnalysisTab):
                 col2 = self.col2_combo.currentText()
                 if not col2:
                     return False, "请选择数据列2（可再次点击表格列标题选择）"
-                d2 = pd.to_numeric(self.df[col2], errors="coerce").dropna()
+                d2 = cached_numeric(self.df, col2).dropna()
                 if len(d2) < 2:
                     return False, f"数据列2 '{col2}' 有效数据不足（仅{len(d2)}行）"
             if method in ("单因素 ANOVA", "双因素 ANOVA"):
@@ -233,7 +235,7 @@ class HypothesisTab(BaseAnalysisTab):
                         return False, "双因素 ANOVA 需要选择第二个因子列"
                     if factor2 == factor:
                         return False, "两个因子列不能相同"
-            d1 = pd.to_numeric(self.df[col1], errors="coerce").dropna()
+            d1 = cached_numeric(self.df, col1).dropna()
             if len(d1) < 2:
                 return False, f"数据列1 '{col1}' 有效数据不足（仅{len(d1)}行）"
         except KeyError as e:
@@ -353,7 +355,7 @@ class HypothesisTab(BaseAnalysisTab):
         col1 = analysis.get("params", {}).get("column1", "")
         if self.df is not None and col1:
             try:
-                raw = pd.to_numeric(self.df[col1], errors="coerce").dropna().values
+                raw = cached_numeric(self.df, col1).dropna().values
                 self._render_chart(raw)
             except Exception:
                 self._clear_canvas()
@@ -443,53 +445,53 @@ def _compute_hypothesis(frame, method, col1, col2, factor, factor2, target, alte
                         equivalence, proportion) -> dict[str, Any]:
     result: dict[str, Any] = {}
     if method == "单样本 t检验":
-        data = pd.to_numeric(frame[col1], errors="coerce").dropna()
+        data = cached_numeric(frame, col1).dropna()
         result = t_tests.one_sample(data, target, alternative)
     elif method == "双样本 t检验":
-        g1 = pd.to_numeric(frame[col1], errors="coerce").dropna()
-        g2 = pd.to_numeric(frame[col2], errors="coerce").dropna()
+        g1 = cached_numeric(frame, col1).dropna()
+        g2 = cached_numeric(frame, col2).dropna()
         result = t_tests.two_sample(g1, g2, alternative=alternative)
     elif method == "配对 t检验":
-        g1 = pd.to_numeric(frame[col1], errors="coerce").dropna()
-        g2 = pd.to_numeric(frame[col2], errors="coerce").dropna()
+        g1 = cached_numeric(frame, col1).dropna()
+        g2 = cached_numeric(frame, col2).dropna()
         result = t_tests.paired(g1, g2, alternative)
     elif method == "单因素 ANOVA":
         result = anova.one_way(frame, col1, factor)
     elif method == "双因素 ANOVA":
         result = anova.two_way(frame, col1, factor, factor2)
     elif method == "正态性检验":
-        data = pd.to_numeric(frame[col1], errors="coerce").dropna()
+        data = cached_numeric(frame, col1).dropna()
         result = normality.normality_test(data, confidence)
     elif method == "方差齐性检验":
-        groups = [pd.to_numeric(frame[c], errors="coerce").dropna() for c in [col1, col2]]
+        groups = [cached_numeric(frame, c).dropna() for c in [col1, col2]]
         result = variance_tests.variance_tests(*groups, confidence)
     elif method == "Mood 中位数检验":
-        groups = [pd.to_numeric(frame[c], errors="coerce").dropna().values
+        groups = [cached_numeric(frame, c).dropna().values
                   for c in [col1, col2] if c and c in frame.columns]
         result = nonparametric.mood_median_test(*groups)
     elif method == "Friedman 检验":
-        groups = [pd.to_numeric(frame[c], errors="coerce").dropna().values
+        groups = [cached_numeric(frame, c).dropna().values
                   for c in [col1, col2] if c and c in frame.columns]
         result = nonparametric.friedman_test(*groups)
     elif method == "Mann-Whitney U":
-        g1 = pd.to_numeric(frame[col1], errors="coerce").dropna().values
-        g2 = pd.to_numeric(frame[col2], errors="coerce").dropna().values
+        g1 = cached_numeric(frame, col1).dropna().values
+        g2 = cached_numeric(frame, col2).dropna().values
         result = nonparametric.mann_whitney(g1, g2, alternative=alternative)
     elif method == "Wilcoxon 符号秩":
-        g1 = pd.to_numeric(frame[col1], errors="coerce").dropna().values
-        g2 = pd.to_numeric(frame[col2], errors="coerce").dropna().values
+        g1 = cached_numeric(frame, col1).dropna().values
+        g2 = cached_numeric(frame, col2).dropna().values
         result = nonparametric.wilcoxon_signed_rank(g1, g2, alternative=alternative)
     elif method == "Kruskal-Wallis":
-        groups = [pd.to_numeric(frame[col1], errors="coerce").dropna().values]
+        groups = [cached_numeric(frame, col1).dropna().values]
         if col2 and col2 in frame.columns:
-            groups.append(pd.to_numeric(frame[col2], errors="coerce").dropna().values)
+            groups.append(cached_numeric(frame, col2).dropna().values)
         result = nonparametric.kruskal_wallis(*groups)
     elif method == "TOST 单样本等价检验":
-        data = pd.to_numeric(frame[col1], errors="coerce").dropna()
+        data = cached_numeric(frame, col1).dropna()
         result = equivalence.one_sample_tost(data, target, margin)
     elif method == "TOST 双样本等价检验":
-        g1 = pd.to_numeric(frame[col1], errors="coerce").dropna()
-        g2 = pd.to_numeric(frame[col2], errors="coerce").dropna()
+        g1 = cached_numeric(frame, col1).dropna()
+        g2 = cached_numeric(frame, col2).dropna()
         result = equivalence.two_sample_tost(g1, g2, margin)
     elif method == "χ²拟合优度检验":
         raw = frame[col1].dropna()

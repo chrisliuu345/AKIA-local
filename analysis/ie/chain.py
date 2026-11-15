@@ -28,25 +28,18 @@ IE_FORMULA = (
 BALANCE_PHASES = ("baseline", "re_measure")
 
 
-def _observed_time(item: TimeObservation) -> float:
-    if item.observation_time and item.observation_time > 0:
-        return float(item.observation_time)
-    return float(item.cycle)
-
-
 def confirm_standard_times(observations: list[TimeObservation], *,
                            rating: float = 1.0,
                            allowance_pct: float = 12.0) -> list[dict[str, Any]]:
-    """按工序和作业员确认标准工时，并保留可还原的输入。"""
+    """按工序和作业员确认标准工时，并保留可还原的输入。
+
+    ``observation_times`` 取工时研究剔除异常值之后实际参与平均的观测。
+    如果写入全部观测，按证据复算的均值会和标准工时对不上。
+    """
     result = TimeStudyEngine.analyze(
         observations, rating=rating, allowance_pct=allowance_pct)
     if not result.get("valid"):
         raise ValueError(result.get("error") or "工时研究无效")
-
-    observed: dict[tuple[str, str], list[float]] = {}
-    for item in observations:
-        key = (str(item.process_id), str(item.operator))
-        observed.setdefault(key, []).append(_observed_time(item))
 
     records: list[dict[str, Any]] = []
     for row in result["results"]:
@@ -54,7 +47,7 @@ def confirm_standard_times(observations: list[TimeObservation], *,
         records.append({
             "process_id": key[0],
             "operator": key[1],
-            "observation_times": list(observed.get(key, [])),
+            "observation_times": [float(value) for value in row["observation_times"]],
             "rating": float(row["rating"]),
             "allowance_pct": float(row["allowance_pct"]),
             "avg_time": float(row["avg_time"]),
@@ -130,9 +123,11 @@ def bundle_balance(processes: list[Process], balance: dict[str, Any],
         raise ValueError(balance["error"])
     applied_ids = {item["process_id"] for item in applied}
     records = list(applied)
+    uncovered: list[str] = []
     for process in processes:
         if process.process_id in applied_ids or not process.cycle_time:
             continue
+        uncovered.append(process.process_id)
         records.append({
             "process_id": process.process_id,
             "standard_time": float(process.cycle_time),
@@ -146,6 +141,8 @@ def bundle_balance(processes: list[Process], balance: dict[str, Any],
         "balance": balance,
         "standard_version": IE_STANDARD_VERSION,
         "formula": IE_FORMULA,
+        # 仍在使用导入 CT 的工序。非空说明这次平衡率不是纯标准工时口径。
+        "uncovered_process_ids": uncovered,
     }
 
 
@@ -216,6 +213,7 @@ def record_balance(ledger: EvidenceLedger, *, phase: str, case_id: str,
         "standard_version": result["standard_version"],
         "formula": result["formula"],
         "inputs": list(result["records"]),
+        "uncovered_process_ids": list(result.get("uncovered_process_ids") or []),
         "takt": balance.get("takt"),
         "balance_rate": current["balance_rate"],
         "balance_loss": current["balance_loss"],

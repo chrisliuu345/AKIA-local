@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QFont
 
 from config.settings import SUPPORTED_EXCEL_EXTENSIONS, MAX_PREVIEW_ROWS
-from core.excel_utils import read_excel_auto
+from core.excel_utils import open_excel_auto, read_excel_auto
 from ui.theme import colors as theme_colors
 from ui.font_config import get_ui_font
 
@@ -128,24 +128,12 @@ class ImportDialog(QDialog):
         )
         if file_path:
             try:
-                import pandas as pd
                 ext = os.path.splitext(file_path)[1].lower()
                 if ext not in SUPPORTED_EXCEL_EXTENSIONS:
                     self.status_label.setText(f"不支持的文件格式: {ext}")
                     return
 
-                xl = None
-                if ext == ".xls":
-                    for eng in ["calamine", "xlrd"]:
-                        try:
-                            xl = pd.ExcelFile(file_path, engine=eng)
-                            break
-                        except Exception:
-                            continue
-                    if xl is None:
-                        raise ValueError("无法读取 .xls 文件，请安装: pip install python-calamine")
-                else:
-                    xl = pd.ExcelFile(file_path, engine="openpyxl")
+                xl = open_excel_auto(file_path)
                 self.file_path = file_path
                 self.sheet_names = list(xl.sheet_names)
                 self.file_label.setText(os.path.basename(file_path))
@@ -214,21 +202,8 @@ class ImportDialog(QDialog):
             return
         try:
             import pandas as pd
-            ext = os.path.splitext(self.file_path)[1].lower()
-            if ext == ".xls":
-                df = None
-                for eng in ["calamine", "xlrd"]:
-                    try:
-                        df = pd.read_excel(self.file_path, sheet_name=sheet_name,
-                                           nrows=MAX_PREVIEW_ROWS, engine=eng)
-                        break
-                    except Exception:
-                        continue
-                if df is None:
-                    return
-            else:
-                df = pd.read_excel(self.file_path, sheet_name=sheet_name,
-                                   nrows=MAX_PREVIEW_ROWS, engine="openpyxl")
+            df = read_excel_auto(self.file_path, sheet_name=sheet_name,
+                                 nrows=MAX_PREVIEW_ROWS)
             self.preview_table.setRowCount(min(MAX_PREVIEW_ROWS, len(df)))
             self.preview_table.setColumnCount(len(df.columns))
             self.preview_table.setHorizontalHeaderLabels([str(c) for c in df.columns])

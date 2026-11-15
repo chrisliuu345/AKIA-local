@@ -77,9 +77,12 @@ def test_sections_and_empty_state(html):
     assert "charts-empty" in html
 
 
-def test_token_passthrough_and_reconnect(html):
-    assert "URLSearchParams(location.search)" in html
-    assert 'get("token")' in html and "encodeURIComponent(TOKEN)" in html
+def test_token_stays_out_of_url_and_reconnects(html):
+    """v4.6.x 起令牌走 Cookie：页面不再把令牌拼进 WebSocket 地址，
+    并且会把地址栏里残留的 token 参数抹掉。"""
+    assert 'wsScheme + location.host + "/ws/stream"' in html
+    assert "encodeURIComponent(TOKEN)" not in html
+    assert 'searchParams.delete("token")' in html and "history.replaceState" in html
     assert "setTimeout(connect" in html        # 断线自动重连（不再整页刷新）
     assert "location.reload" not in html
 

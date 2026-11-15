@@ -3,6 +3,7 @@
 from analysis.ie.chain import (
     IE_STANDARD_VERSION,
     apply_confirmed_standard_times,
+    confirm_standard_times,
     record_balance,
     run_confirmed_balance,
 )
@@ -72,3 +73,14 @@ def test_saved_standard_time_replaces_imported_cycle_time():
     assert applied[0]["standard_record_id"] == context.standards.current("P1").record_id
     assert applied[0]["observation_times"] == [8.0, 10.0, 12.0, 10.0]
     assert applied[0]["source"] == "confirmed_standard_time"
+
+
+def test_evidence_observations_exclude_removed_outliers():
+    """证据里的观测要能复算出标准工时：被剔除的异常值不能留在里面。"""
+    rows = [_obs("P1", value, index)
+            for index, value in enumerate((10, 10.2, 9.8, 10.1, 9.9, 10.0, 60.0), start=1)]
+    record = confirm_standard_times(rows, rating=1.0, allowance_pct=0)[0]
+    assert record["outliers_removed"] == 1
+    assert 60.0 not in record["observation_times"]
+    recomputed = sum(record["observation_times"]) / len(record["observation_times"])
+    assert abs(recomputed - record["avg_time"]) < 1e-3

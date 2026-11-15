@@ -29,10 +29,19 @@ nav.toc a{display:block;padding:5px 10px;border-radius:6px;font-size:13.5px;colo
 nav.toc a:hover{background:#F0F0F0;text-decoration:none}
 main{flex:1;min-width:0}
 section.card{background:var(--card);border:1px solid var(--line);border-radius:10px;
-  padding:22px 26px;margin-bottom:18px;scroll-margin-top:16px}
+  padding:22px 26px;margin-bottom:18px;scroll-margin-top:76px}
+header.top{position:sticky;top:0;z-index:5}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+nav.toc{top:72px;max-height:calc(100vh - 88px)}
+nav.toc a.active{background:#EEF2FC;color:var(--brand);font-weight:650}
+nav.toc .find{display:block;margin:4px 8px 8px}
+nav.toc .find input{width:100%;border:1px solid var(--line);border-radius:6px;
+  padding:6px 8px;font:inherit;font-size:13px;background:#fff}
+td code{display:inline-block;margin:2px 4px 2px 0}
 h1{font-size:22px;margin:0 0 8px}
 h2{font-size:18px;margin:0 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
 h3{font-size:15.5px;margin:18px 0 6px}
+h3[id]{scroll-margin-top:76px}
 p{margin:8px 0}
 ul,ol{padding-left:22px;margin:8px 0}
 li{margin:3px 0}
@@ -68,7 +77,10 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 36px;color:#737373;font-siz
 </header>
 
 <div class="wrap">
-<nav class="toc">
+<nav class="toc" aria-label="本页目录">
+  <label class="find">查找
+    <input id="guide-find" type="search" placeholder="输入关键词" autocomplete="off">
+  </label>
   <div class="grp">开始</div>
   <a href="#quick-start">四条起步路径</a>
   <a href="#ui">界面</a>
@@ -76,12 +88,14 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 36px;color:#737373;font-siz
   <a href="#templates">分析模板与批量</a>
   <div class="grp">分析</div>
   <a href="#modules">模块总览</a>
+  <a href="#modules-ie">IE 工具</a>
   <a href="#charts">看结果</a>
   <a href="#export">导出</a>
   <div class="grp">其余</div>
   <a href="#ai">QAM Harness</a>
   <a href="#realtime">实时看板</a>
   <a href="#hardware">硬件</a>
+  <a href="#install">安装</a>
   <a href="#faq">常见问题</a>
   <a href="#support">支持</a>
 </nav>
@@ -111,15 +125,16 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 36px;color:#737373;font-siz
   <div class="task">
     <p class="do"><b class="k">点</b>欢迎页「导入工作表」，或菜单「文件 → 导入工作表」（<code>Ctrl+O</code>）。已有项目则点「打开项目」，或菜单「文件 → 打开项目 (.qap)」。</p>
     <p class="do"><b class="k">看到</b>文件选择框。工作表认 Excel / CSV。项目文件扩展名是 <code>.qap</code>。</p>
-    <p class="do"><b class="k">结果</b>工作表进入当前数据。状态栏显示文件名。之后打开的分析页会带上这份数据。IE 工时用「导入 IE 数据」，数据库用「导入数据库」。</p>
+    <p class="do"><b class="k">结果</b>工作表进入当前数据。状态栏显示文件名。之后打开的分析页会带上这份数据。IE 工时用「导入 IE 数据」，数据库用「导入数据库」。读文件和连库都在后台进行，窗口不会卡住。</p>
   </div>
   <p>列名用测量值本身，例如「直径」。一张表可以有多列，分析时再选要用的列。</p>
+  <p>数据库单表最多载入 10 万行。超出时弹出「数据未完整载入」，状态栏写出表名。有主键的表按主键取前面的行，分析只用这批已载入的行。</p>
 
   <h3>3. 做一张 SPC 控制图</h3>
   <div class="task">
     <p class="do"><b class="k">点</b>欢迎页「新建分析」，或侧栏「质量分析工具 → SPC 控制图」。</p>
     <p class="do"><b class="k">看到</b>页顶是控制图类型、测量列、子组大小。默认类型是 XBar-R，子组大小 5。需要规格限时再勾选并填写 USL / LSL。</p>
-    <p class="do"><b class="k">点</b>「运行分析 (F5)」。</p>
+    <p class="do"><b class="k">点</b>「运行分析 (F5)」。计算在后台进行，窗口仍可滚动。这一次还没结束时再点，第二次会被忽略。</p>
     <p class="do"><b class="k">看到</b>结果区没有「图表 / 数据」开关。控制图横贯上方。图下方左侧是「图表选项」，右侧是文字结论和数值表。页面只有一根滚动条；鼠标在图上滚动时滚动的是页面，按住 Ctrl 再滚动才缩放图表。</p>
     <p class="do"><b class="k">结果</b>图上有数据点、中心线 CL、控制限 UCL / LCL。右侧表写出同样的数值。点超出控制限时，图上会标出判异点。</p>
   </div>
@@ -200,6 +215,11 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 36px;color:#737373;font-siz
   <p>图表构建器、趋势、能力对比、汇总面板。在图表构建器里点缩略图切换类型，再点运行。</p>
   <h3 id="modules-ie">IE 工具</h3>
   <p>时间研究、工作抽样、线平衡、OEE、VSM、人机作业、标准作业组合、SMED、TPM。工时数据用「文件 → 导入 IE 数据」，不要和普通工作表混用。</p>
+  <div class="task">
+    <p class="do"><b class="k">点</b>工时研究里保存标准工时。打开线平衡，勾选「采用已确认标准工时」，再点运行分析。</p>
+    <p class="do"><b class="k">看到</b>页面写出覆盖了几道工序。没有现行标准工时的工序仍用导入的 CT，并列出工序号。</p>
+    <p class="do"><b class="k">结果</b>每一道参与平衡的工序都有标准工时之后，才能记入基线或复测。记录写入证据账本，留下观测、评比、宽放和标准版本。覆盖不全时会拒绝记入，避免把导入 CT 和标准工时混成一条基线。</p>
+  </div>
   <h3 id="modules-eng">工程工具</h3>
   <p>可靠性、鱼骨图、柏拉图、FMEA、控制计划、8D、PPAP。鱼骨图在图上直接改文字；8D 和 PPAP 按步骤填表。</p>
 </section>
@@ -291,6 +311,14 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 36px;color:#737373;font-siz
     <summary>模板报不支持的分析类型</summary>
     <div class="ans">对照上面的 25 种 <code>analysis_type</code>。帮助菜单里的模板格式说明与这一份清单相同。</div>
   </details>
+  <details>
+    <summary>线平衡不能记入基线</summary>
+    <div class="ans">勾选「采用已确认标准工时」后，每一道参与平衡的工序都要有现行标准工时。缺的工序会列在页面上。先到工时研究保存，再重新分析。</div>
+  </details>
+  <details>
+    <summary>数据库里的表只进来一部分</summary>
+    <div class="ans">单表上限是 10 万行。弹窗和状态栏会写出表名。分析只用已经载入的行。要看全表时，先在库里筛好再导入。</div>
+  </details>
 </section>
 
 <section class="card" id="support">
@@ -303,5 +331,43 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 36px;color:#737373;font-siz
 </div>
 
 <footer>AKIA v4.6.4 · 本指南随软件离线分发（config/help/guide.html）· 菜单「帮助 → 使用指南」或按 F1 打开</footer>
+<script>
+(function () {
+  var box = document.getElementById("guide-find");
+  var cards = Array.prototype.slice.call(document.querySelectorAll("main section.card"));
+  var links = Array.prototype.slice.call(document.querySelectorAll("nav.toc a"));
+  if (box) {
+    box.addEventListener("input", function () {
+      var q = box.value.trim().toLowerCase();
+      cards.forEach(function (card) {
+        card.hidden = q !== "" && card.textContent.toLowerCase().indexOf(q) < 0;
+      });
+      links.forEach(function (link) {
+        var id = (link.getAttribute("href") || "").slice(1);
+        var target = id && document.getElementById(id);
+        link.hidden = q !== "" && target && !cards.some(function (card) {
+          return !card.hidden && card.contains(target);
+        });
+      });
+    });
+  }
+  if (!("IntersectionObserver" in window)) return;
+  var byId = {};
+  links.forEach(function (link) { byId[(link.getAttribute("href") || "").slice(1)] = link; });
+  var current = null;
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (!entry.isIntersecting) return;
+      var link = byId[entry.target.id];
+      if (!link || link === current) return;
+      if (current) current.classList.remove("active");
+      link.classList.add("active");
+      current = link;
+    });
+  }, { rootMargin: "-12% 0px -78% 0px", threshold: 0 });
+  cards.forEach(function (card) { if (card.id) observer.observe(card); });
+  document.querySelectorAll("main h3[id]").forEach(function (node) { observer.observe(node); });
+})();
+</script>
 </body>
 </html>

@@ -75,3 +75,50 @@ def test_unchecked_standard_keeps_imported_cycle_time():
         tab._record_standard_balance("baseline")
     finally:
         tab.close()
+
+
+def test_partial_standard_coverage_is_reported_and_cannot_be_recorded(monkeypatch):
+    from ui.tabs.line_balance_tab import LineBalanceTab
+
+    context = ProjectContext()
+    context.record_standard_time(
+        "P1", standard_time_s=40, normal_time_s=40, allowance_pct=0,
+        rating=1, cycles=4, operator="OP", observation_times=[40, 40, 40, 40],
+        change_reason="确认")
+    warned = []
+    monkeypatch.setattr(QMessageBox, "warning",
+                        staticmethod(lambda *a, **k: warned.append(a[2])))
+    recorded = []
+    tab = LineBalanceTab()
+    try:
+        tab.set_balance_context(context, lambda phase, bundle: recorded.append(phase))
+        tab.set_ie_data([
+            Process("P1", "装配", cycle_time=10),
+            Process("P2", "检验", cycle_time=60),   # P2 没有标准工时
+        ])
+        tab.use_standard_check.setChecked(True)
+        tab._on_one_click_analyze()
+        assert tab._last_balance_bundle["uncovered_process_ids"] == ["P2"]
+        assert "1/2" in tab.standard_coverage_label.text()
+        assert "P2" in tab.standard_coverage_label.text()
+        tab._record_standard_balance("baseline")
+        assert recorded == []
+        assert warned and "P2" in warned[-1]
+    finally:
+        tab.close()
+
+
+def test_new_process_table_discards_stale_balance_bundle():
+    from ui.tabs.line_balance_tab import LineBalanceTab
+
+    tab = LineBalanceTab()
+    try:
+        tab.set_ie_data([Process("P1", "装配", cycle_time=40),
+                         Process("P2", "检验", cycle_time=60)])
+        tab._on_one_click_analyze()
+        assert tab._last_balance_bundle is not None
+        tab.set_ie_data([Process("Q1", "新工序", cycle_time=30)])
+        assert tab._last_balance_bundle is None
+        assert tab._analysis_processes == []
+    finally:
+        tab.close()

@@ -1,6 +1,6 @@
 """工作表拆分 — 按列值/行数/条件/分组"""
 
-import pandas as pd
+from core.excel_utils import read_excel_auto
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -78,7 +78,7 @@ class SheetSplitTab(BaseAnalysisTab):
         if f:
             self._file = f
             self.file_lbl.setText(f)
-            self.df = pd.read_excel(f)
+            self.df = read_excel_auto(f)
 
     def _run(self):
         if not self._file:

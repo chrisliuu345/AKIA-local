@@ -321,7 +321,8 @@ class SettingsDialog(QDialog):
             from config.settings import get_secret
             key = get_secret(f"llm_{pid}_api_key", "")
         return LLMClient(model=self.model_combo.currentText().strip(),
-                         provider=pid, api_key=key or "", api_base=base)
+                         provider=pid, api_key=key or "", api_base=base,
+                         probe=False)
 
     def _on_test_connection(self):
         self.test_btn.setEnabled(False)

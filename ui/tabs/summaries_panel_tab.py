@@ -2,6 +2,8 @@
 
 import numpy as np
 import pandas as pd
+
+from core.numeric_cache import cached_numeric
 from typing import Any
 
 from PySide6.QtWidgets import (
@@ -78,7 +80,7 @@ class SummaryPanelTab(BaseAnalysisTab):
         self.val_list.clear()
         for c in self.df.columns:
             try:
-                s = pd.to_numeric(self.df[c], errors="coerce").dropna()
+                s = cached_numeric(self.df, c).dropna()
                 if len(s) > 0:
                     self.val_list.addItem(str(c))
             except Exception:  # 非数值列：不加入可选列
@@ -110,7 +112,7 @@ class SummaryPanelTab(BaseAnalysisTab):
         fig.set_facecolor(tc["bg_card"])
 
         for i, col in enumerate(val_cols):
-            vals = pd.to_numeric(self.df[col], errors="coerce").dropna().values
+            vals = cached_numeric(self.df, col).dropna().values
             if len(vals) < 3:
                 continue
 

@@ -5,6 +5,8 @@
 from typing import Any
 import pandas as pd
 
+from core.numeric_cache import cached_numeric
+
 
 def _scipy_stats():
     """延迟导入 scipy.stats（约 0.6s）：冷启动不加载，真正校验时才引入。"""
@@ -71,7 +73,7 @@ class DataValidator:
         for col in measurement_cols:
             if col not in df.columns:
                 continue
-            data = pd.to_numeric(df[col], errors="coerce").dropna()
+            data = cached_numeric(df, col).dropna()
             if len(data) < 4:
                 continue
 
@@ -107,7 +109,7 @@ class DataValidator:
         for col in measurement_cols:
             if col not in df.columns:
                 continue
-            data = pd.to_numeric(df[col], errors="coerce").dropna()
+            data = cached_numeric(df, col).dropna()
             if len(data) == 0:
                 continue
 

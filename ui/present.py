@@ -10,7 +10,7 @@ from collections.abc import Callable
 from typing import Any
 
 from core.i18n import i18n
-from ui.worker import run_in_worker
+from ui.worker import WorkerInterrupted, run_in_worker
 
 _ERROR_STYLE = "color: #E00000; "
 
@@ -35,19 +35,29 @@ def present_analysis(
     ``finish`` 在界面线程接收后台结果；返回 ``None`` 表示失败已经在页签内处理。
     未提供 ``finish`` 时，后台返回值会写入 ``current_result`` 并直接展示。
     """
+    # 计算期间界面仍能响应点击。同一页签再次触发时直接忽略，
+    # 否则两次分析会同时写 current_result 和结果区。
+    if getattr(tab, "_analysis_running", False):
+        return None
     valid, msg = tab.validate_params()
     if not valid:
         text = on_invalid(msg) if on_invalid else f"▎{i18n.tr('val.param_failed')}\n{msg}"
         _show_error(tab, text)
         return None
     tab.result_text.setStyleSheet("")
+    tab._analysis_running = True
     try:
         produced = run_in_worker(tab, prepare())
+    except WorkerInterrupted:
+        # 应用正在关闭或循环被外部退出：没有结果，也不往结果区写错误。
+        return None
     except Exception as exc:
         # 引擎失败留在结果区，避免打断已经打开的分析页。
         text = on_failed(exc) if on_failed else f"▎{i18n.tr('val.analysis_failed')}\n{exc!s}"
         _show_error(tab, text)
         return None
+    finally:
+        tab._analysis_running = False
     if finish is None:
         tab.current_result = produced
         shown = produced

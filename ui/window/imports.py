@@ -92,6 +92,7 @@ class ImportMixin:
                     self.profile_result = {}
 
                 tabs = self._get_tabs()
+                from core.numeric_cache import cached_numeric
                 all_warnings = 0
                 for idx, tab in tabs.items():
                     if idx > 6:
@@ -102,7 +103,7 @@ class ImportMixin:
                     num_cols = []
                     for i, c in enumerate(df.columns):
                         try:
-                            s = pd.to_numeric(df.iloc[:, i], errors="coerce").dropna()
+                            s = cached_numeric(df, i).dropna()
                             if len(s) > 0:
                                 num_cols.append(c)
                         except (ValueError, TypeError):  # 非数值列：不参与校验
@@ -224,10 +225,15 @@ class ImportMixin:
                 raw_data, metadata = run_in_worker(self, _load_db)
                 loader = SqlLoader()
                 loader.metadata = metadata
+                truncated = list(metadata.get("truncated_tables") or [])
                 audit("import_db", "user",
-                      f"数据库 {config.get('database', '')} 表数={len(raw_data)}")
+                      f"数据库 {config.get('database', '')} 表数={len(raw_data)}"
+                      + (f" 截断={truncated}" if truncated else ""))
                 self._record_data_imported(
-                    f"db:{config.get('database', '')}", raw_data, kind="database")
+                    f"db:{config.get('database', '')}", raw_data, kind="database",
+                    extra=({"truncated_tables": truncated,
+                            "row_limit": metadata.get("row_limit")}
+                           if truncated else None))
 
                 self.current_data = {
                     "source": "database",
@@ -247,10 +253,18 @@ class ImportMixin:
                 except Exception:
                     self.profile_result = {}
 
-                self.status_label.setText(
-                    f"数据库加载完成: {len(table_names)} 个表, "
-                    f"{loader.metadata.get('total_rows', 0)} 行"
-                )
+                if truncated:
+                    note = i18n.tr("db.truncated").replace(
+                        "{limit}", str(metadata.get("row_limit", ""))
+                    ).replace("{tables}", "、".join(truncated))
+                    self.status_label.setText(note)
+                    # 状态栏容易被忽略；分析只用了前 N 行，必须让用户明确知道。
+                    QMessageBox.warning(self, i18n.tr("db.truncated_title"), note)
+                else:
+                    self.status_label.setText(
+                        f"数据库加载完成: {len(table_names)} 个表, "
+                        f"{loader.metadata.get('total_rows', 0)} 行"
+                    )
             except Exception as e:
                 QMessageBox.critical(
                     self, "数据库导入失败",

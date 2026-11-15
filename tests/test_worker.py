@@ -100,3 +100,86 @@ def test_run_in_worker_reraises_on_the_caller_thread():
         assert QThread.currentThread() is app.thread()
     finally:
         owner.close()
+
+
+def test_run_in_worker_distinguishes_none_result_from_interruption():
+    owner = QWidget()
+    try:
+        assert run_in_worker(owner, lambda: None) is None   # 返回 None 是合法结果
+    finally:
+        owner.close()
+
+
+def test_base_exception_in_worker_does_not_hang_the_caller():
+    def leave():
+        raise SystemExit(3)
+
+    owner = QWidget()
+    try:
+        with pytest.raises(RuntimeError, match="异常退出"):
+            run_in_worker(owner, leave)
+    finally:
+        owner.close()
+
+
+def test_missing_result_raises_instead_of_returning_none(monkeypatch):
+    from PySide6.QtCore import QEventLoop, QTimer
+
+    from ui.worker import WorkerInterrupted, _FnWorker
+
+    app = QApplication.instance() or QApplication([])
+    owner = QWidget()
+    real_exec = QEventLoop.exec
+
+    def exec_then_quit(self, *a, **k):
+        QTimer.singleShot(0, self.quit)
+        return real_exec(self, *a, **k)
+
+    # 线程结束却没有发出任何信号：循环被外部退出后，不能把「没有结果」当成 None。
+    monkeypatch.setattr(_FnWorker, "run", lambda self: None)
+    monkeypatch.setattr(QEventLoop, "exec", exec_then_quit)
+    try:
+        with pytest.raises(WorkerInterrupted):
+            run_in_worker(owner, lambda: 1)
+    finally:
+        owner.close()
+        app.processEvents()
+
+
+def test_present_analysis_ignores_reentrant_trigger():
+    from ui.present import present_analysis
+
+    class _Text:
+        def setStyleSheet(self, *_): pass
+        def setText(self, *_): pass
+
+    class _Tab(QWidget):
+        analysis_completed = type("S", (), {"emit": lambda self: None})()
+
+        def __init__(self):
+            super().__init__()
+            self.result_text = _Text()
+            self.current_result = None
+            self.shown = []
+            self.calls = 0
+
+        def validate_params(self): return True, ""
+        def _clear_canvas(self): pass
+        def display_result(self, result): self.shown.append(result)
+
+    tab = _Tab()
+    seen = {}
+
+    def prepare():
+        def work():
+            tab.calls += 1
+            # 计算中再次触发（模拟用户在局部事件循环里再点一次）
+            seen["inner"] = present_analysis(tab, lambda: (lambda: "second"))
+            return "first"
+        return work
+
+    try:
+        assert present_analysis(tab, prepare) == "first"
+        assert tab.calls == 1
+    finally:
+        tab.close()
