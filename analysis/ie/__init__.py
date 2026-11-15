@@ -7,6 +7,14 @@ from analysis.ie.oee import OEEEngine
 from analysis.ie.vsm import VSMEngine
 from analysis.ie.smed import SMEDEngine, SMEDTask, SMEDResult
 from analysis.ie.tpm import TPMEngine, TPMRecord, TPMResult
+from analysis.ie.chain import (
+    IE_FORMULA,
+    IE_STANDARD_VERSION,
+    confirm_standard_times,
+    processes_from_confirmed,
+    record_balance,
+    run_confirmed_balance,
+)
 
 __all__ = [
     "TimeStudyEngine",
@@ -21,4 +29,10 @@ __all__ = [
     "TPMEngine",
     "TPMRecord",
     "TPMResult",
+    "IE_FORMULA",
+    "IE_STANDARD_VERSION",
+    "confirm_standard_times",
+    "processes_from_confirmed",
+    "record_balance",
+    "run_confirmed_balance",
 ]
