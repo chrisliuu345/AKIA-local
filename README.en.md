@@ -8,7 +8,7 @@
 
 AKIA is an open-source, local-first desktop application for personal industrial engineering (IE) and quality analysis. It brings statistical process control, measurement system analysis, design of experiments, reliability, IE methods, and improvement-case management into one offline desktop workspace.
 
-Current version: v4.6.4.
+Current version: v4.7.0.
 
 AKIA requires no account, subscription, or online activation. Data stays on your machine by default; network connections are made only when you explicitly configure a cloud model, database, dashboard, or external device.
 
@@ -29,17 +29,31 @@ The in-app guide under Help → User Guide provides the complete feature referen
 
 ## Quick Start
 
-### Linux AppImage
+### Linux
 
-Download `AKIA-4.6.4-x86_64.AppImage` and its `.sha256` file from [Releases](https://github.com/chrisliuu345/AKIA-local/releases):
+A Linux release includes an AppImage, a `.deb`, and a `.rpm`. Download the package and its `.sha256` file from [Releases](https://github.com/chrisliuu345/AKIA-local/releases).
+
+AppImage:
 
 ```bash
-sha256sum -c AKIA-4.6.4-x86_64.AppImage.sha256
-chmod +x AKIA-4.6.4-x86_64.AppImage
-./AKIA-4.6.4-x86_64.AppImage
+sha256sum -c AKIA-4.7.0-x86_64.AppImage.sha256
+chmod +x AKIA-4.7.0-x86_64.AppImage
+./AKIA-4.7.0-x86_64.AppImage
 ```
 
 On systems without FUSE, launch with `--appimage-extract-and-run`. To build the AppImage yourself, run `bash build_appimage.sh`; output is written to `build/`.
+
+`.deb` and `.rpm`:
+
+```bash
+sha256sum -c AKIA-4.7.0-amd64.deb.sha256
+sudo apt-get install ./AKIA-4.7.0-amd64.deb
+
+sha256sum -c AKIA-4.7.0-x86_64.rpm.sha256
+sudo dnf install ./AKIA-4.7.0-x86_64.rpm
+```
+
+Install the host tools in [Dependency and release management](docs/dependency-management.md), then run `bash build_deb_rpm.sh`. Output is written to `dist/`, and the program is installed under `/opt/akia`.
 
 ### Windows
 
@@ -102,7 +116,7 @@ Tests run one file per process to isolate Qt, numerical workloads, and memory us
 
 Main build entry points:
 
-- Linux: `build_appimage.sh`
+- Linux: AppImage (`build_appimage.sh`), `.deb`, and `.rpm` (`build_deb_rpm.sh`). Host dependencies for the latter two are in `docs/dependency-management.md`.
 - Windows: `build_pyinstaller.py` and `packaging/AKIA-installer.iss`
 - CI and release gates: `.github/workflows/ci.yml`
 

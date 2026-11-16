@@ -2,8 +2,8 @@
 
 [中文](ROADMAP.md) | [English](ROADMAP.en.md) | [Project Home](README.en.md) | [Releases](https://github.com/chrisliuu345/AKIA-local/releases)
 
-**Status**: Current version is v4.6.4; the version number changes at release. The v4.6.x security and correctness maintenance is done. The v4.7.0 development scope, credible industrial-engineering methods, is complete: known values, the evidence chain, UI-thread work, the shared analysis entry, the main-window split, calamine reads, O(1) benefit-ledger lookup, off-thread model checks, database timeouts, and the SQL row cap. Full translation remains in v4.11.0. Next is v4.8.0.
-**Last updated**: 2026-11-15
+**Status**: Current version is v4.7.0. The v4.6.x security and correctness maintenance is done. The v4.7.0 development scope, credible industrial-engineering methods, is complete: known values, the evidence chain, UI-thread work, the shared analysis entry, the main-window split, calamine reads, O(1) benefit-ledger lookup, off-thread model checks, database timeouts, and the SQL row cap. Full translation remains in v4.11.0. Next is v4.8.0.
+**Last updated**: 2026-11-16
 
 ## Direction
 
@@ -174,6 +174,7 @@ Priorities are, in order: data correctness and security, regression and compatib
 - Performance-baseline tolerance is ×1.5. The previous ×3 tolerance let through a benefit-ledger regression of about 2.2×; that correction is in v4.7.0.
 - mypy is ratcheted directory by directory, and coverage has a per-directory floor, in the same style as the ruff ratchet: each directory starts from its current level and only tightens.
 - From v4.6.0 onward, a release tag also runs Windows installer smoke alongside the Linux AppImage, and checks that the program entry point, project license, and third-party notices are packaged.
+- A Linux release includes an AppImage, a `.deb`, and a `.rpm`. Each package ships with a SHA256 checksum, the project license, and third-party notices. The AppImage is built with `build_appimage.sh`. The `.deb` and `.rpm` are built with `build_deb_rpm.sh`; their host dependencies are in [Dependency and release management](docs/dependency-management.md).
 - From v4.6.0 onward, the sidebar, analysis menu, and command palette use the tab registry as their only entry list. A registered page missing any of those entries is a release defect.
 - Tags and release notes live in GitHub Releases; this roadmap keeps only current status and future plans.
 

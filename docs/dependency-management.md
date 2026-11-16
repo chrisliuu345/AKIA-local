@@ -45,8 +45,46 @@ python tools/collect_licenses.py \
 
 产物包含 `licenses/` 与 `THIRD_PARTY_NOTICES.md`；`licenses/manifest.json` 记录每个许可证文件的 SHA256。
 
+### Linux 安装包的宿主依赖
+
+Linux 发布包含三种安装包：AppImage、`.deb`、`.rpm`。AppImage 由 `bash build_appimage.sh` 构建，另外需要 `file`、`wget`，以及 `packaging/appimagetool.sha256` 所固定的 appimagetool。没有 `libfuse.so.2` 时，构建脚本改用 `--appimage-extract-and-run`。
+
+`.deb` 与 `.rpm` 由 `bash build_deb_rpm.sh` 构建，产物位于 `dist/`。构建机先装好下表中的宿主工具。
+
+| 工具 | 用途 | Fedora | Debian / Ubuntu |
+|------|------|--------|-----------------|
+| `rpmbuild` | 构建 `.rpm` | `rpm-build` | `rpm` |
+| `dpkg-deb` | 构建 `.deb` | `dpkg` | `dpkg`（系统已带） |
+| `fakeroot` | 以非 root 身份写入包内属主 | `fakeroot` | `fakeroot` |
+
+Fedora：
+
+```bash
+sudo dnf install -y rpm-build dpkg fakeroot
+```
+
+Debian / Ubuntu：
+
+```bash
+sudo apt-get install -y rpm fakeroot
+```
+
 ## English
 
 Core, server, connector, and development dependencies have separate source files. `requirements.lock` is the hashed core runtime lock; `requirements-ci.lock` is the hashed full CI and packaging environment, including PyInstaller. Regenerate both with Python 3.11 as the minimum compatibility target using uv, and install with `--require-hashes`.
 
 The packaging script collects the installed dependency closure, copies license files under `licenses/`, writes `THIRD_PARTY_NOTICES.md`, and records per-file SHA256 values in `licenses/manifest.json`.
+
+Linux releases include an AppImage, a `.deb`, and a `.rpm`. The AppImage is built with `bash build_appimage.sh`, which also needs `file`, `wget`, and the appimagetool pin in `packaging/appimagetool.sha256`. When `libfuse.so.2` is absent, the script falls back to `--appimage-extract-and-run`.
+
+The `.deb` and `.rpm` are built with `bash build_deb_rpm.sh`, and the packages are written to `dist/`. Install the host tools below first.
+
+| Tool | Role | Fedora | Debian / Ubuntu |
+|------|------|--------|-----------------|
+| `rpmbuild` | Build the `.rpm` | `rpm-build` | `rpm` |
+| `dpkg-deb` | Build the `.deb` | `dpkg` | `dpkg` (already present) |
+| `fakeroot` | Record root ownership without running as root | `fakeroot` | `fakeroot` |
+
+Fedora: `sudo dnf install -y rpm-build dpkg fakeroot`
+
+Debian / Ubuntu: `sudo apt-get install -y rpm fakeroot`
