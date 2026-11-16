@@ -1,6 +1,8 @@
 """工作表合并 — 追加/JOIN/批量/Sheet"""
 
-import os, pandas as pd
+import os
+
+from core.excel_utils import read_excel_auto
 from PySide6.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
@@ -91,8 +93,8 @@ class SheetMergeTab(BaseAnalysisTab):
             else:
                 if len(self._files) < 2 or not self.key_edit.text():
                     return
-                df1 = pd.read_excel(self._files[0], dtype=str)
-                df2 = pd.read_excel(self._files[1], dtype=str)
+                df1 = read_excel_auto(self._files[0], dtype=str)
+                df2 = read_excel_auto(self._files[1], dtype=str)
                 df = SheetMerger.merge_join(df1, df2, self.key_edit.text())
             self._show_preview(df)
             path, _ = QFileDialog.getSaveFileName(

@@ -21,6 +21,7 @@ from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY
 from ui.font_config import get_ui_font
 from core.data_objects import TimeObservation
 from analysis.ie.time_study import TimeStudyEngine
+from ui.worker import run_in_worker
 
 
 class TimeStudyTab(BaseAnalysisTab):
@@ -176,8 +177,10 @@ class TimeStudyTab(BaseAnalysisTab):
         takt = self.takt_spin.value() if self.takt_spin.value() > 0 else None
         conf_text = self.confidence_combo.currentText()
         confidence = {"90%": 0.90, "95%": 0.95, "99%": 0.99}.get(conf_text, 0.95)
+        observations = list(obs)
 
-        result = TimeStudyEngine.analyze(obs, rating, allowance, takt, confidence)
+        result = run_in_worker(
+            self, TimeStudyEngine.analyze, observations, rating, allowance, takt, confidence)
         self.current_result = {
             "analysis_type": "时间研究",
             "params": {"rating": rating, "allowance": allowance, "confidence": confidence},
@@ -247,6 +250,7 @@ class TimeStudyTab(BaseAnalysisTab):
                 allowance_pct=study.get("allowance_pct"),
                 rating=study.get("rating"), cycles=study.get("cycles"),
                 operator=str(study.get("operator", "")),
+                observation_times=list(study.get("observation_times") or []),
                 change_reason=text, changed_by="user")
             if len(ctx.standards) > before:
                 created.append(record)

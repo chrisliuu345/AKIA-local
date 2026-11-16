@@ -5,6 +5,8 @@ DOE 实验设计分析页 — 含图表嵌入
 from typing import Any
 import pandas as pd
 
+from core.numeric_cache import cached_numeric
+
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QSpinBox, QGroupBox, QFormLayout, QTableWidget, QTableWidgetItem, QSplitter, QHeaderView,
@@ -168,7 +170,7 @@ class DOETab(BaseAnalysisTab):
         if len(self.df) < 4:
             return False, f"数据量不足（仅{len(self.df)}行），至少需要4行"
         try:
-            data = pd.to_numeric(self.df[response], errors="coerce").dropna()
+            data = cached_numeric(self.df, response).dropna()
         except KeyError:
             return False, f"列 '{response}' 在当前数据表中不存在，请点击右侧表格列标题重新选择"
         if len(data) < 4:
@@ -176,81 +178,54 @@ class DOETab(BaseAnalysisTab):
         return True, ""
 
     def run_and_display(self) -> dict[str, Any]:
-        valid, msg = self.validate_params()
-        if not valid:
-            self._clear_canvas()
-            self.result_text.setStyleSheet("color: #E00000; ")
-            self.result_text.setText(f"▎参数校验失败\n{msg}")
-            return None
-        self.result_text.setStyleSheet("")
-        try:
-            result = self.run_analysis()
-            self.display_result(result)
-            self.analysis_completed.emit()
-            return result
-        except Exception as e:
-            self._clear_canvas()
-            self.result_text.setStyleSheet("color: #E00000; ")
-            self.result_text.setText(f"▎分析失败\n{e!s}")
-            return None
+        from ui.present import present_analysis
+
+        def finish(produced):
+            result, design = produced
+            return self._apply_doe(result, design)
+
+        return present_analysis(self, self._doe_job, finish=finish)
 
     def run_analysis(self) -> dict[str, Any]:
-        from analysis.doe import factorial, response_surface, box_behnken
-        from analysis.doe import plackett_burman, definitive_screening, fractional, taguchi, mixture
+        result, design = self._doe_job()()
+        return self._apply_doe(result, design)
 
-        method = self.method_combo.currentText()
-        result = {}
-
-        response = self.response_combo.currentText()
-        numeric_cols = self.parsed_info.get("numeric_columns", [])
-        if not numeric_cols:
-            numeric_cols = list(self.df.select_dtypes(include="number").columns)
-        factor_cols = [c for c in numeric_cols if c != response]
-        if not factor_cols and method != "生成全因子 2^k 设计":
-            raise ValueError(
-                "没有可用的因子列。\n"
-                "DOE 分析需要至少 2 列数值数据（1 列响应 + 1 列因子）。\n"
-                "请检查：数据列是否为数值、列名是否被误判为规格/序号列。")
-
-        if method == "Plackett-Burman 筛选设计":
-            result = plackett_burman.analyze(self.df, response, factor_cols)
-        elif method == "Definitive Screening 设计":
-            result = definitive_screening.analyze(self.df, response, factor_cols)
-        elif method == "全因子 2^k 设计分析":
-            result = factorial.analyze_factorial(self.df, response, factor_cols)
-        elif method == "生成全因子 2^k 设计":
-            factors = factor_cols[:3] if len(factor_cols) >= 3 else factor_cols
-            if not factors:
-                factors = ["A", "B", "C"]
-            reps = self.replicates_spin.value()
-            design_df = factorial.generate_design(factors, reps)
-            result = {"chart_type": "2^k Factorial Design", "design": design_df.to_dict("records"),
-                       "factors": factors, "runs": len(design_df), "replicates": reps}
+    def _apply_doe(self, result, design):
+        if design is not None:
             if self._original_df is None:
                 self._original_df = self.df
-            self.df = design_df
-            self.set_data(design_df, self.parsed_info)
-        elif method == "部分因子 2^(k-p) 设计":
-            result = fractional.analyze(self.df, response, factor_cols)
-        elif method == "响应曲面分析 (CCD)":
-            result = response_surface.analyze_response_surface(self.df, response, factor_cols[:3])
-        elif method == "Box-Behnken 设计":
-            result = box_behnken.analyze_box_behnken(self.df, response, factor_cols[:3])
-        elif method == "田口正交阵列分析":
-            result = taguchi.analyze(self.df, response, factor_cols)
-        elif method == "混合设计分析":
-            result = mixture.analyze(self.df, response, factor_cols)
-
+            self.df = design
+            self.set_data(design, self.parsed_info)
         if result is None:
             return None
-
+        method = result.pop("_method")
+        response = result.pop("_response")
         self.current_result = {
             "analysis_type": method,
-            "params": {"method": method, "response": self.response_combo.currentText()},
+            "params": {"method": method, "response": response},
             "result": result,
             "chart_data": result,
         }
         return self.current_result
+
+    def _doe_job(self):
+        from analysis.doe import factorial, response_surface, box_behnken
+        from analysis.doe import plackett_burman, definitive_screening, fractional, taguchi, mixture
+
+        method = self.method_combo.currentText()
+        response = self.response_combo.currentText()
+        numeric_cols = list(self.parsed_info.get("numeric_columns", []) or [])
+        frame = self.df
+        reps = self.replicates_spin.value()
+        if not numeric_cols and frame is not None:
+            numeric_cols = list(frame.select_dtypes(include="number").columns)
+
+        def compute():
+            return _compute_doe(
+                frame, method, response, numeric_cols, reps,
+                factorial, response_surface, box_behnken, plackett_burman,
+                definitive_screening, fractional, taguchi, mixture)
+        return compute
 
     def _open_power_dialog(self):
         """打开 Power & Sample Size 对话框"""
@@ -360,3 +335,45 @@ class DOETab(BaseAnalysisTab):
         self.title_label.setText(i18n.tr("doe.title"))
         self.run_btn.setText(i18n.tr("doe.run_btn"))
         self.result_label.setText(i18n.tr("doe.result"))
+
+
+def _compute_doe(frame, method, response, numeric_cols, reps,
+                 factorial, response_surface, box_behnken, plackett_burman,
+                 definitive_screening, fractional, taguchi, mixture):
+    factor_cols = [col for col in numeric_cols if col != response]
+    if not factor_cols and method != "生成全因子 2^k 设计":
+        raise ValueError(
+            "没有可用的因子列。\n"
+            "DOE 分析需要至少 2 列数值数据（1 列响应 + 1 列因子）。\n"
+            "请检查：数据列是否为数值、列名是否被误判为规格/序号列。")
+    result: dict[str, Any] = {}
+    design = None
+    if method == "Plackett-Burman 筛选设计":
+        result = plackett_burman.analyze(frame, response, factor_cols)
+    elif method == "Definitive Screening 设计":
+        result = definitive_screening.analyze(frame, response, factor_cols)
+    elif method == "全因子 2^k 设计分析":
+        result = factorial.analyze_factorial(frame, response, factor_cols)
+    elif method == "生成全因子 2^k 设计":
+        factors = factor_cols[:3] if len(factor_cols) >= 3 else factor_cols
+        if not factors:
+            factors = ["A", "B", "C"]
+        design = factorial.generate_design(factors, reps)
+        result = {"chart_type": "2^k Factorial Design", "design": design.to_dict("records"),
+                  "factors": factors, "runs": len(design), "replicates": reps}
+    elif method == "部分因子 2^(k-p) 设计":
+        result = fractional.analyze(frame, response, factor_cols)
+    elif method == "响应曲面分析 (CCD)":
+        result = response_surface.analyze_response_surface(frame, response, factor_cols[:3])
+    elif method == "Box-Behnken 设计":
+        result = box_behnken.analyze_box_behnken(frame, response, factor_cols[:3])
+    elif method == "田口正交阵列分析":
+        result = taguchi.analyze(frame, response, factor_cols)
+    elif method == "混合设计分析":
+        result = mixture.analyze(frame, response, factor_cols)
+    if result is None:
+        return None, design
+    result = dict(result)
+    result["_method"] = method
+    result["_response"] = response
+    return result, design

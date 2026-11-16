@@ -61,9 +61,16 @@ def _resolve_llm_client(parent=None):
 
     完全没有可用连接时询问是否以离线工具模式打开（取消返回 None）。
     """
-    from core.llm_client import LLMClient
+    from PySide6.QtWidgets import QApplication
 
-    client = LLMClient.detect_available()
+    from core.llm_client import LLMClient
+    from ui.worker import run_in_worker
+
+    owner = parent if parent is not None else QApplication.instance()
+    if owner is None:
+        client = LLMClient.detect_available()
+    else:
+        client = run_in_worker(owner, LLMClient.detect_available)
     if client.available:
         return client
     reply = QMessageBox.question(

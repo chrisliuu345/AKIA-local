@@ -11,7 +11,7 @@ from core.fonts import get_ui_font
 APP_NAME = "AKIA"
 APP_FULL_NAME = "Open-source Personal IE & Quality Analysis"
 APP_SLUG = "akia"
-APP_VERSION = "4.6.4"
+APP_VERSION = "4.7.0"
 ORGANIZATION = "AKIA"
 
 # 旧版数据标识（仅用于一次性数据迁移，勿在新代码中引用）
@@ -95,6 +95,8 @@ SUPPORTED_EXCEL_EXTENSIONS = (".xlsx", ".xls", ".xlsm")
 SUPPORTED_TEMPLATE_EXTENSIONS = (".xlsx", ".json")
 MAX_PREVIEW_ROWS = 100
 CHUNK_SIZE = 10000
+#: 数据库导入单表最多读取的行数。再多的行留在库里，不进入分析表。
+SQL_LOAD_MAX_ROWS = 100_000
 
 MSA_NDC_THRESHOLD = 5
 MSA_GRR_ACCEPTABLE = 0.10

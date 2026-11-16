@@ -8,6 +8,8 @@
     python tools/benchmark.py --tolerance 4    # 放宽回归判定倍数
 
 判定: 实测值 > max(基线 × tolerance, 基线 + 0.5s) 视为回归，退出码 1。
+收益复算 ``benefit_recompute_10k_s`` 的倍数不超过 ×1.5（绝对下限 0.1s），
+更严的全局容差仍然生效。
 基线在开发机测得，CI 用较宽 tolerance 捕获数量级劣化（而非抖动）。
 """
 
@@ -36,6 +38,13 @@ METRIC_KEYS = ("cold_start_s", "import_1m_rows_s", "chart_render_5k_s",
                "sampling_1m_rows_s", "benefit_recompute_10k_s",
                "gauge_rolling_100k_s")
 DEFAULT_TOLERANCE = 3.0
+#: 收益台账这项单独收紧。×3 曾放过约 2.2 倍的复算回退。
+BENEFIT_TOLERANCE = 1.5
+BENEFIT_METRIC = "benefit_recompute_10k_s"
+#: 绝对下限只用来吸收计时抖动。通用 0.5s 会把 0.59s 的基线放宽到 ×1.85，
+#: 收益复算改用 0.1s，基线 ≥ 0.2s 时实际放行线就是严格的 ×1.5。
+DEFAULT_FLOOR_S = 0.5
+BENEFIT_FLOOR_S = 0.1
 
 
 def _timed(fn):
@@ -342,13 +351,25 @@ def load_baseline() -> dict:
     return json.loads(BASELINE_PATH.read_text(encoding="utf-8"))
 
 
+def tolerance_for(key: str, tolerance: float) -> float:
+    """收益复算固定不超过 ×1.5，更严的全局容差仍然生效。"""
+    if key == BENEFIT_METRIC:
+        return min(float(tolerance), BENEFIT_TOLERANCE)
+    return float(tolerance)
+
+
+def floor_for(key: str) -> float:
+    return BENEFIT_FLOOR_S if key == BENEFIT_METRIC else DEFAULT_FLOOR_S
+
+
 def compare(results: dict, baseline: dict, tolerance: float) -> list:
     regressions = []
     for key, value in results.items():
         limit = baseline.get(key)
         if limit is None:
             continue
-        allowed = max(float(limit) * float(tolerance), float(limit) + 0.5)
+        allowed = max(float(limit) * tolerance_for(key, tolerance),
+                      float(limit) + floor_for(key))
         if value > allowed:
             regressions.append((key, value, limit, allowed))
     return regressions

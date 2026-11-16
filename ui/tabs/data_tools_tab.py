@@ -1,6 +1,11 @@
 """数据工具集 — 随机生成器 / 格式转换 / 异常值检测"""
 
-import pandas as pd, numpy as np
+import numpy as np
+import pandas as pd
+
+from core.numeric_cache import cached_numeric
+
+from core.excel_utils import read_excel_auto
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -211,7 +216,7 @@ class DataToolsTab(BaseAnalysisTab):
             f, _ = QFileDialog.getOpenFileName(self, "选择Excel", "", "Excel (*.xlsx)")
             if not f:
                 return
-            df = pd.read_excel(f)
+            df = read_excel_auto(f)
             out = f.replace(".xlsx", ".csv")
             df.to_csv(out, index=False)
             QMessageBox.information(self, "完成", f"已保存 {out}")
@@ -262,7 +267,7 @@ class DataToolsTab(BaseAnalysisTab):
         method = self.out_method.currentText()
         if not col:
             return
-        s = pd.to_numeric(self.df[col], errors="coerce").dropna()
+        s = cached_numeric(self.df, col).dropna()
         if method == "IQR":
             q1, q3 = s.quantile(0.25), s.quantile(0.75)
             iqr = q3 - q1

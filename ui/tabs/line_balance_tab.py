@@ -6,7 +6,7 @@ from typing import Any
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QDoubleSpinBox, QGroupBox, QFormLayout, QSpinBox,
+    QDoubleSpinBox, QGroupBox, QFormLayout, QSpinBox, QCheckBox,
     QTableWidget, QTableWidgetItem, QSplitter, QHeaderView,
     QMessageBox,
 )
@@ -22,7 +22,9 @@ from ui.theme import BUTTON_PRIMARY_STRETCH, BUTTON_SECONDARY
 from ui.theme import colors as theme_colors
 from ui.font_config import get_ui_font
 from core.data_objects import Process
+from analysis.ie.chain import apply_confirmed_standard_times, bundle_balance
 from analysis.ie.line_balance import LineBalanceEngine
+from ui.worker import run_in_worker
 from core.skill_matrix import SkillMatrix
 
 
@@ -34,6 +36,10 @@ class LineBalanceTab(BaseAnalysisTab):
         self._skill_saver = None
         self._skill_record_step = None
         self._last_skill_plan = None
+        self._project_context = None
+        self._balance_record_step = None
+        self._analysis_processes: list[Process] = []
+        self._last_balance_bundle = None
         super().__init__(parent)
         self._setup_ui()
 
@@ -64,6 +70,17 @@ class LineBalanceTab(BaseAnalysisTab):
         self.takt_spin.setSuffix(" s")
         self.takt_spin.setSpecialValueText(" 自动 (瓶颈CT)")
         config_layout.addRow("目标节拍:", self.takt_spin)
+
+        self.use_standard_check = QCheckBox(i18n.tr(
+            "ie.line_balance.use_standard", "采用已确认标准工时"))
+        self.use_standard_check.setToolTip(i18n.tr(
+            "ie.line_balance.use_standard_tip",
+            "勾选后，用项目里该工序现行标准工时替换导入的 CT，再计算平衡率"))
+        config_layout.addRow(self.use_standard_check)
+        self.standard_coverage_label = QLabel("")
+        self.standard_coverage_label.setWordWrap(True)
+        self.standard_coverage_label.setStyleSheet("color: #737373; font-size: 11px;")
+        config_layout.addRow(self.standard_coverage_label)
 
         self.btn_analyze = QPushButton(i18n.tr("ie.run_btn"))
         self.btn_analyze.setStyleSheet(BUTTON_PRIMARY_STRETCH)
@@ -104,6 +121,21 @@ class LineBalanceTab(BaseAnalysisTab):
         case_row.addWidget(self.btn_skill_baseline)
         case_row.addWidget(self.btn_skill_remeasure)
         config_layout.addRow(case_row)
+
+        balance_case = QHBoxLayout()
+        self.btn_balance_baseline = QPushButton(i18n.tr(
+            "ie.line_balance.record_baseline", "标准工时平衡记入基线"))
+        self.btn_balance_baseline.setStyleSheet(BUTTON_SECONDARY)
+        self.btn_balance_baseline.clicked.connect(
+            lambda: self._record_standard_balance("baseline"))
+        self.btn_balance_retest = QPushButton(i18n.tr(
+            "ie.line_balance.record_retest", "标准工时平衡记入复测"))
+        self.btn_balance_retest.setStyleSheet(BUTTON_SECONDARY)
+        self.btn_balance_retest.clicked.connect(
+            lambda: self._record_standard_balance("re_measure"))
+        balance_case.addWidget(self.btn_balance_baseline)
+        balance_case.addWidget(self.btn_balance_retest)
+        config_layout.addRow(balance_case)
 
         self.skill_status_label = QLabel("技能矩阵: 未接入")
         self.skill_status_label.setStyleSheet("color: #737373; font-size: 11px;")
@@ -150,6 +182,10 @@ class LineBalanceTab(BaseAnalysisTab):
 
     def set_ie_data(self, processes: list[Process]):
         self.ie_processes = processes
+        # 换了工序表，上一次的分析输入和证据包就不再对应当前数据。
+        self._analysis_processes = []
+        self._last_balance_bundle = None
+        self.standard_coverage_label.setText("")
         self._populate_preview(processes)
 
     def _populate_preview(self, processes: list[Process]):
@@ -172,6 +208,11 @@ class LineBalanceTab(BaseAnalysisTab):
         )
 
     # ------------------------------------------------------------ 技能约束（v4.4.0 B5）
+    def set_balance_context(self, context, record_step=None):
+        """接入项目上下文，以及把标准工时线平衡记入案例和证据账本的回调。"""
+        self._project_context = context
+        self._balance_record_step = record_step
+
     def set_skill_context(self, matrix, save_callback=None, record_step=None):
         """接入技能矩阵、保存回调与"记入案例"回调。"""
         self._skill_matrix = matrix
@@ -280,19 +321,75 @@ class LineBalanceTab(BaseAnalysisTab):
             self, "记入案例",
             f"技能约束排班已记入案例{label}（凭证含技能矩阵指纹）")
 
+    def _show_standard_coverage(self, applied: list) -> None:
+        if not self.use_standard_check.isChecked():
+            self.standard_coverage_label.setText("")
+            return
+        uncovered = (self._last_balance_bundle or {}).get("uncovered_process_ids") or []
+        total = len(applied) + len(uncovered)
+        text = f"标准工时覆盖 {len(applied)}/{total} 道工序"
+        if uncovered:
+            text += f"；仍用导入 CT：{'、'.join(uncovered)}（不能记入基线/复测）"
+        self.standard_coverage_label.setText(text)
+
+    def _record_standard_balance(self, phase: str):
+        bundle = self._last_balance_bundle or {}
+        records = bundle.get("records") or []
+        if not any(item.get("source") == "confirmed_standard_time" for item in records):
+            QMessageBox.information(
+                self, "记入案例",
+                "请先勾选「采用已确认标准工时」并重新分析")
+            return
+        uncovered = bundle.get("uncovered_process_ids") or []
+        if uncovered:
+            # 混用导入 CT 的平衡率不能当作“标准工时基线”，否则前后对比口径不一。
+            QMessageBox.warning(
+                self, "记入案例",
+                "以下工序没有现行标准工时，仍在使用导入的 CT：\n"
+                + "、".join(uncovered)
+                + "\n请先在工时研究中保存这些工序的标准工时，再记入案例。")
+            return
+        if not callable(self._balance_record_step):
+            QMessageBox.information(self, "记入案例", "未接入主窗口，无法记入案例")
+            return
+        try:
+            self._balance_record_step(phase, bundle)
+        except ValueError as exc:
+            QMessageBox.warning(self, "记入案例失败", str(exc))
+            return
+        label = "基线" if phase == "baseline" else "复测"
+        QMessageBox.information(
+            self, "记入案例",
+            f"标准工时线平衡已记入案例{label}，并写入证据账本")
+
     def _on_one_click_analyze(self):
         if not self.ie_processes:
             QMessageBox.warning(self, "无数据", "请先导入包含工序表的 Excel 文件")
             return
 
         takt = self.takt_spin.value() if self.takt_spin.value() > 0 else None
-        engine = LineBalanceEngine()
-        result = engine.analyze(self.ie_processes, takt)
+        processes = list(self.ie_processes)
+        applied: list[dict[str, Any]] = []
+        if self.use_standard_check.isChecked():
+            standards = getattr(self._project_context, "standards", None)
+            if standards is None:
+                QMessageBox.warning(self, "无项目上下文", "请先保存或加载一个项目，再采用标准工时")
+                return
+            processes, applied = apply_confirmed_standard_times(processes, standards)
+            if not applied:
+                QMessageBox.warning(
+                    self, "无标准工时",
+                    "当前工序没有现行标准工时。请先在工时研究中保存标准工时。")
+                return
+        result = run_in_worker(self, LineBalanceEngine().analyze, processes, takt)
 
         if result.get("error"):
             QMessageBox.warning(self, "分析失败", result["error"])
             return
 
+        self._analysis_processes = processes
+        self._last_balance_bundle = bundle_balance(processes, result, applied)
+        self._show_standard_coverage(applied)
         self.current_result = {
             "analysis_type": "生产线平衡",
             "params": {"takt": result["takt"]},
@@ -348,7 +445,8 @@ class LineBalanceTab(BaseAnalysisTab):
 
         takt = result["takt"]
         stations = result["stations"]
-        procs = [p for p in self.ie_processes if p.cycle_time > 0]
+        source = self._analysis_processes or self.ie_processes
+        procs = [p for p in source if p.cycle_time > 0]
 
         fig = Figure(figsize=(11, 4.6), dpi=100)
         fig.set_facecolor(tc["bg_card"])

@@ -84,7 +84,7 @@
 
 ## 构建与发布
 
-- Linux 使用 `bash build_appimage.sh`，Windows 使用 `build_pyinstaller.py` 和 `packaging/AKIA-installer.iss`。
+- Linux 发布三种安装包：AppImage、`.deb`、`.rpm`。AppImage 使用 `bash build_appimage.sh`。`.deb` 与 `.rpm` 使用 `bash build_deb_rpm.sh`，构建前先安装 `docs/dependency-management.md` 中的宿主工具。Windows 使用 `build_pyinstaller.py` 和 `packaging/AKIA-installer.iss`。
 - `build/`、`dist/` 和本地发布归档不入库；发布产物放在 GitHub Releases。
 - 发布前必须通过版本一致性、ruff、逐文件回归、性能基线和打包冒烟。
 - 发布锁文件由 `constraints-known-good.txt` 约束关键主版本；升级 Qt、pandas、SQLAlchemy、

@@ -130,10 +130,10 @@ jobs:
         run: .venv/bin/python tools/benchmark.py --tolerance 4
 
   package-appimage:
-    name: AppImage 打包冒烟（仅 tag）
+    name: Linux 打包冒烟（仅 tag）
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 70
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -146,7 +146,7 @@ jobs:
           .venv/bin/pip install --upgrade pip
           .venv/bin/pip install --require-hashes -r requirements-ci.lock
           sudo apt-get update && sudo apt-get install -y --no-install-recommends \
-            file wget libfuse2 \
+            file wget libfuse2 rpm \
             libegl1 libgl1 libglib2.0-0 libfontconfig1 libfreetype6 \
             libxkbcommon0 libdbus-1-3 libx11-6 libxcb1
       - name: 构建 AppImage
@@ -170,6 +170,13 @@ jobs:
           .venv/bin/python tools/release_manifest.py \
             --verify build/release-manifest.json \
             --require-tag --require-clean
+      - name: 构建 .deb 与 .rpm
+        run: |
+          chmod +x build_deb_rpm.sh
+          PATH="$PWD/.venv/bin:$PATH" ./build_deb_rpm.sh
+          (cd dist && sha256sum -c AKIA-*-amd64.deb.sha256 && sha256sum -c AKIA-*-x86_64.rpm.sha256)
+          dpkg-deb -I dist/AKIA-*-amd64.deb
+          rpm -qp dist/AKIA-*-x86_64.rpm
       - uses: actions/upload-artifact@v4
         with:
           name: AKIA-AppImage
@@ -177,6 +184,11 @@ jobs:
             build/AKIA-*-x86_64.AppImage
             build/AKIA-*-x86_64.AppImage.sha256
             build/release-manifest.json
+            dist/AKIA-*-amd64.deb
+            dist/AKIA-*-amd64.deb.sha256
+            dist/AKIA-*-x86_64.rpm
+            dist/AKIA-*-x86_64.rpm.sha256
+            build/release-manifest-deb-rpm.json
           retention-days: 30
 
   package-windows:

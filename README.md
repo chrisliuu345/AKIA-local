@@ -8,7 +8,7 @@
 
 AKIA 是一款开源、本地优先的个人工业工程（IE）与质量分析桌面软件，面向现场改善、质量工程和数据分析工作。它将统计过程控制、测量系统分析、试验设计、可靠性分析、IE 工具和改善案例管理整合在一个离线桌面应用中。
 
-当前版本：v4.6.4。
+当前版本：v4.7.0。
 
 AKIA 不要求账号、订阅或在线激活。数据默认保存在本机；只有在你主动配置云模型、数据库、看板或外部设备时，软件才会建立相应的网络连接。
 
@@ -29,21 +29,35 @@ AKIA 不要求账号、订阅或在线激活。数据默认保存在本机；只
 
 ## 快速开始
 
-### Linux AppImage
+### Linux
 
-从 [Releases](https://github.com/chrisliuu345/AKIA-local/releases) 下载 `AKIA-4.6.4-x86_64.AppImage` 和同名 `.sha256` 文件：
+Linux 发布包含 AppImage、`.deb` 和 `.rpm`。从 [Releases](https://github.com/chrisliuu345/AKIA-local/releases) 下载安装包和同名 `.sha256` 文件。
+
+AppImage：
 
 ```bash
-sha256sum -c AKIA-4.6.4-x86_64.AppImage.sha256
-chmod +x AKIA-4.6.4-x86_64.AppImage
-./AKIA-4.6.4-x86_64.AppImage
+sha256sum -c AKIA-4.7.0-x86_64.AppImage.sha256
+chmod +x AKIA-4.7.0-x86_64.AppImage
+./AKIA-4.7.0-x86_64.AppImage
 ```
 
-无 FUSE 的环境可使用 `--appimage-extract-and-run` 启动。若要自行构建 AppImage，请运行 `bash build_appimage.sh`，产物位于 `build/`。
+无 FUSE 的环境可使用 `--appimage-extract-and-run` 启动。自行构建请运行 `bash build_appimage.sh`，产物位于 `build/`。
+
+`.deb` 与 `.rpm`：
+
+```bash
+sha256sum -c AKIA-4.7.0-amd64.deb.sha256
+sudo apt-get install ./AKIA-4.7.0-amd64.deb
+
+sha256sum -c AKIA-4.7.0-x86_64.rpm.sha256
+sudo dnf install ./AKIA-4.7.0-x86_64.rpm
+```
+
+自行构建请先安装 [依赖与发布管理](docs/dependency-management.md) 中的宿主工具，再运行 `bash build_deb_rpm.sh`。产物位于 `dist/`，程序安装到 `/opt/akia`。
 
 ### Windows
 
-下载 `AKIA-Setup-4.6.4.exe`，双击运行。
+下载 `AKIA-Setup-4.7.0.exe`，双击运行。
 或在 Windows 上执行：
 
 ```powershell
@@ -103,7 +117,7 @@ python tools/run_tests.py --quiet
 
 主要构建入口：
 
-- Linux：`build_appimage.sh`
+- Linux：AppImage（`build_appimage.sh`）、`.deb` 与 `.rpm`（`build_deb_rpm.sh`）。后两种的宿主依赖见 `docs/dependency-management.md`。
 - Windows：`build_pyinstaller.py` + `packaging/AKIA-installer.iss`
 - CI 与发布门禁：`.github/workflows/ci.yml`
 

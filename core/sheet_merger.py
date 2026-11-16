@@ -1,6 +1,9 @@
 """工作表合并引擎 — 追加/JOIN/批量合并"""
 
-import os, pandas as pd
+import os
+import pandas as pd
+
+from core.excel_utils import open_excel_auto, read_excel_auto
 
 
 class SheetMerger:
@@ -13,7 +16,7 @@ class SheetMerger:
             if ext == ".csv":
                 df = pd.read_csv(f, dtype=str)
             else:
-                df = pd.read_excel(f, sheet_name=sheet_name, dtype=str)
+                df = read_excel_auto(f, sheet_name=sheet_name, dtype=str)
             dfs.append(df)
         if not dfs:
             return pd.DataFrame()
@@ -46,8 +49,8 @@ class SheetMerger:
     @staticmethod
     def merge_sheets(file_path: str) -> dict[str, pd.DataFrame]:
         """单文件多 Sheet 合并"""
-        xl = pd.ExcelFile(file_path)
+        xl = open_excel_auto(file_path)
         result = {}
         for sn in xl.sheet_names:
-            result[sn] = pd.read_excel(file_path, sheet_name=sn, dtype=str)
+            result[sn] = read_excel_auto(file_path, sheet_name=sn, dtype=str)
         return result

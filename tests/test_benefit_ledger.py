@@ -119,6 +119,26 @@ class TestLedger:
         summary = BenefitLedger([_record()]).summary()
         assert summary["roi"] is None
 
+    def test_lookup_does_not_mix_other_cases_or_months(self):
+        ledger = BenefitLedger()
+        for index in range(300):
+            ledger.add(_record(case_id=f"C{index}", month="2026-10",
+                               basis={"quantity": index + 1, "unit_cost": 1.0,
+                                      "baseline_value": 2, "new_value": 1,
+                                      "unit": "s"}))
+        ledger.add(_record(case_id="C1", month="2026-11",
+                           basis={"quantity": 1, "unit_cost": 1.0,
+                                  "baseline_value": 2, "new_value": 1,
+                                  "unit": "s"}))
+        assert [item.case_id for item in ledger.for_case("C1")] == ["C1", "C1"]
+        assert len(ledger.for_month("2026-11")) == 1
+        with pytest.raises(ValueError, match="重复计入"):
+            ledger.add(_record(case_id="C1", month="2026-10",
+                               basis={"quantity": 9, "unit_cost": 1.0,
+                                      "baseline_value": 2, "new_value": 1,
+                                      "unit": "s"}))
+        assert len(ledger) == 301
+
     def test_month_filter_and_roundtrip(self):
         ledger = BenefitLedger([_record(), _record(month="2026-11",
                                                    basis={"quantity": 1,

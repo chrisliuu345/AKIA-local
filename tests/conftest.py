@@ -23,6 +23,28 @@ def _qt_application():
         return
     app = QApplication.instance() or QApplication([])
     yield app
+    _drain_qt(app)
+
+
+def _drain_qt(app) -> None:
+    """会话结束前，按 Qt 的顺序销毁残留对象，再让解释器退出。
+
+    测试里没有父对象的页签只 close() 不销毁。解释器退出时，PySide 在
+    destroyQCoreApplication 里一边遍历 Python 包装、一边析构 QObject，
+    顺序不对会在退出阶段 SIGBUS/SIGSEGV（用例已全部通过，进程却返回非 0）。
+    """
+    import gc
+
+    from PySide6.QtCore import QCoreApplication, QEvent
+    from PySide6.QtWidgets import QApplication
+
+    for widget in QApplication.topLevelWidgets():
+        widget.close()
+        widget.deleteLater()
+    for _ in range(3):
+        QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+        app.processEvents()
+    gc.collect()
 
 
 @lru_cache(maxsize=1)

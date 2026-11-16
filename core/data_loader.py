@@ -6,10 +6,9 @@ import os
 from typing import Any
 import pandas as pd
 from config.settings import SUPPORTED_EXCEL_EXTENSIONS, MAX_PREVIEW_ROWS, CHUNK_SIZE
+from core.excel_utils import read_excel_auto
 from core.ie_parser import IEDataParser
-from core.log_util import get_logger
-
-_log = get_logger(__name__)
+from core.numeric_cache import remap_numeric_cache
 
 
 class DataLoader:
@@ -30,20 +29,7 @@ class DataLoader:
             raise ValueError(f"不支持的文件格式: {ext}，支持: {SUPPORTED_EXCEL_EXTENSIONS}")
 
         self.file_path = file_path
-
-        if ext == ".xls":
-            raw = None
-            for eng in ["calamine", "xlrd"]:
-                try:
-                    raw = pd.read_excel(file_path, sheet_name=sheet_names, dtype=str, engine=eng)
-                    break
-                except Exception as e:
-                    _log.debug("Engine %s failed: %s", eng, e)
-                    continue
-            if raw is None:
-                raise ValueError("无法读取 .xls 文件，请安装: pip install python-calamine")
-        else:
-            raw = pd.read_excel(file_path, sheet_name=sheet_names, dtype=str, engine="openpyxl")
+        raw = read_excel_auto(file_path, sheet_name=sheet_names, dtype=str)
 
         if isinstance(raw, pd.DataFrame):
             raw = {"Sheet1": raw}
@@ -63,20 +49,12 @@ class DataLoader:
         pandas 的 read_excel 不支持 chunksize 参数，对于超大文件（>100万行），
         建议先用数据库导入再通过 SqlLoader 读取。"""
         ext = os.path.splitext(file_path)[1].lower()
-        if ext == ".xls":
-            for eng in ["calamine", "xlrd"]:
-                try:
-                    return pd.read_excel(file_path, sheet_name=sheet_name, dtype=str, engine=eng)
-                except Exception:
-                    continue
-            raise ValueError("无法读取 .xls 文件，请安装: pip install python-calamine")
-        if chunk_size and chunk_size > 0:
-            try:
-                return pd.read_excel(file_path, sheet_name=sheet_name, dtype=str,
-                                     engine="openpyxl").head(chunk_size)
-            except Exception as e:  # 分块预览失败（如引擎不支持）→ 退回整表读取
-                _log.debug("分块预览失败，改读整表: %s", e)
-        return pd.read_excel(file_path, sheet_name=sheet_name, dtype=str, engine="openpyxl")
+        frame = read_excel_auto(file_path, sheet_name=sheet_name, dtype=str)
+        if not isinstance(frame, pd.DataFrame):
+            raise ValueError(f"工作表 '{sheet_name}' 没有读出数据表")
+        if ext == ".xls" or not chunk_size or chunk_size <= 0:
+            return frame
+        return frame.head(chunk_size)
 
     load_chunked = load_head
 
@@ -91,6 +69,8 @@ class DataLoader:
         if ext == ".csv":
             yield from pd.read_csv(file_path, chunksize=chunk_size, dtype=str)
         elif ext in (".xlsx", ".xlsm"):
+            # calamine 没有按行流出的接口。超大表仍用 openpyxl 只读流，
+            # 避免把整本工作簿先装进内存；普通导入走 read_excel_auto。
             from openpyxl import load_workbook
             wb = load_workbook(file_path, read_only=True, data_only=True)
             ws = wb[sheet_name] if sheet_name in wb.sheetnames else wb.active
@@ -172,8 +152,9 @@ def _clean_column_names(df: pd.DataFrame) -> pd.DataFrame:
             new_cols.append(f"列 {n + 1}")
         except ValueError:
             new_cols.append(s)
-    df = df.copy()
+    old_cols = list(df.columns)
     df.columns = new_cols
+    remap_numeric_cache(df, old_cols, new_cols)
     return df
 
 

@@ -7,6 +7,8 @@ from typing import ClassVar, Any
 import pandas as pd
 import numpy as np
 
+from core.numeric_cache import cached_numeric, clear_numeric_cache, remap_numeric_cache
+
 
 class DataParser:
     """智能数据解析：自动识别数据列类型、表头行、规格限"""
@@ -114,7 +116,7 @@ class DataParser:
         # 先去重，避免 df[col] 返回 DataFrame 导致下游 pd.to_numeric 崩溃。
         self._dedupe_columns(df)
         self.column_types = self._classify_columns(df)
-        self.numeric_like = {c: self._numeric_like(df[c]) for c in df.columns}
+        self.numeric_like = {c: self._numeric_like_column(df, c) for c in df.columns}
         self.spec_limits = self._extract_spec_limits(df)
         self.subgroup_col = self._identify_subgroup_column(df)
         self.measurement_cols = self._identify_measurement_columns(df)
@@ -156,7 +158,9 @@ class DataParser:
             seen.add(name)
             counts.setdefault(base, 1)
             new_cols.append(name)
+        old_cols = list(df.columns)
         df.columns = new_cols
+        remap_numeric_cache(df, old_cols, new_cols)
         self.duplicate_columns = renamed
         return df
 
@@ -187,6 +191,18 @@ class DataParser:
             return False
         converted = pd.to_numeric(non_empty, errors="coerce")
         return float(converted.notna().mean()) >= cls.NUMERIC_LIKE_MIN_RATIO
+
+    def _numeric_like_column(self, df: pd.DataFrame, col: str) -> bool:
+        """整列判定走缓存，避免同一列在分类和规格提取时各转一次。"""
+        source = df[col]
+        if isinstance(source, pd.DataFrame):
+            source = source.iloc[:, 0]
+        blank = self._blank_mask(source)
+        non_empty = int((~blank).sum())
+        if non_empty < self.NUMERIC_LIKE_MIN_VALUES:
+            return False
+        converted = cached_numeric(df, col)
+        return float(converted[~blank].notna().mean()) >= self.NUMERIC_LIKE_MIN_RATIO
 
     @staticmethod
     def _blank_mask(series: pd.Series) -> pd.Series:
@@ -331,6 +347,7 @@ class DataParser:
             df = df.iloc[header_row:].reset_index(drop=True)
             df.columns = [str(c).strip() for c in df.iloc[0]]
             df = df.iloc[1:].reset_index(drop=True)
+            clear_numeric_cache(df)
             return df
         cols_are_default = all(
             str(c).isdigit() or str(c).startswith("Unnamed")
@@ -339,6 +356,7 @@ class DataParser:
         if cols_are_default:
             df.columns = [str(c).strip() for c in df.iloc[0]]
             df = df.iloc[1:].reset_index(drop=True)
+            clear_numeric_cache(df)
         return df
 
     def _classify_columns(self, df: pd.DataFrame) -> dict[str, str]:
@@ -398,15 +416,15 @@ class DataParser:
             col_lower = str(col).lower()
             spec = {}
             if any(kw in col_lower for kw in ["usl", "上规格", "上限"]):
-                non_null = pd.to_numeric(df[col], errors="coerce").dropna()
+                non_null = cached_numeric(df, col).dropna()
                 if len(non_null) > 0:
                     spec["usl"] = float(non_null.iloc[0])
             if any(kw in col_lower for kw in ["lsl", "下规格", "下限"]):
-                non_null = pd.to_numeric(df[col], errors="coerce").dropna()
+                non_null = cached_numeric(df, col).dropna()
                 if len(non_null) > 0:
                     spec["lsl"] = float(non_null.iloc[0])
             if any(kw in col_lower for kw in ["target", "目标", "名义"]):
-                non_null = pd.to_numeric(df[col], errors="coerce").dropna()
+                non_null = cached_numeric(df, col).dropna()
                 if len(non_null) > 0:
                     spec["target"] = float(non_null.iloc[0])
             if spec:
@@ -441,11 +459,11 @@ class DataParser:
         ]
 
     def extract_measurement_data(self, df: pd.DataFrame, col: str) -> pd.Series:
-        return pd.to_numeric(df[col], errors="coerce").dropna()
+        return cached_numeric(df, col).dropna()
 
     @staticmethod
     def suggest_subgroup_size(df: pd.DataFrame, col: str) -> int | None:
-        data = pd.to_numeric(df[col], errors="coerce").dropna()
+        data = cached_numeric(df, col).dropna()
         total = len(data)
         common_sizes = [2, 3, 4, 5, 6, 8, 10, 12, 15, 20]
         for size in common_sizes:

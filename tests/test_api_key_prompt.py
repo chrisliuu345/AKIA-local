@@ -24,6 +24,13 @@ def isolated_config(tmp_path, monkeypatch):
     monkeypatch.setattr(settings, "_USER_CONFIG_PATH", str(target))
     monkeypatch.setattr(settings, "_defaults", {})
     monkeypatch.setattr(settings, "_user_overrides", {})
+    # 不碰真实密钥环：这里测的是弹窗与保存流程，不是加密本身（加密见 secret_store 的测试）。
+    # 没有这个替身，无密钥环的 CI / 沙箱里 save_config 会拒绝写入并让用例失败。
+    import core.secret_store as secret_store
+
+    monkeypatch.setattr(secret_store, "encrypt_secret", lambda text: "enc:" + text)
+    monkeypatch.setattr(secret_store, "decrypt_secret",
+                        lambda stored: stored.removeprefix("enc:"))
     return settings
 
 
@@ -213,6 +220,26 @@ def test_no_connection_still_prompts(isolated_config, monkeypatch,
     _StubMessageBox._reply = _StubMessageBox.Yes
     client = mw._resolve_llm_client(None)
     assert client is not None and len(_StubMessageBox.calls) == 2
+
+
+def test_availability_probe_leaves_the_gui_thread(_qt_application, monkeypatch):
+    from PySide6.QtCore import QThread
+    from PySide6.QtWidgets import QApplication
+
+    import ui.main_window_helpers as helpers
+    from core.llm_client import LLMClient
+
+    seen = {}
+
+    def fake(cls, preferred=None):
+        seen["thread"] = QThread.currentThread()
+        client = LLMClient(provider="ollama", probe=False)
+        client.available = True
+        return client
+
+    monkeypatch.setattr(LLMClient, "detect_available", classmethod(fake))
+    helpers._resolve_llm_client(QApplication.instance())
+    assert seen["thread"] is not QApplication.instance().thread()
 
 
 def test_dialog_auto_selects_configured_provider(isolated_config,

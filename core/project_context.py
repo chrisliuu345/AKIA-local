@@ -195,6 +195,7 @@ class ProjectContext:
                              allowance_pct: float | None = None,
                              rating: float | None = None,
                              cycles: int | None = None, operator: str = "",
+                             observation_times: list[float] | None = None,
                              change_reason: str, changed_by: str = "",
                              source_case_id: str = "") -> StandardRecord:
         ref = str(object_ref or "").strip()
@@ -205,7 +206,8 @@ class ProjectContext:
             "standard_time", ref,
             {"standard_time_s": float(standard_time_s),
              "normal_time_s": normal_time_s, "allowance_pct": allowance_pct,
-             "rating": rating, "cycles": cycles, "operator": operator},
+             "rating": rating, "cycles": cycles, "operator": operator,
+             "observation_times": [float(value) for value in (observation_times or [])]},
             change_reason=change_reason, changed_by=changed_by,
             source_case_id=source_case_id)
         if len(self.standards) > before:

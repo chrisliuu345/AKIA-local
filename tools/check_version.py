@@ -17,6 +17,8 @@ ROOT = Path(__file__).resolve().parent.parent
 _APP_VERSION_RE = re.compile(r'^APP_VERSION\s*=\s*"([^"]+)"', re.MULTILINE)
 _ARTIFACT_RES = (
     re.compile(r"AKIA-(\d+\.\d+\.\d+)-x86_64\.AppImage"),
+    re.compile(r"AKIA-(\d+\.\d+\.\d+)-amd64\.deb"),
+    re.compile(r"AKIA-(\d+\.\d+\.\d+)-x86_64\.rpm"),
 )
 _DECL_RES = (
     r"\*\*当前版本\*\*:\s*v(\d+\.\d+\.\d+)",

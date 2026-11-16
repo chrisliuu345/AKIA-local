@@ -49,7 +49,7 @@ class LLMClient:
 
     def __init__(self, model: str | None = None, provider: str = "ollama", *,
                  api_key: str | None = None, api_base: str | None = None,
-                 timeout: float | None = None):
+                 timeout: float | None = None, probe: bool = True):
         self.provider = str(provider or "ollama").strip().lower()
         self.spec: ProviderSpec = get_provider(self.provider)
         self.protocol = self.spec.protocol
@@ -70,7 +70,8 @@ class LLMClient:
 
         self._stop_event = threading.Event()
         self._resp = None
-        self.available = self._check_available()
+        # probe=False 时不访问网络。设置页先把探测放到后台线程，再调 test_connection。
+        self.available = self._check_available() if probe else False
 
     # ------------------------------------------------------------ 配置
     @classmethod

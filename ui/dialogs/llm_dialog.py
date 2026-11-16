@@ -131,7 +131,7 @@ def md_to_html(text: str) -> str:
 class QAMHarnessDialog(QDialog):
     """QAM Harness 对话窗口 — Agent 工具调用 + 知识库 + 模型管理。"""
 
-    def __init__(self, parent=None, engine=None):
+    def __init__(self, parent=None, engine=None, llm=None):
         super().__init__(parent)
         self.setWindowTitle("QAM Harness — 质量工程 AI Agent")
         # 独立顶层窗口：可自由移动/最大化/全屏，不随主窗口模态锁定
@@ -145,16 +145,31 @@ class QAMHarnessDialog(QDialog):
 
         from core.llm_client import LLMClient
         from ui.agent_bridge import build_engine
+        from ui.worker import run_in_worker
 
         # 已注入 engine（测试/内嵌用法）时沿用它自带的 LLM，避免被覆盖
         self.llm = getattr(engine, "llm", None) if engine is not None else None
         if self.llm is None:
-            # 任意云供应商已配置密钥即自动选中（与主窗口连接检测同源）
-            self.llm = LLMClient.detect_available()
-            saved_model = QSettings("AKIA", "LLM").value("model", "")
+            self.llm = llm
+        if self.llm is None:
+            saved_model = str(QSettings("AKIA", "LLM").value("model", "") or "")
+
+            def _detect():
+                client = LLMClient.detect_available()
+                if saved_model:
+                    with contextlib.suppress(Exception):
+                        client.set_model(saved_model, client.provider)
+                return client
+
+            self.llm = run_in_worker(self, _detect)
+        elif engine is None:
+            saved_model = str(QSettings("AKIA", "LLM").value("model", "") or "")
             if saved_model:
-                with contextlib.suppress(Exception):
-                    self.llm.set_model(saved_model, self.llm.provider)
+                def _apply(client=self.llm):
+                    with contextlib.suppress(Exception):
+                        client.set_model(saved_model, client.provider)
+
+                run_in_worker(self, _apply)
         if engine is None:
             engine, self.agent_context = build_engine(parent, llm=self.llm)
         else:
@@ -446,8 +461,13 @@ class QAMHarnessDialog(QDialog):
             from config.settings import get_setting
             model = (get_setting(f"llm_{pid}_model", "") or spec.default_model())
             base = get_setting(f"llm_{pid}_api_base", "")
-            self.llm = type(self.llm)(model=model, provider=pid, api_key=key,
+            from ui.worker import run_in_worker
+
+            def _build():
+                return type(self.llm)(model=model, provider=pid, api_key=key,
                                       api_base=base)
+
+            self.llm = run_in_worker(self, _build)
             self.engine.set_llm(self.llm)
             self._last_provider_id = pid
             self._mark_provider_configured(pid)
@@ -533,15 +553,21 @@ class QAMHarnessDialog(QDialog):
             return
         if name == getattr(self.llm, "model", ""):
             return
-        with contextlib.suppress(Exception):
+        from ui.worker import run_in_worker
+
+        def _apply():
             self.llm.set_model(name, self.llm.provider)
+
+        with contextlib.suppress(Exception):
+            run_in_worker(self, _apply)
         settings = QSettings("AKIA", "LLM")
         settings.setValue("model", name)
         settings.setValue("provider", self.llm.provider)
         self._update_status()
 
     def _retry_connection(self):
-        self.llm.available = self.llm._check_available()
+        from ui.worker import run_in_worker
+        self.llm.available = run_in_worker(self, self.llm._check_available)
         self._update_status()
         self.append_msg("system", "连接检测: " + ("在线" if self.llm.available else "仍离线（工具模式可用）"))
 

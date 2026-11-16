@@ -28,7 +28,7 @@
 ## 3. 文件与命名
 
 - 测试文件：`tests/test_known_values_<domain>_<method>.py`
-  （domain：`spc` / `capability` / `msa` / `doe` / `reliability` / `timeseries` / `ml`）
+  （domain：`spc` / `capability` / `msa` / `doe` / `reliability` / `timeseries` / `ml` / `ie`）
 - 测试函数：`test_<method>_<case_id>`
 - 每个用例一个 `KnownValueCase`，`case_id` 全局唯一，建议 `nist-<dataset>-<stat>` 形式
 - 数据点 ≤ 50 内联在测试文件；更大数据集放 `tests/data/known_values/`（CSV，文件头或同名 `.md` 记录来源）

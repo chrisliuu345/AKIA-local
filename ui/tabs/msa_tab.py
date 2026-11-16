@@ -4,6 +4,8 @@ MSA 测量系统分析页 — 含图表嵌入
 
 from typing import Any
 import pandas as pd
+
+from core.numeric_cache import cached_numeric
 import numpy as np
 
 from PySide6.QtWidgets import (
@@ -206,31 +208,21 @@ class MSATab(BaseAnalysisTab):
             reference = self.ref_spin.value()
             if reference == 0.0:
                 return False, "Type 1 量具研究需要设置参考值（真值）"
-            data = pd.to_numeric(self.df[measure], errors="coerce").dropna()
+            data = cached_numeric(self.df, measure).dropna()
             if len(data) < 5:
                 return False, f"Type 1 量具研究至少需要 5 个观测值，当前 {len(data)}"
         return True, ""
 
     def run_and_display(self) -> dict[str, Any]:
-        valid, msg = self.validate_params()
-        if not valid:
-            self._clear_canvas()
-            self.result_text.setStyleSheet("color: #E00000; ")
-            self.result_text.setText(f"▎参数校验失败\n{msg}")
-            return None
-        self.result_text.setStyleSheet("")
-        try:
-            result = self.run_analysis()
-            self.display_result(result)
-            self.analysis_completed.emit()
-            return result
-        except Exception as e:
-            self._clear_canvas()
-            self.result_text.setStyleSheet("color: #E00000; ")
-            self.result_text.setText(f"▎分析失败\n{e!s}")
-            return None
+        from ui.present import present_analysis
+        return present_analysis(self, self._msa_job)
 
     def run_analysis(self) -> dict[str, Any]:
+        finished = self._msa_job()()
+        self.current_result = finished
+        return finished
+
+    def _msa_job(self):
         from analysis.msa import gage_rr, linearity_bias, attribute_agree, type1_study, emp
 
         method = self.method_combo.currentText()
@@ -239,32 +231,13 @@ class MSATab(BaseAnalysisTab):
         operator = self.operator_col.currentText()
         tolerance = self.tolerance_spin.value()
         reference = self.ref_spin.value()
+        frame = self.df
 
-        result = {}
-        if "R&R" in method and "交叉" in method:
-            result = gage_rr.analyze_crossed(self.df, measure, part, operator, tolerance)
-        elif "R&R" in method and "嵌套" in method:
-            result = gage_rr.analyze_nested(self.df, measure, part, operator, tolerance)
-        elif "EMP" in method:
-            result = emp.analyze_crossed(self.df, measure, part, operator, tolerance)
-        elif "偏倚" in method:
-            data = pd.to_numeric(self.df[measure], errors="coerce").dropna()
-            result = linearity_bias.analyze_bias(data, reference)
-        elif "线性" in method:
-            result = linearity_bias.analyze_linearity(self.df, measure, part)
-        elif "属性一致性" in method:
-            result = attribute_agree.analyze(self.df, measure, part, operator)
-        elif "Type 1" in method:
-            data = pd.to_numeric(self.df[measure], errors="coerce").dropna()
-            result = type1_study.analyze(data, reference, tolerance=tolerance)
-
-        self.current_result = {
-            "analysis_type": method,
-            "params": {"measurement": measure, "part": part, "operator": operator, "tolerance": tolerance, "method": method},
-            "result": result,
-            "chart_data": result,
-        }
-        return self.current_result
+        def compute():
+            return _compute_msa(
+                frame, method, measure, part, operator, tolerance, reference,
+                gage_rr, linearity_bias, attribute_agree, type1_study, emp)
+        return compute
 
     def display_result(self, analysis: dict[str, Any] | None = None):
         if analysis is None:
@@ -275,7 +248,7 @@ class MSATab(BaseAnalysisTab):
         measure = analysis.get("params", {}).get("measurement", "")
         if self.df is not None and measure:
             try:
-                raw = pd.to_numeric(self.df[measure], errors="coerce").dropna().values
+                raw = cached_numeric(self.df, measure).dropna().values
                 self._render_chart(raw)
             except Exception:
                 self._clear_canvas()
@@ -401,3 +374,31 @@ class MSATab(BaseAnalysisTab):
         self.title_label.setText(i18n.tr("msa.title"))
         self.run_btn.setText(i18n.tr("msa.run_btn"))
         self.result_label.setText(i18n.tr("msa.result"))
+
+
+def _compute_msa(frame, method, measure, part, operator, tolerance, reference,
+                 gage_rr, linearity_bias, attribute_agree, type1_study, emp) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    if "R&R" in method and "交叉" in method:
+        result = gage_rr.analyze_crossed(frame, measure, part, operator, tolerance)
+    elif "R&R" in method and "嵌套" in method:
+        result = gage_rr.analyze_nested(frame, measure, part, operator, tolerance)
+    elif "EMP" in method:
+        result = emp.analyze_crossed(frame, measure, part, operator, tolerance)
+    elif "偏倚" in method:
+        data = cached_numeric(frame, measure).dropna()
+        result = linearity_bias.analyze_bias(data, reference)
+    elif "线性" in method:
+        result = linearity_bias.analyze_linearity(frame, measure, part)
+    elif "属性一致性" in method:
+        result = attribute_agree.analyze(frame, measure, part, operator)
+    elif "Type 1" in method:
+        data = cached_numeric(frame, measure).dropna()
+        result = type1_study.analyze(data, reference, tolerance=tolerance)
+    return {
+        "analysis_type": method,
+        "params": {"measurement": measure, "part": part, "operator": operator,
+                   "tolerance": tolerance, "method": method},
+        "result": result,
+        "chart_data": result,
+    }

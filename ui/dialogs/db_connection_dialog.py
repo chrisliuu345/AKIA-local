@@ -231,36 +231,49 @@ class DbConnectionDialog(QDialog):
 
     def _on_test_connection(self):
         config = self._get_config_from_ui()
-        try:
+
+        def _probe():
             self.sql_loader.connect(config)
-            self.conn_status.setText(i18n.tr("db.conn_success"))
-            self.conn_status.setStyleSheet("color: #3E9B68;")
-            self._load_table_list()
-            QMessageBox.information(self, i18n.tr("db.test_title"), i18n.tr("db.conn_success_msg"))
+            return self.sql_loader.get_table_names()
+
+        try:
+            from ui.worker import run_in_worker
+            names = run_in_worker(self, _probe)
         except Exception as e:
             self.conn_status.setText(i18n.tr("db.conn_failed"))
             self.conn_status.setStyleSheet("color: #E00000;")
             QMessageBox.critical(self, i18n.tr("db.test_title"), f"{i18n.tr('db.conn_failed_msg')}\n{e!s}")
+            return
+        self.conn_status.setText(i18n.tr("db.conn_success"))
+        self.conn_status.setStyleSheet("color: #3E9B68;")
+        self._show_table_names(names)
+        QMessageBox.information(self, i18n.tr("db.test_title"), i18n.tr("db.conn_success_msg"))
+
+    def _show_table_names(self, names: list[str]) -> None:
+        self.table_list.clear()
+        for name in sorted(names):
+            item = QListWidgetItem(name)
+            item.setCheckState(Qt.Unchecked)
+            self.table_list.addItem(item)
+        if not names:
+            self.conn_status.setText(i18n.tr("db.no_tables"))
 
     def _load_table_list(self):
-        self.table_list.clear()
         try:
-            names = self.sql_loader.get_table_names()
-            for name in sorted(names):
-                item = QListWidgetItem(name)
-                item.setCheckState(Qt.Unchecked)
-                self.table_list.addItem(item)
-            if not names:
-                self.conn_status.setText(i18n.tr("db.no_tables"))
+            from ui.worker import run_in_worker
+            names = run_in_worker(self, self.sql_loader.get_table_names)
         except Exception as e:
             QMessageBox.warning(self, i18n.tr("db.error"), str(e))
+            return
+        self._show_table_names(names)
 
     def _on_refresh_tables(self):
-        if not self.sql_loader.is_connected():
+        if self.sql_loader.engine is None:
             QMessageBox.warning(self, i18n.tr("db.error"), i18n.tr("db.conn_first"))
             return
         self._load_table_list()
-        self.conn_status.setText(i18n.tr("db.tables_refreshed"))
+        if self.table_list.count():
+            self.conn_status.setText(i18n.tr("db.tables_refreshed"))
 
     def _load_config_combo(self):
         self.config_combo.blockSignals(True)
@@ -276,9 +289,12 @@ class DbConnectionDialog(QDialog):
             QMessageBox.warning(self, i18n.tr("db.error"), i18n.tr("db.fill_required"))
             return
 
-        if not self.sql_loader.is_connected():
+        # is_connected() 和 connect() 都要访问网络，不能在界面线程上做。
+        # 这里的引擎只用来列表，真正导入时主窗口会用 config 重新连接。
+        if self.sql_loader.engine is None:
             try:
-                self.sql_loader.connect(config)
+                from ui.worker import run_in_worker
+                run_in_worker(self, self.sql_loader.connect, config)
             except Exception as e:
                 QMessageBox.critical(self, i18n.tr("db.error"),
                                      f"{i18n.tr('db.conn_failed_msg')}\n{e!s}")

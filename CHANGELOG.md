@@ -4,7 +4,7 @@
 
 有发布提交或版本标签、但没有 GitHub Release 的版本会标明。主线上的 v2.7.0、v2.8.0、v2.9.0、v3.1.0、v3.2.0 和 v4.4.1 没有独立的发布提交、版本标签或 GitHub Release，不单列。
 
-当前版本号见 `config/settings.py` 的 `APP_VERSION`（v4.6.4）。安装包以对应 GitHub Release 的附件为准。
+当前版本号见 `config/settings.py` 的 `APP_VERSION`（v4.7.0）。安装包以对应 GitHub Release 的附件为准。
 
 ## v4.6.4 — 2026-11-15
 

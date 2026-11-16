@@ -2,6 +2,8 @@
 
 import numpy as np
 import pandas as pd
+
+from core.numeric_cache import cached_numeric
 from typing import Any
 
 from PySide6.QtWidgets import (
@@ -124,7 +126,7 @@ class CapComparisonTab(BaseAnalysisTab):
         self.col_list.clear()
         for c in self.df.columns:
             try:
-                s = pd.to_numeric(self.df[c], errors="coerce").dropna()
+                s = cached_numeric(self.df, c).dropna()
                 if len(s) > 0:
                     self.col_list.addItem(str(c))
             except Exception:  # 非数值列：不加入可选列
@@ -156,7 +158,7 @@ class CapComparisonTab(BaseAnalysisTab):
 
         results = []
         for col in selected:
-            series = pd.to_numeric(self.df[col], errors="coerce").dropna()
+            series = cached_numeric(self.df, col).dropna()
             if len(series) < 5:
                 continue
             spec = self._specs.get(col, {})

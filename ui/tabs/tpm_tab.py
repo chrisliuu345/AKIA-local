@@ -14,6 +14,13 @@ from ui.theme import BUTTON_PRIMARY_STRETCH, FONT_18B
 from analysis.ie.tpm import TPMEngine
 
 
+def _analyze_tpm(records):
+    engine = TPMEngine()
+    for record in records:
+        engine.add_record(**record)
+    return engine.analyze()
+
+
 class TPMTab(BaseAnalysisTab):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -119,28 +126,32 @@ class TPMTab(BaseAnalysisTab):
             self.maint_list.addItem(f"{m['due_date']} — {m['task']}")
 
     def run_and_display(self):
+        records = []
         self.engine.records.clear()
         for r in range(self.table.rowCount()):
             try:
+                breakdown = float(self.table.item(r, 3).text()) if self.table.item(r, 3) else 0
                 rec = {
                     "date": self.table.item(r, 0).text() if self.table.item(r, 0) else "",
                     "operating_time": float(self.table.item(r, 1).text()) if self.table.item(r, 1) else 24,
                     "planned_downtime": float(self.table.item(r, 2).text()) if self.table.item(r, 2) else 0,
-                    "breakdown_time": float(self.table.item(r, 3).text()) if self.table.item(r, 3) else 0,
+                    "breakdown_time": breakdown,
                     "setup_time": float(self.table.item(r, 4).text()) if self.table.item(r, 4) else 0,
                     "idle_time": float(self.table.item(r, 5).text()) if self.table.item(r, 5) else 0,
                     "reduced_speed_loss": float(self.table.item(r, 6).text()) if self.table.item(r, 6) else 0,
                     "defect_loss": float(self.table.item(r, 7).text()) if self.table.item(r, 7) else 0,
                     "startup_loss": float(self.table.item(r, 8).text()) if self.table.item(r, 8) else 0,
-                    "breakdown_count": 1 if float(self.table.item(r, 3).text() or 0) > 0 else 0,
+                    "breakdown_count": 1 if breakdown > 0 else 0,
                 }
                 output = (self.table.item(r, 9).text() or "100/100").split("/")
                 rec["total_output"] = int(output[0]) if output else 100
                 rec["good_output"] = int(output[1]) if len(output) > 1 else rec["total_output"]
                 self.engine.add_record(**rec)
+                records.append(rec)
             except (ValueError, AttributeError):
                 continue
-        result = self.engine.analyze()
+        from ui.worker import run_in_worker
+        result = run_in_worker(self, _analyze_tpm, records)
         self._display(result)
         self.current_result = {
             "analysis_type": "TPM 全面维护",

@@ -290,4 +290,7 @@ class DataCleaner(QDialog):
             QMessageBox.information(self, "导出成功", f"已保存到:\n{path}")
 
     def get_cleaned_df(self):
+        from core.numeric_cache import clear_numeric_cache
+        if self.apply_df is not None:
+            clear_numeric_cache(self.apply_df)
         return self.apply_df

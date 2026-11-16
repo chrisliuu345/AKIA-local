@@ -17,6 +17,12 @@ from ui.font_config import get_ui_font
 from analysis.ie.smed import SMEDEngine, SMEDTask
 
 
+def _analyze_smed(tasks):
+    engine = SMEDEngine()
+    engine.tasks = list(tasks)
+    return engine.analyze()
+
+
 def truncate_label(name: str, max_len: int = 8) -> str:
     """甘特图 y 轴标签截断: 超长作业名截为 max_len-1 字 + 省略号"""
     return name if len(name) <= max_len else name[: max_len - 1] + "…"
@@ -141,7 +147,10 @@ class SMEDTab(BaseAnalysisTab):
 
     def run_and_display(self):
         """标准入口 — 各 Tab 统一接口"""
-        result = self.run_analysis()
+        self._read_table()
+        from ui.worker import run_in_worker
+        analyzed = run_in_worker(self, _analyze_smed, list(self.engine.tasks))
+        result = self._present_smed(analyzed)
         if result:
             self.display_result(result)
             self.current_result = {
@@ -153,7 +162,9 @@ class SMEDTab(BaseAnalysisTab):
 
     def run_analysis(self):
         self._read_table()
-        result = self.engine.analyze()
+        return self._present_smed(self.engine.analyze())
+
+    def _present_smed(self, result):
         if not result.tasks:
             self.current_figure = None
             return {"analysis_type": "SMED", "result": {}, "summary": "无数据"}

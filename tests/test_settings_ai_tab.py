@@ -96,6 +96,7 @@ def test_clear_key_flag_writes_empty(dialog, isolated_config):
         dialog2.deleteLater()
 
 
+@pytest.mark.requires_keyring
 def test_cleared_key_is_actually_removed(dialog, isolated_config):
     """审查发现: 清除后旧 _enc 残留会被 get_secret 读回，必须真正删除。"""
     from config.settings import get_secret, save_config

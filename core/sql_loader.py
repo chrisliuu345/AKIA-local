@@ -11,6 +11,11 @@ import pandas as pd
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.engine import Engine
 
+from config.settings import SQL_LOAD_MAX_ROWS
+
+#: 连接建立最长等待秒数。避免不可达主机把界面一直卡住。
+CONNECT_TIMEOUT_SECONDS = 10
+
 
 def sanitize_connection_error(err) -> str:
     """将异常消息中的数据库连接串密码打码，防止密码经日志/弹窗泄露。"""
@@ -69,17 +74,34 @@ def build_connection_string(config: dict) -> str:
     return f"{driver}://{safe_user}:{safe_password}@{host}:{port}/{safe_database}"
 
 
+def connect_args_for(db_type: str) -> dict[str, int]:
+    """各驱动的登录超时。键名跟驱动走，不能混用。"""
+    if db_type == "mssql":
+        return {"timeout": CONNECT_TIMEOUT_SECONDS}
+    return {"connect_timeout": CONNECT_TIMEOUT_SECONDS}
+
+
 class SqlLoader:
     def __init__(self):
         self.engine: Engine | None = None
         self.connection_config: dict[str, Any] = {}
         self.tables: dict[str, pd.DataFrame] = {}
         self.metadata: dict[str, Any] = {}
+        self.truncated_tables: list[str] = []
 
     def connect(self, config: dict) -> bool:
         self.connection_config = config.copy()
         conn_str = build_connection_string(config)
-        self.engine = create_engine(conn_str, pool_pre_ping=True)
+        if self.engine is not None:
+            # 重复连接（反复点「测试连接」）时先释放旧连接池，避免泄漏。
+            with contextlib.suppress(Exception):
+                self.engine.dispose()
+        self.engine = create_engine(
+            conn_str,
+            pool_pre_ping=True,
+            pool_timeout=CONNECT_TIMEOUT_SECONDS,
+            connect_args=connect_args_for(str(config.get("db_type") or "")),
+        )
         try:
             with self.engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
@@ -96,33 +118,61 @@ class SqlLoader:
         views = insp.get_view_names()
         return tables + views
 
-    def load(self, table_names: list[str] | None = None) -> dict[str, pd.DataFrame]:
+    def load(self, table_names: list[str] | None = None,
+             *, max_rows: int | None = None) -> dict[str, pd.DataFrame]:
         if not self.engine:
             raise RuntimeError("未连接到数据库")
         if table_names is None:
             table_names = self.get_table_names()
+        limit = SQL_LOAD_MAX_ROWS if max_rows is None else max(1, int(max_rows))
         result = {}
+        self.truncated_tables = []
         for name in table_names:
-            try:
-                df = pd.read_sql_table(name, self.engine)
-                result[name] = df
-            except Exception:
-                try:
-                    from sqlalchemy import MetaData, select
-                    metadata = MetaData()
-                    metadata.reflect(bind=self.engine, only=[name])
-                    if name in metadata.tables:
-                        tbl = metadata.tables[name]
-                        stmt = select(tbl)
-                        df = pd.read_sql_query(stmt, self.engine)
-                        result[name] = df
-                    else:
-                        raise ValueError(f"表 '{name}' 反射失败")
-                except Exception as e:
-                    raise RuntimeError(f"读取表 '{name}' 失败: {sanitize_connection_error(e)}") from e
+            result[name] = self._read_table(name, limit)
         self.tables = result
         self._extract_metadata()
         return result
+
+    def _read_table(self, name: str, limit: int) -> pd.DataFrame:
+        """只向库要前 ``limit + 1`` 行（多取一行用来判断是否被截断）。
+
+        先按反射出的表结构查询；反射失败时改用不依赖反射的轻量查询。
+        两条路径都带 LIMIT，不会把整张表读进内存再截断。
+        """
+        fetch = limit + 1
+        try:
+            frame = self._read_limited(name, fetch)
+        except Exception:
+            try:
+                frame = self._read_unreflected(name, fetch)
+            except Exception as exc:
+                raise RuntimeError(
+                    f"读取表 '{name}' 失败: {sanitize_connection_error(exc)}"
+                ) from exc
+        if len(frame) > limit:
+            self.truncated_tables.append(name)
+            return frame.iloc[:limit].copy()
+        return frame
+
+    def _read_limited(self, name: str, fetch_rows: int) -> pd.DataFrame:
+        from sqlalchemy import MetaData, select
+        metadata = MetaData()
+        metadata.reflect(bind=self.engine, only=[name])
+        if name not in metadata.tables:
+            raise ValueError(f"表 '{name}' 反射失败")
+        table = metadata.tables[name]
+        stmt = select(table)
+        # 没有 ORDER BY 时，库可以每次返回不同的前 N 行，分析结果就无法复现。
+        # 有主键时按主键排序，截断得到的子集才是确定的。
+        if len(table.primary_key.columns):
+            stmt = stmt.order_by(*table.primary_key.columns)
+        return pd.read_sql_query(stmt.limit(fetch_rows), self.engine)
+
+    def _read_unreflected(self, name: str, fetch_rows: int) -> pd.DataFrame:
+        """不反射表结构，只引用表名；标识符由方言负责引号，LIMIT/TOP 也按方言生成。"""
+        from sqlalchemy import literal_column, select, table
+        stmt = select(literal_column("*")).select_from(table(name)).limit(fetch_rows)
+        return pd.read_sql_query(stmt, self.engine)
 
     def get_preview(self, table_name: str, rows: int = 100) -> pd.DataFrame:
         """预览表数据 — 全部使用 SQLAlchemy ORM 参数化查询，杜绝 SQL 注入。
@@ -180,4 +230,6 @@ class SqlLoader:
             "total_rows": total_rows,
             "columns_per_table": total_cols,
             "table_names": list(self.tables.keys()),
+            "row_limit": SQL_LOAD_MAX_ROWS,
+            "truncated_tables": list(self.truncated_tables),
         }

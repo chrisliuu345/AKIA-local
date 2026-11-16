@@ -268,7 +268,8 @@ class WorkSamplingTab(BaseAnalysisTab):
 
         conf_text = self.confidence_combo.currentText()
         confidence = {"90%": 0.90, "95%": 0.95, "99%": 0.99}.get(conf_text, 0.95)
-        result = WorkSamplingEngine.analyze(obs, confidence)
+        from ui.worker import run_in_worker
+        result = run_in_worker(self, WorkSamplingEngine.analyze, list(obs), confidence)
         self.current_result = result
         self._display_result(result)
         self.analysis_completed.emit()
