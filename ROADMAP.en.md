@@ -2,7 +2,7 @@
 
 [中文](ROADMAP.md) | [English](ROADMAP.en.md) | [Project Home](README.en.md) | [Releases](https://github.com/chrisliuu345/AKIA-local/releases)
 
-**Status**: Current version is v4.6.4. The v4.6.x security and correctness maintenance is done. Next is v4.7.0, credible industrial-engineering methods.
+**Status**: Current version is v4.7.0, credible industrial-engineering methods. The v4.6.x security and correctness maintenance is done.
 **Last updated**: 2026-11-15
 
 ## Direction
@@ -31,7 +31,7 @@ AKIA is an open-source desktop application for personal industrial engineering a
 
 ## Release Sequence
 
-The following releases are ordered by dependency. Each minor release focuses on one primary theme and must meet its completion criteria before the next phase begins. v4.6.4 closes the v4.6.0 bar for human confirmation, path boundaries, and model HMAC, together with the connector and dashboard fixes in that maintenance release. Next is v4.7.0. Unreleased themes still follow the dependency of shop-floor judgement: make existing IE methods and quality characteristics reviewable first, then bring video cycles and live measurements into that same evidence chain, and finish full localisation last so the interface is not translated twice while it is still moving. From v4.7.0, new and touched interface strings go through `i18n.tr`, and the main window is split, so v4.11.0 does not rewrite the v4.7.0–v4.10.0 text.
+The following releases are ordered by dependency. Each minor release focuses on one primary theme and must meet its completion criteria before the next phase begins. v4.6.4 closes the v4.6.0 bar for human confirmation, path boundaries, and model HMAC, together with the connector and dashboard fixes in that maintenance release. The current version is v4.7.0. Unreleased themes still follow the dependency of shop-floor judgement: make existing IE methods and quality characteristics reviewable first, then bring video cycles and live measurements into that same evidence chain, and finish full localisation last so the interface is not translated twice while it is still moving. From v4.7.0, new and touched interface strings go through `i18n.tr`, and the main window is split, so v4.11.0 does not rewrite the v4.7.0–v4.10.0 text.
 
 | Version | Theme | Primary goals |
 |---------|-------|---------------|
