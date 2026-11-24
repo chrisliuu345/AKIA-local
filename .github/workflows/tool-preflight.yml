@@ -1,0 +1,135 @@
+# 标准托管 runner 的工具存在性预检。
+# 不 checkout、不安装、不下载、不构建、不上传工件。
+# 工具缺失或版本命令非零时仍打印结果，并以 qualification=false 正常结束。
+# 这不表示安装包可用。
+name: Tool environment preflight
+
+on:
+  push:
+    branches:
+      - sub/tool-preflight-214c
+    paths:
+      - .github/workflows/tool-preflight.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tool-preflight-sub-tool-preflight-214c
+  cancel-in-progress: false
+
+jobs:
+  preflight-linux:
+    name: Ubuntu tool preflight
+    if: github.ref == 'refs/heads/sub/tool-preflight-214c'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe installed tools
+        shell: bash
+        run: |
+          set -u
+          qual=true
+          echo "package_usable=false"
+          echo "runner_os=${RUNNER_OS:-missing}"
+          echo "runner_arch=${RUNNER_ARCH:-missing}"
+          echo "runner_name=${RUNNER_NAME:-missing}"
+          echo "runner_image_os=${ImageOS:-missing}"
+          echo "runner_image_version=${ImageVersion:-missing}"
+          if [ -r /etc/os-release ]; then
+            echo "os_release_begin"
+            cat /etc/os-release
+            echo "os_release_end"
+          else
+            echo "os_release=missing"
+          fi
+          probe() {
+            tool="$1"
+            shift
+            if ! command -v "$1" >/dev/null 2>&1; then
+              echo "tool=${tool} status=missing exit=127"
+              qual=false
+              return 0
+            fi
+            out="$("$@" 2>&1)"
+            code=$?
+            echo "tool=${tool} status=present command=$1 exit=${code}"
+            printf '%s\n' "$out"
+            if [ "$code" -ne 0 ]; then
+              qual=false
+            fi
+          }
+          probe python python3 --version || true
+          probe python_module python3 -c 'import platform,sys; print(platform.platform()); print(platform.machine()); print(sys.version)' || true
+          probe pyinstaller_module python3 -m PyInstaller --version || true
+          probe dpkg_deb dpkg-deb --version || true
+          probe rpmbuild rpmbuild --version || true
+          probe appimagetool appimagetool --version || true
+          probe ldd ldd --version || true
+          probe objdump objdump --version || true
+          echo "qualification=${qual}"
+          exit 0
+
+  preflight-windows:
+    name: Windows tool preflight
+    if: github.ref == 'refs/heads/sub/tool-preflight-214c'
+    runs-on: windows-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe installed tools
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Continue"
+          $script:qual = $true
+          Write-Output "package_usable=false"
+          foreach ($name in @("RUNNER_OS","RUNNER_ARCH","RUNNER_NAME","ImageOS","ImageVersion")) {
+            $value = [Environment]::GetEnvironmentVariable($name)
+            if ([string]::IsNullOrEmpty($value)) { $value = "missing" }
+            Write-Output ("runner_" + $name + "=" + $value)
+          }
+          function Probe-Exe([string]$tool, [string]$exe, [string[]]$argList) {
+            $cmd = Get-Command $exe -ErrorAction SilentlyContinue
+            if (-not $cmd) {
+              Write-Output "tool=$tool status=missing exit=127"
+              $script:qual = $false
+              return
+            }
+            $out = & $cmd.Source @argList 2>&1 | Out-String
+            $code = $LASTEXITCODE
+            if ($null -eq $code) { $code = 0 }
+            Write-Output "tool=$tool status=present path=$($cmd.Source) exit=$code"
+            Write-Output $out
+            if ($code -ne 0) { $script:qual = $false }
+          }
+          Probe-Exe "python" "python" @("--version")
+          $py = Get-Command python -ErrorAction SilentlyContinue
+          if ($py) {
+            $info = & $py.Source -c "import platform,sys; print(platform.platform()); print(platform.machine()); print(sys.version)" 2>&1 | Out-String
+            $code = $LASTEXITCODE
+            if ($null -eq $code) { $code = 0 }
+            Write-Output "tool=python_module status=present exit=$code"
+            Write-Output $info
+            if ($code -ne 0) { $script:qual = $false }
+          } else {
+            Write-Output "tool=python_module status=missing exit=127"
+            $script:qual = $false
+          }
+          Probe-Exe "pyinstaller_module" "python" @("-m","PyInstaller","--version")
+          $iscc = Get-Command ISCC.exe -ErrorAction SilentlyContinue
+          $known = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          $path = $null
+          if ($iscc) { $path = $iscc.Source }
+          elseif (Test-Path -LiteralPath $known) { $path = $known }
+          if (-not $path) {
+            Write-Output "tool=iscc status=missing exit=127"
+            $script:qual = $false
+          } else {
+            $out = & $path /? 2>&1 | Out-String
+            $code = $LASTEXITCODE
+            if ($null -eq $code) { $code = 0 }
+            Write-Output "tool=iscc status=present path=$path exit=$code"
+            Write-Output $out
+            if ($code -ne 0 -or $out -notmatch "Inno Setup") { $script:qual = $false }
+          }
+          if ($script:qual) { Write-Output "qualification=true" } else { Write-Output "qualification=false" }
+          exit 0
