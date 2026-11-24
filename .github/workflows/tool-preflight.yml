@@ -1,7 +1,7 @@
-# 标准托管 runner 的工具存在性预检。
-# 不 checkout、不安装、不下载、不构建、不上传工件。
-# 工具缺失或版本命令非零时仍打印结果，并以 qualification=false 正常结束。
-# 这不表示安装包可用。
+# 标准 runner 上的工具身份预检。不构建应用或安装包，不上传工件。
+# checkout v4.4.0 / 当前 v4: 11d5960a326750d5838078e36cf38b85af677262
+# setup-python v5.6.0 / 当前 v5: a26af69be951a213d495a4c3e4e4022e16d87065
+# 两个 SHA 于 2026-11-24 从 actions 仓库的 git refs 读出，不是手填的。
 name: Tool environment preflight
 
 on:
@@ -20,116 +20,544 @@ concurrency:
 
 jobs:
   preflight-linux:
-    name: Ubuntu tool preflight
+    name: Ubuntu 24.04 tool identity
     if: github.ref == 'refs/heads/sub/tool-preflight-214c'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
-      - name: Probe installed tools
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.11"
+          architecture: x64
+      - name: Identify tools
         shell: bash
+        env:
+          TOOL_OS: linux
+          REQUESTED_LABEL: ubuntu-24.04
+          PRINT_JSON: "1"
+          FORCE_EXIT: ""
         run: |
-          set -u
-          qual=true
-          echo "package_usable=false"
-          echo "runner_os=${RUNNER_OS:-missing}"
-          echo "runner_arch=${RUNNER_ARCH:-missing}"
-          echo "runner_name=${RUNNER_NAME:-missing}"
-          echo "runner_image_os=${ImageOS:-missing}"
-          echo "runner_image_version=${ImageVersion:-missing}"
-          if [ -r /etc/os-release ]; then
-            echo "os_release_begin"
-            cat /etc/os-release
-            echo "os_release_end"
-          else
-            echo "os_release=missing"
-          fi
-          probe() {
-            tool="$1"
-            shift
-            if ! command -v "$1" >/dev/null 2>&1; then
-              echo "tool=${tool} status=missing exit=127"
-              qual=false
-              return 0
-            fi
-            out="$("$@" 2>&1)"
-            code=$?
-            echo "tool=${tool} status=present command=$1 exit=${code}"
-            printf '%s\n' "$out"
-            if [ "$code" -ne 0 ]; then
-              qual=false
-            fi
+          set +e
+          python - <<'PY'
+          import hashlib, json, os, platform, shutil, subprocess, sys
+          from pathlib import Path
+
+          EXPECTED_APPIMAGE_SHA = "b90f4a8b18967545fda78a445b27680a1642f1ef9488ced28b65398f2be7add2"
+          APPIMAGE_URL = "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+          STATE = Path(os.environ["RUNNER_TEMP"]) / "akia-tool-preflight-state.json"
+          WORK = Path(os.environ["RUNNER_TEMP"]) / "akia-tool-preflight"
+          WORK.mkdir(parents=True, exist_ok=True)
+
+          def parse_lock(text):
+              import re
+              pkgs = []
+              cur = None
+              def flush():
+                  nonlocal cur
+                  if cur:
+                      pkgs.append(cur)
+                      cur = None
+              for raw in text.splitlines():
+                  line = raw.strip()
+                  if not line or line.startswith("#"):
+                      if cur and cur.get("closed"):
+                          flush()
+                      continue
+                  matched = re.match(r"^([A-Za-z0-9_.-]+)==([^\\\s;]+)(?:\s*;\s*(.*?))?\s*\\?\s*$", line)
+                  if matched and not line.startswith("--hash"):
+                      if cur:
+                          flush()
+                      cur = {"name": matched.group(1).lower(), "version": matched.group(2), "marker": (matched.group(3) or "").strip(), "hashes": [], "closed": not line.endswith("\\")}
+                      continue
+                  found = re.search(r"--hash=sha256:([0-9a-f]{64})", line)
+                  if found and cur:
+                      cur["hashes"].append(found.group(1))
+                      if not line.endswith("\\"):
+                          cur["closed"] = True
+                  else:
+                      raise RuntimeError("unparsed lock line")
+              if cur:
+                  flush()
+              return {item["name"]: item for item in pkgs}
+
+          def run_cmd(argv, env=None, timeout=60, cwd=None):
+              try:
+                  done = subprocess.run(argv, capture_output=True, text=True, timeout=timeout, env=env, cwd=cwd, check=False)
+                  return done.returncode, (done.stdout or "")[:2000], (done.stderr or "")[:2000]
+              except Exception as exc:
+                  return 1, "", str(exc)[:2000]
+
+          def probe(name, argv):
+              exe = shutil.which(argv[0])
+              if not exe:
+                  return {"name": name, "state": "missing", "exit": 127, "path": None, "version_text": ""}
+              code, out, err = run_cmd(argv, timeout=30)
+              text = (out or err).strip()
+              return {"name": name, "state": "ready" if code == 0 else "not_ready", "exit": code, "path": exe, "version_text": text[:500]}
+
+          report = {
+              "package_usable": False,
+              "qualification_meaning": "tool_identity_not_package",
+              "toolchain_status": "toolchain_partial",
+              "runner": {
+                  "requested_label": os.environ.get("REQUESTED_LABEL", ""),
+                  "os": os.environ.get("RUNNER_OS", ""),
+                  "arch": os.environ.get("RUNNER_ARCH", ""),
+                  "name": os.environ.get("RUNNER_NAME", ""),
+                  "image_os": os.environ.get("ImageOS", ""),
+                  "image_version": os.environ.get("ImageVersion", ""),
+                  "platform": platform.platform(),
+              },
           }
-          probe python python3 --version || true
-          probe python_module python3 -c 'import platform,sys; print(platform.platform()); print(platform.machine()); print(sys.version)' || true
-          probe pyinstaller_module python3 -m PyInstaller --version || true
-          probe dpkg_deb dpkg-deb --version || true
-          probe rpmbuild rpmbuild --version || true
-          probe appimagetool appimagetool --version || true
-          probe ldd ldd --version || true
-          probe objdump objdump --version || true
-          echo "qualification=${qual}"
-          exit 0
+          try:
+              machine = platform.machine()
+              py_ok = sys.version_info[:2] == (3, 11) and machine in {"x86_64", "AMD64"}
+              report["python"] = {"state": "ready" if py_ok else "mismatch", "version": sys.version, "machine": machine, "executable": sys.executable}
+              lock_path = Path("requirements-ci.lock")
+              locked = parse_lock(lock_path.read_text(encoding="utf-8"))
+              pin = locked["pyinstaller"]
+              if pin["version"] != "6.22.2" or len(pin["hashes"]) < 1:
+                  raise RuntimeError("pyinstaller pin mismatch")
+              constraints = WORK / "constraints.txt"
+              lines = []
+              for item in locked.values():
+                  row = f"{item['name']}=={item['version']}"
+                  if item["marker"]:
+                      row += " ; " + item["marker"]
+                  lines.append(row)
+              constraints.write_text("\n".join(lines) + "\n", encoding="utf-8")
+              venv = WORK / "venv"
+              code, out, err = run_cmd([sys.executable, "-m", "venv", str(venv)], timeout=120)
+              py = venv / ("Scripts/python.exe" if os.environ.get("TOOL_OS") == "windows" else "bin/python")
+              install_code = None
+              packages = []
+              if code != 0 or not py.exists():
+                  py_state = "not_ready"
+                  install_out, install_err = out, err
+              else:
+                  report_path = WORK / "pip-report.json"
+                  install_code, install_out, install_err = run_cmd([
+                      str(py), "-m", "pip", "install", "--no-cache-dir", "--disable-pip-version-check",
+                      "--index-url", "https://pypi.org/simple", "--constraint", str(constraints),
+                      "--report", str(report_path), "pyinstaller==6.22.2",
+                  ], timeout=300)
+                  hash_ok = install_code == 0 and report_path.exists()
+                  if report_path.exists():
+                      data = json.loads(report_path.read_text(encoding="utf-8"))
+                      for item in data.get("install") or []:
+                          meta = item.get("metadata") or {}
+                          info = item.get("download_info") or {}
+                          archive = info.get("archive_info") or {}
+                          hashes = archive.get("hashes") or {}
+                          digest = hashes.get("sha256")
+                          if not digest and str(archive.get("hash", "")).startswith("sha256="):
+                              digest = str(archive["hash"]).split("=", 1)[1]
+                          name = str(meta.get("name", "")).lower()
+                          version = str(meta.get("version", ""))
+                          known = locked.get(name)
+                          in_lock = bool(known and known["version"] == version and digest in set(known["hashes"]))
+                          if not in_lock:
+                              hash_ok = False
+                          packages.append({"name": name, "version": version, "url": info.get("url"), "sha256": digest, "sha256_in_lock": in_lock})
+                  else:
+                      hash_ok = False
+                  ver_code, ver_out, ver_err = run_cmd([str(py), "-m", "PyInstaller", "--version"], timeout=60)
+                  version_text = (ver_out or ver_err).strip()
+                  lic = {"bootloader_exception_seen": False, "license_field": "", "excerpt": ""}
+                  code2, meta_out, meta_err = run_cmd([str(py), "-c", "import importlib.metadata as m; from pathlib import Path; d=m.distribution('pyinstaller'); print(d.metadata.get('License','')); print('---'); roots=[Path(str(d.locate_file('')))];\nimport PyInstaller\nroots.append(Path(PyInstaller.__file__).resolve().parent)\ntext=''\nfor root in roots:\n p=root\n files=[p] if p.is_file() else list(p.rglob('*'))\n for f in files:\n  if f.is_file() and f.name.lower() in {'copying.txt','license.txt','license.rst','license'}:\n   text=f.read_text(errors='replace')[:4000]; break\n if text: break\nprint(text)"], timeout=60)
+                  if code2 == 0:
+                      head, _, body = meta_out.partition("---\n")
+                      lic["license_field"] = head.strip()[:300]
+                      low = body.lower()
+                      lic["bootloader_exception_seen"] = "bootloader" in low and "exception" in low
+                      start = low.find("bootloader")
+                      lic["excerpt"] = body[max(0, start - 120):start + 500].strip()[:700]
+                  version_ok = ver_code == 0 and version_text.startswith("6.22.2")
+                  named = {pkg["name"] for pkg in packages}
+                  py_state = "ready" if hash_ok and version_ok and "pyinstaller" in named and lic["bootloader_exception_seen"] else "partial" if install_code == 0 else "not_ready"
+                  report["pyinstaller"] = {
+                      "state": py_state, "requested": "6.22.2", "version_text": version_text, "version_exit": ver_code,
+                      "install_exit": install_code, "packages": packages, "license": lic,
+                      "note": "pip install does not make a package; no PyInstaller build was run",
+                  }
+              if "pyinstaller" not in report:
+                  report["pyinstaller"] = {"state": "not_ready", "requested": "6.22.2", "install_exit": install_code, "venv_exit": code, "stdout": install_out[:500], "stderr": install_err[:500]}
+              if os.environ.get("TOOL_OS") == "linux":
+                  pin_file = Path("packaging/appimagetool.sha256").read_text(encoding="utf-8").strip()
+                  tool = {"url": APPIMAGE_URL, "expected_sha256": EXPECTED_APPIMAGE_SHA, "pin_file_sha256": pin_file, "state": "not_ready", "download_exit": None, "executed": False,
+                          "license": {"project": "AppImageKit LICENSE is MIT for original source unless a file says otherwise. It does not cover every dependency, and it does not cover contents of AppImages created with the tool.",
+                                      "runtime": "type2-runtime LICENSE is MIT and states the runtime statically links musl, libfuse (LGPL-2), squashfuse, libzstd, and zlib.",
+                                      "blob_license_extracted": False, "continuous_reproducible": False, "mit_covers_entire_blob": False,
+                                      "no_fuse": "Official docs document --appimage-extract-and-run and APPIMAGE_EXTRACT_AND_RUN=1 for type 2 AppImages."}}
+                  if pin_file != EXPECTED_APPIMAGE_SHA:
+                      tool["state"] = "not_ready"
+                      tool["reason"] = "pin_file_mismatch"
+                  else:
+                      dest = WORK / "appimagetool-x86_64.AppImage"
+                      dl, dl_out, dl_err = run_cmd(["curl", "--fail", "--location", "--retry", "0", "--max-time", "180", "--output", str(dest), APPIMAGE_URL], timeout=200)
+                      tool["download_exit"] = dl
+                      tool["download_stderr"] = dl_err[:400]
+                      if dl == 0 and dest.exists():
+                          actual = hashlib.sha256(dest.read_bytes()).hexdigest()
+                          tool["actual_sha256"] = actual
+                          if actual == EXPECTED_APPIMAGE_SHA:
+                              dest.chmod(0o755)
+                              env = os.environ.copy()
+                              env["APPIMAGE_EXTRACT_AND_RUN"] = "1"
+                              vcode, vout, verr = run_cmd([str(dest), "--version"], env=env, timeout=90, cwd=str(WORK))
+                              rcode, rout, rerr = run_cmd([str(dest), "--appimage-version"], env=env, timeout=90, cwd=str(WORK))
+                              tool["version_exit"] = vcode
+                              tool["version_text"] = (vout or verr).strip()[:500]
+                              tool["runtime_exit"] = rcode
+                              tool["runtime_text"] = (rout or rerr).strip()[:500]
+                              tool["executed"] = True
+                              tool["state"] = "ready" if vcode == 0 and tool["version_text"] else "partial"
+                          else:
+                              tool["state"] = "not_ready"
+                              tool["reason"] = "hash_mismatch"
+                              dest.unlink(missing_ok=True)
+                      else:
+                          tool["state"] = "not_ready"
+                          tool["reason"] = "download_failed"
+                  report["appimagetool"] = tool
+                  report["system_tools"] = [
+                      probe("dpkg-deb", ["dpkg-deb", "--version"]),
+                      probe("rpmbuild", ["rpmbuild", "--version"]),
+                      probe("ldd", ["ldd", "--version"]),
+                      probe("objdump", ["objdump", "--version"]),
+                  ]
+              required_ok = report["python"]["state"] == "ready" and report["pyinstaller"]["state"] == "ready"
+              if os.environ.get("TOOL_OS") == "linux":
+                  required_ok = required_ok and report["appimagetool"]["state"] == "ready" and all(item["state"] == "ready" for item in report["system_tools"])
+              report["toolchain_status"] = "toolchain_ready" if required_ok else "toolchain_partial"
+          except Exception as exc:
+              report["error"] = str(exc)[:1000]
+              report["toolchain_status"] = "toolchain_partial"
+          STATE.write_text(json.dumps(report, indent=2), encoding="utf-8")
+          if os.environ.get("PRINT_JSON") == "1":
+              print(json.dumps(report, indent=2))
+          sys.exit(0 if report["toolchain_status"] == "toolchain_ready" else 2)
+          PY
+          code=$?
+          if [ "${FORCE_EXIT}" = "0" ]; then
+            exit 0
+          fi
+          exit "$code"
 
   preflight-windows:
-    name: Windows tool preflight
+    name: Windows 2025 tool identity
     if: github.ref == 'refs/heads/sub/tool-preflight-214c'
-    runs-on: windows-latest
-    timeout-minutes: 5
+    runs-on: windows-2025
+    timeout-minutes: 10
     steps:
-      - name: Probe installed tools
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.11"
+          architecture: x64
+      - name: Identify Python and PyInstaller
+        shell: bash
+        env:
+          TOOL_OS: windows
+          REQUESTED_LABEL: windows-2025
+          PRINT_JSON: "0"
+          FORCE_EXIT: "0"
+        run: |
+          set +e
+          python - <<'PY'
+          import hashlib, json, os, platform, shutil, subprocess, sys
+          from pathlib import Path
+
+          EXPECTED_APPIMAGE_SHA = "b90f4a8b18967545fda78a445b27680a1642f1ef9488ced28b65398f2be7add2"
+          APPIMAGE_URL = "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+          STATE = Path(os.environ["RUNNER_TEMP"]) / "akia-tool-preflight-state.json"
+          WORK = Path(os.environ["RUNNER_TEMP"]) / "akia-tool-preflight"
+          WORK.mkdir(parents=True, exist_ok=True)
+
+          def parse_lock(text):
+              import re
+              pkgs = []
+              cur = None
+              def flush():
+                  nonlocal cur
+                  if cur:
+                      pkgs.append(cur)
+                      cur = None
+              for raw in text.splitlines():
+                  line = raw.strip()
+                  if not line or line.startswith("#"):
+                      if cur and cur.get("closed"):
+                          flush()
+                      continue
+                  matched = re.match(r"^([A-Za-z0-9_.-]+)==([^\\\s;]+)(?:\s*;\s*(.*?))?\s*\\?\s*$", line)
+                  if matched and not line.startswith("--hash"):
+                      if cur:
+                          flush()
+                      cur = {"name": matched.group(1).lower(), "version": matched.group(2), "marker": (matched.group(3) or "").strip(), "hashes": [], "closed": not line.endswith("\\")}
+                      continue
+                  found = re.search(r"--hash=sha256:([0-9a-f]{64})", line)
+                  if found and cur:
+                      cur["hashes"].append(found.group(1))
+                      if not line.endswith("\\"):
+                          cur["closed"] = True
+                  else:
+                      raise RuntimeError("unparsed lock line")
+              if cur:
+                  flush()
+              return {item["name"]: item for item in pkgs}
+
+          def run_cmd(argv, env=None, timeout=60, cwd=None):
+              try:
+                  done = subprocess.run(argv, capture_output=True, text=True, timeout=timeout, env=env, cwd=cwd, check=False)
+                  return done.returncode, (done.stdout or "")[:2000], (done.stderr or "")[:2000]
+              except Exception as exc:
+                  return 1, "", str(exc)[:2000]
+
+          def probe(name, argv):
+              exe = shutil.which(argv[0])
+              if not exe:
+                  return {"name": name, "state": "missing", "exit": 127, "path": None, "version_text": ""}
+              code, out, err = run_cmd(argv, timeout=30)
+              text = (out or err).strip()
+              return {"name": name, "state": "ready" if code == 0 else "not_ready", "exit": code, "path": exe, "version_text": text[:500]}
+
+          report = {
+              "package_usable": False,
+              "qualification_meaning": "tool_identity_not_package",
+              "toolchain_status": "toolchain_partial",
+              "runner": {
+                  "requested_label": os.environ.get("REQUESTED_LABEL", ""),
+                  "os": os.environ.get("RUNNER_OS", ""),
+                  "arch": os.environ.get("RUNNER_ARCH", ""),
+                  "name": os.environ.get("RUNNER_NAME", ""),
+                  "image_os": os.environ.get("ImageOS", ""),
+                  "image_version": os.environ.get("ImageVersion", ""),
+                  "platform": platform.platform(),
+              },
+          }
+          try:
+              machine = platform.machine()
+              py_ok = sys.version_info[:2] == (3, 11) and machine in {"x86_64", "AMD64"}
+              report["python"] = {"state": "ready" if py_ok else "mismatch", "version": sys.version, "machine": machine, "executable": sys.executable}
+              lock_path = Path("requirements-ci.lock")
+              locked = parse_lock(lock_path.read_text(encoding="utf-8"))
+              pin = locked["pyinstaller"]
+              if pin["version"] != "6.22.2" or len(pin["hashes"]) < 1:
+                  raise RuntimeError("pyinstaller pin mismatch")
+              constraints = WORK / "constraints.txt"
+              lines = []
+              for item in locked.values():
+                  row = f"{item['name']}=={item['version']}"
+                  if item["marker"]:
+                      row += " ; " + item["marker"]
+                  lines.append(row)
+              constraints.write_text("\n".join(lines) + "\n", encoding="utf-8")
+              venv = WORK / "venv"
+              code, out, err = run_cmd([sys.executable, "-m", "venv", str(venv)], timeout=120)
+              py = venv / ("Scripts/python.exe" if os.environ.get("TOOL_OS") == "windows" else "bin/python")
+              install_code = None
+              packages = []
+              if code != 0 or not py.exists():
+                  py_state = "not_ready"
+                  install_out, install_err = out, err
+              else:
+                  report_path = WORK / "pip-report.json"
+                  install_code, install_out, install_err = run_cmd([
+                      str(py), "-m", "pip", "install", "--no-cache-dir", "--disable-pip-version-check",
+                      "--index-url", "https://pypi.org/simple", "--constraint", str(constraints),
+                      "--report", str(report_path), "pyinstaller==6.22.2",
+                  ], timeout=300)
+                  hash_ok = install_code == 0 and report_path.exists()
+                  if report_path.exists():
+                      data = json.loads(report_path.read_text(encoding="utf-8"))
+                      for item in data.get("install") or []:
+                          meta = item.get("metadata") or {}
+                          info = item.get("download_info") or {}
+                          archive = info.get("archive_info") or {}
+                          hashes = archive.get("hashes") or {}
+                          digest = hashes.get("sha256")
+                          if not digest and str(archive.get("hash", "")).startswith("sha256="):
+                              digest = str(archive["hash"]).split("=", 1)[1]
+                          name = str(meta.get("name", "")).lower()
+                          version = str(meta.get("version", ""))
+                          known = locked.get(name)
+                          in_lock = bool(known and known["version"] == version and digest in set(known["hashes"]))
+                          if not in_lock:
+                              hash_ok = False
+                          packages.append({"name": name, "version": version, "url": info.get("url"), "sha256": digest, "sha256_in_lock": in_lock})
+                  else:
+                      hash_ok = False
+                  ver_code, ver_out, ver_err = run_cmd([str(py), "-m", "PyInstaller", "--version"], timeout=60)
+                  version_text = (ver_out or ver_err).strip()
+                  lic = {"bootloader_exception_seen": False, "license_field": "", "excerpt": ""}
+                  code2, meta_out, meta_err = run_cmd([str(py), "-c", "import importlib.metadata as m; from pathlib import Path; d=m.distribution('pyinstaller'); print(d.metadata.get('License','')); print('---'); roots=[Path(str(d.locate_file('')))];\nimport PyInstaller\nroots.append(Path(PyInstaller.__file__).resolve().parent)\ntext=''\nfor root in roots:\n p=root\n files=[p] if p.is_file() else list(p.rglob('*'))\n for f in files:\n  if f.is_file() and f.name.lower() in {'copying.txt','license.txt','license.rst','license'}:\n   text=f.read_text(errors='replace')[:4000]; break\n if text: break\nprint(text)"], timeout=60)
+                  if code2 == 0:
+                      head, _, body = meta_out.partition("---\n")
+                      lic["license_field"] = head.strip()[:300]
+                      low = body.lower()
+                      lic["bootloader_exception_seen"] = "bootloader" in low and "exception" in low
+                      start = low.find("bootloader")
+                      lic["excerpt"] = body[max(0, start - 120):start + 500].strip()[:700]
+                  version_ok = ver_code == 0 and version_text.startswith("6.22.2")
+                  named = {pkg["name"] for pkg in packages}
+                  py_state = "ready" if hash_ok and version_ok and "pyinstaller" in named and lic["bootloader_exception_seen"] else "partial" if install_code == 0 else "not_ready"
+                  report["pyinstaller"] = {
+                      "state": py_state, "requested": "6.22.2", "version_text": version_text, "version_exit": ver_code,
+                      "install_exit": install_code, "packages": packages, "license": lic,
+                      "note": "pip install does not make a package; no PyInstaller build was run",
+                  }
+              if "pyinstaller" not in report:
+                  report["pyinstaller"] = {"state": "not_ready", "requested": "6.22.2", "install_exit": install_code, "venv_exit": code, "stdout": install_out[:500], "stderr": install_err[:500]}
+              if os.environ.get("TOOL_OS") == "linux":
+                  pin_file = Path("packaging/appimagetool.sha256").read_text(encoding="utf-8").strip()
+                  tool = {"url": APPIMAGE_URL, "expected_sha256": EXPECTED_APPIMAGE_SHA, "pin_file_sha256": pin_file, "state": "not_ready", "download_exit": None, "executed": False,
+                          "license": {"project": "AppImageKit LICENSE is MIT for original source unless a file says otherwise. It does not cover every dependency, and it does not cover contents of AppImages created with the tool.",
+                                      "runtime": "type2-runtime LICENSE is MIT and states the runtime statically links musl, libfuse (LGPL-2), squashfuse, libzstd, and zlib.",
+                                      "blob_license_extracted": False, "continuous_reproducible": False, "mit_covers_entire_blob": False,
+                                      "no_fuse": "Official docs document --appimage-extract-and-run and APPIMAGE_EXTRACT_AND_RUN=1 for type 2 AppImages."}}
+                  if pin_file != EXPECTED_APPIMAGE_SHA:
+                      tool["state"] = "not_ready"
+                      tool["reason"] = "pin_file_mismatch"
+                  else:
+                      dest = WORK / "appimagetool-x86_64.AppImage"
+                      dl, dl_out, dl_err = run_cmd(["curl", "--fail", "--location", "--retry", "0", "--max-time", "180", "--output", str(dest), APPIMAGE_URL], timeout=200)
+                      tool["download_exit"] = dl
+                      tool["download_stderr"] = dl_err[:400]
+                      if dl == 0 and dest.exists():
+                          actual = hashlib.sha256(dest.read_bytes()).hexdigest()
+                          tool["actual_sha256"] = actual
+                          if actual == EXPECTED_APPIMAGE_SHA:
+                              dest.chmod(0o755)
+                              env = os.environ.copy()
+                              env["APPIMAGE_EXTRACT_AND_RUN"] = "1"
+                              vcode, vout, verr = run_cmd([str(dest), "--version"], env=env, timeout=90, cwd=str(WORK))
+                              rcode, rout, rerr = run_cmd([str(dest), "--appimage-version"], env=env, timeout=90, cwd=str(WORK))
+                              tool["version_exit"] = vcode
+                              tool["version_text"] = (vout or verr).strip()[:500]
+                              tool["runtime_exit"] = rcode
+                              tool["runtime_text"] = (rout or rerr).strip()[:500]
+                              tool["executed"] = True
+                              tool["state"] = "ready" if vcode == 0 and tool["version_text"] else "partial"
+                          else:
+                              tool["state"] = "not_ready"
+                              tool["reason"] = "hash_mismatch"
+                              dest.unlink(missing_ok=True)
+                      else:
+                          tool["state"] = "not_ready"
+                          tool["reason"] = "download_failed"
+                  report["appimagetool"] = tool
+                  report["system_tools"] = [
+                      probe("dpkg-deb", ["dpkg-deb", "--version"]),
+                      probe("rpmbuild", ["rpmbuild", "--version"]),
+                      probe("ldd", ["ldd", "--version"]),
+                      probe("objdump", ["objdump", "--version"]),
+                  ]
+              required_ok = report["python"]["state"] == "ready" and report["pyinstaller"]["state"] == "ready"
+              if os.environ.get("TOOL_OS") == "linux":
+                  required_ok = required_ok and report["appimagetool"]["state"] == "ready" and all(item["state"] == "ready" for item in report["system_tools"])
+              report["toolchain_status"] = "toolchain_ready" if required_ok else "toolchain_partial"
+          except Exception as exc:
+              report["error"] = str(exc)[:1000]
+              report["toolchain_status"] = "toolchain_partial"
+          STATE.write_text(json.dumps(report, indent=2), encoding="utf-8")
+          if os.environ.get("PRINT_JSON") == "1":
+              print(json.dumps(report, indent=2))
+          sys.exit(0 if report["toolchain_status"] == "toolchain_ready" else 2)
+          PY
+          code=$?
+          if [ "${FORCE_EXIT}" = "0" ]; then
+            exit 0
+          fi
+          exit "$code"
+      - name: Identify ISCC and conclude
         shell: pwsh
         run: |
           $ErrorActionPreference = "Continue"
-          $script:qual = $true
-          Write-Output "package_usable=false"
-          foreach ($name in @("RUNNER_OS","RUNNER_ARCH","RUNNER_NAME","ImageOS","ImageVersion")) {
-            $value = [Environment]::GetEnvironmentVariable($name)
-            if ([string]::IsNullOrEmpty($value)) { $value = "missing" }
-            Write-Output ("runner_" + $name + "=" + $value)
-          }
-          function Probe-Exe([string]$tool, [string]$exe, [string[]]$argList) {
-            $cmd = Get-Command $exe -ErrorAction SilentlyContinue
-            if (-not $cmd) {
-              Write-Output "tool=$tool status=missing exit=127"
-              $script:qual = $false
-              return
+          $statePath = Join-Path $env:RUNNER_TEMP "akia-tool-preflight-state.json"
+          $isccPath = Join-Path $env:RUNNER_TEMP "akia-iscc.json"
+          $candidates = @()
+          foreach ($root in @(${env:ProgramFiles(x86)}, $env:ProgramFiles)) {
+            if ($root) {
+              $cand = Join-Path $root "Inno Setup 6\ISCC.exe"
+              if (Test-Path -LiteralPath $cand) { $candidates += $cand }
             }
-            $out = & $cmd.Source @argList 2>&1 | Out-String
-            $code = $LASTEXITCODE
-            if ($null -eq $code) { $code = 0 }
-            Write-Output "tool=$tool status=present path=$($cmd.Source) exit=$code"
-            Write-Output $out
-            if ($code -ne 0) { $script:qual = $false }
           }
-          Probe-Exe "python" "python" @("--version")
-          $py = Get-Command python -ErrorAction SilentlyContinue
-          if ($py) {
-            $info = & $py.Source -c "import platform,sys; print(platform.platform()); print(platform.machine()); print(sys.version)" 2>&1 | Out-String
-            $code = $LASTEXITCODE
-            if ($null -eq $code) { $code = 0 }
-            Write-Output "tool=python_module status=present exit=$code"
-            Write-Output $info
-            if ($code -ne 0) { $script:qual = $false }
-          } else {
-            Write-Output "tool=python_module status=missing exit=127"
-            $script:qual = $false
+          $lib = "C:\ProgramData\chocolatey\lib"
+          if (Test-Path -LiteralPath $lib) {
+            $dirs = @(Get-ChildItem -LiteralPath $lib -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match "(?i)inno" })
+            foreach ($dir in $dirs) {
+              $hits = @(Get-ChildItem -LiteralPath $dir.FullName -Filter ISCC.exe -File -Recurse -Depth 4 -ErrorAction SilentlyContinue)
+              foreach ($hit in $hits) { $candidates += $hit.FullName }
+            }
           }
-          Probe-Exe "pyinstaller_module" "python" @("-m","PyInstaller","--version")
-          $iscc = Get-Command ISCC.exe -ErrorAction SilentlyContinue
-          $known = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
-          $path = $null
-          if ($iscc) { $path = $iscc.Source }
-          elseif (Test-Path -LiteralPath $known) { $path = $known }
-          if (-not $path) {
-            Write-Output "tool=iscc status=missing exit=127"
-            $script:qual = $false
-          } else {
-            $out = & $path /? 2>&1 | Out-String
-            $code = $LASTEXITCODE
-            if ($null -eq $code) { $code = 0 }
-            Write-Output "tool=iscc status=present path=$path exit=$code"
-            Write-Output $out
-            if ($code -ne 0 -or $out -notmatch "Inno Setup") { $script:qual = $false }
+          $commandPath = $null
+          $cmd = Get-Command ISCC.exe -ErrorAction SilentlyContinue
+          if ($cmd) { $commandPath = $cmd.Source }
+          $real = $candidates | Where-Object { $_ -notmatch "\\chocolatey\\bin\\" } | Select-Object -First 1
+          $facts = [ordered]@{
+            usable = $false
+            approved = $false
+            command_path = $commandPath
+            real_path = $real
+            candidates = @($candidates)
+            state = "missing"
+            help_exit = $null
+            help_exit_class = "missing"
+            banner_identity = $null
+            banner_proves_exact_version = $false
+            file_version = $null
+            product_version = $null
+            product_name = $null
+            shim_file_version = $null
+            license_excerpt = $null
+            mandatory_purchase_clause = "not_read"
+            banner = $null
           }
-          if ($script:qual) { Write-Output "qualification=true" } else { Write-Output "qualification=false" }
-          exit 0
+          if ($commandPath -and $commandPath -match "\\chocolatey\\bin\\") {
+            $facts.shim_file_version = (Get-Item -LiteralPath $commandPath).VersionInfo.FileVersion
+          }
+          if ($real) {
+            $info = (Get-Item -LiteralPath $real).VersionInfo
+            $facts.file_version = $info.FileVersion
+            $facts.product_version = $info.ProductVersion
+            $facts.product_name = $info.ProductName
+            $help = & $real /? 2>&1 | Out-String
+            $helpCode = $LASTEXITCODE
+            if ($null -eq $helpCode) { $helpCode = 0 }
+            $facts.help_exit = $helpCode
+            $facts.banner = ($help -split "`r?`n" | Select-Object -First 8) -join "`n"
+            if ($helpCode -eq 1 -and $help -match "Inno Setup 6") {
+              $facts.help_exit_class = "identified_inno6_family"
+              $facts.banner_identity = "inno6_family"
+            } elseif ($helpCode -ne 0) {
+              $facts.help_exit_class = "failure"
+            } else {
+              $facts.help_exit_class = "exit_zero"
+            }
+            $licenseFile = Join-Path (Split-Path -Parent $real) "license.txt"
+            if (Test-Path -LiteralPath $licenseFile) {
+              $excerpt = @(Get-Content -LiteralPath $licenseFile -TotalCount 40)
+              $facts.license_excerpt = ($excerpt -join "`n")
+              $joined = $facts.license_excerpt
+              if ($joined -match "(?i)must purchase|required to purchase|shall purchase") {
+                $facts.mandatory_purchase_clause = "seen"
+              } else {
+                $facts.mandatory_purchase_clause = "not_found_in_local_excerpt"
+              }
+            } else {
+              $facts.mandatory_purchase_clause = "license_file_missing"
+            }
+            if ($facts.file_version) { $facts.state = "identified" } else { $facts.state = "partial" }
+          }
+          $facts | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $isccPath -Encoding utf8
+          python -c "import json,os,pathlib,sys; p=pathlib.Path(os.environ['RUNNER_TEMP'])/'akia-tool-preflight-state.json'; q=pathlib.Path(os.environ['RUNNER_TEMP'])/'akia-iscc.json'; base=json.loads(p.read_text(encoding='utf-8-sig')) if p.exists() else {'package_usable':False,'toolchain_status':'toolchain_partial','error':'python state missing'}; iscc=json.loads(q.read_text(encoding='utf-8-sig')); base['iscc']=iscc; base['package_usable']=False; ok=base.get('python',{}).get('state')=='ready' and base.get('pyinstaller',{}).get('state')=='ready' and iscc.get('state')=='identified'; base['toolchain_status']='toolchain_ready' if ok else 'toolchain_partial'; print(json.dumps(base, indent=2)); sys.exit(0 if ok else 2)"
+          $code = $LASTEXITCODE
+          if ($null -eq $code) { $code = 1 }
+          exit $code
