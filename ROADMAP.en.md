@@ -3,7 +3,7 @@
 [中文](ROADMAP.md) | [English](ROADMAP.en.md) | [Project Home](README.en.md) | [Releases](https://github.com/chrisliuu345/AKIA-local/releases)
 
 **Status**: Current version is v4.7.0, credible industrial-engineering methods. The v4.6.x security and correctness maintenance is done.
-**Last updated**: 2026-11-15
+**Last updated**: 2026-11-28
 
 ## Direction
 
@@ -31,7 +31,7 @@ AKIA is an open-source desktop application for personal industrial engineering a
 
 ## Release Sequence
 
-The following releases are ordered by dependency. Each minor release focuses on one primary theme and must meet its completion criteria before the next phase begins. v4.6.4 closes the v4.6.0 bar for human confirmation, path boundaries, and model HMAC, together with the connector and dashboard fixes in that maintenance release. The current version is v4.7.0. Unreleased themes still follow the dependency of shop-floor judgement: make existing IE methods and quality characteristics reviewable first, then bring video cycles and live measurements into that same evidence chain, and finish full localisation last so the interface is not translated twice while it is still moving. From v4.7.0, new and touched interface strings go through `i18n.tr`, and the main window is split, so v4.11.0 does not rewrite the v4.7.0–v4.10.0 text.
+The following releases are ordered by dependency. Each minor release focuses on one primary theme and must meet its completion criteria before the next phase begins. v4.6.4 closes the v4.6.0 bar for human confirmation, path boundaries, and model HMAC, together with the connector and dashboard fixes in that maintenance release. The current version is v4.7.0. Unreleased themes still follow the dependency of shop-floor judgement: make existing IE methods and quality characteristics reviewable first, then bring video cycles and live measurements into that same evidence chain, and finish full localisation last so the interface is not translated twice while it is still moving. From v4.7.0, new and touched interface strings go through `i18n.tr`, and the main window is split, so v4.11.0 does not rewrite the v4.7.0–v4.10.0 text. Releases after v4.11.0 follow the same dependency order: method depth and current standards first, then the data table and interaction, then more IE methods, and finally reproducible validation and release services. Interface strings added in these releases ship with Chinese and English resources from the start.
 
 | Version | Theme | Primary goals |
 |---------|-------|---------------|
@@ -43,6 +43,12 @@ The following releases are ordered by dependency. Each minor release focuses on 
 | v4.9.0 | Video time-study research and deepening | Industry capability research, a visual-cycle event contract, review, and traceable time-study workflows |
 | v4.10.0 | Real-time acquisition and embedded interfaces | A unified acquisition-adapter contract, more industrial/embedded protocols, health diagnostics, and conformance tests; an origin, authentication, and injection review before more protocols |
 | v4.11.0 | Bilingual interface and report localisation | Runtime language switching, complete Chinese/English resources, and localised reports and charts |
+| v4.12.0 | Statistical method depth | Regression family and diagnostics, post-hoc comparisons, general linear models, multivariate analysis, DOE response optimisation, short-run and attribute capability |
+| v4.13.0 | Current manufacturing standards and measurement-data exchange | AIAG-VDA action priority, VDA 5 / ISO 22514-7, AQDEF exchange, variables sampling |
+| v4.14.0 | Data table and interaction | Editable large data table, undo/redo, linked charts, guided analysis, light and high-contrast themes |
+| v4.15.0 | IE method expansion | Predetermined motion times, ergonomic assessment, mixed-model line balancing, kanban sizing, light simulation, work instructions |
+| v4.16.0 | Reproducibility and validation | Operation recording to scripts, replayable analysis flows, generated software validation report |
+| v4.17.0 | Release, documentation, and community services | macOS build, code signing, optional update check, bilingual documentation site and examples, community files, diagnostics bundle, SBOM |
 
 ## Near-Term Milestones
 
@@ -141,15 +147,78 @@ Completion criteria: at least two new interface families complete end-to-end acq
 
 Completion criteria: switching language while the application is running updates open views and all subsequent exports; Chinese and English resource keys match and no primary interface text remains untranslated; report, chart, date, and number formats follow the selected language; switching language does not change analysis results or project-file semantics; v4.7.0–v4.10.0 strings already passed through `i18n.tr` keep their keys and are not rewritten wholesale in this release.
 
+### v4.12.0 — Statistical Method Depth
+
+- Regression: multiple-regression diagnostics (variance inflation, residual plots, leverage and influence), stepwise and best-subset selection, binary/ordinal/nominal logistic regression, Poisson regression, and nonlinear regression.
+- Analysis of variance: post-hoc multiple comparisons (Tukey, Dunnett, Games-Howell, and others), general linear models, random factors, and simple mixed models.
+- Multivariate analysis: principal components, clustering, and discriminant analysis; factor analysis only if publicly reviewable known values are available.
+- DOE: add a multi-response desirability optimiser on top of the existing response-surface support, and state the constraints and weights used.
+- Other: short-run SPC, pre-control, binomial and Poisson attribute capability, and tolerance stack-up with Monte Carlo simulation (random seed fixed and recorded).
+- All methods live under `analysis/` without a Qt dependency, and are wired into the tab registry, the CLI/SDK tool list, and report export.
+
+Completion criteria: each method has at least one known-value case with a stated source and tolerance in the per-file regression, and `KNOWN_VALUES.md` is updated; singular design matrices, complete separation, and too-small samples return explicit errors rather than silent numbers; every new method has an entry in the interface, the CLI/SDK, and reports; new interface strings ship with Chinese and English resources.
+
+### v4.13.0 — Current Manufacturing Standards and Measurement-Data Exchange
+
+- Add the AIAG-VDA (2019) action-priority (AP) method to FMEA alongside RPN; existing projects keep using RPN and their results do not change.
+- Add VDA 5 / ISO 22514-7 measurement-process capability next to Type 1 and GR&R, connected to the v4.8.0 gauge gate.
+- Provide AQDEF (`.dfq`) import and export, with data entering the unified MeasurementEvent. The parser reuses the entry-count, size, and path limits of the archive readers and reports malformed input explicitly.
+- Provide ISO 3951 / GB/T 6378 variables sampling as a rule pack, reviewed in an environment that holds a licensed copy, with the reviewer, standard revision, and date recorded. Unreviewed tables are labelled "not checked against the standard text" in the interface and the evidence record.
+- Exchange samples in the repository are synthetic; no real production data.
+
+Completion criteria: the review record of the AP table against the published standard is in the repository, and unreviewed parts are labelled in the interface; VDA 5 and variables sampling each have known-value cases; an AQDEF round trip preserves characteristics, specifications, and measured values, and malformed or oversized input is rejected; older `.qap` files remain readable and existing RPN results do not change.
+
+### v4.14.0 — Data Table and Interaction
+
+- An editable large data table built on a data model: column types, formula columns, stack and unstack, subsets, and recoding.
+- Project-level undo/redo covering data edits and analysis parameters. Undo history is not written to `.qap` by default.
+- Linked brushing between charts and the data table; points selected in one chart are highlighted in other charts and the table.
+- Guided analysis: choose a method from the question, check assumptions such as sample size, normality, and stability, and explain the reading through a result card. A result card must not replace a statistical decision or human confirmation.
+- Light and high-contrast themes, high-DPI support, and accessible names.
+- Import open formats such as Parquet. Proprietary formats are considered only when the format is public and the license allows it.
+- Depends on the v4.7.0 `run_in_worker` and the main-window split, so long operations stay off the UI thread.
+
+Completion criteria: scrolling, sorting, and editing in the table stay within a recorded benchmark, and no performance gain is claimed without baseline evidence; undo/redo round-trips data edits and analysis parameters; linked brushing works in at least three chart types; the assumption checks of guided analysis have known-value or boundary cases; the main interface has no unreadable text in either theme; older projects remain readable.
+
+### v4.15.0 — IE Method Expansion
+
+- Predetermined motion times: first research the data-table licensing of systems such as MTM, MOST, and MODAPTS. Implement only what can be published lawfully, or let users import tables they hold; do not ship copyrighted time-value tables in the repository.
+- Ergonomic assessment: RULA, REBA, and the NIOSH lifting equation, using published formulas with known values taken from the original literature.
+- Mixed-model and U-shaped line balancing, kanban quantity calculation, and spaghetti diagrams.
+- Light discrete-event simulation to check line-balance proposals; the random seed is fixed and recorded, and results go into the evidence ledger.
+- Generate work instructions from standard-work combination sheets and time studies.
+- All of the above enter the standard-time, line-balance, and improvement-case evidence chain from v4.7.0. Cycles confirmed in v4.9.0 can feed predetermined-motion analysis, without a second time-calculation engine.
+
+Completion criteria: each new method has at least one known-value case with a source; the licensing conclusion for predetermined motion times is documented; mixed-model balancing and simulation scenarios run without a model or a network; the evidence record can restore the input parameters of each new result; older projects remain readable.
+
+### v4.16.0 — Reproducibility and Validation
+
+- Operation recording: export analysis operations performed in the interface as an SDK script that reproduces the same result from the same data and parameters, within the agreed tolerance.
+- Save replayable analysis flows in a project, with a version field; report clearly when a plugin is missing or a method version has changed.
+- Generate a software validation report that summarises the version, dependency locks, known-value regression results, and the evidence ledger, and states its scope. The report does not claim any compliance certification.
+- Flag conclusions as stale when the input data they depend on has changed.
+
+Completion criteria: a recorded script replays headlessly with results matching the interface; the validation report can be reproduced independently from release artifacts and its hashes match `release-manifest.json`; the stale flag does not rewrite existing conclusions; older projects remain readable and projects without flows behave unchanged.
+
+### v4.17.0 — Release, Documentation, and Community Services
+
+- Add a macOS (Apple silicon) package and include it in release smoke tests.
+- Sign the Windows installer once a certificate is available, with the signature consistent with the release manifest.
+- A user-enabled update check: off by default, requesting only GitHub Releases, uploading no data, and verifying SHA256 after download.
+- A searchable Chinese/English documentation site generated from repository documents and released with each version. Each method states its principle, formula, assumptions, interpretation, and known-value source; each module has synthetic example data and a tutorial.
+- Add `SECURITY.md`, `CONTRIBUTING.md`, issue templates, and a discussion forum, and set up a plugin index.
+- A local diagnostics bundle (logs, environment, version) that the user inspects and attaches to an issue themselves; the application never uploads it.
+- Publish a CycloneDX SBOM and add reproducible-build notes.
+- If SDK/API breaking changes have accumulated by then, move to v5.0.0 in this release and list each change in the release notes.
+
+Completion criteria: every release tag carries installers, hash files, and `release-manifest.json`; the packages for all three platforms pass smoke tests; with the update check off there are no network requests; the documentation site covers every registered tab; example data passes validation and contains no real production data.
+
 ## Later Exploration
 
-- Light and high-contrast themes plus accessibility improvements.
 - More report templates, statistical methods, and community-driven connectors.
 - Optional local analysis such as process windows and edge anomaly detection. These capabilities must not bypass statistical decisions or human confirmation.
 - Advanced video time-study model evaluation, edge-device collaboration, and large-scale line deployment.
-- Automatic installer updates.
 - Tighten the performance-baseline gate (tolerance from ×3 to ×1.5).
-- Contributor documentation.
 - Consider new machine-learning model families only after v4.7.0 and v4.8.0 are accepted.
 
 ## Non-Goals
@@ -175,6 +244,7 @@ Priorities are, in order: data correctness and security, regression and compatib
 - mypy is ratcheted directory by directory, and coverage has a per-directory floor, in the same style as the ruff ratchet: each directory starts from its current level and only tightens.
 - From v4.6.0 onward, a release tag also runs Windows installer smoke alongside the Linux AppImage, and checks that the program entry point, project license, and third-party notices are packaged.
 - From v4.6.0 onward, the sidebar, analysis menu, and command palette use the tab registry as their only entry list. A registered page missing any of those entries is a release defect.
+- Every release tag must carry installers, hash files, and `release-manifest.json`; a missing item is a release defect.
 - Tags and release notes live in GitHub Releases; this roadmap keeps only current status and future plans.
 
 ## Contributing
