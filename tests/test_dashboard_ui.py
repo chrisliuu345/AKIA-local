@@ -78,10 +78,81 @@ def test_sections_and_empty_state(html):
 
 
 def test_token_passthrough_and_reconnect(html):
-    assert "URLSearchParams(location.search)" in html
-    assert 'get("token")' in html and "encodeURIComponent(TOKEN)" in html
-    assert "setTimeout(connect" in html        # 断线自动重连（不再整页刷新）
+    """令牌由服务端 HttpOnly Cookie 携带，页面不得再从查询串读取或写回。
+
+    同域 fetch 与 WebSocket（含断线后的 setTimeout 重连）由浏览器自动附带
+    ``akia_dashboard``。整页刷新会丢掉内存中的控制图，因此仍然禁止 location.reload。
+    """
+    script = re.findall(r"<script>(.*?)</script>", html, re.S)[0]
+
+    assert "URLSearchParams(location.search)" not in html
+    assert 'get("token")' not in script
+    assert "encodeURIComponent(TOKEN)" not in html
+    assert "?token=" not in html
+    assert re.search(r"\bTOKEN\b", script) is None
+    assert "document.cookie" not in script
+
+    strip = re.search(
+        r'if \(location\.search\.includes\("token="\)\) \{.*?\n\}',
+        script,
+        re.S,
+    )
+    assert strip is not None, "地址栏里的 token= 必须被删掉，且不得当作凭证"
+    block = strip.group(0)
+    assert "const clean = new URL(location.href);" in block
+    assert 'clean.searchParams.delete("token");' in block
+    assert (
+        'history.replaceState(null, "", clean.pathname + clean.search + clean.hash);'
+        in block
+    )
+    assert "encodeURIComponent" not in block
+    assert "fetch(" not in block and "WebSocket" not in block
+    without_strip = script.replace(block, "", 1)
+    assert "token" not in without_strip.lower()
+    strip_at = script.index(block)
+    assert strip_at < script.index("function api(")
+    assert strip_at < script.index("const wsUrl")
+    assert strip_at < script.index("function connect(")
+
+    api_body = re.search(r"function api\(path\) \{(.*?)\}", script, re.S)
+    assert api_body is not None
+    assert api_body.group(1).strip() == "return path;"
+    fetches = re.findall(r"fetch\(([^)]*)\)", script)
+    assert fetches
+    assert all(call.startswith("api(") and "token" not in call for call in fetches)
+
+    ws_assign = re.search(r"const wsUrl = ([^;]+);", script)
+    assert ws_assign is not None
+    assert ws_assign.group(1) == 'wsScheme + location.host + "/ws/stream"'
+    assert script.count("new WebSocket(") == 1
+    assert "new WebSocket(wsUrl)" in script
+    assert 'credentials: "omit"' not in script
+    assert "credentials: 'omit'" not in script
+
+    close_handler = re.search(r"ws\.onclose = \(\) => \{.*?\};", script, re.S)
+    assert close_handler is not None
+    assert "setTimeout(connect, 3000)" in close_handler.group(0)
     assert "location.reload" not in html
+
+    server = Path("server/app.py").read_text(encoding="utf-8")
+    assert "response.set_cookie(" in server
+    assert '"akia_dashboard"' in server
+    assert "httponly=True" in server
+    assert 'samesite="strict"' in server
+    assert "supplied = _presented_token(request.headers)" in server
+    assert "supplied = _presented_token(ws.headers)" in server
+    assert not re.search(r"""query_params\.get\(\s*["']token["']""", server)
+    assert not re.search(r"""query_params\[\s*["']token["']""", server)
+    presented = re.search(
+        r"def _presented_token\(headers\).*?return _cookie_token\(headers\.get\(\"cookie\", \"\"\)\)",
+        server,
+        re.S,
+    )
+    assert presented is not None
+    presented_body = presented.group(0)
+    assert "query" not in presented_body
+    assert 'headers.get("authorization"' in presented_body
+    assert 'headers.get("cookie"' in presented_body
 
 
 def test_js_braces_balanced(html):
